@@ -1,0 +1,21 @@
+query getReportByCode($code: String!) {
+  reportData {
+    report(code: $code) {
+      code
+      startTime
+      endTime
+      title
+      visibility
+      zone {
+        name
+      }
+      fights {
+        id
+        name
+        difficulty
+        startTime
+        endTime
+      }
+    }
+  }
+}

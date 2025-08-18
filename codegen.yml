@@ -1,0 +1,17 @@
+overwrite: true
+schema:
+  https://www.esologs.com/api/v2/client:
+    headers:
+      Authorization: 'Bearer ${ESOLOGS_TOKEN}'
+documents: src/graphql/**/*.graphql
+generates:
+  src/graphql/generated.ts:
+    plugins:
+      - typescript
+      - typescript-operations
+      - typescript-react-apollo
+    config:
+      withHooks: true
+      withComponent: false
+      withHOC: false
+      reactApolloVersion: 3
