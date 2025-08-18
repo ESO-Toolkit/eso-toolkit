@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { ApolloProvider } from "@apollo/client";
 import { client } from "./esologsClient";
 import { AuthProvider, useAuth } from "./AuthContext";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HashRouter, Routes, Route } from "react-router-dom";
 import OAuthRedirect from "./OAuthRedirect";
 import {
   AppBar,
@@ -256,12 +256,12 @@ const MainApp: React.FC = () => {
 const App: React.FC = () => (
   <ApolloProvider client={client}>
     <AuthProvider>
-      <BrowserRouter>
+      <HashRouter>
         <Routes>
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
           <Route path="/*" element={<MainApp />} />
         </Routes>
-      </BrowserRouter>
+      </HashRouter>
     </AuthProvider>
   </ApolloProvider>
 );
