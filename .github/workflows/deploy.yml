@@ -27,6 +27,6 @@ jobs:
         uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./apps/ui/eso-log-aggregator/build
+          publish_dir: ./build
           # Set cname if using a custom domain
           # cname: www.yourcustomdomain.com
