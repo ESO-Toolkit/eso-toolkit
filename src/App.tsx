@@ -1,9 +1,12 @@
+import FightDetails, { Fight } from "./FightDetails";
+import ListItemButton from '@mui/material/ListItemButton';
 import React, { useState } from "react";
 import { ApolloProvider } from "@apollo/client";
 import { client } from "./esologsClient";
 import { AuthProvider, useAuth } from "./AuthContext";
 import { HashRouter, Routes, Route } from "react-router-dom";
 import OAuthRedirect from "./OAuthRedirect";
+import GraphiQLPage from "./features/graphiql/GraphiQLPage";
 import {
   AppBar,
   Toolbar,
@@ -13,30 +16,19 @@ import {
   TextField,
   Button,
   CircularProgress,
-  Checkbox,
-  FormControlLabel,
   Paper,
   List,
   ListItem,
   ListItemText,
-  ListItemSecondaryAction,
   Alert,
 } from "@mui/material";
-// import OAuthRedirect from './OAuthRedirect';
-import { Link as LinkIcon } from "@mui/icons-material";
-import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from "./auth";
-import { useGetReportByCodeQuery } from "./graphql/generated";
-
-type Fight = {
-  id: string;
-  name: string;
-  start: string;
-  end: string;
-};
-
+import LinkIcon from '@mui/icons-material/Link';
+import { useGetReportByCodeQuery } from './graphql/generated';
+import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
+// Fight type definition
 const MainApp: React.FC = () => {
   const [fights, setFights] = useState<Fight[]>([]);
-  const [selectedFightIds, setSelectedFightIds] = useState<string[]>([]);
+  const [selectedFightId, setSelectedFightId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [logUrl, setLogUrl] = useState<string>("");
 
@@ -154,9 +146,7 @@ const MainApp: React.FC = () => {
   }, [data, gqlError]);
 
   const handleFightSelect = (id: string) => {
-    setSelectedFightIds((prev) =>
-      prev.includes(id) ? prev.filter((fid) => fid !== id) : [...prev, id],
-    );
+    setSelectedFightId(id);
   };
 
   return (
@@ -216,33 +206,35 @@ const MainApp: React.FC = () => {
             {error || gqlError?.message}
           </Alert>
         )}
-        {isLoggedIn && fights.length > 0 && (
-          <Paper elevation={2} sx={{ p: 3 }}>
+        {isLoggedIn && fights.length > 0 && !selectedFightId && (
+          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
             <Typography variant="h5" gutterBottom>
-              Select Fights
+              Select a Fight
             </Typography>
             <List>
               {fights.map((fight) => (
                 <ListItem key={fight.id} divider>
-                  <ListItemText
-                    primary={fight.name}
-                    secondary={`Time: ${fight.start} - ${fight.end}`}
-                  />
-                  <ListItemSecondaryAction>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={selectedFightIds.includes(fight.id)}
-                          onChange={() => handleFightSelect(fight.id)}
-                          color="primary"
-                        />
-                      }
-                      label="Select"
+                  <ListItemButton selected={selectedFightId === fight.id} onClick={() => handleFightSelect(fight.id)}>
+                    <ListItemText
+                      primary={fight.name}
+                      secondary={`Time: ${fight.start} - ${fight.end}`}
                     />
-                  </ListItemSecondaryAction>
+                  </ListItemButton>
                 </ListItem>
               ))}
             </List>
+          </Paper>
+        )}
+
+        {selectedFightId && (
+          <Paper elevation={2} sx={{ p: 3 }}>
+            <Button variant="outlined" sx={{ mb: 2 }} onClick={() => setSelectedFightId(null)}>
+              Back to Fight List
+            </Button>
+            <Typography variant="h6" gutterBottom>
+              Fight Details
+            </Typography>
+            <FightDetails fight={fights.find(f => f.id === selectedFightId)} />
           </Paper>
         )}
       </Box>
@@ -258,6 +250,7 @@ const App: React.FC = () => (
       <HashRouter>
         <Routes>
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
+          <Route path="/graphiql" element={<GraphiQLPage />} />
           <Route path="/*" element={<MainApp />} />
         </Routes>
       </HashRouter>
