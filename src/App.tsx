@@ -86,7 +86,7 @@ const MainApp: React.FC = () => {
     const verifier = generateCodeVerifier();
     setPkceCodeVerifier(verifier);
     const challenge = await generateCodeChallenge(verifier);
-    const redirectUri = window.location.origin + "/oauth-redirect";
+    const redirectUri = window.location.href + "oauth-redirect";
     const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(redirectUri)}`;
     window.location.href = authUrl;
   };
