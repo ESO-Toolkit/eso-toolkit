@@ -1,9 +1,11 @@
-import React from "react";
-import { AuthProvider } from "./AuthContext";
+import React from 'react';
 
-export default {
-  title: "AuthContext/AuthProvider",
+import { AuthProvider } from './AuthContext';
+
+const story = {
+  title: 'AuthContext/AuthProvider',
   component: AuthProvider,
 };
+export default story;
 
 export const Default = () => <AuthProvider>Auth Context Example</AuthProvider>;

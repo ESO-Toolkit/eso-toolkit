@@ -1,21 +1,24 @@
-import { gql } from '@apollo/client';
-import * as Apollo from '@apollo/client';
+/* eslint-disable */
+import { TypedDocumentNode as DocumentNode } from '@graphql-typed-document-node/core';
 export type Maybe<T> = T | null;
 export type InputMaybe<T> = Maybe<T>;
 export type Exact<T extends { [key: string]: unknown }> = { [K in keyof T]: T[K] };
 export type MakeOptional<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]?: Maybe<T[SubKey]> };
 export type MakeMaybe<T, K extends keyof T> = Omit<T, K> & { [SubKey in K]: Maybe<T[SubKey]> };
-export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = { [_ in K]?: never };
-export type Incremental<T> = T | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
-const defaultOptions = {} as const;
+export type MakeEmpty<T extends { [key: string]: unknown }, K extends keyof T> = {
+  [_ in K]?: never;
+};
+export type Incremental<T> =
+  | T
+  | { [P in keyof T]?: P extends ' $fragmentName' | '__typename' ? T[P] : never };
 /** All built-in and custom scalars, mapped to their actual values */
 export type Scalars = {
-  ID: { input: string; output: string; }
-  String: { input: string; output: string; }
-  Boolean: { input: boolean; output: boolean; }
-  Int: { input: number; output: number; }
-  Float: { input: number; output: number; }
-  JSON: { input: any; output: any; }
+  ID: { input: string; output: string };
+  String: { input: string; output: string };
+  Boolean: { input: boolean; output: boolean };
+  Int: { input: number; output: number };
+  Float: { input: number; output: number };
+  JSON: { input: any; output: any };
 };
 
 export type ArchonViewModels = {
@@ -62,11 +65,9 @@ export type ArchonViewModels = {
   userFromDesktopClientToken?: Maybe<Scalars['JSON']['output']>;
 };
 
-
 export type ArchonViewModelsAbilityArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 export type ArchonViewModelsArticleArgs = {
   articleCategorySlug?: InputMaybe<Scalars['String']['input']>;
@@ -74,22 +75,18 @@ export type ArchonViewModelsArticleArgs = {
   siteName?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsArticleCategoryArgs = {
   articleCategorySlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 export type ArchonViewModelsArticleSlugsArgs = {
   articleCategorySlug?: InputMaybe<Scalars['String']['input']>;
   siteName?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsBuildsClassesAndSpecsPageArgs = {
   gameSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 export type ArchonViewModelsBuildsSpecPageArgs = {
   affixesSlug?: InputMaybe<Scalars['String']['input']>;
@@ -102,7 +99,6 @@ export type ArchonViewModelsBuildsSpecPageArgs = {
   zoneTypeSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsBuildsZonePageArgs = {
   affixesSlug?: InputMaybe<Scalars['String']['input']>;
   difficultySlug?: InputMaybe<Scalars['String']['input']>;
@@ -112,7 +108,6 @@ export type ArchonViewModelsBuildsZonePageArgs = {
   zoneTypeSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsCharacterPageArgs = {
   categorySlug: Scalars['String']['input'];
   characterSlug: Scalars['String']['input'];
@@ -120,7 +115,6 @@ export type ArchonViewModelsCharacterPageArgs = {
   userId?: InputMaybe<Scalars['Int']['input']>;
   zoneSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 export type ArchonViewModelsCharacterPageContentArgs = {
   categorySlug: Scalars['String']['input'];
@@ -130,11 +124,9 @@ export type ArchonViewModelsCharacterPageContentArgs = {
   zoneSlug?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsCmsNavigationArgs = {
   currentSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 export type ArchonViewModelsFightPageArgs = {
   categorySlug: Scalars['String']['input'];
@@ -148,7 +140,6 @@ export type ArchonViewModelsFightPageArgs = {
   throughputSlug?: InputMaybe<Scalars['String']['input']>;
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 export type ArchonViewModelsFightPageContentArgs = {
   categorySlug: Scalars['String']['input'];
@@ -164,11 +155,9 @@ export type ArchonViewModelsFightPageContentArgs = {
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 export type ArchonViewModelsHeaderArgs = {
   gameSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 export type ArchonViewModelsPageOfArticlePreviewsArgs = {
   articleCategorySlug?: InputMaybe<Scalars['String']['input']>;
@@ -176,23 +165,19 @@ export type ArchonViewModelsPageOfArticlePreviewsArgs = {
   siteName?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 export type ArchonViewModelsReportPageArgs = {
   gameSlug: Scalars['String']['input'];
   reportSlug: Scalars['String']['input'];
   userId?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 export type ArchonViewModelsSnippetsArgs = {
   snippetSlugs?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
 
-
 export type ArchonViewModelsTranslationsArgs = {
   keys?: InputMaybe<Array<InputMaybe<Scalars['String']['input']>>>;
 };
-
 
 export type ArchonViewModelsUserFromDesktopClientTokenArgs = {
   desktopClientToken: Scalars['String']['input'];
@@ -248,7 +233,6 @@ export type Character = {
   zoneRankings?: Maybe<Scalars['JSON']['output']>;
 };
 
-
 /** A player character. Characters can earn individual rankings and appear in reports. */
 export type CharacterEncounterRankingsArgs = {
   byBracket?: InputMaybe<Scalars['Boolean']['input']>;
@@ -268,20 +252,17 @@ export type CharacterEncounterRankingsArgs = {
   timeframe?: InputMaybe<RankingTimeframeType>;
 };
 
-
 /** A player character. Characters can earn individual rankings and appear in reports. */
 export type CharacterGameDataArgs = {
   forceUpdate?: InputMaybe<Scalars['Boolean']['input']>;
   specID?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** A player character. Characters can earn individual rankings and appear in reports. */
 export type CharacterRecentReportsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** A player character. Characters can earn individual rankings and appear in reports. */
 export type CharacterZoneRankingsArgs = {
@@ -308,7 +289,6 @@ export type CharacterData = {
   characters?: Maybe<CharacterPagination>;
 };
 
-
 /** The CharacterData object enables the retrieval of single characters or filtered collections of characters. */
 export type CharacterDataCharacterArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -316,7 +296,6 @@ export type CharacterDataCharacterArgs = {
   serverRegion?: InputMaybe<Scalars['String']['input']>;
   serverSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 /** The CharacterData object enables the retrieval of single characters or filtered collections of characters. */
 export type CharacterDataCharactersArgs = {
@@ -408,7 +387,7 @@ export enum CharacterRankingMetricType {
   /** Healing done per second to tanks. */
   Tankhps = 'tankhps',
   /** Weighted damage per second. Unique to WoW currently. Used to remove pad damage and reward damage done to high priority targets. */
-  Wdps = 'wdps'
+  Wdps = 'wdps',
 }
 
 /** A single difficulty for a given raid zone. Difficulties have an integer value representing the actual difficulty, a localized name that describes the difficulty level, and a list of valid sizes for the difficulty level. */
@@ -437,7 +416,6 @@ export type Encounter = {
   zone: Zone;
 };
 
-
 /** A single encounter for the game. */
 export type EncounterCharacterRankingsArgs = {
   bracket?: InputMaybe<Scalars['Int']['input']>;
@@ -456,7 +434,6 @@ export type EncounterCharacterRankingsArgs = {
   size?: InputMaybe<Scalars['Int']['input']>;
   specName?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 /** A single encounter for the game. */
 export type EncounterFightRankingsArgs = {
@@ -511,7 +488,7 @@ export enum EventDataType {
   /** Summons */
   Summons = 'Summons',
   /** Threat. */
-  Threat = 'Threat'
+  Threat = 'Threat',
 }
 
 /** A single expansion for the game. */
@@ -532,7 +509,7 @@ export enum ExternalBuffRankFilter {
   /** Only include ranks that DO NOT CONTAIN external buffs. */
   Exclude = 'Exclude',
   /** Only include ranks that DO CONTAIN external buffs. */
-  Require = 'Require'
+  Require = 'Require',
 }
 
 /** All the possible metrics. */
@@ -548,7 +525,7 @@ export enum FightRankingMetricType {
   /** For Mythic+ dungeons in WoW, represents the team's score. Used for ESO trials and dungeons also. */
   Score = 'score',
   /** Speed metric, based off the duration of the fight. */
-  Speed = 'speed'
+  Speed = 'speed',
 }
 
 /** A single ability for the game. */
@@ -650,19 +627,16 @@ export type GameData = {
   npcs?: Maybe<GameNpcPagination>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataAbilitiesArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataAbilityArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataClassArgs = {
@@ -671,25 +645,21 @@ export type GameDataClassArgs = {
   zone_id?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataClassesArgs = {
   faction_id?: InputMaybe<Scalars['Int']['input']>;
   zone_id?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataItemArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataItem_SetArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataItem_SetsArgs = {
@@ -697,19 +667,16 @@ export type GameDataItem_SetsArgs = {
   page?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataItemsArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataMapArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataMapsArgs = {
@@ -717,12 +684,10 @@ export type GameDataMapsArgs = {
   page?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataNpcArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The game object contains collections of data such as NPCs, classes, abilities, items, maps, etc. Game data only changes when major game patches are released, so you should cache results for as long as possible and only update when new content is released for the game. */
 export type GameDataNpcsArgs = {
@@ -917,7 +882,7 @@ export enum GraphDataType {
   /** Survivability (death info across multiple pulls). */
   Survivability = 'Survivability',
   /** Threat. */
-  Threat = 'Threat'
+  Threat = 'Threat',
 }
 
 /** A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings. */
@@ -948,7 +913,6 @@ export type Guild = {
   zoneRanking: GuildZoneRankings;
 };
 
-
 /** A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings. */
 export type GuildAttendanceArgs = {
   guildTagID?: InputMaybe<Scalars['Int']['input']>;
@@ -957,13 +921,11 @@ export type GuildAttendanceArgs = {
   zoneID?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings. */
 export type GuildMembersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** A single guild. Guilds earn their own rankings and contain characters. They may correspond to a guild in-game or be a custom guild created just to hold reports and rankings. */
 export type GuildZoneRankingArgs = {
@@ -1012,7 +974,6 @@ export type GuildData = {
   guilds?: Maybe<GuildPagination>;
 };
 
-
 /** The GuildData object enables the retrieval of single guilds or filtered collections of guilds. */
 export type GuildDataGuildArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -1020,7 +981,6 @@ export type GuildDataGuildArgs = {
   serverRegion?: InputMaybe<Scalars['String']['input']>;
   serverSlug?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 /** The GuildData object enables the retrieval of single guilds or filtered collections of guilds. */
 export type GuildDataGuildsArgs = {
@@ -1059,7 +1019,7 @@ export enum GuildRank {
   /** The user is not a member of this guild or team. */
   NonMember = 'NonMember',
   Officer = 'Officer',
-  Recruit = 'Recruit'
+  Recruit = 'Recruit',
 }
 
 /** The tag for a specific guild. Tags can be used to categorize reports within a guild. In the site UI, they are referred to as report tags. */
@@ -1084,19 +1044,16 @@ export type GuildZoneRankings = {
   speed?: Maybe<WorldRegionServerRankPositions>;
 };
 
-
 /** A guild's rankings within a zone. */
 export type GuildZoneRankingsCompleteRaidSpeedArgs = {
   difficulty?: InputMaybe<Scalars['Int']['input']>;
   size?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** A guild's rankings within a zone. */
 export type GuildZoneRankingsProgressArgs = {
   size?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** A guild's rankings within a zone. */
 export type GuildZoneRankingsSpeedArgs = {
@@ -1121,7 +1078,7 @@ export enum HardModeLevelRankFilter {
   /** Hard mode level 4. */
   Level4 = 'Level4',
   /** The normal (non-hard) mode level. Convenience alias for hard mode level 0. */
-  NormalMode = 'NormalMode'
+  NormalMode = 'NormalMode',
 }
 
 /** Whether or not to fetch information for friendlies or enemies. */
@@ -1129,7 +1086,7 @@ export enum HostilityType {
   /** Fetch information for enemies. */
   Enemies = 'Enemies',
   /** Fetch information for friendlies. */
-  Friendlies = 'Friendlies'
+  Friendlies = 'Friendlies',
 }
 
 /** A filter for kills vs wipes and encounters vs trash. */
@@ -1143,7 +1100,7 @@ export enum KillType {
   /** Only include trash. */
   Trash = 'Trash',
   /** Only include encounters that end in a wipe. */
-  Wipes = 'Wipes'
+  Wipes = 'Wipes',
 }
 
 /** Source of the rank. Most ranks only support log ranks, but some games (ESO) and content types (Retail WoW M+) support leaderboard ranks with no backing log. */
@@ -1151,7 +1108,7 @@ export enum LeaderboardRank {
   /** All ranks are included. */
   Any = 'Any',
   /** Only include ranks with a backing log. */
-  LogsOnly = 'LogsOnly'
+  LogsOnly = 'LogsOnly',
 }
 
 /** A single partition for a given raid zone. Partitions have an integer value representing the actual partition and a localized name that describes what the partition represents. Partitions contain their own rankings, statistics and all stars. */
@@ -1206,7 +1163,6 @@ export type ProgressRaceData = {
   progressRace?: Maybe<Scalars['JSON']['output']>;
 };
 
-
 /** A way to obtain data for the top guilds involved in an ongoing world first or realm first progress race. */
 export type ProgressRaceDataDetailedCompositionArgs = {
   competitionID?: InputMaybe<Scalars['Int']['input']>;
@@ -1218,7 +1174,6 @@ export type ProgressRaceDataDetailedCompositionArgs = {
   serverSlug?: InputMaybe<Scalars['String']['input']>;
   size?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** A way to obtain data for the top guilds involved in an ongoing world first or realm first progress race. */
 export type ProgressRaceDataProgressRaceArgs = {
@@ -1270,7 +1225,7 @@ export enum RankingCompareType {
   /** Compare against all parses in a two week window. */
   Parses = 'Parses',
   /** Compare against rankings. */
-  Rankings = 'Rankings'
+  Rankings = 'Rankings',
 }
 
 /** Whether or not rankings are today or historical. */
@@ -1278,7 +1233,7 @@ export enum RankingTimeframeType {
   /** Compare against historical rankings. */
   Historical = 'Historical',
   /** Compare against today's rankings. */
-  Today = 'Today'
+  Today = 'Today',
 }
 
 /** A way to obtain your current rate limit usage. */
@@ -1308,7 +1263,6 @@ export type Region = {
   /** The subregions found within this region. */
   subregions?: Maybe<Array<Maybe<Subregion>>>;
 };
-
 
 /** A single region for the game. */
 export type RegionServersArgs = {
@@ -1367,7 +1321,6 @@ export type Report = {
   zone?: Maybe<Zone>;
 };
 
-
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportEventsArgs = {
   abilityID?: InputMaybe<Scalars['Float']['input']>;
@@ -1400,7 +1353,6 @@ export type ReportEventsArgs = {
   wipeCutoff?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportFightsArgs = {
   difficulty?: InputMaybe<Scalars['Int']['input']>;
@@ -1409,7 +1361,6 @@ export type ReportFightsArgs = {
   killType?: InputMaybe<KillType>;
   translate?: InputMaybe<Scalars['Boolean']['input']>;
 };
-
 
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportGraphArgs = {
@@ -1440,12 +1391,10 @@ export type ReportGraphArgs = {
   wipeCutoff?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportMasterDataArgs = {
   translate?: InputMaybe<Scalars['Boolean']['input']>;
 };
-
 
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportPlayerDetailsArgs = {
@@ -1459,7 +1408,6 @@ export type ReportPlayerDetailsArgs = {
   translate?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
-
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportRankingsArgs = {
   compare?: InputMaybe<RankingCompareType>;
@@ -1469,7 +1417,6 @@ export type ReportRankingsArgs = {
   playerMetric?: InputMaybe<ReportRankingMetricType>;
   timeframe?: InputMaybe<RankingTimeframeType>;
 };
-
 
 /** A single report uploaded by a player to a guild or personal logs. */
 export type ReportTableArgs = {
@@ -1563,7 +1510,6 @@ export type ReportComponent = {
   name: Scalars['String']['output'];
 };
 
-
 export type ReportComponentEvaluateArgs = {
   debug?: InputMaybe<Scalars['Boolean']['input']>;
   filter?: InputMaybe<ReportComponentFilter>;
@@ -1580,14 +1526,12 @@ export type ReportComponentData = {
   list: Array<ReportComponent>;
 };
 
-
 export type ReportComponentDataEvaluateScriptArgs = {
   contents: Scalars['String']['input'];
   debug?: InputMaybe<Scalars['Boolean']['input']>;
   filter?: InputMaybe<ReportComponentFilter>;
   reportCode: Scalars['String']['input'];
 };
-
 
 export type ReportComponentDataGetArgs = {
   key: Scalars['String']['input'];
@@ -1630,23 +1574,19 @@ export type ReportComponentMutation = {
   updateContents?: Maybe<Scalars['Boolean']['output']>;
 };
 
-
 export type ReportComponentMutationCreateArgs = {
   contents?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
 };
 
-
 export type ReportComponentMutationDeleteArgs = {
   key: Scalars['String']['input'];
 };
-
 
 export type ReportComponentMutationSetDeletionProtectedArgs = {
   key: Scalars['String']['input'];
   protected?: InputMaybe<Scalars['Boolean']['input']>;
 };
-
 
 export type ReportComponentMutationUpdateContentsArgs = {
   contents: Scalars['String']['input'];
@@ -1680,13 +1620,11 @@ export type ReportData = {
   reports?: Maybe<ReportPagination>;
 };
 
-
 /** The ReportData object enables the retrieval of single reports or filtered collections of reports. */
 export type ReportDataReportArgs = {
   allowUnlisted?: InputMaybe<Scalars['Boolean']['input']>;
   code?: InputMaybe<Scalars['String']['input']>;
 };
-
 
 /** The ReportData object enables the retrieval of single reports or filtered collections of reports. */
 export type ReportDataReportsArgs = {
@@ -1878,7 +1816,6 @@ export type ReportMasterData = {
   logVersion: Scalars['Int']['output'];
 };
 
-
 /** The ReporMastertData object contains information about the log version of a report, as well as the actors and abilities used in the report. */
 export type ReportMasterDataActorsArgs = {
   subType?: InputMaybe<Scalars['String']['input']>;
@@ -1936,7 +1873,7 @@ export enum ReportRankingMetricType {
   /** Healing done per second to tanks. */
   Tankhps = 'tankhps',
   /** Weighted damage per second. Unique to WoW currently. Used to remove pad damage and reward damage done to high priority targets. */
-  Wdps = 'wdps'
+  Wdps = 'wdps',
 }
 
 /** Used to specify a tank, healer or DPS role. */
@@ -1948,7 +1885,7 @@ export enum RoleType {
   /** Fetch the healer role only. */
   Healer = 'Healer',
   /** Fetch the tanking role only. */
-  Tank = 'Tank'
+  Tank = 'Tank',
 }
 
 /** A single server. Servers correspond to actual game servers that characters and guilds reside on. */
@@ -1972,13 +1909,11 @@ export type Server = {
   subregion: Subregion;
 };
 
-
 /** A single server. Servers correspond to actual game servers that characters and guilds reside on. */
 export type ServerCharactersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
   page?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** A single server. Servers correspond to actual game servers that characters and guilds reside on. */
 export type ServerGuildsArgs = {
@@ -2019,7 +1954,6 @@ export type Subregion = {
   servers?: Maybe<ServerPagination>;
 };
 
-
 /** A single subregion. Subregions are used to divide a region into sub-categories, such as French or German subregions of a Europe region. */
 export type SubregionServersArgs = {
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2050,7 +1984,7 @@ export enum SubscriptionStatus {
   /** Platinum Tier subscription */
   Platinum = 'Platinum',
   /** Silver Tier subscription */
-  Silver = 'Silver'
+  Silver = 'Silver',
 }
 
 /** The type of table to examine. */
@@ -2082,7 +2016,7 @@ export enum TableDataType {
   /** Survivability (death info across multiple pulls). */
   Survivability = 'Survivability',
   /** Threat. */
-  Threat = 'Threat'
+  Threat = 'Threat',
 }
 
 /** A single user of the site. Most fields can only be accessed when authenticated as that user with the "view-user-profile" scope. */
@@ -2113,7 +2047,6 @@ export type UserData = {
   user?: Maybe<User>;
 };
 
-
 /** The user data object contains basic information about users and lets you retrieve specific users (or the current user if using the user endpoint). */
 export type UserDataUserArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
@@ -2128,7 +2061,7 @@ export enum ViewType {
   /** View. by source. */
   Source = 'Source',
   /** View by target. */
-  Target = 'Target'
+  Target = 'Target',
 }
 
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
@@ -2154,24 +2087,20 @@ export type WorldData = {
   zones?: Maybe<Array<Maybe<Zone>>>;
 };
 
-
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataEncounterArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataExpansionArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataRegionArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataServerArgs = {
@@ -2180,18 +2109,15 @@ export type WorldDataServerArgs = {
   slug?: InputMaybe<Scalars['String']['input']>;
 };
 
-
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataSubregionArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
 
-
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataZoneArgs = {
   id?: InputMaybe<Scalars['Int']['input']>;
 };
-
 
 /** The world data object contains collections of data such as expansions, zones, encounters, regions, subregions, etc. */
 export type WorldDataZonesArgs = {
@@ -2232,34 +2158,96 @@ export type GetAbilitiesQueryVariables = Exact<{
   page?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
-
-export type GetAbilitiesQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', abilities?: { __typename?: 'GameAbilityPagination', total: number, per_page: number, current_page: number, from?: number | null, to?: number | null, last_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'GameAbility', id: number, name?: string | null, icon?: string | null } | null> | null } | null } | null };
+export type GetAbilitiesQuery = {
+  __typename?: 'Query';
+  gameData?: {
+    __typename?: 'GameData';
+    abilities?: {
+      __typename?: 'GameAbilityPagination';
+      total: number;
+      per_page: number;
+      current_page: number;
+      from?: number | null;
+      to?: number | null;
+      last_page: number;
+      has_more_pages: boolean;
+      data?: Array<{
+        __typename?: 'GameAbility';
+        id: number;
+        name?: string | null;
+        icon?: string | null;
+      } | null> | null;
+    } | null;
+  } | null;
+};
 
 export type GetAbilityQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
-
-export type GetAbilityQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', ability?: { __typename?: 'GameAbility', id: number, name?: string | null, icon?: string | null } | null } | null };
+export type GetAbilityQuery = {
+  __typename?: 'Query';
+  gameData?: {
+    __typename?: 'GameData';
+    ability?: {
+      __typename?: 'GameAbility';
+      id: number;
+      name?: string | null;
+      icon?: string | null;
+    } | null;
+  } | null;
+};
 
 export type GetClassQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
 
+export type GetClassQuery = {
+  __typename?: 'Query';
+  gameData?: {
+    __typename?: 'GameData';
+    class?: { __typename?: 'GameClass'; id: number; name: string; slug: string } | null;
+  } | null;
+};
 
-export type GetClassQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', class?: { __typename?: 'GameClass', id: number, name: string, slug: string } | null } | null };
+export type GetClassesQueryVariables = Exact<{ [key: string]: never }>;
 
-export type GetClassesQueryVariables = Exact<{ [key: string]: never; }>;
-
-
-export type GetClassesQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', classes?: Array<{ __typename?: 'GameClass', id: number, name: string, slug: string } | null> | null } | null };
+export type GetClassesQuery = {
+  __typename?: 'Query';
+  gameData?: {
+    __typename?: 'GameData';
+    classes?: Array<{
+      __typename?: 'GameClass';
+      id: number;
+      name: string;
+      slug: string;
+    } | null> | null;
+  } | null;
+};
 
 export type GetGuildByIdQueryVariables = Exact<{
   guildId: Scalars['Int']['input'];
 }>;
 
-
-export type GetGuildByIdQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guild?: { __typename?: 'Guild', id: number, name: string, description: string, faction: { __typename?: 'GameFaction', name: string }, server: { __typename?: 'Server', name: string, region: { __typename?: 'Region', name: string } }, tags?: Array<{ __typename?: 'GuildTag', id: number, name: string } | null> | null } | null } | null };
+export type GetGuildByIdQuery = {
+  __typename?: 'Query';
+  guildData?: {
+    __typename?: 'GuildData';
+    guild?: {
+      __typename?: 'Guild';
+      id: number;
+      name: string;
+      description: string;
+      faction: { __typename?: 'GameFaction'; name: string };
+      server: {
+        __typename?: 'Server';
+        name: string;
+        region: { __typename?: 'Region'; name: string };
+      };
+      tags?: Array<{ __typename?: 'GuildTag'; id: number; name: string } | null> | null;
+    } | null;
+  } | null;
+};
 
 export type GetGuildsQueryVariables = Exact<{
   limit?: InputMaybe<Scalars['Int']['input']>;
@@ -2269,8 +2257,33 @@ export type GetGuildsQueryVariables = Exact<{
   serverRegion?: InputMaybe<Scalars['String']['input']>;
 }>;
 
-
-export type GetGuildsQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guilds?: { __typename?: 'GuildPagination', total: number, per_page: number, current_page: number, from?: number | null, to?: number | null, last_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'Guild', id: number, name: string, faction: { __typename?: 'GameFaction', name: string }, server: { __typename?: 'Server', name: string, region: { __typename?: 'Region', name: string } } } | null> | null } | null } | null };
+export type GetGuildsQuery = {
+  __typename?: 'Query';
+  guildData?: {
+    __typename?: 'GuildData';
+    guilds?: {
+      __typename?: 'GuildPagination';
+      total: number;
+      per_page: number;
+      current_page: number;
+      from?: number | null;
+      to?: number | null;
+      last_page: number;
+      has_more_pages: boolean;
+      data?: Array<{
+        __typename?: 'Guild';
+        id: number;
+        name: string;
+        faction: { __typename?: 'GameFaction'; name: string };
+        server: {
+          __typename?: 'Server';
+          name: string;
+          region: { __typename?: 'Region'; name: string };
+        };
+      } | null> | null;
+    } | null;
+  } | null;
+};
 
 export type GetGuildByNameQueryVariables = Exact<{
   name: Scalars['String']['input'];
@@ -2278,8 +2291,25 @@ export type GetGuildByNameQueryVariables = Exact<{
   serverRegion: Scalars['String']['input'];
 }>;
 
-
-export type GetGuildByNameQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guild?: { __typename?: 'Guild', id: number, name: string, description: string, faction: { __typename?: 'GameFaction', name: string }, server: { __typename?: 'Server', name: string, region: { __typename?: 'Region', name: string } }, tags?: Array<{ __typename?: 'GuildTag', id: number, name: string } | null> | null } | null } | null };
+export type GetGuildByNameQuery = {
+  __typename?: 'Query';
+  guildData?: {
+    __typename?: 'GuildData';
+    guild?: {
+      __typename?: 'Guild';
+      id: number;
+      name: string;
+      description: string;
+      faction: { __typename?: 'GameFaction'; name: string };
+      server: {
+        __typename?: 'Server';
+        name: string;
+        region: { __typename?: 'Region'; name: string };
+      };
+      tags?: Array<{ __typename?: 'GuildTag'; id: number; name: string } | null> | null;
+    } | null;
+  } | null;
+};
 
 export type GetGuildAttendanceQueryVariables = Exact<{
   guildId: Scalars['Int']['input'];
@@ -2289,8 +2319,33 @@ export type GetGuildAttendanceQueryVariables = Exact<{
   zoneID?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
-
-export type GetGuildAttendanceQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guild?: { __typename?: 'Guild', attendance: { __typename?: 'GuildAttendancePagination', total: number, per_page: number, current_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'GuildAttendance', code: string, startTime?: number | null, players?: Array<{ __typename?: 'PlayerAttendance', name?: string | null, type?: string | null, presence?: number | null } | null> | null } | null> | null } } | null } | null };
+export type GetGuildAttendanceQuery = {
+  __typename?: 'Query';
+  guildData?: {
+    __typename?: 'GuildData';
+    guild?: {
+      __typename?: 'Guild';
+      attendance: {
+        __typename?: 'GuildAttendancePagination';
+        total: number;
+        per_page: number;
+        current_page: number;
+        has_more_pages: boolean;
+        data?: Array<{
+          __typename?: 'GuildAttendance';
+          code: string;
+          startTime?: number | null;
+          players?: Array<{
+            __typename?: 'PlayerAttendance';
+            name?: string | null;
+            type?: string | null;
+            presence?: number | null;
+          } | null> | null;
+        } | null> | null;
+      };
+    } | null;
+  } | null;
+};
 
 export type GetGuildMembersQueryVariables = Exact<{
   guildId: Scalars['Int']['input'];
@@ -2298,19 +2353,120 @@ export type GetGuildMembersQueryVariables = Exact<{
   page?: InputMaybe<Scalars['Int']['input']>;
 }>;
 
+export type GetGuildMembersQuery = {
+  __typename?: 'Query';
+  guildData?: {
+    __typename?: 'GuildData';
+    guild?: {
+      __typename?: 'Guild';
+      members: {
+        __typename?: 'CharacterPagination';
+        total: number;
+        per_page: number;
+        current_page: number;
+        has_more_pages: boolean;
+        data?: Array<{
+          __typename?: 'Character';
+          id: number;
+          name: string;
+          guildRank: number;
+          server: {
+            __typename?: 'Server';
+            name: string;
+            region: { __typename?: 'Region'; name: string };
+          };
+        } | null> | null;
+      };
+    } | null;
+  } | null;
+};
 
-export type GetGuildMembersQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guild?: { __typename?: 'Guild', members: { __typename?: 'CharacterPagination', total: number, per_page: number, current_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'Character', id: number, name: string, guildRank: number, server: { __typename?: 'Server', name: string, region: { __typename?: 'Region', name: string } } } | null> | null } } | null } | null };
-
-export type FightFragment = { __typename?: 'ReportFight', id: number, name: string, difficulty?: number | null, startTime: number, endTime: number };
+export type FightFragment = {
+  __typename?: 'ReportFight';
+  id: number;
+  name: string;
+  difficulty?: number | null;
+  startTime: number;
+  endTime: number;
+};
 
 export type GetReportByCodeQueryVariables = Exact<{
   code: Scalars['String']['input'];
 }>;
 
+export type GetReportByCodeQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    report?: {
+      __typename?: 'Report';
+      code: string;
+      startTime: number;
+      endTime: number;
+      title: string;
+      visibility: string;
+      zone?: { __typename?: 'Zone'; name: string } | null;
+      fights?: Array<{
+        __typename?: 'ReportFight';
+        id: number;
+        name: string;
+        difficulty?: number | null;
+        startTime: number;
+        endTime: number;
+      } | null> | null;
+    } | null;
+  } | null;
+};
 
-export type GetReportByCodeQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', code: string, startTime: number, endTime: number, title: string, visibility: string, zone?: { __typename?: 'Zone', name: string } | null, fights?: Array<{ __typename?: 'ReportFight', id: number, name: string, difficulty?: number | null, startTime: number, endTime: number } | null> | null } | null } | null };
+export type CharacterFragment = {
+  __typename?: 'Character';
+  id: number;
+  name: string;
+  displayName?: string | null;
+  classID: number;
+};
 
-export type EventFragment = { __typename?: 'ReportEventPaginator', data?: any | null, nextPageTimestamp?: number | null };
+export type GetCharactersForReportQueryVariables = Exact<{
+  code: Scalars['String']['input'];
+}>;
+
+export type GetCharactersForReportQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    report?: {
+      __typename?: 'Report';
+      rankedCharacters?: Array<{
+        __typename?: 'Character';
+        id: number;
+        name: string;
+        displayName?: string | null;
+        classID: number;
+      } | null> | null;
+    } | null;
+  } | null;
+};
+
+export type GetPlayersForReportQueryVariables = Exact<{
+  code: Scalars['String']['input'];
+  fightIDs?: InputMaybe<
+    Array<InputMaybe<Scalars['Int']['input']>> | InputMaybe<Scalars['Int']['input']>
+  >;
+}>;
+
+export type GetPlayersForReportQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    report?: { __typename?: 'Report'; playerDetails?: any | null } | null;
+  } | null;
+};
+
+export type EventFragment = {
+  __typename?: 'ReportEventPaginator';
+  data?: any | null;
+  nextPageTimestamp?: number | null;
+};
 
 export type GetReportEventsQueryVariables = Exact<{
   code: Scalars['String']['input'];
@@ -2318,611 +2474,1235 @@ export type GetReportEventsQueryVariables = Exact<{
   fightIds: Array<InputMaybe<Scalars['Int']['input']>> | InputMaybe<Scalars['Int']['input']>;
 }>;
 
+export type GetReportEventsQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    report?: {
+      __typename?: 'Report';
+      events?: {
+        __typename?: 'ReportEventPaginator';
+        data?: any | null;
+        nextPageTimestamp?: number | null;
+      } | null;
+    } | null;
+  } | null;
+};
 
-export type GetReportEventsQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', events?: { __typename?: 'ReportEventPaginator', data?: any | null, nextPageTimestamp?: number | null } | null } | null } | null };
-
-export const FightFragmentDoc = gql`
-    fragment Fight on ReportFight {
-  id
-  name
-  difficulty
-  startTime
-  endTime
-}
-    `;
-export const EventFragmentDoc = gql`
-    fragment Event on ReportEventPaginator {
-  data
-  nextPageTimestamp
-}
-    `;
-export const GetAbilitiesDocument = gql`
-    query getAbilities($limit: Int, $page: Int) {
-  gameData {
-    abilities(limit: $limit, page: $page) {
-      data {
-        id
-        name
-        icon
-      }
-      total
-      per_page
-      current_page
-      from
-      to
-      last_page
-      has_more_pages
-    }
-  }
-}
-    `;
-
-/**
- * __useGetAbilitiesQuery__
- *
- * To run a query within a React component, call `useGetAbilitiesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAbilitiesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAbilitiesQuery({
- *   variables: {
- *      limit: // value for 'limit'
- *      page: // value for 'page'
- *   },
- * });
- */
-export function useGetAbilitiesQuery(baseOptions?: Apollo.QueryHookOptions<GetAbilitiesQuery, GetAbilitiesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAbilitiesQuery, GetAbilitiesQueryVariables>(GetAbilitiesDocument, options);
-      }
-export function useGetAbilitiesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAbilitiesQuery, GetAbilitiesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAbilitiesQuery, GetAbilitiesQueryVariables>(GetAbilitiesDocument, options);
-        }
-export function useGetAbilitiesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAbilitiesQuery, GetAbilitiesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAbilitiesQuery, GetAbilitiesQueryVariables>(GetAbilitiesDocument, options);
-        }
-export type GetAbilitiesQueryHookResult = ReturnType<typeof useGetAbilitiesQuery>;
-export type GetAbilitiesLazyQueryHookResult = ReturnType<typeof useGetAbilitiesLazyQuery>;
-export type GetAbilitiesSuspenseQueryHookResult = ReturnType<typeof useGetAbilitiesSuspenseQuery>;
-export type GetAbilitiesQueryResult = Apollo.QueryResult<GetAbilitiesQuery, GetAbilitiesQueryVariables>;
-export const GetAbilityDocument = gql`
-    query getAbility($id: Int!) {
-  gameData {
-    ability(id: $id) {
-      id
-      name
-      icon
-    }
-  }
-}
-    `;
-
-/**
- * __useGetAbilityQuery__
- *
- * To run a query within a React component, call `useGetAbilityQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetAbilityQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetAbilityQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetAbilityQuery(baseOptions: Apollo.QueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables> & ({ variables: GetAbilityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
-      }
-export function useGetAbilityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
-        }
-export function useGetAbilitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
-        }
-export type GetAbilityQueryHookResult = ReturnType<typeof useGetAbilityQuery>;
-export type GetAbilityLazyQueryHookResult = ReturnType<typeof useGetAbilityLazyQuery>;
-export type GetAbilitySuspenseQueryHookResult = ReturnType<typeof useGetAbilitySuspenseQuery>;
-export type GetAbilityQueryResult = Apollo.QueryResult<GetAbilityQuery, GetAbilityQueryVariables>;
-export const GetClassDocument = gql`
-    query getClass($id: Int!) {
-  gameData {
-    class(id: $id) {
-      id
-      name
-      slug
-    }
-  }
-}
-    `;
-
-/**
- * __useGetClassQuery__
- *
- * To run a query within a React component, call `useGetClassQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetClassQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetClassQuery({
- *   variables: {
- *      id: // value for 'id'
- *   },
- * });
- */
-export function useGetClassQuery(baseOptions: Apollo.QueryHookOptions<GetClassQuery, GetClassQueryVariables> & ({ variables: GetClassQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetClassQuery, GetClassQueryVariables>(GetClassDocument, options);
-      }
-export function useGetClassLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetClassQuery, GetClassQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetClassQuery, GetClassQueryVariables>(GetClassDocument, options);
-        }
-export function useGetClassSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetClassQuery, GetClassQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetClassQuery, GetClassQueryVariables>(GetClassDocument, options);
-        }
-export type GetClassQueryHookResult = ReturnType<typeof useGetClassQuery>;
-export type GetClassLazyQueryHookResult = ReturnType<typeof useGetClassLazyQuery>;
-export type GetClassSuspenseQueryHookResult = ReturnType<typeof useGetClassSuspenseQuery>;
-export type GetClassQueryResult = Apollo.QueryResult<GetClassQuery, GetClassQueryVariables>;
-export const GetClassesDocument = gql`
-    query getClasses {
-  gameData {
-    classes {
-      id
-      name
-      slug
-    }
-  }
-}
-    `;
-
-/**
- * __useGetClassesQuery__
- *
- * To run a query within a React component, call `useGetClassesQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetClassesQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetClassesQuery({
- *   variables: {
- *   },
- * });
- */
-export function useGetClassesQuery(baseOptions?: Apollo.QueryHookOptions<GetClassesQuery, GetClassesQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetClassesQuery, GetClassesQueryVariables>(GetClassesDocument, options);
-      }
-export function useGetClassesLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetClassesQuery, GetClassesQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetClassesQuery, GetClassesQueryVariables>(GetClassesDocument, options);
-        }
-export function useGetClassesSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetClassesQuery, GetClassesQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetClassesQuery, GetClassesQueryVariables>(GetClassesDocument, options);
-        }
-export type GetClassesQueryHookResult = ReturnType<typeof useGetClassesQuery>;
-export type GetClassesLazyQueryHookResult = ReturnType<typeof useGetClassesLazyQuery>;
-export type GetClassesSuspenseQueryHookResult = ReturnType<typeof useGetClassesSuspenseQuery>;
-export type GetClassesQueryResult = Apollo.QueryResult<GetClassesQuery, GetClassesQueryVariables>;
-export const GetGuildByIdDocument = gql`
-    query getGuildById($guildId: Int!) {
-  guildData {
-    guild(id: $guildId) {
-      id
-      name
-      description
-      faction {
-        name
-      }
-      server {
-        name
-        region {
-          name
-        }
-      }
-      tags {
-        id
-        name
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetGuildByIdQuery__
- *
- * To run a query within a React component, call `useGetGuildByIdQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGuildByIdQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGuildByIdQuery({
- *   variables: {
- *      guildId: // value for 'guildId'
- *   },
- * });
- */
-export function useGetGuildByIdQuery(baseOptions: Apollo.QueryHookOptions<GetGuildByIdQuery, GetGuildByIdQueryVariables> & ({ variables: GetGuildByIdQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGuildByIdQuery, GetGuildByIdQueryVariables>(GetGuildByIdDocument, options);
-      }
-export function useGetGuildByIdLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGuildByIdQuery, GetGuildByIdQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGuildByIdQuery, GetGuildByIdQueryVariables>(GetGuildByIdDocument, options);
-        }
-export function useGetGuildByIdSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGuildByIdQuery, GetGuildByIdQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGuildByIdQuery, GetGuildByIdQueryVariables>(GetGuildByIdDocument, options);
-        }
-export type GetGuildByIdQueryHookResult = ReturnType<typeof useGetGuildByIdQuery>;
-export type GetGuildByIdLazyQueryHookResult = ReturnType<typeof useGetGuildByIdLazyQuery>;
-export type GetGuildByIdSuspenseQueryHookResult = ReturnType<typeof useGetGuildByIdSuspenseQuery>;
-export type GetGuildByIdQueryResult = Apollo.QueryResult<GetGuildByIdQuery, GetGuildByIdQueryVariables>;
-export const GetGuildsDocument = gql`
-    query getGuilds($limit: Int, $page: Int, $serverID: Int, $serverSlug: String, $serverRegion: String) {
-  guildData {
-    guilds(
-      limit: $limit
-      page: $page
-      serverID: $serverID
-      serverSlug: $serverSlug
-      serverRegion: $serverRegion
-    ) {
-      total
-      per_page
-      current_page
-      from
-      to
-      last_page
-      has_more_pages
-      data {
-        id
-        name
-        faction {
-          name
-        }
-        server {
-          name
-          region {
-            name
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetGuildsQuery__
- *
- * To run a query within a React component, call `useGetGuildsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGuildsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGuildsQuery({
- *   variables: {
- *      limit: // value for 'limit'
- *      page: // value for 'page'
- *      serverID: // value for 'serverID'
- *      serverSlug: // value for 'serverSlug'
- *      serverRegion: // value for 'serverRegion'
- *   },
- * });
- */
-export function useGetGuildsQuery(baseOptions?: Apollo.QueryHookOptions<GetGuildsQuery, GetGuildsQueryVariables>) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGuildsQuery, GetGuildsQueryVariables>(GetGuildsDocument, options);
-      }
-export function useGetGuildsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGuildsQuery, GetGuildsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGuildsQuery, GetGuildsQueryVariables>(GetGuildsDocument, options);
-        }
-export function useGetGuildsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGuildsQuery, GetGuildsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGuildsQuery, GetGuildsQueryVariables>(GetGuildsDocument, options);
-        }
-export type GetGuildsQueryHookResult = ReturnType<typeof useGetGuildsQuery>;
-export type GetGuildsLazyQueryHookResult = ReturnType<typeof useGetGuildsLazyQuery>;
-export type GetGuildsSuspenseQueryHookResult = ReturnType<typeof useGetGuildsSuspenseQuery>;
-export type GetGuildsQueryResult = Apollo.QueryResult<GetGuildsQuery, GetGuildsQueryVariables>;
-export const GetGuildByNameDocument = gql`
-    query getGuildByName($name: String!, $serverSlug: String!, $serverRegion: String!) {
-  guildData {
-    guild(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
-      id
-      name
-      description
-      faction {
-        name
-      }
-      server {
-        name
-        region {
-          name
-        }
-      }
-      tags {
-        id
-        name
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetGuildByNameQuery__
- *
- * To run a query within a React component, call `useGetGuildByNameQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGuildByNameQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGuildByNameQuery({
- *   variables: {
- *      name: // value for 'name'
- *      serverSlug: // value for 'serverSlug'
- *      serverRegion: // value for 'serverRegion'
- *   },
- * });
- */
-export function useGetGuildByNameQuery(baseOptions: Apollo.QueryHookOptions<GetGuildByNameQuery, GetGuildByNameQueryVariables> & ({ variables: GetGuildByNameQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGuildByNameQuery, GetGuildByNameQueryVariables>(GetGuildByNameDocument, options);
-      }
-export function useGetGuildByNameLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGuildByNameQuery, GetGuildByNameQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGuildByNameQuery, GetGuildByNameQueryVariables>(GetGuildByNameDocument, options);
-        }
-export function useGetGuildByNameSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGuildByNameQuery, GetGuildByNameQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGuildByNameQuery, GetGuildByNameQueryVariables>(GetGuildByNameDocument, options);
-        }
-export type GetGuildByNameQueryHookResult = ReturnType<typeof useGetGuildByNameQuery>;
-export type GetGuildByNameLazyQueryHookResult = ReturnType<typeof useGetGuildByNameLazyQuery>;
-export type GetGuildByNameSuspenseQueryHookResult = ReturnType<typeof useGetGuildByNameSuspenseQuery>;
-export type GetGuildByNameQueryResult = Apollo.QueryResult<GetGuildByNameQuery, GetGuildByNameQueryVariables>;
-export const GetGuildAttendanceDocument = gql`
-    query getGuildAttendance($guildId: Int!, $guildTagID: Int, $limit: Int, $page: Int, $zoneID: Int) {
-  guildData {
-    guild(id: $guildId) {
-      attendance(guildTagID: $guildTagID, limit: $limit, page: $page, zoneID: $zoneID) {
-        total
-        per_page
-        current_page
-        has_more_pages
-        data {
-          code
-          startTime
-          players {
-            name
-            type
-            presence
-          }
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetGuildAttendanceQuery__
- *
- * To run a query within a React component, call `useGetGuildAttendanceQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGuildAttendanceQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGuildAttendanceQuery({
- *   variables: {
- *      guildId: // value for 'guildId'
- *      guildTagID: // value for 'guildTagID'
- *      limit: // value for 'limit'
- *      page: // value for 'page'
- *      zoneID: // value for 'zoneID'
- *   },
- * });
- */
-export function useGetGuildAttendanceQuery(baseOptions: Apollo.QueryHookOptions<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables> & ({ variables: GetGuildAttendanceQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>(GetGuildAttendanceDocument, options);
-      }
-export function useGetGuildAttendanceLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>(GetGuildAttendanceDocument, options);
-        }
-export function useGetGuildAttendanceSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>(GetGuildAttendanceDocument, options);
-        }
-export type GetGuildAttendanceQueryHookResult = ReturnType<typeof useGetGuildAttendanceQuery>;
-export type GetGuildAttendanceLazyQueryHookResult = ReturnType<typeof useGetGuildAttendanceLazyQuery>;
-export type GetGuildAttendanceSuspenseQueryHookResult = ReturnType<typeof useGetGuildAttendanceSuspenseQuery>;
-export type GetGuildAttendanceQueryResult = Apollo.QueryResult<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>;
-export const GetGuildMembersDocument = gql`
-    query getGuildMembers($guildId: Int!, $limit: Int, $page: Int) {
-  guildData {
-    guild(id: $guildId) {
-      members(limit: $limit, page: $page) {
-        total
-        per_page
-        current_page
-        has_more_pages
-        data {
-          id
-          name
-          server {
-            name
-            region {
-              name
-            }
-          }
-          guildRank
-        }
-      }
-    }
-  }
-}
-    `;
-
-/**
- * __useGetGuildMembersQuery__
- *
- * To run a query within a React component, call `useGetGuildMembersQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetGuildMembersQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetGuildMembersQuery({
- *   variables: {
- *      guildId: // value for 'guildId'
- *      limit: // value for 'limit'
- *      page: // value for 'page'
- *   },
- * });
- */
-export function useGetGuildMembersQuery(baseOptions: Apollo.QueryHookOptions<GetGuildMembersQuery, GetGuildMembersQueryVariables> & ({ variables: GetGuildMembersQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetGuildMembersQuery, GetGuildMembersQueryVariables>(GetGuildMembersDocument, options);
-      }
-export function useGetGuildMembersLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetGuildMembersQuery, GetGuildMembersQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetGuildMembersQuery, GetGuildMembersQueryVariables>(GetGuildMembersDocument, options);
-        }
-export function useGetGuildMembersSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetGuildMembersQuery, GetGuildMembersQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetGuildMembersQuery, GetGuildMembersQueryVariables>(GetGuildMembersDocument, options);
-        }
-export type GetGuildMembersQueryHookResult = ReturnType<typeof useGetGuildMembersQuery>;
-export type GetGuildMembersLazyQueryHookResult = ReturnType<typeof useGetGuildMembersLazyQuery>;
-export type GetGuildMembersSuspenseQueryHookResult = ReturnType<typeof useGetGuildMembersSuspenseQuery>;
-export type GetGuildMembersQueryResult = Apollo.QueryResult<GetGuildMembersQuery, GetGuildMembersQueryVariables>;
-export const GetReportByCodeDocument = gql`
-    query getReportByCode($code: String!) {
-  reportData {
-    report(code: $code) {
-      code
-      startTime
-      endTime
-      title
-      visibility
-      zone {
-        name
-      }
-      fights {
-        ...Fight
-      }
-    }
-  }
-}
-    ${FightFragmentDoc}`;
-
-/**
- * __useGetReportByCodeQuery__
- *
- * To run a query within a React component, call `useGetReportByCodeQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetReportByCodeQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetReportByCodeQuery({
- *   variables: {
- *      code: // value for 'code'
- *   },
- * });
- */
-export function useGetReportByCodeQuery(baseOptions: Apollo.QueryHookOptions<GetReportByCodeQuery, GetReportByCodeQueryVariables> & ({ variables: GetReportByCodeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetReportByCodeQuery, GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-      }
-export function useGetReportByCodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportByCodeQuery, GetReportByCodeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetReportByCodeQuery, GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-        }
-export function useGetReportByCodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportByCodeQuery, GetReportByCodeQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetReportByCodeQuery, GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-        }
-export type GetReportByCodeQueryHookResult = ReturnType<typeof useGetReportByCodeQuery>;
-export type GetReportByCodeLazyQueryHookResult = ReturnType<typeof useGetReportByCodeLazyQuery>;
-export type GetReportByCodeSuspenseQueryHookResult = ReturnType<typeof useGetReportByCodeSuspenseQuery>;
-export type GetReportByCodeQueryResult = Apollo.QueryResult<GetReportByCodeQuery, GetReportByCodeQueryVariables>;
-export const GetReportEventsDocument = gql`
-    query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
-  reportData {
-    report(code: $code) {
-      events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
-        ...Event
-      }
-    }
-  }
-}
-    ${EventFragmentDoc}`;
-
-/**
- * __useGetReportEventsQuery__
- *
- * To run a query within a React component, call `useGetReportEventsQuery` and pass it any options that fit your needs.
- * When your component renders, `useGetReportEventsQuery` returns an object from Apollo Client that contains loading, error, and data properties
- * you can use to render your UI.
- *
- * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
- *
- * @example
- * const { data, loading, error } = useGetReportEventsQuery({
- *   variables: {
- *      code: // value for 'code'
- *      afterEventTimestamp: // value for 'afterEventTimestamp'
- *      fightIds: // value for 'fightIds'
- *   },
- * });
- */
-export function useGetReportEventsQuery(baseOptions: Apollo.QueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables> & ({ variables: GetReportEventsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
-      }
-export function useGetReportEventsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
-        }
-export function useGetReportEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
-        }
-export type GetReportEventsQueryHookResult = ReturnType<typeof useGetReportEventsQuery>;
-export type GetReportEventsLazyQueryHookResult = ReturnType<typeof useGetReportEventsLazyQuery>;
-export type GetReportEventsSuspenseQueryHookResult = ReturnType<typeof useGetReportEventsSuspenseQuery>;
-export type GetReportEventsQueryResult = Apollo.QueryResult<GetReportEventsQuery, GetReportEventsQueryVariables>;
+export const FightFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Fight' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReportFight' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'difficulty' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<FightFragment, unknown>;
+export const CharacterFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Character' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Character' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'classID' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<CharacterFragment, unknown>;
+export const EventFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Event' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReportEventPaginator' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'data' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'nextPageTimestamp' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<EventFragment, unknown>;
+export const GetAbilitiesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getAbilities' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'abilities' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'limit' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'page' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'data' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'icon' } },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'from' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'to' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'last_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetAbilitiesQuery, GetAbilitiesQueryVariables>;
+export const GetAbilityDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getAbility' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'ability' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'icon' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetAbilityQuery, GetAbilityQueryVariables>;
+export const GetClassDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getClass' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'class' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'id' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetClassQuery, GetClassQueryVariables>;
+export const GetClassesDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getClasses' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'classes' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'slug' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetClassesQuery, GetClassesQueryVariables>;
+export const GetGuildByIdDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getGuildById' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guildData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'guild' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'faction' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'server' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'region' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'tags' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetGuildByIdQuery, GetGuildByIdQueryVariables>;
+export const GetGuildsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getGuilds' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverSlug' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverRegion' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guildData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'guilds' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'limit' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'page' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'serverID' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'serverID' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'serverSlug' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'serverSlug' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'serverRegion' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'serverRegion' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'from' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'to' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'last_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'data' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'faction' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'server' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'region' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetGuildsQuery, GetGuildsQueryVariables>;
+export const GetGuildByNameDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getGuildByName' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverSlug' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'serverRegion' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guildData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'guild' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'name' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'name' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'serverSlug' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'serverSlug' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'serverRegion' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'serverRegion' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'description' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'faction' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'server' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'region' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'tags' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetGuildByNameQuery, GetGuildByNameQueryVariables>;
+export const GetGuildAttendanceDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getGuildAttendance' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'guildTagID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'zoneID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guildData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'guild' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'attendance' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'guildTagID' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'guildTagID' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'page' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'zoneID' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'zoneID' } },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'data' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'players' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                        { kind: 'Field', name: { kind: 'Name', value: 'type' } },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'presence' },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetGuildAttendanceQuery, GetGuildAttendanceQueryVariables>;
+export const GetGuildMembersDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getGuildMembers' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'guildData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'guild' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'guildId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'members' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'limit' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'page' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'data' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                  {
+                                    kind: 'Field',
+                                    name: { kind: 'Name', value: 'server' },
+                                    selectionSet: {
+                                      kind: 'SelectionSet',
+                                      selections: [
+                                        { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                        {
+                                          kind: 'Field',
+                                          name: { kind: 'Name', value: 'region' },
+                                          selectionSet: {
+                                            kind: 'SelectionSet',
+                                            selections: [
+                                              {
+                                                kind: 'Field',
+                                                name: { kind: 'Name', value: 'name' },
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                  },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'guildRank' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetGuildMembersQuery, GetGuildMembersQueryVariables>;
+export const GetReportByCodeDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getReportByCode' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'report' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'code' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'zone' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+                        },
+                      },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'fights' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'Fight' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Fight' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReportFight' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'difficulty' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetReportByCodeQuery, GetReportByCodeQueryVariables>;
+export const GetCharactersForReportDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getCharactersForReport' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'report' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'code' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'rankedCharacters' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'Character' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Character' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Character' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'classID' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetCharactersForReportQuery, GetCharactersForReportQueryVariables>;
+export const GetPlayersForReportDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getPlayersForReport' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'fightIDs' } },
+          type: {
+            kind: 'ListType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'report' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'code' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'playerDetails' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'includeCombatantInfo' },
+                            value: { kind: 'BooleanValue', value: true },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'fightIDs' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'fightIDs' } },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetPlayersForReportQuery, GetPlayersForReportQueryVariables>;
+export const GetReportEventsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getReportEvents' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
+          },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'afterEventTimestamp' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Float' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'fightIds' } },
+          type: {
+            kind: 'NonNullType',
+            type: {
+              kind: 'ListType',
+              type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+            },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'report' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'code' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'events' },
+                        arguments: [
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'startTime' },
+                            value: {
+                              kind: 'Variable',
+                              name: { kind: 'Name', value: 'afterEventTimestamp' },
+                            },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'fightIDs' },
+                            value: { kind: 'Variable', name: { kind: 'Name', value: 'fightIds' } },
+                          },
+                          {
+                            kind: 'Argument',
+                            name: { kind: 'Name', value: 'useActorIDs' },
+                            value: { kind: 'BooleanValue', value: true },
+                          },
+                        ],
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'Event' } },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'Event' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'ReportEventPaginator' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'data' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'nextPageTimestamp' } },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetReportEventsQuery, GetReportEventsQueryVariables>;

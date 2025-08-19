@@ -7,7 +7,7 @@ export interface Event {
     | {
         gameID?: string | number;
         id?: string | number;
-        [key: string]: any;
+        [key: string]: unknown;
       }
     | string
     | number;
@@ -15,7 +15,7 @@ export interface Event {
   buffId?: string | number;
   id?: string | number;
   timestamp?: number;
-  [key: string]: any;
+  [key: string]: unknown;
 }
 
 export type Events = Event[];

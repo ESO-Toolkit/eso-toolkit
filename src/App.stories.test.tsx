@@ -1,15 +1,16 @@
-import React from "react";
-import renderer from "react-test-renderer";
-import App from "./App";
-import { MemoryRouter } from "react-router-dom";
+import React from 'react';
+import { MemoryRouter } from 'react-router-dom';
+import renderer from 'react-test-renderer';
 
-describe("App Storybook Snapshot", () => {
-  it("matches the default story snapshot", () => {
+import App from './App';
+
+describe('App Storybook Snapshot', () => {
+  it('matches the default story snapshot', () => {
     const tree = renderer
       .create(
         <MemoryRouter>
           <App />
-        </MemoryRouter>,
+        </MemoryRouter>
       )
       .toJSON();
     expect(tree).toMatchSnapshot();

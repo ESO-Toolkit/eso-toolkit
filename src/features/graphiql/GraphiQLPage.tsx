@@ -1,12 +1,12 @@
-import React, { useEffect, useState } from 'react';
 import { Container, AppBar, Toolbar, Typography, Box } from '@mui/material';
 import { GraphiQL } from 'graphiql';
 import 'graphiql/style.css';
 import { buildSchema } from 'graphql';
+import React, { useEffect, useState } from 'react';
 
 const GRAPHQL_ENDPOINT = '/graphql'; // Change this to your actual endpoint if needed
 
-const fetcher = async (graphQLParams: any) => {
+const fetcher = async (graphQLParams: Record<string, unknown>) => {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -18,7 +18,7 @@ const fetcher = async (graphQLParams: any) => {
 };
 
 const GraphiQLPage: React.FC = () => {
-  const [schema, setSchema] = useState<any>(null);
+  const [schema, setSchema] = useState<import('graphql').GraphQLSchema | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 

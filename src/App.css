@@ -63,7 +63,7 @@
   cursor: pointer;
 }
 
-.fight-checkbox-label input[type="checkbox"] {
+.fight-checkbox-label input[type='checkbox'] {
   accent-color: #61dafb;
   margin-right: 16px;
   width: 20px;

@@ -1,9 +1,11 @@
-import React from "react";
-import OAuthRedirect from "./OAuthRedirect";
+import React from 'react';
 
-export default {
-  title: "OAuthRedirect",
+import OAuthRedirect from './OAuthRedirect';
+
+const story = {
+  title: 'OAuthRedirect',
   component: OAuthRedirect,
 };
+export default story;
 
 export const Default = () => <OAuthRedirect />;

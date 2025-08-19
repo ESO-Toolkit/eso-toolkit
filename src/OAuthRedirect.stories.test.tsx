@@ -1,9 +1,10 @@
-import React from "react";
-import renderer from "react-test-renderer";
-import OAuthRedirect from "./OAuthRedirect";
+import React from 'react';
+import renderer from 'react-test-renderer';
 
-describe("OAuthRedirect Storybook Snapshot", () => {
-  it("matches the default story snapshot", () => {
+import OAuthRedirect from './OAuthRedirect';
+
+describe('OAuthRedirect Storybook Snapshot', () => {
+  it('matches the default story snapshot', () => {
     const tree = renderer.create(<OAuthRedirect />).toJSON();
     expect(tree).toMatchSnapshot();
   });

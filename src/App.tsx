@@ -1,14 +1,5 @@
-import FightDetails from './FightDetails';
-import ListItemButton from '@mui/material/ListItemButton';
-import React, { useState } from 'react';
 import { ApolloProvider } from '@apollo/client';
-import { Provider as ReduxProvider } from 'react-redux';
-import store from './store';
-import { createEsoLogsClient } from './esologsClient';
-import { AuthProvider, useAuth } from './AuthContext';
-import { HashRouter, Routes, Route, useSearchParams } from 'react-router-dom';
-import OAuthRedirect from './OAuthRedirect';
-import GraphiQLPage from './features/graphiql/GraphiQLPage';
+import LinkIcon from '@mui/icons-material/Link';
 import {
   AppBar,
   Toolbar,
@@ -23,11 +14,33 @@ import {
   ListItem,
   ListItemText,
   Alert,
+  IconButton,
+  Menu,
+  MenuItem,
+  Avatar,
 } from '@mui/material';
-import LinkIcon from '@mui/icons-material/Link';
-import { useGetReportByCodeQuery } from './graphql/generated';
+import ListItemButton from '@mui/material/ListItemButton';
+import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
+import { Provider as ReduxProvider } from 'react-redux';
+import { HashRouter, Routes, Route } from 'react-router-dom';
+import { PersistGate } from 'redux-persist/integration/react';
+
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
+import { AuthProvider, useAuth } from './AuthContext';
+import { createEsoLogsClient } from './esologsClient';
+import GraphiQLPage from './features/graphiql/GraphiQLPage';
+import FightDetails from './FightDetails';
 import { FightFragment } from './graphql/generated';
+import { useGetReportByCodeQuery } from './graphql/report-data.generated';
+import OAuthRedirect from './OAuthRedirect';
+import ReduxThemeProvider from './ReduxThemeProvider';
+import type { RootState } from './store';
+import { fetchEventsForFight } from './store/eventsSlice';
+import { setReportId, setFightId } from './store/navigationSlice';
+import store, { persistor } from './store/storeWithHistory';
+import { setDarkMode } from './store/uiSlice';
+import { useAppDispatch } from './store/useAppDispatch';
 
 // Utility: Remove nulls and undefineds from a generic array
 function cleanArray<T>(arr: Array<T | null | undefined>): T[] {
@@ -35,27 +48,37 @@ function cleanArray<T>(arr: Array<T | null | undefined>): T[] {
 }
 
 const MainApp: React.FC = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
   const [fights, setFights] = useState<FightFragment[]>([]);
-  const [selectedFightId, setSelectedFightId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
-  // Use query param for report id
-  const reportIdParam = searchParams.get('reportId') || '';
   const [logUrl, setLogUrl] = useState<string>('');
+  const reportId = useSelector((state: RootState) => state.navigation.reportId);
+  const selectedFightId = useSelector((state: RootState) => state.navigation.fightId);
 
   const { isLoggedIn, setAccessToken } = useAuth();
-
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const dispatch = useAppDispatch();
+  const darkMode = useSelector((state: RootState) => state.ui.darkMode);
+  const eventsLoading = useSelector((state: RootState) => state.events.loading);
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
   const handleLogout = () => {
     localStorage.removeItem('access_token');
     setAccessToken('');
+    handleMenuClose();
+  };
+  const handleThemeToggle = () => {
+    dispatch(setDarkMode(!darkMode));
+    handleMenuClose();
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogUrl(e.target.value);
   };
 
-  // Removed handleClientIdChange
-  // PKCE helpers
   const generateCodeVerifier = () => {
     const array = new Uint32Array(32);
     window.crypto.getRandomValues(array);
@@ -95,35 +118,20 @@ const MainApp: React.FC = () => {
   };
 
   const { accessToken } = useAuth();
-  const [fetchCode, setFetchCode] = useState<string>(reportIdParam);
   const {
     data,
     loading,
     error: gqlError,
     refetch,
   } = useGetReportByCodeQuery({
-    variables: { code: fetchCode },
-    skip: !fetchCode,
+    variables: { code: reportId },
+    skip: !reportId,
     context: {
       headers: {
         Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
       },
     },
   });
-
-  // When fetchCode changes, update query param
-  React.useEffect(() => {
-    if (fetchCode !== reportIdParam) {
-      setSearchParams({ reportId: fetchCode });
-    }
-  }, [fetchCode, reportIdParam, setSearchParams]);
-
-  // When query param changes, update fetchCode
-  React.useEffect(() => {
-    if (reportIdParam && reportIdParam !== fetchCode) {
-      setFetchCode(reportIdParam);
-    }
-  }, [reportIdParam, fetchCode]);
 
   const handleFetchLog = () => {
     if (!logUrl) {
@@ -135,14 +143,13 @@ const MainApp: React.FC = () => {
       return;
     }
     setError(null);
-    const reportId = extractReportId(logUrl);
-    if (!reportId) {
+    const extractedId = extractReportId(logUrl);
+    if (!extractedId) {
       setError('Invalid ESOLogs report URL.');
       return;
     }
-    setFetchCode(reportId);
-    setSearchParams({ reportId });
-    refetch({ code: reportId });
+    dispatch(setReportId(extractedId));
+    refetch({ code: extractedId });
   };
 
   React.useEffect(() => {
@@ -159,105 +166,171 @@ const MainApp: React.FC = () => {
   }, [data, gqlError]);
 
   const handleFightSelect = (id: number) => {
-    setSelectedFightId(id);
+    dispatch(setFightId(id));
   };
 
-  return (
-    <Container maxWidth="md">
-      <AppBar position="static" color="primary" sx={{ mb: 4 }}>
-        <Toolbar>
-          <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-            ESO Log Aggregator
-          </Typography>
-          {isLoggedIn && (
-            <Button color="inherit" onClick={handleLogout} sx={{ ml: 2 }}>
-              Logout
-            </Button>
-          )}
-        </Toolbar>
-      </AppBar>
-      <Box sx={{ mt: 2, mb: 4 }}>
-        {!isLoggedIn ? (
-          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={startPKCEAuth}
-                disabled={loading}
-                sx={{ minWidth: 180 }}
-              >
-                Login with ESO Logs
-              </Button>
-            </Box>
-          </Paper>
-        ) : (
-          <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-              <TextField
-                label="ESOLogs.com Log URL"
-                variant="outlined"
-                value={logUrl}
-                onChange={handleUrlChange}
-                fullWidth
-                InputProps={{ startAdornment: <LinkIcon sx={{ mr: 1 }} /> }}
-              />
-              <Button
-                variant="contained"
-                color="secondary"
-                onClick={handleFetchLog}
-                disabled={loading || !logUrl}
-                sx={{ minWidth: 180 }}
-              >
-                {loading ? <CircularProgress size={24} /> : 'Load Log'}
-              </Button>
-            </Box>
-          </Paper>
-        )}
-        {(error || gqlError) && (
-          <Alert severity="error" sx={{ mb: 2 }}>
-            {error || gqlError?.message}
-          </Alert>
-        )}
-        {isLoggedIn && fights.length > 0 && !selectedFightId && (
-          <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-            <Typography variant="h5" gutterBottom>
-              Select a Fight
-            </Typography>
-            <List>
-              {fights.map((fight) => (
-                <ListItem key={fight.id} divider>
-                  <ListItemButton
-                    selected={selectedFightId === fight.id}
-                    onClick={() => handleFightSelect(fight.id)}
-                  >
-                    <ListItemText
-                      primary={fight.name}
-                      secondary={`Time: ${fight.startTime} - ${fight.endTime}`}
-                    />
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          </Paper>
-        )}
+  // Dispatch event fetch when fight selection changes and all required data is present
+  React.useEffect(() => {
+    if (selectedFightId !== null && fights.length > 0 && isLoggedIn && accessToken && reportId) {
+      const fight = fights.find((f) => f.id === selectedFightId);
+      if (fight) {
+        dispatch(fetchEventsForFight({ reportCode: reportId, fight, accessToken }));
+      }
+    }
+  }, [selectedFightId, fights, isLoggedIn, accessToken, reportId, dispatch]);
 
-        {selectedFightId !== null && (
-          <Paper elevation={2} sx={{ p: 3 }}>
-            <Button variant="outlined" sx={{ mb: 2 }} onClick={() => setSelectedFightId(null)}>
-              Back to Fight List
-            </Button>
-            <Typography variant="h6" gutterBottom>
-              Fight Details
-            </Typography>
-            <FightDetails
-              fight={fights.find((f) => f.id === selectedFightId)!}
-              reportCode={fetchCode}
-            />
+  return (
+    <ReduxThemeProvider>
+      <Box
+        sx={{
+          position: 'fixed',
+          inset: 0,
+          width: '100vw',
+          height: '100vh',
+          zIndex: -1,
+          bgcolor: 'background.default',
+        }}
+      />
+      {eventsLoading ? (
+        <Box
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            bgcolor: 'background.paper',
+            opacity: 0.85,
+          }}
+        >
+          <Paper
+            elevation={6}
+            sx={{ p: 4, display: 'flex', flexDirection: 'column', alignItems: 'center' }}
+          >
+            <CircularProgress size={48} sx={{ mb: 2 }} />
+            <Typography variant="h6">Loading events...</Typography>
           </Paper>
-        )}
-      </Box>
-    </Container>
+        </Box>
+      ) : (
+        <Container maxWidth="md">
+          <AppBar position="static" color="primary" sx={{ mb: 4 }}>
+            <Toolbar>
+              <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+                  ESO Log Aggregator
+                </a>
+              </Typography>
+              {isLoggedIn && (
+                <>
+                  <IconButton color="inherit" onClick={handleMenuOpen} sx={{ ml: 2 }}>
+                    <Avatar sx={{ width: 32, height: 32 }}>U</Avatar>
+                  </IconButton>
+                  <Menu
+                    anchorEl={anchorEl}
+                    open={Boolean(anchorEl)}
+                    onClose={handleMenuClose}
+                    anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+                    transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+                  >
+                    <MenuItem onClick={handleThemeToggle}>
+                      Switch to {darkMode ? 'Light' : 'Dark'} Mode
+                    </MenuItem>
+                    <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                  </Menu>
+                </>
+              )}
+            </Toolbar>
+          </AppBar>
+          <Box sx={{ mt: 2, mb: 4 }}>
+            {!isLoggedIn && (
+              <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={startPKCEAuth}
+                    disabled={loading}
+                    sx={{ minWidth: 180 }}
+                  >
+                    Login with ESO Logs
+                  </Button>
+                </Box>
+              </Paper>
+            )}
+            {isLoggedIn && (
+              <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                  <TextField
+                    label="ESOLogs.com Log URL"
+                    variant="outlined"
+                    value={logUrl}
+                    onChange={handleUrlChange}
+                    fullWidth
+                    InputProps={{ startAdornment: <LinkIcon sx={{ mr: 1 }} /> }}
+                  />
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={handleFetchLog}
+                    disabled={loading || !logUrl}
+                    sx={{ minWidth: 180 }}
+                  >
+                    {loading ? <CircularProgress size={24} /> : 'Load Log'}
+                  </Button>
+                </Box>
+              </Paper>
+            )}
+            {(error || gqlError) && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error || gqlError?.message}
+              </Alert>
+            )}
+            {isLoggedIn && fights.length > 0 && selectedFightId == null && (
+              <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+                <Typography variant="h5" gutterBottom>
+                  Select a Fight
+                </Typography>
+                <List>
+                  {fights.map((fight) => (
+                    <ListItem key={fight.id} divider>
+                      <ListItemButton
+                        selected={selectedFightId === fight.id}
+                        onClick={() => handleFightSelect(fight.id)}
+                      >
+                        <ListItemText
+                          primary={fight.name}
+                          secondary={`Time: ${fight.startTime} - ${fight.endTime}`}
+                        />
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Paper>
+            )}
+
+            {selectedFightId != null && (
+              <Paper elevation={2} sx={{ p: 3 }}>
+                <Button
+                  variant="outlined"
+                  sx={{ mb: 2 }}
+                  onClick={() => dispatch(setFightId(null))}
+                >
+                  Back to Fight List
+                </Button>
+                <Typography variant="h6" gutterBottom>
+                  Fight Details
+                </Typography>
+                {(() => {
+                  const fight = fights.find((f) => f.id === selectedFightId);
+                  return fight ? <FightDetails fight={fight} /> : null;
+                })()}
+              </Paper>
+            )}
+          </Box>
+        </Container>
+      )}
+    </ReduxThemeProvider>
   );
 };
 
@@ -268,9 +341,11 @@ const App: React.FC = () => {
   // We need to wrap ApolloProvider inside AuthProvider to get the token
   return (
     <ReduxProvider store={store}>
-      <AuthProvider>
-        <AuthApolloProvider />
-      </AuthProvider>
+      <PersistGate loading={null} persistor={persistor}>
+        <AuthProvider>
+          <AuthApolloProvider />
+        </AuthProvider>
+      </PersistGate>
     </ReduxProvider>
   );
 };

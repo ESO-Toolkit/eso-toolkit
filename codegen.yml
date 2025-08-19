@@ -7,11 +7,26 @@ documents: src/graphql/**/*.graphql
 generates:
   src/graphql/generated.ts:
     plugins:
+      - add:
+          content: '/* eslint-disable */'
       - typescript
       - typescript-operations
+      - typed-document-node
+    config:
+      documentMode: documentNode
+  src/graphql/:
+    preset: near-operation-file
+    presetConfig:
+      extension: .generated.ts
+      baseTypesPath: generated.ts
+    documentMode: external
+    plugins:
+      - add:
+          content: '/* eslint-disable */'
       - typescript-react-apollo
     config:
       withHooks: true
       withComponent: false
       withHOC: false
       reactApolloVersion: 3
+      importOperationTypesFrom: Types

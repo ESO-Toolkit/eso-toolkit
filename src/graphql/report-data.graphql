@@ -24,6 +24,31 @@ query getReportByCode($code: String!) {
   }
 }
 
+fragment Character on Character {
+  id
+  name
+  displayName
+  classID
+}
+
+query getCharactersForReport($code: String!) {
+  reportData {
+    report(code: $code) {
+      rankedCharacters {
+        ...Character
+      }
+    }
+  }
+}
+
+query getPlayersForReport($code: String!, $fightIDs: [Int]) {
+  reportData {
+    report(code: $code) {
+      playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
+    }
+  }
+}
+
 fragment Event on ReportEventPaginator {
   data
   nextPageTimestamp
@@ -32,7 +57,7 @@ fragment Event on ReportEventPaginator {
 query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
   reportData {
     report(code: $code) {
-      events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
+      events(startTime: $afterEventTimestamp, fightIDs: $fightIds, useActorIDs: true) {
         ...Event
       }
     }

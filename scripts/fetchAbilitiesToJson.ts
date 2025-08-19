@@ -1,27 +1,35 @@
 import fs from 'fs';
 import path from 'path';
-import { GetAbilitiesDocument } from '../src/graphql/generated';
-import { createEsoLogsClient } from '../src/esologsClient';
+
 import fetch from 'cross-fetch';
 import dotenv from 'dotenv';
+
+import { createEsoLogsClient } from '../src/esologsClient';
+import { GetAbilitiesDocument } from '../src/graphql/generated';
 
 dotenv.config();
 
 const TOKEN_URL = process.env.ESOLOGS_TOKEN_URL || 'https://www.esologs.com/oauth/token';
 const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
+
 const DATA_DIR = path.resolve(__dirname, '../src/data');
 const OUT_FILE = path.join(DATA_DIR, 'abilities.json');
 const PAGE_SIZE = 100;
 
-// Use generated query document from generated.ts
-
 async function getAccessToken() {
+  if (!CLIENT_ID) {
+    throw new Error('Missing OAUTH_CLIENT_ID in environment variables');
+  }
+  if (!CLIENT_SECRET) {
+    throw new Error('Missing OAUTH_CLIENT_SECRET in environment variables');
+  }
+
   console.log('Fetching access token...');
   const res = await fetch(TOKEN_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: `grant_type=client_credentials&client_id=${encodeURIComponent(CLIENT_ID!)}&client_secret=${encodeURIComponent(CLIENT_SECRET!)}`,
+    body: `grant_type=client_credentials&client_id=${encodeURIComponent(CLIENT_ID)}&client_secret=${encodeURIComponent(CLIENT_SECRET)}`,
   });
   if (!res.ok) {
     throw new Error(`Failed to fetch access token: ${res.status} ${await res.text()}`);
@@ -35,7 +43,12 @@ async function fetchAllAbilities(accessToken: string) {
   const esoLogsClient = createEsoLogsClient(accessToken);
   let page = 1;
   let lastPage = 1;
-  const abilityLookup: Record<string, any> = {};
+  type Ability = {
+    id: number;
+    name?: string;
+    [key: string]: unknown;
+  };
+  const abilityLookup: Record<string, Ability> = {};
 
   do {
     console.log(`Fetching abilities page ${page}...`);
