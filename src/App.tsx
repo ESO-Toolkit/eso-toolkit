@@ -358,7 +358,6 @@ const AuthApolloProvider: React.FC = () => {
       <HashRouter>
         <Routes>
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
-          <Route path="/graphiql" element={<GraphiQLPage />} />
           <Route path="/*" element={<MainApp />} />
         </Routes>
       </HashRouter>
