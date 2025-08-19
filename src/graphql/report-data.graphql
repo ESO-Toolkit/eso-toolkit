@@ -19,3 +19,14 @@ query getReportByCode($code: String!) {
     }
   }
 }
+
+query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
+  reportData {
+    report(code: $code) {
+      events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
+        data
+        nextPageTimestamp
+      }
+    }
+  }
+}

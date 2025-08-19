@@ -1,12 +1,12 @@
-import FightDetails, { Fight } from "./FightDetails";
+import FightDetails, { Fight } from './FightDetails';
 import ListItemButton from '@mui/material/ListItemButton';
-import React, { useState } from "react";
-import { ApolloProvider } from "@apollo/client";
-import { client } from "./esologsClient";
-import { AuthProvider, useAuth } from "./AuthContext";
-import { HashRouter, Routes, Route } from "react-router-dom";
-import OAuthRedirect from "./OAuthRedirect";
-import GraphiQLPage from "./features/graphiql/GraphiQLPage";
+import React, { useState } from 'react';
+import { ApolloProvider } from '@apollo/client';
+import { client } from './esologsClient';
+import { AuthProvider, useAuth } from './AuthContext';
+import { HashRouter, Routes, Route, useSearchParams } from 'react-router-dom';
+import OAuthRedirect from './OAuthRedirect';
+import GraphiQLPage from './features/graphiql/GraphiQLPage';
 import {
   AppBar,
   Toolbar,
@@ -21,22 +21,25 @@ import {
   ListItem,
   ListItemText,
   Alert,
-} from "@mui/material";
+} from '@mui/material';
 import LinkIcon from '@mui/icons-material/Link';
 import { useGetReportByCodeQuery } from './graphql/generated';
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
 // Fight type definition
 const MainApp: React.FC = () => {
+  const [searchParams, setSearchParams] = useSearchParams();
   const [fights, setFights] = useState<Fight[]>([]);
   const [selectedFightId, setSelectedFightId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [logUrl, setLogUrl] = useState<string>("");
+  // Use query param for report id
+  const reportIdParam = searchParams.get('reportId') || '';
+  const [logUrl, setLogUrl] = useState<string>('');
 
   const { isLoggedIn, setAccessToken } = useAuth();
 
   const handleLogout = () => {
-    localStorage.removeItem("access_token");
-    setAccessToken("");
+    localStorage.removeItem('access_token');
+    setAccessToken('');
   };
 
   const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -48,29 +51,24 @@ const MainApp: React.FC = () => {
   const generateCodeVerifier = () => {
     const array = new Uint32Array(32);
     window.crypto.getRandomValues(array);
-    const verifier = Array.from(array, (dec) =>
-      ("0" + dec.toString(16)).slice(-2),
-    ).join("");
-    localStorage.setItem("eso_code_verifier", verifier);
+    const verifier = Array.from(array, (dec) => ('0' + dec.toString(16)).slice(-2)).join('');
+    localStorage.setItem('eso_code_verifier', verifier);
     return verifier;
   };
 
   const base64UrlEncode = (str: ArrayBuffer) => {
     const uint8 = new Uint8Array(str);
-    let binary = "";
+    let binary = '';
     for (let i = 0; i < uint8.byteLength; i++) {
       binary += String.fromCharCode(uint8[i]);
     }
-    return btoa(binary)
-      .replace(/\+/g, "-")
-      .replace(/\//g, "_")
-      .replace(/=+$/, "");
+    return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
   };
 
   const generateCodeChallenge = async (verifier: string) => {
     const encoder = new TextEncoder();
     const data = encoder.encode(verifier);
-    const digest = await window.crypto.subtle.digest("SHA-256", data);
+    const digest = await window.crypto.subtle.digest('SHA-256', data);
     return base64UrlEncode(digest);
   };
   const startPKCEAuth = async () => {
@@ -85,11 +83,11 @@ const MainApp: React.FC = () => {
   const extractReportId = (url: string) => {
     // Example: https://www.esologs.com/reports/dVZXRHYNCDWqLmbM
     const match = url.match(/reports\/([A-Za-z0-9]+)/);
-    return match ? match[1] : "";
+    return match ? match[1] : '';
   };
 
   const { accessToken } = useAuth();
-  const [fetchCode, setFetchCode] = useState<string>("");
+  const [fetchCode, setFetchCode] = useState<string>(reportIdParam);
   const {
     data,
     loading,
@@ -105,42 +103,55 @@ const MainApp: React.FC = () => {
     },
   });
 
+  // When fetchCode changes, update query param
+  React.useEffect(() => {
+    if (fetchCode !== reportIdParam) {
+      setSearchParams({ reportId: fetchCode });
+    }
+  }, [fetchCode, reportIdParam, setSearchParams]);
+
+  // When query param changes, update fetchCode
+  React.useEffect(() => {
+    if (reportIdParam && reportIdParam !== fetchCode) {
+      setFetchCode(reportIdParam);
+    }
+  }, [reportIdParam, fetchCode]);
+
   const handleFetchLog = () => {
     if (!logUrl) {
-      setError("Please provide the ESOLogs report URL.");
+      setError('Please provide the ESOLogs report URL.');
       return;
     }
     if (!accessToken) {
-      setError("You must be logged in to fetch logs.");
+      setError('You must be logged in to fetch logs.');
       return;
     }
     setError(null);
     const reportId = extractReportId(logUrl);
     if (!reportId) {
-      setError("Invalid ESOLogs report URL.");
+      setError('Invalid ESOLogs report URL.');
       return;
     }
     setFetchCode(reportId);
+    setSearchParams({ reportId });
     refetch({ code: reportId });
   };
 
   React.useEffect(() => {
     if (data && data.reportData?.report?.fights) {
       const fightsData = data.reportData.report.fights;
-      const parsedFights: Fight[] = fightsData.map(
-        (fight: any, idx: number) => ({
-          id: String(fight.id ?? idx + 1),
-          name: fight.name ?? `Fight ${idx + 1}`,
-          start: String(fight.startTime ?? ""),
-          end: String(fight.endTime ?? ""),
-        }),
-      );
+      const parsedFights: Fight[] = fightsData.map((fight: any, idx: number) => ({
+        id: String(fight.id ?? idx + 1),
+        name: fight.name ?? `Fight ${idx + 1}`,
+        start: String(fight.startTime ?? ''),
+        end: String(fight.endTime ?? ''),
+      }));
       setFights(parsedFights);
       if (parsedFights.length === 0) {
-        setError("No fights found in API response.");
+        setError('No fights found in API response.');
       }
     } else if (gqlError) {
-      setError("Failed to fetch or parse data from ESOLogs GraphQL API.");
+      setError('Failed to fetch or parse data from ESOLogs GraphQL API.');
       setFights([]);
     }
   }, [data, gqlError]);
@@ -166,7 +177,7 @@ const MainApp: React.FC = () => {
       <Box sx={{ mt: 2, mb: 4 }}>
         {!isLoggedIn ? (
           <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               <Button
                 variant="contained"
                 color="primary"
@@ -180,7 +191,7 @@ const MainApp: React.FC = () => {
           </Paper>
         ) : (
           <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
               <TextField
                 label="ESOLogs.com Log URL"
                 variant="outlined"
@@ -196,7 +207,7 @@ const MainApp: React.FC = () => {
                 disabled={loading || !logUrl}
                 sx={{ minWidth: 180 }}
               >
-                {loading ? <CircularProgress size={24} /> : "Load Log"}
+                {loading ? <CircularProgress size={24} /> : 'Load Log'}
               </Button>
             </Box>
           </Paper>
@@ -214,7 +225,10 @@ const MainApp: React.FC = () => {
             <List>
               {fights.map((fight) => (
                 <ListItem key={fight.id} divider>
-                  <ListItemButton selected={selectedFightId === fight.id} onClick={() => handleFightSelect(fight.id)}>
+                  <ListItemButton
+                    selected={selectedFightId === fight.id}
+                    onClick={() => handleFightSelect(fight.id)}
+                  >
                     <ListItemText
                       primary={fight.name}
                       secondary={`Time: ${fight.start} - ${fight.end}`}
@@ -234,7 +248,14 @@ const MainApp: React.FC = () => {
             <Typography variant="h6" gutterBottom>
               Fight Details
             </Typography>
-            <FightDetails fight={fights.find(f => f.id === selectedFightId)} />
+            <FightDetails
+              fight={
+                fights.find((f) => f.id === selectedFightId)
+                  ? { ...fights.find((f) => f.id === selectedFightId)! }
+                  : undefined
+              }
+              reportCode={fetchCode}
+            />
           </Paper>
         )}
       </Box>

@@ -2235,6 +2235,13 @@ export type GetAbilitiesQueryVariables = Exact<{
 
 export type GetAbilitiesQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', abilities?: { __typename?: 'GameAbilityPagination', total: number, per_page: number, current_page: number, from?: number | null, to?: number | null, last_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'GameAbility', id: number, name?: string | null, icon?: string | null } | null> | null } | null } | null };
 
+export type GetAbilityQueryVariables = Exact<{
+  id: Scalars['Int']['input'];
+}>;
+
+
+export type GetAbilityQuery = { __typename?: 'Query', gameData?: { __typename?: 'GameData', ability?: { __typename?: 'GameAbility', id: number, name?: string | null, icon?: string | null } | null } | null };
+
 export type GetClassQueryVariables = Exact<{
   id: Scalars['Int']['input'];
 }>;
@@ -2301,6 +2308,15 @@ export type GetReportByCodeQueryVariables = Exact<{
 
 export type GetReportByCodeQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', code: string, startTime: number, endTime: number, title: string, visibility: string, zone?: { __typename?: 'Zone', name: string } | null, fights?: Array<{ __typename?: 'ReportFight', id: number, name: string, difficulty?: number | null, startTime: number, endTime: number } | null> | null } | null } | null };
 
+export type GetReportEventsQueryVariables = Exact<{
+  code: Scalars['String']['input'];
+  afterEventTimestamp?: InputMaybe<Scalars['Float']['input']>;
+  fightIds: Array<InputMaybe<Scalars['Int']['input']>> | InputMaybe<Scalars['Int']['input']>;
+}>;
+
+
+export type GetReportEventsQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', events?: { __typename?: 'ReportEventPaginator', data?: any | null, nextPageTimestamp?: number | null } | null } | null } | null };
+
 
 export const GetAbilitiesDocument = gql`
     query getAbilities($limit: Int, $page: Int) {
@@ -2356,6 +2372,50 @@ export type GetAbilitiesQueryHookResult = ReturnType<typeof useGetAbilitiesQuery
 export type GetAbilitiesLazyQueryHookResult = ReturnType<typeof useGetAbilitiesLazyQuery>;
 export type GetAbilitiesSuspenseQueryHookResult = ReturnType<typeof useGetAbilitiesSuspenseQuery>;
 export type GetAbilitiesQueryResult = Apollo.QueryResult<GetAbilitiesQuery, GetAbilitiesQueryVariables>;
+export const GetAbilityDocument = gql`
+    query getAbility($id: Int!) {
+  gameData {
+    ability(id: $id) {
+      id
+      name
+      icon
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetAbilityQuery__
+ *
+ * To run a query within a React component, call `useGetAbilityQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetAbilityQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetAbilityQuery({
+ *   variables: {
+ *      id: // value for 'id'
+ *   },
+ * });
+ */
+export function useGetAbilityQuery(baseOptions: Apollo.QueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables> & ({ variables: GetAbilityQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
+      }
+export function useGetAbilityLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
+        }
+export function useGetAbilitySuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetAbilityQuery, GetAbilityQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetAbilityQuery, GetAbilityQueryVariables>(GetAbilityDocument, options);
+        }
+export type GetAbilityQueryHookResult = ReturnType<typeof useGetAbilityQuery>;
+export type GetAbilityLazyQueryHookResult = ReturnType<typeof useGetAbilityLazyQuery>;
+export type GetAbilitySuspenseQueryHookResult = ReturnType<typeof useGetAbilitySuspenseQuery>;
+export type GetAbilityQueryResult = Apollo.QueryResult<GetAbilityQuery, GetAbilityQueryVariables>;
 export const GetClassDocument = gql`
     query getClass($id: Int!) {
   gameData {
@@ -2806,3 +2866,50 @@ export type GetReportByCodeQueryHookResult = ReturnType<typeof useGetReportByCod
 export type GetReportByCodeLazyQueryHookResult = ReturnType<typeof useGetReportByCodeLazyQuery>;
 export type GetReportByCodeSuspenseQueryHookResult = ReturnType<typeof useGetReportByCodeSuspenseQuery>;
 export type GetReportByCodeQueryResult = Apollo.QueryResult<GetReportByCodeQuery, GetReportByCodeQueryVariables>;
+export const GetReportEventsDocument = gql`
+    query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
+  reportData {
+    report(code: $code) {
+      events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
+        data
+        nextPageTimestamp
+      }
+    }
+  }
+}
+    `;
+
+/**
+ * __useGetReportEventsQuery__
+ *
+ * To run a query within a React component, call `useGetReportEventsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetReportEventsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetReportEventsQuery({
+ *   variables: {
+ *      code: // value for 'code'
+ *      afterEventTimestamp: // value for 'afterEventTimestamp'
+ *      fightIds: // value for 'fightIds'
+ *   },
+ * });
+ */
+export function useGetReportEventsQuery(baseOptions: Apollo.QueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables> & ({ variables: GetReportEventsQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
+      }
+export function useGetReportEventsLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
+        }
+export function useGetReportEventsSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<GetReportEventsQuery, GetReportEventsQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<GetReportEventsQuery, GetReportEventsQueryVariables>(GetReportEventsDocument, options);
+        }
+export type GetReportEventsQueryHookResult = ReturnType<typeof useGetReportEventsQuery>;
+export type GetReportEventsLazyQueryHookResult = ReturnType<typeof useGetReportEventsLazyQuery>;
+export type GetReportEventsSuspenseQueryHookResult = ReturnType<typeof useGetReportEventsSuspenseQuery>;
+export type GetReportEventsQueryResult = Apollo.QueryResult<GetReportEventsQuery, GetReportEventsQueryVariables>;

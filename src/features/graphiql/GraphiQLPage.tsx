@@ -1,19 +1,49 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Container, AppBar, Toolbar, Typography, Box } from '@mui/material';
 import { GraphiQL } from 'graphiql';
 import 'graphiql/style.css';
 import { buildSchema } from 'graphql';
 
-// @ts-ignore
-import schemaSource from './schema.graphql?raw';
+const GRAPHQL_ENDPOINT = '/graphql'; // Change this to your actual endpoint if needed
 
-const schema = buildSchema(schemaSource);
+const fetcher = async (graphQLParams: any) => {
+  const response = await fetch(GRAPHQL_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(graphQLParams),
+  });
+  return response.json();
+};
 
 const GraphiQLPage: React.FC = () => {
-  const dummyFetcher = async () => {
-    // Always returns empty data
-    return { data: {} };
-  };
+  const [schema, setSchema] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch('/schema.graphql')
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch schema.graphql');
+        return res.text();
+      })
+      .then((schemaSource) => {
+        setSchema(buildSchema(schemaSource));
+        setLoading(false);
+      })
+      .catch((err) => {
+        setError(err.message);
+        setLoading(false);
+      });
+  }, []);
+
+  if (loading) {
+    return <div>Loading GraphQL schema...</div>;
+  }
+  if (error) {
+    return <div>Error loading schema: {error}</div>;
+  }
 
   return (
     <Container maxWidth="xl" disableGutters>
@@ -25,7 +55,7 @@ const GraphiQLPage: React.FC = () => {
         </Toolbar>
       </AppBar>
       <Box sx={{ height: 'calc(100vh - 64px)', width: '100%' }}>
-        <GraphiQL fetcher={dummyFetcher} schema={schema} />
+        <GraphiQL fetcher={fetcher} schema={schema} />
       </Box>
     </Container>
   );

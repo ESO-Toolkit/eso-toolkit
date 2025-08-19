@@ -331,20 +331,12 @@ enum SubscriptionStatus {
   # Platinum Tier subscription
   Platinum
   # Legacy Silver Tier subscription
-  LegacySilver
-    @deprecated(
-      reason: "Legacy Silver subscriptions are not available for new users."
-    )
+  LegacySilver @deprecated(reason: "Legacy Silver subscriptions are not available for new users.")
   # Legacy Gold Tier subscription
-  LegacyGold
-    @deprecated(
-      reason: "Legacy Gold subscriptions are not available for new users."
-    )
+  LegacyGold @deprecated(reason: "Legacy Gold subscriptions are not available for new users.")
   # Legacy Platinum Tier subscription
   LegacyPlatinum
-    @deprecated(
-      reason: "Legacy Platinum subscriptions are not available for new users."
-    )
+    @deprecated(reason: "Legacy Platinum subscriptions are not available for new users.")
   # Alchemical Society Tier subscription
   AlchemicalSociety
 }
@@ -530,11 +522,7 @@ type ArchonViewModels {
   # articleSlug: [Not documented]
   # articleCategorySlug: [Not documented]
   # siteName: [Not documented]
-  article(
-    articleSlug: String
-    articleCategorySlug: String
-    siteName: String
-  ): JSON
+  article(articleSlug: String, articleCategorySlug: String, siteName: String): JSON
   # Arguments
   # currentSlug: [Not documented]
   cmsNavigation(currentSlug: String): JSON
@@ -542,11 +530,7 @@ type ArchonViewModels {
   # articleCategorySlug: [Not documented]
   # pageNumber: [Not documented]
   # siteName: [Not documented]
-  pageOfArticlePreviews(
-    articleCategorySlug: String
-    pageNumber: Int
-    siteName: String
-  ): JSON
+  pageOfArticlePreviews(articleCategorySlug: String, pageNumber: Int, siteName: String): JSON
   # Arguments
   # snippetSlugs: [Not documented]
   snippets(snippetSlugs: [String]): JSON
@@ -754,12 +738,7 @@ type CharacterData {
   # serverRegion: Optional. The region for a specific character.
   # Must be used in conjunction with name and serverRegion to uniquely identify a
   # character.
-  character(
-    id: Int
-    name: String
-    serverSlug: String
-    serverRegion: String
-  ): Character
+  character(id: Int, name: String, serverSlug: String, serverRegion: String): Character
   # A collection of characters for a specific guild.
   #
   # Arguments
@@ -1250,12 +1229,7 @@ type Guild {
   # omitted, defaults to the first page.
   # zoneID: Optional. Whether or not to filter the attendance table
   # to a specific zone.
-  attendance(
-    guildTagID: Int
-    limit: Int
-    page: Int
-    zoneID: Int
-  ): GuildAttendancePagination!
+  attendance(guildTagID: Int, limit: Int, page: Int, zoneID: Int): GuildAttendancePagination!
   # Whether or not the guild has competition mode enabled.
   competitionMode: Boolean!
   # The description for the guild that is displayed with the guild name on the site.
@@ -1360,25 +1334,6 @@ type GuildData {
     serverSlug: String
     serverRegion: String
   ): GuildPagination
-}
-
-type GuildPagination {
-  # List of items on the current page
-  data: [Guild]
-  # Number of total items selected by the query
-  total: Int!
-  # Number of items returned per page
-  per_page: Int!
-  # Current page of the cursor
-  current_page: Int!
-  # Number of the first item returned
-  from: Int
-  # Number of the last item returned
-  to: Int
-  # The last page (number of pages)
-  last_page: Int!
-  # Determines if cursor has more pages after the current page
-  has_more_pages: Boolean!
 }
 
 type GuildPagination {

@@ -17,6 +17,16 @@ query getAbilities($limit: Int, $page: Int) {
   }
 }
 
+query getAbility($id: Int!) {
+  gameData {
+    ability(id: $id) {
+      id
+      name
+      icon
+    }
+  }
+}
+
 query getClass($id: Int!) {
   gameData {
     class(id: $id) {
