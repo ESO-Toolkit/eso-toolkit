@@ -10,16 +10,21 @@ interface AuthContextType {
   accessToken: string;
   isLoggedIn: boolean;
   setAccessToken: (token: string) => void;
+  rebindAccessToken: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({
-  children,
-}) => {
+export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string>(
     () => localStorage.getItem("access_token") || "",
   );
+
+  // Re-bind access token from localStorage
+  const rebindAccessToken = React.useCallback(() => {
+    setAccessToken(localStorage.getItem("access_token") || "");
+  }, [setAccessToken]);
+
 
   useEffect(() => {
     // Listen for changes to localStorage (e.g., from OAuthRedirect)
@@ -45,10 +50,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
     }
   }
 
+
   const isLoggedIn = !!accessToken && !isTokenExpired(accessToken);
 
+  const contextValue = React.useMemo(
+    () => ({ accessToken, isLoggedIn, setAccessToken, rebindAccessToken }),
+    [accessToken, isLoggedIn, rebindAccessToken]
+  );
+
   return (
-    <AuthContext.Provider value={{ accessToken, isLoggedIn, setAccessToken }}>
+    <AuthContext.Provider value={contextValue}>
       {children}
     </AuthContext.Provider>
   );

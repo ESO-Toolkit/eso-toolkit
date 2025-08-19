@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "./AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CircularProgress, Container, Typography } from "@mui/material";
 import { getPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from "./auth";
@@ -8,6 +9,7 @@ const OAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
+  const { rebindAccessToken } = useAuth();
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -35,8 +37,9 @@ const OAuthRedirect: React.FC = () => {
         });
         if (!response.ok) throw new Error("Token exchange failed");
         const data = await response.json();
-        localStorage.setItem("access_token", data.access_token);
-        navigate("/");
+  localStorage.setItem("access_token", data.access_token);
+  rebindAccessToken();
+  navigate("/");
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -46,7 +49,7 @@ const OAuthRedirect: React.FC = () => {
       }
     };
     fetchToken();
-  }, [location, navigate]);
+  }, [location, navigate, rebindAccessToken]);
 
   return (
     <Container maxWidth="sm" style={{ textAlign: "center", marginTop: "4rem" }}>
