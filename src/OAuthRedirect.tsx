@@ -26,7 +26,7 @@ const OAuthRedirect: React.FC = () => {
           code,
           client_id: CLIENT_ID,
           code_verifier: verifier,
-          redirect_uri: window.location.href + 'oauth-redirect',
+          redirect_uri: window.location.href + '#/oauth-redirect',
         });
         const response = await fetch(OAUTH_TOKEN_URL, {
           method: "POST",
