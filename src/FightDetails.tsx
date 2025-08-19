@@ -101,18 +101,6 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportCode }) => {
     }
   }, [data]);
 
-  // Build a map of abilityGameID to name
-  const abilityNameMap: Record<string, string> = React.useMemo(() => {
-    const map: Record<string, string> = {};
-    for (const id in abilities) {
-      const ability = abilities[id];
-      if (ability && ability.name) {
-        map[id] = ability.name;
-      }
-    }
-    return map;
-  }, [abilities]);
-
   // Calculate buff uptimes
   const buffUptimes: Record<string, number> = {};
   const buffNames: Record<string, string> = {};
