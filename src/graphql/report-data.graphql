@@ -1,3 +1,11 @@
+fragment Fight on ReportFight {
+  id
+  name
+  difficulty
+  startTime
+  endTime
+}
+
 query getReportByCode($code: String!) {
   reportData {
     report(code: $code) {
@@ -10,22 +18,22 @@ query getReportByCode($code: String!) {
         name
       }
       fights {
-        id
-        name
-        difficulty
-        startTime
-        endTime
+        ...Fight
       }
     }
   }
+}
+
+fragment Event on ReportEventPaginator {
+  data
+  nextPageTimestamp
 }
 
 query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
   reportData {
     report(code: $code) {
       events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
-        data
-        nextPageTimestamp
+        ...Event
       }
     }
   }

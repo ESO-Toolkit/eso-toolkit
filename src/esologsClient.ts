@@ -1,21 +1,35 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
-const httpLink = createHttpLink({
-  uri: 'https://www.esologs.com/api/v2/client',
-});
+export function createEsoLogsClient(accessToken: string) {
+  const httpLink = createHttpLink({
+    uri: 'https://www.esologs.com/api/v2/client',
+  });
 
-const authLink = setContext((_, { headers }) => {
-  const token = localStorage.getItem('access_token');
-  return {
-    headers: {
-      ...headers,
-      Authorization: token ? `Bearer ${token}` : undefined,
-    },
-  };
-});
+  const authLink = setContext((_, { headers }) => {
+    return {
+      headers: {
+        ...headers,
+        Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+      },
+    };
+  });
 
-export const client = new ApolloClient({
-  link: authLink.concat(httpLink),
-  cache: new InMemoryCache(),
-});
+  return new ApolloClient({
+    link: authLink.concat(httpLink),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            gameData: {
+              merge(_existing, incoming) {
+                // Always return incoming, never cache gameData
+                return incoming;
+              },
+            },
+          },
+        },
+      },
+    }),
+  });
+}

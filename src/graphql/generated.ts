@@ -2301,12 +2301,16 @@ export type GetGuildMembersQueryVariables = Exact<{
 
 export type GetGuildMembersQuery = { __typename?: 'Query', guildData?: { __typename?: 'GuildData', guild?: { __typename?: 'Guild', members: { __typename?: 'CharacterPagination', total: number, per_page: number, current_page: number, has_more_pages: boolean, data?: Array<{ __typename?: 'Character', id: number, name: string, guildRank: number, server: { __typename?: 'Server', name: string, region: { __typename?: 'Region', name: string } } } | null> | null } } | null } | null };
 
+export type FightFragment = { __typename?: 'ReportFight', id: number, name: string, difficulty?: number | null, startTime: number, endTime: number };
+
 export type GetReportByCodeQueryVariables = Exact<{
   code: Scalars['String']['input'];
 }>;
 
 
 export type GetReportByCodeQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', code: string, startTime: number, endTime: number, title: string, visibility: string, zone?: { __typename?: 'Zone', name: string } | null, fights?: Array<{ __typename?: 'ReportFight', id: number, name: string, difficulty?: number | null, startTime: number, endTime: number } | null> | null } | null } | null };
+
+export type EventFragment = { __typename?: 'ReportEventPaginator', data?: any | null, nextPageTimestamp?: number | null };
 
 export type GetReportEventsQueryVariables = Exact<{
   code: Scalars['String']['input'];
@@ -2317,7 +2321,21 @@ export type GetReportEventsQueryVariables = Exact<{
 
 export type GetReportEventsQuery = { __typename?: 'Query', reportData?: { __typename?: 'ReportData', report?: { __typename?: 'Report', events?: { __typename?: 'ReportEventPaginator', data?: any | null, nextPageTimestamp?: number | null } | null } | null } | null };
 
-
+export const FightFragmentDoc = gql`
+    fragment Fight on ReportFight {
+  id
+  name
+  difficulty
+  startTime
+  endTime
+}
+    `;
+export const EventFragmentDoc = gql`
+    fragment Event on ReportEventPaginator {
+  data
+  nextPageTimestamp
+}
+    `;
 export const GetAbilitiesDocument = gql`
     query getAbilities($limit: Int, $page: Int) {
   gameData {
@@ -2823,16 +2841,12 @@ export const GetReportByCodeDocument = gql`
         name
       }
       fights {
-        id
-        name
-        difficulty
-        startTime
-        endTime
+        ...Fight
       }
     }
   }
 }
-    `;
+    ${FightFragmentDoc}`;
 
 /**
  * __useGetReportByCodeQuery__
@@ -2871,13 +2885,12 @@ export const GetReportEventsDocument = gql`
   reportData {
     report(code: $code) {
       events(startTime: $afterEventTimestamp, fightIDs: $fightIds) {
-        data
-        nextPageTimestamp
+        ...Event
       }
     }
   }
 }
-    `;
+    ${EventFragmentDoc}`;
 
 /**
  * __useGetReportEventsQuery__

@@ -1,8 +1,10 @@
-import FightDetails, { Fight } from './FightDetails';
+import FightDetails from './FightDetails';
 import ListItemButton from '@mui/material/ListItemButton';
 import React, { useState } from 'react';
 import { ApolloProvider } from '@apollo/client';
-import { client } from './esologsClient';
+import { Provider as ReduxProvider } from 'react-redux';
+import store from './store';
+import { createEsoLogsClient } from './esologsClient';
 import { AuthProvider, useAuth } from './AuthContext';
 import { HashRouter, Routes, Route, useSearchParams } from 'react-router-dom';
 import OAuthRedirect from './OAuthRedirect';
@@ -25,11 +27,17 @@ import {
 import LinkIcon from '@mui/icons-material/Link';
 import { useGetReportByCodeQuery } from './graphql/generated';
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
-// Fight type definition
+import { FightFragment } from './graphql/generated';
+
+// Utility: Remove nulls and undefineds from a generic array
+function cleanArray<T>(arr: Array<T | null | undefined>): T[] {
+  return arr.filter((item): item is T => item != null);
+}
+
 const MainApp: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [fights, setFights] = useState<Fight[]>([]);
-  const [selectedFightId, setSelectedFightId] = useState<string | null>(null);
+  const [fights, setFights] = useState<FightFragment[]>([]);
+  const [selectedFightId, setSelectedFightId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   // Use query param for report id
   const reportIdParam = searchParams.get('reportId') || '';
@@ -139,15 +147,9 @@ const MainApp: React.FC = () => {
 
   React.useEffect(() => {
     if (data && data.reportData?.report?.fights) {
-      const fightsData = data.reportData.report.fights;
-      const parsedFights: Fight[] = fightsData.map((fight: any, idx: number) => ({
-        id: String(fight.id ?? idx + 1),
-        name: fight.name ?? `Fight ${idx + 1}`,
-        start: String(fight.startTime ?? ''),
-        end: String(fight.endTime ?? ''),
-      }));
-      setFights(parsedFights);
-      if (parsedFights.length === 0) {
+      const fightsData = cleanArray(data.reportData.report.fights);
+      setFights(fightsData);
+      if (fightsData.length === 0) {
         setError('No fights found in API response.');
       }
     } else if (gqlError) {
@@ -156,7 +158,7 @@ const MainApp: React.FC = () => {
     }
   }, [data, gqlError]);
 
-  const handleFightSelect = (id: string) => {
+  const handleFightSelect = (id: number) => {
     setSelectedFightId(id);
   };
 
@@ -231,7 +233,7 @@ const MainApp: React.FC = () => {
                   >
                     <ListItemText
                       primary={fight.name}
-                      secondary={`Time: ${fight.start} - ${fight.end}`}
+                      secondary={`Time: ${fight.startTime} - ${fight.endTime}`}
                     />
                   </ListItemButton>
                 </ListItem>
@@ -240,7 +242,7 @@ const MainApp: React.FC = () => {
           </Paper>
         )}
 
-        {selectedFightId && (
+        {selectedFightId !== null && (
           <Paper elevation={2} sx={{ p: 3 }}>
             <Button variant="outlined" sx={{ mb: 2 }} onClick={() => setSelectedFightId(null)}>
               Back to Fight List
@@ -249,11 +251,7 @@ const MainApp: React.FC = () => {
               Fight Details
             </Typography>
             <FightDetails
-              fight={
-                fights.find((f) => f.id === selectedFightId)
-                  ? { ...fights.find((f) => f.id === selectedFightId)! }
-                  : undefined
-              }
+              fight={fights.find((f) => f.id === selectedFightId)!}
               reportCode={fetchCode}
             />
           </Paper>
@@ -265,9 +263,23 @@ const MainApp: React.FC = () => {
 
 // import OAuthRedirect from './OAuthRedirect';
 
-const App: React.FC = () => (
-  <ApolloProvider client={client}>
-    <AuthProvider>
+const App: React.FC = () => {
+  // Use AuthProvider to get access token
+  // We need to wrap ApolloProvider inside AuthProvider to get the token
+  return (
+    <ReduxProvider store={store}>
+      <AuthProvider>
+        <AuthApolloProvider />
+      </AuthProvider>
+    </ReduxProvider>
+  );
+};
+
+const AuthApolloProvider: React.FC = () => {
+  const { accessToken } = useAuth();
+  const client = createEsoLogsClient(accessToken || '');
+  return (
+    <ApolloProvider client={client}>
       <HashRouter>
         <Routes>
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
@@ -275,8 +287,8 @@ const App: React.FC = () => (
           <Route path="/*" element={<MainApp />} />
         </Routes>
       </HashRouter>
-    </AuthProvider>
-  </ApolloProvider>
-);
+    </ApolloProvider>
+  );
+};
 
 export default App;
