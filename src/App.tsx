@@ -24,7 +24,7 @@ import {
 } from "@mui/material";
 // import OAuthRedirect from './OAuthRedirect';
 import { Link as LinkIcon } from "@mui/icons-material";
-import { setPkceCodeVerifier, CLIENT_ID } from "./auth";
+import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from "./auth";
 import { useGetReportByCodeQuery } from "./graphql/generated";
 
 type Fight = {
@@ -86,8 +86,7 @@ const MainApp: React.FC = () => {
     const verifier = generateCodeVerifier();
     setPkceCodeVerifier(verifier);
     const challenge = await generateCodeChallenge(verifier);
-    const redirectUri = window.location.href + "#/oauth-redirect";
-    const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(redirectUri)}`;
+    const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
     window.location.href = authUrl;
   };
 

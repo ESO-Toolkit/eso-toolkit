@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { CircularProgress, Container, Typography } from "@mui/material";
-import { getPkceCodeVerifier, CLIENT_ID } from "./auth";
+import { getPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from "./auth";
 
 const OAUTH_TOKEN_URL = "https://www.esologs.com/oauth/token"; // Adjust if needed
 const OAuthRedirect: React.FC = () => {
@@ -26,7 +26,7 @@ const OAuthRedirect: React.FC = () => {
           code,
           client_id: CLIENT_ID,
           code_verifier: verifier,
-          redirect_uri: window.location.href + '#/oauth-redirect',
+          redirect_uri: REDIRECT_URI,
         });
         const response = await fetch(OAUTH_TOKEN_URL, {
           method: "POST",
