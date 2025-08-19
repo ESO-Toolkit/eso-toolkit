@@ -29,7 +29,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
 import { AuthProvider, useAuth } from './AuthContext';
 import { createEsoLogsClient } from './esologsClient';
-import GraphiQLPage from './features/graphiql/GraphiQLPage';
 import FightDetails from './FightDetails';
 import { FightFragment } from './graphql/generated';
 import { useGetReportByCodeQuery } from './graphql/report-data.generated';
