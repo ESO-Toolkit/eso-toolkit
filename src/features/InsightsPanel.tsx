@@ -3,7 +3,9 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../graphql/generated';
+import { PlayerInfo } from '../store/eventsSlice';
 import { RootState } from '../store/storeWithHistory';
+import { PlayerTalent } from '../types/playerDetails';
 
 interface InsightsPanelProps {
   fight: FightFragment;
@@ -18,18 +20,23 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   // Find equipped abilities and champion points from combatantInfo
   const abilityEquipped: Record<string, string[]> = {};
   const cpEquipped: Record<string, string[]> = {};
-  Object.values(players).forEach((player: any) => {
+
+  Object.values(players).forEach((player: PlayerInfo) => {
     const talents = player?.combatantInfo?.talents || [];
     ABILITY_NAMES.forEach((name) => {
-      if (talents.some((talent: any) => talent.name?.toLowerCase() === name.toLowerCase())) {
+      if (
+        talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
+      ) {
         if (!abilityEquipped[name]) abilityEquipped[name] = [];
-        abilityEquipped[name].push(player.displayName || player.name || String(player.id));
+        abilityEquipped[name].push(String(player.displayName || player.name || player.id));
       }
     });
     CHAMPION_POINT_NAMES.forEach((name) => {
-      if (talents.some((talent: any) => talent.name?.toLowerCase() === name.toLowerCase())) {
+      if (
+        talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
+      ) {
         if (!cpEquipped[name]) cpEquipped[name] = [];
-        cpEquipped[name].push(player.displayName || player.name || String(player.id));
+        cpEquipped[name].push(String(player.displayName || player.name || player.id));
       }
     });
   });

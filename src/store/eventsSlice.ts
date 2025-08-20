@@ -9,12 +9,16 @@ import {
   GetReportEventsQuery,
 } from '../graphql/generated';
 import { Event } from '../types/events';
-import { PlayerDetails } from '../types/playerDetails';
+import { PlayerDetails, PlayerTalent } from '../types/playerDetails';
 
-interface PlayerInfo {
+export interface PlayerInfo {
   id: string | number;
-  name: string | number | null;
-  [key: string]: string | number | boolean | null | undefined;
+  name: string;
+  combatantInfo?: {
+    talents?: PlayerTalent[];
+  };
+  displayName: string;
+  [key: string]: string | number | boolean | null | undefined | object;
 }
 
 export interface EventsState {
