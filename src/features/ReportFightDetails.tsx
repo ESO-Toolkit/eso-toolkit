@@ -82,6 +82,12 @@ const ReportFightDetails: React.FC = () => {
     return <Typography variant="h6">Fight not found.</Typography>;
   }
 
+  // Get selectedTabId from query param if present
+  const searchParams = new URLSearchParams(window.location.search);
+  const selectedTabId = searchParams.has('selectedTabId')
+    ? Number(searchParams.get('selectedTabId'))
+    : undefined;
+
   return (
     <Paper elevation={2} sx={{ p: 3 }}>
       <Button
@@ -96,7 +102,7 @@ const ReportFightDetails: React.FC = () => {
       <Typography variant="h6" gutterBottom>
         Fight Details
       </Typography>
-      <FightDetails fight={fight} />
+      <FightDetails fight={fight} selectedTabId={selectedTabId} />
     </Paper>
   );
 };

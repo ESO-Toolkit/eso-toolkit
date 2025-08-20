@@ -1,6 +1,8 @@
 import { Box, Tabs, Tab, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 
 import BuffUptimesPanel from './features/BuffUptimesPanel';
 import DamageDonePanel from './features/DamageDonePanel';
@@ -13,11 +15,17 @@ import { RootState } from './store/storeWithHistory';
 
 interface FightDetailsProps {
   fight: FightFragment;
+  selectedTabId?: number;
 }
 
-const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
+const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [page, setPage] = React.useState(0);
-  const [selectedTab, setSelectedTab] = React.useState(0);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
+  const navigateToTab = (tabIdx: number) => {
+    searchParams.set('selectedTabId', String(tabIdx));
+    setSearchParams(searchParams);
+  };
   const EVENTS_PER_PAGE = 25;
 
   // All useSelector calls must be before any return
@@ -50,27 +58,28 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
     <Box mt={2}>
       <Tabs
         value={selectedTab}
-        onChange={(_, v) => setSelectedTab(v)}
+        onChange={(_, v) => navigateToTab(v)}
         sx={{ mb: 2, overflowX: 'auto', minWidth: 0 }}
         variant="scrollable"
         scrollButtons="auto"
       >
         <Tab label="Insights" />
+        <Tab label="Players" />
         <Tab label="Damage Done" />
         <Tab label="Healing Done" />
         <Tab label="Buff Uptimes" />
         <Tab label="Raw Events" />
         <Tab label="Diagnostics" />
-        <Tab label="Players" />
       </Tabs>
       {selectedTab === 0 && <InsightsPanel fight={fight} />}
-      {selectedTab === 1 && <DamageDonePanel fight={fight} />}
-      {selectedTab === 2 && <HealingDonePanel fight={fight} />}
-      {selectedTab === 3 && <BuffUptimesPanel fight={fight} />}
-      {selectedTab === 4 && (
+      {selectedTab === 1 && <PlayersPanel />}
+      {selectedTab === 2 && <DamageDonePanel fight={fight} />}
+      {selectedTab === 3 && <HealingDonePanel fight={fight} />}
+      {selectedTab === 4 && <BuffUptimesPanel fight={fight} />}
+      {selectedTab === 5 && (
         <EventsPanel page={page} setPage={setPage} EVENTS_PER_PAGE={EVENTS_PER_PAGE} />
       )}
-      {selectedTab === 5 && (
+      {selectedTab === 6 && (
         <Box mt={2}>
           <strong>Total Events:</strong> {events.length.toLocaleString()}
           <Box mt={2}>
