@@ -43,26 +43,20 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
       const fightEnd = Number(fight.endTime);
       const fightDuration = fightEnd - fightStart;
       const activeBuffs: Record<string, Record<string, number>> = {};
-      events.forEach((event) => {
+      // Filter events to only applybuff/removebuff
+      const filteredEvents = events.filter((event) => {
+        const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
+        return eventType === 'applybuff' || eventType === 'removebuff';
+      });
+      filteredEvents.forEach((event) => {
         const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
         const abilityGameID =
           event.abilityGameID || event.abilityId || event.buffId || event.id || 'unknown';
-
-        switch (event.type) {
-          case 'applybuff':
-          case 'removebuff':
-            break;
-          default:
-            return;
-        }
-
         const ability = masterData.abilitiesById[event.abilityGameID || ''];
-
         // Not a buff
         if (ability.type !== '2') {
           return;
         }
-
         const targetId = String(event.targetID ?? event.target ?? 'unknown');
         if (!activeBuffs[abilityGameID]) activeBuffs[abilityGameID] = {};
         if (!buffDetails[abilityGameID]) buffDetails[abilityGameID] = {};
