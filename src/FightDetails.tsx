@@ -18,6 +18,10 @@ interface FightDetailsProps {
 }
 
 const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
+  React.useEffect(() => {
+    document.title = 'ESO Log Insights by NotaGuild';
+  }, []);
+
   const [page, setPage] = React.useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
