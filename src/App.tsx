@@ -20,7 +20,7 @@ import {
   Avatar,
 } from '@mui/material';
 import ListItemButton from '@mui/material/ListItemButton';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Provider as ReduxProvider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
@@ -55,6 +55,28 @@ const MainApp: React.FC = () => {
   const dispatch = useAppDispatch();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
   const eventsLoading = useSelector((state: RootState) => (state.events as EventsState).loading);
+
+  // Navigation sync effects (after all variable declarations)
+  useEffect(() => {
+    // On mount, read reportId and fightId from URL hash
+    const hash = window.location.hash.replace(/^#\/?/, '');
+    const match = hash.match(/^report\/([A-Za-z0-9]+)(?:\/fight\/(\d+))?/);
+    if (match) {
+      const [, urlReportId, urlFightId] = match;
+      if (urlReportId && urlReportId !== reportId) dispatch(setReportId(urlReportId));
+      if (urlFightId && Number(urlFightId) !== selectedFightId) dispatch(setFightId(Number(urlFightId)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dispatch, reportId, selectedFightId]);
+
+  useEffect(() => {
+    if (reportId) {
+      let newHash = `#report/${reportId}`;
+      if (selectedFightId != null) newHash += `/fight/${selectedFightId}`;
+      if (window.location.hash !== newHash) window.location.hash = newHash;
+    }
+  }, [reportId, selectedFightId]);
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -144,8 +166,9 @@ const MainApp: React.FC = () => {
       setError('Invalid ESOLogs report URL.');
       return;
     }
-    dispatch(setReportId(extractedId));
-    refetch({ code: extractedId });
+  dispatch(setReportId(extractedId));
+  // URL will update via effect above
+  refetch({ code: extractedId });
   };
 
   React.useEffect(() => {
@@ -162,7 +185,8 @@ const MainApp: React.FC = () => {
   }, [data, gqlError]);
 
   const handleFightSelect = (id: number) => {
-    dispatch(setFightId(id));
+  dispatch(setFightId(id));
+  // URL will update via effect above
   };
 
   // Dispatch event fetch when fight selection changes and all required data is present
@@ -317,6 +341,7 @@ const MainApp: React.FC = () => {
                   variant="outlined"
                   sx={{ mb: 2 }}
                   onClick={() => dispatch(setFightId(null))}
+                  // URL will update via effect above
                 >
                   Back to Fight List
                 </Button>
