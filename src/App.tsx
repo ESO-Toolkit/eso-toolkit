@@ -23,7 +23,7 @@ import ListItemButton from '@mui/material/ListItemButton';
 import React, { useState, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { Provider as ReduxProvider } from 'react-redux';
-import { HashRouter, Routes, Route } from 'react-router-dom';
+import { HashRouter, Routes, Route, useNavigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
@@ -49,6 +49,7 @@ const MainApp: React.FC = () => {
   const [logUrl, setLogUrl] = useState<string>('');
   const reportId = useSelector((state: RootState) => state.navigation.reportId);
   const selectedFightId = useSelector((state: RootState) => state.navigation.fightId);
+  const navigate = useNavigate();
 
   const { isLoggedIn, setAccessToken } = useAuth();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -64,7 +65,8 @@ const MainApp: React.FC = () => {
     if (match) {
       const [, urlReportId, urlFightId] = match;
       if (urlReportId && urlReportId !== reportId) dispatch(setReportId(urlReportId));
-      if (urlFightId && Number(urlFightId) !== selectedFightId) dispatch(setFightId(Number(urlFightId)));
+      if (urlFightId && Number(urlFightId) !== selectedFightId)
+        dispatch(setFightId(Number(urlFightId)));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dispatch, reportId, selectedFightId]);
@@ -166,9 +168,9 @@ const MainApp: React.FC = () => {
       setError('Invalid ESOLogs report URL.');
       return;
     }
-  dispatch(setReportId(extractedId));
-  // URL will update via effect above
-  refetch({ code: extractedId });
+    dispatch(setReportId(extractedId));
+    // URL will update via effect above
+    refetch({ code: extractedId });
   };
 
   React.useEffect(() => {
@@ -185,8 +187,8 @@ const MainApp: React.FC = () => {
   }, [data, gqlError]);
 
   const handleFightSelect = (id: number) => {
-  dispatch(setFightId(id));
-  // URL will update via effect above
+    dispatch(setFightId(id));
+    // URL will update via effect above
   };
 
   // Dispatch event fetch when fight selection changes and all required data is present
@@ -243,9 +245,13 @@ const MainApp: React.FC = () => {
           <AppBar position="static" color="primary" sx={{ mb: 4 }}>
             <Toolbar>
               <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
-                <a href="/" style={{ color: 'inherit', textDecoration: 'none' }}>
+                <Button
+                  color="inherit"
+                  sx={{ fontSize: '1.25rem', textTransform: 'none', p: 0 }}
+                  onClick={() => navigate('/')}
+                >
                   ESO Log Aggregator
-                </a>
+                </Button>
               </Typography>
               {isLoggedIn && (
                 <>
@@ -340,8 +346,12 @@ const MainApp: React.FC = () => {
                 <Button
                   variant="outlined"
                   sx={{ mb: 2 }}
-                  onClick={() => dispatch(setFightId(null))}
-                  // URL will update via effect above
+                  onClick={() => {
+                    dispatch(setFightId(null));
+                    if (reportId) {
+                      navigate(`/report/${reportId}`);
+                    }
+                  }}
                 >
                   Back to Fight List
                 </Button>
