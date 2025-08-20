@@ -1,6 +1,6 @@
 import { useDispatch } from 'react-redux';
 
-import type { AppDispatch } from './index';
+import { AppDispatch } from './storeWithHistory';
 
 /**
  * Typed dispatch hook for Redux Toolkit, allowing thunk actions.

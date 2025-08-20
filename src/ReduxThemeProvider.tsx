@@ -2,7 +2,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import type { RootState } from './store';
+import { RootState } from './store/storeWithHistory';
 
 const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);

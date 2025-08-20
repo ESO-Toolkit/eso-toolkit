@@ -15,6 +15,7 @@ import storage from 'redux-persist/lib/storage';
 
 import abilitiesReducer from './abilitiesSlice';
 import eventsReducer from './eventsSlice';
+import masterDataReducer from './masterDataSlice';
 import navigationReducer from './navigationSlice';
 import uiReducer from './uiSlice';
 
@@ -35,6 +36,7 @@ const store = configureStore({
     ui: persistReducer<ReturnType<typeof uiReducer>>(uiPersistConfig, uiReducer),
     navigation: navigationReducer,
     router: routerReducer,
+    masterData: masterDataReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

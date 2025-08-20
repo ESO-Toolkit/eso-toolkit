@@ -29,22 +29,20 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { setPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
 import { AuthProvider, useAuth } from './AuthContext';
 import { createEsoLogsClient } from './esologsClient';
+import GraphiQLPage from './features/graphiql/GraphiQLPage';
 import FightDetails from './FightDetails';
 import { FightFragment } from './graphql/generated';
 import { useGetReportByCodeQuery } from './graphql/report-data.generated';
 import OAuthRedirect from './OAuthRedirect';
 import ReduxThemeProvider from './ReduxThemeProvider';
-import type { RootState } from './store';
 import { fetchEventsForFight } from './store/eventsSlice';
+import type { EventsState } from './store/eventsSlice';
+import { fetchReportMasterData } from './store/masterDataSlice';
 import { setReportId, setFightId } from './store/navigationSlice';
-import store, { persistor } from './store/storeWithHistory';
+import store, { persistor, RootState } from './store/storeWithHistory';
 import { setDarkMode } from './store/uiSlice';
 import { useAppDispatch } from './store/useAppDispatch';
-
-// Utility: Remove nulls and undefineds from a generic array
-function cleanArray<T>(arr: Array<T | null | undefined>): T[] {
-  return arr.filter((item): item is T => item != null);
-}
+import { cleanArray } from './utils/cleanArray';
 
 const MainApp: React.FC = () => {
   const [fights, setFights] = useState<FightFragment[]>([]);
@@ -57,7 +55,7 @@ const MainApp: React.FC = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const dispatch = useAppDispatch();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
-  const eventsLoading = useSelector((state: RootState) => state.events.loading);
+  const eventsLoading = useSelector((state: RootState) => (state.events as EventsState).loading);
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -177,6 +175,12 @@ const MainApp: React.FC = () => {
       }
     }
   }, [selectedFightId, fights, isLoggedIn, accessToken, reportId, dispatch]);
+
+  React.useEffect(() => {
+    if (reportId && accessToken) {
+      dispatch(fetchReportMasterData({ reportCode: reportId, accessToken }));
+    }
+  }, [reportId, accessToken, dispatch]);
 
   return (
     <ReduxThemeProvider>
@@ -357,6 +361,7 @@ const AuthApolloProvider: React.FC = () => {
       <HashRouter>
         <Routes>
           <Route path="/oauth-redirect" element={<OAuthRedirect />} />
+          <Route path="/graphql" element={<GraphiQLPage />} />
           <Route path="/*" element={<MainApp />} />
         </Routes>
       </HashRouter>

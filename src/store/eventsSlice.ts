@@ -17,7 +17,7 @@ interface PlayerInfo {
   [key: string]: string | number | boolean | null | undefined;
 }
 
-interface EventsState {
+export interface EventsState {
   events: Event[];
   players: Record<string, PlayerInfo>;
   characters: Record<number, CharacterFragment>;
@@ -64,7 +64,8 @@ export const fetchEventsForFight = createAsyncThunk<
           variables: {
             code: reportCode,
             fightIds: [requestedFightId],
-            afterEventTimestamp: nextPageTimestamp ?? undefined,
+            startTime: nextPageTimestamp ?? fight.startTime,
+            endTime: fight.endTime,
           },
           context: {
             headers: {

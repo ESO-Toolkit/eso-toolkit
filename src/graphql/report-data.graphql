@@ -54,11 +54,54 @@ fragment Event on ReportEventPaginator {
   nextPageTimestamp
 }
 
-query getReportEvents($code: String!, $afterEventTimestamp: Float, $fightIds: [Int]!) {
+query getReportEvents($code: String!, $startTime: Float, $endTime: Float, $fightIds: [Int]!) {
   reportData {
     report(code: $code) {
-      events(startTime: $afterEventTimestamp, fightIDs: $fightIds, useActorIDs: true) {
+      events(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIds
+        useActorIDs: true
+        limit: 1000000
+      ) {
         ...Event
+      }
+    }
+  }
+}
+
+fragment ReportAbility on ReportAbility {
+  gameID
+  icon
+  name
+  type
+}
+
+fragment ReportActor on ReportActor {
+  displayName
+  gameID
+  icon
+  id
+  name
+  server
+  subType
+  type
+}
+
+fragment MasterData on ReportMasterData {
+  abilities {
+    ...ReportAbility
+  }
+  actors {
+    ...ReportActor
+  }
+}
+
+query getReportMasterData($code: String!) {
+  reportData {
+    report(code: $code) {
+      masterData {
+        ...MasterData
       }
     }
   }

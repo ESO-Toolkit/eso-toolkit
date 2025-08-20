@@ -2,8 +2,16 @@ import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
 export function createEsoLogsClient(accessToken: string) {
-  const httpLink = createHttpLink({
-    uri: 'https://www.esologs.com/api/v2/client',
+  // Custom link to append query name to URL
+  const customHttpLink = createHttpLink({
+    uri: (operation) => {
+      const baseUrl = 'https://www.esologs.com/api/v2/client';
+      const queryName = operation.operationName;
+      if (queryName) {
+        return `${baseUrl}?query=${encodeURIComponent(queryName)}`;
+      }
+      return baseUrl;
+    },
   });
 
   const authLink = setContext((_, { headers }) => {
@@ -16,7 +24,7 @@ export function createEsoLogsClient(accessToken: string) {
   });
 
   return new ApolloClient({
-    link: authLink.concat(httpLink),
+    link: authLink.concat(customHttpLink),
     cache: new InMemoryCache({
       typePolicies: {
         Query: {
