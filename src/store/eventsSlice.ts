@@ -141,15 +141,15 @@ const eventsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchEventsForFight.pending, (state, action) => {
-        state.loading = true;
-        state.error = null;
-
         const fightId = action.meta.arg.fight.id;
 
         if (fightId === state.currentFetchFightId) {
           state.shouldExecuteFetch = false;
         } else {
           state.shouldExecuteFetch = true;
+          state.loaded = false;
+          state.loading = true;
+          state.error = null;
           state.currentFetchFightId = Number(action.meta.arg.fight.id);
         }
       })

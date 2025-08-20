@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import BuffUptimesPanel from './features/BuffUptimesPanel';
 import DamageDonePanel from './features/DamageDonePanel';
+import DeathEventPanel from './features/DeathEventPanel';
 import EventsPanel from './features/EventsPanel';
 import HealingDonePanel from './features/HealingDonePanel';
 import InsightsPanel from './features/InsightsPanel';
@@ -68,6 +69,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
       >
         <Tab label="Insights" />
         <Tab label="Players" />
+        <Tab label="Deaths" />
         <Tab label="Damage Done" />
         <Tab label="Healing Done" />
         <Tab label="Buff Uptimes" />
@@ -76,13 +78,14 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
       </Tabs>
       {selectedTab === 0 && <InsightsPanel fight={fight} />}
       {selectedTab === 1 && <PlayersPanel />}
-      {selectedTab === 2 && <DamageDonePanel fight={fight} />}
-      {selectedTab === 3 && <HealingDonePanel fight={fight} />}
-      {selectedTab === 4 && <BuffUptimesPanel fight={fight} />}
-      {selectedTab === 5 && (
+      {selectedTab === 2 && <DeathEventPanel fight={fight} />}
+      {selectedTab === 3 && <DamageDonePanel fight={fight} />}
+      {selectedTab === 4 && <HealingDonePanel fight={fight} />}
+      {selectedTab === 5 && <BuffUptimesPanel fight={fight} />}
+      {selectedTab === 6 && (
         <EventsPanel page={page} setPage={setPage} EVENTS_PER_PAGE={EVENTS_PER_PAGE} />
       )}
-      {selectedTab === 6 && (
+      {selectedTab === 7 && (
         <Box mt={2}>
           <strong>Total Events:</strong> {events.length.toLocaleString()}
           <Box mt={2}>
@@ -111,7 +114,6 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
           </Box>
         </Box>
       )}
-      {selectedTab === 6 && <PlayersPanel />}
     </Box>
   );
 };

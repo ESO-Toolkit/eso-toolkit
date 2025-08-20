@@ -11,14 +11,44 @@ import { detectBuildIssues } from '../utils/detectBuildIssues';
 
 const PlayersPanel: React.FC = () => {
   // Get report actors from masterData
-
   const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
+  const abilitiesById = useSelector((state: RootState) => state.masterData.abilitiesById);
+  const events = useSelector((state: RootState) => state.events.events);
   // Get player details (gear/talents) from masterData
   // Player details are stored in events.players, keyed by actor id
   const eventPlayers = useSelector((state: RootState) => state.events.players);
 
   // Filter for Player actors only
   const playerActors = Object.values(actorsById).filter((actor) => actor.type === 'Player');
+
+  // Calculate unique mundus buffs per player
+  const mundusBuffsByPlayer = React.useMemo(() => {
+    const result: Record<string, Set<string>> = {};
+
+    if (!events || !abilitiesById) return result;
+
+    // Initialize sets for each player
+    playerActors.forEach((actor) => {
+      if (actor.id) {
+        result[String(actor.id)] = new Set();
+      }
+    });
+
+    // Look through all events for applybuff events
+    events.forEach((event) => {
+      if (event.type === 'applybuff' && event.abilityGameID && event.targetID) {
+        const ability = abilitiesById[event.abilityGameID];
+        if (ability?.name && ability.name.toLowerCase().includes('mundus')) {
+          const playerId = String(event.targetID);
+          if (result[playerId]) {
+            result[playerId].add(ability.name);
+          }
+        }
+      }
+    });
+
+    return result;
+  }, [events, abilitiesById, playerActors]);
 
   return (
     <Box sx={{ p: 2 }}>
@@ -119,6 +149,19 @@ const PlayersPanel: React.FC = () => {
                             <Chip key={idx} label={`${count} ${setName}`} size="small" />
                           ));
                         })()}
+                      </Box>
+                    </Box>
+                  )}
+                  {/* Mundus Buffs Section */}
+                  {actor.id && mundusBuffsByPlayer[String(actor.id)]?.size > 0 && (
+                    <Box mt={1}>
+                      <Typography variant="body2" fontWeight="bold">
+                        Mundus Buffs:
+                      </Typography>
+                      <Box display="flex" flexWrap="wrap" gap={1}>
+                        {Array.from(mundusBuffsByPlayer[String(actor.id)]).map((buffName, idx) => (
+                          <Chip key={idx} label={String(buffName)} size="small" color="primary" />
+                        ))}
                       </Box>
                     </Box>
                   )}

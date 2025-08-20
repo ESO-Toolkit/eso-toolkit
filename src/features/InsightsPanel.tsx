@@ -19,6 +19,25 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const players = useSelector((state: RootState) => state.events.players);
   const events = useSelector((state: RootState) => state.events.events);
 
+  const fightStarter = React.useMemo(() => {
+    if (!events || !fight?.startTime) return null;
+    // Find the first playerentercombat event after fight start
+    const starterEvent = events.find(
+      (event) =>
+        (event.type || event._type || event.eventType) === 'playerentercombat' &&
+        event.timestamp &&
+        event.timestamp >= fight.startTime
+    );
+    if (starterEvent) {
+      const playerId = String(
+        starterEvent.sourceID ?? starterEvent.targetID ?? starterEvent.playerID ?? ''
+      );
+      const player = players[playerId];
+      return player?.displayName || player?.name || playerId;
+    }
+    return null;
+  }, [events, fight, players]);
+
   // Memoized calculation of equipped abilities and buff actors
   const masterData = useSelector((state: RootState) => state.masterData);
   const abilityEquipped = React.useMemo(() => {
@@ -79,6 +98,12 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
       <Box>
         <Typography>
           <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography>
+          <strong>Fight Started By:</strong> {fightStarter ? fightStarter : 'Unknown'}
         </Typography>
       </Box>
 

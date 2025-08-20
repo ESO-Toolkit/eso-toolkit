@@ -6,7 +6,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  ListItemText,
 } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -43,6 +42,7 @@ const ReportFights: React.FC = () => {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
         <CircularProgress />
+        <Typography sx={{ ml: 2 }}>Loading fights...</Typography>
       </Box>
     );
   }
@@ -59,21 +59,34 @@ const ReportFights: React.FC = () => {
           <Typography variant="h5" gutterBottom>
             Select a Fight
           </Typography>
-          <List>
-            {fights.map((fight: FightFragment) => (
-              <ListItem key={fight.id} divider>
-                <ListItemButton
-                  selected={fightId === fight.id}
-                  onClick={() => handleFightSelect(fight.id)}
-                >
-                  <ListItemText
-                    primary={fight.name}
-                    secondary={`Time: ${fight.startTime} - ${fight.endTime}`}
-                  />
-                </ListItemButton>
-              </ListItem>
-            ))}
-          </List>
+          {(() => {
+            const groups: { [key: string]: FightFragment[] } = {};
+            fights.forEach((fight: FightFragment) => {
+              const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
+              if (!groups[groupName]) groups[groupName] = [];
+              groups[groupName].push(fight);
+            });
+            return Object.entries(groups).map(([groupName, groupFights]) => (
+              <Box key={groupName} sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 1 }}>
+                  {groupName}
+                </Typography>
+                <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                  {groupFights.map((fight, idx) => (
+                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                      <ListItemButton
+                        selected={fightId === fight.id}
+                        onClick={() => handleFightSelect(fight.id)}
+                        sx={{ minWidth: 48, justifyContent: 'center' }}
+                      >
+                        <Typography variant="button">Pull {idx + 1}</Typography>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
+                </List>
+              </Box>
+            ));
+          })()}
         </Paper>
       )}
     </>

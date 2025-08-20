@@ -49,7 +49,7 @@ const HeaderBar: React.FC = () => {
             sx={{ fontSize: '1.25rem', textTransform: 'none', p: 0 }}
             onClick={() => navigate('/')}
           >
-            ESO Log Aggregator
+            ESO Log Insights
           </Button>
         </Typography>
         {isLoggedIn && (
