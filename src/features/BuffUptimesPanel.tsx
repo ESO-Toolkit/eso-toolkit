@@ -26,6 +26,7 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight })
   const events = useSelector((state: RootState) => state.events.events);
   const characters = useSelector((state: RootState) => state.events.characters);
   const players = useSelector((state: RootState) => state.events.players);
+  const masterData = useSelector((state: RootState) => state.masterData);
   // Calculate buff uptimes and details
   const buffUptimes: Record<string, number> = {};
   const buffDetails: Record<string, Record<string, Array<{ start: number; end: number }>>> = {};
@@ -87,8 +88,10 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight })
       {Object.keys(buffUptimes).length > 0 ? (
         <List>
           {Object.keys(buffUptimes)
+            .filter((abilityGameID) => masterData.abilitiesById[abilityGameID]?.type === '2')
             .sort((a, b) => buffUptimes[b] - buffUptimes[a])
             .map((abilityGameID) => {
+              const ability = masterData.abilitiesById[abilityGameID];
               // Calculate total time when ANY target had the buff
               const intervalsByTarget = buffDetails[abilityGameID] || {};
               const allIntervals: Array<{ start: number; end: number }> = [];
@@ -142,17 +145,17 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight })
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', width: '100%' }}>
                         <>
-                          {abilities[abilityGameID]?.icon && (
+                          {ability?.icon && (
                             <img
-                              src={`https://assets.rpglogs.com/img/eso/abilities/${String(abilities[abilityGameID].icon)}.png`}
-                              alt={abilities[abilityGameID]?.name || `Buff ${abilityGameID}`}
+                              src={`https://assets.rpglogs.com/img/eso/abilities/${String(ability.icon)}.png`}
+                              alt={ability?.name || `Buff ${abilityGameID}`}
                               style={{ width: 32, height: 32, marginRight: 12, borderRadius: 4 }}
                             />
                           )}
                           <ListItemText
                             primary={
-                              abilities[abilityGameID]?.name
-                                ? `${abilities[abilityGameID].name} (${abilityGameID})`
+                              ability?.name
+                                ? `${ability.name} (${abilityGameID})`
                                 : `Buff ${abilityGameID}`
                             }
                             secondary={`Total Uptime: ${uptimePercent.toFixed(2)}% | Avg per Target: ${avgTargetUptime.toFixed(2)}%`}

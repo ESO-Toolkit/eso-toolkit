@@ -24,9 +24,6 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
   );
 
   const events = useSelector((state: RootState) => state.events.events);
-  const totalDamageEvents = events.filter(
-    (event) => (event.type || event._type || event.eventType || '').toLowerCase() === 'damage'
-  ).length;
 
   return (
     <Box mt={2}>
@@ -36,9 +33,6 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
         <Tab label="Raw Events" />
         <Tab label="Diagnostics" />
       </Tabs>
-      <Box mb={2}>
-        <strong>Total Damage Events:</strong> {totalDamageEvents.toLocaleString()}
-      </Box>
       {selectedTab === 0 && <DamageDonePanel fight={fight} />}
       {selectedTab === 1 && <BuffUptimesPanel abilities={abilities} fight={fight} />}
       {selectedTab === 2 && (
