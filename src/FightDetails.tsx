@@ -1,7 +1,6 @@
 import { Box, Tabs, Tab, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useNavigate } from 'react-router-dom';
 import { useSearchParams } from 'react-router-dom';
 
 import BuffUptimesPanel from './features/BuffUptimesPanel';
