@@ -24,6 +24,7 @@ export interface PlayerGear {
   setID: number;
   type?: number;
   setName?: string;
+  flags?: number;
 }
 
 export interface CombatantInfo {

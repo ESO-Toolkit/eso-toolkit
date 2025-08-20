@@ -7,6 +7,7 @@ import DamageDonePanel from './features/DamageDonePanel';
 import EventsPanel from './features/EventsPanel';
 import HealingDonePanel from './features/HealingDonePanel';
 import InsightsPanel from './features/InsightsPanel';
+import PlayersPanel from './features/PlayersPanel';
 import { FightFragment } from './graphql/generated';
 import { RootState } from './store/storeWithHistory';
 
@@ -19,6 +20,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
   const [selectedTab, setSelectedTab] = React.useState(0);
   const EVENTS_PER_PAGE = 25;
 
+  // All useSelector calls must be before any return
   const events = useSelector((state: RootState) => state.events.events);
   const eventsLoaded = useSelector((state: RootState) => state.events.loaded);
   const masterDataLoaded = useSelector((state: RootState) => state.masterData.loaded);
@@ -42,15 +44,24 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
     );
   }
 
+  // Get players and masterData actors at top level for hooks compliance
+
   return (
     <Box mt={2}>
-      <Tabs value={selectedTab} onChange={(_, v) => setSelectedTab(v)} sx={{ mb: 2 }}>
+      <Tabs
+        value={selectedTab}
+        onChange={(_, v) => setSelectedTab(v)}
+        sx={{ mb: 2, overflowX: 'auto', minWidth: 0 }}
+        variant="scrollable"
+        scrollButtons="auto"
+      >
         <Tab label="Insights" />
         <Tab label="Damage Done" />
         <Tab label="Healing Done" />
         <Tab label="Buff Uptimes" />
         <Tab label="Raw Events" />
         <Tab label="Diagnostics" />
+        <Tab label="Players" />
       </Tabs>
       {selectedTab === 0 && <InsightsPanel fight={fight} />}
       {selectedTab === 1 && <DamageDonePanel fight={fight} />}
@@ -88,6 +99,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
           </Box>
         </Box>
       )}
+      {selectedTab === 6 && <PlayersPanel />}
     </Box>
   );
 };
