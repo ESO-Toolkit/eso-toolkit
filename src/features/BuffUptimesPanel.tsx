@@ -12,83 +12,104 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../store/storeWithHistory';
 
-export interface Ability {
-  name: string | null;
-  [key: string]: unknown;
-}
-
 interface BuffUptimesPanelProps {
-  abilities: Record<string, Ability>;
   fight: { startTime?: number; endTime?: number };
 }
 
-const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight }) => {
+const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
   const events = useSelector((state: RootState) => state.events.events);
   const characters = useSelector((state: RootState) => state.events.characters);
   const players = useSelector((state: RootState) => state.events.players);
   const masterData = useSelector((state: RootState) => state.masterData);
-  // Calculate buff uptimes and details
-  const buffUptimes: Record<string, number> = {};
-  const buffDetails: Record<string, Record<string, Array<{ start: number; end: number }>>> = {};
-  if (events && events.length > 0 && fight && fight.startTime != null && fight.endTime != null) {
-    const fightStart = Number(fight.startTime);
-    const fightEnd = Number(fight.endTime);
-    const activeBuffs: Record<string, Record<string, number>> = {};
-    events.forEach((event) => {
-      const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-      let abilityGameID =
-        event.abilityGameID || event.abilityId || event.buffId || event.id || 'unknown';
-      if (abilityGameID === 'unknown' && event.ability && typeof event.ability === 'object') {
-        abilityGameID = event.ability.gameID || event.ability.id || 'unknown';
-      } else if (
-        abilityGameID === 'unknown' &&
-        (typeof event.ability === 'string' || typeof event.ability === 'number')
-      ) {
-        abilityGameID = event.ability;
-      }
-      if (abilityGameID === 'unknown') return;
-      const targetId = String(event.targetID ?? event.target ?? 'unknown');
-      if (!activeBuffs[abilityGameID]) activeBuffs[abilityGameID] = {};
-      if (!buffDetails[abilityGameID]) buffDetails[abilityGameID] = {};
-      if (!buffDetails[abilityGameID][targetId]) buffDetails[abilityGameID][targetId] = [];
-      if (eventType === 'applybuff') {
-        activeBuffs[abilityGameID][targetId] = Number(event.timestamp);
-      } else if (eventType === 'removebuff' && activeBuffs[abilityGameID][targetId] != null) {
-        const start = activeBuffs[abilityGameID][targetId];
-        const end = Number(event.timestamp);
-        buffDetails[abilityGameID][targetId].push({ start, end });
-        delete activeBuffs[abilityGameID][targetId];
-      }
-    });
-    // If any buffs are still active at fight end, close them
-    Object.keys(activeBuffs).forEach((abilityGameID) => {
-      Object.keys(activeBuffs[abilityGameID]).forEach((targetId) => {
-        const start = activeBuffs[abilityGameID][targetId];
-        const end = fightEnd;
-        buffDetails[abilityGameID][targetId].push({ start, end });
-      });
-    });
-    // Calculate uptime percentages
-    Object.keys(buffDetails).forEach((abilityGameID) => {
-      let totalBuffTime = 0;
-      Object.values(buffDetails[abilityGameID]).forEach((intervals) => {
-        totalBuffTime += intervals.reduce(
-          (sum, interval) => sum + (interval.end - interval.start),
-          0
-        );
-      });
-      const uptimePercent = (totalBuffTime / (fightEnd - fightStart)) * 100;
-      buffUptimes[abilityGameID] = uptimePercent;
-    });
-  }
+
+  // Get all Player actors from masterData
+  const playerActorIds = React.useMemo(() => {
+    return Object.values(masterData.actorsById)
+      .filter(
+        (actor): actor is import('../graphql/generated').ReportActorFragment =>
+          actor && actor.type === 'Player'
+      )
+      .map((actor) => String(actor.id));
+  }, [masterData.actorsById]);
+
   const [expandedBuff, setExpandedBuff] = React.useState<string | null>(null);
+
+  // Memoized calculation of buff uptimes and details
+  const { buffUptimes, buffDetails } = React.useMemo(() => {
+    const buffUptimes: Record<string, number> = {};
+    const buffDetails: Record<string, Record<string, Array<{ start: number; end: number }>>> = {};
+    if (events && events.length > 0 && fight && fight.startTime != null && fight.endTime != null) {
+      const fightStart = Number(fight.startTime);
+      const fightEnd = Number(fight.endTime);
+      const fightDuration = fightEnd - fightStart;
+      const activeBuffs: Record<string, Record<string, number>> = {};
+      events.forEach((event) => {
+        const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
+        const abilityGameID =
+          event.abilityGameID || event.abilityId || event.buffId || event.id || 'unknown';
+
+        switch (event.type) {
+          case 'applybuff':
+          case 'removebuff':
+            break;
+          default:
+            return;
+        }
+
+        const ability = masterData.abilitiesById[event.abilityGameID || ''];
+
+        // Not a buff
+        if (ability.type !== '2') {
+          return;
+        }
+
+        const targetId = String(event.targetID ?? event.target ?? 'unknown');
+        if (!activeBuffs[abilityGameID]) activeBuffs[abilityGameID] = {};
+        if (!buffDetails[abilityGameID]) buffDetails[abilityGameID] = {};
+        if (!buffDetails[abilityGameID][targetId]) buffDetails[abilityGameID][targetId] = [];
+        if (eventType === 'applybuff') {
+          activeBuffs[abilityGameID][targetId] = Number(event.timestamp);
+        } else if (eventType === 'removebuff' && activeBuffs[abilityGameID][targetId] != null) {
+          const start = activeBuffs[abilityGameID][targetId];
+          const end = Number(event.timestamp);
+          buffDetails[abilityGameID][targetId].push({ start, end });
+          delete activeBuffs[abilityGameID][targetId];
+        }
+      });
+      // If any buffs are still active at fight end, close them
+      Object.keys(activeBuffs).forEach((abilityGameID) => {
+        Object.keys(activeBuffs[abilityGameID]).forEach((targetId) => {
+          const start = activeBuffs[abilityGameID][targetId];
+          const end = fightEnd;
+          buffDetails[abilityGameID][targetId].push({ start, end });
+        });
+      });
+      // Calculate uptime percentages using only Player actors
+      Object.keys(buffDetails).forEach((abilityGameID) => {
+        let totalBuffTime = 0;
+        Object.entries(buffDetails[abilityGameID]).forEach(([targetId, intervals]) => {
+          if (playerActorIds.includes(targetId)) {
+            totalBuffTime += intervals.reduce(
+              (sum, interval) => sum + (interval.end - interval.start),
+              0
+            );
+          }
+        });
+        // Each player should have fightDuration worth of buff for 100%
+        const denominator = playerActorIds.length * fightDuration;
+        const uptimePercent = denominator > 0 ? (totalBuffTime / denominator) * 100 : 0;
+        buffUptimes[abilityGameID] = uptimePercent;
+      });
+    }
+    return { buffUptimes, buffDetails };
+  }, [events, fight, masterData.abilitiesById, playerActorIds]);
+
   return (
     <Box>
       <Typography variant="h6">Buff Uptime Percentages</Typography>
       {Object.keys(buffUptimes).length > 0 ? (
         <List>
           {Object.keys(buffUptimes)
-            .filter((abilityGameID) => masterData.abilitiesById[abilityGameID]?.type === '2')
             .sort((a, b) => buffUptimes[b] - buffUptimes[a])
             .map((abilityGameID) => {
               const ability = masterData.abilitiesById[abilityGameID];
@@ -175,8 +196,9 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight })
                     <Box sx={{ pl: 4, pb: 2 }}>
                       <Typography variant="subtitle1">Buff Uptime Details by Target</Typography>
                       <List>
-                        {Object.entries(buffDetails[abilityGameID] || {}).map(
-                          ([targetId, intervals]) => {
+                        {Object.entries(buffDetails[abilityGameID] || {})
+                          .filter(([targetId]) => playerActorIds.includes(targetId))
+                          .map(([targetId, intervals]) => {
                             const fightStart = Number(fight?.startTime ?? 0);
                             const fightEnd = Number(fight?.endTime ?? 1);
                             const totalBuffTime = intervals.reduce(
@@ -221,8 +243,7 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ abilities, fight })
                                 </Box>
                               </ListItem>
                             );
-                          }
-                        )}
+                          })}
                       </List>
                     </Box>
                   )}

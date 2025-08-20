@@ -17,6 +17,7 @@ import abilitiesReducer from './abilitiesSlice';
 import eventsReducer from './eventsSlice';
 import masterDataReducer from './masterDataSlice';
 import navigationReducer from './navigationSlice';
+import reportReducer from './reportSlice';
 import uiReducer from './uiSlice';
 
 const uiPersistConfig = {
@@ -37,6 +38,7 @@ const store = configureStore({
     navigation: navigationReducer,
     router: routerReducer,
     masterData: masterDataReducer,
+    report: reportReducer,
   },
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({

@@ -1,27 +1,11 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 
-interface NavigationState {
-  reportId: string;
-  fightId: number | null;
-}
-
-const initialState: NavigationState = {
-  reportId: '',
-  fightId: null,
-};
+const initialState = {};
 
 const navigationSlice = createSlice({
   name: 'navigation',
   initialState,
-  reducers: {
-    setReportId(state, action: PayloadAction<string>) {
-      state.reportId = action.payload;
-    },
-    setFightId(state, action: PayloadAction<number | null>) {
-      state.fightId = action.payload;
-    },
-  },
+  reducers: {},
 });
 
-export const { setReportId, setFightId } = navigationSlice.actions;
 export default navigationSlice.reducer;

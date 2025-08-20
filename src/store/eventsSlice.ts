@@ -26,6 +26,7 @@ export interface EventsState {
   players: Record<string, PlayerInfo>;
   characters: Record<number, CharacterFragment>;
   loading: boolean;
+  loaded: boolean;
   error: string | null;
   currentFetchFightId?: number | null;
   shouldExecuteFetch: boolean;
@@ -36,6 +37,7 @@ const initialState: EventsState = {
   players: {},
   characters: {},
   loading: false,
+  loaded: false,
   error: null,
   currentFetchFightId: null,
   shouldExecuteFetch: false,
@@ -132,6 +134,7 @@ const eventsSlice = createSlice({
       state.events = [];
       state.error = null;
       state.loading = false;
+      state.loaded = false;
     },
   },
   extraReducers: (builder) => {
@@ -159,6 +162,7 @@ const eventsSlice = createSlice({
           state.players = action.payload.players;
           state.loading = false;
           state.error = null;
+          state.loaded = true;
           state.currentFetchFightId = null;
         }
       )

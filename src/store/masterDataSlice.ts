@@ -13,6 +13,7 @@ interface MasterDataState {
   abilitiesById: Record<string | number, ReportAbilityFragment>;
   actorsById: Record<string | number, ReportActorFragment>;
   loading: boolean;
+  loaded: boolean;
   error: string | null;
 }
 
@@ -20,6 +21,7 @@ const initialState: MasterDataState = {
   abilitiesById: {},
   actorsById: {},
   loading: false,
+  loaded: false,
   error: null,
 };
 
@@ -89,6 +91,7 @@ const masterDataSlice = createSlice({
       .addCase(fetchReportMasterData.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.loaded = false;
       })
       .addCase(
         fetchReportMasterData.fulfilled,
@@ -96,6 +99,7 @@ const masterDataSlice = createSlice({
           state.abilitiesById = action.payload.abilitiesById;
           state.actorsById = action.payload.actorsById;
           state.loading = false;
+          state.loaded = true;
           state.error = null;
         }
       )

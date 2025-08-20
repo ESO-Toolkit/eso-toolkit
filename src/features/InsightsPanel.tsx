@@ -17,66 +17,105 @@ const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
   const players = useSelector((state: RootState) => state.events.players);
-  // Find equipped abilities and champion points from combatantInfo
-  const abilityEquipped: Record<string, string[]> = {};
-  const cpEquipped: Record<string, string[]> = {};
+  const events = useSelector((state: RootState) => state.events.events);
 
-  Object.values(players).forEach((player: PlayerInfo) => {
-    const talents = player?.combatantInfo?.talents || [];
-    ABILITY_NAMES.forEach((name) => {
-      if (
-        talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
-      ) {
-        if (!abilityEquipped[name]) abilityEquipped[name] = [];
-        abilityEquipped[name].push(String(player.displayName || player.name || player.id));
-      }
+  // Memoized calculation of equipped abilities and buff actors
+  const masterData = useSelector((state: RootState) => state.masterData);
+  const abilityEquipped = React.useMemo(() => {
+    const result: Record<string, string[]> = {};
+    Object.values(players).forEach((player: PlayerInfo) => {
+      const talents = player?.combatantInfo?.talents || [];
+      ABILITY_NAMES.forEach((name) => {
+        if (
+          talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
+        ) {
+          if (!result[name]) result[name] = [];
+          result[name].push(String(player.displayName || player.name || player.id));
+        }
+      });
     });
+    return result;
+  }, [players]);
+
+  const buffActors = React.useMemo(() => {
+    const result: Record<string, Set<string>> = {
+      'Enlivening Overflow': new Set(),
+      'From the Brink': new Set(),
+    };
+    const buffAbilityIds: Record<string, Array<string | number | null | undefined>> = {};
     CHAMPION_POINT_NAMES.forEach((name) => {
-      if (
-        talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
-      ) {
-        if (!cpEquipped[name]) cpEquipped[name] = [];
-        cpEquipped[name].push(String(player.displayName || player.name || player.id));
+      buffAbilityIds[name] = Object.values(masterData.abilitiesById)
+        .filter((a) => a.name?.toLowerCase() === name.toLowerCase())
+        .map((a) => a.gameID)
+        .filter((id) => id != null);
+    });
+    events.forEach((event) => {
+      const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
+      if (eventType === 'applybuff') {
+        CHAMPION_POINT_NAMES.forEach((name) => {
+          if (
+            buffAbilityIds[name].includes(event.abilityGameID ?? '') ||
+            buffAbilityIds[name].includes(event.abilityId ?? '') ||
+            buffAbilityIds[name].includes(event.buffId ?? '')
+          ) {
+            const sourceId = String(event.sourceID);
+            if (event.sourceID != null && players[sourceId]) {
+              result[name].add(
+                String(players[sourceId].displayName || players[sourceId].name || sourceId)
+              );
+            }
+          }
+        });
       }
     });
-  });
+    return result;
+  }, [events, masterData, players]);
   return (
     <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
       <Typography variant="h6" gutterBottom>
         Fight Insights
       </Typography>
+
       <Box>
         <Typography>
           <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
         </Typography>
-        <Box mt={2}>
-          <Typography variant="subtitle1">Abilities Equipped:</Typography>
-          <List dense>
-            {ABILITY_NAMES.map((name) => (
-              <ListItem key={name}>
-                <ListItemText
-                  primary={name}
-                  secondary={
-                    abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
-        <Box mt={2}>
-          <Typography variant="subtitle1">Champion Points Equipped:</Typography>
-          <List dense>
-            {CHAMPION_POINT_NAMES.map((name) => (
-              <ListItem key={name}>
-                <ListItemText
-                  primary={name}
-                  secondary={cpEquipped[name]?.length ? cpEquipped[name].join(', ') : 'None'}
-                />
-              </ListItem>
-            ))}
-          </List>
-        </Box>
+      </Box>
+
+      <Box>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Abilities Equipped:
+        </Typography>
+        <List dense>
+          {ABILITY_NAMES.map((name) => (
+            <ListItem key={name} sx={{ mb: 1 }}>
+              <ListItemText
+                primary={name}
+                secondary={
+                  abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Box>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Champion Points Equipped:
+        </Typography>
+        <List dense>
+          {CHAMPION_POINT_NAMES.map((name) => (
+            <ListItem key={name} sx={{ mb: 1 }}>
+              <ListItemText
+                primary={name}
+                secondary={
+                  buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
       </Box>
     </Paper>
   );

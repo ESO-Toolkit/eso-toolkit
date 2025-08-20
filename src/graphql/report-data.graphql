@@ -62,7 +62,7 @@ query getReportEvents($code: String!, $startTime: Float, $endTime: Float, $fight
         endTime: $endTime
         fightIDs: $fightIds
         useActorIDs: true
-        limit: 1000000
+        limit: 100000000
       ) {
         ...Event
       }

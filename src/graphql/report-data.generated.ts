@@ -206,7 +206,7 @@ export const GetReportEventsDocument = gql`
         endTime: $endTime
         fightIDs: $fightIds
         useActorIDs: true
-        limit: 1000000
+        limit: 100000000
       ) {
         ...Event
       }
