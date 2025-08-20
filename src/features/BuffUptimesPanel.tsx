@@ -10,6 +10,7 @@ import {
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { ReportActorFragment } from '../graphql/generated';
 import { RootState } from '../store/storeWithHistory';
 
 interface BuffUptimesPanelProps {
@@ -25,10 +26,7 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
   // Get all Player actors from masterData
   const playerActorIds = React.useMemo(() => {
     return Object.values(masterData.actorsById)
-      .filter(
-        (actor): actor is import('../graphql/generated').ReportActorFragment =>
-          actor && actor.type === 'Player'
-      )
+      .filter((actor): actor is ReportActorFragment => actor && actor.type === 'Player')
       .map((actor) => String(actor.id));
   }, [masterData.actorsById]);
 
