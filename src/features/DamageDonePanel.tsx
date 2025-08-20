@@ -68,12 +68,8 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
         dps: fightDuration > 0 ? total / fightDuration : 0,
       };
     })
-  .sort((a, b) => b.dps - a.dps);
-  const abilityNameLookup = (abilityId: string | number | undefined) => {
-    if (!abilityId) return undefined;
-    const ability = masterData.abilitiesById[abilityId];
-    return ability ? ability.name : undefined;
-  };
+    .sort((a, b) => b.dps - a.dps);
+
   return (
     <Box>
       <Typography variant="h6">Damage Done by Player</Typography>
