@@ -10,18 +10,14 @@ import {
 import { cleanArray } from '../utils/cleanArray';
 
 interface MasterDataState {
-  abilities: ReportAbilityFragment[];
   abilitiesById: Record<string | number, ReportAbilityFragment>;
-  actors: ReportActorFragment[];
   actorsById: Record<string | number, ReportActorFragment>;
   loading: boolean;
   error: string | null;
 }
 
 const initialState: MasterDataState = {
-  abilities: [],
   abilitiesById: {},
-  actors: [],
   actorsById: {},
   loading: false,
   error: null,
@@ -97,9 +93,7 @@ const masterDataSlice = createSlice({
       .addCase(
         fetchReportMasterData.fulfilled,
         (state, action: PayloadAction<MasterDataPayload>) => {
-          state.abilities = action.payload.abilities;
           state.abilitiesById = action.payload.abilitiesById;
-          state.actors = action.payload.actors;
           state.actorsById = action.payload.actorsById;
           state.loading = false;
           state.error = null;
