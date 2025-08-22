@@ -1,5 +1,4 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LaunchIcon from '@mui/icons-material/Launch';
 import {
   Box,
   Typography,
@@ -7,14 +6,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  Checkbox,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-  Link,
-  IconButton,
 } from '@mui/material';
 import {
   Chart as ChartJS,
@@ -33,7 +24,9 @@ import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
+import StatChecklist from '../components/StatChecklist';
 import { FightFragment } from '../graphql/generated';
+import { useReportFightParams } from '../hooks/useReportFightParams';
 import { RootState } from '../store/storeWithHistory';
 import { KnownAbilities, CriticalDamageValues } from '../types/abilities';
 import { CombatantGear, CombatantInfoEvent, EventType } from '../types/combatlogEvents';
@@ -89,8 +82,6 @@ interface PlayerCriticalDamageDetailsProps {
   id: string;
   name: string;
   fight: FightFragment;
-  reportId?: string;
-  fightId?: number;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
@@ -99,13 +90,12 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
   id,
   name,
   fight,
-  reportId,
-  fightId,
   expanded = false,
   onExpandChange,
 }) => {
   const events = useSelector((state: RootState) => state.events.events);
   const [searchParams] = useSearchParams();
+  const { reportId, fightId } = useReportFightParams();
 
   const selectedTargetId = searchParams.get('target') || '';
 
@@ -225,12 +215,123 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
   // Compute critical damage data for this specific player
   const criticalDamageData = React.useMemo(() => {
+    const fightStart = fight.startTime;
+    const fightEnd = fight.endTime;
+
+    // Track Major Brittle debuff uptimes for the selected target
+    const majorBrittleEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
+          (event.abilityName ?? '').includes('Major Brittle'))
+    );
+
+    // Build a timeline of Major Brittle active intervals
+    const majorBrittleIntervals: Array<{ start: number; end: number }> = [];
+    let majorBrittleActiveStart: number | null = null;
+    for (const event of majorBrittleEvents) {
+      if (event.type === 'applydebuff') {
+        if (majorBrittleActiveStart === null) majorBrittleActiveStart = event.timestamp;
+      } else if (event.type === 'removedebuff') {
+        if (majorBrittleActiveStart !== null) {
+          majorBrittleIntervals.push({ start: majorBrittleActiveStart, end: event.timestamp });
+          majorBrittleActiveStart = null;
+        }
+      }
+    }
+    // If Major Brittle was never removed, assume it lasts until fight end
+    if (majorBrittleActiveStart !== null) {
+      majorBrittleIntervals.push({ start: majorBrittleActiveStart, end: fightEnd });
+    }
+    // ...existing code...
+
+    // Track Minor Brittle debuff uptimes for the selected target
+    const minorBrittleEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
+          (event.abilityName ?? '').includes('Minor Brittle'))
+    );
+
+    // Build a timeline of Minor Brittle active intervals
+    const minorBrittleIntervals: Array<{ start: number; end: number }> = [];
+    let brittleActiveStart: number | null = null;
+    for (const event of minorBrittleEvents) {
+      if (event.type === 'applydebuff') {
+        if (brittleActiveStart === null) brittleActiveStart = event.timestamp;
+      } else if (event.type === 'removedebuff') {
+        if (brittleActiveStart !== null) {
+          minorBrittleIntervals.push({ start: brittleActiveStart, end: event.timestamp });
+          brittleActiveStart = null;
+        }
+      }
+    }
+    // If Minor Brittle was never removed, assume it lasts until fight end
+    if (brittleActiveStart !== null) {
+      minorBrittleIntervals.push({ start: brittleActiveStart, end: fightEnd });
+    }
     if (!fightEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
       return null;
     }
+    // ...existing code...
 
-    const fightStart = fight.startTime;
-    const fightEnd = fight.endTime;
+    // Track Minor Force buff uptimes for the selected player
+    // Find all buff events for Minor Force where target is selected player
+    const minorForceEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applybuff' || event.type === 'removebuff') &&
+        String(event.targetID ?? event.target ?? '') === id &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
+          (event.abilityName ?? '').includes('Minor Force'))
+    );
+
+    // Build a timeline of Minor Force active intervals
+    const minorForceIntervals: Array<{ start: number; end: number }> = [];
+    let activeStart: number | null = null;
+    for (const event of minorForceEvents) {
+      if (event.type === 'applybuff') {
+        if (activeStart === null) activeStart = event.timestamp;
+      } else if (event.type === 'removebuff') {
+        if (activeStart !== null) {
+          minorForceIntervals.push({ start: activeStart, end: event.timestamp });
+          activeStart = null;
+        }
+      }
+    }
+    // If Minor Force was never removed, assume it lasts until fight end
+    if (activeStart !== null) {
+      minorForceIntervals.push({ start: activeStart, end: fightEnd });
+    }
+
+    // Track Major Force buff uptimes for the selected player
+    // Find all buff events for Major Force where target is selected player
+    const majorForceEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applybuff' || event.type === 'removebuff') &&
+        String(event.targetID ?? event.target ?? '') === id &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
+          (event.abilityName ?? '').includes('Major Force'))
+    );
+
+    // Build a timeline of Major Force active intervals
+    const majorForceIntervals: Array<{ start: number; end: number }> = [];
+    let majorForceActiveStart: number | null = null;
+    for (const event of majorForceEvents) {
+      if (event.type === 'applybuff') {
+        if (majorForceActiveStart === null) majorForceActiveStart = event.timestamp;
+      } else if (event.type === 'removebuff') {
+        if (majorForceActiveStart !== null) {
+          majorForceIntervals.push({ start: majorForceActiveStart, end: event.timestamp });
+          majorForceActiveStart = null;
+        }
+      }
+    }
+    // If Major Force was never removed, assume it lasts until fight end
+    if (majorForceActiveStart !== null) {
+      majorForceIntervals.push({ start: majorForceActiveStart, end: fightEnd });
+    }
 
     // Analyze critical damage sources for this player
     const sources: CriticalDamageSource[] = [];
@@ -254,6 +355,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       wasActive: true,
       description: 'Default critical damage bonus that all players start with',
     });
+    // Add Minor Breach to sources list (ESO Logs link, checklist style)
     sources.push({
       name: 'Lucent Echoes',
       value: CriticalDamageValues.LUCENT_ECHOES,
@@ -309,74 +411,120 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
         ),
       description: `Passive that provides 2% critical damage per piece of medium armor worn (${mediumArmorCount} pieces)`,
     });
-
     setCriticalDamageSources(sources);
 
-    // Create timeline data points
+    // Create timeline data points with Minor Force and Major Force uptime
+    const fightDurationSeconds = (fightEnd - fightStart) / 1000;
     const dataPoints: CriticalDamageDataPoint[] = [];
-    const currentCriticalDamage = playerBaseCriticalDamage;
+    let minorForceUptimeSeconds = 0;
+    let majorForceUptimeSeconds = 0;
+    let minorBrittleUptimeSeconds = 0;
+    let majorBrittleUptimeSeconds = 0;
+    for (let second = 0; second <= Math.ceil(fightDurationSeconds); second++) {
+      const timestamp = fightStart + second * 1000;
+      let critDmg = playerBaseCriticalDamage;
+      // Check if Minor Force is active at this timestamp
+      const isMinorForceActive = minorForceIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isMinorForceActive) {
+        critDmg += 10;
+        minorForceUptimeSeconds++;
+      }
+      // Check if Major Force is active at this timestamp
+      const isMajorForceActive = majorForceIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isMajorForceActive) {
+        critDmg += 20;
+        majorForceUptimeSeconds++;
+      }
+      // Check if Minor Brittle is active at this timestamp
+      const isMinorBrittleActive = minorBrittleIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isMinorBrittleActive) {
+        critDmg += 10;
+        minorBrittleUptimeSeconds++;
+      }
+      // Check if Major Brittle is active at this timestamp
+      const isMajorBrittleActive = majorBrittleIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isMajorBrittleActive) {
+        critDmg += 20;
+        majorBrittleUptimeSeconds++;
+      }
+      dataPoints.push({
+        timestamp,
+        criticalDamage: critDmg,
+        relativeTime: second,
+      });
+    }
 
-    // Add initial data point
-    dataPoints.push({
-      timestamp: fightStart,
-      criticalDamage: currentCriticalDamage,
-      relativeTime: 0,
+    // Add Minor Force to sources list (ESO Logs link)
+    let minorForceLink: string | undefined;
+    if (reportId && id) {
+      minorForceLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=buffs&hostility=0&ability=${KnownAbilities.MINOR_FORCE}&source=${id}`;
+    }
+    sources.push({
+      name: 'Minor Force',
+      value: 10,
+      wasActive: minorForceUptimeSeconds > 0,
+      description: `Buff that provides 10% critical damage. Uptime: ${((minorForceUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: minorForceLink,
     });
 
-    // TODO: Process debuff events to track critical damage changes over time
-
-    // Voxelization: Reduce data points to 1-second intervals
-    const voxelizedDataPoints: CriticalDamageDataPoint[] = [];
-    const fightDurationSeconds = (fightEnd - fightStart) / 1000;
-
-    for (let second = 0; second <= Math.ceil(fightDurationSeconds); second++) {
-      const voxelStart = fightStart + second * 1000;
-      const voxelEnd = voxelStart + 1000;
-
-      // Find all points in this 1-second interval
-      const pointsInVoxel = dataPoints.filter(
-        (point) => point.timestamp >= voxelStart && point.timestamp < voxelEnd
-      );
-
-      if (pointsInVoxel.length > 0) {
-        // Use the point with the highest critical damage in this interval
-        const maxPoint = pointsInVoxel.reduce((max, point) =>
-          point.criticalDamage > max.criticalDamage ? point : max
-        );
-        voxelizedDataPoints.push({
-          timestamp: voxelStart,
-          criticalDamage: maxPoint.criticalDamage,
-          relativeTime: second,
-        });
-      } else {
-        // First voxel with no points, use base critical damage
-        if (voxelizedDataPoints.length === 0) {
-          voxelizedDataPoints.push({
-            timestamp: voxelStart,
-            criticalDamage: playerBaseCriticalDamage,
-            relativeTime: second,
-          });
-        } else {
-          // Use the last known value
-          const lastPoint = voxelizedDataPoints[voxelizedDataPoints.length - 1];
-          voxelizedDataPoints.push({
-            timestamp: voxelStart,
-            criticalDamage: lastPoint.criticalDamage,
-            relativeTime: second,
-          });
-        }
-      }
+    // Add Major Force to sources list (ESO Logs link)
+    let majorForceLink: string | undefined;
+    if (reportId && id) {
+      majorForceLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=buffs&hostility=0&ability=${KnownAbilities.MAJOR_FORCE}&source=${id}`;
     }
+    sources.push({
+      name: 'Major Force',
+      value: 20,
+      wasActive: majorForceUptimeSeconds > 0,
+      description: `Buff that provides 20% critical damage. Uptime: ${((majorForceUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: majorForceLink,
+    });
+
+    // Add Minor Brittle to sources list (ESO Logs link)
+    let minorBrittleLink: string | undefined;
+    if (reportId && selectedTargetId) {
+      minorBrittleLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=debuffs&hostility=1&ability=${KnownAbilities.MINOR_BRITTLE}&source=${selectedTargetId}`;
+    }
+    sources.push({
+      name: 'Minor Brittle',
+      value: 10,
+      wasActive: minorBrittleUptimeSeconds > 0,
+      description: `Debuff that provides 10% critical damage. Uptime: ${((minorBrittleUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: minorBrittleLink,
+    });
+
+    // Add Major Brittle to sources list (ESO Logs link)
+    let majorBrittleLink: string | undefined;
+    if (reportId && selectedTargetId) {
+      majorBrittleLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=debuffs&hostility=1&ability=${KnownAbilities.MAJOR_BRITTLE}&source=${selectedTargetId}`;
+    }
+    sources.push({
+      name: 'Major Brittle',
+      value: 20,
+      wasActive: majorBrittleUptimeSeconds > 0,
+      description: `Debuff that provides 20% critical damage. Uptime: ${((majorBrittleUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: majorBrittleLink,
+    });
+
+    setCriticalDamageSources(sources);
 
     const playerData: PlayerCriticalDamageData = {
       playerId: id,
       playerName: name,
-      dataPoints: voxelizedDataPoints,
-      finalCriticalDamage: currentCriticalDamage,
+      dataPoints,
+      finalCriticalDamage: dataPoints[dataPoints.length - 1].criticalDamage,
     };
 
     return playerData;
-  }, [id, name, fightEvents, fight, selectedTargetId, playerBaseCriticalDamage]);
+  }, [id, name, fightEvents, fight, selectedTargetId, playerBaseCriticalDamage, fightId, reportId]);
 
   if (!criticalDamageData) {
     return (
@@ -438,87 +586,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
             </Typography>
 
             {/* Critical Damage Sources Checklist */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Critical Damage Sources
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <List dense>
-                  {criticalDamageSources.map((source, index) => (
-                    <ListItem key={index} disablePadding>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <Checkbox
-                          checked={source.wasActive}
-                          disabled
-                          size="small"
-                          color={source.wasActive ? 'success' : 'default'}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                textDecoration: source.wasActive ? 'none' : 'line-through',
-                                color: source.wasActive ? 'text.primary' : 'text.disabled',
-                              }}
-                            >
-                              {source.name}
-                            </Typography>
-                            <Chip
-                              label={`${source.value} crit dmg`}
-                              size="small"
-                              variant={source.wasActive ? 'filled' : 'outlined'}
-                              color={source.wasActive ? 'primary' : 'default'}
-                            />
-                            {source.link && (
-                              <IconButton
-                                size="small"
-                                href={source.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                sx={{ ml: 'auto', opacity: 0.7 }}
-                                title="View detailed analysis on ESO Logs"
-                              >
-                                <LaunchIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: source.wasActive ? 'text.secondary' : 'text.disabled',
-                            }}
-                          >
-                            {source.description}
-                            {source.link && (
-                              <Link
-                                href={source.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                sx={{ ml: 1, fontSize: 'inherit' }}
-                              >
-                                View on ESO Logs
-                              </Link>
-                            )}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1, display: 'block' }}
-                >
-                  ✓ = Source was active during this fight | ✗ = Source was not used
-                </Typography>
-              </Paper>
-            </Box>
+            <StatChecklist sources={criticalDamageSources} title="Critical Damage Sources" />
 
             {/* Critical Damage vs Time Chart */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>

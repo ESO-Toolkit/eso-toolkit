@@ -17,6 +17,14 @@ export type AbilitiesLookup = Record<string, Ability>;
  * Known ESO ability IDs for penetration calculations
  */
 export enum KnownAbilities {
+  // Major Brittle - increases critical damage by 20% (debuff)
+  MAJOR_BRITTLE = 145977,
+  // Minor Brittle - increases critical damage by 10% (debuff)
+  MINOR_BRITTLE = 146697,
+  // Minor Force - increases critical damage by 10%
+  MINOR_FORCE = 61746,
+  // Major Force - increases critical damage by 20%
+  MAJOR_FORCE = 61747,
   // Major Breach - reduces target's physical and spell resistance
   MAJOR_BREACH = 61743,
 
