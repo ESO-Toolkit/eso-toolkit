@@ -23,9 +23,12 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  FormControlLabel,
+  Switch,
+  Stack,
 } from '@mui/material';
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import BuffUptimesPanel from './features/BuffUptimesPanel';
@@ -40,6 +43,7 @@ import PenetrationPanel from './features/PenetrationPanel';
 import PlayersPanel from './features/PlayersPanel';
 import { FightFragment } from './graphql/generated';
 import { RootState } from './store/storeWithHistory';
+import { toggleExperimentalTabs } from './store/uiSlice';
 import { EventType } from './types/combatlogEvents';
 
 interface FightDetailsProps {
@@ -51,10 +55,15 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
   const [page, setPage] = React.useState(0);
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
-  const navigateToTab = (tabIdx: number) => {
-    searchParams.set('selectedTabId', String(tabIdx));
-    setSearchParams(searchParams);
-  };
+  const dispatch = useDispatch();
+
+  const navigateToTab = React.useCallback(
+    (tabIdx: number) => {
+      searchParams.set('selectedTabId', String(tabIdx));
+      setSearchParams(searchParams);
+    },
+    [searchParams, setSearchParams]
+  );
   const EVENTS_PER_PAGE = 25;
 
   // All useSelector calls must be before any return
@@ -62,6 +71,14 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
   const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
   const eventsLoaded = useSelector((state: RootState) => state.events.loaded);
   const masterDataLoaded = useSelector((state: RootState) => state.masterData.loaded);
+  const showExperimentalTabs = useSelector((state: RootState) => state.ui.showExperimentalTabs);
+
+  // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
+  React.useEffect(() => {
+    if (!showExperimentalTabs && selectedTab >= 8) {
+      navigateToTab(0);
+    }
+  }, [showExperimentalTabs, selectedTab, navigateToTab]);
 
   // Get selected target from URL params
   const selectedTargetId = searchParams.get('target') || '';
@@ -157,8 +174,8 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
 
   return (
     <React.Fragment>
-      {/* Target Selection */}
-      <Box sx={{ mb: 3 }}>
+      {/* Target Selection and Experimental Toggle */}
+      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Target Enemy</InputLabel>
           <Select
@@ -174,7 +191,19 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
             ))}
           </Select>
         </FormControl>
-      </Box>
+
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, and Diagnostics">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showExperimentalTabs}
+                onChange={() => dispatch(toggleExperimentalTabs())}
+              />
+            }
+            label="Show Experimental Tabs"
+          />
+        </Tooltip>
+      </Stack>
       <Box mt={2}>
         <Tabs
           value={selectedTab}
@@ -207,18 +236,22 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
           <Tooltip title="Penetration">
             <Tab icon={<SecurityIcon />} />
           </Tooltip>
-          <Tooltip title="Location Heatmap">
-            <Tab icon={<MapIcon />} />
-          </Tooltip>
-          <Tooltip title="Raw Events">
-            <Tab icon={<ListIcon />} />
-          </Tooltip>
-          <Tooltip title="Target Events">
-            <Tab icon={<GpsFixedIcon />} />
-          </Tooltip>
-          <Tooltip title="Diagnostics">
-            <Tab icon={<BugReportIcon />} />
-          </Tooltip>
+          {showExperimentalTabs && (
+            <>
+              <Tooltip title="Location Heatmap">
+                <Tab icon={<MapIcon />} />
+              </Tooltip>
+              <Tooltip title="Raw Events">
+                <Tab icon={<ListIcon />} />
+              </Tooltip>
+              <Tooltip title="Target Events">
+                <Tab icon={<GpsFixedIcon />} />
+              </Tooltip>
+              <Tooltip title="Diagnostics">
+                <Tab icon={<BugReportIcon />} />
+              </Tooltip>
+            </>
+          )}
         </Tabs>
         {selectedTab === 0 && <InsightsPanel fight={fight} />}
         {selectedTab === 1 && <PlayersPanel />}
@@ -227,12 +260,12 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
         {selectedTab === 4 && <HealingDonePanel fight={fight} />}
         {selectedTab === 5 && <BuffUptimesPanel fight={fight} />}
         {selectedTab === 6 && <CriticalDamagePanel fight={fight} />}
-        {selectedTab === 7 && <PenetrationPanel fight={fight} />}
-        {selectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
-        {selectedTab === 9 && (
+        {selectedTab === 7 && <PenetrationPanel fight={fight} selectedTargetId={selectedTargetId} />}
+        {showExperimentalTabs && selectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
+        {showExperimentalTabs && selectedTab === 9 && (
           <EventsPanel page={page} setPage={setPage} EVENTS_PER_PAGE={EVENTS_PER_PAGE} />
         )}
-        {selectedTab === 10 && selectedTargetId && (
+        {showExperimentalTabs && selectedTab === 10 && selectedTargetId && (
           <Box mt={2}>
             <Typography variant="h6" gutterBottom>
               Events for Target:{' '}
@@ -290,7 +323,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
             })()}
           </Box>
         )}
-        {selectedTab === 10 && !selectedTargetId && (
+        {showExperimentalTabs && selectedTab === 10 && !selectedTargetId && (
           <Box mt={2}>
             <Typography variant="h6" gutterBottom>
               Target Events
@@ -300,7 +333,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
             </Typography>
           </Box>
         )}
-        {selectedTab === 11 && (
+        {showExperimentalTabs && selectedTab === 11 && (
           <Box mt={2}>
             <strong>Total Events:</strong> {events.length.toLocaleString()}
             <Box mt={2}>

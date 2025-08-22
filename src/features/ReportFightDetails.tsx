@@ -1,4 +1,5 @@
-import { Paper, Typography, Button, CircularProgress, Box } from '@mui/material';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import { Paper, Typography, Button, CircularProgress, Box, Stack, Tooltip } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -109,9 +110,30 @@ const ReportFightDetails: React.FC = () => {
       >
         Back to Fight List
       </Button>
-      <Typography variant="h6" gutterBottom>
-        Fight Details
-      </Typography>
+
+      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+        <Typography variant="h6" gutterBottom={false}>
+          Fight Details
+        </Typography>
+
+        <Tooltip title="View full report on ESO Logs">
+          <Button
+            component="a"
+            href={`https://www.esologs.com/reports/${reportId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="outlined"
+            size="small"
+            startIcon={<OpenInNewIcon />}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.875rem',
+            }}
+          >
+            ESO Logs
+          </Button>
+        </Tooltip>
+      </Stack>
 
       {fight && (
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
