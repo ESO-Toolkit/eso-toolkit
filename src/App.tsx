@@ -9,13 +9,13 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AuthProvider, useAuth } from './AuthContext';
 import { createEsoLogsClient } from './esologsClient';
-import ReportFightDetails from './features/ReportFightDetails';
-import ReportFights from './features/ReportFights';
+import ReportFightDetails from './features/report_details/ReportFightDetails';
+import ReportFights from './features/report_details/ReportFights';
 import AppLayout from './layouts/AppLayout';
 import OAuthRedirect from './OAuthRedirect';
-import { clearEvents } from './store/eventsSlice';
-import { clearMasterData } from './store/masterDataSlice';
-import { clearReport } from './store/reportSlice';
+import { clearEvents } from './store/events/eventsSlice';
+import { clearMasterData } from './store/master_data/masterDataSlice';
+import { clearReport } from './store/report/reportSlice';
 import store, { persistor } from './store/storeWithHistory';
 import { useAppDispatch } from './store/useAppDispatch';
 

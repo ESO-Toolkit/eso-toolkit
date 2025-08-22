@@ -1,0 +1,24 @@
+# Master data queries
+# Used by: PlayersPanel.tsx, InsightsPanel.tsx, and other components needing actor/ability data
+
+# Original master data query - kept for backwards compatibility
+query getReportMasterData($code: String!) {
+  reportData {
+    report(code: $code) {
+      masterData {
+        ...MasterData
+      }
+    }
+  }
+}
+
+# OPTIMIZED: Players only - reduces payload by 50-70%
+query getReportPlayersOnly($code: String!) {
+  reportData {
+    report(code: $code) {
+      masterData {
+        ...OptimizedMasterData
+      }
+    }
+  }
+}

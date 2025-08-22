@@ -161,7 +161,7 @@ export interface ApplyBuffStackEvent {
   stack: number;
 }
 
-export type EventType =
+export type LogEvent =
   | DamageEvent
   | DeathEvent
   | ResourceChangeEvent

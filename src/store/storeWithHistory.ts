@@ -13,12 +13,11 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import abilitiesReducer from './abilitiesSlice';
-import eventsReducer from './eventsSlice';
-import masterDataReducer from './masterDataSlice';
-import navigationReducer from './navigationSlice';
-import reportReducer from './reportSlice';
-import uiReducer from './uiSlice';
+import abilitiesReducer from './abilities/abilitiesSlice';
+import eventsReducer from './events/eventsSlice';
+import masterDataReducer from './master_data/masterDataSlice';
+import reportReducer from './report/reportSlice';
+import uiReducer from './ui/uiSlice';
 
 const uiPersistConfig = {
   key: 'ui',
@@ -35,7 +34,6 @@ const store = configureStore({
     abilities: abilitiesReducer,
     events: eventsReducer,
     ui: persistReducer<ReturnType<typeof uiReducer>>(uiPersistConfig, uiReducer),
-    navigation: navigationReducer,
     router: routerReducer,
     masterData: masterDataReducer,
     report: reportReducer,
