@@ -147,17 +147,6 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       baseCriticalDamage += CriticalDamageValues.LUCENT_ECHOES;
     }
 
-    // Check Fated Fortune passive from player auras
-    const hasFatedFortune = latestAuras.some(
-      (aura) =>
-        aura.ability === KnownAbilities.FATED_FORTUNE || aura.name?.includes('Fated Fortune')
-    );
-
-    // Add Fated Fortune critical damage bonus
-    if (hasFatedFortune) {
-      baseCriticalDamage += CriticalDamageValues.FATED_FORTUNE;
-    }
-
     // Check Hemorrhage passive from player auras
     const hasHemorrhage = latestAuras.some(
       (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
@@ -304,6 +293,62 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       minorForceIntervals.push({ start: activeStart, end: fightEnd });
     }
 
+    // Track Lucent Echoes buff uptimes for the selected player
+    // Find all buff events for Lucent Echoes where target is selected player
+    const lucentEchoesEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applybuff' || event.type === 'removebuff') &&
+        String(event.targetID ?? event.target ?? '') === id &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
+          (event.abilityName ?? '').includes('Lucent Echoes'))
+    );
+
+    // Build a timeline of Lucent Echoes active intervals
+    const lucentEchoesIntervals: Array<{ start: number; end: number }> = [];
+    let lucentEchoesActiveStart: number | null = null;
+    for (const event of lucentEchoesEvents) {
+      if (event.type === 'applybuff') {
+        if (lucentEchoesActiveStart === null) lucentEchoesActiveStart = event.timestamp;
+      } else if (event.type === 'removebuff') {
+        if (lucentEchoesActiveStart !== null) {
+          lucentEchoesIntervals.push({ start: lucentEchoesActiveStart, end: event.timestamp });
+          lucentEchoesActiveStart = null;
+        }
+      }
+    }
+    // If Lucent Echoes was never removed, assume it lasts until fight end
+    if (lucentEchoesActiveStart !== null) {
+      lucentEchoesIntervals.push({ start: lucentEchoesActiveStart, end: fightEnd });
+    }
+
+    // Track Fated Fortune buff uptimes for the selected player
+    // Find all buff events for Fated Fortune where target is selected player
+    const fatedFortuneEvents = fightEvents.filter(
+      (event) =>
+        (event.type === 'applybuff' || event.type === 'removebuff') &&
+        String(event.targetID ?? event.target ?? '') === id &&
+        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+          (event.abilityName ?? '').includes('Fated Fortune'))
+    );
+
+    // Build a timeline of Fated Fortune active intervals
+    const fatedFortuneIntervals: Array<{ start: number; end: number }> = [];
+    let fatedFortuneActiveStart: number | null = null;
+    for (const event of fatedFortuneEvents) {
+      if (event.type === 'applybuff') {
+        if (fatedFortuneActiveStart === null) fatedFortuneActiveStart = event.timestamp;
+      } else if (event.type === 'removebuff') {
+        if (fatedFortuneActiveStart !== null) {
+          fatedFortuneIntervals.push({ start: fatedFortuneActiveStart, end: event.timestamp });
+          fatedFortuneActiveStart = null;
+        }
+      }
+    }
+    // If Fated Fortune was never removed, assume it lasts until fight end
+    if (fatedFortuneActiveStart !== null) {
+      fatedFortuneIntervals.push({ start: fatedFortuneActiveStart, end: fightEnd });
+    }
+
     // Track Major Force buff uptimes for the selected player
     // Find all buff events for Major Force where target is selected player
     const majorForceEvents = fightEvents.filter(
@@ -354,25 +399,6 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       wasActive: true,
       description: 'Default critical damage bonus that all players start with',
     });
-    // Add Minor Breach to sources list (ESO Logs link, checklist style)
-    sources.push({
-      name: 'Lucent Echoes',
-      value: CriticalDamageValues.LUCENT_ECHOES,
-      wasActive: latestAuras.some(
-        (aura) =>
-          aura.ability === KnownAbilities.LUCENT_ECHOES || aura.name?.includes('Lucent Echoes')
-      ),
-      description: 'Buff that provides 11% critical damage bonus',
-    });
-    sources.push({
-      name: 'Fated Fortune',
-      value: CriticalDamageValues.FATED_FORTUNE,
-      wasActive: latestAuras.some(
-        (aura) =>
-          aura.ability === KnownAbilities.FATED_FORTUNE || aura.name?.includes('Fated Fortune')
-      ),
-      description: 'Passive that provides 12% critical damage bonus',
-    });
     sources.push({
       name: 'Hemorrhage',
       value: CriticalDamageValues.HEMORRHAGE,
@@ -412,23 +438,100 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
     });
     setCriticalDamageSources(sources);
 
-    // Create timeline data points with Minor Force and Major Force uptime
+    // Create high-resolution timeline data first (0.1 second intervals)
     const fightDurationSeconds = (fightEnd - fightStart) / 1000;
-    const dataPoints: CriticalDamageDataPoint[] = [];
+    const highResDataPoints: CriticalDamageDataPoint[] = [];
     let minorForceUptimeSeconds = 0;
     let majorForceUptimeSeconds = 0;
     let minorBrittleUptimeSeconds = 0;
     let majorBrittleUptimeSeconds = 0;
-    for (let second = 0; second <= Math.ceil(fightDurationSeconds); second++) {
-      const timestamp = fightStart + second * 1000;
-      let critDmg = playerBaseCriticalDamage;
+    let lucentEchoesUptimeSeconds = 0;
+    let fatedFortuneUptimeSeconds = 0;
+
+    // Generate high-resolution data (0.1 second increments)
+    const resolution = 0.1; // seconds
+    const totalSteps = Math.ceil(fightDurationSeconds / resolution);
+
+    for (let step = 0; step <= totalSteps; step++) {
+      const relativeTime = step * resolution;
+      const timestamp = fightStart + relativeTime * 1000;
+
+      // Start with base critical damage (without buffs that vary over time)
+      // This includes passives like Fated Fortune, Hemorrhage, etc. that are always active
+      let critDmg = 50; // Base critical damage
+
+      // Add passives that are always active (from gear/talents)
+      // Note: We'll recalculate these from auras since Lucent Echoes might not always be active
+      const currentAuras = latestAuras; // Using latest auras as approximation for static passives
+
+      // Add static passives that don't change during combat
+      if (
+        currentAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+            aura.name?.includes('Fated Fortune')
+        )
+      ) {
+        critDmg += CriticalDamageValues.FATED_FORTUNE;
+      }
+      if (
+        currentAuras.some(
+          (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+        )
+      ) {
+        critDmg += CriticalDamageValues.HEMORRHAGE;
+      }
+      if (
+        currentAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
+        )
+      ) {
+        critDmg += CriticalDamageValues.PIERCING_SPEAR;
+      }
+      if (
+        currentAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.ADVANCED_SPECIES ||
+            aura.name?.includes('Advanced Species')
+        )
+      ) {
+        critDmg += CriticalDamageValues.ADVANCED_SPECIES;
+      }
+      if (
+        mediumArmorCount > 0 &&
+        currentAuras.some(
+          (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+        )
+      ) {
+        critDmg += mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE;
+      }
+
+      // Check if Lucent Echoes is active at this timestamp (dynamic buff)
+      const isLucentEchoesActive = lucentEchoesIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isLucentEchoesActive) {
+        critDmg += CriticalDamageValues.LUCENT_ECHOES;
+        if (step % Math.round(1 / resolution) === 0) lucentEchoesUptimeSeconds++; // Count per second
+      }
+
+      // Check if Fated Fortune is active at this timestamp (dynamic buff)
+      const isFatedFortuneActive = fatedFortuneIntervals.some(
+        (interval) => timestamp >= interval.start && timestamp < interval.end
+      );
+      if (isFatedFortuneActive) {
+        critDmg += CriticalDamageValues.FATED_FORTUNE;
+        if (step % Math.round(1 / resolution) === 0) fatedFortuneUptimeSeconds++; // Count per second
+      }
+
       // Check if Minor Force is active at this timestamp
       const isMinorForceActive = minorForceIntervals.some(
         (interval) => timestamp >= interval.start && timestamp < interval.end
       );
       if (isMinorForceActive) {
         critDmg += 10;
-        minorForceUptimeSeconds++;
+        if (step % Math.round(1 / resolution) === 0) minorForceUptimeSeconds++; // Count per second
       }
       // Check if Major Force is active at this timestamp
       const isMajorForceActive = majorForceIntervals.some(
@@ -436,7 +539,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       );
       if (isMajorForceActive) {
         critDmg += 20;
-        majorForceUptimeSeconds++;
+        if (step % Math.round(1 / resolution) === 0) majorForceUptimeSeconds++; // Count per second
       }
       // Check if Minor Brittle is active at this timestamp
       const isMinorBrittleActive = minorBrittleIntervals.some(
@@ -444,7 +547,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       );
       if (isMinorBrittleActive) {
         critDmg += 10;
-        minorBrittleUptimeSeconds++;
+        if (step % Math.round(1 / resolution) === 0) minorBrittleUptimeSeconds++; // Count per second
       }
       // Check if Major Brittle is active at this timestamp
       const isMajorBrittleActive = majorBrittleIntervals.some(
@@ -452,13 +555,43 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       );
       if (isMajorBrittleActive) {
         critDmg += 20;
-        majorBrittleUptimeSeconds++;
+        if (step % Math.round(1 / resolution) === 0) majorBrittleUptimeSeconds++; // Count per second
       }
-      dataPoints.push({
+
+      highResDataPoints.push({
         timestamp,
         criticalDamage: critDmg,
-        relativeTime: second,
+        relativeTime,
       });
+    }
+
+    // Downsample to 0.5 second increments using the highest value within each increment
+    const dataPoints: CriticalDamageDataPoint[] = [];
+    const downsampleInterval = 0.5; // seconds
+    const downsampleSteps = Math.ceil(fightDurationSeconds / downsampleInterval);
+
+    for (let downsampleStep = 0; downsampleStep <= downsampleSteps; downsampleStep++) {
+      const startTime = downsampleStep * downsampleInterval;
+      const endTime = (downsampleStep + 1) * downsampleInterval;
+
+      // Find all high-res points within this 0.5 second window
+      const windowPoints = highResDataPoints.filter(
+        (point) => point.relativeTime >= startTime && point.relativeTime < endTime
+      );
+
+      if (windowPoints.length > 0) {
+        // Find the point with the highest critical damage value
+        const maxPoint = windowPoints.reduce((max, point) =>
+          point.criticalDamage > max.criticalDamage ? point : max
+        );
+
+        // Create the downsampled point using the timestamp of the max point but with rounded relative time
+        dataPoints.push({
+          timestamp: fightStart + startTime * 1000, // Use start of window for consistent timing
+          criticalDamage: maxPoint.criticalDamage,
+          relativeTime: startTime,
+        });
+      }
     }
 
     // Add Minor Force to sources list (ESO Logs link)
@@ -472,6 +605,32 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       wasActive: minorForceUptimeSeconds > 0,
       description: `Buff that provides 10% critical damage. Uptime: ${((minorForceUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
       link: minorForceLink,
+    });
+
+    // Add Lucent Echoes to sources list (ESO Logs link)
+    let lucentEchoesLink: string | undefined;
+    if (reportId && id) {
+      lucentEchoesLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=buffs&hostility=0&ability=${KnownAbilities.LUCENT_ECHOES}&source=${id}`;
+    }
+    sources.push({
+      name: 'Lucent Echoes',
+      value: CriticalDamageValues.LUCENT_ECHOES,
+      wasActive: lucentEchoesUptimeSeconds > 0,
+      description: `Buff that provides 11% critical damage bonus. Uptime: ${((lucentEchoesUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: lucentEchoesLink,
+    });
+
+    // Add Fated Fortune to sources list (ESO Logs link)
+    let fatedFortuneLink: string | undefined;
+    if (reportId && id) {
+      fatedFortuneLink = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&spells=buffs&hostility=0&ability=${KnownAbilities.FATED_FORTUNE_STAGE_ONE}&source=${id}`;
+    }
+    sources.push({
+      name: 'Fated Fortune',
+      value: CriticalDamageValues.FATED_FORTUNE,
+      wasActive: fatedFortuneUptimeSeconds > 0,
+      description: `Buff that provides 12% critical damage bonus. Uptime: ${((fatedFortuneUptimeSeconds / (fightDurationSeconds + 1)) * 100).toFixed(1)}%`,
+      link: fatedFortuneLink,
     });
 
     // Add Major Force to sources list (ESO Logs link)
@@ -522,7 +681,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
     };
 
     return playerData;
-  }, [id, name, fightEvents, fight, selectedTargetId, playerBaseCriticalDamage, fightId, reportId]);
+  }, [id, name, fightEvents, fight, selectedTargetId, fightId, reportId]);
 
   if (!criticalDamageData) {
     return (
@@ -639,6 +798,25 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
                               display: true,
                               position: 'start',
                               backgroundColor: 'rgba(211, 47, 47, 0.8)',
+                              color: 'white',
+                              font: {
+                                size: 12,
+                              },
+                              padding: 4,
+                            },
+                          },
+                          targetLine: {
+                            type: 'line',
+                            yMin: 125,
+                            yMax: 125,
+                            borderColor: '#2e7d32',
+                            borderWidth: 2,
+                            borderDash: [5, 5],
+                            label: {
+                              content: 'Target: 125%',
+                              display: true,
+                              position: 'end',
+                              backgroundColor: 'rgba(46, 125, 50, 0.8)',
                               color: 'white',
                               font: {
                                 size: 12,

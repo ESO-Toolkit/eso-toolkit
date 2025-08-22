@@ -56,10 +56,10 @@ export enum KnownAbilities {
   VELOTHI_UR_MAGE_BUFF = 193447,
 
   // Lucent Echoes - Buff that provides 11% critical damage
-  LUCENT_ECHOES = 194904,
+  LUCENT_ECHOES = 220015,
 
   // Fated Fortune - Passive that provides 12% critical damage
-  FATED_FORTUNE = 184822,
+  FATED_FORTUNE_STAGE_ONE = 194875,
 
   // Hemorrhage - Passive that provides 10% critical damage
   HEMORRHAGE = 45597,
