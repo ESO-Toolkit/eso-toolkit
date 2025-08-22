@@ -12,7 +12,6 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../graphql/generated';
-import { useReportFightParams } from '../hooks/useReportFightParams';
 import { RootState } from '../store/storeWithHistory';
 import { resolveActorName } from '../utils/resolveActorName';
 
@@ -25,7 +24,6 @@ interface PenetrationPanelProps {
 const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
   const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
   const eventPlayers = useSelector((state: RootState) => state.events.players);
-  const { reportId, fightId } = useReportFightParams();
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get selected player from URL params
@@ -136,8 +134,6 @@ const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
               id={selectedPlayer.id}
               name={selectedPlayer.name}
               fight={fight}
-              reportId={reportId}
-              fightId={fightId ? parseInt(fightId, 10) : undefined}
               expanded={true}
             />
           ) : (

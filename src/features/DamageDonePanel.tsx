@@ -20,8 +20,7 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
     fightDuration = (Number(fight.endTime) - Number(fight.startTime)) / 1000;
   }
   events.forEach((event) => {
-    const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-    if (eventType === 'damage' && event.sourceID != null) {
+    if (event.type === 'damage' && event.sourceID != null) {
       const playerId = Number(event.sourceID);
       const amount = Number(event.amount) || 0;
       if (!damageByPlayer[playerId]) {

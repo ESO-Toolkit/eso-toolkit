@@ -17,6 +17,14 @@ export type AbilitiesLookup = Record<string, Ability>;
  * Known ESO ability IDs for penetration calculations
  */
 export enum KnownAbilities {
+  // Major Brittle - increases critical damage by 20% (debuff)
+  MAJOR_BRITTLE = 145977,
+  // Minor Brittle - increases critical damage by 10% (debuff)
+  MINOR_BRITTLE = 146697,
+  // Minor Force - increases critical damage by 10%
+  MINOR_FORCE = 61746,
+  // Major Force - increases critical damage by 20%
+  MAJOR_FORCE = 61747,
   // Major Breach - reduces target's physical and spell resistance
   MAJOR_BREACH = 61743,
 
@@ -47,6 +55,21 @@ export enum KnownAbilities {
   // Velothi Ur-Mage's Amulet - Mythic set buff
   VELOTHI_UR_MAGE_BUFF = 193447,
 
+  // Lucent Echoes - Buff that provides 11% critical damage
+  LUCENT_ECHOES = 194904,
+
+  // Fated Fortune - Passive that provides 12% critical damage
+  FATED_FORTUNE = 184822,
+
+  // Hemorrhage - Passive that provides 10% critical damage
+  HEMORRHAGE = 45597,
+
+  // Piercing Spear - Passive that provides 12% critical damage
+  PIERCING_SPEAR = 45273,
+
+  // Dexterity - Passive that provides 2% crit damage per piece of medium armor
+  DEXTERITY = 45241,
+
   // Herald of the Tome abilities (for Splintered Secrets passive)
   CEPHALIARCHS_FLAIL = 183006,
   PRAGMATIC_FATECARVER = 193398,
@@ -56,6 +79,9 @@ export enum KnownAbilities {
   TENTACULAR_DREAD = 185823,
   FULMINATING_RUNE = 182988,
   RECUPERATIVE_TREATISE = 183047,
+
+  // Advanced Species - Passive that provides 15% critical damage
+  ADVANCED_SPECIES = 184809,
 
   // TODO: Add more penetration-related abilities
   // Examples:
@@ -104,6 +130,38 @@ export enum PenetrationValues {
   TIDEBORN_WILDSTALKER_4_PIECE = 1487,
 
   // TODO: Add more penetration values
+  // etc.
+}
+
+/**
+ * Critical damage values for different effects (in percentage)
+ */
+export enum CriticalDamageValues {
+  // Lucent Echoes provides 11% critical damage
+  LUCENT_ECHOES = 11,
+
+  // Fated Fortune provides 12% critical damage
+  FATED_FORTUNE = 12,
+
+  // Hemorrhage provides 10% critical damage
+  HEMORRHAGE = 10,
+
+  // Piercing Spear provides 12% critical damage
+  PIERCING_SPEAR = 12,
+
+  // Dexterity provides 2% critical damage per piece of medium armor
+  DEXTERITY_PER_PIECE = 2,
+
+  // Advanced Species provides 15% critical damage
+  ADVANCED_SPECIES = 15,
+
+  // The Shadow mundus stone provides ~12% critical damage
+  THE_SHADOW = 12,
+
+  // TODO: Add more critical damage values
+  // Examples:
+  // MOTHER_SORROW_5_PIECE = X,
+  // RELEQUEN_5_PIECE = X,
   // etc.
 }
 

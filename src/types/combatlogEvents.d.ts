@@ -1,5 +1,3 @@
-import { CombatantInfoEvent } from './combatantinfo-event';
-
 export interface DamageEvent {
   type: 'damage';
   abilityGameID?: number;
@@ -38,14 +36,7 @@ export interface ResourceChangeEvent {
   timestamp: number;
   resourceChangeType: number;
   resourceChange: number;
-  targetResources?: {
-    hitPoints?: number;
-    maxHitPoints?: number;
-    magicka?: number;
-    maxMagicka?: number;
-    stamina?: number;
-    maxStamina?: number;
-  };
+  targetResources?: Resources;
 }
 
 export interface BuffEvent {
@@ -58,6 +49,79 @@ export interface BuffEvent {
   abilityName?: string;
   abilityId?: number;
   abilityGameID?: number;
+  sourceID?: number | string;
+}
+
+export interface PlayerEnterCombatEvent {
+  timestamp: number;
+  type: 'playerentercombat';
+  fight: number;
+  sourceID?: number;
+}
+
+export interface CombatantInfoEvent {
+  timestamp: number;
+  type: 'combatantinfo';
+  fight: number;
+  sourceID: number;
+  gear: CombatantGear[];
+  auras: CombatantAura[];
+}
+
+export interface CombatantGear {
+  id: number;
+  quality: number;
+  icon: string;
+  name?: string;
+  championPoints: number;
+  trait: number;
+  enchantType: number;
+  enchantQuality: number;
+  setID: number;
+  type: number;
+}
+
+export interface CombatantAura {
+  source: number;
+  ability: number;
+  stacks: number;
+  icon: string;
+  name: string;
+}
+
+export interface HealEvent {
+  timestamp: number;
+  type: 'heal';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  hitType: number;
+  amount: number;
+  overheal: number;
+  castTrackID: number;
+  sourceResources: Resources;
+  targetResources: Resources;
+}
+
+export interface Resources {
+  hitPoints: number;
+  maxHitPoints: number;
+  magicka: number;
+  maxMagicka: number;
+  stamina: number;
+  maxStamina: number;
+  ultimate: number;
+  maxUltimate: number;
+  werewolf: number;
+  maxWerewolf: number;
+  absorb: number;
+  championPoints: number;
+  x: number;
+  y: number;
+  facing: number;
 }
 
 export type EventType =
@@ -65,4 +129,6 @@ export type EventType =
   | DeathEvent
   | ResourceChangeEvent
   | BuffEvent
-  | CombatantInfoEvent;
+  | CombatantInfoEvent
+  | PlayerEnterCombatEvent
+  | HealEvent;

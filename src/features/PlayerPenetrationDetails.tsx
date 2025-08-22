@@ -1,5 +1,4 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import LaunchIcon from '@mui/icons-material/Launch';
 import {
   Box,
   Typography,
@@ -7,14 +6,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  Checkbox,
-  List,
-  ListItem,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-  Link,
-  IconButton,
 } from '@mui/material';
 import {
   Chart as ChartJS,
@@ -33,11 +24,12 @@ import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
+import StatChecklist from '../components/StatChecklist';
 import { FightFragment } from '../graphql/generated';
+import { useReportFightParams } from '../hooks/useReportFightParams';
 import { RootState } from '../store/storeWithHistory';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../types/abilities';
-import { CombatantInfoEvent, CombatantGear } from '../types/combatantinfo-event';
-import { EventType, BuffEvent } from '../types/combatlogEvents';
+import { EventType, BuffEvent, CombatantInfoEvent, CombatantGear } from '../types/combatlogEvents';
 
 // Register Chart.js components
 ChartJS.register(
@@ -134,8 +126,6 @@ interface PlayerPenetrationDetailsProps {
   id: string;
   name: string;
   fight: FightFragment;
-  reportId?: string;
-  fightId?: number;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
@@ -144,14 +134,13 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
   id,
   name,
   fight,
-  reportId,
-  fightId,
   expanded = false,
   onExpandChange,
 }) => {
   const events = useSelector((state: RootState) => state.events.events);
   const eventPlayers = useSelector((state: RootState) => state.events.players);
   const [searchParams] = useSearchParams();
+  const { reportId, fightId } = useReportFightParams();
 
   // Get selected target from URL params
   const selectedTargetId = searchParams.get('target') || '';
@@ -180,7 +169,7 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
     const fightEnd = fight.endTime;
 
     // Pre-filter events once for the fight timeframe
-    return (events as EventType[]).filter(
+    return events.filter(
       (event: EventType) => event.timestamp >= fightStart && event.timestamp <= fightEnd
     );
   }, [events, fight?.startTime, fight?.endTime]);
@@ -666,87 +655,7 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
             </Typography>
 
             {/* Penetration Sources Checklist */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Penetration Sources
-              </Typography>
-              <Paper variant="outlined" sx={{ p: 2 }}>
-                <List dense>
-                  {penetrationSources.map((source, index) => (
-                    <ListItem key={index} disablePadding>
-                      <ListItemIcon sx={{ minWidth: 36 }}>
-                        <Checkbox
-                          checked={source.wasActive}
-                          disabled
-                          size="small"
-                          color={source.wasActive ? 'success' : 'default'}
-                        />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary={
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                textDecoration: source.wasActive ? 'none' : 'line-through',
-                                color: source.wasActive ? 'text.primary' : 'text.disabled',
-                              }}
-                            >
-                              {source.name}
-                            </Typography>
-                            <Chip
-                              label={`${source.value} pen`}
-                              size="small"
-                              variant={source.wasActive ? 'filled' : 'outlined'}
-                              color={source.wasActive ? 'primary' : 'default'}
-                            />
-                            {source.link && (
-                              <IconButton
-                                size="small"
-                                href={source.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                sx={{ ml: 'auto', opacity: 0.7 }}
-                                title="View detailed analysis on ESO Logs"
-                              >
-                                <LaunchIcon fontSize="small" />
-                              </IconButton>
-                            )}
-                          </Box>
-                        }
-                        secondary={
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: source.wasActive ? 'text.secondary' : 'text.disabled',
-                            }}
-                          >
-                            {source.description}
-                            {source.link && (
-                              <Link
-                                href={source.link}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                sx={{ ml: 1, fontSize: 'inherit' }}
-                              >
-                                View on ESO Logs
-                              </Link>
-                            )}
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-                </List>
-                <Typography
-                  variant="caption"
-                  color="text.secondary"
-                  sx={{ mt: 1, display: 'block' }}
-                >
-                  ✓ = Source was active during this fight | ✗ = Source was not used
-                </Typography>
-              </Paper>
-            </Box>
+            <StatChecklist sources={penetrationSources} title="Penetration Sources" />
 
             {/* Penetration vs Time Chart */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>

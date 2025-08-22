@@ -23,7 +23,7 @@ import { fetchReportMasterData, clearMasterData } from '../store/masterDataSlice
 import { fetchReportData } from '../store/reportSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
-import { Event } from '../types/events';
+import { EventType } from '../types/combatlogEvents';
 
 const ReportFightDetails: React.FC = () => {
   const { reportId, fightId } = useReportFightParams();
@@ -90,7 +90,7 @@ const ReportFightDetails: React.FC = () => {
     const participatingActorIds = new Set<string>();
 
     // Filter events for this fight's timeframe and collect participating actors
-    events.forEach((event: Event) => {
+    events.forEach((event: EventType) => {
       if (event.timestamp < fightStart || event.timestamp > fightEnd) {
         return;
       }

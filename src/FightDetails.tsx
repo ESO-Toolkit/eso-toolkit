@@ -1,9 +1,21 @@
-import { Box, Tabs, Tab, CircularProgress, Typography } from '@mui/material';
+// Import MUI icons
+import BugReportIcon from '@mui/icons-material/BugReport';
+import DangerousIcon from '@mui/icons-material/Dangerous';
+import HealingIcon from '@mui/icons-material/Healing';
+import InsightsIcon from '@mui/icons-material/Insights';
+import ListIcon from '@mui/icons-material/List';
+import PeopleIcon from '@mui/icons-material/People';
+import SecurityIcon from '@mui/icons-material/Security';
+import SwordsIcon from '@mui/icons-material/SportsMartialArts';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import WhatshotIcon from '@mui/icons-material/Whatshot';
+import { Box, Tabs, Tab, CircularProgress, Typography, Tooltip } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import BuffUptimesPanel from './features/BuffUptimesPanel';
+import CriticalDamagePanel from './features/CriticalDamagePanel';
 import DamageDonePanel from './features/DamageDonePanel';
 import DeathEventPanel from './features/DeathEventPanel';
 import EventsPanel from './features/EventsPanel';
@@ -68,15 +80,36 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
         variant="scrollable"
         scrollButtons="auto"
       >
-        <Tab label="Insights" />
-        <Tab label="Players" />
-        <Tab label="Deaths" />
-        <Tab label="Damage Done" />
-        <Tab label="Healing Done" />
-        <Tab label="Buff Uptimes" />
-        <Tab label="Penetration" />
-        <Tab label="Raw Events" />
-        <Tab label="Diagnostics" />
+        <Tooltip title="Insights">
+          <Tab icon={<InsightsIcon />} />
+        </Tooltip>
+        <Tooltip title="Players">
+          <Tab icon={<PeopleIcon />} />
+        </Tooltip>
+        <Tooltip title="Deaths">
+          <Tab icon={<DangerousIcon />} />
+        </Tooltip>
+        <Tooltip title="Damage Done">
+          <Tab icon={<SwordsIcon />} />
+        </Tooltip>
+        <Tooltip title="Healing Done">
+          <Tab icon={<HealingIcon />} />
+        </Tooltip>
+        <Tooltip title="Buff Uptimes">
+          <Tab icon={<TrendingUpIcon />} />
+        </Tooltip>
+        <Tooltip title="Critical Damage">
+          <Tab icon={<WhatshotIcon />} />
+        </Tooltip>
+        <Tooltip title="Penetration">
+          <Tab icon={<SecurityIcon />} />
+        </Tooltip>
+        <Tooltip title="Raw Events">
+          <Tab icon={<ListIcon />} />
+        </Tooltip>
+        <Tooltip title="Diagnostics">
+          <Tab icon={<BugReportIcon />} />
+        </Tooltip>
       </Tabs>
       {selectedTab === 0 && <InsightsPanel fight={fight} />}
       {selectedTab === 1 && <PlayersPanel />}
@@ -84,11 +117,12 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
       {selectedTab === 3 && <DamageDonePanel fight={fight} />}
       {selectedTab === 4 && <HealingDonePanel fight={fight} />}
       {selectedTab === 5 && <BuffUptimesPanel fight={fight} />}
-      {selectedTab === 6 && <PenetrationPanel fight={fight} />}
-      {selectedTab === 7 && (
+      {selectedTab === 6 && <CriticalDamagePanel fight={fight} />}
+      {selectedTab === 7 && <PenetrationPanel fight={fight} />}
+      {selectedTab === 8 && (
         <EventsPanel page={page} setPage={setPage} EVENTS_PER_PAGE={EVENTS_PER_PAGE} />
       )}
-      {selectedTab === 8 && (
+      {selectedTab === 9 && (
         <Box mt={2}>
           <strong>Total Events:</strong> {events.length.toLocaleString()}
           <Box mt={2}>
@@ -97,12 +131,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
               {Object.entries(
                 events.reduce(
                   (acc, event) => {
-                    const type = (
-                      event.type ||
-                      event._type ||
-                      event.eventType ||
-                      'unknown'
-                    ).toLowerCase();
+                    const type = event.type.toLowerCase();
                     acc[type] = (acc[type] || 0) + 1;
                     return acc;
                   },

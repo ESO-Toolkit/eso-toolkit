@@ -8,7 +8,7 @@ import {
   GetPlayersForReportDocument,
   GetReportEventsQuery,
 } from '../graphql/generated';
-import { Event } from '../types/events';
+import { EventType } from '../types/combatlogEvents';
 import { PlayerDetails, PlayerGear, PlayerTalent } from '../types/playerDetails';
 
 export interface PlayerInfo {
@@ -23,7 +23,7 @@ export interface PlayerInfo {
 }
 
 export interface EventsState {
-  events: Event[];
+  events: EventType[];
   players: Record<string, PlayerInfo>;
   characters: Record<number, CharacterFragment>;
   loading: boolean;
@@ -46,7 +46,7 @@ const initialState: EventsState = {
 
 export const fetchEventsForFight = createAsyncThunk<
   {
-    events: Event[];
+    events: EventType[];
     players: Record<string, PlayerInfo>;
   },
   { reportCode: string; fight: FightFragment; accessToken: string },
@@ -63,7 +63,7 @@ export const fetchEventsForFight = createAsyncThunk<
     try {
       const client = createEsoLogsClient(accessToken);
       // Fetch all pages of events
-      let allEvents: Event[] = [];
+      let allEvents: EventType[] = [];
       let nextPageTimestamp: number | null = null;
       do {
         const response: { data: GetReportEventsQuery } = await client.query({
@@ -157,7 +157,7 @@ const eventsSlice = createSlice({
         fetchEventsForFight.fulfilled,
         (
           state,
-          action: PayloadAction<{ events: Event[]; players: Record<string, PlayerInfo> }>
+          action: PayloadAction<{ events: EventType[]; players: Record<string, PlayerInfo> }>
         ) => {
           state.events = action.payload.events;
           state.players = action.payload.players;
