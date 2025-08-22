@@ -1,3 +1,5 @@
+import { CombatantInfoEvent } from './combatantinfo-event';
+
 export interface DamageEvent {
   type: 'damage';
   abilityGameID?: number;
@@ -36,16 +38,31 @@ export interface ResourceChangeEvent {
   timestamp: number;
   resourceChangeType: number;
   resourceChange: number;
+  targetResources?: {
+    hitPoints?: number;
+    maxHitPoints?: number;
+    magicka?: number;
+    maxMagicka?: number;
+    stamina?: number;
+    maxStamina?: number;
+  };
 }
 
 export interface BuffEvent {
-  type: 'applybuff' | 'removebuff';
+  type: 'applybuff' | 'removebuff' | 'applydebuff' | 'removedebuff';
   targetID?: number | string;
   target?: number | string;
   victimID?: number | string;
   victim?: number | string;
   timestamp: number;
   abilityName?: string;
+  abilityId?: number;
+  abilityGameID?: number;
 }
 
-export type EventType = DamageEvent | DeathEvent | ResourceChangeEvent | BuffEvent;
+export type EventType =
+  | DamageEvent
+  | DeathEvent
+  | ResourceChangeEvent
+  | BuffEvent
+  | CombatantInfoEvent;

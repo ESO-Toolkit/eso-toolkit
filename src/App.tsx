@@ -13,26 +13,70 @@ import ReportFightDetails from './features/ReportFightDetails';
 import ReportFights from './features/ReportFights';
 import AppLayout from './layouts/AppLayout';
 import OAuthRedirect from './OAuthRedirect';
+import { clearEvents } from './store/eventsSlice';
+import { clearMasterData } from './store/masterDataSlice';
+import { clearReport } from './store/reportSlice';
 import store, { persistor } from './store/storeWithHistory';
+import { useAppDispatch } from './store/useAppDispatch';
 
 const MainApp: React.FC = () => {
   const [logUrl, setLogUrl] = React.useState('');
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
 
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setLogUrl(e.target.value);
   };
 
-  const extractReportId = (url: string) => {
-    // Example: https://www.esologs.com/reports/dVZXRHYNCDWqLmbM
-    const match = url.match(/reports\/([A-Za-z0-9]+)/);
-    return match ? match[1] : '';
+  const extractReportInfo = (url: string) => {
+    // Example URLs:
+    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM
+    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM#fight=5
+    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM?fight=5
+    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM/5
+
+    const reportMatch = url.match(/reports\/([A-Za-z0-9]+)/);
+    if (!reportMatch) return null;
+
+    const reportId = reportMatch[1];
+
+    // Try to extract fight ID from various URL patterns
+    let fightId: string | null = null;
+
+    // Pattern: #fight=5
+    const hashFightMatch = url.match(/#fight=(\d+)/);
+    if (hashFightMatch) {
+      fightId = hashFightMatch[1];
+    }
+
+    // Pattern: ?fight=5 or &fight=5
+    const queryFightMatch = url.match(/[?&]fight=(\d+)/);
+    if (queryFightMatch) {
+      fightId = queryFightMatch[1];
+    }
+
+    // Pattern: /reports/reportId/fightId
+    const pathFightMatch = url.match(/reports\/[A-Za-z0-9]+\/(\d+)/);
+    if (pathFightMatch) {
+      fightId = pathFightMatch[1];
+    }
+
+    return { reportId, fightId };
   };
 
   const handleLoadLog = () => {
-    const code = extractReportId(logUrl);
-    if (code) {
-      navigate(`/report/${code}`);
+    const result = extractReportInfo(logUrl);
+    if (result) {
+      // Clear current fight, events, and report data before navigating
+      dispatch(clearEvents());
+      dispatch(clearMasterData());
+      dispatch(clearReport());
+
+      if (result.fightId) {
+        navigate(`/report/${result.reportId}/fight/${result.fightId}`);
+      } else {
+        navigate(`/report/${result.reportId}`);
+      }
     } else {
       alert('Invalid ESOLogs report URL');
     }

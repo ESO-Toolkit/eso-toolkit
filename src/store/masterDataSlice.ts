@@ -85,7 +85,15 @@ export const fetchReportMasterData = createAsyncThunk<
 const masterDataSlice = createSlice({
   name: 'masterData',
   initialState,
-  reducers: {},
+  reducers: {
+    clearMasterData(state) {
+      state.abilitiesById = {};
+      state.actorsById = {};
+      state.loading = false;
+      state.loaded = false;
+      state.error = null;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchReportMasterData.pending, (state) => {
@@ -110,4 +118,5 @@ const masterDataSlice = createSlice({
   },
 });
 
+export const { clearMasterData } = masterDataSlice.actions;
 export default masterDataSlice.reducer;

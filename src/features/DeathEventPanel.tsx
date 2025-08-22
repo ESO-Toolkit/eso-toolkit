@@ -43,6 +43,7 @@ interface DeathInfo {
   killingBlow: AttackEvent | null;
   lastAttacks: AttackEvent[];
   stamina: number | null;
+  maxStamina: number | null;
   wasBlocking: boolean | null;
 }
 
@@ -184,33 +185,58 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           };
         }
         let stamina: number | null = null;
-        // Calculate stamina at time of death by tracking all stamina changes since last death
+        let maxStamina: number | null = null;
+        // Find the most recent resourcechange event with targetResources data for this player
         if (resourceChangesByPlayer[playerId]) {
-          let currentStamina = 0;
-          let hasStaminaData = false;
+          let mostRecentStaminaEvent: ResourceChangeEvent | null = null;
 
-          // Sort stamina events by timestamp to process them in order
-          const staminaEvents: ResourceChangeEvent[] = [];
+          // Find the most recent resourcechange event before death with targetResources data
           for (const e of resourceChangesByPlayer[playerId]) {
             if (
-              e.resourceChangeType === 1 && // stamina resource type
               e.timestamp < event.timestamp &&
-              (lastDeathTimestamp === undefined || e.timestamp > lastDeathTimestamp)
+              (lastDeathTimestamp === undefined || e.timestamp > lastDeathTimestamp) &&
+              e.targetResources?.stamina !== undefined
             ) {
-              staminaEvents.push(e);
+              if (!mostRecentStaminaEvent || e.timestamp > mostRecentStaminaEvent.timestamp) {
+                mostRecentStaminaEvent = e;
+              }
             }
           }
-          staminaEvents.sort((a, b) => a.timestamp - b.timestamp);
 
-          // Apply stamina changes in chronological order to get final stamina value
-          for (const e of staminaEvents) {
-            currentStamina += e.resourceChange;
-            hasStaminaData = true;
+          // Use the stamina value from the most recent event with targetResources
+          if (mostRecentStaminaEvent?.targetResources?.stamina !== undefined) {
+            stamina = mostRecentStaminaEvent.targetResources.stamina;
+            maxStamina = mostRecentStaminaEvent.targetResources.maxStamina ?? null;
+          } else {
+            // Fallback to the old calculation method if no targetResources available
+            let currentStamina = 0;
+            let hasStaminaData = false;
+
+            // Sort stamina events by timestamp to process them in order
+            const staminaEvents: ResourceChangeEvent[] = [];
+            for (const e of resourceChangesByPlayer[playerId]) {
+              if (
+                e.resourceChangeType === 1 && // stamina resource type
+                e.timestamp < event.timestamp &&
+                (lastDeathTimestamp === undefined || e.timestamp > lastDeathTimestamp)
+              ) {
+                staminaEvents.push(e);
+              }
+            }
+            staminaEvents.sort((a, b) => a.timestamp - b.timestamp);
+
+            // Apply stamina changes in chronological order to get final stamina value
+            for (const e of staminaEvents) {
+              currentStamina += e.resourceChange;
+              hasStaminaData = true;
+            }
+
+            stamina = hasStaminaData ? Math.max(0, currentStamina) : null;
+            maxStamina = null;
           }
-
-          stamina = hasStaminaData ? Math.max(0, currentStamina) : null;
         } else {
           stamina = null;
+          maxStamina = null;
         }
         // Find the most recent applybuff and removebuff for 'Brace for Impact' before the death event
         let lastApplyBuffTime: number | null = null;
@@ -252,13 +278,15 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           killingBlow,
           lastAttacks,
           stamina,
+          maxStamina,
           wasBlocking,
         });
         lastDeathTimestamp = event.timestamp;
       }
     });
 
-    return deaths;
+    // Sort deaths by timestamp to display them in chronological order
+    return deaths.sort((a, b) => a.timestamp - b.timestamp);
   }, [events, fight, abilitiesById, actorsById]);
 
   if (deathInfos.length === 0) {
@@ -340,7 +368,14 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
                     {info.wasBlocking && (
                       <Chip label={'Blocking'} color={'success'} sx={{ mr: 1 }} />
                     )}
-                    <Chip label={`Stamina: ${info.stamina ?? 'Unknown'}`} sx={{ mr: 1 }} />
+                    <Chip
+                      label={
+                        info.stamina !== null && info.maxStamina !== null
+                          ? `Stamina: ${info.stamina}/${info.maxStamina}`
+                          : `Stamina: ${info.stamina ?? 'Unknown'}`
+                      }
+                      sx={{ mr: 1 }}
+                    />
                   </Box>
                   <Box mt={2}>
                     <Typography variant="body2" fontWeight="bold">
