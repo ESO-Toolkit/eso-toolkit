@@ -67,7 +67,6 @@ interface PlayerCriticalDamageData {
   playerId: string;
   playerName: string;
   dataPoints: CriticalDamageDataPoint[];
-  finalCriticalDamage: number;
 }
 
 interface CriticalDamageSource {
@@ -520,7 +519,6 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
       playerId: id,
       playerName: name,
       dataPoints,
-      finalCriticalDamage: dataPoints[dataPoints.length - 1].criticalDamage,
     };
 
     return playerData;
@@ -560,11 +558,8 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
                   (point: CriticalDamageDataPoint) => point.criticalDamage
                 ),
                 0
-              )}{' '}
-              crit dmg
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Final: {criticalDamageData.finalCriticalDamage} crit dmg
+              )}
+              % Crit Damage
             </Typography>
           </Box>
         </Box>
@@ -579,10 +574,6 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
             <Typography variant="body2" sx={{ mb: 1 }}>
               <strong>Data Points:</strong> {criticalDamageData.dataPoints.length}
-            </Typography>
-
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Final Critical Damage:</strong> {criticalDamageData.finalCriticalDamage}
             </Typography>
 
             {/* Critical Damage Sources Checklist */}

@@ -1,4 +1,3 @@
-import LaunchIcon from '@mui/icons-material/Launch';
 import {
   Box,
   Typography,
@@ -8,7 +7,6 @@ import {
   ListItemIcon,
   Checkbox,
   ListItemText,
-  IconButton,
   Link,
 } from '@mui/material';
 import React from 'react';
@@ -55,18 +53,6 @@ const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources
                   >
                     {source.name}
                   </Typography>
-                  {source.link && (
-                    <IconButton
-                      size="small"
-                      href={source.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ ml: 'auto', opacity: 0.7 }}
-                      title="View detailed analysis on ESO Logs"
-                    >
-                      <LaunchIcon fontSize="small" />
-                    </IconButton>
-                  )}
                 </Box>
               }
               secondary={

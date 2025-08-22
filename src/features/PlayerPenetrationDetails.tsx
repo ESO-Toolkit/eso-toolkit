@@ -111,7 +111,6 @@ interface PlayerPenetrationData {
   playerId: string;
   playerName: string;
   dataPoints: PenetrationDataPoint[];
-  finalPenetration: number;
 }
 
 interface PenetrationSource {
@@ -578,7 +577,6 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
       playerId: id,
       playerName: name,
       dataPoints: voxelizedDataPoints,
-      finalPenetration: currentPenetration,
     };
 
     return playerData;
@@ -632,9 +630,6 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
               )}{' '}
               pen
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Final: {penetrationData.finalPenetration} pen
-            </Typography>
           </Box>
         </Box>
       </AccordionSummary>
@@ -648,10 +643,6 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
 
             <Typography variant="body2" sx={{ mb: 1 }}>
               <strong>Data Points:</strong> {penetrationData.dataPoints.length}
-            </Typography>
-
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Final Penetration:</strong> {penetrationData.finalPenetration}
             </Typography>
 
             {/* Penetration Sources Checklist */}

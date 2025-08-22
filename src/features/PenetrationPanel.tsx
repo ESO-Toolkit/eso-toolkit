@@ -6,6 +6,7 @@ import {
   Select,
   MenuItem,
   SelectChangeEvent,
+  Alert,
 } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -19,9 +20,10 @@ import PlayerPenetrationDetails from './PlayerPenetrationDetails';
 
 interface PenetrationPanelProps {
   fight: FightFragment;
+  selectedTargetId?: string;
 }
 
-const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
+const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTargetId }) => {
   const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
   const eventPlayers = useSelector((state: RootState) => state.events.players);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -69,6 +71,21 @@ const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
       return newParams;
     });
   };
+
+  // Show target selection message if no target is selected
+  if (!selectedTargetId) {
+    return (
+      <Box>
+        <Typography variant="h4" gutterBottom>
+          Penetration Analysis
+        </Typography>
+        
+        <Alert severity="info" sx={{ mt: 2 }}>
+          Please select a target enemy using the dropdown above to view penetration analysis for that target.
+        </Alert>
+      </Box>
+    );
+  }
 
   return (
     <Box>
