@@ -121,6 +121,11 @@ const App: React.FC = () => {
 const AuthApolloProvider: React.FC = () => {
   const { accessToken } = useAuth();
   const client = createEsoLogsClient(accessToken || '');
+
+  React.useEffect(() => {
+    document.title = 'ESO Log Insights by NotaGuild';
+  }, []);
+
   return (
     <ApolloProvider client={client}>
       <HashRouter>

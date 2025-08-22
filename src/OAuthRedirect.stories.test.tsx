@@ -1,11 +1,19 @@
+import { render } from '@testing-library/react';
 import React from 'react';
-import renderer from 'react-test-renderer';
+import { MemoryRouter } from 'react-router-dom';
 
+import { AuthProvider } from './AuthContext';
 import OAuthRedirect from './OAuthRedirect';
 
 describe('OAuthRedirect Storybook Snapshot', () => {
   it('matches the default story snapshot', () => {
-    const tree = renderer.create(<OAuthRedirect />).toJSON();
-    expect(tree).toMatchSnapshot();
+    const { container } = render(
+      <AuthProvider>
+        <MemoryRouter>
+          <OAuthRedirect />
+        </MemoryRouter>
+      </AuthProvider>
+    );
+    expect(container.firstChild).toMatchSnapshot();
   });
 });

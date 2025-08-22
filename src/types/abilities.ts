@@ -83,6 +83,9 @@ export enum KnownAbilities {
   // Advanced Species - Passive that provides 15% critical damage
   ADVANCED_SPECIES = 184809,
 
+  // Taunted Debuffs
+  TAUNT = 38254,
+
   // TODO: Add more penetration-related abilities
   // Examples:
   // NIGHT_MOTHERS_GAZE = <id>,

@@ -124,6 +124,43 @@ export interface Resources {
   facing: number;
 }
 
+export interface CastEvent {
+  timestamp: number;
+  type: 'cast';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+}
+
+export interface BeginCastEvent {
+  timestamp: number;
+  type: 'begincast';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  castTrackID: number;
+  sourceResources: Resources;
+  targetResources: Resources;
+}
+
+export interface ApplyBuffStackEvent {
+  timestamp: number;
+  type: 'applybuffstack';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  stack: number;
+}
+
 export type EventType =
   | DamageEvent
   | DeathEvent
@@ -131,4 +168,7 @@ export type EventType =
   | BuffEvent
   | CombatantInfoEvent
   | PlayerEnterCombatEvent
-  | HealEvent;
+  | HealEvent
+  | CastEvent
+  | BeginCastEvent
+  | ApplyBuffStackEvent;
