@@ -15,7 +15,6 @@ import {
   Chip,
   Link,
   IconButton,
-  CircularProgress,
 } from '@mui/material';
 import {
   Chart as ChartJS,
