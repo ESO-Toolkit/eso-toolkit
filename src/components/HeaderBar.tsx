@@ -14,7 +14,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useAuth } from '../AuthContext';
 import { RootState } from '../store/storeWithHistory';
-import { setDarkMode } from '../store/uiSlice';
+import { setDarkMode } from '../store/ui/uiSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 const HeaderBar: React.FC = () => {

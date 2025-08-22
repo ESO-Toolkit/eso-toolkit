@@ -1,58 +1,7 @@
-fragment Fight on ReportFight {
-  id
-  name
-  difficulty
-  startTime
-  endTime
-}
-
-query getReportByCode($code: String!) {
-  reportData {
-    report(code: $code) {
-      code
-      startTime
-      endTime
-      title
-      visibility
-      zone {
-        name
-      }
-      fights {
-        ...Fight
-      }
-    }
-  }
-}
-
-fragment Character on Character {
-  id
-  name
-  displayName
-  classID
-}
-
-query getCharactersForReport($code: String!) {
-  reportData {
-    report(code: $code) {
-      rankedCharacters {
-        ...Character
-      }
-    }
-  }
-}
-
-query getPlayersForReport($code: String!, $fightIDs: [Int]) {
-  reportData {
-    report(code: $code) {
-      playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
-    }
-  }
-}
-
-fragment Event on ReportEventPaginator {
-  data
-  nextPageTimestamp
-}
+# Event queries for all event-related components
+# Used by: EventsPanel.tsx, DamageDonePanel.tsx, HealingDonePanel.tsx,
+#          BuffUptimesPanel.tsx, DeathEventPanel.tsx, LocationHeatmapPanel.tsx,
+#          CriticalDamagePanel.tsx, PenetrationPanel.tsx
 
 # Original query with 100M limit - kept for backwards compatibility
 query getReportEvents($code: String!, $startTime: Float, $endTime: Float, $fightIds: [Int]!) {
@@ -75,6 +24,7 @@ query getReportEvents($code: String!, $startTime: Float, $endTime: Float, $fight
 # OPTIMIZED QUERIES - Use these for 60-90% performance improvement
 
 # Damage events only - replaces client-side filtering with server-side
+# Used by: DamageDonePanel.tsx, CriticalDamagePanel.tsx, LocationHeatmapPanel.tsx
 query getDamageEvents(
   $code: String!
   $startTime: Float
@@ -100,6 +50,7 @@ query getDamageEvents(
 }
 
 # Healing events only - much faster than filtering 100M events
+# Used by: HealingDonePanel.tsx
 query getHealingEvents(
   $code: String!
   $startTime: Float
@@ -125,6 +76,7 @@ query getHealingEvents(
 }
 
 # Buff/debuff events for penetration and uptime analysis
+# Used by: BuffUptimesPanel.tsx, PenetrationPanel.tsx
 query getBuffEvents(
   $code: String!
   $startTime: Float
@@ -150,6 +102,7 @@ query getBuffEvents(
 }
 
 # Death events for death tracking
+# Used by: DeathEventPanel.tsx
 query getDeathEvents(
   $code: String!
   $startTime: Float
@@ -169,75 +122,6 @@ query getDeathEvents(
         limit: $limit
       ) {
         ...Event
-      }
-    }
-  }
-}
-
-fragment ReportAbility on ReportAbility {
-  gameID
-  icon
-  name
-  type
-}
-
-fragment ReportActor on ReportActor {
-  displayName
-  gameID
-  icon
-  id
-  name
-  server
-  subType
-  type
-}
-
-fragment MasterData on ReportMasterData {
-  abilities {
-    ...ReportAbility
-  }
-  actors {
-    ...ReportActor
-  }
-}
-
-# Original master data query - kept for backwards compatibility
-query getReportMasterData($code: String!) {
-  reportData {
-    report(code: $code) {
-      masterData {
-        ...MasterData
-      }
-    }
-  }
-}
-
-# OPTIMIZED: Players only - reduces payload by 50-70%
-fragment OptimizedReportActor on ReportActor {
-  displayName
-  gameID
-  id
-  name
-  server
-  subType
-  type
-  # Removed icon field - not used in most UI components
-}
-
-fragment OptimizedMasterData on ReportMasterData {
-  abilities {
-    ...ReportAbility
-  }
-  actors(type: "Player") {
-    ...OptimizedReportActor
-  }
-}
-
-query getReportPlayersOnly($code: String!) {
-  reportData {
-    report(code: $code) {
-      masterData {
-        ...OptimizedMasterData
       }
     }
   }

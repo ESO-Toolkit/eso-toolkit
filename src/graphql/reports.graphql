@@ -1,0 +1,20 @@
+# Reports and Fights queries
+# Used by: ReportFights.tsx, ReportFightDetails.tsx
+
+query getReportByCode($code: String!) {
+  reportData {
+    report(code: $code) {
+      code
+      startTime
+      endTime
+      title
+      visibility
+      zone {
+        name
+      }
+      fights {
+        ...Fight
+      }
+    }
+  }
+}

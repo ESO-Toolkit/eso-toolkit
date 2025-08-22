@@ -1,0 +1,69 @@
+# Shared fragments used across multiple components
+
+fragment Fight on ReportFight {
+  id
+  name
+  difficulty
+  startTime
+  endTime
+}
+
+fragment Character on Character {
+  id
+  name
+  displayName
+  classID
+}
+
+fragment Event on ReportEventPaginator {
+  data
+  nextPageTimestamp
+}
+
+fragment ReportAbility on ReportAbility {
+  gameID
+  icon
+  name
+  type
+}
+
+fragment ReportActor on ReportActor {
+  displayName
+  gameID
+  icon
+  id
+  name
+  server
+  subType
+  type
+}
+
+fragment MasterData on ReportMasterData {
+  abilities {
+    ...ReportAbility
+  }
+  actors {
+    ...ReportActor
+  }
+}
+
+# OPTIMIZED: Players only - reduces payload by 50-70%
+fragment OptimizedReportActor on ReportActor {
+  displayName
+  gameID
+  id
+  name
+  server
+  subType
+  type
+  # Removed icon field - not used in most UI components
+}
+
+fragment OptimizedMasterData on ReportMasterData {
+  abilities {
+    ...ReportAbility
+  }
+  actors(type: "Player") {
+    ...OptimizedReportActor
+  }
+}
