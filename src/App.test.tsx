@@ -1,15 +1,9 @@
 import { render, screen } from '@testing-library/react';
-import React from 'react';
-import { MemoryRouter } from 'react-router-dom';
 
 import App from './App';
 
-test('renders learn react link', () => {
-  render(
-    <MemoryRouter>
-      <App />
-    </MemoryRouter>
-  );
-  const linkElement = screen.getByText(/learn react/i);
-  expect(linkElement).toBeInTheDocument();
+test('renders ESO Log Insights application', () => {
+  render(<App />);
+  const titleElement = screen.getByText(/ESO Log Insights/i);
+  expect(titleElement).toBeInTheDocument();
 });

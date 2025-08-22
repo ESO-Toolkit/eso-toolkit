@@ -1,0 +1,14 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`OAuthRedirect Storybook Snapshot matches the default story snapshot 1`] = `
+<div
+  class="MuiContainer-root MuiContainer-maxWidthSm css-zzzaw2-MuiContainer-root"
+  style="text-align: center; margin-top: 4rem;"
+>
+  <p
+    class="MuiTypography-root MuiTypography-body1 css-lcmie7-MuiTypography-root"
+  >
+    Missing code or PKCE verifier.
+  </p>
+</div>
+`;
