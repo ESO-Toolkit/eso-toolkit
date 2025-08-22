@@ -4,8 +4,12 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { RootState } from '../store/storeWithHistory';
+import { MundusStones } from '../types/abilities';
+import { CombatantInfoEvent } from '../types/combatantinfo-event';
+import { EventType } from '../types/combatlogEvents';
 import { PlayerGear } from '../types/playerDetails';
 import { detectBuildIssues } from '../utils/detectBuildIssues';
+import { resolveActorName } from '../utils/resolveActorName';
 
 // This panel now uses report actors from masterData
 
@@ -21,28 +25,105 @@ const PlayersPanel: React.FC = () => {
   // Filter for Player actors only
   const playerActors = Object.values(actorsById).filter((actor) => actor.type === 'Player');
 
-  // Calculate unique mundus buffs per player
+  // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
-    const result: Record<string, Set<string>> = {};
+    const result: Record<string, Array<{ name: string; id: number }>> = {};
 
     if (!events || !abilitiesById) return result;
 
-    // Initialize sets for each player
+    // Get all mundus stone ability IDs from the enum
+    const mundusStoneIds = Object.values(MundusStones) as number[];
+
+    // Initialize arrays for each player
     playerActors.forEach((actor) => {
       if (actor.id) {
-        result[String(actor.id)] = new Set();
+        const playerId = String(actor.id);
+        result[playerId] = [];
+
+        // Find the latest combatantinfo event for this player
+        const combatantInfoEvents = events
+          .filter((event) => {
+            const eventData = event as unknown as EventType;
+            return (
+              eventData.type === 'combatantinfo' &&
+              'sourceID' in eventData &&
+              String(eventData.sourceID) === playerId
+            );
+          })
+          .sort((a, b) => {
+            const aData = a as unknown as EventType;
+            const bData = b as unknown as EventType;
+            return (bData.timestamp || 0) - (aData.timestamp || 0);
+          }); // Most recent first
+
+        const latestCombatantInfo = combatantInfoEvents[0] as unknown as CombatantInfoEvent;
+        if (latestCombatantInfo && latestCombatantInfo.auras) {
+          // Check each aura to see if it's a mundus stone
+          latestCombatantInfo.auras.forEach((aura) => {
+            if (mundusStoneIds.includes(aura.ability)) {
+              const ability = abilitiesById[aura.ability];
+              const mundusName = ability?.name || aura.name || `Unknown Mundus (${aura.ability})`;
+
+              // Only add if not already present
+              if (!result[playerId].some((buff) => buff.id === aura.ability)) {
+                result[playerId].push({
+                  name: mundusName,
+                  id: aura.ability,
+                });
+              }
+            }
+          });
+        }
       }
     });
 
-    // Look through all events for applybuff events
-    events.forEach((event) => {
-      if (event.type === 'applybuff' && event.abilityGameID && event.targetID) {
-        const ability = abilitiesById[event.abilityGameID];
-        if (ability?.name && ability.name.toLowerCase().includes('mundus')) {
-          const playerId = String(event.targetID);
-          if (result[playerId]) {
-            result[playerId].add(ability.name);
-          }
+    return result;
+  }, [events, abilitiesById, playerActors]);
+
+  // Calculate all auras per player from combatantinfo events
+  const aurasByPlayer = React.useMemo(() => {
+    const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
+
+    if (!events || !abilitiesById) return result;
+
+    // Initialize arrays for each player
+    playerActors.forEach((actor) => {
+      if (actor.id) {
+        const playerId = String(actor.id);
+        result[playerId] = [];
+
+        // Find the latest combatantinfo event for this player
+        const combatantInfoEvents = events
+          .filter((event) => {
+            const eventData = event as unknown as EventType;
+            return (
+              eventData.type === 'combatantinfo' &&
+              'sourceID' in eventData &&
+              String(eventData.sourceID) === playerId
+            );
+          })
+          .sort((a, b) => {
+            const aData = a as unknown as EventType;
+            const bData = b as unknown as EventType;
+            return (bData.timestamp || 0) - (aData.timestamp || 0);
+          }); // Most recent first
+
+        const latestCombatantInfo = combatantInfoEvents[0] as unknown as CombatantInfoEvent;
+        if (latestCombatantInfo && latestCombatantInfo.auras) {
+          // Get all auras for this player
+          latestCombatantInfo.auras.forEach((aura) => {
+            const ability = abilitiesById[aura.ability];
+            const auraName = ability?.name || aura.name || `Unknown Aura (${aura.ability})`;
+
+            result[playerId].push({
+              name: auraName,
+              id: aura.ability,
+              stacks: aura.stacks,
+            });
+          });
+
+          // Sort auras by name for consistent display
+          result[playerId].sort((a, b) => a.name.localeCompare(b.name));
         }
       }
     });
@@ -75,14 +156,14 @@ const PlayersPanel: React.FC = () => {
                     {actor.icon ? (
                       <Avatar
                         src={`https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`}
-                        alt={actor.name ?? undefined}
+                        alt={String(resolveActorName(actor))}
                         sx={{ mr: 2 }}
                       />
                     ) : (
                       <Avatar sx={{ mr: 2 }} />
                     )}
                     <Box>
-                      <Typography variant="subtitle1">{actor.name}</Typography>
+                      <Typography variant="subtitle1">{resolveActorName(actor)}</Typography>
                       <Typography variant="body2" color="text.secondary">
                         {actor.subType}
                       </Typography>
@@ -112,7 +193,7 @@ const PlayersPanel: React.FC = () => {
                             src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
                             alt={talent.name}
                             sx={{ width: 32, height: 32, border: '1px solid #ccc' }}
-                            title={talent.name}
+                            title={`${talent.name} (ID: ${talent.guid})`}
                           />
                         ))}
                       </Box>
@@ -124,7 +205,7 @@ const PlayersPanel: React.FC = () => {
                               src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
                               alt={talent.name}
                               sx={{ width: 32, height: 32, border: '1px solid #ccc' }}
-                              title={talent.name}
+                              title={`${talent.name} (ID: ${talent.guid})`}
                             />
                           ))}
                         </Box>
@@ -138,29 +219,71 @@ const PlayersPanel: React.FC = () => {
                       </Typography>
                       <Box display="flex" flexWrap="wrap" gap={1}>
                         {(() => {
-                          // Group gear by setName
-                          const setCounts: Record<string, number> = {};
+                          // Group gear by setName and collect setIDs
+                          const setData: Record<string, { count: number; setID: number }> = {};
                           gear.forEach((g: PlayerGear) => {
                             if (g.setName) {
-                              setCounts[g.setName] = (setCounts[g.setName] || 0) + 1;
+                              if (!setData[g.setName]) {
+                                setData[g.setName] = { count: 0, setID: g.setID };
+                              }
+                              setData[g.setName].count += 1;
                             }
                           });
-                          return Object.entries(setCounts).map(([setName, count], idx) => (
-                            <Chip key={idx} label={`${count} ${setName}`} size="small" />
+                          return Object.entries(setData).map(([setName, data], idx) => (
+                            <Chip
+                              key={idx}
+                              label={`${data.count} ${setName}`}
+                              size="small"
+                              title={`Set ID: ${data.setID}`}
+                            />
                           ));
                         })()}
                       </Box>
                     </Box>
                   )}
                   {/* Mundus Buffs Section */}
-                  {actor.id && mundusBuffsByPlayer[String(actor.id)]?.size > 0 && (
+                  {actor.id && mundusBuffsByPlayer[String(actor.id)]?.length > 0 && (
                     <Box mt={1}>
                       <Typography variant="body2" fontWeight="bold">
                         Mundus Buffs:
                       </Typography>
                       <Box display="flex" flexWrap="wrap" gap={1}>
-                        {Array.from(mundusBuffsByPlayer[String(actor.id)]).map((buffName, idx) => (
-                          <Chip key={idx} label={String(buffName)} size="small" color="primary" />
+                        {mundusBuffsByPlayer[String(actor.id)].map((buff, idx) => (
+                          <Chip
+                            key={idx}
+                            label={buff.name}
+                            size="small"
+                            color="primary"
+                            title={`Ability ID: ${buff.id}`}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+                  )}
+                  {/* All Auras Section */}
+                  {actor.id && aurasByPlayer[String(actor.id)]?.length > 0 && (
+                    <Box mt={1}>
+                      <Typography variant="body2" fontWeight="bold">
+                        Active Auras ({aurasByPlayer[String(actor.id)].length}):
+                      </Typography>
+                      <Box
+                        display="flex"
+                        flexWrap="wrap"
+                        gap={1}
+                        sx={{ maxHeight: '120px', overflowY: 'auto' }}
+                      >
+                        {aurasByPlayer[String(actor.id)].map((aura, idx) => (
+                          <Chip
+                            key={idx}
+                            label={
+                              aura.stacks && aura.stacks > 1
+                                ? `${aura.name} (${aura.stacks})`
+                                : aura.name
+                            }
+                            size="small"
+                            variant="outlined"
+                            title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
+                          />
                         ))}
                       </Box>
                     </Box>

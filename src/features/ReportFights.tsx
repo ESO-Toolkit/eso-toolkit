@@ -14,6 +14,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../AuthContext';
 import { FightFragment } from '../graphql/generated';
 import { useReportFightParams } from '../hooks/useReportFightParams';
+import { clearEvents } from '../store/eventsSlice';
+import { clearMasterData } from '../store/masterDataSlice';
 import { fetchReportData } from '../store/reportSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -27,12 +29,18 @@ const ReportFights: React.FC = () => {
   const fights = useSelector((state: RootState) => state.report.fights);
   const loading = useSelector((state: RootState) => state.report.loading);
   const error = useSelector((state: RootState) => state.report.error);
+  const currentReportId = useSelector((state: RootState) => state.report.reportId);
 
   React.useEffect(() => {
     if (reportId && accessToken && fights.length === 0 && !loading && !error) {
+      // Clear existing data when fetching a new report (different from current one)
+      if (currentReportId !== reportId) {
+        dispatch(clearEvents());
+        dispatch(clearMasterData());
+      }
       dispatch(fetchReportData({ reportId, accessToken }));
     }
-  }, [reportId, accessToken, fights.length, loading, error, dispatch]);
+  }, [reportId, accessToken, fights.length, loading, error, currentReportId, dispatch]);
 
   const handleFightSelect = (id: number) => {
     navigate(`/report/${reportId}/fight/${id}`);

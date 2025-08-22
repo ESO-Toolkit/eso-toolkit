@@ -9,6 +9,7 @@ import DeathEventPanel from './features/DeathEventPanel';
 import EventsPanel from './features/EventsPanel';
 import HealingDonePanel from './features/HealingDonePanel';
 import InsightsPanel from './features/InsightsPanel';
+import PenetrationPanel from './features/PenetrationPanel';
 import PlayersPanel from './features/PlayersPanel';
 import { FightFragment } from './graphql/generated';
 import { RootState } from './store/storeWithHistory';
@@ -73,6 +74,7 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
         <Tab label="Damage Done" />
         <Tab label="Healing Done" />
         <Tab label="Buff Uptimes" />
+        <Tab label="Penetration" />
         <Tab label="Raw Events" />
         <Tab label="Diagnostics" />
       </Tabs>
@@ -82,10 +84,11 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
       {selectedTab === 3 && <DamageDonePanel fight={fight} />}
       {selectedTab === 4 && <HealingDonePanel fight={fight} />}
       {selectedTab === 5 && <BuffUptimesPanel fight={fight} />}
-      {selectedTab === 6 && (
+      {selectedTab === 6 && <PenetrationPanel fight={fight} />}
+      {selectedTab === 7 && (
         <EventsPanel page={page} setPage={setPage} EVENTS_PER_PAGE={EVENTS_PER_PAGE} />
       )}
-      {selectedTab === 7 && (
+      {selectedTab === 8 && (
         <Box mt={2}>
           <strong>Total Events:</strong> {events.length.toLocaleString()}
           <Box mt={2}>

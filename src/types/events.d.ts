@@ -14,7 +14,7 @@ export interface Event {
   abilityId?: string | number;
   buffId?: string | number;
   id?: string | number;
-  timestamp?: number;
+  timestamp: number;
   [key: string]: unknown;
 }
 
