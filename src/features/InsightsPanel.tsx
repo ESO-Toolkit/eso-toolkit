@@ -5,6 +5,7 @@ import { useSelector } from 'react-redux';
 import { FightFragment } from '../graphql/generated';
 import { PlayerInfo } from '../store/eventsSlice';
 import { RootState } from '../store/storeWithHistory';
+import { PlayerEnterCombatEvent } from '../types/combatlogEvents';
 import { PlayerTalent } from '../types/playerDetails';
 
 interface InsightsPanelProps {
@@ -23,15 +24,11 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
     if (!events || !fight?.startTime) return null;
     // Find the first playerentercombat event after fight start
     const starterEvent = events.find(
-      (event) =>
-        (event.type || event._type || event.eventType) === 'playerentercombat' &&
-        event.timestamp &&
-        event.timestamp >= fight.startTime
+      (event): event is PlayerEnterCombatEvent =>
+        event.type === 'playerentercombat' && event.timestamp >= fight.startTime
     );
     if (starterEvent) {
-      const playerId = String(
-        starterEvent.sourceID ?? starterEvent.targetID ?? starterEvent.playerID ?? ''
-      );
+      const playerId = String(starterEvent.sourceID ?? '');
       const player = players[playerId];
       return player?.displayName || player?.name || playerId;
     }
@@ -69,13 +66,11 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
         .filter((id) => id != null);
     });
     events.forEach((event) => {
-      const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-      if (eventType === 'applybuff') {
+      if (event.type === 'applybuff') {
         CHAMPION_POINT_NAMES.forEach((name) => {
           if (
             buffAbilityIds[name].includes(event.abilityGameID ?? '') ||
-            buffAbilityIds[name].includes(event.abilityId ?? '') ||
-            buffAbilityIds[name].includes(event.buffId ?? '')
+            buffAbilityIds[name].includes(event.abilityId ?? '')
           ) {
             const sourceId = String(event.sourceID);
             if (event.sourceID != null && players[sourceId]) {

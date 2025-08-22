@@ -19,8 +19,7 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
     fightDuration = (Number(fight.endTime) - Number(fight.startTime)) / 1000;
   }
   events.forEach((event) => {
-    const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-    if (eventType === 'heal' && event.sourceID != null) {
+    if (event.type === 'heal' && event.sourceID != null) {
       const playerId = Number(event.sourceID);
       const amount = Number(event.amount) || 0;
       const overheal = Number(event.overheal) || 0;

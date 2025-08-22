@@ -36,8 +36,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FightFragment } from '../graphql/generated';
 import { RootState } from '../store/storeWithHistory';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../types/abilities';
-import { CombatantInfoEvent, CombatantGear } from '../types/combatantinfo-event';
-import { EventType, BuffEvent } from '../types/combatlogEvents';
+import { EventType, BuffEvent, CombatantInfoEvent, CombatantGear } from '../types/combatlogEvents';
 
 // Register Chart.js components
 ChartJS.register(
@@ -180,7 +179,7 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
     const fightEnd = fight.endTime;
 
     // Pre-filter events once for the fight timeframe
-    return (events as EventType[]).filter(
+    return events.filter(
       (event: EventType) => event.timestamp >= fightStart && event.timestamp <= fightEnd
     );
   }, [events, fight?.startTime, fight?.endTime]);

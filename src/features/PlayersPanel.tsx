@@ -5,8 +5,7 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../store/storeWithHistory';
 import { MundusStones } from '../types/abilities';
-import { CombatantInfoEvent } from '../types/combatantinfo-event';
-import { EventType } from '../types/combatlogEvents';
+import { CombatantInfoEvent, EventType } from '../types/combatlogEvents';
 import { PlayerGear } from '../types/playerDetails';
 import { detectBuildIssues } from '../utils/detectBuildIssues';
 import { resolveActorName } from '../utils/resolveActorName';
@@ -94,8 +93,8 @@ const PlayersPanel: React.FC = () => {
 
         // Find the latest combatantinfo event for this player
         const combatantInfoEvents = events
-          .filter((event) => {
-            const eventData = event as unknown as EventType;
+          .filter((event): event is CombatantInfoEvent => {
+            const eventData = event;
             return (
               eventData.type === 'combatantinfo' &&
               'sourceID' in eventData &&
@@ -103,12 +102,10 @@ const PlayersPanel: React.FC = () => {
             );
           })
           .sort((a, b) => {
-            const aData = a as unknown as EventType;
-            const bData = b as unknown as EventType;
-            return (bData.timestamp || 0) - (aData.timestamp || 0);
+            return (b.timestamp || 0) - (a.timestamp || 0);
           }); // Most recent first
 
-        const latestCombatantInfo = combatantInfoEvents[0] as unknown as CombatantInfoEvent;
+        const latestCombatantInfo = combatantInfoEvents[0];
         if (latestCombatantInfo && latestCombatantInfo.auras) {
           // Get all auras for this player
           latestCombatantInfo.auras.forEach((aura) => {

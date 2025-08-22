@@ -41,15 +41,13 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
       const fightEnd = Number(fight.endTime);
       const fightDuration = fightEnd - fightStart;
       const activeBuffs: Record<string, Record<string, number>> = {};
-      // Filter events to only applybuff/removebuff
-      const filteredEvents = events.filter((event) => {
-        const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-        return eventType === 'applybuff' || eventType === 'removebuff';
-      });
-      filteredEvents.forEach((event) => {
-        const eventType = (event.type || event._type || event.eventType || '').toLowerCase();
-        const abilityGameID =
-          event.abilityGameID || event.abilityId || event.buffId || event.id || 'unknown';
+
+      events.forEach((event) => {
+        if (event.type !== 'applybuff' && event.type !== 'removebuff') {
+          return;
+        }
+
+        const abilityGameID = event.abilityGameID || event.abilityId || 'unknown';
         const ability = masterData.abilitiesById[event.abilityGameID || ''];
         // Not a buff
         if (ability.type !== '2') {
@@ -59,9 +57,9 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
         if (!activeBuffs[abilityGameID]) activeBuffs[abilityGameID] = {};
         if (!buffDetails[abilityGameID]) buffDetails[abilityGameID] = {};
         if (!buffDetails[abilityGameID][targetId]) buffDetails[abilityGameID][targetId] = [];
-        if (eventType === 'applybuff') {
+        if (event.type === 'applybuff') {
           activeBuffs[abilityGameID][targetId] = Number(event.timestamp);
-        } else if (eventType === 'removebuff' && activeBuffs[abilityGameID][targetId] != null) {
+        } else if (event.type === 'removebuff' && activeBuffs[abilityGameID][targetId] != null) {
           const start = activeBuffs[abilityGameID][targetId];
           const end = Number(event.timestamp);
           buffDetails[abilityGameID][targetId].push({ start, end });
