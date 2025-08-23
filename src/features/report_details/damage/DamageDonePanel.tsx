@@ -1,13 +1,17 @@
-import { Box, Typography, List, ListItem, ListItemText, Avatar } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { selectDamagePanelData } from '../../../store/crossSliceSelectors';
 
+import DamageDonePanelView from './DamageDonePanelView';
+
 interface DamageDonePanelProps {
   fight: { startTime?: number; endTime?: number };
 }
 
+/**
+ * Smart component that handles data processing and state management for damage done panel
+ */
 const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const { events, players, characters, masterData } = useSelector(selectDamagePanelData);
@@ -49,73 +53,57 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
       return actor && actor.type === 'Player';
     };
   }, [masterData.actorsById]);
-  const damageRows = Object.entries(damageStatistics.damageByPlayer)
-    .filter(([id]) => isPlayerActor(id))
-    .map(([id, total]) => {
-      const totalDamage = Number(total);
-      let name: string | undefined;
-      // Prefer masterData actor name if available
-      const actor = masterData.actorsById[id];
-      if (actor) {
-        name = actor.displayName ?? actor.name ?? `Player ${id}`;
-      } else {
-        // Fallback to previous logic
-        const playerInfo = players[id] || {};
-        const charId = Number(id);
-        if (characters[charId]) {
-          const charName = characters[charId].name;
-          const displayName = playerInfo.displayName || characters[charId].displayName;
-          name = displayName ? `${charName} (${displayName})` : charName;
-        } else if (typeof playerInfo.name === 'string') {
-          const displayName = playerInfo.displayName;
-          name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
-        } else {
-          name = `Player ${id}`;
-        }
-      }
-      return {
-        id,
-        name,
-        total: totalDamage,
-        dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
-      };
-    })
-    .sort((a, b) => b.dps - a.dps);
 
-  return (
-    <Box>
-      <Typography variant="h6">Damage Done by Player</Typography>
-      {damageRows.length > 0 ? (
-        <List>
-          {damageRows.map((row) => {
-            const actor = masterData.actorsById[row.id];
-            const iconUrl = actor?.icon
-              ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
-              : undefined;
-            return (
-              <ListItem key={row.id} divider>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {iconUrl && (
-                        <Avatar src={iconUrl} alt="icon" sx={{ width: 24, height: 24 }} />
-                      )}
-                      <Typography component="span">
-                        {row.name} (ID: {row.id})
-                      </Typography>
-                    </Box>
-                  }
-                  secondary={`Total Damage: ${row.total.toLocaleString()} | DPS: ${row.dps.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      ) : (
-        <Typography>No damage events found.</Typography>
-      )}
-    </Box>
-  );
+  const damageRows = useMemo(() => {
+    return Object.entries(damageStatistics.damageByPlayer)
+      .filter(([id]) => isPlayerActor(id))
+      .map(([id, total]) => {
+        const totalDamage = Number(total);
+        let name: string | undefined;
+
+        // Prefer masterData actor name if available
+        const actor = masterData.actorsById[id];
+        if (actor) {
+          name = actor.displayName ?? actor.name ?? `Player ${id}`;
+        } else {
+          // Fallback to previous logic
+          const playerInfo = players[id] || {};
+          const charId = Number(id);
+          if (characters[charId]) {
+            const charName = characters[charId].name;
+            const displayName = playerInfo.displayName || characters[charId].displayName;
+            name = displayName ? `${charName} (${displayName})` : charName;
+          } else if (typeof playerInfo.name === 'string') {
+            const displayName = playerInfo.displayName;
+            name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
+          } else {
+            name = `Player ${id}`;
+          }
+        }
+
+        const iconUrl = actor?.icon
+          ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
+          : undefined;
+
+        return {
+          id,
+          name,
+          total: totalDamage,
+          dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
+          iconUrl,
+        };
+      })
+      .sort((a, b) => b.dps - a.dps);
+  }, [
+    damageStatistics.damageByPlayer,
+    isPlayerActor,
+    masterData.actorsById,
+    players,
+    characters,
+    fightDuration,
+  ]);
+
+  return <DamageDonePanelView damageRows={damageRows} />;
 };
 
 export default DamageDonePanel;

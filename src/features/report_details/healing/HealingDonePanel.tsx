@@ -1,13 +1,17 @@
-import { Box, Typography, List, ListItem, ListItemText, Avatar } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
 import { selectHealingPanelData } from '../../../store/crossSliceSelectors';
 
+import HealingDonePanelView from './HealingDonePanelView';
+
 interface HealingDonePanelProps {
   fight: { startTime?: number; endTime?: number };
 }
 
+/**
+ * Smart component that handles data processing and state management for healing done panel
+ */
 const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const { events, players, characters, masterData } = useSelector(selectHealingPanelData);
@@ -47,70 +51,46 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
     };
   }, [masterData.actorsById]);
 
-  const healingRows = Object.entries(healingStatistics)
-    .filter(([id]) => isPlayerActor(id))
-    .map(([id, { raw, overheal }]) => {
-      let name: string | undefined;
-      const actor = masterData.actorsById[id];
-      if (actor) {
-        name = actor.displayName ?? actor.name ?? `Player ${id}`;
-      } else {
-        const playerInfo = players[id] || {};
-        const charId = Number(id);
-        if (characters[charId]) {
-          const charName = characters[charId].name;
-          const displayName = playerInfo.displayName || characters[charId].displayName;
-          name = displayName ? `${charName} (${displayName})` : charName;
-        } else if (typeof playerInfo.name === 'string') {
-          const displayName = playerInfo.displayName;
-          name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
+  const healingRows = useMemo(() => {
+    return Object.entries(healingStatistics)
+      .filter(([id]) => isPlayerActor(id))
+      .map(([id, { raw, overheal }]) => {
+        let name: string | undefined;
+        const actor = masterData.actorsById[id];
+        if (actor) {
+          name = actor.displayName ?? actor.name ?? `Player ${id}`;
         } else {
-          name = `Player ${id}`;
+          const playerInfo = players[id] || {};
+          const charId = Number(id);
+          if (characters[charId]) {
+            const charName = characters[charId].name;
+            const displayName = playerInfo.displayName || characters[charId].displayName;
+            name = displayName ? `${charName} (${displayName})` : charName;
+          } else if (typeof playerInfo.name === 'string') {
+            const displayName = playerInfo.displayName;
+            name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
+          } else {
+            name = `Player ${id}`;
+          }
         }
-      }
-      return {
-        id,
-        name,
-        raw,
-        hps: fightDuration > 0 ? raw / fightDuration : 0,
-        overheal,
-      };
-    })
-    .sort((a, b) => b.hps - a.hps);
-  return (
-    <Box>
-      <Typography variant="h6">Healing Done by Player</Typography>
-      {healingRows.length > 0 ? (
-        <List>
-          {healingRows.map((row) => {
-            const actor = masterData.actorsById[row.id];
-            const iconUrl = actor?.icon
-              ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
-              : undefined;
-            return (
-              <ListItem key={row.id} divider>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      {iconUrl && (
-                        <Avatar src={iconUrl} alt="icon" sx={{ width: 24, height: 24 }} />
-                      )}
-                      <Typography component="span">
-                        {row.name} (ID: {row.id})
-                      </Typography>
-                    </Box>
-                  }
-                  secondary={`Raw Heals: ${row.raw.toLocaleString()} | HPS: ${row.hps.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Overheals: ${row.overheal.toLocaleString()}`}
-                />
-              </ListItem>
-            );
-          })}
-        </List>
-      ) : (
-        <Typography>No healing events found.</Typography>
-      )}
-    </Box>
-  );
+
+        const iconUrl = actor?.icon
+          ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
+          : undefined;
+
+        return {
+          id,
+          name,
+          raw,
+          hps: fightDuration > 0 ? raw / fightDuration : 0,
+          overheal,
+          iconUrl,
+        };
+      })
+      .sort((a, b) => b.hps - a.hps);
+  }, [healingStatistics, isPlayerActor, masterData.actorsById, players, characters, fightDuration]);
+
+  return <HealingDonePanelView healingRows={healingRows} />;
 };
 
 export default HealingDonePanel;

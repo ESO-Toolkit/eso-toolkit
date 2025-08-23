@@ -1,4 +1,3 @@
-import { Box, Typography, Paper, List, ListItem, ListItemText } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -7,6 +6,8 @@ import { PlayerInfo } from '../../../store/events/eventsSlice';
 import { RootState } from '../../../store/storeWithHistory';
 import { PlayerEnterCombatEvent } from '../../../types/combatlogEvents';
 import { PlayerTalent } from '../../../types/playerDetails';
+
+import InsightsPanelView from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
@@ -85,59 +86,13 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
     return result;
   }, [events, masterData, players]);
   return (
-    <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Fight Insights
-      </Typography>
-
-      <Box>
-        <Typography>
-          <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
-        </Typography>
-      </Box>
-
-      <Box>
-        <Typography>
-          <strong>Fight Started By:</strong> {fightStarter ? fightStarter : 'Unknown'}
-        </Typography>
-      </Box>
-
-      <Box>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Abilities Equipped:
-        </Typography>
-        <List dense>
-          {ABILITY_NAMES.map((name) => (
-            <ListItem key={name} sx={{ mb: 1 }}>
-              <ListItemText
-                primary={name}
-                secondary={
-                  abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-
-      <Box>
-        <Typography variant="subtitle1" sx={{ mb: 1 }}>
-          Champion Points Equipped:
-        </Typography>
-        <List dense>
-          {CHAMPION_POINT_NAMES.map((name) => (
-            <ListItem key={name} sx={{ mb: 1 }}>
-              <ListItemText
-                primary={name}
-                secondary={
-                  buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
-      </Box>
-    </Paper>
+    <InsightsPanelView
+      fight={fight}
+      durationSeconds={durationSeconds}
+      fightStarter={fightStarter}
+      abilityEquipped={abilityEquipped}
+      buffActors={buffActors}
+    />
   );
 };
 

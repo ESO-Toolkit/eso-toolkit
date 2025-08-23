@@ -3,12 +3,12 @@ import { useSelector } from 'react-redux';
 
 import { RootState } from '../../../store/storeWithHistory';
 
-import EventsGrid from './EventsGrid';
+import EventsPanelView from './EventsPanelView';
 
 const EventsPanel: React.FC = () => {
   const events = useSelector((state: RootState) => state.events.events);
 
-  return <EventsGrid events={events} />;
+  return <EventsPanelView events={events} />;
 };
 
 export default EventsPanel;
