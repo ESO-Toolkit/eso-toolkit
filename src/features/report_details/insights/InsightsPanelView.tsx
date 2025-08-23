@@ -1,0 +1,80 @@
+import { Box, Typography, Paper, List, ListItem, ListItemText } from '@mui/material';
+import React from 'react';
+
+import { FightFragment } from '../../../graphql/generated';
+
+interface InsightsPanelViewProps {
+  fight: FightFragment;
+  durationSeconds: number;
+  fightStarter: string | null;
+  abilityEquipped: Record<string, string[]>;
+  buffActors: Record<string, Set<string>>;
+}
+
+const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
+const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
+
+const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
+  durationSeconds,
+  fightStarter,
+  abilityEquipped,
+  buffActors,
+}) => {
+  return (
+    <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
+      <Typography variant="h6" gutterBottom>
+        Fight Insights
+      </Typography>
+
+      <Box>
+        <Typography>
+          <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography>
+          <strong>Fight Started By:</strong> {fightStarter ? fightStarter : 'Unknown'}
+        </Typography>
+      </Box>
+
+      <Box>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Abilities Equipped:
+        </Typography>
+        <List dense>
+          {ABILITY_NAMES.map((name) => (
+            <ListItem key={name} sx={{ mb: 1 }}>
+              <ListItemText
+                primary={name}
+                secondary={
+                  abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+
+      <Box>
+        <Typography variant="subtitle1" sx={{ mb: 1 }}>
+          Champion Points Equipped:
+        </Typography>
+        <List dense>
+          {CHAMPION_POINT_NAMES.map((name) => (
+            <ListItem key={name} sx={{ mb: 1 }}>
+              <ListItemText
+                primary={name}
+                secondary={
+                  buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+      </Box>
+    </Paper>
+  );
+};
+
+export default InsightsPanelView;
