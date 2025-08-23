@@ -9,6 +9,8 @@ import {
   Checkbox,
   ListItemText,
   Link,
+  FormControlLabel,
+  Switch,
 } from '@mui/material';
 import React from 'react';
 
@@ -25,68 +27,89 @@ interface StatChecklistProps {
   title?: string;
 }
 
-const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources' }) => (
-  <Box sx={{ mb: 3 }}>
-    <Typography variant="h6" sx={{ mb: 2 }}>
-      {title}
-    </Typography>
-    <Card variant="outlined" className="u-hover-lift u-fade-in-up">
-      <CardContent sx={{ p: 2 }}>
-        <List dense>
-          {sources.map((source, index) => (
-            <ListItem key={index} disablePadding>
-              <ListItemIcon sx={{ minWidth: 36 }}>
-                <Checkbox
-                  checked={source.wasActive}
-                  disabled
-                  size="small"
-                  color={source.wasActive ? 'success' : 'default'}
-                />
-              </ListItemIcon>
-              <ListItemText
-                primary={
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources' }) => {
+  const [showUnchecked, setShowUnchecked] = React.useState(false);
+  const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
+
+  const visibleSources = React.useMemo(
+    () => sources.filter((s) => s.wasActive || showUnchecked),
+    [sources, showUnchecked]
+  );
+
+  return (
+    <Box sx={{ mb: 3 }}>
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <Typography variant="h6">{title}</Typography>
+        <FormControlLabel
+          control={
+            <Switch
+              size="small"
+              checked={showUnchecked}
+              onChange={() => setShowUnchecked((v) => !v)}
+              disabled={missedCount === 0}
+            />
+          }
+          label={`Show missed sources${missedCount ? ` (${missedCount})` : ''}`}
+        />
+      </Box>
+      <Card variant="outlined" className="u-hover-lift u-fade-in-up">
+        <CardContent sx={{ p: 2 }}>
+          <List dense>
+            {visibleSources.map((source, index) => (
+              <ListItem key={index} disablePadding>
+                <ListItemIcon sx={{ minWidth: 36 }}>
+                  <Checkbox
+                    checked={source.wasActive}
+                    disabled
+                    size="small"
+                    color={source.wasActive ? 'success' : 'default'}
+                  />
+                </ListItemIcon>
+                <ListItemText
+                  primary={
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          textDecoration: source.wasActive ? 'none' : 'line-through',
+                          color: source.wasActive ? 'text.primary' : 'text.disabled',
+                        }}
+                      >
+                        {source.name}
+                      </Typography>
+                    </Box>
+                  }
+                  secondary={
                     <Typography
-                      variant="body2"
+                      variant="caption"
                       sx={{
-                        textDecoration: source.wasActive ? 'none' : 'line-through',
-                        color: source.wasActive ? 'text.primary' : 'text.disabled',
+                        color: source.wasActive ? 'text.secondary' : 'text.disabled',
                       }}
                     >
-                      {source.name}
+                      {source.description}
+                      {source.link && (
+                        <Link
+                          href={source.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          sx={{ ml: 1, fontSize: 'inherit' }}
+                        >
+                          View on ESO Logs
+                        </Link>
+                      )}
                     </Typography>
-                  </Box>
-                }
-                secondary={
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: source.wasActive ? 'text.secondary' : 'text.disabled',
-                    }}
-                  >
-                    {source.description}
-                    {source.link && (
-                      <Link
-                        href={source.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        sx={{ ml: 1, fontSize: 'inherit' }}
-                      >
-                        View on ESO Logs
-                      </Link>
-                    )}
-                  </Typography>
-                }
-              />
-            </ListItem>
-          ))}
-        </List>
-        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-          ✓ = Source was active during this fight | ✗ = Source was not used
-        </Typography>
-      </CardContent>
-    </Card>
-  </Box>
-);
+                  }
+                />
+              </ListItem>
+            ))}
+          </List>
+          <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+            ✓ = Source was active during this fight | ✗ = Source was not used
+          </Typography>
+        </CardContent>
+      </Card>
+    </Box>
+  );
+};
 
 export default StatChecklist;

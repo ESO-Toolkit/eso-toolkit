@@ -75,6 +75,34 @@ const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           },
         },
       },
+      // Force dropdown (menu/popover) backgrounds to solid panel color
+      MuiMenu: {
+        styleOverrides: {
+          paper: {
+            background: 'none',
+            backgroundImage: 'none',
+            backgroundColor: '#30394d',
+          },
+        },
+      },
+      MuiPopover: {
+        styleOverrides: {
+          paper: {
+            background: 'none',
+            backgroundImage: 'none',
+            backgroundColor: '#30394d',
+          },
+        },
+      },
+      MuiAutocomplete: {
+        styleOverrides: {
+          paper: {
+            background: 'none',
+            backgroundImage: 'none',
+            backgroundColor: '#30394d',
+          },
+        },
+      },
       MuiCard: {
         styleOverrides: {
           root: {

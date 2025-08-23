@@ -68,10 +68,44 @@ const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   }
 
   return (
-    <Paper elevation={2} sx={{ p: 3 }}>
+    <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
+      <Tooltip title="View full report on ESO Logs">
+        <Button
+          component="a"
+          href={`https://www.esologs.com/reports/${reportId}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          variant="outlined"
+          size="small"
+          startIcon={<OpenInNewIcon />}
+          sx={{
+            position: 'absolute',
+            top: 16,
+            right: 16,
+            textTransform: 'none',
+            fontSize: '0.875rem',
+          }}
+        >
+          ESO Logs
+        </Button>
+      </Tooltip>
       <Button
         variant="outlined"
-        sx={{ mb: 2 }}
+        sx={{
+          mb: 2,
+          color: 'text.secondary',
+          bgcolor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
+          borderColor: (theme) =>
+            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
+          textTransform: 'none',
+          '&:hover': {
+            bgcolor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+            borderColor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
+          },
+        }}
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}
@@ -83,24 +117,6 @@ const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <Typography variant="h6" gutterBottom={false}>
           Fight Details
         </Typography>
-
-        <Tooltip title="View full report on ESO Logs">
-          <Button
-            component="a"
-            href={`https://www.esologs.com/reports/${reportId}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            variant="outlined"
-            size="small"
-            startIcon={<OpenInNewIcon />}
-            sx={{
-              textTransform: 'none',
-              fontSize: '0.875rem',
-            }}
-          >
-            ESO Logs
-          </Button>
-        </Tooltip>
       </Stack>
 
       {fight && (
