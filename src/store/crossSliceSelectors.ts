@@ -4,6 +4,7 @@ import {
   selectOptimizedDamageEvents,
   selectOptimizedHealingEvents,
   selectAllEvents,
+  selectBuffEvents,
   selectEventPlayers,
   selectEventCharacters,
   selectEventsLoadingState,
@@ -86,5 +87,16 @@ export const selectPlayerDetailsData = createSelector(
     events,
     eventPlayers,
     actorsById,
+  })
+);
+
+// NEW: Buff Uptimes Panel optimized data
+export const selectBuffUptimesData = createSelector(
+  [selectBuffEvents, selectEventPlayers, selectEventCharacters, selectMasterData],
+  (buffEvents, players, characters, masterData) => ({
+    buffEvents,
+    players,
+    characters,
+    masterData,
   })
 );
