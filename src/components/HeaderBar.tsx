@@ -2,7 +2,7 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { beginOAuthLogin } from '../auth';
+import { startPKCEAuth } from '../auth';
 import { useAuth } from '../AuthContext';
 
 const HeaderBar: React.FC = () => {
@@ -19,7 +19,7 @@ const HeaderBar: React.FC = () => {
   }, []);
 
   const handleLogin = () => {
-    beginOAuthLogin();
+    startPKCEAuth();
   };
 
   const handleLogout = () => {
@@ -61,7 +61,9 @@ const HeaderBar: React.FC = () => {
                 backgroundClip: 'text',
               }}
             >
-              <span role="img" aria-label="sword">⚔️</span>
+              <span role="img" aria-label="sword">
+                ⚔️
+              </span>
               ESO Insights Helper
             </Typography>
           </Button>
