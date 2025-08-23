@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../AuthContext';
+import type { FightFragment } from '../../graphql/generated';
 import { useReportFightParams } from '../../hooks/useReportFightParams';
 import { selectReportFightDetailsData } from '../../store/crossSliceSelectors';
 import { fetchEventsForFight, clearEvents } from '../../store/events/eventsSlice';
@@ -32,18 +33,18 @@ const ReportFightDetails: React.FC = () => {
     currentFetchFightId,
   } = useSelector(selectReportFightDetailsData);
 
-  const fight = fights.find((f) => f.id === Number(fightId));
+  const fight = fights.find((f: FightFragment) => f.id === Number(fightId));
 
   // Fetch master data if not loaded
   React.useEffect(() => {
-    if (reportId && accessToken && !masterDataLoaded && !masterDataLoading && !masterDataError) {
+    if (reportId && !masterDataLoaded && !masterDataLoading && !masterDataError) {
       dispatch(fetchReportMasterData({ reportCode: reportId, accessToken }));
     }
   }, [reportId, accessToken, masterDataLoaded, masterDataLoading, masterDataError, dispatch]);
 
   // Always fetch report data if fights are missing
   React.useEffect(() => {
-    if (reportId && accessToken && fights.length === 0 && !fightsLoading && !fightsError) {
+    if (reportId && fights.length === 0 && !fightsLoading && !fightsError) {
       // Clear existing data when fetching a new report (different from current one)
       if (currentReportId !== reportId) {
         dispatch(clearEvents());
@@ -54,7 +55,7 @@ const ReportFightDetails: React.FC = () => {
   }, [reportId, accessToken, fights.length, fightsLoading, fightsError, currentReportId, dispatch]);
 
   React.useEffect(() => {
-    if (fight && reportId && accessToken) {
+    if (fight && reportId) {
       void dispatch(fetchEventsForFight({ reportCode: reportId, fight, accessToken }));
     }
   }, [fight, reportId, accessToken, dispatch]);

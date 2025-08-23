@@ -9,11 +9,9 @@ import ReduxThemeProvider from '../ReduxThemeProvider';
 const AppLayout: React.FC = () => (
   <ReduxThemeProvider>
     <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <Box sx={{ position: 'sticky', top: 0, zIndex: 100 }}>
-        <HeaderBar />
-      </Box>
+      <HeaderBar />
       <Container maxWidth="md">
-        <Box sx={{ pt: 2, pb: 4, minHeight: 'calc(100vh - 64px)', overflowY: 'auto' }}>
+        <Box sx={{ pt: 10, pb: 4, minHeight: '100vh', overflowY: 'auto' }}>
           <Outlet />
         </Box>
       </Container>

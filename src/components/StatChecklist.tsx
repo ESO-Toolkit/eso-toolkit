@@ -1,7 +1,8 @@
 import {
   Box,
   Typography,
-  Paper,
+  Card,
+  CardContent,
   List,
   ListItem,
   ListItemIcon,
@@ -29,60 +30,62 @@ const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources
     <Typography variant="h6" sx={{ mb: 2 }}>
       {title}
     </Typography>
-    <Paper variant="outlined" sx={{ p: 2 }}>
-      <List dense>
-        {sources.map((source, index) => (
-          <ListItem key={index} disablePadding>
-            <ListItemIcon sx={{ minWidth: 36 }}>
-              <Checkbox
-                checked={source.wasActive}
-                disabled
-                size="small"
-                color={source.wasActive ? 'success' : 'default'}
-              />
-            </ListItemIcon>
-            <ListItemText
-              primary={
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+    <Card variant="outlined" className="u-hover-lift u-fade-in-up">
+      <CardContent sx={{ p: 2 }}>
+        <List dense>
+          {sources.map((source, index) => (
+            <ListItem key={index} disablePadding>
+              <ListItemIcon sx={{ minWidth: 36 }}>
+                <Checkbox
+                  checked={source.wasActive}
+                  disabled
+                  size="small"
+                  color={source.wasActive ? 'success' : 'default'}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        textDecoration: source.wasActive ? 'none' : 'line-through',
+                        color: source.wasActive ? 'text.primary' : 'text.disabled',
+                      }}
+                    >
+                      {source.name}
+                    </Typography>
+                  </Box>
+                }
+                secondary={
                   <Typography
-                    variant="body2"
+                    variant="caption"
                     sx={{
-                      textDecoration: source.wasActive ? 'none' : 'line-through',
-                      color: source.wasActive ? 'text.primary' : 'text.disabled',
+                      color: source.wasActive ? 'text.secondary' : 'text.disabled',
                     }}
                   >
-                    {source.name}
+                    {source.description}
+                    {source.link && (
+                      <Link
+                        href={source.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        sx={{ ml: 1, fontSize: 'inherit' }}
+                      >
+                        View on ESO Logs
+                      </Link>
+                    )}
                   </Typography>
-                </Box>
-              }
-              secondary={
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: source.wasActive ? 'text.secondary' : 'text.disabled',
-                  }}
-                >
-                  {source.description}
-                  {source.link && (
-                    <Link
-                      href={source.link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      sx={{ ml: 1, fontSize: 'inherit' }}
-                    >
-                      View on ESO Logs
-                    </Link>
-                  )}
-                </Typography>
-              }
-            />
-          </ListItem>
-        ))}
-      </List>
-      <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-        ✓ = Source was active during this fight | ✗ = Source was not used
-      </Typography>
-    </Paper>
+                }
+              />
+            </ListItem>
+          ))}
+        </List>
+        <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
+          ✓ = Source was active during this fight | ✗ = Source was not used
+        </Typography>
+      </CardContent>
+    </Card>
   </Box>
 );
 

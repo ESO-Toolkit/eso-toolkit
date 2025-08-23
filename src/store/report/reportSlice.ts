@@ -36,7 +36,11 @@ export const fetchReportData = createAsyncThunk<
         },
       },
     });
-    const fights = (data?.reportData?.report?.fights ?? []) as FightFragment[];
+    const report = data?.reportData?.report;
+    if (!report) {
+      return rejectWithValue('Report not found or not public.');
+    }
+    const fights = (report.fights ?? []) as FightFragment[];
     return { reportId, data, fights };
   } catch (err) {
     const hasMessage = (e: unknown): e is { message: string } =>
@@ -68,9 +72,11 @@ const reportSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchReportData.pending, (state) => {
+      .addCase(fetchReportData.pending, (state, action) => {
         state.loading = true;
         state.error = null;
+        // Latch the attempted report id to avoid infinite retry loops in components
+        state.reportId = action.meta.arg.reportId;
       })
       .addCase(fetchReportData.fulfilled, (state, action) => {
         state.reportId = action.payload.reportId;
@@ -82,6 +88,11 @@ const reportSlice = createSlice({
       .addCase(fetchReportData.rejected, (state, action) => {
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch report data';
+        // Also latch the attempted report id on failure
+        // so UI effects see the same report and do not re-dispatch endlessly
+        if (action.meta && action.meta.arg) {
+          state.reportId = action.meta.arg.reportId;
+        }
       });
   },
 });

@@ -120,11 +120,23 @@ const App: React.FC = () => {
 
 const AuthApolloProvider: React.FC = () => {
   const { accessToken } = useAuth();
-  const client = createEsoLogsClient(accessToken || '');
+  const client = React.useMemo(() => createEsoLogsClient(accessToken || ''), [accessToken]);
 
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
   }, []);
+
+  // Support non-hash OAuth redirect: /oauth-redirect?code=...
+  // HashRouter won't match a path without a hash, so we short-circuit here.
+  const publicUrl = process.env.PUBLIC_URL || '';
+  const currentPath = window.location.pathname.replace(publicUrl, '');
+  if (currentPath === '/oauth-redirect') {
+    return (
+      <ApolloProvider client={client}>
+        <OAuthRedirect />
+      </ApolloProvider>
+    );
+  }
 
   return (
     <ApolloProvider client={client}>
