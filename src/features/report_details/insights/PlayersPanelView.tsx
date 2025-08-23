@@ -39,7 +39,7 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
           const buildIssues = detectBuildIssues(gear);
           return (
             <Box key={actor.id} display="flex" flexWrap="wrap" gap={1}>
-              <Card>
+              <Card variant="outlined" className="u-hover-lift u-fade-in-up">
                 <CardContent>
                   <Box display="flex" alignItems="center" mb={1}>
                     {actor.icon ? (
@@ -85,7 +85,8 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             key={idx}
                             src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
                             alt={talent.name}
-                            sx={{ width: 32, height: 32, border: '1px solid #ccc' }}
+                            variant="rounded"
+                            sx={{ width: 32, height: 32, border: '1px solid var(--border)' }}
                             title={`${talent.name} (ID: ${talent.guid})`}
                           />
                         ))}
@@ -97,7 +98,8 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               key={idx}
                               src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
                               alt={talent.name}
-                              sx={{ width: 32, height: 32, border: '1px solid #ccc' }}
+                              variant="rounded"
+                              sx={{ width: 32, height: 32, border: '1px solid var(--border)' }}
                               title={`${talent.name} (ID: ${talent.guid})`}
                             />
                           ))}
@@ -127,6 +129,7 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               key={idx}
                               label={`${data.count} ${setName}`}
                               size="small"
+                              variant="outlined"
                               title={`Set ID: ${data.setID}`}
                             />
                           ));
@@ -147,6 +150,7 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             label={buff.name}
                             size="small"
                             color="primary"
+                            variant="outlined"
                             title={`Ability ID: ${buff.id}`}
                           />
                         ))}

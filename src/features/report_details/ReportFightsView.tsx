@@ -42,6 +42,25 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
+  // Fallback when nothing is loading and there are no fights to show
+  if (!loading && fights.length === 0) {
+    return (
+      <Paper elevation={2} sx={{ p: 3 }}>
+        {error && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          No data loaded yet
+        </Typography>
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Paste an ESO Logs report URL above and click "Load Log" to view fights.
+        </Typography>
+      </Paper>
+    );
+  }
+
   return (
     <>
       {error && (

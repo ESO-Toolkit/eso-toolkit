@@ -22,9 +22,11 @@ const ReportFights: React.FC = () => {
   const currentReportId = useSelector((state: RootState) => state.report.reportId);
 
   React.useEffect(() => {
-    if (reportId && accessToken && fights.length === 0 && !loading && !error) {
+    const canFetch = reportId && fights.length === 0 && !loading;
+    const isNewReport = currentReportId !== reportId;
+    if (canFetch && (!error || isNewReport)) {
       // Clear existing data when fetching a new report (different from current one)
-      if (currentReportId !== reportId) {
+      if (isNewReport) {
         dispatch(clearEvents());
         dispatch(clearMasterData());
       }
