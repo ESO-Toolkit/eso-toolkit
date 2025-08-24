@@ -2,9 +2,9 @@ import { AppBar, Toolbar, Typography, Button, Box } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
 import { startPKCEAuth } from '../auth';
 import { useAuth } from '../AuthContext';
-import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
 
 const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();

@@ -245,7 +245,7 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 Events by Type:
               </Typography>
               <List dense>
-                {Object.entries(
+                {(Object.entries(
                   events.reduce(
                     (acc, event) => {
                       const type = event.type.toLowerCase();
@@ -254,7 +254,7 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                     },
                     {} as Record<string, number>
                   )
-                )
+                ) as Array<[string, number]>)
                   .sort(([, a], [, b]) => b - a) // Sort by count descending
                   .map(([type, count]) => (
                     <ListItem key={type} sx={{ py: 0.5, px: 0 }}>

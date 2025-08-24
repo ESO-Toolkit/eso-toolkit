@@ -14,12 +14,16 @@ export function detectBuildIssues(gear: PlayerGear[]): BuildIssue[] {
       return;
     }
 
-    // Enchantment quality is not legendary
-    if (g.enchantQuality !== 5) {
+    // Enchantment quality check: only flag if below the allowed maximum (min(gear quality, 5)).
+    // Example: if gear quality is 4, do NOT flag enchant quality 4; if gear is 5, flag when enchant < 5.
+    const gearQ = typeof g.quality === 'number' ? g.quality : 0;
+    const enchantQ = typeof g.enchantQuality === 'number' ? g.enchantQuality : 0;
+    const allowedMax = gearQ > 0 ? Math.min(5, gearQ) : 5; // default to 5 if gear quality unknown
+    if (enchantQ < allowedMax) {
       issues.push({
         gearName: g.name || 'Unnamed Gear',
-        enchantQuality: g.enchantQuality,
-        message: `${g.name || 'Unnamed Gear'}: Enchantment quality is ${g.enchantQuality} (should be 5)`,
+        enchantQuality: enchantQ,
+        message: `${g.name || 'Unnamed Gear'}: Enchantment quality is ${enchantQ} (should be ${allowedMax})`,
       });
     }
 
