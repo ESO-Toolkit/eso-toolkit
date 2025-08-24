@@ -1276,7 +1276,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
             </Typography>
 
             {/* Critical Damage Sources Checklist */}
-            <StatChecklist sources={criticalDamageSources} title="Critical Damage Sources" />
+            <StatChecklist
+              sources={criticalDamageSources}
+              title="Critical Damage Sources"
+              loading={!criticalDamageSources.length}
+            />
 
             {/* Critical Multiplier Information */}
             {criticalMultiplier && (

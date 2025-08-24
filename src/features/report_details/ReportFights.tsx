@@ -1,37 +1,41 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { useAuth } from '../../AuthContext';
 import { useReportFightParams } from '../../hooks/useReportFightParams';
-import { clearAllEvents } from '../../store/events_data/actions';
+import { clearEvents } from '../../store/events/eventsSlice';
 import { clearMasterData } from '../../store/master_data/masterDataSlice';
 import { fetchReportData } from '../../store/report/reportSlice';
 import { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 
-import { ReportFightsView } from './ReportFightsView';
+import ReportFightsView from './ReportFightsView';
 
-export const ReportFights: React.FC = () => {
+const ReportFights: React.FC = () => {
   const { reportId, fightId } = useReportFightParams();
   const dispatch = useAppDispatch();
-  const client = useEsoLogsClientInstance();
+  const { accessToken } = useAuth();
 
   const fights = useSelector((state: RootState) => state.report.fights);
   const loading = useSelector((state: RootState) => state.report.loading);
   const error = useSelector((state: RootState) => state.report.error);
   const currentReportId = useSelector((state: RootState) => state.report.reportId);
+  const reportStartTime = useSelector(
+    (state: RootState) => state.report.data?.reportData?.report?.startTime
+  );
 
   React.useEffect(() => {
-    if (reportId && client) {
-      // Clear existing data when fetching a new report
-      if (currentReportId !== reportId) {
-        dispatch(clearAllEvents());
+    const canFetch = reportId && fights.length === 0 && !loading;
+    const isNewReport = currentReportId !== reportId;
+    if (canFetch && (!error || isNewReport)) {
+      // Clear existing data when fetching a new report (different from current one)
+      if (isNewReport) {
+        dispatch(clearEvents());
         dispatch(clearMasterData());
       }
-      // The thunk now handles checking if data needs to be fetched internally
-      dispatch(fetchReportData({ reportId, client }));
+      dispatch(fetchReportData({ reportId, accessToken }));
     }
-  }, [reportId, client, currentReportId, dispatch]);
+  }, [reportId, accessToken, fights.length, loading, error, currentReportId, dispatch]);
 
   return (
     <ReportFightsView
@@ -40,6 +44,9 @@ export const ReportFights: React.FC = () => {
       error={error}
       fightId={fightId}
       reportId={reportId}
+      reportStartTime={reportStartTime}
     />
   );
 };
+
+export default ReportFights;
