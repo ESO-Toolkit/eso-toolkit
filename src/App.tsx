@@ -1,4 +1,3 @@
-import { ApolloProvider } from '@apollo/client';
 import LinkIcon from '@mui/icons-material/Link';
 import { Box, Paper, Button, TextField } from '@mui/material';
 import React from 'react';
@@ -7,12 +6,12 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { AuthProvider, useAuth } from './AuthContext';
-import { createEsoLogsClient } from './esologsClient';
-import ReportFightDetails from './features/report_details/ReportFightDetails';
-import ReportFights from './features/report_details/ReportFights';
-import AppLayout from './layouts/AppLayout';
-import OAuthRedirect from './OAuthRedirect';
+import { AuthProvider } from './AuthContext';
+import { EsoLogsClientProvider } from './EsoLogsClientContext';
+import { ReportFightDetails } from './features/report_details/ReportFightDetails';
+import { ReportFights } from './features/report_details/ReportFights';
+import { AppLayout } from './layouts/AppLayout';
+import { OAuthRedirect } from './OAuthRedirect';
 import { clearAllEvents } from './store/events_data/actions';
 import { clearMasterData } from './store/master_data/masterDataSlice';
 import { clearReport } from './store/report/reportSlice';
@@ -111,7 +110,9 @@ const App: React.FC = () => {
     <ReduxProvider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <AuthProvider>
-          <AuthApolloProvider />
+          <EsoLogsClientProvider>
+            <AuthApolloProvider />
+          </EsoLogsClientProvider>
         </AuthProvider>
       </PersistGate>
     </ReduxProvider>
@@ -119,9 +120,6 @@ const App: React.FC = () => {
 };
 
 const AuthApolloProvider: React.FC = () => {
-  const { accessToken } = useAuth();
-  const client = React.useMemo(() => createEsoLogsClient(accessToken || ''), [accessToken]);
-
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
   }, []);
@@ -131,27 +129,21 @@ const AuthApolloProvider: React.FC = () => {
   const publicUrl = process.env.PUBLIC_URL || '';
   const currentPath = window.location.pathname.replace(publicUrl, '');
   if (currentPath === '/oauth-redirect') {
-    return (
-      <ApolloProvider client={client}>
-        <OAuthRedirect />
-      </ApolloProvider>
-    );
+    return <OAuthRedirect />;
   }
 
   return (
-    <ApolloProvider client={client}>
-      <HashRouter>
-        <Routes>
-          <Route path="/oauth-redirect" element={<OAuthRedirect />} />
-          <Route element={<AppLayout />}>
-            {/* Pass fights as prop via state, fallback to empty array if not present */}
-            <Route path="/report/:reportId/fight/:fightId" element={<ReportFightDetails />} />
-            <Route path="/report/:reportId" element={<ReportFights />} />
-            <Route path="/*" element={<MainApp />} />
-          </Route>
-        </Routes>
-      </HashRouter>
-    </ApolloProvider>
+    <HashRouter>
+      <Routes>
+        <Route path="/oauth-redirect" element={<OAuthRedirect />} />
+        <Route element={<AppLayout />}>
+          {/* Pass fights as prop via state, fallback to empty array if not present */}
+          <Route path="/report/:reportId/fight/:fightId" element={<ReportFightDetails />} />
+          <Route path="/report/:reportId" element={<ReportFights />} />
+          <Route path="/*" element={<MainApp />} />
+        </Route>
+      </Routes>
+    </HashRouter>
   );
 };
 

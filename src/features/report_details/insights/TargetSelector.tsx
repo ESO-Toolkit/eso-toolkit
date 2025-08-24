@@ -15,7 +15,7 @@ import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { setSelectedTargetId } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
-const TargetSelector: React.FC = () => {
+export const TargetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
   const players = useSelector(selectEventPlayers);
   const selectedTargetId = useSelector(selectSelectedTargetId);
@@ -73,4 +73,4 @@ const TargetSelector: React.FC = () => {
   );
 };
 
-export default React.memo(TargetSelector);
+export const MemoizedTargetSelector = React.memo(TargetSelector);

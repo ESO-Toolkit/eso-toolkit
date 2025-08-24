@@ -6,7 +6,7 @@ import { useDebuffEvents } from '../../../hooks/useDebuffEvents';
 import { KnownAbilities } from '../../../types/abilities';
 import { DebuffEvent } from '../../../types/combatlogEvents';
 
-import StatusEffectUptimesView from './StatusEffectUptimesView';
+import { StatusEffectUptimesView } from './StatusEffectUptimesView';
 
 // Define the specific status effect abilities to track
 const STATUS_EFFECT_ABILITIES = new Set([
@@ -34,7 +34,7 @@ interface StatusEffectUptime {
   applications: number;
 }
 
-const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
+export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
   fight,
   selectedTargetId,
 }) => {
@@ -151,4 +151,3 @@ const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
     />
   );
 };
-export default StatusEffectUptimesPanel;

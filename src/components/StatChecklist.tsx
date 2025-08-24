@@ -27,7 +27,7 @@ interface StatChecklistProps {
   title?: string;
 }
 
-const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources' }) => {
+export const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources' }) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
 
@@ -111,6 +111,3 @@ const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources
     </Box>
   );
 };
-
-export default StatChecklist;
-

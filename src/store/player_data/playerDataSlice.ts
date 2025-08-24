@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import { GetPlayersForReportQuery } from '../../graphql/generated';
 import { GetPlayersForReportDocument } from '../../graphql/players.generated';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
@@ -43,25 +43,19 @@ export interface PlayerDataPayload {
 
 export const fetchPlayerData = createAsyncThunk<
   PlayerDataPayload,
-  { reportCode: string; fightId: number; accessToken: string },
+  { reportCode: string; fightId: number; client: EsoLogsClient },
   { rejectValue: string }
 >(
   'playerData/fetchPlayerData',
-  async ({ reportCode, fightId, accessToken }, { rejectWithValue }) => {
+  async ({ reportCode, fightId, client }, { rejectWithValue }) => {
     try {
-      const client = createEsoLogsClient(accessToken);
-      const response: { data: GetPlayersForReportQuery } = await client.query({
+      const response: GetPlayersForReportQuery = await client.query({
         query: GetPlayersForReportDocument,
         variables: { code: reportCode, fightIDs: [fightId] },
-        context: {
-          headers: {
-            Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-          },
-        },
       });
 
       const playerDetails: PlayerDetails =
-        response.data.reportData?.report?.playerDetails?.data?.playerDetails;
+        response.reportData?.report?.playerDetails?.data?.playerDetails;
 
       const playersById: Record<string, PlayerDetailsWithRole> = {};
 

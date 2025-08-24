@@ -59,7 +59,7 @@ const DAMAGE_TYPE_ICONS: Record<DamageTypeFlags, string> = {
   [DamageTypeFlags.SHOCK]: '⚡', // Shock
 };
 
-const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
+export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
   damageTypeBreakdown,
   totalDamage,
   isLoading,
@@ -196,5 +196,3 @@ const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
     </Box>
   );
 };
-
-export default DamageTypeBreakdownView;

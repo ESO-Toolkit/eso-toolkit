@@ -50,7 +50,7 @@ interface RotationAnalysisPanelViewProps {
   fight: { startTime?: number; endTime?: number };
 }
 
-const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
+export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
   rotationAnalyses,
   fight,
 }) => {
@@ -187,6 +187,3 @@ const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
     </Box>
   );
 };
-
-export default RotationAnalysisPanelView;
-

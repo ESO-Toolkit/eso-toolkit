@@ -9,7 +9,7 @@ import {
 import { selectMasterData } from '../../../store/master_data/masterDataSelectors';
 import { CastEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 
-import RotationAnalysisPanelView from './RotationAnalysisPanelView';
+import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 
 interface RotationAnalysisPanelProps {
   fight: { startTime?: number; endTime?: number };
@@ -49,7 +49,7 @@ interface ResourceEfficiencyData {
 /**
  * Analyzes player skill rotations and resource management from cast and resource events
  */
-const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
+export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
   // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
   const castEvents = useSelector(selectCastEvents);
   const resourceEvents = useSelector(selectResourceEvents);
@@ -224,4 +224,4 @@ const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) 
   return <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />;
 };
 
-export default React.memo(RotationAnalysisPanel);
+export const MemoizedRotationAnalysisPanel = React.memo(RotationAnalysisPanel);

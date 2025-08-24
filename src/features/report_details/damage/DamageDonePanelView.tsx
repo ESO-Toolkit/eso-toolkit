@@ -16,7 +16,7 @@ interface DamageDonePanelViewProps {
 /**
  * Dumb component that only handles rendering the damage done panel UI
  */
-const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damageRows }) => {
+export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damageRows }) => {
   return (
     <Box>
       <Typography variant="h6">Damage Done by Player</Typography>
@@ -46,6 +46,3 @@ const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damageRows })
     </Box>
   );
 };
-
-export default DamageDonePanelView;
-

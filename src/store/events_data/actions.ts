@@ -47,7 +47,7 @@ export {
 export const clearAllEvents = createAction('events/clearAll');
 
 // Main events reducer
-export { default as eventsReducer } from './index';
+export { eventsReducer } from './index';
 
 // Export selectors
 export * from './selectors';

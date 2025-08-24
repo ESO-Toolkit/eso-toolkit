@@ -5,11 +5,11 @@ import { PlayerInfo } from '../../../store/events_data/actions';
 import { MundusStones } from '../../../types/abilities';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 
-import PlayersPanelView from './PlayersPanelView';
+import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
 
-const PlayersPanel: React.FC = () => {
+export const PlayersPanel: React.FC = () => {
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData, isPlayerDataLoading } = usePlayerData();
@@ -34,7 +34,7 @@ const PlayersPanel: React.FC = () => {
   // Convert playerData to the expected format
   const eventPlayers = React.useMemo(() => {
     const result: Record<string, PlayerInfo> = {};
-    if (playerData.playersById) {
+    if (playerData?.playersById) {
       Object.entries(playerData.playersById).forEach(([id, player]) => {
         // Convert PlayerDetailsEntry to PlayerInfo format by adding required index signature
         const playerInfo: PlayerInfo = {
@@ -56,7 +56,7 @@ const PlayersPanel: React.FC = () => {
       });
     }
     return result;
-  }, [playerData.playersById]);
+  }, [playerData?.playersById]);
 
   // Calculate loading state
   const isLoading = isMasterDataLoading || isPlayerDataLoading || isCombatantInfoEventsLoading;
@@ -184,5 +184,3 @@ const PlayersPanel: React.FC = () => {
     />
   );
 };
-
-export default PlayersPanel;

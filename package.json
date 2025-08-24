@@ -39,6 +39,7 @@
     "start": "craco start",
     "build": "craco build",
     "test": "craco test --watchAll=false",
+    "test:watch": "craco test",
     "type-check": "tsc --noEmit",
     "validate": "npm run type-check && npm run lint",
     "lint": "eslint ./src --ext .ts,.tsx",

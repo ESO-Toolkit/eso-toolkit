@@ -6,7 +6,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useBuffEvents, useReportMasterData } from '../../../hooks';
 import { selectPlayersById } from '../../../store/player_data';
 
-import BuffUptimesPanelView from './BuffUptimesPanelView';
+import { BuffUptimesPanelView } from './BuffUptimesPanelView';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
@@ -16,7 +16,7 @@ interface BuffUptimesPanelProps {
 /**
  * Smart component that handles data processing and state management for buff uptimes panel
  */
-const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, reportCode }) => {
+export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, reportCode }) => {
   // Use the new hooks for data fetching
   const { buffEvents, isBuffEventsLoading } = useBuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -206,5 +206,3 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, reportCode }
     />
   );
 };
-
-export default BuffUptimesPanel;

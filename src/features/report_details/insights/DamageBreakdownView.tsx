@@ -46,7 +46,7 @@ interface DamageBreakdownViewProps {
   isLoading: boolean;
 }
 
-const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
+export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
   damageBreakdown,
   totalDamage,
   isLoading,
@@ -206,5 +206,3 @@ const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
     </Box>
   );
 };
-
-export default DamageBreakdownView;

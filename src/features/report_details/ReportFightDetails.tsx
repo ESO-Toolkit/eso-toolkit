@@ -3,19 +3,21 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../AuthContext';
+import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { useReportFightParams } from '../../hooks/useReportFightParams';
 import { fetchReportData } from '../../store/report/reportSlice';
 import { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 
-import ReportFightDetailsView from './ReportFightDetailsView';
+import { ReportFightDetailsView } from './ReportFightDetailsView';
 
-const ReportFightDetails: React.FC = () => {
+export const ReportFightDetails: React.FC = () => {
   const { reportId, fightId } = useReportFightParams();
   const [searchParams] = useSearchParams();
   const dispatch = useAppDispatch();
 
   const { accessToken } = useAuth();
+  const client = useEsoLogsClientInstance();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const fights = useSelector((state: RootState) => state.report.fights);
@@ -31,9 +33,9 @@ const ReportFightDetails: React.FC = () => {
   React.useEffect(() => {
     if (reportId && accessToken) {
       // The thunk now handles checking if data needs to be fetched internally
-      dispatch(fetchReportData({ reportId, accessToken }));
+      dispatch(fetchReportData({ reportId, client }));
     }
-  }, [reportId, accessToken, dispatch]);
+  }, [reportId, accessToken, dispatch, client]);
 
   // Get selectedTabId from query param if present
   const selectedTabId = searchParams.has('selectedTabId')
@@ -51,5 +53,3 @@ const ReportFightDetails: React.FC = () => {
     />
   );
 };
-
-export default ReportFightDetails;

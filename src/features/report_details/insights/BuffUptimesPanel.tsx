@@ -4,7 +4,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useBuffEvents, useReportMasterData } from '../../../hooks';
 import { BuffEvent } from '../../../types/combatlogEvents';
 
-import BuffUptimesView from './BuffUptimesView';
+import { BuffUptimesView } from './BuffUptimesView';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
@@ -21,7 +21,7 @@ interface BuffUptime {
   applications: number;
 }
 
-const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedTargetId }) => {
+export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedTargetId }) => {
   const { buffEvents, isBuffEventsLoading } = useBuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -138,5 +138,3 @@ const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedTarg
     />
   );
 };
-
-export default BuffUptimesPanel;

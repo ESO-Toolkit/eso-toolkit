@@ -6,7 +6,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData, usePlayerData } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import PenetrationPanelView from './PenetrationPanelView';
+import { PenetrationPanelView } from './PenetrationPanelView';
 
 interface PenetrationPanelProps {
   fight: FightFragment;
@@ -16,7 +16,7 @@ interface PenetrationPanelProps {
 /**
  * Smart component that handles data processing and state management for penetration panel
  */
-const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTargetId }) => {
+export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTargetId }) => {
   // Use hooks to get data
   const { reportMasterData } = useReportMasterData();
   const { playerData } = usePlayerData();
@@ -91,4 +91,4 @@ const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTarg
   );
 };
 
-export default React.memo(PenetrationPanel);
+export const MemoizedPenetrationPanel = React.memo(PenetrationPanel);

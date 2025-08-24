@@ -34,7 +34,7 @@ interface BuffUptimesPanelViewProps {
 /**
  * Dumb component that only handles rendering the buff uptimes panel UI
  */
-const BuffUptimesPanelView: React.FC<BuffUptimesPanelViewProps> = ({
+export const BuffUptimesPanelView: React.FC<BuffUptimesPanelViewProps> = ({
   buffs,
   expandedBuff: _expandedBuff,
   onToggleExpand: _onToggleExpand,
@@ -113,6 +113,3 @@ const BuffUptimesPanelView: React.FC<BuffUptimesPanelViewProps> = ({
     </Box>
   );
 };
-
-export default BuffUptimesPanelView;
-

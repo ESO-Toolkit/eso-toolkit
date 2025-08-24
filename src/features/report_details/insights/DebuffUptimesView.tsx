@@ -26,7 +26,7 @@ interface DebuffUptimesViewProps {
   isLoading: boolean;
 }
 
-const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
+export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   selectedTargetId,
   debuffUptimes,
   isLoading,
@@ -137,5 +137,3 @@ const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
     </Box>
   );
 };
-
-export default DebuffUptimesView;

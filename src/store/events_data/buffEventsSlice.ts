@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import {
   FightFragment,
   GetBuffEventsDocument,
@@ -36,13 +36,11 @@ const initialState: BuffEventsState = {
 
 export const fetchBuffEvents = createAsyncThunk<
   BuffEvent[],
-  { reportCode: string; fight: FightFragment; accessToken: string },
+  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: RootState; rejectValue: string }
 >(
   'buffEvents/fetchBuffEvents',
-  async ({ reportCode, fight, accessToken }) => {
-    const client = createEsoLogsClient(accessToken);
-
+  async ({ reportCode, fight, client }) => {
     // Fetch both friendly and enemy buff events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
@@ -51,7 +49,7 @@ export const fetchBuffEvents = createAsyncThunk<
       let nextPageTimestamp: number | null = null;
 
       do {
-        const response: { data: GetBuffEventsQuery } = await client.query({
+        const response: GetBuffEventsQuery = await client.query({
           query: GetBuffEventsDocument,
           variables: {
             code: reportCode,
@@ -60,14 +58,9 @@ export const fetchBuffEvents = createAsyncThunk<
             endTime: fight.endTime,
             hostilityType: hostilityType,
           },
-          context: {
-            headers: {
-              Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-            },
-          },
         });
 
-        const page = response.data?.reportData?.report?.events;
+        const page = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
         }

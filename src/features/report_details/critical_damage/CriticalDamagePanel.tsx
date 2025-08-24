@@ -11,7 +11,7 @@ import {
 } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import CriticalDamagePanelView from './CriticalDamagePanelView';
+import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 
 interface CriticalDamagePanelProps {
   fight: FightFragment;
@@ -21,7 +21,7 @@ interface CriticalDamagePanelProps {
 /**
  * Smart component that handles data processing and state management for critical damage panel
  */
-const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, reportCode }) => {
+export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, reportCode }) => {
   // Use hooks to get data
   const { isDamageEventsLoading } = useDamageEvents();
   const { isBuffEventsLoading } = useBuffEvents();
@@ -94,5 +94,3 @@ const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, report
     />
   );
 };
-
-export default CriticalDamagePanel;

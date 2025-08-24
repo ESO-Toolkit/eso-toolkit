@@ -20,7 +20,7 @@ interface ReportFightsViewProps {
   reportId: string | undefined;
 }
 
-const ReportFightsView: React.FC<ReportFightsViewProps> = ({
+export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fights,
   loading,
   error,
@@ -121,6 +121,3 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     </>
   );
 };
-
-export default ReportFightsView;
-

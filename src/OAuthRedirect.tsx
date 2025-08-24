@@ -6,7 +6,7 @@ import { getPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
 import { useAuth } from './AuthContext';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
-const OAuthRedirect: React.FC = () => {
+export const OAuthRedirect: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [error, setError] = useState<string | null>(null);
@@ -65,5 +65,3 @@ const OAuthRedirect: React.FC = () => {
     </Container>
   );
 };
-
-export default OAuthRedirect;

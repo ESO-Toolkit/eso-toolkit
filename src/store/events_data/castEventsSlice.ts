@@ -51,7 +51,7 @@ export const fetchCastEvents = createAsyncThunk<
       let nextPageTimestamp: number | null = null;
 
       do {
-        const response: { data: GetCastEventsQuery } = await client.query({
+        const response: GetCastEventsQuery = await client.query({
           query: GetCastEventsDocument,
           variables: {
             code: reportCode,
@@ -60,14 +60,9 @@ export const fetchCastEvents = createAsyncThunk<
             endTime: fight.endTime,
             hostilityType: hostilityType,
           },
-          context: {
-            headers: {
-              Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-            },
-          },
         });
 
-        const page = response.data?.reportData?.report?.events;
+        const page = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
         }

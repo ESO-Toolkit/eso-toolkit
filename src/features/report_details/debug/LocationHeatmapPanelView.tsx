@@ -106,7 +106,7 @@ interface LocationHeatmapPanelViewProps {
 
 const TOP_POSITIONS_PER_TANK = 3;
 
-const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> = ({
+export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> = ({
   locationData,
   playerActors,
   fightPhases,
@@ -841,6 +841,3 @@ const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> = ({
     </Box>
   );
 };
-
-export default LocationHeatmapPanelView;
-

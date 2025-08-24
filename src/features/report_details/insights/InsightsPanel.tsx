@@ -4,7 +4,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useBuffEvents, useDamageEvents, usePlayerData, useReportMasterData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 
-import InsightsPanelView from './InsightsPanelView';
+import { InsightsPanelView } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
@@ -14,7 +14,7 @@ interface InsightsPanelProps {
 const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
-const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
 
   const { buffEvents, isBuffEventsLoading } = useBuffEvents();
@@ -34,7 +34,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }
         return;
       }
 
-      const player = playerData.playersById[playerId];
+      const player = playerData?.playersById[playerId];
 
       if (!player) {
         return;
@@ -93,18 +93,18 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }
         const name = abilityGameIDToName[event.abilityGameID ?? ''];
         const sourceId = String(event.sourceID);
 
-        if (event.sourceID != null && playerData.playersById[sourceId]) {
+        if (event.sourceID != null && playerData?.playersById[sourceId]) {
           const player = playerData.playersById[sourceId];
           result[name].add(String(player.displayName || player.name || sourceId));
         }
       }
     });
     return result;
-  }, [buffEvents, reportMasterData.abilitiesById, playerData.playersById]);
+  }, [buffEvents, reportMasterData.abilitiesById, playerData?.playersById]);
 
   // Find the first damage dealer
   const firstDamageDealer = React.useMemo(() => {
-    if (!damageEvents || damageEvents.length === 0 || !playerData.playersById) {
+    if (!damageEvents || damageEvents.length === 0 || !playerData?.playersById) {
       return null;
     }
 
@@ -126,7 +126,7 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }
     }
 
     return sourcePlayer.displayName || sourcePlayer.name || `Player ${firstDamageEvent.sourceID}`;
-  }, [damageEvents, playerData.playersById, fight.friendlyPlayers]);
+  }, [damageEvents, playerData?.playersById, fight.friendlyPlayers]);
 
   return (
     <InsightsPanelView
@@ -142,5 +142,3 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }
     />
   );
 };
-
-export default React.memo(InsightsPanel);

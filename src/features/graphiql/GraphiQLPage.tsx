@@ -19,7 +19,7 @@ const fetcher = async (
   return response.json();
 };
 
-const GraphiQLPage: React.FC = () => {
+export const GraphiQLPage: React.FC = () => {
   const [schema, setSchema] = useState<import('graphql').GraphQLSchema | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -62,5 +62,3 @@ const GraphiQLPage: React.FC = () => {
     </Container>
   );
 };
-
-export default GraphiQLPage;

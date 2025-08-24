@@ -9,7 +9,7 @@ import {
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
 import { BuffEvent, DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 
-import DeathEventPanelView from './DeathEventPanelView';
+import { DeathEventPanelView } from './DeathEventPanelView';
 
 interface DeathEventPanelProps {
   fight: { startTime?: number; endTime?: number };
@@ -35,15 +35,15 @@ interface DeathInfo {
   wasBlocking: boolean | null;
 }
 
-const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
+export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   // Get reportId and fightId from params
   const { reportId, fightId } = useReportFightParams();
 
   // Use hooks to get data
-  const { deathEvents } = useDeathEvents();
-  const { damageEvents } = useDamageEvents();
-  const { buffEvents } = useBuffEvents();
-  const { reportMasterData } = useReportMasterData();
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
@@ -159,7 +159,11 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     reportMasterData.abilitiesById,
   ]);
 
-  if (deathInfos.length === 0) {
+  // Calculate combined loading state
+  const isLoading =
+    isDeathEventsLoading || isDamageEventsLoading || isBuffEventsLoading || isMasterDataLoading;
+
+  if (isLoading) {
     return (
       <DeathEventPanelView
         deathInfos={[]}
@@ -167,6 +171,7 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
         reportId={reportId}
         fightId={fightId ? Number(fightId) : undefined}
         fight={fight}
+        isLoading={true}
       />
     );
   }
@@ -178,7 +183,7 @@ const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
       reportId={reportId}
       fightId={fightId ? Number(fightId) : undefined}
       fight={fight}
+      isLoading={isLoading}
     />
   );
 };
-export default DeathEventPanel;

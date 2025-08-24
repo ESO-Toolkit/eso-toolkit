@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import {
   FightFragment,
   GetResourceEventsDocument,
@@ -36,22 +36,20 @@ const initialState: ResourceEventsState = {
 
 export const fetchResourceEvents = createAsyncThunk<
   ResourceChangeEvent[],
-  { reportCode: string; fight: FightFragment; accessToken: string },
+  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: RootState; rejectValue: string }
 >(
   'resourceEvents/fetchResourceEvents',
-  async ({ reportCode, fight, accessToken }) => {
-    const client = createEsoLogsClient(accessToken);
-
+  async ({ reportCode, fight, client }) => {
     // Fetch both friendly and enemy resource events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: ResourceChangeEvent[] = [];
+    let allEvents: LogEvent[] = [];
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;
 
       do {
-        const response: { data: GetResourceEventsQuery } = await client.query({
+        const response: GetResourceEventsQuery = await client.query({
           query: GetResourceEventsDocument,
           variables: {
             code: reportCode,
@@ -60,29 +58,20 @@ export const fetchResourceEvents = createAsyncThunk<
             endTime: fight.endTime,
             hostilityType: hostilityType,
           },
-          context: {
-            headers: {
-              Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-            },
-          },
         });
 
-        const page = response.data?.reportData?.report?.events;
+        const page = response.reportData?.report?.events;
         if (page?.data) {
-          // Filter to only resource events during the loop for better performance
-          const resourceEvents = page.data.filter(
-            (event: LogEvent) => event.type === 'resourcechange'
-          ) as ResourceChangeEvent[];
-          allEvents = allEvents.concat(resourceEvents);
+          allEvents = allEvents.concat(page.data);
         }
         nextPageTimestamp = page?.nextPageTimestamp ?? null;
       } while (nextPageTimestamp);
     }
 
-    return allEvents;
+    return allEvents as ResourceChangeEvent[];
   },
   {
-    condition: ({ reportCode, fight, accessToken }, { getState }) => {
+    condition: ({ reportCode, fight }, { getState }) => {
       const state = getState().events.resources;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
@@ -112,7 +101,7 @@ const resourceEventsSlice = createSlice({
   name: 'resourceEvents',
   initialState,
   reducers: {
-    clearResourceEvents(state) {
+    clearResourceEvents: (state) => {
       state.events = [];
       state.loading = false;
       state.error = null;
@@ -130,22 +119,24 @@ const resourceEventsSlice = createSlice({
         state.error = null;
       })
       .addCase(fetchResourceEvents.fulfilled, (state, action) => {
-        state.events = action.payload;
         state.loading = false;
+        state.events = action.payload;
         state.error = null;
         // Update cache metadata
+        const { reportCode, fight } = action.meta.arg;
         state.cacheMetadata = {
-          lastFetchedReportId: action.meta.arg.reportCode,
-          lastFetchedFightId: Number(action.meta.arg.fight.id),
+          lastFetchedReportId: reportCode,
+          lastFetchedFightId: Number(fight.id),
           lastFetchedTimestamp: Date.now(),
         };
       })
       .addCase(fetchResourceEvents.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch resource events';
+        state.error = action.payload || 'Failed to fetch resource events';
       });
   },
 });
 
 export const { clearResourceEvents } = resourceEventsSlice.actions;
+
 export default resourceEventsSlice.reducer;
