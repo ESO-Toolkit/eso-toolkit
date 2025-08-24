@@ -1,11 +1,11 @@
 import {
   Box,
-  CircularProgress,
   Paper,
   Typography,
   List,
   ListItem,
   ListItemButton,
+  Skeleton,
 } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -38,10 +38,20 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading fights...</Typography>
-      </Box>
+      <Paper elevation={2} sx={{ p: 3 }}>
+        <Skeleton variant="text" width={180} height={32} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
+        {[...Array(3)].map((_, idx) => (
+          <Box key={idx} sx={{ mb: 2 }}>
+            <Skeleton variant="text" width={140} height={28} sx={{ mb: 1 }} />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {[...Array(6)].map((__, j) => (
+                <Skeleton key={j} variant="rounded" width={88} height={36} />
+              ))}
+            </Box>
+          </Box>
+        ))}
+      </Paper>
     );
   }
 
