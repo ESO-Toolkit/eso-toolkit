@@ -3,12 +3,9 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { useAuth } from '../../AuthContext';
-import type { FightFragment } from '../../graphql/generated';
 import { useReportFightParams } from '../../hooks/useReportFightParams';
-import { selectReportFightDetailsData } from '../../store/crossSliceSelectors';
-import { fetchEventsForFight, clearEvents } from '../../store/events/eventsSlice';
-import { fetchReportMasterData, clearMasterData } from '../../store/master_data/masterDataSlice';
 import { fetchReportData } from '../../store/report/reportSlice';
+import { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 
 import ReportFightDetailsView from './ReportFightDetailsView';
@@ -21,44 +18,22 @@ const ReportFightDetails: React.FC = () => {
   const { accessToken } = useAuth();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const {
-    fights,
-    fightsLoading,
-    fightsError,
-    currentReportId,
-    masterDataLoaded,
-    masterDataLoading,
-    masterDataError,
-    eventsLoading,
-    currentFetchFightId,
-  } = useSelector(selectReportFightDetailsData);
+  const fights = useSelector((state: RootState) => state.report.fights);
+  const fightsLoading = useSelector((state: RootState) => state.report.loading);
+  const fightsError = useSelector((state: RootState) => state.report.error);
 
-  const fight = fights.find((f: FightFragment) => f.id === Number(fightId));
+  // FIXED: Memoize fight lookup to prevent infinite renders in child components
+  const fight = React.useMemo(() => {
+    return fights.find((f) => f.id === Number(fightId));
+  }, [fights, fightId]);
 
-  // Fetch master data if not loaded
+  // Only fetch report fights data - individual panels will fetch their own data
   React.useEffect(() => {
-    if (reportId && !masterDataLoaded && !masterDataLoading && !masterDataError) {
-      dispatch(fetchReportMasterData({ reportCode: reportId, accessToken }));
-    }
-  }, [reportId, accessToken, masterDataLoaded, masterDataLoading, masterDataError, dispatch]);
-
-  // Always fetch report data if fights are missing
-  React.useEffect(() => {
-    if (reportId && fights.length === 0 && !fightsLoading && !fightsError) {
-      // Clear existing data when fetching a new report (different from current one)
-      if (currentReportId !== reportId) {
-        dispatch(clearEvents());
-        dispatch(clearMasterData());
-      }
+    if (reportId && accessToken) {
+      // The thunk now handles checking if data needs to be fetched internally
       dispatch(fetchReportData({ reportId, accessToken }));
     }
-  }, [reportId, accessToken, fights.length, fightsLoading, fightsError, currentReportId, dispatch]);
-
-  React.useEffect(() => {
-    if (fight && reportId) {
-      void dispatch(fetchEventsForFight({ reportCode: reportId, fight, accessToken }));
-    }
-  }, [fight, reportId, accessToken, dispatch]);
+  }, [reportId, accessToken, dispatch]);
 
   // Get selectedTabId from query param if present
   const selectedTabId = searchParams.has('selectedTabId')
@@ -70,10 +45,6 @@ const ReportFightDetails: React.FC = () => {
       fight={fight}
       fightsLoading={fightsLoading || fights.length === 0}
       fightsError={fightsError}
-      masterDataLoading={masterDataLoading}
-      masterDataLoaded={masterDataLoaded}
-      eventsLoading={eventsLoading}
-      currentFetchFightId={currentFetchFightId ?? null}
       selectedTabId={selectedTabId}
       reportId={reportId}
       fightId={fightId}

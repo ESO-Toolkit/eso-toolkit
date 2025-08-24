@@ -1,62 +1,65 @@
+export enum HitType {
+  Normal = 1,
+  Critical = 2,
+}
+
 export interface DamageEvent {
-  type: 'damage';
-  abilityGameID?: number;
-  abilityName?: string;
-  abilityId?: number;
-  sourceName?: string;
-  sourceID?: number;
-  targetID?: number | string;
-  target?: number | string;
-  victimID?: number | string;
-  victim?: number | string;
   timestamp: number;
-  amount?: number;
-  blocked?: boolean | number;
+  type: 'damage';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: false;
+  abilityGameID: number;
+  fight: number;
+  hitType: HitType;
+  amount: number;
+  castTrackID: number;
+  sourceResources: Resources;
+  targetResources: Resources;
+  blocked?: number;
 }
 
 export interface DeathEvent {
-  type: 'death';
-  abilityGameID?: number;
-  abilityName?: string;
-  abilityId?: number;
-  sourceName?: string;
-  sourceID?: number;
-  targetID?: number | string;
-  target?: number | string;
   timestamp: number;
-  amount?: number;
+  type: 'death';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetInstance: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  castTrackID: number;
+  sourceResources: Resources;
+  targetResources: Resources;
+  amount: number;
 }
 
 export interface ResourceChangeEvent {
+  timestamp: number;
   type: 'resourcechange';
-  targetID?: number | string;
-  target?: number | string;
-  victimID?: number | string;
-  victim?: number | string;
-  timestamp: number;
-  resourceChangeType: number;
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
   resourceChange: number;
-  targetResources?: Resources;
-}
-
-export interface BuffEvent {
-  type: 'applybuff' | 'removebuff' | 'applydebuff' | 'removedebuff';
-  targetID?: number | string;
-  target?: number | string;
-  victimID?: number | string;
-  victim?: number | string;
-  timestamp: number;
-  abilityName?: string;
-  abilityId?: number;
-  abilityGameID?: number;
-  sourceID?: number | string;
+  resourceChangeType: number;
+  otherResourceChange: number;
+  maxResourceAmount: number;
+  waste: number;
+  castTrackID: number;
+  sourceResources: Resources;
+  targetResources: Resources;
 }
 
 export interface PlayerEnterCombatEvent {
   timestamp: number;
   type: 'playerentercombat';
   fight: number;
-  sourceID?: number;
+  sourceID: number;
 }
 
 export interface CombatantInfoEvent {
@@ -72,7 +75,7 @@ export interface CombatantGear {
   id: number;
   quality: number;
   icon: string;
-  name?: string;
+  name: string;
   championPoints: number;
   trait: number;
   enchantType: number;
@@ -161,14 +164,96 @@ export interface ApplyBuffStackEvent {
   stack: number;
 }
 
+export interface ApplyDebuffEvent {
+  timestamp: number;
+  type: 'applydebuff';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+}
+
+export interface RemoveDebuffEvent {
+  timestamp: number;
+  type: 'removedebuff';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+}
+
+export interface ApplyBuffEvent {
+  timestamp: 4812643;
+  type: 'applybuff';
+  sourceID: 8;
+  sourceIsFriendly: true;
+  targetID: 8;
+  targetIsFriendly: true;
+  abilityGameID: 247975;
+  fight: 74;
+  extraAbilityGameID: 38901;
+}
+
+export interface RemoveBuffEvent {
+  timestamp: number;
+  type: 'removebuff';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+}
+
+export interface ApplyDebuffStackEvent {
+  timestamp: number;
+  type: 'applydebuffstack';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  stack: number;
+}
+
+export interface RemoveBuffStackEvent {
+  timestamp: number;
+  type: 'removebuffstack';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  stack: number;
+}
+
+export type BuffEvent =
+  | ApplyBuffEvent
+  | ApplyBuffStackEvent
+  | RemoveBuffEvent
+  | RemoveBuffStackEvent;
+
+export type DebuffEvent =
+  | ApplyDebuffEvent
+  | ApplyDebuffStackEvent
+  | RemoveDebuffEvent
+  | RemoveDebuffStackEvent;
+
 export type LogEvent =
+  | ApplyBuffStackEvent
+  | BeginCastEvent
+  | BuffEvent
+  | CastEvent
+  | CombatantInfoEvent
   | DamageEvent
   | DeathEvent
-  | ResourceChangeEvent
-  | BuffEvent
-  | CombatantInfoEvent
-  | PlayerEnterCombatEvent
+  | DebuffEvent
   | HealEvent
-  | CastEvent
-  | BeginCastEvent
-  | ApplyBuffStackEvent;
+  | PlayerEnterCombatEvent
+  | ResourceChangeEvent;

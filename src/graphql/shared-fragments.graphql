@@ -6,6 +6,23 @@ fragment Fight on ReportFight {
   difficulty
   startTime
   endTime
+  # Participant information
+  friendlyPlayers
+  enemyPlayers
+  bossPercentage
+  # Optional: NPC information if needed
+  friendlyNPCs {
+    gameID
+    groupCount
+    instanceCount
+    id
+  }
+  enemyNPCs {
+    gameID
+    id
+    groupCount
+    instanceCount
+  }
 }
 
 fragment Character on Character {

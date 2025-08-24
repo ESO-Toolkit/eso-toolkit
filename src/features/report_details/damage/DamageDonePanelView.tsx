@@ -48,3 +48,4 @@ const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damageRows })
 };
 
 export default DamageDonePanelView;
+

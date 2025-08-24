@@ -27,9 +27,20 @@ import { useSearchParams } from 'react-router-dom';
 import StatChecklist from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
+import {
+  selectDamageEvents,
+  selectBuffEvents,
+  selectDebuffEvents,
+} from '../../../store/events_data/actions';
 import { RootState } from '../../../store/storeWithHistory';
 import { KnownAbilities, CriticalDamageValues } from '../../../types/abilities';
-import { CombatantGear, CombatantInfoEvent, LogEvent } from '../../../types/combatlogEvents';
+import {
+  CombatantGear,
+  CombatantInfoEvent,
+  CombatantAura,
+  LogEvent,
+  DamageEvent,
+} from '../../../types/combatlogEvents';
 
 // Register Chart.js components
 ChartJS.register(
@@ -77,6 +88,19 @@ interface CriticalDamageSource {
   link?: string; // Optional external link for detailed analysis
 }
 
+interface CriticalMultiplierInfo {
+  abilityName: string;
+  abilityId: number;
+  criticalDamage: number;
+  normalDamage: number;
+  criticalMultiplier: number;
+  foundPair: boolean;
+  criticalTimestamp: number;
+  accountedCritDamagePercent: number;
+  unaccountedCritDamagePercent: number;
+  activeSources: CriticalDamageSource[];
+}
+
 interface PlayerCriticalDamageDetailsProps {
   id: string;
   name: string;
@@ -92,7 +116,6 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
   expanded = false,
   onExpandChange,
 }) => {
-  const events = useSelector((state: RootState) => state.events.events);
   const [searchParams] = useSearchParams();
   const { reportId, fightId } = useReportFightParams();
 
@@ -102,25 +125,30 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
   const [criticalDamageSources, setCriticalDamageSources] = React.useState<CriticalDamageSource[]>(
     []
   );
+  const [criticalMultiplier, setCriticalMultiplier] = React.useState<CriticalMultiplierInfo | null>(
+    null
+  );
 
+  const combatantInfoEvents = useSelector((state: RootState) => state.events.combatantInfo.events);
+
+  // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
+  const damageEvents = useSelector(selectDamageEvents);
+  const buffEvents = useSelector(selectBuffEvents);
+  const debuffEvents = useSelector(selectDebuffEvents);
+
+  // Combine all events for compatibility with existing code
   const fightEvents = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime) {
-      return [];
-    }
-
-    return (events as LogEvent[]).filter(
-      (event) => event.timestamp >= fight.startTime && event.timestamp <= fight.endTime
-    );
-  }, [events, fight]);
+    return [...damageEvents, ...buffEvents, ...debuffEvents, ...combatantInfoEvents];
+  }, [damageEvents, buffEvents, debuffEvents, combatantInfoEvents]);
 
   // Calculate base critical damage for this specific player
   const playerBaseCriticalDamage = React.useMemo(() => {
-    if (!fightEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
+    if (!selectedTargetId) {
       return 0;
     }
 
     // Find the combatantinfo event for this player in this specific fight
-    const combatantInfoEvent = fightEvents.find(
+    const combatantInfoEvent = combatantInfoEvents.find(
       (event): event is CombatantInfoEvent =>
         event.type === 'combatantinfo' &&
         String(event.sourceID) === id &&
@@ -138,7 +166,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
     // Check Lucent Echoes buff from player auras
     const hasLucentEchoes = latestAuras.some(
-      (aura) =>
+      (aura: CombatantAura) =>
         aura.ability === KnownAbilities.LUCENT_ECHOES || aura.name?.includes('Lucent Echoes')
     );
 
@@ -149,7 +177,8 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
     // Check Hemorrhage passive from player auras
     const hasHemorrhage = latestAuras.some(
-      (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+      (aura: CombatantAura) =>
+        aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
     );
 
     // Add Hemorrhage critical damage bonus
@@ -159,7 +188,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
     // Check Piercing Spear passive from player auras
     const hasPiercingSpear = latestAuras.some(
-      (aura) =>
+      (aura: CombatantAura) =>
         aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
     );
 
@@ -170,7 +199,7 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
     // Check Advanced Species passive from player auras
     const hasAdvancedSpecies = latestAuras.some(
-      (aura) =>
+      (aura: CombatantAura) =>
         aura.ability === KnownAbilities.ADVANCED_SPECIES || aura.name?.includes('Advanced Species')
     );
 
@@ -181,7 +210,8 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
     // Check Dexterity passive from player auras
     const hasDexterity = latestAuras.some(
-      (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+      (aura: CombatantAura) =>
+        aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
     );
 
     if (hasDexterity && latestData?.gear) {
@@ -199,7 +229,507 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
     // - Other sources
 
     return baseCriticalDamage;
-  }, [fightEvents, selectedTargetId, fight, id]);
+  }, [combatantInfoEvents, selectedTargetId, fight, id]);
+
+  // Helper function to check if a buff is active at a timestamp
+  const isBuffActiveAtTimestamp = React.useCallback(
+    (timestamp: number, buffEvents: LogEvent[], fightStart: number, fightEnd: number): boolean => {
+      const intervals: Array<{ start: number; end: number }> = [];
+      let activeStart: number | null = null;
+
+      for (const event of buffEvents) {
+        if (event.type === 'applybuff') {
+          if (activeStart === null) activeStart = event.timestamp;
+        } else if (event.type === 'removebuff') {
+          if (activeStart !== null) {
+            intervals.push({ start: activeStart, end: event.timestamp });
+            activeStart = null;
+          }
+        }
+      }
+
+      if (activeStart !== null) {
+        intervals.push({ start: activeStart, end: fightEnd });
+      }
+
+      return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
+    },
+    []
+  );
+
+  // Helper function to check if a debuff is active at a timestamp
+  const isDebuffActiveAtTimestamp = React.useCallback(
+    (
+      timestamp: number,
+      debuffEvents: LogEvent[],
+      fightStart: number,
+      fightEnd: number
+    ): boolean => {
+      const intervals: Array<{ start: number; end: number }> = [];
+      let activeStart: number | null = null;
+
+      for (const event of debuffEvents) {
+        if (event.type === 'applydebuff') {
+          if (activeStart === null) activeStart = event.timestamp;
+        } else if (event.type === 'removedebuff') {
+          if (activeStart !== null) {
+            intervals.push({ start: activeStart, end: event.timestamp });
+            activeStart = null;
+          }
+        }
+      }
+
+      if (activeStart !== null) {
+        intervals.push({ start: activeStart, end: fightEnd });
+      }
+
+      return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
+    },
+    []
+  );
+
+  // Helper function to calculate critical damage percentage at a specific timestamp
+  const calculateCriticalDamageAtTimestamp = React.useCallback(
+    (
+      timestamp: number,
+      events: LogEvent[],
+      playerId: string,
+      targetId: string,
+      fightData: FightFragment
+    ): number => {
+      const fightStart = fightData.startTime;
+      const fightEnd = fightData.endTime;
+
+      // Find combatant info for auras
+      const combatantInfoEvent = events.find(
+        (event): event is CombatantInfoEvent =>
+          event.type === 'combatantinfo' &&
+          String(event.sourceID) === playerId &&
+          'fight' in event &&
+          event.fight === fightData.id
+      );
+      const latestAuras = combatantInfoEvent?.auras ?? [];
+      const mediumArmorCount =
+        combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
+
+      // Start with base critical damage
+      let critDmg = 50;
+
+      // Add static passives
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+            aura.name?.includes('Fated Fortune')
+        )
+      ) {
+        critDmg += CriticalDamageValues.FATED_FORTUNE;
+      }
+      if (
+        latestAuras.some(
+          (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+        )
+      ) {
+        critDmg += CriticalDamageValues.HEMORRHAGE;
+      }
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
+        )
+      ) {
+        critDmg += CriticalDamageValues.PIERCING_SPEAR;
+      }
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.ADVANCED_SPECIES ||
+            aura.name?.includes('Advanced Species')
+        )
+      ) {
+        critDmg += CriticalDamageValues.ADVANCED_SPECIES;
+      }
+      if (
+        mediumArmorCount > 0 &&
+        latestAuras.some(
+          (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+        )
+      ) {
+        critDmg += mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE;
+      }
+
+      // Check dynamic buffs active at this timestamp
+      // Lucent Echoes
+      const lucentEchoesEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
+            (event.abilityName ?? '').includes('Lucent Echoes'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightStart, fightEnd)) {
+        critDmg += CriticalDamageValues.LUCENT_ECHOES;
+      }
+
+      // Minor Force
+      const minorForceEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
+            (event.abilityName ?? '').includes('Minor Force'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightStart, fightEnd)) {
+        critDmg += 10;
+      }
+
+      // Major Force
+      const majorForceEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
+            (event.abilityName ?? '').includes('Major Force'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightStart, fightEnd)) {
+        critDmg += 20;
+      }
+
+      // Minor Brittle (on target)
+      const minorBrittleEvents = events.filter(
+        (event) =>
+          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+          String(event.targetID ?? event.target ?? '') === targetId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
+            (event.abilityName ?? '').includes('Minor Brittle'))
+      );
+      if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightStart, fightEnd)) {
+        critDmg += 10;
+      }
+
+      // Major Brittle (on target)
+      const majorBrittleEvents = events.filter(
+        (event) =>
+          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+          String(event.targetID ?? event.target ?? '') === targetId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
+            (event.abilityName ?? '').includes('Major Brittle'))
+      );
+      if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightStart, fightEnd)) {
+        critDmg += 20;
+      }
+
+      return critDmg;
+    },
+    [isBuffActiveAtTimestamp, isDebuffActiveAtTimestamp]
+  );
+
+  // Helper function to get active critical damage sources at a specific timestamp
+  const getActiveCriticalDamageSourcesAtTimestamp = React.useCallback(
+    (
+      timestamp: number,
+      events: LogEvent[],
+      playerId: string,
+      targetId: string,
+      fightData: FightFragment
+    ): CriticalDamageSource[] => {
+      const sources: CriticalDamageSource[] = [];
+      const fightStart = fightData.startTime;
+      const fightEnd = fightData.endTime;
+
+      // Find combatant info for auras
+      const combatantInfoEvent = events.find(
+        (event): event is CombatantInfoEvent =>
+          event.type === 'combatantinfo' &&
+          String(event.sourceID) === playerId &&
+          'fight' in event &&
+          event.fight === fightData.id
+      );
+      const latestAuras = combatantInfoEvent?.auras ?? [];
+      const mediumArmorCount =
+        combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
+
+      // Base critical damage
+      sources.push({
+        name: 'Base Critical Damage',
+        value: 50,
+        wasActive: true,
+        description: 'Default critical damage bonus that all players start with',
+      });
+
+      // Static passives
+      if (
+        latestAuras.some(
+          (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+        )
+      ) {
+        sources.push({
+          name: 'Hemorrhage',
+          value: CriticalDamageValues.HEMORRHAGE,
+          wasActive: true,
+          description: 'Passive that provides 10% critical damage bonus',
+        });
+      }
+
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
+        )
+      ) {
+        sources.push({
+          name: 'Piercing Spear',
+          value: CriticalDamageValues.PIERCING_SPEAR,
+          wasActive: true,
+          description: 'Passive that provides 12% critical damage bonus',
+        });
+      }
+
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.ADVANCED_SPECIES ||
+            aura.name?.includes('Advanced Species')
+        )
+      ) {
+        sources.push({
+          name: 'Advanced Species',
+          value: CriticalDamageValues.ADVANCED_SPECIES,
+          wasActive: true,
+          description: 'Passive that provides 15% critical damage bonus',
+        });
+      }
+
+      if (
+        latestAuras.some(
+          (aura) =>
+            aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+            aura.name?.includes('Fated Fortune')
+        )
+      ) {
+        sources.push({
+          name: 'Fated Fortune',
+          value: CriticalDamageValues.FATED_FORTUNE,
+          wasActive: true,
+          description: 'Passive that provides 12% critical damage bonus',
+        });
+      }
+
+      if (
+        mediumArmorCount > 0 &&
+        latestAuras.some(
+          (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+        )
+      ) {
+        sources.push({
+          name: 'Dexterity',
+          value: mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE,
+          wasActive: true,
+          description: `Passive that provides 2% critical damage per piece of medium armor worn (${mediumArmorCount} pieces)`,
+        });
+      }
+
+      // Dynamic buffs/debuffs
+      const lucentEchoesEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
+            (event.abilityName ?? '').includes('Lucent Echoes'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightStart, fightEnd)) {
+        sources.push({
+          name: 'Lucent Echoes',
+          value: CriticalDamageValues.LUCENT_ECHOES,
+          wasActive: true,
+          description: 'Buff that provides 11% critical damage bonus',
+        });
+      }
+
+      const minorForceEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
+            (event.abilityName ?? '').includes('Minor Force'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightStart, fightEnd)) {
+        sources.push({
+          name: 'Minor Force',
+          value: 10,
+          wasActive: true,
+          description: 'Buff that provides 10% critical damage',
+        });
+      }
+
+      const majorForceEvents = events.filter(
+        (event) =>
+          (event.type === 'applybuff' || event.type === 'removebuff') &&
+          String(event.targetID ?? event.target ?? '') === playerId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
+            (event.abilityName ?? '').includes('Major Force'))
+      );
+      if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightStart, fightEnd)) {
+        sources.push({
+          name: 'Major Force',
+          value: 20,
+          wasActive: true,
+          description: 'Buff that provides 20% critical damage',
+        });
+      }
+
+      const minorBrittleEvents = events.filter(
+        (event) =>
+          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+          String(event.targetID ?? event.target ?? '') === targetId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
+            (event.abilityName ?? '').includes('Minor Brittle'))
+      );
+      if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightStart, fightEnd)) {
+        sources.push({
+          name: 'Minor Brittle',
+          value: 10,
+          wasActive: true,
+          description: 'Debuff that provides 10% critical damage',
+        });
+      }
+
+      const majorBrittleEvents = events.filter(
+        (event) =>
+          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+          String(event.targetID ?? event.target ?? '') === targetId &&
+          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
+            (event.abilityName ?? '').includes('Major Brittle'))
+      );
+      if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightStart, fightEnd)) {
+        sources.push({
+          name: 'Major Brittle',
+          value: 20,
+          wasActive: true,
+          description: 'Debuff that provides 20% critical damage',
+        });
+      }
+
+      return sources.filter((source) => source.wasActive);
+    },
+    [isBuffActiveAtTimestamp, isDebuffActiveAtTimestamp]
+  );
+
+  // Calculate critical multiplier by finding pairs of critical and normal hits
+  const criticalMultiplierData = React.useMemo(() => {
+    if (!fightEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
+      return null;
+    }
+
+    // Get damage events for this player against the selected target
+    const playerDamageEvents = fightEvents.filter(
+      (event): event is DamageEvent =>
+        event.type === 'damage' &&
+        String(event.sourceID) === id &&
+        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
+        typeof event.amount === 'number' &&
+        event.amount > 0 &&
+        typeof event.hitType === 'number' &&
+        Boolean(event.abilityGameID || event.abilityId)
+    );
+
+    // Group damage events by ability
+    const damageByAbility = new Map<number, { critical: DamageEvent[]; normal: DamageEvent[] }>();
+
+    playerDamageEvents.forEach((event) => {
+      const abilityId = event.abilityGameID;
+      if (!abilityId) return;
+
+      if (!damageByAbility.has(abilityId)) {
+        damageByAbility.set(abilityId, { critical: [], normal: [] });
+      }
+
+      const group = damageByAbility.get(abilityId);
+      if (!group) return;
+
+      if (event.hitType === 2) {
+        // Critical hit
+        group.critical.push(event);
+      } else if (event.hitType === 1) {
+        // Normal hit
+        group.normal.push(event);
+      }
+    });
+
+    // Find the first ability that has both critical and normal hits
+    for (const [abilityId, { critical, normal }] of Array.from(damageByAbility.entries())) {
+      if (critical.length > 0 && normal.length > 0) {
+        // Calculate average damage for critical and normal hits
+        const avgCriticalDamage =
+          critical.reduce((sum: number, event: DamageEvent) => sum + (event.amount ?? 0), 0) /
+          critical.length;
+        const avgNormalDamage =
+          normal.reduce((sum: number, event: DamageEvent) => sum + (event.amount ?? 0), 0) /
+          normal.length;
+
+        if (avgNormalDamage > 0) {
+          const multiplier = avgCriticalDamage / avgNormalDamage;
+
+          // Use the first critical hit for timestamp analysis
+          const criticalEvent = critical[0];
+          const criticalTimestamp = criticalEvent.timestamp;
+
+          // Calculate what the critical damage % should be at this timestamp
+          const accountedCritDamage = calculateCriticalDamageAtTimestamp(
+            criticalTimestamp,
+            fightEvents,
+            id,
+            selectedTargetId,
+            fight
+          );
+
+          // Convert multiplier to critical damage percentage
+          // If multiplier is 1.75x, that means 175% damage = 75% critical damage bonus
+          const actualCritDamagePercent = (multiplier - 1) * 100;
+
+          // The accounted critical damage already includes base 50%, convert to bonus for comparison
+          const expectedCritDamageBonus = accountedCritDamage - 50;
+          const unaccountedPercent = Math.max(0, actualCritDamagePercent - expectedCritDamageBonus);
+
+          // Get active sources at this timestamp
+          const activeSources = getActiveCriticalDamageSourcesAtTimestamp(
+            criticalTimestamp,
+            fightEvents,
+            id,
+            selectedTargetId,
+            fight
+          );
+
+          return {
+            abilityName: `Ability ${abilityId}`,
+            abilityId,
+            criticalDamage: Math.round(avgCriticalDamage),
+            normalDamage: Math.round(avgNormalDamage),
+            criticalMultiplier: multiplier,
+            foundPair: true,
+            criticalTimestamp,
+            accountedCritDamagePercent: expectedCritDamageBonus,
+            unaccountedCritDamagePercent: unaccountedPercent,
+            activeSources,
+          };
+        }
+      }
+    }
+
+    return null;
+  }, [
+    fightEvents,
+    selectedTargetId,
+    fight,
+    id,
+    calculateCriticalDamageAtTimestamp,
+    getActiveCriticalDamageSourcesAtTimestamp,
+  ]);
+
+  // Update the critical multiplier state when data changes
+  React.useEffect(() => {
+    setCriticalMultiplier(criticalMultiplierData);
+  }, [criticalMultiplierData]);
 
   // Compute critical damage data for this specific player
   const criticalDamageData = React.useMemo(() => {
@@ -720,6 +1250,16 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
               )}
               % Crit Damage
             </Typography>
+            {criticalMultiplier && (
+              <Typography variant="body2" color="#d32f2f" sx={{ fontWeight: 'bold' }}>
+                Crit Multiplier: {criticalMultiplier.criticalMultiplier.toFixed(2)}x
+                {criticalMultiplier.unaccountedCritDamagePercent > 0 && (
+                  <span style={{ color: '#ff9800', fontSize: '0.75rem', marginLeft: '4px' }}>
+                    (+{criticalMultiplier.unaccountedCritDamagePercent.toFixed(1)}% unknown)
+                  </span>
+                )}
+              </Typography>
+            )}
           </Box>
         </Box>
       </AccordionSummary>
@@ -737,6 +1277,86 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
 
             {/* Critical Damage Sources Checklist */}
             <StatChecklist sources={criticalDamageSources} title="Critical Damage Sources" />
+
+            {/* Critical Multiplier Information */}
+            {criticalMultiplier && (
+              <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Critical Multiplier Analysis
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Ability:</strong> {criticalMultiplier.abilityName}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Normal Damage (Avg):</strong>{' '}
+                  {criticalMultiplier.normalDamage.toLocaleString()}
+                </Typography>
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Critical Damage (Avg):</strong>{' '}
+                  {criticalMultiplier.criticalDamage.toLocaleString()}
+                </Typography>
+                <Typography variant="body1" sx={{ fontWeight: 'bold', color: '#d32f2f', mb: 2 }}>
+                  <strong>Critical Multiplier:</strong>{' '}
+                  {criticalMultiplier.criticalMultiplier.toFixed(2)}x
+                </Typography>
+
+                <Typography variant="h6" sx={{ mb: 1, fontSize: '1rem' }}>
+                  Critical Damage Analysis at Critical Hit Timestamp:
+                </Typography>
+
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Actual Critical Damage Bonus:</strong>{' '}
+                  {((criticalMultiplier.criticalMultiplier - 1) * 100).toFixed(1)}%
+                  <span style={{ color: '#666', marginLeft: '8px' }}>
+                    (multiplier: {criticalMultiplier.criticalMultiplier.toFixed(2)}x)
+                  </span>
+                </Typography>
+
+                <Typography variant="body2" sx={{ mb: 1 }}>
+                  <strong>Expected from Known Sources:</strong>{' '}
+                  {(criticalMultiplier.accountedCritDamagePercent + 50).toFixed(1)}% total
+                  <span style={{ color: '#666', marginLeft: '4px' }}>
+                    (50% base + {criticalMultiplier.accountedCritDamagePercent.toFixed(1)}% bonus)
+                  </span>
+                </Typography>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 2,
+                    color:
+                      criticalMultiplier.unaccountedCritDamagePercent > 0 ? '#d32f2f' : '#2e7d32',
+                    fontWeight: 'bold',
+                  }}
+                >
+                  <strong>Unaccounted Critical Damage:</strong>{' '}
+                  {criticalMultiplier.unaccountedCritDamagePercent.toFixed(1)}%
+                  {criticalMultiplier.unaccountedCritDamagePercent > 0 &&
+                    ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
+                </Typography>
+
+                <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
+                  Active Critical Damage Sources at Critical Hit:
+                </Typography>
+                {criticalMultiplier.activeSources.map((source, index) => (
+                  <Typography key={index} variant="body2" sx={{ ml: 2, mb: 0.5 }}>
+                    • {source.name}: +{source.value}% ({source.description})
+                  </Typography>
+                ))}
+
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mt: 2, fontStyle: 'italic' }}
+                >
+                  Critical damage bonuses are additive before being applied as a multiplier. For
+                  example, if you have 75% critical damage total (50% base + 25% from sources), your
+                  critical hits will do 175% of normal damage (1.75x multiplier). This analysis
+                  compares the actual multiplier observed in combat against what we expect from
+                  known additive sources.
+                </Typography>
+              </Paper>
+            )}
 
             {/* Critical Damage vs Time Chart */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>

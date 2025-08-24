@@ -3,9 +3,6 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createEsoLogsClient } from '../../esologsClient';
 import {
   GetReportMasterDataDocument,
-  GetReportPlayersOnlyDocument,
-  GetReportMasterDataQuery,
-  GetReportPlayersOnlyQuery,
   ReportAbilityFragment,
   ReportActorFragment,
 } from '../../graphql/generated';
@@ -23,12 +20,6 @@ interface MasterDataState {
     lastFetchedTimestamp: number | null;
     actorCount: number;
     abilityCount: number;
-    isPlayersOnly: boolean; // Track if we fetched only players or all actors
-  };
-  // OPTIMIZED: Add loading states for individual operations
-  loadingStates: {
-    masterData: boolean;
-    playersOnly: boolean;
   };
 }
 
@@ -44,17 +35,12 @@ const initialState: MasterDataState = {
     lastFetchedTimestamp: null,
     actorCount: 0,
     abilityCount: 0,
-    isPlayersOnly: false,
-  },
-  // OPTIMIZED: Initialize loading states
-  loadingStates: {
-    masterData: false,
-    playersOnly: false,
   },
 };
 
 export interface MasterDataPayload {
   abilities: ReportAbilityFragment[];
+  reportCode: string;
   abilitiesById: Record<string | number, ReportAbilityFragment>;
   actors: ReportActorFragment[];
   actorsById: Record<string | number, ReportActorFragment>;
@@ -64,103 +50,76 @@ export const fetchReportMasterData = createAsyncThunk<
   MasterDataPayload,
   { reportCode: string; accessToken: string },
   { rejectValue: string }
->('masterData/fetchReportMasterData', async ({ reportCode, accessToken }, { rejectWithValue }) => {
-  try {
-    const client = createEsoLogsClient(accessToken);
-    const response: { data: GetReportMasterDataQuery } = await client.query({
-      query: GetReportMasterDataDocument,
-      variables: { code: reportCode },
-      context: {
-        headers: {
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+>(
+  'masterData/fetchReportMasterData',
+  async ({ reportCode, accessToken }, { rejectWithValue }) => {
+    try {
+      const client = createEsoLogsClient(accessToken);
+      const response = await client.query({
+        query: GetReportMasterDataDocument,
+        variables: { code: reportCode },
+        context: {
+          headers: {
+            Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+          },
         },
-      },
-    });
-    const masterData = response.data?.reportData?.report?.masterData;
-    const actors = cleanArray(masterData?.actors) ?? [];
-    const actorsById: Record<string | number, ReportActorFragment> = {};
-    for (const actor of actors) {
-      if (actor && (typeof actor.id === 'string' || typeof actor.id === 'number')) {
-        actorsById[actor.id] = actor;
+      });
+      const masterData = response.data?.reportData?.report?.masterData;
+      const actors = cleanArray(masterData?.actors) ?? [];
+      const actorsById: Record<string | number, ReportActorFragment> = {};
+      for (const actor of actors) {
+        if (actor && (typeof actor.id === 'string' || typeof actor.id === 'number')) {
+          actorsById[actor.id] = actor;
+        }
       }
-    }
-    const abilities = cleanArray(masterData?.abilities) ?? [];
-    const abilitiesById: Record<string | number, ReportAbilityFragment> = {};
-    for (const ability of abilities) {
-      if (ability && (typeof ability.gameID === 'string' || typeof ability.gameID === 'number')) {
-        abilitiesById[ability.gameID] = ability;
+      const abilities = cleanArray(masterData?.abilities) ?? [];
+      const abilitiesById: Record<string | number, ReportAbilityFragment> = {};
+      for (const ability of abilities) {
+        if (ability && (typeof ability.gameID === 'string' || typeof ability.gameID === 'number')) {
+          abilitiesById[ability.gameID] = ability;
+        }
       }
+      return {
+        abilities,
+        abilitiesById,
+        actors,
+        actorsById,
+        reportCode,
+      };
+    } catch (err) {
+      const hasMessage = (e: unknown): e is { message: string } =>
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof (e as { message: unknown }).message === 'string';
+      if (hasMessage(err)) {
+        return rejectWithValue(err.message);
+      }
+      return rejectWithValue('Failed to fetch master data');
     }
-    return {
-      abilities,
-      abilitiesById,
-      actors,
-      actorsById,
-    };
-  } catch (err) {
-    const hasMessage = (e: unknown): e is { message: string } =>
-      typeof e === 'object' &&
-      e !== null &&
-      'message' in e &&
-      typeof (e as { message: unknown }).message === 'string';
-    if (hasMessage(err)) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue('Failed to fetch master data');
-  }
-});
+  },
+  {
+    condition: ({ reportCode, accessToken }, { getState }) => {
+      const state = getState() as { masterData: MasterDataState };
+      console.log('CONDITION');
+      // Check if we already have master data for this report
+      if (
+        state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
+        state.masterData.loaded &&
+        Object.keys(state.masterData.abilitiesById).length > 0 &&
+        Object.keys(state.masterData.actorsById).length > 0
+      ) {
+        return false; // Prevent thunk execution - data is cached
+      }
 
-// OPTIMIZED: Players-only query for 50-70% faster loading
-export const fetchReportPlayersOnly = createAsyncThunk<
-  MasterDataPayload,
-  { reportCode: string; accessToken: string },
-  { rejectValue: string }
->('masterData/fetchReportPlayersOnly', async ({ reportCode, accessToken }, { rejectWithValue }) => {
-  try {
-    const client = createEsoLogsClient(accessToken);
-    const response: { data: GetReportPlayersOnlyQuery } = await client.query({
-      query: GetReportPlayersOnlyDocument,
-      variables: { code: reportCode },
-      context: {
-        headers: {
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-        },
-      },
-    });
+      if (state.masterData.loading) {
+        return false; // Prevent duplicate execution
+      }
 
-    const masterData = response.data?.reportData?.report?.masterData;
-    const actors = cleanArray(masterData?.actors) ?? [];
-    const actorsById: Record<string | number, ReportActorFragment> = {};
-    for (const actor of actors) {
-      if (actor && (typeof actor.id === 'string' || typeof actor.id === 'number')) {
-        actorsById[actor.id] = actor;
-      }
-    }
-    const abilities = cleanArray(masterData?.abilities) ?? [];
-    const abilitiesById: Record<string | number, ReportAbilityFragment> = {};
-    for (const ability of abilities) {
-      if (ability && (typeof ability.gameID === 'string' || typeof ability.gameID === 'number')) {
-        abilitiesById[ability.gameID] = ability;
-      }
-    }
-    return {
-      abilities,
-      abilitiesById,
-      actors,
-      actorsById,
-    };
-  } catch (err) {
-    const hasMessage = (e: unknown): e is { message: string } =>
-      typeof e === 'object' &&
-      e !== null &&
-      'message' in e &&
-      typeof (e as { message: unknown }).message === 'string';
-    if (hasMessage(err)) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue('Failed to fetch players data');
+      return true; // Allow thunk execution
+    },
   }
-});
+);
 
 const masterDataSlice = createSlice({
   name: 'masterData',
@@ -178,70 +137,36 @@ const masterDataSlice = createSlice({
         lastFetchedTimestamp: null,
         actorCount: 0,
         abilityCount: 0,
-        isPlayersOnly: false,
-      };
-      state.loadingStates = {
-        masterData: false,
-        playersOnly: false,
       };
     },
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchReportMasterData.pending, (state) => {
+        console.log('PENDING');
         state.loading = true;
-        state.loadingStates.masterData = true;
         state.error = null;
         state.loaded = false;
       })
       .addCase(
         fetchReportMasterData.fulfilled,
         (state, action: PayloadAction<MasterDataPayload>) => {
+          console.log('FULFILLED');
           state.abilitiesById = action.payload.abilitiesById;
           state.actorsById = action.payload.actorsById;
           state.loading = false;
-          state.loadingStates.masterData = false;
           state.loaded = true;
           state.error = null;
           // OPTIMIZED: Update cache metadata
+          state.cacheMetadata.lastFetchedReportId = action.payload.reportCode;
           state.cacheMetadata.lastFetchedTimestamp = Date.now();
           state.cacheMetadata.actorCount = action.payload.actors.length;
           state.cacheMetadata.abilityCount = action.payload.abilities.length;
-          state.cacheMetadata.isPlayersOnly = false;
         }
       )
       .addCase(fetchReportMasterData.rejected, (state, action) => {
         state.loading = false;
-        state.loadingStates.masterData = false;
         state.error = (action.payload as string) || 'Failed to fetch master data';
-      })
-      // OPTIMIZED: Players-only reducer cases
-      .addCase(fetchReportPlayersOnly.pending, (state) => {
-        state.loading = true;
-        state.loadingStates.playersOnly = true;
-        state.error = null;
-        state.loaded = false;
-      })
-      .addCase(
-        fetchReportPlayersOnly.fulfilled,
-        (state, action: PayloadAction<MasterDataPayload>) => {
-          state.abilitiesById = action.payload.abilitiesById;
-          state.actorsById = action.payload.actorsById;
-          state.loading = false;
-          state.loadingStates.playersOnly = false;
-          state.loaded = true;
-          state.error = null;
-          // OPTIMIZED: Update cache metadata for players-only fetch
-          state.cacheMetadata.lastFetchedTimestamp = Date.now();
-          state.cacheMetadata.actorCount = action.payload.actors.length;
-          state.cacheMetadata.abilityCount = action.payload.abilities.length;
-          state.cacheMetadata.isPlayersOnly = true;
-        }
-      )
-      .addCase(fetchReportPlayersOnly.rejected, (state, action) => {
-        state.loading = false;
-        state.loadingStates.playersOnly = false;
-        state.error = (action.payload as string) || 'Failed to fetch players data';
       });
   },
 });

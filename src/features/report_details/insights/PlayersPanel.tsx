@@ -1,7 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
-import { RootState } from '../../../store/storeWithHistory';
+import { useCombatantInfoEvents, usePlayerData, useReportMasterData } from '../../../hooks';
+import { PlayerInfo } from '../../../store/events_data/actions';
 import { MundusStones } from '../../../types/abilities';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 
@@ -10,47 +10,86 @@ import PlayersPanelView from './PlayersPanelView';
 // This panel now uses report actors from masterData
 
 const PlayersPanel: React.FC = () => {
-  // Get report actors from masterData
-  const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
-  const abilitiesById = useSelector((state: RootState) => state.masterData.abilitiesById);
-  const events = useSelector((state: RootState) => state.events.events);
-  // Get player details (gear/talents) from masterData
-  // Player details are stored in events.players, keyed by actor id
-  const eventPlayers = useSelector((state: RootState) => state.events.players);
+  // Use hooks to get data
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+
+  // Extract actors and abilities from masterData with memoization
+  const actorsById = React.useMemo(
+    () => reportMasterData.actorsById || {},
+    [reportMasterData.actorsById]
+  );
+  const abilitiesById = React.useMemo(
+    () => reportMasterData.abilitiesById || {},
+    [reportMasterData.abilitiesById]
+  );
 
   // Filter for Player actors only
-  const playerActors = Object.values(actorsById).filter((actor) => actor.type === 'Player');
+  const playerActors = React.useMemo(
+    () => Object.values(actorsById).filter((actor) => actor?.type === 'Player'),
+    [actorsById]
+  );
+
+  // Convert playerData to the expected format
+  const eventPlayers = React.useMemo(() => {
+    const result: Record<string, PlayerInfo> = {};
+    if (playerData.playersById) {
+      Object.entries(playerData.playersById).forEach(([id, player]) => {
+        // Convert PlayerDetailsEntry to PlayerInfo format by adding required index signature
+        const playerInfo: PlayerInfo = {
+          id: player.id,
+          name: player.name,
+          displayName: player.displayName,
+          combatantInfo: {
+            talents: player.combatantInfo?.talents,
+            gear: player.combatantInfo?.gear,
+          },
+          // Include all other properties from the original player
+          ...Object.fromEntries(
+            Object.entries(player).filter(
+              ([key]) => !['id', 'name', 'displayName', 'combatantInfo'].includes(key)
+            )
+          ),
+        };
+        result[id] = playerInfo;
+      });
+    }
+    return result;
+  }, [playerData.playersById]);
+
+  // Calculate loading state
+  const isLoading = isMasterDataLoading || isPlayerDataLoading || isCombatantInfoEventsLoading;
 
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};
 
-    if (!events || !abilitiesById) return result;
+    if (!combatantInfoEvents || !abilitiesById) return result;
 
     // Get all mundus stone ability IDs from the enum
     const mundusStoneIds = Object.values(MundusStones) as number[];
 
     // Initialize arrays for each player
     playerActors.forEach((actor) => {
-      if (actor.id) {
+      if (actor?.id) {
         const playerId = String(actor.id);
         result[playerId] = [];
 
         // Find the latest combatantinfo event for this player
-        const combatantInfoEvents = events
+        const combatantInfoEventsForPlayer = combatantInfoEvents
           .filter((event): event is CombatantInfoEvent => {
-            const eventData = event;
             return (
-              eventData.type === 'combatantinfo' &&
-              'sourceID' in eventData &&
-              String(eventData.sourceID) === playerId
+              event.type === 'combatantinfo' &&
+              'sourceID' in event &&
+              String(event.sourceID) === playerId
             );
           })
           .sort((a, b) => {
             return (b.timestamp || 0) - (a.timestamp || 0);
           }); // Most recent first
 
-        const latestCombatantInfo = combatantInfoEvents[0];
+        const latestCombatantInfo = combatantInfoEventsForPlayer[0];
         if (latestCombatantInfo && latestCombatantInfo.auras) {
           // Check each aura to see if it's a mundus stone
           latestCombatantInfo.auras.forEach((aura) => {
@@ -72,35 +111,34 @@ const PlayersPanel: React.FC = () => {
     });
 
     return result;
-  }, [events, abilitiesById, playerActors]);
+  }, [combatantInfoEvents, abilitiesById, playerActors]);
 
   // Calculate all auras per player from combatantinfo events
   const aurasByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
 
-    if (!events || !abilitiesById) return result;
+    if (!combatantInfoEvents || !abilitiesById) return result;
 
     // Initialize arrays for each player
     playerActors.forEach((actor) => {
-      if (actor.id) {
+      if (actor?.id) {
         const playerId = String(actor.id);
         result[playerId] = [];
 
         // Find the latest combatantinfo event for this player
-        const combatantInfoEvents = events
+        const combatantInfoEventsForPlayer = combatantInfoEvents
           .filter((event): event is CombatantInfoEvent => {
-            const eventData = event;
             return (
-              eventData.type === 'combatantinfo' &&
-              'sourceID' in eventData &&
-              String(eventData.sourceID) === playerId
+              event.type === 'combatantinfo' &&
+              'sourceID' in event &&
+              String(event.sourceID) === playerId
             );
           })
           .sort((a, b) => {
             return (b.timestamp || 0) - (a.timestamp || 0);
           }); // Most recent first
 
-        const latestCombatantInfo = combatantInfoEvents[0];
+        const latestCombatantInfo = combatantInfoEventsForPlayer[0];
         if (latestCombatantInfo && latestCombatantInfo.auras) {
           // Get all auras for this player
           latestCombatantInfo.auras.forEach((aura) => {
@@ -121,7 +159,20 @@ const PlayersPanel: React.FC = () => {
     });
 
     return result;
-  }, [events, abilitiesById, playerActors]);
+  }, [combatantInfoEvents, abilitiesById, playerActors]);
+
+  // Show loading if any data is still loading
+  if (isLoading) {
+    return (
+      <PlayersPanelView
+        playerActors={[]}
+        eventPlayers={{}}
+        mundusBuffsByPlayer={{}}
+        aurasByPlayer={{}}
+        isLoading={true}
+      />
+    );
+  }
 
   return (
     <PlayersPanelView
@@ -129,6 +180,7 @@ const PlayersPanel: React.FC = () => {
       eventPlayers={eventPlayers}
       mundusBuffsByPlayer={mundusBuffsByPlayer}
       aurasByPlayer={aurasByPlayer}
+      isLoading={false}
     />
   );
 };

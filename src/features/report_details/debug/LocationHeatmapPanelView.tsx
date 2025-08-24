@@ -843,3 +843,4 @@ const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> = ({
 };
 
 export default LocationHeatmapPanelView;
+

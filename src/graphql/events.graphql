@@ -1,26 +1,3 @@
-# Event queries for all event-related components
-# Used by: EventsPanel.tsx, DamageDonePanel.tsx, HealingDonePanel.tsx,
-#          BuffUptimesPanel.tsx, DeathEventPanel.tsx, LocationHeatmapPanel.tsx,
-#          CriticalDamagePanel.tsx, PenetrationPanel.tsx
-
-# Original query with 100M limit - kept for backwards compatibility
-query getReportEvents($code: String!, $startTime: Float, $endTime: Float, $fightIds: [Int]!) {
-  reportData {
-    report(code: $code) {
-      events(
-        startTime: $startTime
-        endTime: $endTime
-        fightIDs: $fightIds
-        useActorIDs: true
-        includeResources: true
-        limit: 100000000
-      ) {
-        ...Event
-      }
-    }
-  }
-}
-
 # OPTIMIZED QUERIES - Use these for 60-90% performance improvement
 
 # Damage events only - replaces client-side filtering with server-side
@@ -30,7 +7,8 @@ query getDamageEvents(
   $startTime: Float
   $endTime: Float
   $fightIds: [Int]!
-  $limit: Int = 50000
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
 ) {
   reportData {
     report(code: $code) {
@@ -40,7 +18,8 @@ query getDamageEvents(
         fightIDs: $fightIds
         dataType: DamageDone
         useActorIDs: true
-        includeResources: false
+        includeResources: true
+        hostilityType: $hostilityType
         limit: $limit
       ) {
         ...Event
@@ -56,7 +35,8 @@ query getHealingEvents(
   $startTime: Float
   $endTime: Float
   $fightIds: [Int]!
-  $limit: Int = 50000
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
 ) {
   reportData {
     report(code: $code) {
@@ -66,7 +46,8 @@ query getHealingEvents(
         fightIDs: $fightIds
         dataType: Healing
         useActorIDs: true
-        includeResources: false
+        includeResources: true
+        hostilityType: $hostilityType
         limit: $limit
       ) {
         ...Event
@@ -82,7 +63,8 @@ query getBuffEvents(
   $startTime: Float
   $endTime: Float
   $fightIds: [Int]!
-  $limit: Int = 30000
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
 ) {
   reportData {
     report(code: $code) {
@@ -92,7 +74,8 @@ query getBuffEvents(
         fightIDs: $fightIds
         dataType: Buffs
         useActorIDs: true
-        includeResources: false
+        includeResources: true
+        hostilityType: $hostilityType
         limit: $limit
       ) {
         ...Event
@@ -108,7 +91,8 @@ query getDeathEvents(
   $startTime: Float
   $endTime: Float
   $fightIds: [Int]!
-  $limit: Int = 10000
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
 ) {
   reportData {
     report(code: $code) {
@@ -118,7 +102,121 @@ query getDeathEvents(
         fightIDs: $fightIds
         dataType: Deaths
         useActorIDs: true
-        includeResources: false
+        includeResources: true
+        hostilityType: $hostilityType
+        limit: $limit
+      ) {
+        ...Event
+      }
+    }
+  }
+}
+
+# Combatant info events (gear changes, spec changes, etc.)
+# Used by: CombatantInfoPanel.tsx, gear analysis features
+query getCombatantInfoEvents(
+  $code: String!
+  $startTime: Float
+  $endTime: Float
+  $fightIds: [Int]!
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
+) {
+  reportData {
+    report(code: $code) {
+      events(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIds
+        dataType: CombatantInfo
+        useActorIDs: true
+        includeResources: true
+        hostilityType: $hostilityType
+        limit: $limit
+      ) {
+        ...Event
+      }
+    }
+  }
+}
+
+# Debuff events for debuff tracking and penetration analysis
+# Used by: DebuffPanel.tsx, PenetrationPanel.tsx, StatusEffectUptimesPanel.tsx
+# Fetches both friendly and enemy debuffs for comprehensive analysis
+query getDebuffEvents(
+  $code: String!
+  $startTime: Float
+  $endTime: Float
+  $fightIds: [Int]!
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
+) {
+  reportData {
+    report(code: $code) {
+      events(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIds
+        dataType: Debuffs
+        useActorIDs: true
+        includeResources: true
+        hostilityType: $hostilityType
+        limit: $limit
+      ) {
+        ...Event
+      }
+    }
+  }
+}
+
+# Cast events for ability usage tracking
+# Used by: CastPanel.tsx, rotation analysis features
+query getCastEvents(
+  $code: String!
+  $startTime: Float
+  $endTime: Float
+  $fightIds: [Int]!
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
+) {
+  reportData {
+    report(code: $code) {
+      events(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIds
+        dataType: Casts
+        useActorIDs: true
+        includeResources: true
+        hostilityType: $hostilityType
+        limit: $limit
+      ) {
+        ...Event
+      }
+    }
+  }
+}
+
+# Resource events for resource tracking (magicka, stamina, health, ultimate)
+# Used by: ResourcePanel.tsx, resource analysis features
+query getResourceEvents(
+  $code: String!
+  $startTime: Float
+  $endTime: Float
+  $fightIds: [Int]!
+  $hostilityType: HostilityType
+  $limit: Int = 1000000
+) {
+  reportData {
+    report(code: $code) {
+      events(
+        startTime: $startTime
+        endTime: $endTime
+        fightIDs: $fightIds
+        dataType: Resources
+        useActorIDs: true
+        includeResources: true
+        hostilityType: $hostilityType
         limit: $limit
       ) {
         ...Event

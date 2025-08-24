@@ -1,27 +1,48 @@
+import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 
-import { selectHealingPanelData } from '../../../store/crossSliceSelectors';
+import { FightFragment } from '../../../graphql/generated';
+import { useHealingEvents, useReportMasterData } from '../../../hooks';
+import { resolveActorName } from '../../../utils/resolveActorName';
 
 import HealingDonePanelView from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
-  fight: { startTime?: number; endTime?: number };
+  fight: FightFragment;
+  reportCode?: string;
 }
 
 /**
  * Smart component that handles data processing and state management for healing done panel
  */
-const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
-  // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const { events, players, characters, masterData } = useSelector(selectHealingPanelData);
+const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight, reportCode }) => {
+  // Use hooks to get data
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+
+  // Extract data from hooks with memoization
+  const events = useMemo(() => healingEvents || [], [healingEvents]);
+  const masterData = useMemo(
+    () => reportMasterData || { actorsById: {}, abilitiesById: {} },
+    [reportMasterData]
+  );
+
+  // Compute loading state
+  const isLoading = useMemo(() => {
+    return isHealingEventsLoading || isMasterDataLoading;
+  }, [isHealingEventsLoading, isMasterDataLoading]);
+
+  const isDataReady = useMemo(() => {
+    return !isLoading;
+  }, [isLoading]);
+
+  // IMPORTANT: All hooks must be called before any early returns
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
     const healingByPlayer: Record<number, { raw: number; overheal: number }> = {};
 
-    // OPTIMIZED: Events are already filtered to healing events by the selector
-    events.forEach((event) => {
+    events.forEach((event: { sourceID?: number; amount?: number; overhealing?: number }) => {
       if ('sourceID' in event && event.sourceID != null) {
         const playerId = Number(event.sourceID);
         const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
@@ -55,24 +76,8 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
     return Object.entries(healingStatistics)
       .filter(([id]) => isPlayerActor(id))
       .map(([id, { raw, overheal }]) => {
-        let name: string | undefined;
         const actor = masterData.actorsById[id];
-        if (actor) {
-          name = actor.displayName ?? actor.name ?? `Player ${id}`;
-        } else {
-          const playerInfo = players[id] || {};
-          const charId = Number(id);
-          if (characters[charId]) {
-            const charName = characters[charId].name;
-            const displayName = playerInfo.displayName || characters[charId].displayName;
-            name = displayName ? `${charName} (${displayName})` : charName;
-          } else if (typeof playerInfo.name === 'string') {
-            const displayName = playerInfo.displayName;
-            name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
-          } else {
-            name = `Player ${id}`;
-          }
-        }
+        const name = resolveActorName(actor, id, null);
 
         const iconUrl = actor?.icon
           ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
@@ -88,7 +93,36 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
         };
       })
       .sort((a, b) => b.hps - a.hps);
-  }, [healingStatistics, isPlayerActor, masterData.actorsById, players, characters, fightDuration]);
+  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration]);
+
+  // Show loading spinner while data is being fetched
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 200,
+        }}
+      >
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography variant="h6">Loading healing data...</Typography>
+      </Box>
+    );
+  }
+
+  // Don't render until we have data
+  if (!isDataReady) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="body1" color="text.secondary">
+          No healing data available for this fight
+        </Typography>
+      </Box>
+    );
+  }
 
   return <HealingDonePanelView healingRows={healingRows} />;
 };

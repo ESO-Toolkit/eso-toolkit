@@ -113,3 +113,4 @@ const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources
 };
 
 export default StatChecklist;
+

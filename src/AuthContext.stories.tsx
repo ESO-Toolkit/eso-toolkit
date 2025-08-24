@@ -9,3 +9,4 @@ const story = {
 export default story;
 
 export const Default = () => <AuthProvider>Auth Context Example</AuthProvider>;
+

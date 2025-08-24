@@ -9,11 +9,10 @@ export const selectReportFights = (state: RootState) => state.report.fights;
 export const selectReportId = (state: RootState) => state.report.reportId;
 
 // Report loading state
-export const selectReportLoadingState = createSelector([selectReport], (report) => ({
-  loading: report.loading,
-  error: report.error,
-  reportId: report.reportId,
-}));
+export const selectReportLoadingState = createSelector([selectReport], (report) => report.loading);
+
+// Report error state
+export const selectReportErrorState = createSelector([selectReport], (report) => report.error);
 
 // Combined report data
 export const selectCombinedReportData = createSelector([selectReport], (report) => ({

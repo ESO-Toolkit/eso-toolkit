@@ -14,13 +14,13 @@ import { ReportActorFragment } from '../../../graphql/generated';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 interface AttackEvent {
-  abilityName?: string;
-  abilityId?: number;
-  sourceName?: string;
-  sourceID?: number;
-  timestamp?: number;
-  type?: string;
-  amount?: number;
+  abilityName?: string | null;
+  abilityId?: number | null;
+  sourceName?: string | null;
+  sourceID?: number | null;
+  timestamp?: number | null;
+  type?: string | null;
+  amount?: number | null;
   wasBlocked?: boolean | null;
 }
 
@@ -224,3 +224,4 @@ const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 };
 
 export default DeathEventPanelView;
+

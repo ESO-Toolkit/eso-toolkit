@@ -17,6 +17,16 @@ export type AbilitiesLookup = Record<string, Ability>;
  * Known ESO ability IDs for penetration calculations
  */
 export enum KnownAbilities {
+  // Status Effects
+  BURNING = 18084,
+  POISONED = 21929,
+  OVERCHARGED = 178118,
+  SUNDERED = 178123,
+  CONCUSSION = 95134,
+  CHILL = 95136,
+  HEMMORRHAGING = 148801,
+  DISEASED = 178127,
+
   // Major Brittle - increases critical damage by 20% (debuff)
   MAJOR_BRITTLE = 145977,
   // Minor Brittle - increases critical damage by 10% (debuff)
@@ -230,3 +240,4 @@ export enum MundusStones {
   // The Tower - Increases Max Stamina
   THE_TOWER = 13985,
 }
+

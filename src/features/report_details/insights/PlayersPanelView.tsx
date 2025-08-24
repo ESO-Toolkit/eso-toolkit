@@ -2,7 +2,7 @@ import { Box, Typography, Grid, Card, CardContent, Avatar, Alert, Chip } from '@
 import React from 'react';
 
 import { ReportActorFragment } from '../../../graphql/generated';
-import { PlayerInfo } from '../../../store/events/eventsSlice';
+import { PlayerInfo } from '../../../store/events_data/actions';
 import { PlayerGear } from '../../../types/playerDetails';
 import { detectBuildIssues } from '../../../utils/detectBuildIssues';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -12,6 +12,7 @@ interface PlayersPanelViewProps {
   eventPlayers: Record<string, PlayerInfo>;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
+  isLoading?: boolean;
 }
 
 const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
@@ -19,7 +20,21 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   eventPlayers,
   mundusBuffsByPlayer,
   aurasByPlayer,
+  isLoading = false,
 }) => {
+  if (isLoading) {
+    return (
+      <Box sx={{ p: 2 }}>
+        <Typography variant="h6" gutterBottom>
+          Players
+        </Typography>
+        <Typography variant="body2" color="text.secondary">
+          Loading player data...
+        </Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box sx={{ p: 2 }}>
       <Typography variant="h6" gutterBottom>

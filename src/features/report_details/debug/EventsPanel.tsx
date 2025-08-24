@@ -1,14 +1,15 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { RootState } from '../../../store/storeWithHistory';
+import { selectAllEvents } from '../../../store/events_data/actions';
 
 import EventsPanelView from './EventsPanelView';
 
 const EventsPanel: React.FC = () => {
-  const events = useSelector((state: RootState) => state.events.events);
+  const events = useSelector(selectAllEvents);
 
   return <EventsPanelView events={events} />;
 };
 
 export default EventsPanel;
+

@@ -13,7 +13,7 @@ import ReportFightDetails from './features/report_details/ReportFightDetails';
 import ReportFights from './features/report_details/ReportFights';
 import AppLayout from './layouts/AppLayout';
 import OAuthRedirect from './OAuthRedirect';
-import { clearEvents } from './store/events/eventsSlice';
+import { clearAllEvents } from './store/events_data/actions';
 import { clearMasterData } from './store/master_data/masterDataSlice';
 import { clearReport } from './store/report/reportSlice';
 import store, { persistor } from './store/storeWithHistory';
@@ -68,7 +68,7 @@ const MainApp: React.FC = () => {
     const result = extractReportInfo(logUrl);
     if (result) {
       // Clear current fight, events, and report data before navigating
-      dispatch(clearEvents());
+      dispatch(clearAllEvents());
       dispatch(clearMasterData());
       dispatch(clearReport());
 
