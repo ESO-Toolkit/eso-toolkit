@@ -1,5 +1,5 @@
 import { render, screen, waitFor } from '@testing-library/react';
-import { act, PropsWithChildren } from 'react';
+import { act } from 'react';
 import React from 'react';
 
 import { AuthProvider } from './AuthContext';
