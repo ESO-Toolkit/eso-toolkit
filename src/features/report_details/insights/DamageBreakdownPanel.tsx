@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
+import { parseDamageTypeFlags } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
 import DamageBreakdownView from './DamageBreakdownView';
@@ -19,6 +20,7 @@ interface DamageBreakdown {
   criticalHits: number;
   criticalRate: number;
   averageDamage: number;
+  damageTypes?: string[];
 }
 
 const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) => {
@@ -85,6 +87,7 @@ const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) =>
       const abilityName = ability?.name || `Unknown (${abilityGameID})`;
       const criticalRate = data.hitCount > 0 ? (data.criticalHits / data.hitCount) * 100 : 0;
       const averageDamage = data.hitCount > 0 ? data.totalDamage / data.hitCount : 0;
+      const damageTypes = ability?.type ? parseDamageTypeFlags(ability.type) : undefined;
 
       if (data.totalDamage > 0) {
         breakdown.push({
@@ -96,6 +99,7 @@ const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) =>
           criticalHits: data.criticalHits,
           criticalRate,
           averageDamage,
+          damageTypes,
         });
       }
     });

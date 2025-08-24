@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useAuth } from '../AuthContext';
+import { GetPlayersForReportQuery } from '../graphql/generated';
 import {
   selectPlayerData,
   selectPlayerDataLoadingState,
@@ -11,7 +12,10 @@ import { useAppDispatch } from '../store/useAppDispatch';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function usePlayerData() {
+export function usePlayerData(): {
+  playerData: GetPlayersForReportQuery | null;
+  isPlayerDataLoading: boolean;
+} {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();

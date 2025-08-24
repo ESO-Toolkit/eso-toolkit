@@ -13,7 +13,6 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import abilitiesReducer from './abilities/abilitiesSlice';
 import eventsReducer from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import playerDataReducer from './player_data/playerDataSlice';
@@ -32,7 +31,6 @@ const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHisto
 
 const store = configureStore({
   reducer: {
-    abilities: abilitiesReducer,
     events: eventsReducer,
     ui: persistReducer<ReturnType<typeof uiReducer>>(uiPersistConfig, uiReducer),
     router: routerReducer,

@@ -70,7 +70,7 @@ const EventsGrid: React.FC<EventsGridProps> = ({ events, title = 'Events', heigh
       headerName: 'Event Details',
       width: 150,
       renderCell: (params) => {
-        const handleCopyDetails = async () => {
+        const handleCopyDetails = async (): Promise<void> => {
           try {
             const jsonString = JSON.stringify(params.row.originalEvent, null, 2);
             await navigator.clipboard.writeText(jsonString);
@@ -155,4 +155,3 @@ const EventsGrid: React.FC<EventsGridProps> = ({ events, title = 'Events', heigh
 };
 
 export default EventsGrid;
-

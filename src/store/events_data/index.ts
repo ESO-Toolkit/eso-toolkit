@@ -27,7 +27,7 @@ const combinedEventsReducer = combineReducers({
 const eventsReducer = (
   state: ReturnType<typeof combinedEventsReducer> | undefined,
   action: { type: string }
-) => {
+): ReturnType<typeof combinedEventsReducer> => {
   // If clearAllEvents is dispatched, reset all slices to their initial state
   if (action.type === clearAllEvents.type) {
     return combinedEventsReducer(undefined, action);

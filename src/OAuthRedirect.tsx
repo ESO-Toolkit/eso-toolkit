@@ -22,7 +22,7 @@ const OAuthRedirect: React.FC = () => {
       return;
     }
 
-    const fetchToken = async () => {
+    const fetchToken = async (): Promise<void> => {
       try {
         const body = new URLSearchParams({
           grant_type: 'authorization_code',
@@ -67,4 +67,3 @@ const OAuthRedirect: React.FC = () => {
 };
 
 export default OAuthRedirect;
-

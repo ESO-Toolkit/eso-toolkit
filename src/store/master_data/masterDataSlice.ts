@@ -101,7 +101,6 @@ export const fetchReportMasterData = createAsyncThunk<
   {
     condition: ({ reportCode, accessToken }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
-      console.log('CONDITION');
       // Check if we already have master data for this report
       if (
         state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
@@ -143,7 +142,6 @@ const masterDataSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchReportMasterData.pending, (state) => {
-        console.log('PENDING');
         state.loading = true;
         state.error = null;
         state.loaded = false;
@@ -151,7 +149,6 @@ const masterDataSlice = createSlice({
       .addCase(
         fetchReportMasterData.fulfilled,
         (state, action: PayloadAction<MasterDataPayload>) => {
-          console.log('FULFILLED');
           state.abilitiesById = action.payload.abilitiesById;
           state.actorsById = action.payload.actorsById;
           state.loading = false;

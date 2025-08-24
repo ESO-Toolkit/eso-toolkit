@@ -1,30 +1,45 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import {
+  BuffEvent,
+  CastEvent,
+  CombatantInfoEvent,
+  DamageEvent,
+  DeathEvent,
+  DebuffEvent,
+  HealEvent,
+  ResourceChangeEvent,
+} from '../../types/combatlogEvents.d';
 import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectReport } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 
 // Basic event selectors for the new modular structure
-export const selectEvents = (state: RootState) => state.events;
-export const selectDamageEvents = (state: RootState) => state.events.damage.events;
-export const selectHealingEvents = (state: RootState) => state.events.healing.events;
-export const selectBuffEvents = (state: RootState) => state.events.buffs.events;
-export const selectDeathEvents = (state: RootState) => state.events.deaths.events;
-export const selectCombatantInfoEvents = (state: RootState) => state.events.combatantInfo.events;
-export const selectDebuffEvents = (state: RootState) => state.events.debuffs.events;
-export const selectCastEvents = (state: RootState) => state.events.casts.events;
-export const selectResourceEvents = (state: RootState) => state.events.resources.events;
+export const selectEvents = (state: RootState): RootState['events'] => state.events;
+export const selectDamageEvents = (state: RootState): DamageEvent[] => state.events.damage.events;
+export const selectHealingEvents = (state: RootState): HealEvent[] => state.events.healing.events;
+export const selectBuffEvents = (state: RootState): BuffEvent[] => state.events.buffs.events;
+export const selectDeathEvents = (state: RootState): DeathEvent[] => state.events.deaths.events;
+export const selectCombatantInfoEvents = (state: RootState): CombatantInfoEvent[] =>
+  state.events.combatantInfo.events;
+export const selectDebuffEvents = (state: RootState): DebuffEvent[] => state.events.debuffs.events;
+export const selectCastEvents = (state: RootState): CastEvent[] => state.events.casts.events;
+export const selectResourceEvents = (state: RootState): ResourceChangeEvent[] =>
+  state.events.resources.events;
 
 // Loading state selectors
-export const selectDamageEventsLoading = (state: RootState) => state.events.damage.loading;
-export const selectHealingEventsLoading = (state: RootState) => state.events.healing.loading;
-export const selectBuffEventsLoading = (state: RootState) => state.events.buffs.loading;
-export const selectDeathEventsLoading = (state: RootState) => state.events.deaths.loading;
-export const selectCombatantInfoEventsLoading = (state: RootState) =>
+export const selectDamageEventsLoading = (state: RootState): boolean => state.events.damage.loading;
+export const selectHealingEventsLoading = (state: RootState): boolean =>
+  state.events.healing.loading;
+export const selectBuffEventsLoading = (state: RootState): boolean => state.events.buffs.loading;
+export const selectDeathEventsLoading = (state: RootState): boolean => state.events.deaths.loading;
+export const selectCombatantInfoEventsLoading = (state: RootState): boolean =>
   state.events.combatantInfo.loading;
-export const selectDebuffEventsLoading = (state: RootState) => state.events.debuffs.loading;
-export const selectCastEventsLoading = (state: RootState) => state.events.casts.loading;
-export const selectResourceEventsLoading = (state: RootState) => state.events.resources.loading;
+export const selectDebuffEventsLoading = (state: RootState): boolean =>
+  state.events.debuffs.loading;
+export const selectCastEventsLoading = (state: RootState): boolean => state.events.casts.loading;
+export const selectResourceEventsLoading = (state: RootState): boolean =>
+  state.events.resources.loading;
 
 // Player/combatant selectors
 // Assumes there is a selected fight in report.selectedFight or similar

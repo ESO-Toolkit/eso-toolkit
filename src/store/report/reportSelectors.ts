@@ -4,9 +4,11 @@ import { RootState } from '../storeWithHistory';
 
 // REPORT SELECTORS - Read from report slice
 
-export const selectReport = (state: RootState) => state.report;
-export const selectReportFights = (state: RootState) => state.report.fights;
-export const selectReportId = (state: RootState) => state.report.reportId;
+export const selectReport = (state: RootState): RootState['report'] => state.report;
+export const selectReportFights = (state: RootState): RootState['report']['fights'] =>
+  state.report.fights;
+export const selectReportId = (state: RootState): RootState['report']['reportId'] =>
+  state.report.reportId;
 
 // Report loading state
 export const selectReportLoadingState = createSelector([selectReport], (report) => report.loading);

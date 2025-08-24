@@ -4,9 +4,11 @@ import { RootState } from '../storeWithHistory';
 
 // MASTER DATA SELECTORS - Read from masterData slice
 
-export const selectMasterData = (state: RootState) => state.masterData;
-export const selectActorsById = (state: RootState) => state.masterData.actorsById;
-export const selectAbilitiesById = (state: RootState) => state.masterData.abilitiesById;
+export const selectMasterData = (state: RootState): RootState['masterData'] => state.masterData;
+export const selectActorsById = (state: RootState): RootState['masterData']['actorsById'] =>
+  state.masterData.actorsById;
+export const selectAbilitiesById = (state: RootState): RootState['masterData']['abilitiesById'] =>
+  state.masterData.abilitiesById;
 
 // Master data loading state
 export const selectMasterDataLoadingState = createSelector(

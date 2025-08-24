@@ -8,5 +8,4 @@ const story = {
 };
 export default story;
 
-export const Default = () => <OAuthRedirect />;
-
+export const Default = (): React.ReactElement => <OAuthRedirect />;

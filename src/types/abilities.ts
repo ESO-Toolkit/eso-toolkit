@@ -1,4 +1,75 @@
 /**
+ * ESO damage type flags - each bit represents a damage type
+ */
+export enum DamageTypeFlags {
+  PHYSICAL = 1,
+  NONE = 2,
+  FIRE = 4,
+  POISON = 8,
+  FROST = 16,
+  BLEED = 32,
+  MAGIC = 64,
+  GENERIC = 128,
+  DROWN = 256,
+  SHOCK = 512,
+  DISEASE = 1024,
+}
+
+/**
+ * Map damage type flags to display names
+ */
+export const DAMAGE_TYPE_DISPLAY_NAMES: Record<DamageTypeFlags, string> = {
+  [DamageTypeFlags.PHYSICAL]: 'Physical',
+  [DamageTypeFlags.MAGIC]: 'Magic',
+  [DamageTypeFlags.FIRE]: 'Fire',
+  [DamageTypeFlags.FROST]: 'Frost',
+  [DamageTypeFlags.SHOCK]: 'Shock',
+  [DamageTypeFlags.POISON]: 'Poison',
+  [DamageTypeFlags.DISEASE]: 'Disease',
+  [DamageTypeFlags.GENERIC]: 'Generic',
+  [DamageTypeFlags.DROWN]: 'Drown',
+  [DamageTypeFlags.BLEED]: 'Bleed',
+  [DamageTypeFlags.NONE]: 'None',
+};
+
+/**
+ * Helper function to parse damage type flags into readable format
+ */
+export function parseDamageTypeFlags(type: string | number | null | undefined): string[] {
+  if (!type) return ['None'];
+
+  const typeNum = typeof type === 'number' ? type : parseInt(String(type), 10);
+  if (isNaN(typeNum) || typeNum === 0) return ['Generic'];
+
+  const damageTypes: string[] = [];
+
+  Object.values(DamageTypeFlags).forEach((flag) => {
+    if (typeof flag === 'number' && (typeNum & flag) === flag) {
+      damageTypes.push(DAMAGE_TYPE_DISPLAY_NAMES[flag]);
+    }
+  });
+
+  return damageTypes.length > 0 ? damageTypes : ['Unknown'];
+}
+
+/**
+ * Helper function to get damage types from flags for breakdown analysis
+ */
+export function getDamageTypesFromFlags(
+  flagValue: number
+): { flag: DamageTypeFlags; name: string }[] {
+  const result: { flag: DamageTypeFlags; name: string }[] = [];
+
+  Object.values(DamageTypeFlags).forEach((flag) => {
+    if (typeof flag === 'number' && (flagValue & flag) === flag) {
+      result.push({ flag, name: DAMAGE_TYPE_DISPLAY_NAMES[flag] });
+    }
+  });
+
+  return result;
+}
+
+/**
  * Ability interface for general ability data
  */
 export interface Ability {
@@ -95,6 +166,8 @@ export enum KnownAbilities {
 
   // Taunted Debuffs
   TAUNT = 38254,
+
+  RESURRECT = 26770,
 
   // TODO: Add more penetration-related abilities
   // Examples:
@@ -240,4 +313,3 @@ export enum MundusStones {
   // The Tower - Increases Max Stamina
   THE_TOWER = 13985,
 }
-

@@ -8,5 +8,4 @@ const story = {
 };
 export default story;
 
-export const Default = () => <AuthProvider>Auth Context Example</AuthProvider>;
-
+export const Default = (): React.ReactElement => <AuthProvider>Auth Context Example</AuthProvider>;

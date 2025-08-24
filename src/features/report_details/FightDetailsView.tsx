@@ -1,6 +1,7 @@
 // Import MUI icons
 import BugReportIcon from '@mui/icons-material/BugReport';
 import DangerousIcon from '@mui/icons-material/Dangerous';
+import ExtensionIcon from '@mui/icons-material/Extension';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HealingIcon from '@mui/icons-material/Healing';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -35,6 +36,7 @@ import ActorsPanel from './actors/ActorsPanel';
 import CriticalDamagePanel from './critical_damage/CriticalDamagePanel';
 import DamageDonePanel from './damage/DamageDonePanel';
 import DeathEventPanel from './deaths/DeathEventPanel';
+import AbilitiesDebugPanel from './debug/AbilitiesDebugPanel';
 import { Diagnostics } from './debug/Diagnostics';
 import EventsGrid from './debug/EventsGrid';
 import EventsPanel from './debug/EventsPanel';
@@ -146,6 +148,9 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <Tooltip title="Penetration">
             <Tab icon={<SecurityIcon />} />
           </Tooltip>
+          <Tooltip title="Abilities Debug">
+            <Tab icon={<ExtensionIcon />} />
+          </Tooltip>
           {showExperimentalTabs && (
             <Tooltip title="Location Heatmap">
               <Tab icon={<MapIcon />} />
@@ -185,9 +190,10 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {validSelectedTab === 6 && (
           <PenetrationPanel fight={fight} selectedTargetId={selectedTargetId} />
         )}
-        {showExperimentalTabs && validSelectedTab === 7 && <LocationHeatmapPanel fight={fight} />}
-        {showExperimentalTabs && validSelectedTab === 8 && <EventsPanel />}
-        {showExperimentalTabs && validSelectedTab === 9 && selectedTargetId && (
+        {validSelectedTab === 7 && <AbilitiesDebugPanel fight={fight} />}
+        {showExperimentalTabs && validSelectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
+        {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
+        {showExperimentalTabs && validSelectedTab === 10 && selectedTargetId && (
           <Box mt={2}>
             <Typography variant="h6" gutterBottom>
               Events for Target:{' '}
@@ -221,7 +227,7 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             })()}
           </Box>
         )}
-        {showExperimentalTabs && validSelectedTab === 10 && !selectedTargetId && (
+        {showExperimentalTabs && validSelectedTab === 11 && !selectedTargetId && (
           <Box mt={2}>
             <Typography variant="h6" gutterBottom>
               Target Events
@@ -231,8 +237,8 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Typography>
           </Box>
         )}
-        {showExperimentalTabs && validSelectedTab === 11 && <Diagnostics />}
-        {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
+        {showExperimentalTabs && validSelectedTab === 12 && <Diagnostics />}
+        {showExperimentalTabs && validSelectedTab === 13 && <ActorsPanel />}
       </Box>
     </React.Fragment>
   );

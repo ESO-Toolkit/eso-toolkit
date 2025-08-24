@@ -11,6 +11,23 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { AbilityIcon } from '../../../components/AbilityIcon';
+
+// Color mapping for different damage types
+const DAMAGE_TYPE_COLORS: Record<string, string> = {
+  Physical: '#8B5A2B',
+  Magic: '#6366F1',
+  Fire: '#EF4444',
+  Frost: '#3B82F6',
+  Shock: '#FBBF24',
+  Poison: '#10B981',
+  Disease: '#8B5CF6',
+  Generic: '#6B7280',
+  Drown: '#0EA5E9',
+  Bleed: '#DC2626',
+  None: '#9CA3AF',
+};
+
 interface DamageBreakdown {
   abilityGameID: string;
   abilityName: string;
@@ -20,6 +37,7 @@ interface DamageBreakdown {
   criticalHits: number;
   criticalRate: number;
   averageDamage: number;
+  damageTypes?: string[];
 }
 
 interface DamageBreakdownViewProps {
@@ -71,12 +89,7 @@ const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
               <ListItem key={damage.abilityGameID} sx={{ py: 1 }} divider>
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1.25 }}>
                   {damage.icon ? (
-                    <Avatar
-                      src={`https://assets.rpglogs.com/img/eso/abilities/${damage.icon}.png`}
-                      alt={damage.abilityName}
-                      sx={{ width: 32, height: 32, borderRadius: 1, boxShadow: 1 }}
-                      variant="rounded"
-                    />
+                    <AbilityIcon abilityId={damage.abilityGameID} />
                   ) : (
                     <Avatar sx={{ width: 32, height: 32 }} variant="rounded">
                       {damage.abilityName.charAt(0)}
@@ -86,7 +99,15 @@ const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                     <ListItemText
                       primary={damage.abilityName}
                       secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1,
+                            mt: 0.5,
+                            flexWrap: 'wrap',
+                          }}
+                        >
                           <Typography variant="caption" color="text.secondary">
                             {formatNumber(damage.totalDamage)} damage
                           </Typography>
@@ -118,6 +139,28 @@ const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                                 }}
                               />
                             </>
+                          )}
+                          {damage.damageTypes && damage.damageTypes.length > 0 && (
+                            <Box sx={{ display: 'flex', gap: 0.5, ml: 0.5 }}>
+                              {damage.damageTypes.map((damageType) => (
+                                <Chip
+                                  key={damageType}
+                                  label={damageType}
+                                  size="small"
+                                  sx={{
+                                    height: 16,
+                                    fontSize: '0.625rem',
+                                    bgcolor:
+                                      DAMAGE_TYPE_COLORS[damageType] || DAMAGE_TYPE_COLORS.Generic,
+                                    color: 'white',
+                                    '& .MuiChip-label': {
+                                      px: 0.5,
+                                      fontWeight: 500,
+                                    },
+                                  }}
+                                />
+                              ))}
+                            </Box>
                           )}
                         </Box>
                       }
