@@ -75,7 +75,7 @@ module.exports = {
   },
   devServer: {
     port: 3000,
-    open: true,
+    open: false, // Disable automatic browser opening to prevent multiple windows
     historyApiFallback: true,
     compress: true,
     hot: true,
