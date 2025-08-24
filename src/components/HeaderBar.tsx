@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { startPKCEAuth } from '../auth';
 import { useAuth } from '../AuthContext';
+import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
 
 const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
@@ -75,6 +76,16 @@ const HeaderBar: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="u-focus-ring u-hover-glow"
+            startIcon={
+              <Box
+                component="span"
+                role="img"
+                aria-label="note"
+                sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
+              >
+                📝
+              </Box>
+            }
           >
             Text Editor
           </Button>
@@ -84,6 +95,16 @@ const HeaderBar: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="u-focus-ring u-hover-glow"
+            startIcon={
+              <Box
+                component="span"
+                role="img"
+                aria-label="calculator"
+                sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
+              >
+                🧮
+              </Box>
+            }
           >
             Calculator
           </Button>
@@ -93,6 +114,7 @@ const HeaderBar: React.FC = () => {
             target="_blank"
             rel="noopener noreferrer"
             className="u-focus-ring u-hover-glow"
+            startIcon={<DiscordIcon aria-hidden style={{ width: 18, height: 18 }} />}
           >
             Discord
           </Button>

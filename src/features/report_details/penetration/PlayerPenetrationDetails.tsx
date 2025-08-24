@@ -699,7 +699,11 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
             </Typography>
 
             {/* Penetration Sources Checklist */}
-            <StatChecklist sources={penetrationSources} title="Penetration Sources" />
+            <StatChecklist
+              sources={penetrationSources}
+              title="Penetration Sources"
+              loading={!penetrationSources.length}
+            />
 
             {/* Penetration vs Time Chart */}
             <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>

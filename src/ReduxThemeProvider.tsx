@@ -38,8 +38,15 @@ const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     },
     shape: { borderRadius: 10 },
     typography: {
+      // Inter variable as the default UI/body font; Space Grotesk for headings
       fontFamily:
-        "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+        "Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+      h1: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+      h2: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+      h3: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+      h4: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+      h5: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+      h6: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
     },
     components: {
       MuiCssBaseline: {
@@ -51,6 +58,8 @@ const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             background:
               'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               #0b1220',
             color: tokens.text,
+            // Enable variable font optical sizing where supported
+            fontOpticalSizing: 'auto',
           },
           '*, *::before, *::after': { boxSizing: 'border-box' },
         },
@@ -204,6 +213,10 @@ const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             outline: '2px solid var(--accent)',
             outlineOffset: 2,
             borderRadius: 'inherit',
+          },
+          // Utility: align digits for better comparison in stat-heavy UIs
+          '.u-tabular': {
+            fontVariantNumeric: 'tabular-nums',
           },
           '@media (prefers-reduced-motion: reduce)': {
             '.u-fade-in': { animation: 'none !important' },
