@@ -1,31 +1,26 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
 import { FightFragment } from '../graphql/generated';
+import { useAuth } from '../AuthContext';
 import { fetchCastEvents } from '../store/events_data/castEventsSlice';
 import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
-import { CastEvent } from '../types/combatlogEvents';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useCastEvents(): {
-  castEvents: CastEvent[];
-  isCastEventsLoading: boolean;
-  selectedFight: FightFragment | null;
-} {
+export function useCastEvents() {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();
-  const fights = useSelector(selectReportFights);
+  const fights = useSelector(selectReportFights) as FightFragment[] | null | undefined;
 
   // Get the specific fight from the report data
   const selectedFight = React.useMemo(() => {
     if (!fightId || !fights) return null;
     const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight.id === fightIdNumber) || null;
+    return fights.find((fight: FightFragment) => fight.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
   React.useEffect(() => {
