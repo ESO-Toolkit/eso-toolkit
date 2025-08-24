@@ -24,7 +24,18 @@ export const fetchReportData = createAsyncThunk<
   { reportId: string; data: GetReportByCodeQuery; fights: FightFragment[] },
   { reportId: string; accessToken: string },
   { rejectValue: string }
->('report/fetchReportData', async ({ reportId, accessToken }, { rejectWithValue }) => {
+>('report/fetchReportData', async ({ reportId, accessToken }, { rejectWithValue, getState }) => {
+  // Check if we already have this report data
+  const state = getState() as { report: ReportState };
+  if (state.report.reportId === reportId && state.report.data && !state.report.loading) {
+    // Return cached data without making API call
+    return {
+      reportId,
+      data: state.report.data,
+      fights: state.report.fights,
+    };
+  }
+
   try {
     const client = createEsoLogsClient(accessToken);
     const { data } = await client.query({
@@ -99,3 +110,4 @@ const reportSlice = createSlice({
 
 export const { setReportId, clearReport } = reportSlice.actions;
 export default reportSlice.reducer;
+

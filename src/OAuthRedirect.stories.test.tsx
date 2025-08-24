@@ -17,3 +17,4 @@ describe('OAuthRedirect Storybook Snapshot', () => {
     expect(container.firstChild).toMatchSnapshot();
   });
 });
+

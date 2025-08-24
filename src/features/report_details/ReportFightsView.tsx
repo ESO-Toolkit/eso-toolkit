@@ -29,9 +29,12 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleFightSelect = (id: number) => {
-    navigate(`/report/${reportId}/fight/${id}`);
-  };
+  const handleFightSelect = React.useCallback(
+    (id: number) => {
+      navigate(`/report/${reportId}/fight/${id}`);
+    },
+    [navigate, reportId]
+  );
 
   if (loading) {
     return (
@@ -86,17 +89,29 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   {groupName}
                 </Typography>
                 <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {groupFights.map((fight, idx) => (
-                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
-                      <ListItemButton
-                        selected={fightId === String(fight.id)}
-                        onClick={() => handleFightSelect(fight.id)}
-                        sx={{ minWidth: 48, justifyContent: 'center' }}
-                      >
-                        <Typography variant="button">Pull {idx + 1}</Typography>
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
+                  {groupFights.map((fight, idx) => {
+                    const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                    const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
+                    return (
+                      <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                        <ListItemButton
+                          selected={fightId === String(fight.id)}
+                          onClick={() => handleFightSelect(fight.id)}
+                          sx={{
+                            minWidth: 48,
+                            justifyContent: 'center',
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="button" color={isWipe ? 'error' : 'success'}>
+                            {fightLabel}
+                          </Typography>
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
                 </List>
               </Box>
             ));
@@ -108,3 +123,4 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 };
 
 export default ReportFightsView;
+

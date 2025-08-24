@@ -9,6 +9,21 @@ export const FightFragmentDoc = gql`
   difficulty
   startTime
   endTime
+  friendlyPlayers
+  enemyPlayers
+  bossPercentage
+  friendlyNPCs {
+    gameID
+    groupCount
+    instanceCount
+    id
+  }
+  enemyNPCs {
+    gameID
+    id
+    groupCount
+    instanceCount
+  }
 }
     `;
 export const CharacterFragmentDoc = gql`

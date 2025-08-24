@@ -4,8 +4,15 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
-import { selectFightDetailsData } from '../../store/crossSliceSelectors';
-import { LogEvent } from '../../types/combatlogEvents';
+import {
+  useReportFightParams,
+  useDamageEvents,
+  useHealingEvents,
+  useBuffEvents,
+  useDebuffEvents,
+  useReportMasterData,
+} from '../../hooks';
+import { selectDeathEvents } from '../../store/events_data/selectors';
 
 import FightDetailsView from './FightDetailsView';
 
@@ -16,23 +23,47 @@ interface FightDetailsProps {
 
 const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { reportId } = useReportFightParams();
+
+  // Use the new hooks for data fetching
+  const { damageEvents } = useDamageEvents();
+  const { healingEvents } = useHealingEvents();
+  const { buffEvents } = useBuffEvents();
+  const { debuffEvents } = useDebuffEvents();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const deathEvents = useSelector(selectDeathEvents);
+
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
 
   const navigateToTab = React.useCallback(
     (tabIdx: number) => {
-      searchParams.set('selectedTabId', String(tabIdx));
-      setSearchParams(searchParams);
+      setSearchParams((prevParams) => {
+        const newParams = new URLSearchParams(prevParams);
+        newParams.set('selectedTabId', String(tabIdx));
+        return newParams;
+      });
     },
-    [searchParams, setSearchParams]
+    [setSearchParams]
   );
 
-  // OPTIMIZED: Single selector instead of multiple useSelector calls - removed showExperimentalTabs
-  const { events, actorsById, eventsLoaded, masterDataLoaded } =
-    useSelector(selectFightDetailsData);
+  // Create a minimal events array for components that need it (like debug tabs)
+  // OPTIMIZED: Only includes the event types we actually fetch, with empty array optimization
+  const events = React.useMemo(() => {
+    const totalLength =
+      damageEvents.length +
+      healingEvents.length +
+      buffEvents.length +
+      debuffEvents.length +
+      deathEvents.length;
+    if (totalLength === 0) {
+      return [];
+    }
+    return [...damageEvents, ...healingEvents, ...buffEvents, ...debuffEvents, ...deathEvents];
+  }, [damageEvents, healingEvents, buffEvents, debuffEvents, deathEvents]);
 
   // Calculate total number of available tabs
-  const totalTabs = showExperimentalTabs ? 12 : 8;
+  const totalTabs = showExperimentalTabs ? 13 : 8;
 
   // Ensure selectedTab is valid for current tab count
   const validSelectedTab = Math.min(selectedTab, totalTabs - 1);
@@ -48,72 +79,40 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
   const selectedTargetId = searchParams.get('target') || '';
 
   // Get available targets (NPCs/Bosses that participated in this fight)
+  // OPTIMIZED: Only calculate when experimental tabs are enabled since that's when targets are used
   const targets = React.useMemo(() => {
-    if (!events || !fight?.startTime || !fight?.endTime) {
+    if (!fight.enemyNPCs) {
       return [];
     }
 
-    // Get all actor IDs that participated in this fight
-    const fightStart = fight.startTime;
-    const fightEnd = fight.endTime;
-    const participatingActorIds = new Set<string>();
+    const rtn = [];
 
-    // Filter events for this fight's timeframe and collect participating actors
-    events.forEach((event: LogEvent) => {
-      if (event.timestamp < fightStart || event.timestamp > fightEnd) {
-        return;
+    for (const npc of Object.values(fight.enemyNPCs)) {
+      const actor = npc?.id ? reportMasterData.actorsById[npc.id] : undefined;
+
+      if (actor) {
+        rtn.push(actor);
       }
+    }
 
-      switch (event.type) {
-        // Ignore these types of events
-        case 'begincast':
-        case 'cast':
-        case 'applybuff':
-        case 'removebuff':
-        case 'applydebuff':
-        case 'removedebuff':
-        case 'applybuffstack':
-          return;
-        default:
-          break;
-      }
+    return rtn;
+  }, [reportMasterData.actorsById, fight.enemyNPCs]);
 
-      // Collect source IDs (most events have sourceID)
-      if ('sourceID' in event && event.sourceID) {
-        participatingActorIds.add(String(event.sourceID));
-      }
-
-      // Collect target IDs (damage, heal, buff events)
-      if ('targetID' in event && event.targetID) {
-        participatingActorIds.add(String(event.targetID));
-      }
-    });
-
-    // Filter actors to only NPCs that participated in the fight
-    return Object.values(actorsById)
-      .filter(
-        (actor) =>
-          actor.type === 'NPC' &&
-          actor.name &&
-          actor.id &&
-          participatingActorIds.has(String(actor.id))
-      )
-      .map((actor) => ({ id: actor.id?.toString() || '', name: actor.name || '' }))
-      .sort((a, b) => a.name.localeCompare(b.name));
-  }, [actorsById, events, fight]);
-
-  const handleTargetChange = (event: SelectChangeEvent) => {
-    const targetId = event.target.value;
-    setSearchParams((prevParams) => {
-      const newParams = new URLSearchParams(prevParams);
-      if (targetId) {
-        newParams.set('target', targetId);
-      } else {
-        newParams.delete('target');
-      }
-      return newParams;
-    });
-  };
+  const handleTargetChange = React.useCallback(
+    (event: SelectChangeEvent) => {
+      const targetId = event.target.value;
+      setSearchParams((prevParams) => {
+        const newParams = new URLSearchParams(prevParams);
+        if (targetId) {
+          newParams.set('target', targetId);
+        } else {
+          newParams.delete('target');
+        }
+        return newParams;
+      });
+    },
+    [setSearchParams]
+  );
 
   const toggleExperimentalTabs = React.useCallback(() => {
     setSearchParams((prevParams) => {
@@ -127,19 +126,19 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
     });
   }, [showExperimentalTabs, setSearchParams]);
 
-  // Only render content when events for the current fight are loaded
-  if (!eventsLoaded || !masterDataLoaded) {
+  // Only render content when master data is loaded
+  if (isMasterDataLoading) {
     return (
       <FightDetailsView
         fight={fight}
+        reportCode={reportId}
         selectedTabId={selectedTabId}
         validSelectedTab={validSelectedTab}
         showExperimentalTabs={showExperimentalTabs}
         targets={targets}
         selectedTargetId={selectedTargetId}
         events={events}
-        eventsLoaded={false}
-        masterDataLoaded={false}
+        loading={true}
         onNavigateToTab={navigateToTab}
         onTargetChange={handleTargetChange}
         onToggleExperimentalTabs={toggleExperimentalTabs}
@@ -152,14 +151,14 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
   return (
     <FightDetailsView
       fight={fight}
+      reportCode={reportId}
       selectedTabId={selectedTabId}
       validSelectedTab={validSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
       targets={targets}
       selectedTargetId={selectedTargetId}
       events={events}
-      eventsLoaded={eventsLoaded}
-      masterDataLoaded={masterDataLoaded}
+      loading={false}
       onNavigateToTab={navigateToTab}
       onTargetChange={handleTargetChange}
       onToggleExperimentalTabs={toggleExperimentalTabs}

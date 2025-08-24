@@ -10,3 +10,4 @@ describe('AuthProvider Storybook Snapshot', () => {
     expect(element).toBeInTheDocument();
   });
 });
+

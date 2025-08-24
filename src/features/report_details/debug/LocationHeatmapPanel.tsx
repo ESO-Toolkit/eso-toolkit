@@ -3,11 +3,11 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { selectLocationHeatmapData } from '../../../store/crossSliceSelectors';
-import { KnownAbilities } from '../../../types/abilities';
-import { LogEvent, ResourceChangeEvent, BuffEvent } from '../../../types/combatlogEvents';
+import { usePlayerData } from '../../../hooks';
+import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
+import { selectLocationHeatmapData } from './debugSelectors';
 import LocationHeatmapPanelView from './LocationHeatmapPanelView';
 
 interface LocationPoint {
@@ -58,92 +58,46 @@ const DEFAULT_MAP_SIZE = 1000; // Default map bounds when no data is available
 const MAP_BOUNDS_PADDING = 100; // Padding around actual data bounds
 
 const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) => {
+  // Use hooks to get player data
+  const { playerData } = usePlayerData();
+
   // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const { events, actorsById, eventPlayers } = useSelector(selectLocationHeatmapData);
+  const { events, actorsById } = useSelector(selectLocationHeatmapData);
 
   const [selectedPlayer, setSelectedPlayer] = React.useState<string>('all');
   const [showHeatmap, setShowHeatmap] = React.useState<boolean>(true);
   const [showMarkers, setShowMarkers] = React.useState<boolean>(true);
   const [selectedPhase, setSelectedPhase] = React.useState<number | 'all'>('all');
 
-  // Get player actors and determine roles based on combat performance
+  // Get player actors with roles from player data
   const playerActors = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
-
-    const fightStart = fight.startTime;
-    const fightEnd = fight.endTime;
-
-    // First pass: collect healing done and taunt applications for all players
-    const healingByPlayer: Record<string, number> = {};
-    const tauntsByPlayer: Record<string, number> = {};
-
-    events.forEach((event) => {
-      if (event.timestamp < fightStart || event.timestamp > fightEnd) {
-        return;
-      }
-
-      // Track healing done
-      if (event.type === 'heal' && event.sourceID != null) {
-        const playerId = String(event.sourceID);
-        const amount = Number(event.amount) || 0;
-        healingByPlayer[playerId] = (healingByPlayer[playerId] || 0) + amount;
-      }
-
-      // Track taunt applications (look for taunt debuffs applied to targets)
-      if (event.type === 'applydebuff' && event.sourceID != null) {
-        const buffEvent = event as BuffEvent;
-        const isTaunt = buffEvent.abilityGameID === KnownAbilities.TAUNT;
-
-        if (isTaunt) {
-          const playerId = String(event.sourceID);
-          tauntsByPlayer[playerId] = (tauntsByPlayer[playerId] || 0) + 1;
-        }
-      }
-    });
 
     // Get all player actors
     const allPlayers = Object.values(actorsById)
       .filter((actor) => actor.type === 'Player' && actor.id != null)
-      .map((actor) => ({
-        id: String(actor.id),
-        name: String(resolveActorName(actor)),
-        healing: healingByPlayer[String(actor.id)] || 0,
-        taunts: tauntsByPlayer[String(actor.id)] || 0,
-        actor,
-        player: eventPlayers[String(actor.id)],
-      }));
+      .map((actor) => {
+        const actorId = String(actor.id);
+        // Get role from player data, fallback to 'dps' if not found
+        const playerInfo = playerData.playersById?.[actorId] as {
+          role?: 'tank' | 'dps' | 'healer';
+        };
+        const role = playerInfo?.role || 'dps';
 
-    // Determine roles based on performance
-    const playersByHealing = [...allPlayers].sort((a, b) => b.healing - a.healing);
-    const healers = new Set<string>();
-    const tanks = new Set<string>();
+        return {
+          id: actorId,
+          name: String(resolveActorName(actor)),
+          role,
+          // Set dummy values for healing and taunts since we're not computing them anymore
+          healing: 0,
+          taunts: 0,
+          actor,
+          player: undefined, // Not using this property anymore since we get role from playerData
+        };
+      });
 
-    // Top 2 healers by healing done
-    playersByHealing.slice(0, 2).forEach((player) => {
-      if (player.healing > 0) {
-        healers.add(player.id);
-      }
-    });
-
-    // From remaining players, select up to 2 tanks based on taunt applications
-    const nonHealers = allPlayers.filter((p) => !healers.has(p.id));
-    const playersByTaunts = nonHealers.sort((a, b) => b.taunts - a.taunts);
-    playersByTaunts.slice(0, 2).forEach((player) => {
-      if (player.taunts > 0) {
-        tanks.add(player.id);
-      }
-    });
-
-    // Assign roles
-    return allPlayers.map((player) => ({
-      ...player,
-      role: healers.has(player.id)
-        ? ('healer' as const)
-        : tanks.has(player.id)
-          ? ('tank' as const)
-          : ('dps' as const),
-    }));
-  }, [actorsById, eventPlayers, events, fight?.startTime, fight?.endTime]);
+    return allPlayers;
+  }, [actorsById, playerData.playersById, fight?.startTime, fight?.endTime]);
 
   // Calculate fight phases based on damage gaps
   const fightPhases = React.useMemo(() => {
@@ -275,7 +229,7 @@ const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) =>
         const resources = resourceEvent.targetResources;
 
         if (resources && resources.x !== undefined && resources.y !== undefined) {
-          const targetId = String(resourceEvent.targetID || resourceEvent.target || '');
+          const targetId = String(resourceEvent.targetID || '');
           const tankActor = tankActors.find((p) => p.id === targetId);
 
           // Only track tanks

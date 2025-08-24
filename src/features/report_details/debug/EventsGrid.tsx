@@ -155,3 +155,4 @@ const EventsGrid: React.FC<EventsGridProps> = ({ events, title = 'Events', heigh
 };
 
 export default EventsGrid;
+

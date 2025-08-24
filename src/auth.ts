@@ -43,3 +43,4 @@ export async function startPKCEAuth() {
   const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
   window.location.href = authUrl;
 }
+

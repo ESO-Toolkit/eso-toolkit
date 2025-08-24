@@ -55,3 +55,4 @@ export interface PlayerDetails {
   healers: PlayerDetailsEntry[];
   tanks: PlayerDetailsEntry[];
 }
+

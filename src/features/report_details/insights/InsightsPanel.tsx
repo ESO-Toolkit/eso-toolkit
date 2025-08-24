@@ -1,47 +1,48 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { PlayerInfo } from '../../../store/events/eventsSlice';
-import { RootState } from '../../../store/storeWithHistory';
-import { PlayerEnterCombatEvent } from '../../../types/combatlogEvents';
+import { useBuffEvents, useDamageEvents, usePlayerData, useReportMasterData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 
 import InsightsPanelView from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
+  selectedTargetId?: string;
 }
 
 const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
-const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
+const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
-  const players = useSelector((state: RootState) => state.events.players);
-  const events = useSelector((state: RootState) => state.events.events);
 
-  const fightStarter = React.useMemo(() => {
-    if (!events || !fight?.startTime) return null;
-    // Find the first playerentercombat event after fight start
-    const starterEvent = events.find(
-      (event): event is PlayerEnterCombatEvent =>
-        event.type === 'playerentercombat' && event.timestamp >= fight.startTime
-    );
-    if (starterEvent) {
-      const playerId = String(starterEvent.sourceID ?? '');
-      const player = players[playerId];
-      return player?.displayName || player?.name || playerId;
-    }
-    return null;
-  }, [events, fight, players]);
+  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
-  // Memoized calculation of equipped abilities and buff actors
-  const masterData = useSelector((state: RootState) => state.masterData);
   const abilityEquipped = React.useMemo(() => {
     const result: Record<string, string[]> = {};
-    Object.values(players).forEach((player: PlayerInfo) => {
-      const talents = player?.combatantInfo?.talents || [];
+
+    if (!fight.friendlyPlayers) {
+      return {};
+    }
+
+    fight.friendlyPlayers.forEach((playerId) => {
+      if (playerId === null) {
+        return;
+      }
+
+      const player = playerData.playersById[playerId];
+
+      if (!player) {
+        return;
+      }
+
+      const thisPlayerData = player.id ? playerData.playersById[player.id] : undefined;
+
+      const talents = thisPlayerData?.combatantInfo?.talents || [];
       ABILITY_NAMES.forEach((name) => {
         if (
           talents.some((talent: PlayerTalent) => talent.name?.toLowerCase() === name.toLowerCase())
@@ -52,48 +53,94 @@ const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
       });
     });
     return result;
-  }, [players]);
+  }, [playerData, fight.friendlyPlayers]);
 
   const buffActors = React.useMemo(() => {
     const result: Record<string, Set<string>> = {
       'Enlivening Overflow': new Set(),
       'From the Brink': new Set(),
     };
-    const buffAbilityIds: Record<string, Array<string | number | null | undefined>> = {};
-    CHAMPION_POINT_NAMES.forEach((name) => {
-      buffAbilityIds[name] = Object.values(masterData.abilitiesById)
-        .filter((a) => a.name?.toLowerCase() === name.toLowerCase())
-        .map((a) => a.gameID)
-        .filter((id) => id != null);
+    // Build a lookup of ability names to their gameIDs for champion point buffs
+    const buffAbilityIds: Record<string, Array<string | number>> = {};
+    // Create a name-to-gameID map once for all abilities
+    const abilityNameToGameIDs: Record<string, Array<string | number>> = {};
+    Object.values(reportMasterData.abilitiesById).forEach((a) => {
+      const name = a.name?.toLowerCase();
+      if (name && a.gameID != null) {
+        if (!abilityNameToGameIDs[name]) abilityNameToGameIDs[name] = [];
+        abilityNameToGameIDs[name].push(a.gameID);
+      }
     });
-    events.forEach((event) => {
-      if (event.type === 'applybuff') {
-        CHAMPION_POINT_NAMES.forEach((name) => {
-          if (
-            buffAbilityIds[name].includes(event.abilityGameID ?? '') ||
-            buffAbilityIds[name].includes(event.abilityId ?? '')
-          ) {
-            const sourceId = String(event.sourceID);
-            if (event.sourceID != null && players[sourceId]) {
-              result[name].add(
-                String(players[sourceId].displayName || players[sourceId].name || sourceId)
-              );
-            }
-          }
-        });
+    CHAMPION_POINT_NAMES.forEach((name) => {
+      buffAbilityIds[name] = abilityNameToGameIDs[name.toLowerCase()] || [];
+    });
+
+    // Build a set of relevant abilityGameIDs for quick lookup
+    const relevantAbilityGameIDs = new Set(
+      CHAMPION_POINT_NAMES.flatMap((name) => buffAbilityIds[name])
+    );
+
+    // Map abilityGameID to champion point name for reverse lookup
+    const abilityGameIDToName: Record<string | number, string> = {};
+    CHAMPION_POINT_NAMES.forEach((name) => {
+      buffAbilityIds[name].forEach((id) => {
+        abilityGameIDToName[id] = name;
+      });
+    });
+
+    buffEvents.forEach((event) => {
+      if (event.type === 'applybuff' && relevantAbilityGameIDs.has(event.abilityGameID ?? '')) {
+        const name = abilityGameIDToName[event.abilityGameID ?? ''];
+        const sourceId = String(event.sourceID);
+
+        if (event.sourceID != null && playerData.playersById[sourceId]) {
+          const player = playerData.playersById[sourceId];
+          result[name].add(String(player.displayName || player.name || sourceId));
+        }
       }
     });
     return result;
-  }, [events, masterData, players]);
+  }, [buffEvents, reportMasterData.abilitiesById, playerData.playersById]);
+
+  // Find the first damage dealer
+  const firstDamageDealer = React.useMemo(() => {
+    if (!damageEvents || damageEvents.length === 0 || !playerData.playersById) {
+      return null;
+    }
+
+    // Sort damage events by timestamp to find the earliest one
+    const sortedDamageEvents = [...damageEvents].sort((a, b) => a.timestamp - b.timestamp);
+
+    // Find the first damage event from a friendly player
+    const firstDamageEvent = sortedDamageEvents.find(
+      (event) => event.sourceIsFriendly && fight.friendlyPlayers?.includes(event.sourceID)
+    );
+
+    if (!firstDamageEvent) {
+      return null;
+    }
+
+    const sourcePlayer = playerData.playersById[firstDamageEvent.sourceID];
+    if (!sourcePlayer) {
+      return null;
+    }
+
+    return sourcePlayer.displayName || sourcePlayer.name || `Player ${firstDamageEvent.sourceID}`;
+  }, [damageEvents, playerData.playersById, fight.friendlyPlayers]);
+
   return (
     <InsightsPanelView
       fight={fight}
       durationSeconds={durationSeconds}
-      fightStarter={fightStarter}
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
+      firstDamageDealer={firstDamageDealer}
+      selectedTargetId={selectedTargetId}
+      isLoading={
+        isBuffEventsLoading || isDamageEventsLoading || isPlayerDataLoading || isMasterDataLoading
+      }
     />
   );
 };
 
-export default InsightsPanel;
+export default React.memo(InsightsPanel);

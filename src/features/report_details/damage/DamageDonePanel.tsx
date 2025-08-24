@@ -1,27 +1,49 @@
+import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 
-import { selectDamagePanelData } from '../../../store/crossSliceSelectors';
+import { FightFragment } from '../../../graphql/generated';
+import { useDamageEvents, useReportMasterData, usePlayerData } from '../../../hooks';
+import { resolveActorName } from '../../../utils/resolveActorName';
 
 import DamageDonePanelView from './DamageDonePanelView';
 
 interface DamageDonePanelProps {
-  fight: { startTime?: number; endTime?: number };
+  fight: FightFragment;
+  reportCode?: string;
 }
 
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
-  // OPTIMIZED: Single selector instead of multiple useSelector calls
-  const { events, players, characters, masterData } = useSelector(selectDamagePanelData);
+const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportCode }) => {
+  // Use hooks to get data
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { isPlayerDataLoading } = usePlayerData();
+
+  // Extract data from hooks with memoization
+  const events = useMemo(() => damageEvents || [], [damageEvents]);
+  const masterData = useMemo(
+    () => reportMasterData || { actorsById: {}, abilitiesById: {} },
+    [reportMasterData]
+  );
+
+  // Compute loading and error states
+  const isLoading = useMemo(() => {
+    return isDamageEventsLoading || isMasterDataLoading || isPlayerDataLoading;
+  }, [isDamageEventsLoading, isMasterDataLoading, isPlayerDataLoading]);
+
+  const isDataReady = useMemo(() => {
+    return !isLoading;
+  }, [isLoading]);
+
+  // IMPORTANT: All hooks must be called before any early returns
 
   // Memoize damage calculations to prevent unnecessary recalculations
   const damageStatistics = useMemo(() => {
     const damageByPlayer: Record<number, number> = {};
     const damageEventsBySource: Record<number, number> = {};
 
-    // OPTIMIZED: Events are already filtered to damage events by the selector
     events.forEach((event) => {
       if ('sourceID' in event && event.sourceID != null) {
         const playerId = Number(event.sourceID);
@@ -59,27 +81,10 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
       .filter(([id]) => isPlayerActor(id))
       .map(([id, total]) => {
         const totalDamage = Number(total);
-        let name: string | undefined;
 
         // Prefer masterData actor name if available
         const actor = masterData.actorsById[id];
-        if (actor) {
-          name = actor.displayName ?? actor.name ?? `Player ${id}`;
-        } else {
-          // Fallback to previous logic
-          const playerInfo = players[id] || {};
-          const charId = Number(id);
-          if (characters[charId]) {
-            const charName = characters[charId].name;
-            const displayName = playerInfo.displayName || characters[charId].displayName;
-            name = displayName ? `${charName} (${displayName})` : charName;
-          } else if (typeof playerInfo.name === 'string') {
-            const displayName = playerInfo.displayName;
-            name = displayName ? `${playerInfo.name} (${displayName})` : playerInfo.name;
-          } else {
-            name = `Player ${id}`;
-          }
-        }
+        const name = resolveActorName(actor, id, null);
 
         const iconUrl = actor?.icon
           ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
@@ -94,14 +99,36 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight }) => {
         };
       })
       .sort((a, b) => b.dps - a.dps);
-  }, [
-    damageStatistics.damageByPlayer,
-    isPlayerActor,
-    masterData.actorsById,
-    players,
-    characters,
-    fightDuration,
-  ]);
+  }, [damageStatistics.damageByPlayer, isPlayerActor, masterData.actorsById, fightDuration]);
+
+  // Show loading spinner while data is being fetched
+  if (isLoading) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: 200,
+        }}
+      >
+        <CircularProgress sx={{ mb: 2 }} />
+        <Typography variant="h6">Loading damage data...</Typography>
+      </Box>
+    );
+  }
+
+  // Don't render until we have data
+  if (!isDataReady) {
+    return (
+      <Box sx={{ textAlign: 'center', py: 4 }}>
+        <Typography variant="body1" color="text.secondary">
+          No damage data available for this fight
+        </Typography>
+      </Box>
+    );
+  }
 
   return <DamageDonePanelView damageRows={damageRows} />;
 };

@@ -9,15 +9,16 @@ export const selectActorsById = (state: RootState) => state.masterData.actorsByI
 export const selectAbilitiesById = (state: RootState) => state.masterData.abilitiesById;
 
 // Master data loading state
-export const selectMasterDataLoadingState = createSelector([selectMasterData], (masterData) => ({
-  loading: masterData.loading,
-  loadingMasterData: masterData.loadingStates.masterData,
-  loadingPlayersOnly: masterData.loadingStates.playersOnly,
-  loaded: masterData.loaded,
-  error: masterData.error,
-  // OPTIMIZED: Expose cache metadata
-  cacheMetadata: masterData.cacheMetadata,
-}));
+export const selectMasterDataLoadingState = createSelector(
+  [selectMasterData],
+  (masterData) => masterData.loading
+);
+
+// Master data error state
+export const selectMasterDataErrorState = createSelector(
+  [selectMasterData],
+  (masterData) => masterData.error
+);
 
 // Combined master data selector
 export const selectCombinedMasterData = createSelector([selectMasterData], (masterData) => ({

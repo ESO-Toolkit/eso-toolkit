@@ -1,10 +1,9 @@
 import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../../../graphql/generated';
-import { RootState } from '../../../store/storeWithHistory';
+import { useReportMasterData, usePlayerData } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import PenetrationPanelView from './PenetrationPanelView';
@@ -18,8 +17,20 @@ interface PenetrationPanelProps {
  * Smart component that handles data processing and state management for penetration panel
  */
 const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTargetId }) => {
-  const actorsById = useSelector((state: RootState) => state.masterData.actorsById);
-  const eventPlayers = useSelector((state: RootState) => state.events.players);
+  // Use hooks to get data
+  const { reportMasterData } = useReportMasterData();
+  const { playerData } = usePlayerData();
+
+  // Extract data from hooks with memoization
+  const actorsById = React.useMemo(
+    () => reportMasterData?.actorsById || {},
+    [reportMasterData?.actorsById]
+  );
+  const eventPlayers = React.useMemo(
+    () => playerData?.playersById || {},
+    [playerData?.playersById]
+  );
+
   const [searchParams, setSearchParams] = useSearchParams();
 
   // Get selected player from URL params
