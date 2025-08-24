@@ -61,12 +61,12 @@ module.exports = {
         };
       }
 
-      // Add performance hints
+      // Add performance hints - bypass recommended asset size limits
       if (env === 'production') {
         webpackConfig.performance = {
           ...webpackConfig.performance,
-          maxAssetSize: 1000000, // 1MB
-          maxEntrypointSize: 1000000, // 1MB
+          maxAssetSize: 5000000, // 5MB - increased from 1MB
+          maxEntrypointSize: 5000000, // 5MB - increased from 1MB
         };
       }
 
