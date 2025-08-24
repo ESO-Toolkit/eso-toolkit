@@ -1,5 +1,5 @@
 import { ApolloProvider } from '@apollo/client';
-import React, { createContext, useContext, useMemo, useEffect, useRef, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
 
 import { useAuth } from './AuthContext';
 import { EsoLogsClient } from './esologsClient';
@@ -13,26 +13,14 @@ const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>
 
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { accessToken, isLoggedIn } = useAuth();
-  const clientRef = useRef<EsoLogsClient | null>(null);
 
-  // Create and manage the EsoLogsClient instance
-  const client = useMemo(() => {
-    if (!isLoggedIn || !accessToken) {
-      clientRef.current = null;
-      return null;
-    }
-
-    // Create new client only if we don't have one or if we were logged out
-    if (!clientRef.current) {
-      clientRef.current = new EsoLogsClient(accessToken);
-    }
-
-    return clientRef.current;
-  }, [accessToken, isLoggedIn]);
+  // We want a singleton here
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const client = useMemo(() => new EsoLogsClient(accessToken), []);
 
   // Update the client's access token when it changes
   useEffect(() => {
-    if (client && accessToken && isLoggedIn) {
+    if (accessToken && isLoggedIn) {
       // Only update if the token has actually changed
       if (client.getAccessToken() !== accessToken) {
         client.updateAccessToken(accessToken);
@@ -42,7 +30,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const contextValue = useMemo(
     () => ({
-      client,
+      client: isLoggedIn ? client : null,
       isReady: isLoggedIn && client !== null,
     }),
     [client, isLoggedIn]
@@ -50,7 +38,11 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>
-      {client ? <ApolloProvider client={client.getClient()}> {children}</ApolloProvider> : children}
+      {client && isLoggedIn ? (
+        <ApolloProvider client={client.getClient()}> {children}</ApolloProvider>
+      ) : (
+        children
+      )}
     </EsoLogsClientContext.Provider>
   );
 };
