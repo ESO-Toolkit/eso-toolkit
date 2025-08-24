@@ -24,11 +24,11 @@ const MainApp: React.FC = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
 
-  const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
   };
 
-  const extractReportInfo = (url: string) => {
+  const extractReportInfo = (url: string): { reportId: string; fightId: string | null } | null => {
     // Example URLs:
     // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM
     // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM#fight=5
@@ -64,7 +64,7 @@ const MainApp: React.FC = () => {
     return { reportId, fightId };
   };
 
-  const handleLoadLog = () => {
+  const handleLoadLog = (): void => {
     const result = extractReportInfo(logUrl);
     if (result) {
       // Clear current fight, events, and report data before navigating

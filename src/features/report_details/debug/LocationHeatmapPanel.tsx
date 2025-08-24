@@ -278,14 +278,14 @@ const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) =>
     const voxelMap = new Map<string, VoxelData>();
 
     // Helper function to get voxel key from coordinates
-    const getVoxelKey = (x: number, y: number) => {
+    const getVoxelKey = (x: number, y: number): string => {
       const voxelX = Math.floor(x / VOXEL_SIZE) * VOXEL_SIZE;
       const voxelY = Math.floor(y / VOXEL_SIZE) * VOXEL_SIZE;
       return `${voxelX},${voxelY}`;
     };
 
     // Helper function to get voxel center coordinates
-    const getVoxelCenter = (voxelKey: string) => {
+    const getVoxelCenter = (voxelKey: string): { x: number; y: number } => {
       const [voxelX, voxelY] = voxelKey.split(',').map(Number);
       return { x: voxelX + VOXEL_SIZE / 2, y: voxelY + VOXEL_SIZE / 2 };
     };

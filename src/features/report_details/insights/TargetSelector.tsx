@@ -20,7 +20,7 @@ const TargetSelector: React.FC = () => {
   const players = useSelector(selectEventPlayers);
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
-  const handleTargetChange = (event: SelectChangeEvent<string>) => {
+  const handleTargetChange = (event: SelectChangeEvent<string>): void => {
     const value = event.target.value;
     dispatch(setSelectedTargetId(value === '' ? null : value));
   };
@@ -74,4 +74,3 @@ const TargetSelector: React.FC = () => {
 };
 
 export default React.memo(TargetSelector);
-

@@ -12,17 +12,17 @@ const HeaderBar: React.FC = () => {
   const [scrolled, setScrolled] = React.useState(false);
 
   React.useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const onScroll = (): void => setScrolled(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleLogin = () => {
+  const handleLogin = (): void => {
     startPKCEAuth();
   };
 
-  const handleLogout = () => {
+  const handleLogout = (): void => {
     localStorage.removeItem('access_token');
     rebindAccessToken();
     navigate('/');
@@ -112,4 +112,3 @@ const HeaderBar: React.FC = () => {
 };
 
 export default HeaderBar;
-

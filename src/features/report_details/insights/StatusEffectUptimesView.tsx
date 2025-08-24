@@ -78,7 +78,7 @@ const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
           </TableHead>
           <TableBody>
             {statusEffectUptimes.map((uptime) => {
-              const formatDuration = (seconds: number) => {
+              const formatDuration = (seconds: number): string => {
                 if (seconds < 60) {
                   return `${seconds.toFixed(1)}s`;
                 }
@@ -87,7 +87,7 @@ const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
                 return `${minutes}m ${remainingSeconds.toFixed(1)}s`;
               };
 
-              const getUptimeColor = (percentage: number) => {
+              const getUptimeColor = (percentage: number): 'success' | 'warning' | 'error' => {
                 if (percentage >= 80) return 'success';
                 if (percentage >= 60) return 'warning';
                 return 'error';

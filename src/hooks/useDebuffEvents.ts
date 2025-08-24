@@ -2,14 +2,20 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useAuth } from '../AuthContext';
+import { FightFragment } from '../graphql/generated';
 import { fetchDebuffEvents } from '../store/events_data/debuffEventsSlice';
 import { selectDebuffEvents, selectDebuffEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
+import { DebuffEvent } from '../types/combatlogEvents';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useDebuffEvents() {
+export function useDebuffEvents(): {
+  debuffEvents: DebuffEvent[];
+  isDebuffEventsLoading: boolean;
+  selectedFight: FightFragment | null;
+} {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();

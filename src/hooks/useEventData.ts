@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useAuth } from '../AuthContext';
+import { ReportActorFragment } from '../graphql/generated';
 import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
 import {
   selectAllEvents,
@@ -25,10 +26,41 @@ import {
 } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
+import {
+  LogEvent,
+  DamageEvent,
+  HealEvent,
+  BuffEvent,
+  DeathEvent,
+  CombatantInfoEvent,
+  DebuffEvent,
+  CastEvent,
+  ResourceChangeEvent,
+} from '../types/combatlogEvents';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useEventData() {
+export function useEventData(): {
+  allEvents: LogEvent[];
+  eventPlayers: ReportActorFragment[];
+  isAnyEventLoading: boolean;
+  damageEvents: DamageEvent[];
+  healingEvents: HealEvent[];
+  buffEvents: BuffEvent[];
+  deathEvents: DeathEvent[];
+  combatantInfoEvents: CombatantInfoEvent[];
+  debuffEvents: DebuffEvent[];
+  castEvents: CastEvent[];
+  resourceEvents: ResourceChangeEvent[];
+  isDamageEventsLoading: boolean;
+  isHealingEventsLoading: boolean;
+  isBuffEventsLoading: boolean;
+  isDeathEventsLoading: boolean;
+  isCombatantInfoEventsLoading: boolean;
+  isDebuffEventsLoading: boolean;
+  isCastEventsLoading: boolean;
+  isResourceEventsLoading: boolean;
+} {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();

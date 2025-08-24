@@ -11,8 +11,10 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { DamageTypeFlags } from '../../../types/abilities';
+
 interface DamageTypeBreakdown {
-  damageType: string;
+  damageType: DamageTypeFlags;
   displayName: string;
   totalDamage: number;
   hitCount: number;
@@ -28,35 +30,33 @@ interface DamageTypeBreakdownViewProps {
 }
 
 // Color mapping for different damage types
-const DAMAGE_TYPE_COLORS: Record<string, string> = {
-  '1': '#8B5A2B', // Physical - Brown
-  '2': '#6366F1', // Magic - Purple
-  '3': '#EF4444', // Fire - Red
-  '4': '#3B82F6', // Frost - Blue
-  '5': '#FBBF24', // Shock - Yellow
-  '6': '#10B981', // Poison - Green
-  '7': '#8B5CF6', // Disease - Violet
-  '8': '#6B7280', // Generic - Gray
-  '9': '#0EA5E9', // Drown - Cyan
-  '10': '#DC2626', // Bleed - Dark Red
-  '11': '#9CA3AF', // None - Light Gray
-  Unknown: '#6B7280', // Unknown - Gray
+const DAMAGE_TYPE_COLORS: Record<DamageTypeFlags, string> = {
+  [DamageTypeFlags.BLEED]: '#DC2626', // Bleed - Dark Red
+  [DamageTypeFlags.DISEASE]: '#8B5CF6', // Disease - Violet
+  [DamageTypeFlags.DROWN]: '#0EA5E9', // Drown - Cyan
+  [DamageTypeFlags.FIRE]: '#EF4444', // Fire - Red
+  [DamageTypeFlags.FROST]: '#3B82F6', // Frost - Blue
+  [DamageTypeFlags.GENERIC]: '#6B7280', // Generic - Gray
+  [DamageTypeFlags.MAGIC]: '#6366F1', // Magic - Purple
+  [DamageTypeFlags.NONE]: '#9CA3AF', // None - Light Gray
+  [DamageTypeFlags.PHYSICAL]: '#8B5A2B', // Physical - Brown
+  [DamageTypeFlags.POISON]: '#10B981', // Poison - Green
+  [DamageTypeFlags.SHOCK]: '#FBBF24', // Shock - Yellow
 };
 
 // Icon mapping for different damage types
-const DAMAGE_TYPE_ICONS: Record<string, string> = {
-  '1': '⚔️', // Physical
-  '2': '✨', // Magic
-  '3': '🔥', // Fire
-  '4': '❄️', // Frost
-  '5': '⚡', // Shock
-  '6': '☠️', // Poison
-  '7': '🦠', // Disease
-  '8': '💥', // Generic
-  '9': '🌊', // Drown
-  '10': '🩸', // Bleed
-  '11': '⭕', // None
-  Unknown: '❓', // Unknown
+const DAMAGE_TYPE_ICONS: Record<DamageTypeFlags, string> = {
+  [DamageTypeFlags.BLEED]: '🩸', // Bleed
+  [DamageTypeFlags.DISEASE]: '🦠', // Disease
+  [DamageTypeFlags.DROWN]: '🌊', // Drown
+  [DamageTypeFlags.FIRE]: '🔥', // Fire
+  [DamageTypeFlags.FROST]: '❄️', // Frost
+  [DamageTypeFlags.GENERIC]: '💥', // Generic
+  [DamageTypeFlags.MAGIC]: '✨', // Magic
+  [DamageTypeFlags.NONE]: '⭕', // None
+  [DamageTypeFlags.PHYSICAL]: '⚔️', // Physical
+  [DamageTypeFlags.POISON]: '☠️', // Poison
+  [DamageTypeFlags.SHOCK]: '⚡', // Shock
 };
 
 const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
@@ -98,9 +98,8 @@ const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
         <List disablePadding>
           {damageTypeBreakdown.map((damageType) => {
             const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
-            const color =
-              DAMAGE_TYPE_COLORS[damageType.damageType] || DAMAGE_TYPE_COLORS['Unknown'];
-            const icon = DAMAGE_TYPE_ICONS[damageType.damageType] || DAMAGE_TYPE_ICONS['Unknown'];
+            const color = DAMAGE_TYPE_COLORS[damageType.damageType];
+            const icon = DAMAGE_TYPE_ICONS[damageType.damageType];
 
             return (
               <ListItem key={damageType.damageType} sx={{ py: 1 }} divider>

@@ -3,17 +3,17 @@ import { useSelector } from 'react-redux';
 
 import { useAuth } from '../AuthContext';
 import { FightFragment } from '../graphql/generated';
-import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
-import { selectDamageEvents, selectDamageEventsLoading } from '../store/events_data/selectors';
+import { fetchCastEvents } from '../store/events_data/castEventsSlice';
+import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
-import { DamageEvent } from '../types/combatlogEvents';
+import { CastEvent } from '../types/combatlogEvents';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useDamageEvents(): {
-  damageEvents: DamageEvent[];
-  isDamageEventsLoading: boolean;
+export function useCastEvents(): {
+  castEvents: CastEvent[];
+  isCastEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const { accessToken } = useAuth();
@@ -31,7 +31,7 @@ export function useDamageEvents(): {
   React.useEffect(() => {
     if (reportId && selectedFight && accessToken) {
       dispatch(
-        fetchDamageEvents({
+        fetchCastEvents({
           reportCode: reportId,
           fight: selectedFight,
           accessToken,
@@ -40,11 +40,11 @@ export function useDamageEvents(): {
     }
   }, [dispatch, reportId, selectedFight, accessToken]);
 
-  const damageEvents = useSelector(selectDamageEvents);
-  const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
+  const castEvents = useSelector(selectCastEvents);
+  const isCastEventsLoading = useSelector(selectCastEventsLoading);
 
   return React.useMemo(
-    () => ({ damageEvents, isDamageEventsLoading, selectedFight }),
-    [damageEvents, isDamageEventsLoading, selectedFight]
+    () => ({ castEvents, isCastEventsLoading, selectedFight }),
+    [castEvents, isCastEventsLoading, selectedFight]
   );
 }

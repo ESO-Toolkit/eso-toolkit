@@ -1,7 +1,7 @@
-import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
+import { ApolloClient, InMemoryCache, createHttpLink, NormalizedCacheObject } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
-export function createEsoLogsClient(accessToken: string) {
+export function createEsoLogsClient(accessToken: string): ApolloClient<NormalizedCacheObject> {
   // Custom link to append query name to URL
   const customHttpLink = createHttpLink({
     uri: (operation) => {
@@ -41,4 +41,3 @@ export function createEsoLogsClient(accessToken: string) {
     }),
   });
 }
-

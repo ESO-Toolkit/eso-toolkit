@@ -2,51 +2,43 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useHealingEvents, useReportMasterData } from '../../../hooks';
+import { useCastEvents, useHealingEvents, useReportMasterData } from '../../../hooks';
+import { KnownAbilities } from '../../../types/abilities';
+import { HealEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import HealingDonePanelView from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
   fight: FightFragment;
-  reportCode?: string;
 }
 
 /**
  * Smart component that handles data processing and state management for healing done panel
  */
-const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight, reportCode }) => {
+const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { castEvents, isCastEventsLoading } = useCastEvents();
 
-  // Extract data from hooks with memoization
-  const events = useMemo(() => healingEvents || [], [healingEvents]);
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
     [reportMasterData]
   );
 
   // Compute loading state
-  const isLoading = useMemo(() => {
-    return isHealingEventsLoading || isMasterDataLoading;
-  }, [isHealingEventsLoading, isMasterDataLoading]);
-
-  const isDataReady = useMemo(() => {
-    return !isLoading;
-  }, [isLoading]);
-
-  // IMPORTANT: All hooks must be called before any early returns
+  const isLoading = isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading;
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
     const healingByPlayer: Record<number, { raw: number; overheal: number }> = {};
 
-    events.forEach((event: { sourceID?: number; amount?: number; overhealing?: number }) => {
+    healingEvents.forEach((event: HealEvent) => {
       if ('sourceID' in event && event.sourceID != null) {
-        const playerId = Number(event.sourceID);
-        const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
-        const overheal = 'overheal' in event ? Number(event.overheal) || 0 : 0;
+        const playerId = event.sourceID;
+        const amount = event.amount ?? 0;
+        const overheal = event.overheal ?? 0;
         if (!healingByPlayer[playerId]) {
           healingByPlayer[playerId] = { raw: 0, overheal: 0 };
         }
@@ -56,7 +48,21 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight, reportCode }
     });
 
     return healingByPlayer;
-  }, [events]);
+  }, [healingEvents]);
+
+  const resByPlayer = useMemo(() => {
+    const result: Record<string, number> = {};
+
+    for (const event of castEvents) {
+      if (event.type !== 'cast') continue;
+
+      if (event.abilityGameID === KnownAbilities.RESURRECT) {
+        result[event.sourceID] = (result[event.sourceID] || 0) + 1;
+      }
+    }
+
+    return result;
+  }, [castEvents]);
 
   const fightDuration = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -83,17 +89,25 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight, reportCode }
           ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
           : undefined;
 
+        const ressurects = resByPlayer[id] || 0;
+
+        // Calculate overheal percentage: (overheal / (raw + overheal)) * 100
+        const totalHealing = raw + overheal;
+        const overhealPercentage = totalHealing > 0 ? (overheal / totalHealing) * 100 : 0;
+
         return {
           id,
           name,
           raw,
           hps: fightDuration > 0 ? raw / fightDuration : 0,
           overheal,
+          overhealPercentage,
           iconUrl,
+          ressurects,
         };
       })
       .sort((a, b) => b.hps - a.hps);
-  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration]);
+  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration, resByPlayer]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {
@@ -114,7 +128,7 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight, reportCode }
   }
 
   // Don't render until we have data
-  if (!isDataReady) {
+  if (isLoading) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
         <Typography variant="body1" color="text.secondary">

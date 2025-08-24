@@ -7,11 +7,15 @@ import {
   selectMasterDataLoadingState,
 } from '../store/master_data/masterDataSelectors';
 import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
+import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useReportMasterData() {
+export function useReportMasterData(): {
+  reportMasterData: RootState['masterData'];
+  isMasterDataLoading: boolean;
+} {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId } = useReportFightParams();

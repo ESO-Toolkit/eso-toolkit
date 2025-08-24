@@ -6,7 +6,9 @@ import React, { useEffect, useState } from 'react';
 
 const GRAPHQL_ENDPOINT = '/graphql'; // Change this to your actual endpoint if needed
 
-const fetcher = async (graphQLParams: Record<string, unknown>) => {
+const fetcher = async (
+  graphQLParams: Record<string, unknown>
+): Promise<Record<string, unknown>> => {
   const response = await fetch(GRAPHQL_ENDPOINT, {
     method: 'POST',
     headers: {
@@ -62,4 +64,3 @@ const GraphiQLPage: React.FC = () => {
 };
 
 export default GraphiQLPage;
-
