@@ -9,12 +9,12 @@ import MapIcon from '@mui/icons-material/Map';
 import PeopleIcon from '@mui/icons-material/People';
 import SecurityIcon from '@mui/icons-material/Security';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
+import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
   Box,
   Tabs,
   Tab,
-  CircularProgress,
   Typography,
   Tooltip,
   FormControl,
@@ -25,17 +25,20 @@ import {
   FormControlLabel,
   Switch,
   Stack,
+  List,
+  ListItem,
+  ListItemText,
+  Skeleton,
 } from '@mui/material';
 import React from 'react';
 
-import { FightFragment, ReportActorFragment } from '../../graphql/generated';
+import { FightFragment } from '../../graphql/generated';
 import { LogEvent } from '../../types/combatlogEvents';
 
-import ActorsPanel from './actors/ActorsPanel';
+import BuffUptimesPanel from './buff_uptimes/BuffUptimesPanel';
 import CriticalDamagePanel from './critical_damage/CriticalDamagePanel';
 import DamageDonePanel from './damage/DamageDonePanel';
 import DeathEventPanel from './deaths/DeathEventPanel';
-import { Diagnostics } from './debug/Diagnostics';
 import EventsGrid from './debug/EventsGrid';
 import EventsPanel from './debug/EventsPanel';
 import LocationHeatmapPanel from './debug/LocationHeatmapPanel';
@@ -46,14 +49,14 @@ import PenetrationPanel from './penetration/PenetrationPanel';
 
 interface FightDetailsViewProps {
   fight: FightFragment;
-  reportCode: string | undefined;
   selectedTabId?: number;
   validSelectedTab: number;
   showExperimentalTabs: boolean;
-  targets: Array<ReportActorFragment>;
+  targets: Array<{ id: string; name: string }>;
   selectedTargetId: string;
   events: LogEvent[];
-  loading: boolean;
+  eventsLoaded: boolean;
+  masterDataLoaded: boolean;
   onNavigateToTab: (tabIdx: number) => void;
   onTargetChange: (event: SelectChangeEvent) => void;
   onToggleExperimentalTabs: () => void;
@@ -66,26 +69,26 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   targets,
   selectedTargetId,
   events,
-  loading,
+  eventsLoaded,
+  masterDataLoaded,
   onNavigateToTab,
   onTargetChange,
   onToggleExperimentalTabs,
 }) => {
   // Only render content when events for the current fight are loaded
-  if (loading) {
+  if (!eventsLoaded || !masterDataLoaded) {
     return (
-      <Box
-        mt={2}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 200,
-        }}
-      >
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="h6">Loading events...</Typography>
+      <Box mt={2}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+          <Skeleton variant="rounded" width={220} height={56} />
+          <Skeleton variant="rounded" width={220} height={40} />
+        </Stack>
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} variant="circular" width={36} height={36} />
+          ))}
+        </Box>
+        <Skeleton variant="rectangular" height={360} />
       </Box>
     );
   }
@@ -103,13 +106,13 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             displayEmpty
           >
             {targets.map((target) => (
-              <MenuItem key={target.id || ''} value={target.id || ''}>
+              <MenuItem key={target.id} value={target.id}>
                 {target.name} ({target.id})
               </MenuItem>
             ))}
           </Select>
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, and All Actors">
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, and Diagnostics">
           <FormControlLabel
             control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
             label="Show Experimental Tabs"
@@ -140,6 +143,9 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <Tooltip title="Healing Done">
             <Tab icon={<HealingIcon />} />
           </Tooltip>
+          <Tooltip title="Buff Uptimes">
+            <Tab icon={<TrendingUpIcon />} />
+          </Tooltip>
           <Tooltip title="Critical Damage">
             <Tab icon={<WhatshotIcon />} />
           </Tooltip>
@@ -167,31 +173,24 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<BugReportIcon />} />
             </Tooltip>
           )}
-
-          {showExperimentalTabs && (
-            <Tooltip title="All Actors">
-              <Tab icon={<PeopleIcon />} />
-            </Tooltip>
-          )}
         </Tabs>
-        {validSelectedTab === 0 && (
-          <InsightsPanel fight={fight} selectedTargetId={selectedTargetId} />
-        )}
+        {validSelectedTab === 0 && <InsightsPanel fight={fight} />}
         {validSelectedTab === 1 && <PlayersPanel />}
         {validSelectedTab === 2 && <DeathEventPanel fight={fight} />}
         {validSelectedTab === 3 && <DamageDonePanel fight={fight} />}
         {validSelectedTab === 4 && <HealingDonePanel fight={fight} />}
-        {validSelectedTab === 5 && <CriticalDamagePanel fight={fight} />}
-        {validSelectedTab === 6 && (
+        {validSelectedTab === 5 && <BuffUptimesPanel fight={fight} />}
+        {validSelectedTab === 6 && <CriticalDamagePanel fight={fight} />}
+        {validSelectedTab === 7 && (
           <PenetrationPanel fight={fight} selectedTargetId={selectedTargetId} />
         )}
-        {showExperimentalTabs && validSelectedTab === 7 && <LocationHeatmapPanel fight={fight} />}
-        {showExperimentalTabs && validSelectedTab === 8 && <EventsPanel />}
-        {showExperimentalTabs && validSelectedTab === 9 && selectedTargetId && (
+        {showExperimentalTabs && validSelectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
+        {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
+        {showExperimentalTabs && validSelectedTab === 10 && selectedTargetId && (
           <Box mt={2}>
             <Typography variant="h6" gutterBottom>
               Events for Target:{' '}
-              {targets.find((t) => String(t.id) === selectedTargetId)?.name || selectedTargetId}
+              {targets.find((t) => t.id === selectedTargetId)?.name || selectedTargetId}
             </Typography>
             {(() => {
               // Filter events for the selected target during this fight
@@ -207,13 +206,13 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
                   return eventTargetId === selectedTargetId || eventSourceId === selectedTargetId;
                 })
-                .sort((a: LogEvent, b: LogEvent) => a.timestamp - b.timestamp);
+                .sort((a, b) => a.timestamp - b.timestamp);
 
               return (
                 <EventsGrid
                   events={targetEvents}
                   title={`Target Events for ${
-                    targets.find((t) => String(t.id) === selectedTargetId)?.name || selectedTargetId
+                    targets.find((t) => t.id === selectedTargetId)?.name || selectedTargetId
                   }`}
                   height={600}
                 />
@@ -231,8 +230,52 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Typography>
           </Box>
         )}
-        {showExperimentalTabs && validSelectedTab === 11 && <Diagnostics />}
-        {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
+        {showExperimentalTabs && validSelectedTab === 11 && (
+          <Box mt={2}>
+            <Typography variant="h6" gutterBottom>
+              Diagnostics
+            </Typography>
+            <Box mb={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                Total Events: {events.length.toLocaleString()}
+              </Typography>
+            </Box>
+            <Box mt={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Events by Type:
+              </Typography>
+              <List dense>
+                {Object.entries(
+                  events.reduce(
+                    (acc, event) => {
+                      const type = event.type.toLowerCase();
+                      acc[type] = (acc[type] || 0) + 1;
+                      return acc;
+                    },
+                    {} as Record<string, number>
+                  )
+                )
+                  .sort(([, a], [, b]) => b - a) // Sort by count descending
+                  .map(([type, count]) => (
+                    <ListItem key={type} sx={{ py: 0.5, px: 0 }}>
+                      <ListItemText
+                        primary={
+                          <Typography component="span">
+                            <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
+                              {type}:
+                            </Typography>
+                            <Typography component="span" color="text.secondary">
+                              {count.toLocaleString()}
+                            </Typography>
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+              </List>
+            </Box>
+          </Box>
+        )}
       </Box>
     </React.Fragment>
   );
