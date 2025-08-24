@@ -1,5 +1,5 @@
 import { ApolloProvider } from '@apollo/client';
-import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, useEffect, useRef, ReactNode } from 'react';
 
 import { useAuth } from './AuthContext';
 import { EsoLogsClient } from './esologsClient';
@@ -13,13 +13,21 @@ const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>
 
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { accessToken, isLoggedIn } = useAuth();
+  const clientRef = useRef<EsoLogsClient | null>(null);
 
   // Create and manage the EsoLogsClient instance
   const client = useMemo(() => {
     if (!isLoggedIn || !accessToken) {
+      clientRef.current = null;
       return null;
     }
-    return new EsoLogsClient(accessToken);
+
+    // Create new client only if we don't have one or if we were logged out
+    if (!clientRef.current) {
+      clientRef.current = new EsoLogsClient(accessToken);
+    }
+
+    return clientRef.current;
   }, [accessToken, isLoggedIn]);
 
   // Update the client's access token when it changes
@@ -39,8 +47,6 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     }),
     [client, isLoggedIn]
   );
-
-  console.log(client?.getClient());
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>
