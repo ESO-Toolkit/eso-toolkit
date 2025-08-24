@@ -32,19 +32,19 @@ import React from 'react';
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { LogEvent } from '../../types/combatlogEvents';
 
-import ActorsPanel from './actors/ActorsPanel';
-import CriticalDamagePanel from './critical_damage/CriticalDamagePanel';
-import DamageDonePanel from './damage/DamageDonePanel';
-import DeathEventPanel from './deaths/DeathEventPanel';
-import AbilitiesDebugPanel from './debug/AbilitiesDebugPanel';
+import { ActorsPanel } from './actors/ActorsPanel';
+import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { DamageDonePanel } from './damage/DamageDonePanel';
+import { DeathEventPanel } from './deaths/DeathEventPanel';
+import { AbilitiesDebugPanel } from './debug/AbilitiesDebugPanel';
 import { Diagnostics } from './debug/Diagnostics';
-import EventsGrid from './debug/EventsGrid';
-import EventsPanel from './debug/EventsPanel';
-import LocationHeatmapPanel from './debug/LocationHeatmapPanel';
-import HealingDonePanel from './healing/HealingDonePanel';
-import InsightsPanel from './insights/InsightsPanel';
-import PlayersPanel from './insights/PlayersPanel';
-import PenetrationPanel from './penetration/PenetrationPanel';
+import { EventsGrid } from './debug/EventsGrid';
+import { EventsPanel } from './debug/EventsPanel';
+import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
+import { HealingDonePanel } from './healing/HealingDonePanel';
+import { InsightsPanel } from './insights/InsightsPanel';
+import { PlayersPanel } from './insights/PlayersPanel';
+import { PenetrationPanel } from './penetration/PenetrationPanel';
 
 interface FightDetailsViewProps {
   fight: FightFragment;
@@ -61,7 +61,7 @@ interface FightDetailsViewProps {
   onToggleExperimentalTabs: () => void;
 }
 
-const FightDetailsView: React.FC<FightDetailsViewProps> = ({
+export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
   validSelectedTab,
   showExperimentalTabs,
@@ -243,5 +243,3 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     </React.Fragment>
   );
 };
-
-export default FightDetailsView;

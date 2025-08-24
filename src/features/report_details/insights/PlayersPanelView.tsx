@@ -15,7 +15,7 @@ interface PlayersPanelViewProps {
   isLoading?: boolean;
 }
 
-const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
+export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   playerActors,
   eventPlayers,
   mundusBuffsByPlayer,
@@ -209,5 +209,3 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
     </Box>
   );
 };
-
-export default PlayersPanelView;

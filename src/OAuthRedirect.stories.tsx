@@ -1,6 +1,6 @@
 import React from 'react';
 
-import OAuthRedirect from './OAuthRedirect';
+import { OAuthRedirect } from './OAuthRedirect';
 
 const story = {
   title: 'OAuthRedirect',

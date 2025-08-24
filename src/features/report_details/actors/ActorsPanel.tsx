@@ -3,9 +3,9 @@ import { useSelector } from 'react-redux';
 
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 
-import ActorsPanelView from './ActorsPanelView';
+import { ActorsPanelView } from './ActorsPanelView';
 
-const ActorsPanel: React.FC = () => {
+export const ActorsPanel: React.FC = () => {
   const actorsById = useSelector(selectActorsById);
 
   // Convert actors object to array for the data grid
@@ -23,6 +23,3 @@ const ActorsPanel: React.FC = () => {
 
   return <ActorsPanelView actors={actors} />;
 };
-
-export default ActorsPanel;
-

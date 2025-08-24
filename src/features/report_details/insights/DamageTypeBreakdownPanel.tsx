@@ -9,7 +9,7 @@ import {
 } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
-import DamageTypeBreakdownView from './DamageTypeBreakdownView';
+import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
 
 interface DamageTypeBreakdownPanelProps {
   fight: FightFragment;
@@ -25,7 +25,7 @@ interface DamageTypeBreakdown {
   averageDamage: number;
 }
 
-const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fight }) => {
+export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fight }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -146,5 +146,3 @@ const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fig
     />
   );
 };
-
-export default DamageTypeBreakdownPanel;

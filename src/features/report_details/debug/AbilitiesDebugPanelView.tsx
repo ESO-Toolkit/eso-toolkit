@@ -42,7 +42,7 @@ interface AbilitiesDebugPanelViewProps {
   isLoading: boolean;
 }
 
-const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = ({
+export const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = ({
   abilities,
   totalCount,
   isLoading,
@@ -268,5 +268,3 @@ const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = ({
     </Box>
   );
 };
-
-export default AbilitiesDebugPanelView;

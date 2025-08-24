@@ -13,7 +13,7 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
-import eventsReducer from './events_data';
+import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';

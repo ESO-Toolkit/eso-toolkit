@@ -32,7 +32,7 @@ interface HealingDonePanelViewProps {
 /**
  * Dumb component that only handles rendering the healing done panel UI
  */
-const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
+export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
   const { reportId, fightId } = useReportFightParams();
 
   const handleResurrectClick = (playerId: string): void => {
@@ -99,5 +99,3 @@ const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows
     </Box>
   );
 };
-
-export default HealingDonePanelView;

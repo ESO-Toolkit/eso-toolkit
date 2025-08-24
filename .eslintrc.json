@@ -2,6 +2,7 @@
   "extends": ["react-app", "plugin:@typescript-eslint/recommended"],
   "plugins": ["@typescript-eslint", "import"],
   "rules": {
+    "import/no-default-export": "error",
     "import/order": [
       "error",
       {
@@ -19,5 +20,19 @@
         "allowDirectConstAssertionInArrowFunctions": true
       }
     ]
-  }
+  },
+  "overrides": [
+    {
+      "files": ["src/index.tsx", "src/App.tsx", "src/reportWebVitals.ts", "**/*.stories.tsx"],
+      "rules": {
+        "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["**/*Slice.ts", "**/store/**/*.ts", "src/graphql.d.ts"],
+      "rules": {
+        "import/no-default-export": "off"
+      }
+    }
+  ]
 }

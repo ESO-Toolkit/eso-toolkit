@@ -4,13 +4,13 @@ import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 
-import AbilitiesDebugPanelView from './AbilitiesDebugPanelView';
+import { AbilitiesDebugPanelView } from './AbilitiesDebugPanelView';
 
 interface AbilitiesDebugPanelProps {
   fight: FightFragment;
 }
 
-const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight }) => {
+export const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight }) => {
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   // Process abilities data
@@ -45,5 +45,3 @@ const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight }) => {
     />
   );
 };
-
-export default AbilitiesDebugPanel;

@@ -5,7 +5,7 @@ import { useDamageEvents, useReportMasterData } from '../../../hooks';
 import { parseDamageTypeFlags } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
-import DamageBreakdownView from './DamageBreakdownView';
+import { DamageBreakdownView } from './DamageBreakdownView';
 
 interface DamageBreakdownPanelProps {
   fight: FightFragment;
@@ -23,7 +23,7 @@ interface DamageBreakdown {
   damageTypes?: string[];
 }
 
-const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) => {
+export const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -124,5 +124,3 @@ const DamageBreakdownPanel: React.FC<DamageBreakdownPanelProps> = ({ fight }) =>
     />
   );
 };
-
-export default DamageBreakdownPanel;

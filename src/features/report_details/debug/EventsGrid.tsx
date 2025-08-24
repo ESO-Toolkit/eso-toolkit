@@ -10,7 +10,11 @@ interface EventsGridProps {
   height?: number;
 }
 
-const EventsGrid: React.FC<EventsGridProps> = ({ events, title = 'Events', height = 600 }) => {
+export const EventsGrid: React.FC<EventsGridProps> = ({
+  events,
+  title = 'Events',
+  height = 600,
+}) => {
   // Define columns for the DataGrid
   const columns: GridColDef[] = [
     {
@@ -153,5 +157,3 @@ const EventsGrid: React.FC<EventsGridProps> = ({ events, title = 'Events', heigh
     </Box>
   );
 };
-
-export default EventsGrid;

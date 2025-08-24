@@ -5,7 +5,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useDamageEvents, useReportMasterData, usePlayerData } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import DamageDonePanelView from './DamageDonePanelView';
+import { DamageDonePanelView } from './DamageDonePanelView';
 
 interface DamageDonePanelProps {
   fight: FightFragment;
@@ -15,7 +15,7 @@ interface DamageDonePanelProps {
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportCode }) => {
+export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportCode }) => {
   // Use hooks to get data
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -132,5 +132,3 @@ const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportCode }) 
 
   return <DamageDonePanelView damageRows={damageRows} />;
 };
-
-export default DamageDonePanel;

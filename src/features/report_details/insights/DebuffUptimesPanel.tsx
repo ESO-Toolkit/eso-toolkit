@@ -4,7 +4,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useDebuffEvents, useReportMasterData } from '../../../hooks';
 import { DebuffEvent } from '../../../types/combatlogEvents';
 
-import DebuffUptimesView from './DebuffUptimesView';
+import { DebuffUptimesView } from './DebuffUptimesView';
 
 interface DebuffUptimesPanelProps {
   fight: FightFragment;
@@ -21,7 +21,10 @@ interface DebuffUptime {
   applications: number;
 }
 
-const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight, selectedTargetId }) => {
+export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
+  fight,
+  selectedTargetId,
+}) => {
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -147,5 +150,3 @@ const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight, selected
     />
   );
 };
-
-export default DebuffUptimesPanel;

@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import {
   selectMasterData,
   selectMasterDataLoadingState,
@@ -16,15 +16,15 @@ export function useReportMasterData(): {
   reportMasterData: RootState['masterData'];
   isMasterDataLoading: boolean;
 } {
-  const { accessToken } = useAuth();
+  const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
   const { reportId } = useReportFightParams();
 
   React.useEffect(() => {
-    if (reportId !== undefined && accessToken !== undefined) {
-      dispatch(fetchReportMasterData({ reportCode: reportId, accessToken }));
+    if (reportId !== undefined && client !== undefined) {
+      dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
-  }, [dispatch, reportId, accessToken]);
+  }, [dispatch, reportId, client]);
 
   const reportMasterData = useSelector(selectMasterData);
   const isMasterDataLoading = useSelector(selectMasterDataLoadingState);

@@ -24,7 +24,7 @@ import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
-import StatChecklist from '../../../components/StatChecklist';
+import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
 import {
@@ -109,7 +109,7 @@ interface PlayerCriticalDamageDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 
-const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
+export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
   id,
   name,
   fight,
@@ -1494,5 +1494,3 @@ const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = 
     </Accordion>
   );
 };
-
-export default PlayerCriticalDamageDetails;

@@ -8,7 +8,7 @@ import { LogEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { selectLocationHeatmapData } from './debugSelectors';
-import LocationHeatmapPanelView from './LocationHeatmapPanelView';
+import { LocationHeatmapPanelView } from './LocationHeatmapPanelView';
 
 interface LocationPoint {
   x: number;
@@ -57,7 +57,7 @@ const TOP_POSITIONS_PER_TANK = 3; // Number of top positions to track per tank
 const DEFAULT_MAP_SIZE = 1000; // Default map bounds when no data is available
 const MAP_BOUNDS_PADDING = 100; // Padding around actual data bounds
 
-const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) => {
+export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) => {
   // Use hooks to get player data
   const { playerData } = usePlayerData();
 
@@ -79,7 +79,7 @@ const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) =>
       .map((actor) => {
         const actorId = String(actor.id);
         // Get role from player data, fallback to 'dps' if not found
-        const playerInfo = playerData.playersById?.[actorId] as {
+        const playerInfo = playerData?.playersById?.[actorId] as {
           role?: 'tank' | 'dps' | 'healer';
         };
         const role = playerInfo?.role || 'dps';
@@ -97,7 +97,7 @@ const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) =>
       });
 
     return allPlayers;
-  }, [actorsById, playerData.playersById, fight?.startTime, fight?.endTime]);
+  }, [actorsById, playerData?.playersById, fight?.startTime, fight?.endTime]);
 
   // Calculate fight phases based on damage gaps
   const fightPhases = React.useMemo(() => {
@@ -560,5 +560,3 @@ const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ fight }) =>
     />
   );
 };
-
-export default LocationHeatmapPanel;

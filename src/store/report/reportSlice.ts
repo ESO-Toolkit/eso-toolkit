@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import { GetReportByCodeQuery, FightFragment } from '../../graphql/generated';
 import { GetReportByCodeDocument } from '../../graphql/reports.generated';
 
@@ -22,9 +22,9 @@ const initialState: ReportState = {
 
 export const fetchReportData = createAsyncThunk<
   { reportId: string; data: GetReportByCodeQuery; fights: FightFragment[] },
-  { reportId: string; accessToken: string },
+  { reportId: string; client: EsoLogsClient },
   { rejectValue: string }
->('report/fetchReportData', async ({ reportId, accessToken }, { rejectWithValue, getState }) => {
+>('report/fetchReportData', async ({ reportId, client }, { rejectWithValue, getState }) => {
   // Check if we already have this report data
   const state = getState() as { report: ReportState };
   if (state.report.reportId === reportId && state.report.data && !state.report.loading) {
@@ -37,22 +37,16 @@ export const fetchReportData = createAsyncThunk<
   }
 
   try {
-    const client = createEsoLogsClient(accessToken);
-    const { data } = await client.query({
+    const response: GetReportByCodeQuery = await client.query({
       query: GetReportByCodeDocument,
       variables: { code: reportId },
-      context: {
-        headers: {
-          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-        },
-      },
     });
-    const report = data?.reportData?.report;
+    const report = response.reportData?.report;
     if (!report) {
       return rejectWithValue('Report not found or not public.');
     }
     const fights = (report.fights ?? []) as FightFragment[];
-    return { reportId, data, fights };
+    return { reportId, data: response, fights };
   } catch (err) {
     const hasMessage = (e: unknown): e is { message: string } =>
       typeof e === 'object' &&
@@ -110,4 +104,3 @@ const reportSlice = createSlice({
 
 export const { setReportId, clearReport } = reportSlice.actions;
 export default reportSlice.reducer;
-

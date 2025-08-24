@@ -7,7 +7,7 @@ import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import HealingDonePanelView from './HealingDonePanelView';
+import { HealingDonePanelView } from './HealingDonePanelView';
 
 interface HealingDonePanelProps {
   fight: FightFragment;
@@ -16,7 +16,7 @@ interface HealingDonePanelProps {
 /**
  * Smart component that handles data processing and state management for healing done panel
  */
-const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
+export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -140,5 +140,3 @@ const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => {
 
   return <HealingDonePanelView healingRows={healingRows} />;
 };
-
-export default HealingDonePanel;

@@ -24,7 +24,7 @@ import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
-import StatChecklist from '../../../components/StatChecklist';
+import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
 import { useReportFightParams } from '../../../hooks/useReportFightParams';
 import {
@@ -139,7 +139,7 @@ interface PlayerPenetrationDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 
-const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
+export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
   id,
   name,
   fight,
@@ -845,4 +845,4 @@ const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> = ({
   );
 };
 
-export default React.memo(PlayerPenetrationDetails);
+export const MemoizedPlayerPenetrationDetails = React.memo(PlayerPenetrationDetails);

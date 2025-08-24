@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
 
-import FightDetails from './FightDetails';
+import { FightDetails } from './FightDetails';
 
 interface ReportFightDetailsViewProps {
   fight: FightFragment | undefined;
@@ -16,13 +16,12 @@ interface ReportFightDetailsViewProps {
   fightId: string | undefined;
 }
 
-const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
+export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fight,
   fightsLoading,
   fightsError,
   selectedTabId,
   reportId,
-  fightId,
 }) => {
   const navigate = useNavigate();
 
@@ -40,7 +39,7 @@ const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
           }}
         >
           <CircularProgress sx={{ mb: 2 }} />
-          <Typography variant="h6">Loading...</Typography>
+          <Typography variant="h6">Loading Report Data...</Typography>
         </Box>
       </Paper>
     );
@@ -116,5 +115,3 @@ const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
     </Paper>
   );
 };
-
-export default ReportFightDetailsView;

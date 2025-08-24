@@ -12,7 +12,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 
-import PlayerPenetrationDetails from './PlayerPenetrationDetails';
+import { PlayerPenetrationDetails } from './PlayerPenetrationDetails';
 
 interface PlayerData {
   id: string;
@@ -30,7 +30,7 @@ interface PenetrationPanelViewProps {
 /**
  * Dumb component that only handles rendering the penetration panel UI
  */
-const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
+export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   players,
   selectedPlayerId,
   selectedTargetId,
@@ -134,6 +134,3 @@ const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
     </Box>
   );
 };
-
-export default PenetrationPanelView;
-

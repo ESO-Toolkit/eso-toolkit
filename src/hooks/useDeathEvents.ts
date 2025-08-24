@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { fetchDeathEvents } from '../store/events_data/deathEventsSlice';
 import { selectDeathEvents, selectDeathEventsLoading } from '../store/events_data/selectors';
@@ -16,7 +16,7 @@ export function useDeathEvents(): {
   isDeathEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
-  const { accessToken } = useAuth();
+  const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();
   const fights = useSelector(selectReportFights);
@@ -29,16 +29,16 @@ export function useDeathEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    if (reportId && selectedFight && accessToken) {
+    if (reportId && selectedFight && client) {
       dispatch(
         fetchDeathEvents({
           reportCode: reportId,
           fight: selectedFight,
-          accessToken,
+          client,
         })
       );
     }
-  }, [dispatch, reportId, selectedFight, accessToken]);
+  }, [dispatch, reportId, selectedFight, client]);
 
   const deathEvents = useSelector(selectDeathEvents);
   const isDeathEventsLoading = useSelector(selectDeathEventsLoading);

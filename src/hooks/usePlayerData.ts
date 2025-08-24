@@ -1,33 +1,32 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
-import { GetPlayersForReportQuery } from '../graphql/generated';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import {
   selectPlayerData,
   selectPlayerDataLoadingState,
 } from '../store/player_data/playerDataSelectors';
-import { fetchPlayerData } from '../store/player_data/playerDataSlice';
+import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 import { useReportFightParams } from './useReportFightParams';
 
 export function usePlayerData(): {
-  playerData: GetPlayersForReportQuery | null;
+  playerData: PlayerDataState | null;
   isPlayerDataLoading: boolean;
 } {
-  const { accessToken } = useAuth();
+  const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();
 
   React.useEffect(() => {
-    if (reportId !== undefined && fightId !== undefined && accessToken !== undefined) {
+    if (reportId !== undefined && fightId !== undefined && client !== undefined) {
       const fightIdNumber = parseInt(fightId, 10);
       if (!isNaN(fightIdNumber)) {
-        dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, accessToken }));
+        dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
       }
     }
-  }, [dispatch, reportId, fightId, accessToken]);
+  }, [dispatch, reportId, fightId, client]);
 
   const playerData = useSelector(selectPlayerData);
   const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);

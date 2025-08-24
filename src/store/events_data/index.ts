@@ -35,4 +35,4 @@ const eventsReducer = (
   return combinedEventsReducer(state, action);
 };
 
-export default eventsReducer;
+export { eventsReducer };

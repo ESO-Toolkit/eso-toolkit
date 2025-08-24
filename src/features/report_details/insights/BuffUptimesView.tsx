@@ -26,7 +26,7 @@ interface BuffUptimesViewProps {
   isLoading: boolean;
 }
 
-const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
+export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   selectedTargetId,
   buffUptimes,
   isLoading,
@@ -137,5 +137,3 @@ const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
     </Box>
   );
 };
-
-export default BuffUptimesView;

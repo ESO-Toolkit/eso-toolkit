@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
 import { selectDamageEvents, selectDamageEventsLoading } from '../store/events_data/selectors';
@@ -16,7 +16,7 @@ export function useDamageEvents(): {
   isDamageEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
-  const { accessToken } = useAuth();
+  const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();
   const fights = useSelector(selectReportFights);
@@ -29,16 +29,16 @@ export function useDamageEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    if (reportId && selectedFight && accessToken) {
+    if (reportId && selectedFight) {
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,
           fight: selectedFight,
-          accessToken,
+          client,
         })
       );
     }
-  }, [dispatch, reportId, selectedFight, accessToken]);
+  }, [dispatch, reportId, selectedFight, client]);
 
   const damageEvents = useSelector(selectDamageEvents);
   const isDamageEventsLoading = useSelector(selectDamageEventsLoading);

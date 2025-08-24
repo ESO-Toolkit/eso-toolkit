@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import {
   GetReportMasterDataDocument,
   ReportAbilityFragment,
@@ -48,23 +48,17 @@ export interface MasterDataPayload {
 
 export const fetchReportMasterData = createAsyncThunk<
   MasterDataPayload,
-  { reportCode: string; accessToken: string },
+  { reportCode: string; client: EsoLogsClient },
   { rejectValue: string }
 >(
   'masterData/fetchReportMasterData',
-  async ({ reportCode, accessToken }, { rejectWithValue }) => {
+  async ({ reportCode, client }, { rejectWithValue }) => {
     try {
-      const client = createEsoLogsClient(accessToken);
       const response = await client.query({
         query: GetReportMasterDataDocument,
         variables: { code: reportCode },
-        context: {
-          headers: {
-            Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-          },
-        },
       });
-      const masterData = response.data?.reportData?.report?.masterData;
+      const masterData = response.reportData?.report?.masterData;
       const actors = cleanArray(masterData?.actors) ?? [];
       const actorsById: Record<string | number, ReportActorFragment> = {};
       for (const actor of actors) {
@@ -99,7 +93,7 @@ export const fetchReportMasterData = createAsyncThunk<
     }
   },
   {
-    condition: ({ reportCode, accessToken }, { getState }) => {
+    condition: ({ reportCode }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
       // Check if we already have master data for this report
       if (

@@ -29,7 +29,7 @@ interface StatusEffectUptimesViewProps {
   isLoading: boolean;
 }
 
-const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
+export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
   selectedTargetId,
   statusEffectUptimes,
   isLoading,
@@ -125,4 +125,4 @@ const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
   );
 };
 
-export default StatusEffectUptimesView;
+// No default export needed

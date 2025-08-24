@@ -12,11 +12,11 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 
-import BuffUptimesPanel from './BuffUptimesPanel';
-import DamageBreakdownPanel from './DamageBreakdownPanel';
-import DamageTypeBreakdownPanel from './DamageTypeBreakdownPanel';
-import DebuffUptimesPanel from './DebuffUptimesPanel';
-import StatusEffectUptimesPanel from './StatusEffectUptimesPanel';
+import { BuffUptimesPanel } from './BuffUptimesPanel';
+import { DamageBreakdownPanel } from './DamageBreakdownPanel';
+import { DamageTypeBreakdownPanel } from './DamageTypeBreakdownPanel';
+import { DebuffUptimesPanel } from './DebuffUptimesPanel';
+import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 
 interface InsightsPanelViewProps {
   fight: FightFragment;
@@ -31,7 +31,7 @@ interface InsightsPanelViewProps {
 const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
-const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
+export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   fight,
   durationSeconds,
   abilityEquipped,
@@ -175,5 +175,3 @@ const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
     </>
   );
 };
-
-export default InsightsPanelView;

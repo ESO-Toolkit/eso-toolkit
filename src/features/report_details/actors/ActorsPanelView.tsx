@@ -16,7 +16,7 @@ interface ActorsPanelViewProps {
   actors: Actor[];
 }
 
-const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({ actors }) => {
+export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({ actors }) => {
   // Define columns for the DataGrid
   const columns: GridColDef[] = [
     {
@@ -100,6 +100,3 @@ const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({ actors }) => {
     </Box>
   );
 };
-
-export default ActorsPanelView;
-

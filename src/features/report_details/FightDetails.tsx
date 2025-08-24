@@ -14,14 +14,14 @@ import {
 } from '../../hooks';
 import { selectDeathEvents } from '../../store/events_data/selectors';
 
-import FightDetailsView from './FightDetailsView';
+import { FightDetailsView } from './FightDetailsView';
 
 interface FightDetailsProps {
   fight: FightFragment;
   selectedTabId?: number;
 }
 
-const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
+export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
   const { reportId } = useReportFightParams();
 
@@ -165,5 +165,3 @@ const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => 
     />
   );
 };
-
-export default FightDetails;

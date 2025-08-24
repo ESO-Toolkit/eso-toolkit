@@ -18,11 +18,18 @@ if (typeof global.TextDecoder === 'undefined') {
 }
 
 // Mock localStorage
+// Don't use jest.fn() here because it can cause issues if the individual tests spy
 const localStorageMock = {
-  getItem: jest.fn(() => null),
-  setItem: jest.fn(),
-  removeItem: jest.fn(),
-  clear: jest.fn(),
+  getItem: () => null,
+  setItem: () => {
+    /* Do Nothing */
+  },
+  removeItem: () => {
+    /* Do Nothing */
+  },
+  clear: () => {
+    /* Do Nothing */
+  },
 };
 Object.defineProperty(window, 'localStorage', {
   value: localStorageMock,
@@ -71,4 +78,3 @@ Object.defineProperty(window, 'location', {
   value: mockLocation,
   writable: true,
 });
-

@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { startPKCEAuth } from '../auth';
 import { useAuth } from '../AuthContext';
 
-const HeaderBar: React.FC = () => {
+export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
   // Dark mode toggle is disabled for now; keeping theme in dark mode only.
   const navigate = useNavigate();
@@ -110,5 +110,3 @@ const HeaderBar: React.FC = () => {
     </AppBar>
   );
 };
-
-export default HeaderBar;

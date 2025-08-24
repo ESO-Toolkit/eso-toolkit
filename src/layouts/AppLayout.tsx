@@ -3,10 +3,10 @@ import Container from '@mui/material/Container';
 import React from 'react';
 import { Outlet } from 'react-router-dom';
 
-import HeaderBar from '../components/HeaderBar';
-import ReduxThemeProvider from '../ReduxThemeProvider';
+import { HeaderBar } from '../components/HeaderBar';
+import { ReduxThemeProvider } from '../ReduxThemeProvider';
 
-const AppLayout: React.FC = () => (
+export const AppLayout: React.FC = () => (
   <ReduxThemeProvider>
     <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
       <HeaderBar />
@@ -18,6 +18,3 @@ const AppLayout: React.FC = () => (
     </Box>
   </ReduxThemeProvider>
 );
-
-export default AppLayout;
-

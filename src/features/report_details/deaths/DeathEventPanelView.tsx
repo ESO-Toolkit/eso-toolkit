@@ -7,6 +7,7 @@ import {
   ListItem,
   ListItemText,
   Chip,
+  CircularProgress,
 } from '@mui/material';
 import React from 'react';
 
@@ -40,14 +41,16 @@ interface DeathEventPanelViewProps {
   reportId?: string;
   fightId?: number;
   fight: { startTime?: number; endTime?: number };
+  isLoading?: boolean;
 }
 
-const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
+export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   deathInfos,
   actorsById,
   reportId,
   fightId,
   fight,
+  isLoading = false,
 }) => {
   // Helper function to convert timestamp to seconds since fight start
   const formatTimeFromFightStart = (timestamp: number): string => {
@@ -59,6 +62,30 @@ const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     const seconds = (totalSeconds % 60).toFixed(1);
     return `${minutes}:${seconds.padStart(4, '0')}`;
   };
+
+  // Show loading spinner while data is being fetched
+  if (isLoading) {
+    return (
+      <Box mt={2}>
+        <Typography variant="h6">Death Events</Typography>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minHeight: 200,
+            py: 4,
+          }}
+        >
+          <CircularProgress sx={{ mb: 2 }} />
+          <Typography variant="body1" color="text.secondary">
+            Loading death event data...
+          </Typography>
+        </Box>
+      </Box>
+    );
+  }
 
   if (deathInfos.length === 0) {
     return (
@@ -222,6 +249,3 @@ const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     </Box>
   );
 };
-
-export default DeathEventPanelView;
-

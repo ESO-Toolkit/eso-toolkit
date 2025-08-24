@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useAuth } from '../AuthContext';
+import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { fetchCombatantInfoEvents } from '../store/events_data/combatantInfoEventsSlice';
 import {
@@ -19,10 +19,10 @@ export function useCombatantInfoEvents(): {
   isCombatantInfoEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
-  const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();
   const fights = useSelector(selectReportFights);
+  const client = useEsoLogsClientInstance();
 
   // Get the specific fight from the report data
   const selectedFight = React.useMemo(() => {
@@ -32,16 +32,16 @@ export function useCombatantInfoEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    if (reportId && selectedFight && accessToken) {
+    if (reportId && selectedFight) {
       dispatch(
         fetchCombatantInfoEvents({
           reportCode: reportId,
           fight: selectedFight,
-          accessToken,
+          client,
         })
       );
     }
-  }, [dispatch, reportId, selectedFight, accessToken]);
+  }, [dispatch, reportId, selectedFight, client]);
 
   const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
   const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
