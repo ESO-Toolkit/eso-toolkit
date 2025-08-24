@@ -1,4 +1,6 @@
 // DEPRECATED: This file contained complex object-creating selectors that caused infinite renders.
+
+export {};
 // Components should use basic selectors from store/events/eventsSelectors directly and
 // compute derived state using useMemo hooks in components instead.
 
@@ -12,4 +14,3 @@
 
 // Then compute loading states and other derived data in your component using useMemo
 // to avoid creating new objects every render that cause infinite re-renders.
-

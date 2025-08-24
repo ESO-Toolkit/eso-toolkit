@@ -7,7 +7,7 @@ export interface AbilityIconProps {
   abilityId: string | number;
 }
 
-export function AbilityIcon(props: AbilityIconProps): React.ReactNode {
+export function AbilityIcon(props: AbilityIconProps): React.ReactElement | null {
   const { reportMasterData } = useReportMasterData();
 
   const ability = reportMasterData?.abilitiesById[props.abilityId];
