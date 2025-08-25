@@ -5,7 +5,6 @@ import {
   selectResourceEvents,
   selectDamageEvents,
   selectHealingEvents,
-  selectBuffEvents,
   selectDebuffEvents,
   selectCastEvents,
   selectDeathEvents,
@@ -21,7 +20,6 @@ export const selectLocationHeatmapData = createSelector(
     selectResourceEvents,
     selectDamageEvents,
     selectHealingEvents,
-    selectBuffEvents,
     selectDebuffEvents,
     selectCastEvents,
     selectDeathEvents,
@@ -33,7 +31,6 @@ export const selectLocationHeatmapData = createSelector(
     resourceEvents,
     damageEvents,
     healingEvents,
-    buffEvents,
     debuffEvents,
     castEvents,
     deathEvents,
@@ -44,7 +41,6 @@ export const selectLocationHeatmapData = createSelector(
       ...resourceEvents,
       ...damageEvents,
       ...healingEvents,
-      ...buffEvents,
       ...debuffEvents,
       ...castEvents,
       ...deathEvents,
@@ -58,4 +54,3 @@ export const selectLocationHeatmapData = createSelector(
     };
   }
 );
-

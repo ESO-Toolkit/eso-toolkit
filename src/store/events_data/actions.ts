@@ -23,7 +23,17 @@ export {
   type HealingEventsState,
 } from './healingEventsSlice';
 
-export { fetchBuffEvents, clearBuffEvents, type BuffEventsState } from './buffEventsSlice';
+export {
+  fetchFriendlyBuffEvents,
+  clearFriendlyBuffEvents,
+  type FriendlyBuffEventsState,
+} from './friendlyBuffEventsSlice';
+
+export {
+  fetchHostileBuffEvents,
+  clearHostileBuffEvents,
+  type HostileBuffEventsState,
+} from './hostileBuffEventsSlice';
 
 export { fetchDeathEvents, clearDeathEvents, type DeathEventsState } from './deathEventsSlice';
 

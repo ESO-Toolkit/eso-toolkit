@@ -1,7 +1,12 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useBuffEvents, useDamageEvents, usePlayerData, useReportMasterData } from '../../../hooks';
+import {
+  useFriendlyBuffEvents,
+  useDamageEvents,
+  usePlayerData,
+  useReportMasterData,
+} from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 
 import { InsightsPanelView } from './InsightsPanelView';
@@ -17,7 +22,7 @@ const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
 
-  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
@@ -88,7 +93,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTar
       });
     });
 
-    buffEvents.forEach((event) => {
+    friendlyBuffEvents.forEach((event) => {
       if (event.type === 'applybuff' && relevantAbilityGameIDs.has(event.abilityGameID ?? '')) {
         const name = abilityGameIDToName[event.abilityGameID ?? ''];
         const sourceId = String(event.sourceID);
@@ -100,7 +105,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTar
       }
     });
     return result;
-  }, [buffEvents, reportMasterData.abilitiesById, playerData?.playersById]);
+  }, [friendlyBuffEvents, reportMasterData.abilitiesById, playerData?.playersById]);
 
   // Find the first damage dealer
   const firstDamageDealer = React.useMemo(() => {
@@ -137,7 +142,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTar
       firstDamageDealer={firstDamageDealer}
       selectedTargetId={selectedTargetId}
       isLoading={
-        isBuffEventsLoading || isDamageEventsLoading || isPlayerDataLoading || isMasterDataLoading
+        isFriendlyBuffEventsLoading ||
+        isDamageEventsLoading ||
+        isPlayerDataLoading ||
+        isMasterDataLoading
       }
     />
   );

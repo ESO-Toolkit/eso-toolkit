@@ -1,13 +1,8 @@
 import React from 'react';
 
-import {
-  useDeathEvents,
-  useDamageEvents,
-  useReportMasterData,
-  useBuffEvents,
-} from '../../../hooks';
+import { useDeathEvents, useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import { BuffEvent, DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
+import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
 
@@ -42,7 +37,6 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
@@ -63,15 +57,6 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
       const targetId = String(dmgEvent.targetID ?? '');
       if (!damageByPlayer[targetId]) damageByPlayer[targetId] = [];
       damageByPlayer[targetId].push(dmgEvent);
-    });
-
-    // Build a map of buff events per player
-    const buffEventsByPlayer: Record<string, BuffEvent[]> = {};
-    buffEvents.forEach((event) => {
-      const buffEvent = event;
-      const targetId = String(buffEvent.targetID ?? '');
-      if (!buffEventsByPlayer[targetId]) buffEventsByPlayer[targetId] = [];
-      buffEventsByPlayer[targetId].push(buffEvent);
     });
 
     // Process deaths to create DeathInfo objects
@@ -154,14 +139,12 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     fight?.endTime,
     deathEvents,
     damageEvents,
-    buffEvents,
     reportMasterData.actorsById,
     reportMasterData.abilitiesById,
   ]);
 
   // Calculate combined loading state
-  const isLoading =
-    isDeathEventsLoading || isDamageEventsLoading || isBuffEventsLoading || isMasterDataLoading;
+  const isLoading = isDeathEventsLoading || isDamageEventsLoading || isMasterDataLoading;
 
   if (isLoading) {
     return (

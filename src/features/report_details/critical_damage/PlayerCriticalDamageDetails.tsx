@@ -26,12 +26,9 @@ import { useSearchParams } from 'react-router-dom';
 
 import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
+import { useFriendlyBuffEvents } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import {
-  selectDamageEvents,
-  selectBuffEvents,
-  selectDebuffEvents,
-} from '../../../store/events_data/actions';
+import { selectDamageEvents, selectDebuffEvents } from '../../../store/events_data/actions';
 import { RootState } from '../../../store/storeWithHistory';
 import { KnownAbilities, CriticalDamageValues } from '../../../types/abilities';
 import {
@@ -133,13 +130,13 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
   // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
   const damageEvents = useSelector(selectDamageEvents);
-  const buffEvents = useSelector(selectBuffEvents);
+  const { friendlyBuffEvents } = useFriendlyBuffEvents();
   const debuffEvents = useSelector(selectDebuffEvents);
 
   // Combine all events for compatibility with existing code
   const fightEvents = React.useMemo(() => {
-    return [...damageEvents, ...buffEvents, ...debuffEvents, ...combatantInfoEvents];
-  }, [damageEvents, buffEvents, debuffEvents, combatantInfoEvents]);
+    return [...damageEvents, ...friendlyBuffEvents, ...debuffEvents, ...combatantInfoEvents];
+  }, [damageEvents, friendlyBuffEvents, debuffEvents, combatantInfoEvents]);
 
   // Calculate base critical damage for this specific player
   const playerBaseCriticalDamage = React.useMemo(() => {

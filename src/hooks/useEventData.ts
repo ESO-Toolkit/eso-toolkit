@@ -9,7 +9,6 @@ import {
   selectAllEvents,
   selectDamageEvents,
   selectHealingEvents,
-  selectBuffEvents,
   selectDeathEvents,
   selectCombatantInfoEvents,
   selectDebuffEvents,
@@ -17,7 +16,6 @@ import {
   selectResourceEvents,
   selectDamageEventsLoading,
   selectHealingEventsLoading,
-  selectBuffEventsLoading,
   selectDeathEventsLoading,
   selectCombatantInfoEventsLoading,
   selectDebuffEventsLoading,
@@ -31,7 +29,6 @@ import {
   LogEvent,
   DamageEvent,
   HealEvent,
-  BuffEvent,
   DeathEvent,
   CombatantInfoEvent,
   DebuffEvent,
@@ -45,7 +42,6 @@ export function useEventData(): {
   isAnyEventLoading: boolean;
   damageEvents: DamageEvent[];
   healingEvents: HealEvent[];
-  buffEvents: BuffEvent[];
   deathEvents: DeathEvent[];
   combatantInfoEvents: CombatantInfoEvent[];
   debuffEvents: DebuffEvent[];
@@ -53,7 +49,6 @@ export function useEventData(): {
   resourceEvents: ResourceChangeEvent[];
   isDamageEventsLoading: boolean;
   isHealingEventsLoading: boolean;
-  isBuffEventsLoading: boolean;
   isDeathEventsLoading: boolean;
   isCombatantInfoEventsLoading: boolean;
   isDebuffEventsLoading: boolean;
@@ -87,7 +82,6 @@ export function useEventData(): {
   const allEvents = useSelector(selectAllEvents);
   const damageEvents = useSelector(selectDamageEvents);
   const healingEvents = useSelector(selectHealingEvents);
-  const buffEvents = useSelector(selectBuffEvents);
   const deathEvents = useSelector(selectDeathEvents);
   const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
   const debuffEvents = useSelector(selectDebuffEvents);
@@ -97,7 +91,6 @@ export function useEventData(): {
 
   const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
   const isHealingEventsLoading = useSelector(selectHealingEventsLoading);
-  const isBuffEventsLoading = useSelector(selectBuffEventsLoading);
   const isDeathEventsLoading = useSelector(selectDeathEventsLoading);
   const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
   const isDebuffEventsLoading = useSelector(selectDebuffEventsLoading);
@@ -108,7 +101,6 @@ export function useEventData(): {
     () =>
       isDamageEventsLoading ||
       isHealingEventsLoading ||
-      isBuffEventsLoading ||
       isDeathEventsLoading ||
       isCombatantInfoEventsLoading ||
       isDebuffEventsLoading ||
@@ -117,7 +109,6 @@ export function useEventData(): {
     [
       isDamageEventsLoading,
       isHealingEventsLoading,
-      isBuffEventsLoading,
       isDeathEventsLoading,
       isCombatantInfoEventsLoading,
       isDebuffEventsLoading,
@@ -136,7 +127,6 @@ export function useEventData(): {
       // Individual event types
       damageEvents,
       healingEvents,
-      buffEvents,
       deathEvents,
       combatantInfoEvents,
       debuffEvents,
@@ -146,7 +136,6 @@ export function useEventData(): {
       // Individual loading states
       isDamageEventsLoading,
       isHealingEventsLoading,
-      isBuffEventsLoading,
       isDeathEventsLoading,
       isCombatantInfoEventsLoading,
       isDebuffEventsLoading,
@@ -159,7 +148,6 @@ export function useEventData(): {
       isAnyEventLoading,
       damageEvents,
       healingEvents,
-      buffEvents,
       deathEvents,
       combatantInfoEvents,
       debuffEvents,
@@ -167,7 +155,6 @@ export function useEventData(): {
       resourceEvents,
       isDamageEventsLoading,
       isHealingEventsLoading,
-      isBuffEventsLoading,
       isDeathEventsLoading,
       isCombatantInfoEventsLoading,
       isDebuffEventsLoading,

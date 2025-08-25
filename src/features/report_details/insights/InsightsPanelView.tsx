@@ -160,7 +160,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           Status Effects & Uptimes
         </Typography>
         <StatusEffectUptimesPanel fight={fight} selectedTargetId={selectedTargetId} />
-        <BuffUptimesPanel fight={fight} selectedTargetId={selectedTargetId} />
+        <BuffUptimesPanel fight={fight} />
         <DebuffUptimesPanel fight={fight} selectedTargetId={selectedTargetId} />
       </Paper>
 

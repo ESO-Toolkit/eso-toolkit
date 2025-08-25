@@ -4,15 +4,18 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchBuffEvents } from '../store/events_data/buffEventsSlice';
-import { selectBuffEvents, selectBuffEventsLoading } from '../store/events_data/selectors';
+import { fetchFriendlyBuffEvents } from '../store/events_data/friendlyBuffEventsSlice';
+import {
+  selectFriendlyBuffEvents,
+  selectFriendlyBuffEventsLoading,
+} from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
 
-export function useBuffEvents(): {
-  buffEvents: BuffEvent[];
-  isBuffEventsLoading: boolean;
+export function useFriendlyBuffEvents(): {
+  friendlyBuffEvents: BuffEvent[];
+  isFriendlyBuffEventsLoading: boolean;
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
@@ -30,20 +33,22 @@ export function useBuffEvents(): {
   React.useEffect(() => {
     if (reportId && selectedFight && client) {
       dispatch(
-        fetchBuffEvents({
+        fetchFriendlyBuffEvents({
           reportCode: reportId,
           fight: selectedFight,
           client,
+          // Optional: you can customize the interval size
+          // intervalSize: 60000, // 60 seconds
         })
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
 
-  const buffEvents = useSelector(selectBuffEvents);
-  const isBuffEventsLoading = useSelector(selectBuffEventsLoading);
+  const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
+  const isFriendlyBuffEventsLoading = useSelector(selectFriendlyBuffEventsLoading);
 
   return React.useMemo(
-    () => ({ buffEvents, isBuffEventsLoading, selectedFight }),
-    [buffEvents, isBuffEventsLoading, selectedFight]
+    () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
+    [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight]
   );
 }

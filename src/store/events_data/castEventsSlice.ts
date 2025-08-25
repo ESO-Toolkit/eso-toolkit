@@ -72,7 +72,7 @@ export const fetchCastEvents = createAsyncThunk<
 
     // Filter to only cast events
     const castEvents = allEvents.filter(
-      (event) => event.type === 'begincast' || event.type === 'cast'
+      (event) => !event.fake && (event.type === 'begincast' || event.type === 'cast')
     ) as CastEvent[];
     return castEvents;
   },

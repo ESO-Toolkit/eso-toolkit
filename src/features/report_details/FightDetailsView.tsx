@@ -16,7 +16,6 @@ import {
   Box,
   Tabs,
   Tab,
-  Typography,
   Tooltip,
   FormControl,
   InputLabel,
@@ -27,23 +26,20 @@ import {
   Switch,
   Stack,
   Skeleton,
-  ListItem,
-  ListItemText,
-  List,
 } from '@mui/material';
 import React from 'react';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
-import { LogEvent } from '../../types/combatlogEvents';
 
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
 import { AbilitiesDebugPanel } from './debug/AbilitiesDebugPanel';
-import { EventsGrid } from './debug/EventsGrid';
+import { DiagnosticsPanel } from './debug/DiagnosticsPanel';
 import { EventsPanel } from './debug/EventsPanel';
 import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
+import { TargetEventsPanel } from './debug/TargetEventsPanel';
 import { HealingDonePanel } from './healing/HealingDonePanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
@@ -58,7 +54,6 @@ interface FightDetailsViewProps {
   showExperimentalTabs: boolean;
   targets: Array<ReportActorFragment>;
   selectedTargetId: string;
-  events: LogEvent[];
   loading: boolean;
   onNavigateToTab: (tabIdx: number) => void;
   onTargetChange: (event: SelectChangeEvent) => void;
@@ -71,7 +66,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   showExperimentalTabs,
   targets,
   selectedTargetId,
-  events,
   loading,
   onNavigateToTab,
   onTargetChange,
@@ -202,98 +196,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {validSelectedTab === 7 && <AbilitiesDebugPanel fight={fight} />}
         {showExperimentalTabs && validSelectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
         {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
-        {showExperimentalTabs && validSelectedTab === 10 && selectedTargetId && (
-          <Box mt={2}>
-            <Typography variant="h6" gutterBottom>
-              Events for Target:{' '}
-              {targets.find((t) => String(t.id) === selectedTargetId)?.name || selectedTargetId}
-            </Typography>
-            {(() => {
-              // Filter events for the selected target during this fight
-              const targetEvents = events
-                .filter((event: LogEvent) => {
-                  if (!fight?.startTime || !fight?.endTime) return false;
-                  if (event.timestamp < fight.startTime || event.timestamp > fight.endTime)
-                    return false;
-
-                  // Check if this event involves the selected target
-                  const eventTargetId = 'targetID' in event ? String(event.targetID || '') : '';
-                  const eventSourceId = 'sourceID' in event ? String(event.sourceID || '') : '';
-
-                  return eventTargetId === selectedTargetId || eventSourceId === selectedTargetId;
-                })
-                .sort((a: LogEvent, b: LogEvent) => a.timestamp - b.timestamp);
-
-              return (
-                <EventsGrid
-                  events={targetEvents}
-                  title={`Target Events for ${
-                    targets.find((t) => String(t.id) === selectedTargetId)?.name || selectedTargetId
-                  }`}
-                  height={600}
-                />
-              );
-            })()}
-          </Box>
-        )}
-        {showExperimentalTabs && validSelectedTab === 11 && !selectedTargetId && (
-          <Box mt={2}>
-            <Typography variant="h6" gutterBottom>
-              Target Events
-            </Typography>
-            <Typography variant="body1" color="text.secondary">
-              Please select a target enemy above to view events associated with that target.
-            </Typography>
-          </Box>
-        )}
-        {showExperimentalTabs && validSelectedTab === 11 && (
-          <Box mt={2}>
-            <Typography variant="h6" gutterBottom>
-              Diagnostics
-            </Typography>
-            <Box mb={2}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
-                Total Events: {events.length.toLocaleString()}
-              </Typography>
-            </Box>
-            <Box mt={2}>
-              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
-                Events by Type:
-              </Typography>
-              <List dense>
-                {(
-                  Object.entries(
-                    events.reduce(
-                      (acc, event) => {
-                        const type = event.type.toLowerCase();
-                        acc[type] = (acc[type] || 0) + 1;
-                        return acc;
-                      },
-                      {} as Record<string, number>
-                    )
-                  ) as Array<[string, number]>
-                )
-                  .sort(([, a], [, b]) => b - a) // Sort by count descending
-                  .map(([type, count]) => (
-                    <ListItem key={type} sx={{ py: 0.5, px: 0 }}>
-                      <ListItemText
-                        primary={
-                          <Typography component="span">
-                            <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
-                              {type}:
-                            </Typography>
-                            <Typography component="span" color="text.secondary">
-                              {count.toLocaleString()}
-                            </Typography>
-                          </Typography>
-                        }
-                      />
-                    </ListItem>
-                  ))}
-              </List>
-            </Box>
-          </Box>
-        )}
+        {showExperimentalTabs && validSelectedTab === 10 && <TargetEventsPanel />}
+        {showExperimentalTabs && validSelectedTab === 11 && <DiagnosticsPanel />}
         {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
         {showExperimentalTabs && validSelectedTab === 13 && <TalentsGridPanel fight={fight} />}
       </Box>

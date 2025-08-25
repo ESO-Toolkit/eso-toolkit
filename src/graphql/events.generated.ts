@@ -123,7 +123,7 @@ export type GetHealingEventsLazyQueryHookResult = ReturnType<typeof useGetHealin
 export type GetHealingEventsSuspenseQueryHookResult = ReturnType<typeof useGetHealingEventsSuspenseQuery>;
 export type GetHealingEventsQueryResult = Apollo.QueryResult<Types.GetHealingEventsQuery, Types.GetHealingEventsQueryVariables>;
 export const GetBuffEventsDocument = gql`
-    query getBuffEvents($code: String!, $startTime: Float, $endTime: Float, $fightIds: [Int]!, $hostilityType: HostilityType, $limit: Int = 1000000) {
+    query getBuffEvents($code: String!, $startTime: Float, $endTime: Float, $fightIds: [Int]!, $hostilityType: HostilityType, $limit: Int = 20000) {
   reportData {
     report(code: $code) {
       events(
