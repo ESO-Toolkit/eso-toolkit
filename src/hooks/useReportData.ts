@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { GetReportByCodeQuery } from '../graphql/generated';
+import { ReportFragment } from '../graphql/generated';
 import { selectReportLoadingState } from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
 import { RootState } from '../store/storeWithHistory';
@@ -11,7 +11,7 @@ import { useAppDispatch } from '../store/useAppDispatch';
 import { useReportFightParams } from './useReportFightParams';
 
 export function useReportData(): {
-  reportData: GetReportByCodeQuery | null;
+  reportData: ReportFragment | null;
   isReportLoading: boolean;
 } {
   const client = useEsoLogsClientInstance();

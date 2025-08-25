@@ -1,12 +1,14 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { FightFragment } from '../../graphql/generated';
 import { RootState } from '../storeWithHistory';
 
 // REPORT SELECTORS - Read from report slice
 
 export const selectReport = (state: RootState): RootState['report'] => state.report;
-export const selectReportFights = (state: RootState): RootState['report']['fights'] =>
-  state.report.fights;
+export const selectReportFights = (
+  state: RootState
+): Array<FightFragment | null> | undefined | null => state.report.data?.fights;
 export const selectReportId = (state: RootState): RootState['report']['reportId'] =>
   state.report.reportId;
 
@@ -18,7 +20,7 @@ export const selectReportErrorState = createSelector([selectReport], (report) =>
 
 // Combined report data
 export const selectCombinedReportData = createSelector([selectReport], (report) => ({
-  fights: report.fights,
+  fights: report.data?.fights,
   reportId: report.reportId,
   data: report.data,
   loading: report.loading,

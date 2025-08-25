@@ -20,8 +20,10 @@ import reportReducer from './report/reportSlice';
 import uiReducer from './ui/uiSlice';
 
 const uiPersistConfig = {
-  key: 'ui',
+  key: 'root',
+  whitelist: ['ui'],
   storage,
+  transforms: [],
 };
 
 const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
