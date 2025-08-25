@@ -3,6 +3,7 @@ import React from 'react';
 import {
   useCastEvents,
   useCombatantInfoEvents,
+  useCurrentFight,
   useDeathEvents,
   usePlayerData,
   useReportFightParams,
@@ -12,6 +13,16 @@ import { KnownAbilities, MundusStones } from '../../../types/abilities';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 
 import { PlayersPanelView } from './PlayersPanelView';
+
+// Exclusion list extracted from the provided pins filter
+const CPM_EXCLUSION_LIST = Object.freeze(
+  new Set<number>([
+    16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572, 23196, 95040,
+    39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
+    16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
+    16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
+  ])
+);
 
 // This panel now uses report actors from masterData
 
@@ -24,6 +35,7 @@ export const PlayersPanel: React.FC = () => {
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const fight = useCurrentFight();
 
   const { abilitiesById } = reportMasterData;
 
@@ -91,33 +103,27 @@ export const PlayersPanel: React.FC = () => {
   const cpmByPlayer = React.useMemo(() => {
     const result: Record<string, number> = {};
 
-    // Exclusion list extracted from the provided pins filter
-    const excluded = new Set<number>([
-      16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572, 23196, 95040,
-      39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
-      16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
-      16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
-    ]);
+    if (!fight) {
+      return result;
+    }
 
-    // Limit to events in this fight (if present) and gather timestamps for duration
-    let minTs = Number.POSITIVE_INFINITY;
-    let maxTs = Number.NEGATIVE_INFINITY;
+    const test: Record<number, number> = {};
 
     for (const ev of castEvents) {
-      if (typeof ev.timestamp === 'number') {
-        if (ev.timestamp < minTs) minTs = ev.timestamp;
-        if (ev.timestamp > maxTs) maxTs = ev.timestamp;
-      }
-      if (ev.type === 'cast') {
+      if (ev.type === 'cast' && !ev.fake) {
         const src = ev.sourceID;
         const abilityId: number | undefined = ev.abilityGameID;
-        if (src && typeof abilityId === 'number' && !excluded.has(abilityId)) {
+        if (!CPM_EXCLUSION_LIST.has(abilityId)) {
           result[src] = (result[src] || 0) + 1;
+        }
+
+        if (src === 1) {
+          test[abilityId] = (test[abilityId] || 0) + 1;
         }
       }
     }
 
-    const durationMs = maxTs > minTs ? maxTs - minTs : 0;
+    const durationMs = fight?.endTime - fight?.startTime;
     const minutes = durationMs > 0 ? durationMs / 60000 : 0;
     if (minutes > 0) {
       for (const k of Object.keys(result)) {
@@ -130,8 +136,10 @@ export const PlayersPanel: React.FC = () => {
       }
     }
 
+    console.log(result);
+
     return result;
-  }, [castEvents]);
+  }, [castEvents, fight]);
 
   // Compute death counts per player for the current fight
   const deathsByPlayer = React.useMemo(() => {
