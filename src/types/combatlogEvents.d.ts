@@ -136,6 +136,7 @@ export interface CastEvent {
   targetIsFriendly: boolean;
   abilityGameID: number;
   fight: number;
+  fake?: boolean;
 }
 
 export interface BeginCastEvent {
