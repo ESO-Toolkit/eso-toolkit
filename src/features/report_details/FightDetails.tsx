@@ -94,7 +94,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   ]);
 
   // Calculate total number of available tabs
-  const totalTabs = showExperimentalTabs ? 14 : 8;
+  const totalTabs = showExperimentalTabs ? 15 : 8;
 
   // Ensure selectedTab is valid for current tab count
   const validSelectedTab = Math.min(selectedTab, totalTabs - 1);

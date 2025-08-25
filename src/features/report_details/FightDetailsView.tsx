@@ -8,6 +8,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import ListIcon from '@mui/icons-material/List';
 import MapIcon from '@mui/icons-material/Map';
 import PeopleIcon from '@mui/icons-material/People';
+import PsychologyIcon from '@mui/icons-material/Psychology';
 import SecurityIcon from '@mui/icons-material/Security';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
@@ -35,6 +36,7 @@ import React from 'react';
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { LogEvent } from '../../types/combatlogEvents';
 
+import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
@@ -46,6 +48,7 @@ import { HealingDonePanel } from './healing/HealingDonePanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
+import { TalentsGridPanel } from './talents/TalentsGridPanel';
 
 interface FightDetailsViewProps {
   fight: FightFragment;
@@ -111,7 +114,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             ))}
           </Select>
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, and All Actors">
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, All Actors, and Talents">
           <FormControlLabel
             control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
             label="Show Experimental Tabs"
@@ -176,6 +179,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && (
             <Tooltip title="All Actors">
               <Tab icon={<PeopleIcon />} />
+            </Tooltip>
+          )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Talents">
+              <Tab icon={<PsychologyIcon />} />
             </Tooltip>
           )}
         </Tabs>
@@ -285,6 +294,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Box>
           </Box>
         )}
+        {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
+        {showExperimentalTabs && validSelectedTab === 13 && <TalentsGridPanel fight={fight} />}
       </Box>
     </React.Fragment>
   );
