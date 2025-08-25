@@ -12,6 +12,69 @@ module.exports = {
       '@graphql': path.resolve(__dirname, 'src/graphql'),
     },
     configure: (webpackConfig, { env }) => {
+      // Replace TypeScript loader with SWC for faster compilation
+      // SWC (Speedy Web Compiler) is a Rust-based JavaScript/TypeScript compiler
+      // that provides significantly faster build times than the default tsc
+      const oneOf = webpackConfig.module.rules.find((rule) => rule.oneOf);
+      if (oneOf) {
+        // Find and replace the TypeScript rule
+        const tsRule = oneOf.oneOf.find(
+          (rule) => rule.test && rule.test.toString().includes('tsx?')
+        );
+        if (tsRule) {
+          // Replace with SWC loader with environment-specific configuration
+          tsRule.use = [
+            {
+              loader: require.resolve('swc-loader'),
+              options: {
+                jsc: {
+                  parser: {
+                    syntax: 'typescript',
+                    tsx: true,
+                    decorators: false,
+                    dynamicImport: true,
+                  },
+                  transform: {
+                    react: {
+                      runtime: 'automatic',
+                      importSource: 'react',
+                      refresh: env === 'development',
+                      development: env === 'development',
+                    },
+                  },
+                  target: 'es2020',
+                  loose: false,
+                  externalHelpers: false,
+                  keepClassNames: env === 'development',
+                },
+                module: {
+                  type: 'es6',
+                  strict: false,
+                  strictMode: true,
+                  lazy: false,
+                  noInterop: false,
+                },
+                minify: env === 'production',
+                isModule: true,
+                sourceMaps: true,
+                env: {
+                  targets: {
+                    chrome: '58',
+                    firefox: '57',
+                    safari: '11',
+                    edge: '16',
+                  },
+                  mode: 'entry',
+                },
+              },
+            },
+          ];
+          // Remove the existing loaders
+          delete tsRule.loader;
+          delete tsRule.options;
+        }
+      }
+
       // Custom webpack configuration
 
       // Enable source maps in production for better debugging

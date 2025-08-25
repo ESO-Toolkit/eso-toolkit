@@ -1,0 +1,41 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "tsx": true,
+      "decorators": false,
+      "dynamicImport": true
+    },
+    "transform": {
+      "react": {
+        "runtime": "automatic",
+        "importSource": "react",
+        "refresh": true,
+        "development": true
+      }
+    },
+    "target": "es2020",
+    "loose": false,
+    "externalHelpers": false,
+    "keepClassNames": true
+  },
+  "module": {
+    "type": "es6",
+    "strict": false,
+    "strictMode": true,
+    "lazy": false,
+    "noInterop": false
+  },
+  "minify": false,
+  "isModule": true,
+  "sourceMaps": true,
+  "env": {
+    "targets": {
+      "chrome": "58",
+      "firefox": "57",
+      "safari": "11",
+      "edge": "16"
+    },
+    "mode": "entry"
+  }
+}
