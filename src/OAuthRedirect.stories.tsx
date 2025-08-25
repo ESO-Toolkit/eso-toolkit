@@ -9,4 +9,3 @@ const story = {
 export default story;
 
 export const Default = () => <OAuthRedirect />;
-

@@ -240,4 +240,3 @@ export enum MundusStones {
   // The Tower - Increases Max Stamina
   THE_TOWER = 13985,
 }
-

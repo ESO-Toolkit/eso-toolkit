@@ -224,4 +224,3 @@ const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 };
 
 export default DeathEventPanelView;
-

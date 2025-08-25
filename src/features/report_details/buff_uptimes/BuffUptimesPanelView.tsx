@@ -115,4 +115,3 @@ const BuffUptimesPanelView: React.FC<BuffUptimesPanelViewProps> = ({
 };
 
 export default BuffUptimesPanelView;
-

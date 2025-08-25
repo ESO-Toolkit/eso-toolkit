@@ -102,4 +102,3 @@ const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({ actors }) => {
 };
 
 export default ActorsPanelView;
-

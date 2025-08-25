@@ -74,4 +74,3 @@ const TargetSelector: React.FC = () => {
 };
 
 export default React.memo(TargetSelector);
-

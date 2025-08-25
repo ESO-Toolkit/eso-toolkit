@@ -43,4 +43,3 @@ const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 };
 
 export default CriticalDamagePanelView;
-

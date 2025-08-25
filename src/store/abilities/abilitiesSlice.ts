@@ -25,4 +25,3 @@ const abilitiesSlice = createSlice({
 
 export const { setAbilities, clearAbilities } = abilitiesSlice.actions;
 export default abilitiesSlice.reducer;
-

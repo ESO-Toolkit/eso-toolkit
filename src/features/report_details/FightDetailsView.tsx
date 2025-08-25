@@ -245,16 +245,18 @@ const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 Events by Type:
               </Typography>
               <List dense>
-                {(Object.entries(
-                  events.reduce(
-                    (acc, event) => {
-                      const type = event.type.toLowerCase();
-                      acc[type] = (acc[type] || 0) + 1;
-                      return acc;
-                    },
-                    {} as Record<string, number>
-                  )
-                ) as Array<[string, number]>)
+                {(
+                  Object.entries(
+                    events.reduce(
+                      (acc, event) => {
+                        const type = event.type.toLowerCase();
+                        acc[type] = (acc[type] || 0) + 1;
+                        return acc;
+                      },
+                      {} as Record<string, number>
+                    )
+                  ) as Array<[string, number]>
+                )
                   .sort(([, a], [, b]) => b - a) // Sort by count descending
                   .map(([type, count]) => (
                     <ListItem key={type} sx={{ py: 0.5, px: 0 }}>

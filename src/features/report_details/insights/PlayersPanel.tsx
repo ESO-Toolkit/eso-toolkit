@@ -49,7 +49,8 @@ const PlayersPanel: React.FC = () => {
 
   // Derive combatantinfo events from the main events stream
   const combatantInfoEvents = React.useMemo(
-    () => (events || []).filter((e: LogEvent): e is CombatantInfoEvent => e.type === 'combatantinfo'),
+    () =>
+      (events || []).filter((e: LogEvent): e is CombatantInfoEvent => e.type === 'combatantinfo'),
     [events]
   );
 
@@ -60,11 +61,12 @@ const PlayersPanel: React.FC = () => {
     if (!combatantInfoEvents || !abilitiesById) return result;
 
     // Get numeric mundus stone ability IDs from the enum (filter out string keys)
-    const mundusStoneIds = (Object.values(MundusStones).filter(
+    const mundusStoneIds = Object.values(MundusStones).filter(
       (v): v is number => typeof v === 'number'
-    ));
+    );
     // Secondary: detect by ability name in case logs use alternate IDs (e.g., "Bonus (2): The Atronach")
-    const mundusNameRegex = /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
+    const mundusNameRegex =
+      /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
 
     // Initialize arrays for each player
     playerActors.forEach((actor) => {
@@ -75,7 +77,9 @@ const PlayersPanel: React.FC = () => {
         // Gather ALL combatantinfo events for this player and union mundus auras across them
         const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
           (event: CombatantInfoEvent): event is CombatantInfoEvent =>
-            event.type === 'combatantinfo' && 'sourceID' in event && String(event.sourceID) === playerId
+            event.type === 'combatantinfo' &&
+            'sourceID' in event &&
+            String(event.sourceID) === playerId
         );
 
         if (combatantInfoEventsForPlayer.length > 0) {
@@ -103,10 +107,9 @@ const PlayersPanel: React.FC = () => {
             if (ev.type === 'applybuff') {
               const abilityId = ev.abilityGameID;
               // mundus applies to self; match either source or target to this player
-              const appliesToPlayer = (
+              const appliesToPlayer =
                 (ev.targetID != null && String(ev.targetID) === playerId) ||
-                (ev.sourceID != null && String(ev.sourceID) === playerId)
-              );
+                (ev.sourceID != null && String(ev.sourceID) === playerId);
               if (typeof abilityId === 'number' && appliesToPlayer) {
                 const ability = abilitiesById[abilityId];
                 const name = ability?.name || '';
@@ -148,26 +151,28 @@ const PlayersPanel: React.FC = () => {
       const latest = latestByPlayer.get(key);
       // Prefer playerData for richer info (talents + gear with setName); fallback to combatantinfo
       const pd = playerData?.playersById?.[actor.id];
-      const gear = (pd?.combatantInfo?.gear && pd.combatantInfo.gear.length > 0)
-        ? pd.combatantInfo.gear
-        : (latest?.gear || []).map((g) => ({
-            id: g.id,
-            slot: 0, // slot is not available in combatantinfo; default to 0
-            quality: g.quality,
-            icon: g.icon,
-            name: g.name,
-            championPoints: g.championPoints,
-            trait: g.trait,
-            enchantType: g.enchantType,
-            enchantQuality: g.enchantQuality,
-            setID: g.setID,
-            type: g.type,
-            setName: undefined,
-            flags: undefined,
-          }));
-      const talents = (pd?.combatantInfo?.talents && pd.combatantInfo.talents.length > 0)
-        ? pd.combatantInfo.talents
-        : [];
+      const gear =
+        pd?.combatantInfo?.gear && pd.combatantInfo.gear.length > 0
+          ? pd.combatantInfo.gear
+          : (latest?.gear || []).map((g) => ({
+              id: g.id,
+              slot: 0, // slot is not available in combatantinfo; default to 0
+              quality: g.quality,
+              icon: g.icon,
+              name: g.name,
+              championPoints: g.championPoints,
+              trait: g.trait,
+              enchantType: g.enchantType,
+              enchantQuality: g.enchantQuality,
+              setID: g.setID,
+              type: g.type,
+              setName: undefined,
+              flags: undefined,
+            }));
+      const talents =
+        pd?.combatantInfo?.talents && pd.combatantInfo.talents.length > 0
+          ? pd.combatantInfo.talents
+          : [];
 
       record[key] = {
         id: actor.id,
@@ -192,17 +197,14 @@ const PlayersPanel: React.FC = () => {
 
     // Exclusion list extracted from the provided pins filter
     const excluded = new Set<number>([
-      16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572,
-      23196, 95040, 39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221,
-      48076, 32974, 21970, 41838, 16565, 45227, 118604, 26832, 15383, 45382, 16420,
-      68401, 47193, 190583, 16212, 228524, 186981, 16037, 15435, 15279, 72931, 45228,
-      16688, 61875, 61874,
+      16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572, 23196, 95040,
+      39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
+      16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
+      16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
     ]);
 
     const playerIds = new Set(
-      (playerActors || [])
-        .filter((a) => a.id != null)
-        .map((a) => String(a.id))
+      (playerActors || []).filter((a) => a.id != null).map((a) => String(a.id))
     );
 
     // Limit to events in this fight (if present) and gather timestamps for duration
@@ -221,7 +223,12 @@ const PlayersPanel: React.FC = () => {
       if (ev.type === 'cast') {
         const src = ev.sourceID != null ? String(ev.sourceID) : undefined;
         const abilityId = ev.abilityGameID;
-        if (src && playerIds.has(src) && typeof abilityId === 'number' && !excluded.has(abilityId)) {
+        if (
+          src &&
+          playerIds.has(src) &&
+          typeof abilityId === 'number' &&
+          !excluded.has(abilityId)
+        ) {
           result[src] = (result[src] || 0) + 1;
         }
       }
@@ -251,7 +258,10 @@ const PlayersPanel: React.FC = () => {
     const fightNum = fightId ? Number(fightId) : undefined;
 
     for (const ev of events as LogEvent[]) {
-      if (ev.type === 'death' && (fightNum == null || (typeof ev.fight === 'number' && ev.fight === fightNum))) {
+      if (
+        ev.type === 'death' &&
+        (fightNum == null || (typeof ev.fight === 'number' && ev.fight === fightNum))
+      ) {
         const target = ev.targetID; // DeathEvent always includes targetID
         if (target != null) {
           const key = String(target);
@@ -269,9 +279,7 @@ const PlayersPanel: React.FC = () => {
     const counts: Record<string, number> = {};
     if (!events || !abilitiesById) return counts;
 
-    const playerIdSet = new Set(
-      playerActors.filter((a) => a.id != null).map((a) => String(a.id))
-    );
+    const playerIdSet = new Set(playerActors.filter((a) => a.id != null).map((a) => String(a.id)));
 
     // Identify ability IDs whose name matches "Recently Revived" specifically (most reliable success signal)
     const recentlyRevivedIds = Object.entries(abilitiesById)
@@ -313,7 +321,9 @@ const PlayersPanel: React.FC = () => {
       // Gather ALL combatantinfo events for this player and union their auras
       const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
         (event): event is CombatantInfoEvent =>
-          event.type === 'combatantinfo' && 'sourceID' in event && String(event.sourceID) === playerId
+          event.type === 'combatantinfo' &&
+          'sourceID' in event &&
+          String(event.sourceID) === playerId
       );
 
       if (combatantInfoEventsForPlayer.length > 0) {

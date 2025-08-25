@@ -67,4 +67,3 @@ const OAuthRedirect: React.FC = () => {
 };
 
 export default OAuthRedirect;
-

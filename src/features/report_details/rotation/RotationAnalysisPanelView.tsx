@@ -189,4 +189,3 @@ const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
 };
 
 export default RotationAnalysisPanelView;
-

@@ -26,3 +26,6 @@ yarn-error.log*
 *storybook.log
 storybook-static
 .twig/
+
+# fetch checkpoints
+src/data/abilities.fetch.checkpoint.json

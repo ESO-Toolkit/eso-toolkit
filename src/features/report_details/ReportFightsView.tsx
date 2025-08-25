@@ -1,12 +1,4 @@
-import {
-  Box,
-  Paper,
-  Typography,
-  List,
-  ListItem,
-  ListItemButton,
-  Skeleton,
-} from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemButton, Skeleton } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -133,4 +125,3 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 };
 
 export default ReportFightsView;
-

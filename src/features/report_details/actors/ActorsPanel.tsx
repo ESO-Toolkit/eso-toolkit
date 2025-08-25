@@ -25,4 +25,3 @@ const ActorsPanel: React.FC = () => {
 };
 
 export default ActorsPanel;
-

@@ -29,37 +29,31 @@ const ReportFightDetails: React.FC = () => {
   const masterDataLoaded = useSelector((state: RootState) => state.masterData.loaded);
 
   // Aggregate events loading across slices
-  const eventsLoading = useSelector((state: RootState) =>
-    state.events.damage.loading ||
-    state.events.healing.loading ||
-    state.events.buffs.loading ||
-    state.events.deaths.loading ||
-    state.events.combatantInfo.loading ||
-    state.events.debuffs.loading ||
-    state.events.casts.loading ||
-    state.events.resources.loading
+  const eventsLoading = useSelector(
+    (state: RootState) =>
+      state.events.damage.loading ||
+      state.events.healing.loading ||
+      state.events.buffs.loading ||
+      state.events.deaths.loading ||
+      state.events.combatantInfo.loading ||
+      state.events.debuffs.loading ||
+      state.events.casts.loading ||
+      state.events.resources.loading
   );
 
   // Derive current fetching fight id from any loading event slice
   const currentFetchFightId = useSelector((state: RootState) => {
     const fid = fightId ? Number(fightId) : null;
     const { events } = state;
-    if (events.damage.loading)
-      return events.damage.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.healing.loading)
-      return events.healing.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.buffs.loading)
-      return events.buffs.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.deaths.loading)
-      return events.deaths.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.damage.loading) return events.damage.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.healing.loading) return events.healing.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.buffs.loading) return events.buffs.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.deaths.loading) return events.deaths.cacheMetadata.lastFetchedFightId ?? fid;
     if (events.combatantInfo.loading)
       return events.combatantInfo.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.debuffs.loading)
-      return events.debuffs.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.casts.loading)
-      return events.casts.cacheMetadata.lastFetchedFightId ?? fid;
-    if (events.resources.loading)
-      return events.resources.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.debuffs.loading) return events.debuffs.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.casts.loading) return events.casts.cacheMetadata.lastFetchedFightId ?? fid;
+    if (events.resources.loading) return events.resources.cacheMetadata.lastFetchedFightId ?? fid;
     return null;
   });
 

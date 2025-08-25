@@ -1,8 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment } from '../graphql/generated';
 import { useAuth } from '../AuthContext';
+import { FightFragment } from '../graphql/generated';
 import { fetchCastEvents } from '../store/events_data/castEventsSlice';
 import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';

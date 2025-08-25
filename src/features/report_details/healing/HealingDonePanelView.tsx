@@ -49,4 +49,3 @@ const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows
 };
 
 export default HealingDonePanelView;
-

@@ -12,4 +12,3 @@ const EventsPanel: React.FC = () => {
 };
 
 export default EventsPanel;
-

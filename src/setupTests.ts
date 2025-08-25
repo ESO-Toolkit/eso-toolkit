@@ -71,4 +71,3 @@ Object.defineProperty(window, 'location', {
   value: mockLocation,
   writable: true,
 });
-

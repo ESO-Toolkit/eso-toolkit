@@ -136,4 +136,3 @@ const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
 };
 
 export default PenetrationPanelView;
-

@@ -62,4 +62,3 @@ const GraphiQLPage: React.FC = () => {
 };
 
 export default GraphiQLPage;
-

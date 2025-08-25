@@ -29,7 +29,11 @@ interface StatChecklistProps {
   loading?: boolean;
 }
 
-const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources', loading = false }) => {
+const StatChecklist: React.FC<StatChecklistProps> = ({
+  sources,
+  title = 'Sources',
+  loading = false,
+}) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
 
@@ -144,4 +148,3 @@ const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources
 };
 
 export default StatChecklist;
-

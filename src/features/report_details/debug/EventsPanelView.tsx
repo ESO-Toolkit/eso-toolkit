@@ -13,4 +13,3 @@ const EventsPanelView: React.FC<EventsPanelViewProps> = ({ events }) => {
 };
 
 export default EventsPanelView;
-
