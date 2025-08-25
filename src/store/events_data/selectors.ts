@@ -32,6 +32,9 @@ export const selectDamageEventsLoading = (state: RootState): boolean => state.ev
 export const selectHealingEventsLoading = (state: RootState): boolean =>
   state.events.healing.loading;
 export const selectBuffEventsLoading = (state: RootState): boolean => state.events.buffs.loading;
+export const selectBuffEventsProgress = (
+  state: RootState
+): { total: number; completed: number; failed: number } => state.events.buffs.intervalProgress;
 export const selectDeathEventsLoading = (state: RootState): boolean => state.events.deaths.loading;
 export const selectCombatantInfoEventsLoading = (state: RootState): boolean =>
   state.events.combatantInfo.loading;

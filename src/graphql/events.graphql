@@ -64,7 +64,7 @@ query getBuffEvents(
   $endTime: Float
   $fightIds: [Int]!
   $hostilityType: HostilityType
-  $limit: Int = 1000000
+  $limit: Int = 20000
 ) {
   reportData {
     report(code: $code) {
