@@ -1,4 +1,5 @@
-import { CssBaseline, GlobalStyles } from '@mui/material';
+import CssBaseline from '@mui/material/CssBaseline';
+import GlobalStyles from '@mui/material/GlobalStyles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React from 'react';
 import { useSelector } from 'react-redux';

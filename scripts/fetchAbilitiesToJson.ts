@@ -13,11 +13,11 @@ const TOKEN_URL = process.env.ESOLOGS_TOKEN_URL || 'https://www.esologs.com/oaut
 const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
 
-const DATA_DIR = path.resolve(__dirname, '../src/data');
+const DATA_DIR = path.resolve(__dirname, '../data');
 const OUT_FILE = path.join(DATA_DIR, 'abilities.json');
 const PAGE_SIZE = 100;
 
-async function getAccessToken() {
+async function getAccessToken(): Promise<string> {
   if (!CLIENT_ID) {
     throw new Error('Missing OAUTH_CLIENT_ID in environment variables');
   }
