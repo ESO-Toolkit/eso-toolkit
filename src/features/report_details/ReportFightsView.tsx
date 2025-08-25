@@ -5,7 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { FightFragment } from '../../graphql/generated';
 
 interface ReportFightsViewProps {
-  fights: FightFragment[];
+  fights: Array<FightFragment | null> | undefined | null;
   loading: boolean;
   error: string | null;
   fightId: string | undefined;
@@ -73,16 +73,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   }
 
   // Fallback when nothing is loading and there are no fights to show
-  if (!loading && fights.length === 0) {
+  if (!fights?.length) {
     return (
       <Paper elevation={2} sx={{ p: 3 }}>
-        {error && (
-          <Typography color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
-        )}
         <Typography variant="h6" sx={{ mb: 1 }}>
-          No data loaded yet
+          Could not find requested fight.
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Paste an ESO Logs report URL above and click "Load Log" to view fights.
@@ -105,7 +100,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           </Typography>
           {(() => {
             const groups: { [key: string]: FightFragment[] } = {};
-            fights.forEach((fight: FightFragment) => {
+            fights.forEach((fight: FightFragment | null) => {
+              if (fight === null) {
+                return;
+              }
+
               const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
               if (!groups[groupName]) groups[groupName] = [];
               groups[groupName].push(fight);

@@ -1,31 +1,25 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { EsoLogsClient } from '../../esologsClient';
-import { GetReportByCodeQuery, FightFragment } from '../../graphql/generated';
-import { GetReportByCodeDocument } from '../../graphql/reports.generated';
+import { ReportFragment } from '../../graphql/generated';
+import { GetReportByCodeDocument } from '../../graphql/generated';
 
 export interface ReportState {
   reportId: string;
-  data: GetReportByCodeQuery | null;
-  fights: FightFragment[];
+  data: ReportFragment | null;
   loading: boolean;
   error: string | null;
-  startTime: number;
-  endTime: number;
 }
 
 const initialState: ReportState = {
   reportId: '',
   data: null,
-  fights: [],
   loading: false,
   error: null,
-  startTime: -1,
-  endTime: -1,
 };
 
 export const fetchReportData = createAsyncThunk<
-  { reportId: string; data: GetReportByCodeQuery; fights: FightFragment[] },
+  { reportId: string; data: ReportFragment },
   { reportId: string; client: EsoLogsClient },
   { rejectValue: string }
 >('report/fetchReportData', async ({ reportId, client }, { rejectWithValue, getState }) => {
@@ -33,32 +27,19 @@ export const fetchReportData = createAsyncThunk<
   const state = getState() as { report: ReportState };
   if (state.report.reportId === reportId && state.report.data && !state.report.loading) {
     // Return cached data without making API call
-    return {
-      reportId,
-      data: state.report.data,
-      fights: state.report.fights,
-      startTime: state.report.startTime,
-      endTime: state.report.endTime,
-    };
+    return { data: state.report.data, reportId: state.report.reportId };
   }
 
   try {
-    const response: GetReportByCodeQuery = await client.query({
+    const response = await client.query({
       query: GetReportByCodeDocument,
       variables: { code: reportId },
     });
-    const report = response.reportData?.report;
-    if (!report) {
+
+    if (!response.reportData?.report) {
       return rejectWithValue('Report not found or not public.');
     }
-    const fights = (report.fights ?? []) as FightFragment[];
-    return {
-      reportId,
-      data: response,
-      fights,
-      startTime: report.startTime,
-      endTime: report.endTime,
-    };
+    return { data: response.reportData.report, reportId: reportId };
   } catch (err) {
     const hasMessage = (e: unknown): e is { message: string } =>
       typeof e === 'object' &&
@@ -82,7 +63,6 @@ const reportSlice = createSlice({
     clearReport(state) {
       state.reportId = '';
       state.data = null;
-      state.fights = [];
       state.loading = false;
       state.error = null;
     },
@@ -98,7 +78,6 @@ const reportSlice = createSlice({
       .addCase(fetchReportData.fulfilled, (state, action) => {
         state.reportId = action.payload.reportId;
         state.data = action.payload.data;
-        state.fights = action.payload.fights;
         state.loading = false;
         state.error = null;
       })

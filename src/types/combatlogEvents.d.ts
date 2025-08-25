@@ -188,15 +188,15 @@ export interface RemoveDebuffEvent {
 }
 
 export interface ApplyBuffEvent {
-  timestamp: 4812643;
+  timestamp: number;
   type: 'applybuff';
-  sourceID: 8;
+  sourceID: number;
   sourceIsFriendly: true;
-  targetID: 8;
+  targetID: number;
   targetIsFriendly: true;
-  abilityGameID: 247975;
-  fight: 74;
-  extraAbilityGameID: 38901;
+  abilityGameID: number;
+  fight: number;
+  extraAbilityGameID: number;
 }
 
 export interface RemoveBuffEvent {

@@ -25,7 +25,7 @@ export function useDeathEvents(): {
   const selectedFight = React.useMemo(() => {
     if (!fightId || !fights) return null;
     const fightIdNumber = parseInt(fightId, 10);
-    return fights.find((fight) => fight.id === fightIdNumber) || null;
+    return fights.find((fight) => fight && fight.id === fightIdNumber) || null;
   }, [fightId, fights]);
 
   React.useEffect(() => {

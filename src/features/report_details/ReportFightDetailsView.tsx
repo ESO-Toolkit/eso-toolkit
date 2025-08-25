@@ -8,9 +8,8 @@ import { FightFragment } from '../../graphql/generated';
 import { FightDetails } from './FightDetails';
 
 interface ReportFightDetailsViewProps {
-  fight: FightFragment | undefined;
+  fight: FightFragment | undefined | null;
   fightsLoading: boolean;
-  fightsError: string | null;
   selectedTabId?: number;
   reportId: string | undefined;
   fightId: string | undefined;
@@ -19,7 +18,6 @@ interface ReportFightDetailsViewProps {
 export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fight,
   fightsLoading,
-  fightsError,
   selectedTabId,
   reportId,
 }) => {
@@ -40,10 +38,6 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <Skeleton variant="rectangular" height={220} sx={{ mt: 2 }} />
       </Paper>
     );
-  }
-
-  if (fightsError) {
-    return <Typography color="error">Error loading fights: {fightsError}</Typography>;
   }
 
   if (!fight) {

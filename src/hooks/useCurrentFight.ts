@@ -15,8 +15,8 @@ export function useCurrentFight(): FightFragment | undefined {
 
   const reportData = useSelector(selectReport);
 
-  return useMemo(
-    () => reportData.fights.find((f) => String(f.id) === fightId),
-    [fightId, reportData]
-  );
+  return useMemo(() => {
+    const fight = reportData.data?.fights?.find((f) => String(f?.id) === fightId);
+    return fight === null ? undefined : fight;
+  }, [fightId, reportData]);
 }
