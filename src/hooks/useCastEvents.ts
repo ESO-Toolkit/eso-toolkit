@@ -1,8 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment } from '../graphql/generated';
 import { useAuth } from '../AuthContext';
+import { FightFragment } from '../graphql/generated';
 import { fetchCastEvents } from '../store/events_data/castEventsSlice';
 import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
@@ -10,7 +10,11 @@ import { useAppDispatch } from '../store/useAppDispatch';
 
 import { useReportFightParams } from './useReportFightParams';
 
-export function useCastEvents() {
+export function useCastEvents(): {
+  castEvents: ReturnType<typeof selectCastEvents>;
+  isCastEventsLoading: ReturnType<typeof selectCastEventsLoading>;
+  selectedFight: FightFragment | null;
+} {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useReportFightParams();

@@ -1,13 +1,22 @@
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
-import { Box, Typography, Grid, Card, CardContent, Avatar, Chip, Accordion, AccordionSummary, AccordionDetails, Tooltip } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Avatar,
+  Chip,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Tooltip,
+} from '@mui/material';
 import type { ChipProps } from '@mui/material/Chip';
-import { keyframes } from '@mui/system';
+import type { Theme } from '@mui/material/styles';
+import { keyframes, SxProps } from '@mui/system';
 import React from 'react';
-
-import { PlayerDetailsEntry, PlayerGear } from '../../../types/playerDetails';
-import { detectBuildIssues } from '../../../utils/detectBuildIssues';
-import { resolveActorName } from '../../../utils/resolveActorName';
 
 import dkIcon from '../../../assets/dk-white.png';
 import necromancerIcon from '../../../assets/necromancer-white.png';
@@ -16,6 +25,9 @@ import sorcererIcon from '../../../assets/sorcerer.png';
 import templarIcon from '../../../assets/templar-white.png';
 import wardenIcon from '../../../assets/warden-white.png';
 import arcanistIcon from '../../../assets/white-arcanist.png';
+import { PlayerDetailsEntry, PlayerGear } from '../../../types/playerDetails';
+import { detectBuildIssues } from '../../../utils/detectBuildIssues';
+import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Helpers for gear classification and chip coloring
 const normalizeName = (name?: string): string =>
@@ -219,102 +231,114 @@ const glossyBaseSx = {
   },
 };
 
-const buildVariantSx = (variant: string) => {
-  const v: Record<string, any> = {
+const buildVariantSx = (variant: string): SxProps<Theme> => {
+  const v: Record<string, SxProps<Theme>> = {
     green: {
-      background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
       borderColor: 'rgba(76, 217, 100, 0.3)',
       color: '#5ce572',
       '& .MuiChip-label': { color: '#5ce572' },
     },
     blue: {
-      background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
       borderColor: 'rgba(0, 122, 255, 0.3)',
       color: '#4da3ff',
       '& .MuiChip-label': { color: '#4da3ff' },
     },
     lightBlue: {
-      background: 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
       borderColor: 'rgba(94, 234, 255, 0.35)',
       color: '#7ee8ff',
       '& .MuiChip-label': { color: '#7ee8ff' },
     },
     purple: {
-      background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
       borderColor: 'rgba(175, 82, 222, 0.3)',
       color: '#c57fff',
       '& .MuiChip-label': { color: '#c57fff' },
     },
     indigo: {
-      background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
       borderColor: 'rgba(88, 86, 214, 0.3)',
       color: '#8583ff',
       '& .MuiChip-label': { color: '#8583ff' },
     },
     yellow: {
-      background: 'linear-gradient(135deg, rgba(255, 235, 59, 0.25) 0%, rgba(255, 235, 59, 0.15) 50%, rgba(255, 235, 59, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 235, 59, 0.25) 0%, rgba(255, 235, 59, 0.15) 50%, rgba(255, 235, 59, 0.08) 100%)',
       borderColor: 'rgba(255, 235, 59, 0.35)',
       color: '#fff176',
       '& .MuiChip-label': { color: '#fff176' },
     },
     gold: {
-      background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
       borderColor: 'rgba(255, 193, 7, 0.35)',
       color: '#ffd54f',
       '& .MuiChip-label': { color: '#ffd54f' },
     },
     orange: {
-      background: 'linear-gradient(135deg, rgba(255, 149, 0, 0.25) 0%, rgba(255, 149, 0, 0.15) 50%, rgba(255, 149, 0, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 149, 0, 0.25) 0%, rgba(255, 149, 0, 0.15) 50%, rgba(255, 149, 0, 0.08) 100%)',
       borderColor: 'rgba(255, 149, 0, 0.3)',
       color: '#ffb74d',
       '& .MuiChip-label': { color: '#ffb74d' },
     },
     red: {
-      background: 'linear-gradient(135deg, rgba(255, 82, 82, 0.25) 0%, rgba(255, 82, 82, 0.15) 50%, rgba(255, 82, 82, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 82, 82, 0.25) 0%, rgba(255, 82, 82, 0.15) 50%, rgba(255, 82, 82, 0.08) 100%)',
       borderColor: 'rgba(255, 82, 82, 0.3)',
       color: '#ff6b6b',
       '& .MuiChip-label': { color: '#ff6b6b' },
     },
     pink: {
-      background: 'linear-gradient(135deg, rgba(255, 107, 178, 0.25) 0%, rgba(255, 107, 178, 0.15) 50%, rgba(255, 107, 178, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 107, 178, 0.25) 0%, rgba(255, 107, 178, 0.15) 50%, rgba(255, 107, 178, 0.08) 100%)',
       borderColor: 'rgba(255, 107, 178, 0.35)',
       color: '#ff8fc7',
       '& .MuiChip-label': { color: '#ff8fc7' },
     },
     teal: {
-      background: 'linear-gradient(135deg, rgba(0, 200, 190, 0.25) 0%, rgba(0, 200, 190, 0.15) 50%, rgba(0, 200, 190, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(0, 200, 190, 0.25) 0%, rgba(0, 200, 190, 0.15) 50%, rgba(0, 200, 190, 0.08) 100%)',
       borderColor: 'rgba(0, 200, 190, 0.35)',
       color: '#4dd0c7',
       '& .MuiChip-label': { color: '#4dd0c7' },
     },
     lime: {
-      background: 'linear-gradient(135deg, rgba(205, 220, 57, 0.25) 0%, rgba(205, 220, 57, 0.15) 50%, rgba(205, 220, 57, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(205, 220, 57, 0.25) 0%, rgba(205, 220, 57, 0.15) 50%, rgba(205, 220, 57, 0.08) 100%)',
       borderColor: 'rgba(205, 220, 57, 0.35)',
       color: '#d4e157',
       '& .MuiChip-label': { color: '#d4e157' },
     },
     silver: {
-      background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
       borderColor: 'rgba(236, 240, 241, 0.35)',
       color: '#ecf0f1',
       '& .MuiChip-label': { color: '#ecf0f1' },
     },
     legendary: {
-      background: 'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
-      borderImage: 'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
+      background:
+        'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
+      borderImage:
+        'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
       border: '1px solid transparent',
       color: '#ffffff',
       '& .MuiChip-label': { color: '#ffffff' },
       animation: `${legendaryGlow} 3s ease-in-out infinite`,
     },
   };
-  return { ...glossyBaseSx, ...(v[variant] || v.silver) };
+  return { ...glossyBaseSx, ...(v[variant] || v.silver) } as SxProps<Theme>;
 };
 
-const getGearChipProps = (
-  setName: string,
-  count: number
-): Partial<ChipProps> => {
+const getGearChipProps = (setName: string, count: number): Partial<ChipProps> => {
   const n = normalizeName(setName);
   // Mythics first (explicit list)
   if (MYTHIC_SET_NAMES.has(n)) {
@@ -390,8 +414,13 @@ function abbreviateFood(name: string): string {
     .split(/\s+/)
     .filter(Boolean);
   if (words.length === 0) return name;
-  const acronym = words.map((w) => w[0]!.toUpperCase()).join('');
-  return acronym.length >= 2 && acronym.length <= 4 ? acronym : words.slice(0, 3).map((w) => w[0]!.toUpperCase()).join('');
+  const acronym = words.map((w) => (w.length > 0 ? w[0].toUpperCase() : '')).join('');
+  return acronym.length >= 2 && acronym.length <= 4
+    ? acronym
+    : words
+        .slice(0, 3)
+        .map((w) => (w.length > 0 ? w[0].toUpperCase() : ''))
+        .join('');
 }
 
 interface PlayersPanelViewProps {
@@ -431,34 +460,39 @@ function parseClasses(input?: string | null): string[] {
   const raw = (input || '').trim();
   if (!raw) return [];
   // Split on common delimiters that may separate multiple classes
-  const parts = raw.split(/[\\/|,•]+/).map((s) => s.trim()).filter(Boolean);
+  const parts = raw
+    .split(/[\\/|,•]+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
   return (parts.length ? parts : [raw]).slice(0, 3);
 }
 
 // Map common abbreviations and variants to canonical keys used in CLASS_ICON_MAP
 const CLASS_ALIASES: Record<string, string> = {
-  'dragonknight': 'dragonknight',
+  dragonknight: 'dragonknight',
   'dragon knight': 'dragonknight',
-  'dk': 'dragonknight',
-  'templar': 'templar',
-  'plar': 'templar',
-  'warden': 'warden',
-  'nightblade': 'nightblade',
+  dk: 'dragonknight',
+  templar: 'templar',
+  plar: 'templar',
+  warden: 'warden',
+  nightblade: 'nightblade',
   'night blade': 'nightblade',
-  'nb': 'nightblade',
-  'sorcerer': 'sorcerer',
-  'sorc': 'sorcerer',
-  'necromancer': 'necromancer',
-  'necro': 'necromancer',
-  'arcanist': 'arcanist',
+  nb: 'nightblade',
+  sorcerer: 'sorcerer',
+  sorc: 'sorcerer',
+  necromancer: 'necromancer',
+  necro: 'necromancer',
+  arcanist: 'arcanist',
 };
 
 function toClassKey(name?: string | null): string {
-  const k = String(name || '').toLowerCase().trim();
+  const k = String(name || '')
+    .toLowerCase()
+    .trim();
   return CLASS_ALIASES[k] || k;
 }
 
-const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
+export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   playerActors,
   mundusBuffsByPlayer,
   aurasByPlayer,
@@ -525,56 +559,156 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
       <Grid container spacing={2}>
         {playerActors &&
           Object.values(playerActors).map((player) => {
-            // Get player details from events.players by actor id
+            if (!player) {
+              return null;
+            }
 
-          if (!player) {
-            return null;
-          }
-
-          const talents = player?.combatantInfo?.talents ?? [];
-          const gear = player?.combatantInfo?.gear ?? [];
-          const armorWeights = getArmorWeightCounts(gear);
-          const buildIssues = detectBuildIssues(gear);
-          return (
-            <Box key={actor.id} sx={{ width: '100%', mb: 2 }}>
-              <Card variant="outlined" className="u-hover-lift u-fade-in-up" sx={{ width: '100%' }}>
-                <CardContent sx={{ p: 2 }}>
-                  <Box display="flex" flexDirection={{ xs: 'column', md: 'row' }} alignItems="stretch" gap={2}>
-                    {/* Left column: identity, talents, gear, issues */}
-                    <Box flex={1} minWidth={0}>
-                      <Box display="flex" alignItems="center" mb={1.5}>
-                        {actor.icon ? (
-                          <Avatar
-                            src={`https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`}
-                            alt={String(resolveActorName(actor))}
-                            sx={{ mr: 2.5 }}
-                          />
-                        ) : (
-                          <Avatar sx={{ mr: 2.5 }} />
-                        )}
-                        <Box>
-                          <Box display="flex" alignItems="center" gap={1.25}>
-                            <Typography variant="subtitle1">{resolveActorName(actor)}</Typography>
-                            <Box display="inline-flex" alignItems="center" gap={0.5}>
-                              <ShieldOutlinedIcon sx={{ color: 'text.secondary', fontSize: 12 }} />
-                              <Typography variant="caption" sx={{ color: '#ff7a7a', fontSize: 11, lineHeight: 1 }}>{armorWeights.heavy}</Typography>
-                              <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}>•</Typography>
-                              <Typography variant="caption" sx={{ color: '#93f093', fontSize: 11, lineHeight: 1 }}>{armorWeights.medium}</Typography>
-                            <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}>•</Typography>
-                            <Typography variant="caption" sx={{ color: '#3c9bff', fontSize: 11, lineHeight: 1 }}>{armorWeights.light}</Typography>
-                    </Box>
+            const talents = player?.combatantInfo?.talents ?? [];
+            const gear = player?.combatantInfo?.gear ?? [];
+            const armorWeights = getArmorWeightCounts(gear);
+            const buildIssues = detectBuildIssues(gear);
+            return (
+              <Box key={player.id} sx={{ width: '100%', mb: 2 }}>
+                <Card
+                  variant="outlined"
+                  className="u-hover-lift u-fade-in-up"
+                  sx={{ width: '100%' }}
+                >
+                  <CardContent sx={{ p: 2 }}>
+                    <Box
+                      display="flex"
+                      flexDirection={{ xs: 'column', md: 'row' }}
+                      alignItems="stretch"
+                      gap={2}
+                    >
+                      {/* Left column: identity, talents, gear, issues */}
+                      <Box flex={1} minWidth={0}>
+                        <Box display="flex" alignItems="center" mb={1.5}>
+                          {player.icon ? (
+                            <Avatar
+                              src={`https://assets.rpglogs.com/img/eso/icons/${player.icon}.png`}
+                              alt={String(resolveActorName(player))}
+                              sx={{ mr: 2.5 }}
+                            />
+                          ) : (
+                            <Avatar sx={{ mr: 2.5 }} />
+                          )}
+                          <Box>
+                            <Box display="flex" alignItems="center" gap={1.25}>
+                              <Typography variant="subtitle1">
+                                {resolveActorName(player)}
+                              </Typography>
+                              <Box display="inline-flex" alignItems="center" gap={0.5}>
+                                <ShieldOutlinedIcon
+                                  sx={{ color: 'text.secondary', fontSize: 12 }}
+                                />
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: '#ff7a7a', fontSize: 11, lineHeight: 1 }}
+                                >
+                                  {armorWeights.heavy}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
+                                >
+                                  •
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: '#93f093', fontSize: 11, lineHeight: 1 }}
+                                >
+                                  {armorWeights.medium}
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
+                                >
+                                  •
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: '#3c9bff', fontSize: 11, lineHeight: 1 }}
+                                >
+                                  {armorWeights.light}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            {(() => {
+                              // Prefer showing the three ESO skill lines for the detected class.
+                              const baseKey = toClassKey(player.type);
+                              const sublines = CLASS_SUBLINES[baseKey];
+                              const classes = parseClasses(player.type);
+                              const fallbackList = classes.length
+                                ? classes
+                                : ([player.type].filter(Boolean) as string[]);
+                              const list = sublines ? sublines : fallbackList.slice(0, 3);
+                              const icon = CLASS_ICON_MAP[baseKey];
+                              const joined = list.join(' • ');
+                              return (
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                    minWidth: 0,
+                                    mt: 0.75,
+                                    mb: 0.75,
+                                  }}
+                                >
+                                  {icon && (
+                                    <img
+                                      src={icon}
+                                      alt={String(baseKey)}
+                                      width={12}
+                                      height={12}
+                                      style={{ opacity: 0.8, flexShrink: 0 }}
+                                    />
+                                  )}
+                                  <Tooltip title={joined}>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                      sx={{
+                                        lineHeight: 1.05,
+                                        fontSize: '0.70rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        display: 'block',
+                                        minWidth: 0,
+                                        maxWidth: '100%',
+                                      }}
+                                    >
+                                      {joined}
+                                    </Typography>
+                                  </Tooltip>
+                                </Box>
+                              );
+                            })()}
                           </Box>
                           {(() => {
                             // Prefer showing the three ESO skill lines for the detected class.
-                            const baseKey = toClassKey(actor.subType);
+                            const baseKey = toClassKey(player.type);
                             const sublines = CLASS_SUBLINES[baseKey];
-                            const classes = parseClasses(actor.subType);
-                            const fallbackList = classes.length ? classes : ([actor.subType].filter(Boolean) as string[]);
+                            const classes = parseClasses(player.type);
+                            const fallbackList = classes.length
+                              ? classes
+                              : ([player.type].filter(Boolean) as string[]);
                             const list = sublines ? sublines : fallbackList.slice(0, 3);
                             const icon = CLASS_ICON_MAP[baseKey];
                             const joined = list.join(' • ');
                             return (
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 0, mt: 0.75, mb: 0.75 }}>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  minWidth: 0,
+                                  mt: 0.75,
+                                  mb: 0.75,
+                                }}
+                              >
                                 {icon && (
                                   <img
                                     src={icon}
@@ -606,94 +740,52 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             );
                           })()}
                         </Box>
-                      </Box>
-                      {/* Talents (title removed for cleaner UI) */}
-                      {talents.length > 0 && (
-                        <Box mb={1.5}>
-                          <Box display="flex" flexWrap="wrap" gap={1.25} mb={1.25}>
-                            {talents.slice(0, 6).map((talent, idx) => (
-                              <Avatar
-                                key={idx}
-                                src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
-                                alt={talent.name}
-                                variant="rounded"
-                                sx={{ width: 32, height: 32, border: '1px solid var(--border)', boxShadow: 'rgb(0 0 0) 0px 2px 4px' }}
-                                title={`${talent.name} (ID: ${talent.guid})`}
-                              />
-                            ))}
-                          </Box>
-                          {talents.length > 6 && (
-                            <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
-                              {talents.slice(6).map((talent, idx) => (
+                        {/* Talents (title removed for cleaner UI) */}
+                        {talents.length > 0 && (
+                          <Box mb={1.5}>
+                            <Box display="flex" flexWrap="wrap" gap={1.25} mb={1.25}>
+                              {talents.slice(0, 6).map((talent, idx) => (
                                 <Avatar
                                   key={idx}
                                   src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
                                   alt={talent.name}
                                   variant="rounded"
-                                  sx={{ width: 32, height: 32, border: '1px solid var(--border)', boxShadow: 'rgb(0 0 0) 0px 2px 4px' }}
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    border: '1px solid var(--border)',
+                                    boxShadow: 'rgb(0 0 0) 0px 2px 4px',
+                                  }}
                                   title={`${talent.name} (ID: ${talent.guid})`}
                                 />
                               ))}
                             </Box>
-                          )}
-                        </Box>
-                      )}
-                      {/* Gear */}
-                      {gear.length > 0 && (
-                        <Box mt={1.25}>
-                          {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
-                          <Box display="flex" flexWrap="wrap" gap={1.25}>
-                            {(() => {
-                              const w = getArmorWeightCounts(gear);
-                              return (
-                                <Box display="flex" alignItems="center" gap={0.25} sx={{ mb: 0.5 }}>
-                                  <Typography variant="body2" fontWeight="bold">
-                                    Gear Sets:
-                                  </Typography>
-                                  <Box
-                                    display="inline-flex"
-                                    alignItems="center"
-                                    gap={0.375}
-                                    sx={{ ml: 0.25 }}
-                                  >
-                                    <ShieldOutlinedIcon
-                                      sx={{ color: 'text.secondary', fontSize: 12 }}
-                                    />
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: '#ff7a7a', fontSize: 11, lineHeight: 1 }}
-                                    >
-                                      {w.heavy}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
-                                    >
-                                      •
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: '#93f093', fontSize: 11, lineHeight: 1 }}
-                                    >
-                                      {w.medium}
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
-                                    >
-                                      •
-                                    </Typography>
-                                    <Typography
-                                      variant="caption"
-                                      sx={{ color: '#3c9bff', fontSize: 11, lineHeight: 1 }}
-                                    >
-                                      {w.light}
-                                    </Typography>
-                                  </Box>
-                                </Box>
-                              );
-                            })()}
-                            <Box display="flex" flexWrap="wrap" gap={1}>
+                            {talents.length > 6 && (
+                              <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
+                                {talents.slice(6).map((talent, idx) => (
+                                  <Avatar
+                                    key={idx}
+                                    src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                    alt={talent.name}
+                                    variant="rounded"
+                                    sx={{
+                                      width: 32,
+                                      height: 32,
+                                      border: '1px solid var(--border)',
+                                      boxShadow: 'rgb(0 0 0) 0px 2px 4px',
+                                    }}
+                                    title={`${talent.name} (ID: ${talent.guid})`}
+                                  />
+                                ))}
+                              </Box>
+                            )}
+                          </Box>
+                        )}
+                        {/* Gear */}
+                        {gear.length > 0 && (
+                          <Box mt={1.25}>
+                            {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
+                            <Box display="flex" flexWrap="wrap" gap={1.25}>
                               {(() => {
                                 type BaseSet = {
                                   total: number;
@@ -752,20 +844,23 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                   if (!entry.setID && g.setID) entry.setID = g.setID;
                                 });
 
-                              const chips: React.ReactNode[] = [];
-                              Object.entries(setDataByBase).forEach(([baseKey, data], idx) => {
-                                const labelName = data.perfected === data.total ? `Perfected ${data.baseDisplay}` : data.baseDisplay;
-                                const count = data.total;
-                                const chipProps = getGearChipProps(labelName, count);
-                                chips.push(
-                                  <Chip
-                                    key={idx}
-                                    label={`${count} ${labelName}`}
-                                    size="small"
-                                    title={`Set ID: ${data.setID ?? ''}`}
-                                    {...chipProps}
-                                  />
-                                );
+                                const chips: React.ReactNode[] = [];
+                                Object.entries(setDataByBase).forEach(([baseKey, data], idx) => {
+                                  const labelName =
+                                    data.perfected === data.total
+                                      ? `Perfected ${data.baseDisplay}`
+                                      : data.baseDisplay;
+                                  const count = data.total;
+                                  const chipProps = getGearChipProps(labelName, count);
+                                  chips.push(
+                                    <Chip
+                                      key={idx}
+                                      label={`${count} ${labelName}`}
+                                      size="small"
+                                      title={`Set ID: ${data.setID ?? ''}`}
+                                      {...chipProps}
+                                    />
+                                  );
 
                                   if (
                                     count >= 5 &&
@@ -789,162 +884,240 @@ const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                           </Box>
                         )}
 
-                      {/* Build Issues details moved under right column */}
-                    </Box>
-                    {/* Right column: Player info box aligned right */}
-                    <Box sx={{ width: { xs: '100%', md: 300 } }}>
-                      {(() => {
-                        const hasMundus = !!(actor.id && mundusBuffsByPlayer[String(actor.id)]?.length);
-                        const deathsVal = actor.id ? (deathsByPlayer[String(actor.id)] ?? 0) : 0;
-                        const resVal = actor.id ? (resurrectsByPlayer[String(actor.id)] ?? 0) : 0;
-                        const cpmVal = actor.id ? (cpmByPlayer[String(actor.id)] ?? 0) : 0;
-                        const foodAura = actor.id ? detectFoodFromAuras(aurasByPlayer[String(actor.id)]) : undefined;
-                        return (
-                          <Box
+                        {/* Build Issues details moved under right column */}
+                      </Box>
+                      {/* Right column: Player info box aligned right */}
+                      <Box sx={{ width: { xs: '100%', md: 300 } }}>
+                        {(() => {
+                          const hasMundus = !!(
+                            player.id && mundusBuffsByPlayer[String(player.id)]?.length
+                          );
+                          const deathsVal = player.id
+                            ? (deathsByPlayer[String(player.id)] ?? 0)
+                            : 0;
+                          const resVal = player.id
+                            ? (resurrectsByPlayer[String(player.id)] ?? 0)
+                            : 0;
+                          const cpmVal = player.id ? (cpmByPlayer[String(player.id)] ?? 0) : 0;
+                          const foodAura = player.id
+                            ? detectFoodFromAuras(aurasByPlayer[String(player.id)])
+                            : undefined;
+                          return (
+                            <Box
+                              sx={{
+                                p: 1,
+                                border: '1px solid var(--border)',
+                                borderRadius: 1,
+                                backgroundColor: 'rgba(2,6,23,0.25)',
+                                boxShadow: 'rgb(6 9 11) 0px 2px 4px',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  mb: 1,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'flex-start',
+                                  minWidth: 0,
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    flexWrap: 'nowrap',
+                                    gap: 1,
+                                    minHeight: 24,
+                                    flex: '1 1 auto',
+                                    minWidth: 0,
+                                    overflow: 'hidden',
+                                    mr: 1,
+                                  }}
+                                >
+                                  {hasMundus && (
+                                    <>
+                                      {(mundusBuffsByPlayer[String(player.id)] ?? []).map(
+                                        (buff, idx) => (
+                                          <Box
+                                            key={idx}
+                                            component="span"
+                                            title={`Ability ID: ${buff.id}`}
+                                            sx={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              border: '1px solid',
+                                              borderColor: 'var(--border)',
+                                              borderRadius: 9999,
+                                              px: 0.75,
+                                              py: 0.25,
+                                              fontSize: 11,
+                                              lineHeight: 1,
+                                              color: 'primary.main',
+                                              whiteSpace: 'nowrap',
+                                              verticalAlign: 'middle',
+                                              fontFamily: 'Space Grotesk, sans-serif',
+                                              fontWeight: 200,
+                                            }}
+                                          >
+                                            {buff.name.replace(/^Boon:\\s*/i, '')}
+                                          </Box>
+                                        )
+                                      )}
+                                    </>
+                                  )}
+                                </Box>
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{
+                                    whiteSpace: 'nowrap',
+                                    flex: '0 0 auto',
+                                    flexShrink: 0,
+                                    ml: 'auto',
+                                    pr: 1,
+                                    maxWidth: '100%',
+                                    minWidth: 0,
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                  }}
+                                >
+                                  {foodAura && (
+                                    <>
+                                      <Tooltip title={`Food/Drink: ${foodAura.name}`}>
+                                        <span
+                                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                                        >
+                                          <span role="img" aria-label="food">
+                                            🍲
+                                          </span>
+                                          <Box component="span" sx={{ display: 'none' }}>
+                                            &nbsp;{abbreviateFood(foodAura.name)}
+                                          </Box>
+                                        </span>
+                                      </Tooltip>{' '}
+                                      •{' '}
+                                    </>
+                                  )}
+                                  <Tooltip title="Deaths in this fight">
+                                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                      <span role="img" aria-label="deaths">
+                                        💀
+                                      </span>
+                                      &nbsp;{deathsVal}
+                                    </span>
+                                  </Tooltip>{' '}
+                                  •{' '}
+                                  <Tooltip title="Successful resurrects performed">
+                                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                      <span role="img" aria-label="resurrects">
+                                        ❤️
+                                      </span>
+                                      &nbsp;{resVal}
+                                    </span>
+                                  </Tooltip>{' '}
+                                  •{' '}
+                                  <Tooltip title="Casts per Minute">
+                                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                      <span role="img" aria-label="cpm">
+                                        🐭
+                                      </span>
+                                      &nbsp;
+                                      {reportId ? (
+                                        <a
+                                          href={castsUrl(reportId, fightId)}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          style={{ color: 'inherit', textDecoration: 'underline' }}
+                                        >
+                                          {cpmVal}
+                                        </a>
+                                      ) : (
+                                        <>{cpmVal}</>
+                                      )}
+                                    </span>
+                                  </Tooltip>
+                                </Typography>
+                              </Box>
+                              {player.id && aurasByPlayer[String(player.id)]?.length > 0 && (
+                                <Box sx={{}}>
+                                  <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                                    Notable Auras
+                                  </Typography>
+                                  <Box display="flex" flexWrap="wrap" gap={1}>
+                                    {aurasByPlayer[String(player.id)]
+                                      .slice()
+                                      .sort((a, b) => a.name.localeCompare(b.name))
+                                      .slice(0, 3)
+                                      .map((aura, idx) => (
+                                        <Chip
+                                          key={idx}
+                                          label={
+                                            aura.stacks && aura.stacks > 1
+                                              ? `${aura.name} (${aura.stacks})`
+                                              : aura.name
+                                          }
+                                          size="small"
+                                          title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
+                                          sx={buildVariantSx('indigo')}
+                                        />
+                                      ))}
+                                  </Box>
+                                </Box>
+                              )}
+                            </Box>
+                          );
+                        })()}
+                        {buildIssues.length > 0 && (
+                          <Accordion
+                            variant="outlined"
                             sx={{
-                              p: 1,
-                              border: '1px solid var(--border)',
-                              borderRadius: 1,
-                              backgroundColor: 'rgba(2,6,23,0.25)',
-                              boxShadow: 'rgb(6 9 11) 0px 2px 4px',
+                              mt: 1,
+                              borderColor: 'warning.main',
+                              backgroundColor: 'rgba(255,193,7,0.07)',
                             }}
                           >
-                            <Box sx={{ mb: 1, display: 'flex', alignItems: 'center', justifyContent: 'flex-start', minWidth: 0 }}>
-                              <Box sx={{ display: 'flex', flexWrap: 'nowrap', gap: 1, minHeight: 24, flex: '1 1 auto', minWidth: 0, overflow: 'hidden', mr: 1 }}>
-                                {hasMundus && (
-                                  <>
-                                    {(mundusBuffsByPlayer[String(actor.id)] ?? []).map((buff, idx) => (
-                                      <Box
-                                        key={idx}
-                                        component="span"
-                                        title={`Ability ID: ${buff.id}`}
-                                        sx={{
-                                          display: 'inline-flex',
-                                          alignItems: 'center',
-                                          border: '1px solid',
-                                          borderColor: 'var(--border)',
-                                          borderRadius: 9999,
-                                          px: 0.75,
-                                          py: 0.25,
-                                          fontSize: 11,
-                                          lineHeight: 1,
-                                          color: 'primary.main',
-                                          whiteSpace: 'nowrap',
-                                          verticalAlign: 'middle',
-                                          fontFamily: 'Space Grotesk, sans-serif',
-                                          fontWeight: 200,
-                                        }}
-                                      >
-                                        {buff.name.replace(/^Boon:\\s*/i, '')}
-                                      </Box>
-                                    ))}
-                                  </>
-                                )}
-                              </Box>
-                              <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'nowrap', flex: '0 0 auto', flexShrink: 0, ml: 'auto', pr: 1, maxWidth: '100%', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                                {foodAura && (
-                                  <>
-                                    <Tooltip title={`Food/Drink: ${foodAura.name}`}>
-                                      <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                        <span role="img" aria-label="food">🍲</span>
-                                        <Box component="span" sx={{ display: 'none' }}>&nbsp;{abbreviateFood(foodAura.name)}</Box>
-                                      </span>
-                                    </Tooltip>
-                                    {' '}•{' '}
-                                  </>
-                                )}
-                                <Tooltip title="Deaths in this fight">
-                                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    <span role="img" aria-label="deaths">💀</span>&nbsp;{deathsVal}
-                                  </span>
-                                </Tooltip>
-                                {' '}•{' '}
-                                <Tooltip title="Successful resurrects performed">
-                                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    <span role="img" aria-label="resurrects">❤️</span>&nbsp;{resVal}
-                                  </span>
-                                </Tooltip>
-                                {' '}•{' '}
-                                <Tooltip title="Casts per Minute">
-                                  <span style={{ display: 'inline-flex', alignItems: 'center' }}>
-                                    <span role="img" aria-label="cpm">🐭</span>&nbsp;
-                                    {reportId ? (
-                                      <a
-                                        href={castsUrl(reportId, fightId)}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'inherit', textDecoration: 'underline' }}
-                                      >
-                                        {cpmVal}
-                                      </a>
-                                    ) : (
-                                      <>{cpmVal}</>
-                                    )}
-                                  </span>
-                                </Tooltip>
-                              </Typography>
-                            </Box>
-                            {actor.id && aurasByPlayer[String(actor.id)]?.length > 0 && (
-                              <Box sx={{}}>
-                                <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
-                                  Notable Auras
-                                </Typography>
-                                <Box display="flex" flexWrap="wrap" gap={1}>
-                                  {aurasByPlayer[String(actor.id)]
-                                    .slice()
-                                    .sort((a, b) => a.name.localeCompare(b.name))
-                                    .slice(0, 3)
-                                    .map((aura, idx) => (
-                                      <Chip
-                                        key={idx}
-                                        label={aura.stacks && aura.stacks > 1 ? `${aura.name} (${aura.stacks})` : aura.name}
-                                        size="small"
-                                        title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
-                                        sx={buildVariantSx('indigo')}
-                                      />
-                                    ))}
-                                </Box>
-                              </Box>
-                            )}
-                          </Box>
-                        );
-                      })()}
-                      {buildIssues.length > 0 && (
-                        <Accordion
-                          variant="outlined"
-                          sx={{
-                            mt: 1,
-                            borderColor: 'warning.main',
-                            backgroundColor: 'rgba(255,193,7,0.07)',
-                          }}
-                        >
-                          <AccordionSummary
-                            expandIcon={<ExpandMoreIcon sx={{ color: 'warning.main' }} />}
-                            sx={{ '& .MuiAccordionSummary-content': { alignItems: 'center' } }}
-                          >
-                            <Typography
-                              variant="body2"
-                              fontWeight="bold"
-                              sx={{ color: 'warning.main', display: 'flex', alignItems: 'center', gap: 1 }}
+                            <AccordionSummary
+                              expandIcon={<ExpandMoreIcon sx={{ color: 'warning.main' }} />}
+                              sx={{ '& .MuiAccordionSummary-content': { alignItems: 'center' } }}
                             >
-                              <span role="img" aria-label="attention">⚠️</span>
-                              Build Issues ({buildIssues.length})
-                            </Typography>
-                          </AccordionSummary>
-                          <AccordionDetails>
-                            <Box component="ul" sx={{ m: 0, pl: 0, listStyle: 'none' }}>
-                              {buildIssues.map((issue, idx) => (
-                                <Typography key={`issue-${idx}`} component="li" variant="body2" sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
-                                  <span aria-hidden style={{ width: 18 }}>•</span>
-                                  <span>
-                                    <strong>{issue.gearName}</strong>: {issue.message.replace(/^.*?:\s*/, '')}
-                                  </span>
-                                </Typography>
-                              ))}
-                            </Box>
-                          </AccordionDetails>
-                        </Accordion>
-                      )}
+                              <Typography
+                                variant="body2"
+                                fontWeight="bold"
+                                sx={{
+                                  color: 'warning.main',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                }}
+                              >
+                                <span role="img" aria-label="attention">
+                                  ⚠️
+                                </span>
+                                Build Issues ({buildIssues.length})
+                              </Typography>
+                            </AccordionSummary>
+                            <AccordionDetails>
+                              <Box component="ul" sx={{ m: 0, pl: 0, listStyle: 'none' }}>
+                                {buildIssues.map((issue, idx) => (
+                                  <Typography
+                                    key={`issue-${idx}`}
+                                    component="li"
+                                    variant="body2"
+                                    sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
+                                  >
+                                    <span aria-hidden style={{ width: 18 }}>
+                                      •
+                                    </span>
+                                    <span>
+                                      <strong>{issue.gearName}</strong>:{' '}
+                                      {issue.message.replace(/^.*?:\s*/, '')}
+                                    </span>
+                                  </Typography>
+                                ))}
+                              </Box>
+                            </AccordionDetails>
+                          </Accordion>
+                        )}
+                      </Box>
                     </Box>
                     {/* Duplicate long lists removed to keep card minimal; summarized in right panel */}
                   </CardContent>

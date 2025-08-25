@@ -2,7 +2,7 @@ import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import {
   useDamageEvents,
   useHealingEvents,
@@ -12,6 +12,7 @@ import {
   useCastEvents,
   useCombatantInfoEvents,
   useReportMasterData,
+  useReportFightParams,
 } from '../../hooks';
 
 import { FightDetailsView } from './FightDetailsView';
@@ -23,6 +24,7 @@ interface FightDetailsProps {
 
 export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { reportId } = useReportFightParams();
 
   // Use the new hooks for data fetching
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
@@ -33,6 +35,16 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+
+  const isLoading =
+    isDamageEventsLoading ||
+    isHealingEventsLoading ||
+    isBuffEventsLoading ||
+    isMasterDataLoading ||
+    isDebuffEventsLoading ||
+    isDeathEventsLoading ||
+    isCastEventsLoading ||
+    isCombatantInfoEventsLoading;
 
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
@@ -81,31 +93,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
     combatantInfoEvents,
   ]);
 
-  // Aggregate loading state for all event categories used in this view
-  const eventsLoaded = React.useMemo(
-    () =>
-      !(
-        isDamageEventsLoading ||
-        isHealingEventsLoading ||
-        isBuffEventsLoading ||
-        isDebuffEventsLoading ||
-        isDeathEventsLoading ||
-        isCastEventsLoading ||
-        isCombatantInfoEventsLoading
-      ),
-    [
-      isDamageEventsLoading,
-      isHealingEventsLoading,
-      isBuffEventsLoading,
-      isDebuffEventsLoading,
-      isDeathEventsLoading,
-      isCastEventsLoading,
-      isCombatantInfoEventsLoading,
-    ]
-  );
-
-  const masterDataLoaded = !isMasterDataLoading;
-
   // Calculate total number of available tabs
   const totalTabs = showExperimentalTabs ? 14 : 8;
 
@@ -129,13 +116,13 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       return [];
     }
 
-    const rtn: { id: string; name: string }[] = [];
+    const rtn: ReportActorFragment[] = [];
 
     for (const npc of Object.values(fight.enemyNPCs)) {
       const actor = npc?.id ? reportMasterData.actorsById[npc.id] : undefined;
 
       if (actor?.id && actor?.name) {
-        rtn.push({ id: String(actor.id), name: actor.name });
+        rtn.push(actor);
       }
     }
 
@@ -171,9 +158,10 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   }, [showExperimentalTabs, setSearchParams]);
 
   // Only render content when master data is loaded
-  if (isMasterDataLoading) {
+  if (isLoading) {
     return (
       <FightDetailsView
+        reportCode={reportId}
         fight={fight}
         selectedTabId={selectedTabId}
         validSelectedTab={validSelectedTab}
@@ -181,8 +169,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
         targets={targets}
         selectedTargetId={selectedTargetId}
         events={events}
-        eventsLoaded={false}
-        masterDataLoaded={false}
+        loading={true}
         onNavigateToTab={navigateToTab}
         onTargetChange={handleTargetChange}
         onToggleExperimentalTabs={toggleExperimentalTabs}
@@ -194,6 +181,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
 
   return (
     <FightDetailsView
+      reportCode={reportId}
       fight={fight}
       selectedTabId={selectedTabId}
       validSelectedTab={validSelectedTab}
@@ -201,8 +189,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       targets={targets}
       selectedTargetId={selectedTargetId}
       events={events}
-      eventsLoaded={eventsLoaded}
-      masterDataLoaded={masterDataLoaded}
+      loading={false}
       onNavigateToTab={navigateToTab}
       onTargetChange={handleTargetChange}
       onToggleExperimentalTabs={toggleExperimentalTabs}
