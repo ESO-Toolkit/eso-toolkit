@@ -11,7 +11,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { useReportFightParams } from '../../../hooks/useReportFightParams';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
 
 interface HealingRow {
@@ -33,7 +33,7 @@ interface HealingDonePanelViewProps {
  * Dumb component that only handles rendering the healing done panel UI
  */
 export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   const handleResurrectClick = (playerId: string): void => {
     if (reportId && fightId) {

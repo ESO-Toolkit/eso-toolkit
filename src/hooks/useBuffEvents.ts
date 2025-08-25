@@ -3,13 +3,12 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchBuffEvents } from '../store/events_data/buffEventsSlice';
 import { selectBuffEvents, selectBuffEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
-
-import { useReportFightParams } from './useReportFightParams';
 
 export function useBuffEvents(): {
   buffEvents: BuffEvent[];
@@ -17,7 +16,7 @@ export function useBuffEvents(): {
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
   const fights = useSelector(selectReportFights);
   const client = useEsoLogsClientInstance();
 

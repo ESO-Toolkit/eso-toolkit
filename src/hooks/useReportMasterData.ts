@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import {
   selectMasterData,
   selectMasterDataLoadingState,
@@ -10,18 +11,16 @@ import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
-import { useReportFightParams } from './useReportFightParams';
-
 export function useReportMasterData(): {
   reportMasterData: RootState['masterData'];
   isMasterDataLoading: boolean;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId } = useReportFightParams();
+  const { reportId } = useSelectedReportAndFight();
 
   React.useEffect(() => {
-    if (reportId !== undefined && client !== undefined) {
+    if (reportId) {
       dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
   }, [dispatch, reportId, client]);

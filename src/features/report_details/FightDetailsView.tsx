@@ -49,7 +49,7 @@ import { PenetrationPanel } from './penetration/PenetrationPanel';
 
 interface FightDetailsViewProps {
   fight: FightFragment;
-  reportCode: string | undefined;
+  reportCode: string | undefined | null;
   selectedTabId?: number;
   validSelectedTab: number;
   showExperimentalTabs: boolean;

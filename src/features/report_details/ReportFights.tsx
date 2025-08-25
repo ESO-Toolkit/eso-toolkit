@@ -2,7 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { useReportFightParams } from '../../hooks/useReportFightParams';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { clearAllEvents } from '../../store/events_data/actions';
 import { clearMasterData } from '../../store/master_data/masterDataSlice';
 import { fetchReportData } from '../../store/report/reportSlice';
@@ -12,7 +12,8 @@ import { useAppDispatch } from '../../store/useAppDispatch';
 import { ReportFightsView } from './ReportFightsView';
 
 export const ReportFights: React.FC = () => {
-  const { reportId, fightId } = useReportFightParams();
+  // Get current selected report and fight from context
+  const { reportId, fightId } = useSelectedReportAndFight();
   const dispatch = useAppDispatch();
   const client = useEsoLogsClientInstance();
 
@@ -39,8 +40,8 @@ export const ReportFights: React.FC = () => {
       fights={fights}
       loading={loading}
       error={error}
-      fightId={fightId}
-      reportId={reportId}
+      fightId={fightId || undefined}
+      reportId={reportId || undefined}
       reportStartTime={startTime}
     />
   );

@@ -5,16 +5,19 @@ import { Outlet } from 'react-router-dom';
 
 import { HeaderBar } from '../components/HeaderBar';
 import { ReduxThemeProvider } from '../ReduxThemeProvider';
+import { ReportFightProvider } from '../ReportFightContext';
 
 export const AppLayout: React.FC = () => (
   <ReduxThemeProvider>
-    <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
-      <HeaderBar />
-      <Container maxWidth="md">
-        <Box sx={{ pt: 10, pb: 4, minHeight: '100vh', overflowY: 'auto' }}>
-          <Outlet />
-        </Box>
-      </Container>
-    </Box>
+    <ReportFightProvider>
+      <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
+        <HeaderBar />
+        <Container maxWidth="md">
+          <Box sx={{ pt: 10, pb: 4, minHeight: '100vh', overflowY: 'auto' }}>
+            <Outlet />
+          </Box>
+        </Container>
+      </Box>
+    </ReportFightProvider>
   </ReduxThemeProvider>
 );

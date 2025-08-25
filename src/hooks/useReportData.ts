@@ -3,12 +3,12 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { ReportFragment } from '../graphql/generated';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import { selectReportLoadingState } from '../store/report/reportSelectors';
 import { fetchReportData } from '../store/report/reportSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
-import { useReportFightParams } from './useReportFightParams';
 
 export function useReportData(): {
   reportData: ReportFragment | null;
@@ -16,10 +16,10 @@ export function useReportData(): {
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId } = useReportFightParams();
+  const { reportId } = useSelectedReportAndFight();
 
   React.useEffect(() => {
-    if (reportId !== undefined) {
+    if (reportId) {
       dispatch(fetchReportData({ reportId, client }));
     }
   }, [dispatch, reportId, client]);

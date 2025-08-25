@@ -3,13 +3,12 @@ import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchResourceEvents } from '../store/events_data/resourceEventsSlice';
 import { selectResourceEvents, selectResourceEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { ResourceChangeEvent } from '../types/combatlogEvents';
-
-import { useReportFightParams } from './useReportFightParams';
 
 export function useResourceEvents(): {
   resourceEvents: ResourceChangeEvent[];
@@ -18,7 +17,7 @@ export function useResourceEvents(): {
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
   const fights = useSelector(selectReportFights);
 
   // Get the specific fight from the report data

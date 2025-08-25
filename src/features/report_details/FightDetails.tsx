@@ -12,8 +12,8 @@ import {
   useCastEvents,
   useCombatantInfoEvents,
   useReportMasterData,
-  useReportFightParams,
 } from '../../hooks';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
 
@@ -24,7 +24,7 @@ interface FightDetailsProps {
 
 export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { reportId } = useReportFightParams();
+  const { reportId } = useSelectedReportAndFight();
 
   // Use the new hooks for data fetching
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();

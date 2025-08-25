@@ -6,7 +6,7 @@ import {
   useReportMasterData,
   useBuffEvents,
 } from '../../../hooks';
-import { useReportFightParams } from '../../../hooks/useReportFightParams';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { BuffEvent, DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
@@ -37,7 +37,7 @@ interface DeathInfo {
 
 export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   // Get reportId and fightId from params
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   // Use hooks to get data
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();

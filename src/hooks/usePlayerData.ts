@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import {
   selectPlayerData,
   selectPlayerDataLoadingState,
@@ -9,18 +10,16 @@ import {
 import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
-import { useReportFightParams } from './useReportFightParams';
-
 export function usePlayerData(): {
   playerData: PlayerDataState | null;
   isPlayerDataLoading: boolean;
 } {
   const client = useEsoLogsClientInstance();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   React.useEffect(() => {
-    if (reportId !== undefined && fightId !== undefined && client !== undefined) {
+    if (reportId && fightId) {
       const fightIdNumber = parseInt(fightId, 10);
       if (!isNaN(fightIdNumber)) {
         dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
