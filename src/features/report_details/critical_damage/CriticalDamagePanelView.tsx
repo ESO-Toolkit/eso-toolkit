@@ -4,17 +4,13 @@ import React from 'react';
 import { FightFragment } from '../../../graphql/generated';
 
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
-
-interface PlayerData {
-  id: string;
-  name: string;
-}
+import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 
 interface CriticalDamagePanelProps {
-  players: PlayerData[];
+  players: Record<string, PlayerDetailsWithRole> | undefined;
   fight: FightFragment;
   expandedPanels: Record<string, boolean>;
-  onExpandChange: (playerId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 
 /**
@@ -28,7 +24,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box>
-      {players.map((player) => (
+      {Object.values(players).map((player) => (
         <PlayerCriticalDamageDetails
           key={player.id}
           id={player.id}

@@ -30,7 +30,7 @@ const initialState: PlayerDataState = {
   },
 };
 
-interface PlayerDetailsWithRole extends PlayerDetailsEntry {
+export interface PlayerDetailsWithRole extends PlayerDetailsEntry {
   role: 'dps' | 'tank' | 'healer';
 }
 

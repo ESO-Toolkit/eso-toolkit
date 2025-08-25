@@ -26,7 +26,12 @@ import { useSearchParams } from 'react-router-dom';
 
 import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
-import { useFriendlyBuffEvents } from '../../../hooks';
+import {
+  useCombatantInfoEvents,
+  useDamageEvents,
+  useDebuffEvents,
+  useFriendlyBuffEvents,
+} from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectDamageEvents, selectDebuffEvents } from '../../../store/events_data/actions';
 import { RootState } from '../../../store/storeWithHistory';
@@ -37,6 +42,8 @@ import {
   CombatantAura,
   LogEvent,
   DamageEvent,
+  DebuffEvent,
+  BuffEvent,
 } from '../../../types/combatlogEvents';
 
 // Register Chart.js components
@@ -72,7 +79,7 @@ interface CriticalDamageDataPoint {
 }
 
 interface PlayerCriticalDamageData {
-  playerId: string;
+  playerId: number;
   playerName: string;
   dataPoints: CriticalDamageDataPoint[];
 }
@@ -99,11 +106,371 @@ interface CriticalMultiplierInfo {
 }
 
 interface PlayerCriticalDamageDetailsProps {
-  id: string;
+  id: number;
   name: string;
   fight: FightFragment;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
+}
+
+// Helper function to get active critical damage sources at a specific timestamp
+function getActiveCriticalDamageSourcesAtTimestamp(
+  timestamp: number,
+  debuffEvents: DebuffEvent[],
+  friendlyBuffEvents: BuffEvent[],
+  combatantInfoEvents: CombatantInfoEvent[],
+  playerId: number,
+  targetId: string,
+  fightData: FightFragment
+): CriticalDamageSource[] {
+  const sources: CriticalDamageSource[] = [];
+  const fightEnd = fightData.endTime;
+
+  // Find combatant info for auras
+  const combatantInfoEvent = combatantInfoEvents.find(
+    (event) => event.sourceID === playerId && event.fight === fightData.id
+  );
+  const latestAuras = combatantInfoEvent?.auras ?? [];
+  const mediumArmorCount =
+    combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
+
+  // Base critical damage
+  sources.push({
+    name: 'Base Critical Damage',
+    value: 50,
+    wasActive: true,
+    description: 'Default critical damage bonus that all players start with',
+  });
+
+  // Static passives
+  if (
+    latestAuras.some(
+      (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+    )
+  ) {
+    sources.push({
+      name: 'Hemorrhage',
+      value: CriticalDamageValues.HEMORRHAGE,
+      wasActive: true,
+      description: 'Passive that provides 10% critical damage bonus',
+    });
+  }
+
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
+    )
+  ) {
+    sources.push({
+      name: 'Piercing Spear',
+      value: CriticalDamageValues.PIERCING_SPEAR,
+      wasActive: true,
+      description: 'Passive that provides 12% critical damage bonus',
+    });
+  }
+
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.ADVANCED_SPECIES || aura.name?.includes('Advanced Species')
+    )
+  ) {
+    sources.push({
+      name: 'Advanced Species',
+      value: CriticalDamageValues.ADVANCED_SPECIES,
+      wasActive: true,
+      description: 'Passive that provides 15% critical damage bonus',
+    });
+  }
+
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+        aura.name?.includes('Fated Fortune')
+    )
+  ) {
+    sources.push({
+      name: 'Fated Fortune',
+      value: CriticalDamageValues.FATED_FORTUNE,
+      wasActive: true,
+      description: 'Passive that provides 12% critical damage bonus',
+    });
+  }
+
+  if (
+    mediumArmorCount > 0 &&
+    latestAuras.some(
+      (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+    )
+  ) {
+    sources.push({
+      name: 'Dexterity',
+      value: mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE,
+      wasActive: true,
+      description: `Passive that provides 2% critical damage per piece of medium armor worn (${mediumArmorCount} pieces)`,
+    });
+  }
+
+  // Dynamic buffs/debuffs
+  const lucentEchoesEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.LUCENT_ECHOES
+  );
+  if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightEnd)) {
+    sources.push({
+      name: 'Lucent Echoes',
+      value: CriticalDamageValues.LUCENT_ECHOES,
+      wasActive: true,
+      description: 'Buff that provides 11% critical damage bonus',
+    });
+  }
+
+  const minorForceEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.MINOR_FORCE
+  );
+  if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightEnd)) {
+    sources.push({
+      name: 'Minor Force',
+      value: 10,
+      wasActive: true,
+      description: 'Buff that provides 10% critical damage',
+    });
+  }
+
+  const majorForceEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.MAJOR_FORCE
+  );
+  if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightEnd)) {
+    sources.push({
+      name: 'Major Force',
+      value: 20,
+      wasActive: true,
+      description: 'Buff that provides 20% critical damage',
+    });
+  }
+
+  const minorBrittleEvents = debuffEvents.filter(
+    (event) =>
+      (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+      String(event.targetID) === targetId &&
+      event.abilityGameID === KnownAbilities.MINOR_BRITTLE
+  );
+  if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightEnd)) {
+    sources.push({
+      name: 'Minor Brittle',
+      value: 10,
+      wasActive: true,
+      description: 'Debuff that provides 10% critical damage',
+    });
+  }
+
+  const majorBrittleEvents = debuffEvents.filter(
+    (event) =>
+      (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+      String(event.targetID) === targetId &&
+      event.abilityGameID === KnownAbilities.MAJOR_BRITTLE
+  );
+  if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightEnd)) {
+    sources.push({
+      name: 'Major Brittle',
+      value: 20,
+      wasActive: true,
+      description: 'Debuff that provides 20% critical damage',
+    });
+  }
+
+  return sources.filter((source) => source.wasActive);
+}
+
+// Helper function to check if a buff is active at a timestamp
+function isBuffActiveAtTimestamp(
+  timestamp: number,
+  buffEvents: LogEvent[],
+  fightEnd: number
+): boolean {
+  const intervals: Array<{ start: number; end: number }> = [];
+  let activeStart: number | null = null;
+
+  for (const event of buffEvents) {
+    if (event.type === 'applybuff') {
+      if (activeStart === null) activeStart = event.timestamp;
+    } else if (event.type === 'removebuff') {
+      if (activeStart !== null) {
+        intervals.push({ start: activeStart, end: event.timestamp });
+        activeStart = null;
+      }
+    }
+  }
+
+  if (activeStart !== null) {
+    intervals.push({ start: activeStart, end: fightEnd });
+  }
+
+  return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
+}
+
+// Helper function to check if a debuff is active at a timestamp
+function isDebuffActiveAtTimestamp(
+  timestamp: number,
+  debuffEvents: LogEvent[],
+  fightEnd: number
+): boolean {
+  const intervals: Array<{ start: number; end: number }> = [];
+  let activeStart: number | null = null;
+
+  for (const event of debuffEvents) {
+    if (event.type === 'applydebuff') {
+      if (activeStart === null) activeStart = event.timestamp;
+    } else if (event.type === 'removedebuff') {
+      if (activeStart !== null) {
+        intervals.push({ start: activeStart, end: event.timestamp });
+        activeStart = null;
+      }
+    }
+  }
+
+  if (activeStart !== null) {
+    intervals.push({ start: activeStart, end: fightEnd });
+  }
+
+  return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
+}
+
+// Helper function to calculate critical damage percentage at a specific timestamp
+function calculateCriticalDamageAtTimestamp(
+  timestamp: number,
+  debuffEvents: DebuffEvent[],
+  friendlyBuffEvents: BuffEvent[],
+  combatantInfoEvents: CombatantInfoEvent[],
+  playerId: number,
+  targetId: string,
+  fightData: FightFragment
+): number {
+  const fightEnd = fightData.endTime;
+
+  // Find combatant info for auras
+  const combatantInfoEvent = combatantInfoEvents.find(
+    (event): event is CombatantInfoEvent =>
+      event.sourceID === playerId && event.fight === fightData.id
+  );
+  const latestAuras = combatantInfoEvent?.auras ?? [];
+  const mediumArmorCount =
+    combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
+
+  // Start with base critical damage
+  let critDmg = 50;
+
+  // Add static passives
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
+        aura.name?.includes('Fated Fortune')
+    )
+  ) {
+    critDmg += CriticalDamageValues.FATED_FORTUNE;
+  }
+  if (
+    latestAuras.some(
+      (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
+    )
+  ) {
+    critDmg += CriticalDamageValues.HEMORRHAGE;
+  }
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
+    )
+  ) {
+    critDmg += CriticalDamageValues.PIERCING_SPEAR;
+  }
+  if (
+    latestAuras.some(
+      (aura) =>
+        aura.ability === KnownAbilities.ADVANCED_SPECIES || aura.name?.includes('Advanced Species')
+    )
+  ) {
+    critDmg += CriticalDamageValues.ADVANCED_SPECIES;
+  }
+  if (
+    mediumArmorCount > 0 &&
+    latestAuras.some(
+      (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
+    )
+  ) {
+    critDmg += mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE;
+  }
+
+  // Check dynamic buffs active at this timestamp
+  // Lucent Echoes
+  const lucentEchoesEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.LUCENT_ECHOES
+  );
+
+  if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightEnd)) {
+    critDmg += CriticalDamageValues.LUCENT_ECHOES;
+  }
+
+  // Minor Force
+  const minorForceEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.MINOR_FORCE
+  );
+  if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightEnd)) {
+    critDmg += 10;
+  }
+
+  // Major Force
+  const majorForceEvents = friendlyBuffEvents.filter(
+    (event) =>
+      (event.type === 'applybuff' || event.type === 'removebuff') &&
+      event.targetID === playerId &&
+      event.abilityGameID === KnownAbilities.MAJOR_FORCE
+  );
+  if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightEnd)) {
+    critDmg += 20;
+  }
+
+  // Minor Brittle (on target)
+  const minorBrittleEvents = debuffEvents.filter(
+    (event) =>
+      (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+      String(event.targetID ?? event.target ?? '') === targetId &&
+      ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
+        (event.abilityName ?? '').includes('Minor Brittle'))
+  );
+  if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightEnd)) {
+    critDmg += 10;
+  }
+
+  // Major Brittle (on target)
+  const majorBrittleEvents = debuffEvents.filter(
+    (event) =>
+      (event.type === 'applydebuff' || event.type === 'removedebuff') &&
+      event.targetID === targetId &&
+      event.abilityGameID === KnownAbilities.MAJOR_BRITTLE
+  );
+  if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightEnd)) {
+    critDmg += 20;
+  }
+
+  return critDmg;
 }
 
 export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
@@ -126,17 +493,10 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     null
   );
 
-  const combatantInfoEvents = useSelector((state: RootState) => state.events.combatantInfo.events);
-
-  // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
-  const damageEvents = useSelector(selectDamageEvents);
-  const { friendlyBuffEvents } = useFriendlyBuffEvents();
-  const debuffEvents = useSelector(selectDebuffEvents);
-
-  // Combine all events for compatibility with existing code
-  const fightEvents = React.useMemo(() => {
-    return [...damageEvents, ...friendlyBuffEvents, ...debuffEvents, ...combatantInfoEvents];
-  }, [damageEvents, friendlyBuffEvents, debuffEvents, combatantInfoEvents]);
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
 
   // Calculate base critical damage for this specific player
   const playerBaseCriticalDamage = React.useMemo(() => {
@@ -146,11 +506,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
     // Find the combatantinfo event for this player in this specific fight
     const combatantInfoEvent = combatantInfoEvents.find(
-      (event): event is CombatantInfoEvent =>
-        event.type === 'combatantinfo' &&
-        String(event.sourceID) === id &&
-        'fight' in event &&
-        event.fight === fight.id
+      (event) => event.sourceID === id && event.fight === fight.id
     );
 
     const latestData = combatantInfoEvent;
@@ -228,406 +584,16 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     return baseCriticalDamage;
   }, [combatantInfoEvents, selectedTargetId, fight, id]);
 
-  // Helper function to check if a buff is active at a timestamp
-  const isBuffActiveAtTimestamp = React.useCallback(
-    (timestamp: number, buffEvents: LogEvent[], fightStart: number, fightEnd: number): boolean => {
-      const intervals: Array<{ start: number; end: number }> = [];
-      let activeStart: number | null = null;
-
-      for (const event of buffEvents) {
-        if (event.type === 'applybuff') {
-          if (activeStart === null) activeStart = event.timestamp;
-        } else if (event.type === 'removebuff') {
-          if (activeStart !== null) {
-            intervals.push({ start: activeStart, end: event.timestamp });
-            activeStart = null;
-          }
-        }
-      }
-
-      if (activeStart !== null) {
-        intervals.push({ start: activeStart, end: fightEnd });
-      }
-
-      return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
-    },
-    []
-  );
-
-  // Helper function to check if a debuff is active at a timestamp
-  const isDebuffActiveAtTimestamp = React.useCallback(
-    (
-      timestamp: number,
-      debuffEvents: LogEvent[],
-      fightStart: number,
-      fightEnd: number
-    ): boolean => {
-      const intervals: Array<{ start: number; end: number }> = [];
-      let activeStart: number | null = null;
-
-      for (const event of debuffEvents) {
-        if (event.type === 'applydebuff') {
-          if (activeStart === null) activeStart = event.timestamp;
-        } else if (event.type === 'removedebuff') {
-          if (activeStart !== null) {
-            intervals.push({ start: activeStart, end: event.timestamp });
-            activeStart = null;
-          }
-        }
-      }
-
-      if (activeStart !== null) {
-        intervals.push({ start: activeStart, end: fightEnd });
-      }
-
-      return intervals.some((interval) => timestamp >= interval.start && timestamp < interval.end);
-    },
-    []
-  );
-
-  // Helper function to calculate critical damage percentage at a specific timestamp
-  const calculateCriticalDamageAtTimestamp = React.useCallback(
-    (
-      timestamp: number,
-      events: LogEvent[],
-      playerId: string,
-      targetId: string,
-      fightData: FightFragment
-    ): number => {
-      const fightStart = fightData.startTime;
-      const fightEnd = fightData.endTime;
-
-      // Find combatant info for auras
-      const combatantInfoEvent = events.find(
-        (event): event is CombatantInfoEvent =>
-          event.type === 'combatantinfo' &&
-          String(event.sourceID) === playerId &&
-          'fight' in event &&
-          event.fight === fightData.id
-      );
-      const latestAuras = combatantInfoEvent?.auras ?? [];
-      const mediumArmorCount =
-        combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
-
-      // Start with base critical damage
-      let critDmg = 50;
-
-      // Add static passives
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
-            aura.name?.includes('Fated Fortune')
-        )
-      ) {
-        critDmg += CriticalDamageValues.FATED_FORTUNE;
-      }
-      if (
-        latestAuras.some(
-          (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
-        )
-      ) {
-        critDmg += CriticalDamageValues.HEMORRHAGE;
-      }
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
-        )
-      ) {
-        critDmg += CriticalDamageValues.PIERCING_SPEAR;
-      }
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.ADVANCED_SPECIES ||
-            aura.name?.includes('Advanced Species')
-        )
-      ) {
-        critDmg += CriticalDamageValues.ADVANCED_SPECIES;
-      }
-      if (
-        mediumArmorCount > 0 &&
-        latestAuras.some(
-          (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
-        )
-      ) {
-        critDmg += mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE;
-      }
-
-      // Check dynamic buffs active at this timestamp
-      // Lucent Echoes
-      const lucentEchoesEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
-            (event.abilityName ?? '').includes('Lucent Echoes'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightStart, fightEnd)) {
-        critDmg += CriticalDamageValues.LUCENT_ECHOES;
-      }
-
-      // Minor Force
-      const minorForceEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
-            (event.abilityName ?? '').includes('Minor Force'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightStart, fightEnd)) {
-        critDmg += 10;
-      }
-
-      // Major Force
-      const majorForceEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
-            (event.abilityName ?? '').includes('Major Force'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightStart, fightEnd)) {
-        critDmg += 20;
-      }
-
-      // Minor Brittle (on target)
-      const minorBrittleEvents = events.filter(
-        (event) =>
-          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-          String(event.targetID ?? event.target ?? '') === targetId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
-            (event.abilityName ?? '').includes('Minor Brittle'))
-      );
-      if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightStart, fightEnd)) {
-        critDmg += 10;
-      }
-
-      // Major Brittle (on target)
-      const majorBrittleEvents = events.filter(
-        (event) =>
-          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-          String(event.targetID ?? event.target ?? '') === targetId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
-            (event.abilityName ?? '').includes('Major Brittle'))
-      );
-      if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightStart, fightEnd)) {
-        critDmg += 20;
-      }
-
-      return critDmg;
-    },
-    [isBuffActiveAtTimestamp, isDebuffActiveAtTimestamp]
-  );
-
-  // Helper function to get active critical damage sources at a specific timestamp
-  const getActiveCriticalDamageSourcesAtTimestamp = React.useCallback(
-    (
-      timestamp: number,
-      events: LogEvent[],
-      playerId: string,
-      targetId: string,
-      fightData: FightFragment
-    ): CriticalDamageSource[] => {
-      const sources: CriticalDamageSource[] = [];
-      const fightStart = fightData.startTime;
-      const fightEnd = fightData.endTime;
-
-      // Find combatant info for auras
-      const combatantInfoEvent = events.find(
-        (event): event is CombatantInfoEvent =>
-          event.type === 'combatantinfo' &&
-          String(event.sourceID) === playerId &&
-          'fight' in event &&
-          event.fight === fightData.id
-      );
-      const latestAuras = combatantInfoEvent?.auras ?? [];
-      const mediumArmorCount =
-        combatantInfoEvent?.gear?.filter((gear: CombatantGear) => gear.type === 2).length || 0;
-
-      // Base critical damage
-      sources.push({
-        name: 'Base Critical Damage',
-        value: 50,
-        wasActive: true,
-        description: 'Default critical damage bonus that all players start with',
-      });
-
-      // Static passives
-      if (
-        latestAuras.some(
-          (aura) => aura.ability === KnownAbilities.HEMORRHAGE || aura.name?.includes('Hemorrhage')
-        )
-      ) {
-        sources.push({
-          name: 'Hemorrhage',
-          value: CriticalDamageValues.HEMORRHAGE,
-          wasActive: true,
-          description: 'Passive that provides 10% critical damage bonus',
-        });
-      }
-
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.PIERCING_SPEAR || aura.name?.includes('Piercing Spear')
-        )
-      ) {
-        sources.push({
-          name: 'Piercing Spear',
-          value: CriticalDamageValues.PIERCING_SPEAR,
-          wasActive: true,
-          description: 'Passive that provides 12% critical damage bonus',
-        });
-      }
-
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.ADVANCED_SPECIES ||
-            aura.name?.includes('Advanced Species')
-        )
-      ) {
-        sources.push({
-          name: 'Advanced Species',
-          value: CriticalDamageValues.ADVANCED_SPECIES,
-          wasActive: true,
-          description: 'Passive that provides 15% critical damage bonus',
-        });
-      }
-
-      if (
-        latestAuras.some(
-          (aura) =>
-            aura.ability === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
-            aura.name?.includes('Fated Fortune')
-        )
-      ) {
-        sources.push({
-          name: 'Fated Fortune',
-          value: CriticalDamageValues.FATED_FORTUNE,
-          wasActive: true,
-          description: 'Passive that provides 12% critical damage bonus',
-        });
-      }
-
-      if (
-        mediumArmorCount > 0 &&
-        latestAuras.some(
-          (aura) => aura.ability === KnownAbilities.DEXTERITY || aura.name?.includes('Dexterity')
-        )
-      ) {
-        sources.push({
-          name: 'Dexterity',
-          value: mediumArmorCount * CriticalDamageValues.DEXTERITY_PER_PIECE,
-          wasActive: true,
-          description: `Passive that provides 2% critical damage per piece of medium armor worn (${mediumArmorCount} pieces)`,
-        });
-      }
-
-      // Dynamic buffs/debuffs
-      const lucentEchoesEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
-            (event.abilityName ?? '').includes('Lucent Echoes'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, lucentEchoesEvents, fightStart, fightEnd)) {
-        sources.push({
-          name: 'Lucent Echoes',
-          value: CriticalDamageValues.LUCENT_ECHOES,
-          wasActive: true,
-          description: 'Buff that provides 11% critical damage bonus',
-        });
-      }
-
-      const minorForceEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
-            (event.abilityName ?? '').includes('Minor Force'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, minorForceEvents, fightStart, fightEnd)) {
-        sources.push({
-          name: 'Minor Force',
-          value: 10,
-          wasActive: true,
-          description: 'Buff that provides 10% critical damage',
-        });
-      }
-
-      const majorForceEvents = events.filter(
-        (event) =>
-          (event.type === 'applybuff' || event.type === 'removebuff') &&
-          String(event.targetID ?? event.target ?? '') === playerId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
-            (event.abilityName ?? '').includes('Major Force'))
-      );
-      if (isBuffActiveAtTimestamp(timestamp, majorForceEvents, fightStart, fightEnd)) {
-        sources.push({
-          name: 'Major Force',
-          value: 20,
-          wasActive: true,
-          description: 'Buff that provides 20% critical damage',
-        });
-      }
-
-      const minorBrittleEvents = events.filter(
-        (event) =>
-          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-          String(event.targetID ?? event.target ?? '') === targetId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
-            (event.abilityName ?? '').includes('Minor Brittle'))
-      );
-      if (isDebuffActiveAtTimestamp(timestamp, minorBrittleEvents, fightStart, fightEnd)) {
-        sources.push({
-          name: 'Minor Brittle',
-          value: 10,
-          wasActive: true,
-          description: 'Debuff that provides 10% critical damage',
-        });
-      }
-
-      const majorBrittleEvents = events.filter(
-        (event) =>
-          (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-          String(event.targetID ?? event.target ?? '') === targetId &&
-          ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
-            (event.abilityName ?? '').includes('Major Brittle'))
-      );
-      if (isDebuffActiveAtTimestamp(timestamp, majorBrittleEvents, fightStart, fightEnd)) {
-        sources.push({
-          name: 'Major Brittle',
-          value: 20,
-          wasActive: true,
-          description: 'Debuff that provides 20% critical damage',
-        });
-      }
-
-      return sources.filter((source) => source.wasActive);
-    },
-    [isBuffActiveAtTimestamp, isDebuffActiveAtTimestamp]
-  );
-
   // Calculate critical multiplier by finding pairs of critical and normal hits
   const criticalMultiplierData = React.useMemo(() => {
-    if (!fightEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
+    if (!selectedTargetId || !fight?.startTime || !fight?.endTime) {
       return null;
     }
 
     // Get damage events for this player against the selected target
-    const playerDamageEvents = fightEvents.filter(
-      (event): event is DamageEvent =>
-        event.type === 'damage' &&
-        String(event.sourceID) === id &&
-        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
-        typeof event.amount === 'number' &&
-        event.amount > 0 &&
-        typeof event.hitType === 'number' &&
-        Boolean(event.abilityGameID || event.abilityId)
+    const playerDamageEvents = damageEvents.filter(
+      (event) =>
+        event.sourceID === id && String(event.targetID) === selectedTargetId && event.amount > 0
     );
 
     // Group damage events by ability
@@ -674,7 +640,9 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
           // Calculate what the critical damage % should be at this timestamp
           const accountedCritDamage = calculateCriticalDamageAtTimestamp(
             criticalTimestamp,
-            fightEvents,
+            debuffEvents,
+            friendlyBuffEvents,
+            combatantInfoEvents,
             id,
             selectedTargetId,
             fight
@@ -691,7 +659,9 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
           // Get active sources at this timestamp
           const activeSources = getActiveCriticalDamageSourcesAtTimestamp(
             criticalTimestamp,
-            fightEvents,
+            debuffEvents,
+            friendlyBuffEvents,
+            combatantInfoEvents,
             id,
             selectedTargetId,
             fight
@@ -715,12 +685,13 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
     return null;
   }, [
-    fightEvents,
+    friendlyBuffEvents,
+    debuffEvents,
+    combatantInfoEvents,
+    damageEvents,
     selectedTargetId,
     fight,
     id,
-    calculateCriticalDamageAtTimestamp,
-    getActiveCriticalDamageSourcesAtTimestamp,
   ]);
 
   // Update the critical multiplier state when data changes
@@ -734,12 +705,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     const fightEnd = fight.endTime;
 
     // Track Major Brittle debuff uptimes for the selected target
-    const majorBrittleEvents = fightEvents.filter(
+    const majorBrittleEvents = debuffEvents.filter(
       (event) =>
         (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_BRITTLE ||
-          (event.abilityName ?? '').includes('Major Brittle'))
+        event.targetID === selectedTargetId &&
+        event.abilityGameID === KnownAbilities.MAJOR_BRITTLE
     );
 
     // Build a timeline of Major Brittle active intervals
@@ -762,12 +732,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     // ...existing code...
 
     // Track Minor Brittle debuff uptimes for the selected target
-    const minorBrittleEvents = fightEvents.filter(
+    const minorBrittleEvents = debuffEvents.filter(
       (event) =>
         (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-        String(event.targetID ?? event.target ?? '') === selectedTargetId &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_BRITTLE ||
-          (event.abilityName ?? '').includes('Minor Brittle'))
+        event.targetID === selectedTargetId &&
+        event.abilityGameID === KnownAbilities.MINOR_BRITTLE
     );
 
     // Build a timeline of Minor Brittle active intervals
@@ -787,19 +756,18 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     if (brittleActiveStart !== null) {
       minorBrittleIntervals.push({ start: brittleActiveStart, end: fightEnd });
     }
-    if (!fightEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
+    if (!selectedTargetId || !fight?.startTime || !fight?.endTime) {
       return null;
     }
     // ...existing code...
 
     // Track Minor Force buff uptimes for the selected player
     // Find all buff events for Minor Force where target is selected player
-    const minorForceEvents = fightEvents.filter(
+    const minorForceEvents = friendlyBuffEvents.filter(
       (event) =>
         (event.type === 'applybuff' || event.type === 'removebuff') &&
-        String(event.targetID ?? event.target ?? '') === id &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MINOR_FORCE ||
-          (event.abilityName ?? '').includes('Minor Force'))
+        event.targetID === id &&
+        event.abilityGameID === KnownAbilities.MINOR_FORCE
     );
 
     // Build a timeline of Minor Force active intervals
@@ -822,12 +790,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
     // Track Lucent Echoes buff uptimes for the selected player
     // Find all buff events for Lucent Echoes where target is selected player
-    const lucentEchoesEvents = fightEvents.filter(
+    const lucentEchoesEvents = friendlyBuffEvents.filter(
       (event) =>
         (event.type === 'applybuff' || event.type === 'removebuff') &&
-        String(event.targetID ?? event.target ?? '') === id &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.LUCENT_ECHOES ||
-          (event.abilityName ?? '').includes('Lucent Echoes'))
+        event.targetID === id &&
+        event.abilityGameID === KnownAbilities.LUCENT_ECHOES
     );
 
     // Build a timeline of Lucent Echoes active intervals
@@ -850,12 +817,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
     // Track Fated Fortune buff uptimes for the selected player
     // Find all buff events for Fated Fortune where target is selected player
-    const fatedFortuneEvents = fightEvents.filter(
+    const fatedFortuneEvents = friendlyBuffEvents.filter(
       (event) =>
         (event.type === 'applybuff' || event.type === 'removebuff') &&
-        String(event.targetID ?? event.target ?? '') === id &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.FATED_FORTUNE_STAGE_ONE ||
-          (event.abilityName ?? '').includes('Fated Fortune'))
+        event.targetID === id &&
+        event.abilityGameID === KnownAbilities.FATED_FORTUNE_STAGE_ONE
     );
 
     // Build a timeline of Fated Fortune active intervals
@@ -878,12 +844,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
     // Track Major Force buff uptimes for the selected player
     // Find all buff events for Major Force where target is selected player
-    const majorForceEvents = fightEvents.filter(
+    const majorForceEvents = friendlyBuffEvents.filter(
       (event) =>
         (event.type === 'applybuff' || event.type === 'removebuff') &&
-        String(event.targetID ?? event.target ?? '') === id &&
-        ((event.abilityGameID ?? event.abilityId) === KnownAbilities.MAJOR_FORCE ||
-          (event.abilityName ?? '').includes('Major Force'))
+        event.targetID === id &&
+        event.abilityGameID === KnownAbilities.MAJOR_FORCE
     );
 
     // Build a timeline of Major Force active intervals
@@ -908,12 +873,8 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     const sources: CriticalDamageSource[] = [];
 
     // Find the combatantinfo event for this player to check auras
-    const combatantInfoEvent = fightEvents.find(
-      (event): event is CombatantInfoEvent =>
-        event.type === 'combatantinfo' &&
-        String(event.sourceID) === id &&
-        'fight' in event &&
-        event.fight === fight.id
+    const combatantInfoEvent = combatantInfoEvents.find(
+      (event) => event.type === 'combatantinfo' && event.sourceID === id && event.fight === fight.id
     );
     const latestAuras = combatantInfoEvent?.auras ?? [];
     const mediumArmorCount =
@@ -1208,7 +1169,17 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     };
 
     return playerData;
-  }, [id, name, fightEvents, fight, selectedTargetId, fightId, reportId]);
+  }, [
+    id,
+    name,
+    debuffEvents,
+    friendlyBuffEvents,
+    combatantInfoEvents,
+    fight,
+    selectedTargetId,
+    fightId,
+    reportId,
+  ]);
 
   if (!criticalDamageData) {
     return (
