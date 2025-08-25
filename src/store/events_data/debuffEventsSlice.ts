@@ -92,7 +92,7 @@ export const fetchDebuffEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh && state.events.length > 0) {
+      if (isCached && isFresh) {
         return false; // Prevent thunk execution
       }
 

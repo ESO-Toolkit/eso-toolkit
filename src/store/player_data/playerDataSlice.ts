@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
 import { EsoLogsClient } from '../../esologsClient';
-import { GetPlayersForReportQuery } from '../../graphql/generated';
-import { GetPlayersForReportDocument } from '../../graphql/players.generated';
+import { GetPlayersForReportDocument } from '../../graphql/generated';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
 
 export interface PlayerDataState {
@@ -49,7 +48,7 @@ export const fetchPlayerData = createAsyncThunk<
   'playerData/fetchPlayerData',
   async ({ reportCode, fightId, client }, { rejectWithValue }) => {
     try {
-      const response: GetPlayersForReportQuery = await client.query({
+      const response = await client.query({
         query: GetPlayersForReportDocument,
         variables: { code: reportCode, fightIDs: [fightId] },
       });
@@ -86,9 +85,7 @@ export const fetchPlayerData = createAsyncThunk<
       const state = getState() as { playerData: PlayerDataState };
       if (
         state.playerData.cacheMetadata.lastFetchedReportId === reportCode &&
-        state.playerData.cacheMetadata.lastFetchedFightId === fightId &&
-        state.playerData.loaded &&
-        Object.keys(state.playerData.playersById).length > 0
+        state.playerData.cacheMetadata.lastFetchedFightId === fightId
       ) {
         return false; // Prevent thunk execution - data is cached
       }
