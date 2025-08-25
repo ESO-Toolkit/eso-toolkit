@@ -38,7 +38,7 @@ interface DeathInfo {
 interface DeathEventPanelViewProps {
   deathInfos: DeathInfo[];
   actorsById: Record<string | number, ReportActorFragment>;
-  reportId?: string;
+  reportId?: string | null;
   fightId?: number;
   fight: { startTime?: number; endTime?: number };
   isLoading?: boolean;

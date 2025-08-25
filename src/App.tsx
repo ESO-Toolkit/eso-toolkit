@@ -8,6 +8,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AuthProvider } from './AuthContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
+import { LiveLog } from './features/live_logging/LiveLog';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { ReportFights } from './features/report_details/ReportFights';
 import { AppLayout } from './layouts/AppLayout';
@@ -111,7 +112,7 @@ const App: React.FC = () => {
       <PersistGate loading={null} persistor={persistor}>
         <AuthProvider>
           <EsoLogsClientProvider>
-            <AuthApolloProvider />
+            <AppRoutes />
           </EsoLogsClientProvider>
         </AuthProvider>
       </PersistGate>
@@ -119,7 +120,7 @@ const App: React.FC = () => {
   );
 };
 
-const AuthApolloProvider: React.FC = () => {
+const AppRoutes: React.FC = () => {
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
   }, []);
@@ -144,6 +145,14 @@ const AuthApolloProvider: React.FC = () => {
         <Route element={<AppLayout />}>
           {/* Pass fights as prop via state, fallback to empty array if not present */}
           <Route path="/report/:reportId/fight/:fightId" element={<ReportFightDetails />} />
+          <Route
+            path="/report/:reportId/live"
+            element={
+              <LiveLog>
+                <ReportFightDetails />
+              </LiveLog>
+            }
+          />
           <Route path="/report/:reportId" element={<ReportFights />} />
           <Route path="/*" element={<MainApp />} />
         </Route>

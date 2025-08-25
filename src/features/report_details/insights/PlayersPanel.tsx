@@ -6,9 +6,9 @@ import {
   useCurrentFight,
   useDeathEvents,
   usePlayerData,
-  useReportFightParams,
   useReportMasterData,
 } from '../../../hooks';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities, MundusStones } from '../../../types/abilities';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 
@@ -28,7 +28,7 @@ const CPM_EXCLUSION_LIST = Object.freeze(
 
 export const PlayersPanel: React.FC = () => {
   // Get report/fight context for CPM and deeplink
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   // Use hooks to get data
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();

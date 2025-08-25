@@ -26,7 +26,7 @@ import { useSearchParams } from 'react-router-dom';
 
 import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
-import { useReportFightParams } from '../../../hooks/useReportFightParams';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import {
   selectDebuffEvents,
   selectCombatantInfoEvents,
@@ -163,7 +163,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   }, [eventPlayersArray]);
 
   const [searchParams] = useSearchParams();
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
 
   // Get selected target from URL params
   const selectedTargetId = searchParams.get('target') || '';

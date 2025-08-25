@@ -2,12 +2,13 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { useReportData } from '../../hooks';
-import { useReportFightParams } from '../../hooks/useReportFightParams';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
 
 export const ReportFightDetails: React.FC = () => {
-  const { reportId, fightId } = useReportFightParams();
+  // Get current selected report and fight from context
+  const { reportId, fightId } = useSelectedReportAndFight();
   const [searchParams] = useSearchParams();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
@@ -28,8 +29,8 @@ export const ReportFightDetails: React.FC = () => {
       fight={fight}
       fightsLoading={isReportLoading}
       selectedTabId={selectedTabId}
-      reportId={reportId}
-      fightId={fightId}
+      reportId={reportId || undefined}
+      fightId={fightId || undefined}
     />
   );
 };

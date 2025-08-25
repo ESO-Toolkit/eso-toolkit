@@ -3,12 +3,11 @@ import { useSelector } from 'react-redux';
 
 import { useAuth } from '../AuthContext';
 import { FightFragment } from '../graphql/generated';
+import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchCastEvents } from '../store/events_data/castEventsSlice';
 import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
-
-import { useReportFightParams } from './useReportFightParams';
 
 export function useCastEvents(): {
   castEvents: ReturnType<typeof selectCastEvents>;
@@ -17,7 +16,7 @@ export function useCastEvents(): {
 } {
   const { accessToken } = useAuth();
   const dispatch = useAppDispatch();
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useSelectedReportAndFight();
   const fights = useSelector(selectReportFights) as FightFragment[] | null | undefined;
 
   // Get the specific fight from the report data
