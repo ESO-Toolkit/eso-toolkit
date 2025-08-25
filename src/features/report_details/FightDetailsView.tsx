@@ -15,7 +15,6 @@ import {
   Box,
   Tabs,
   Tab,
-  CircularProgress,
   Typography,
   Tooltip,
   FormControl,
@@ -26,6 +25,7 @@ import {
   FormControlLabel,
   Switch,
   Stack,
+  Skeleton,
 } from '@mui/material';
 import React from 'react';
 
@@ -76,18 +76,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // Only render content when events for the current fight are loaded
   if (loading) {
     return (
-      <Box
-        mt={2}
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 200,
-        }}
-      >
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="h6">Loading events...</Typography>
+      <Box mt={2}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+          <Skeleton variant="rounded" width={220} height={56} />
+          <Skeleton variant="rounded" width={220} height={40} />
+        </Stack>
+        <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto' }}>
+          {Array.from({ length: 8 }).map((_, i) => (
+            <Skeleton key={i} variant="circular" width={36} height={36} />
+          ))}
+        </Box>
+        <Skeleton variant="rectangular" height={360} />
       </Box>
     );
   }

@@ -20,6 +20,7 @@ export const ReportFights: React.FC = () => {
   const loading = useSelector((state: RootState) => state.report.loading);
   const error = useSelector((state: RootState) => state.report.error);
   const currentReportId = useSelector((state: RootState) => state.report.reportId);
+  const startTime = useSelector((state: RootState) => state.report.startTime);
 
   React.useEffect(() => {
     if (reportId && client) {
@@ -40,6 +41,7 @@ export const ReportFights: React.FC = () => {
       error={error}
       fightId={fightId}
       reportId={reportId}
+      reportStartTime={startTime}
     />
   );
 };

@@ -5,26 +5,30 @@ import { gql } from '@apollo/client';
 import { FightFragmentDoc } from './shared-fragments.generated';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
-
+export const ReportFragmentDoc = gql`
+    fragment Report on Report {
+  code
+  startTime
+  endTime
+  title
+  visibility
+  zone {
+    name
+  }
+  fights {
+    ...Fight
+  }
+}
+    ${FightFragmentDoc}`;
 export const GetReportByCodeDocument = gql`
     query getReportByCode($code: String!) {
   reportData {
     report(code: $code) {
-      code
-      startTime
-      endTime
-      title
-      visibility
-      zone {
-        name
-      }
-      fights {
-        ...Fight
-      }
+      ...Report
     }
   }
 }
-    ${FightFragmentDoc}`;
+    ${ReportFragmentDoc}`;
 
 /**
  * __useGetReportByCodeQuery__

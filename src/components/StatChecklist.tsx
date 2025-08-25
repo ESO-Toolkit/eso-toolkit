@@ -11,6 +11,7 @@ import {
   Link,
   FormControlLabel,
   Switch,
+  Skeleton,
 } from '@mui/material';
 import React from 'react';
 
@@ -25,9 +26,14 @@ export interface StatChecklistSource {
 interface StatChecklistProps {
   sources: StatChecklistSource[];
   title?: string;
+  loading?: boolean;
 }
 
-export const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = 'Sources' }) => {
+export const StatChecklist: React.FC<StatChecklistProps> = ({
+  sources,
+  title = 'Sources',
+  loading = false,
+}) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
 
@@ -35,6 +41,35 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({ sources, title = '
     () => sources.filter((s) => s.wasActive || showUnchecked),
     [sources, showUnchecked]
   );
+
+  if (loading) {
+    return (
+      <Box sx={{ mb: 3 }}>
+        <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Skeleton variant="text" width={160} height={28} />
+          <Skeleton variant="rectangular" width={180} height={28} />
+        </Box>
+        <Card variant="outlined" className="u-hover-lift u-fade-in-up">
+          <CardContent sx={{ p: 2 }}>
+            <List dense>
+              {Array.from({ length: 5 }).map((_, index) => (
+                <ListItem key={index} disablePadding>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Skeleton variant="circular" width={18} height={18} />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={<Skeleton variant="text" width="60%" />}
+                    secondary={<Skeleton variant="text" width="40%" />}
+                  />
+                </ListItem>
+              ))}
+            </List>
+            <Skeleton variant="text" width="70%" />
+          </CardContent>
+        </Card>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ mb: 3 }}>

@@ -10,6 +10,8 @@ export interface ReportState {
   fights: FightFragment[];
   loading: boolean;
   error: string | null;
+  startTime: number;
+  endTime: number;
 }
 
 const initialState: ReportState = {
@@ -18,6 +20,8 @@ const initialState: ReportState = {
   fights: [],
   loading: false,
   error: null,
+  startTime: -1,
+  endTime: -1,
 };
 
 export const fetchReportData = createAsyncThunk<
@@ -33,6 +37,8 @@ export const fetchReportData = createAsyncThunk<
       reportId,
       data: state.report.data,
       fights: state.report.fights,
+      startTime: state.report.startTime,
+      endTime: state.report.endTime,
     };
   }
 
@@ -46,7 +52,13 @@ export const fetchReportData = createAsyncThunk<
       return rejectWithValue('Report not found or not public.');
     }
     const fights = (report.fights ?? []) as FightFragment[];
-    return { reportId, data: response, fights };
+    return {
+      reportId,
+      data: response,
+      fights,
+      startTime: report.startTime,
+      endTime: report.endTime,
+    };
   } catch (err) {
     const hasMessage = (e: unknown): e is { message: string } =>
       typeof e === 'object' &&

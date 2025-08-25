@@ -1,5 +1,5 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Paper, Typography, Button, CircularProgress, Box, Stack, Tooltip } from '@mui/material';
+import { Paper, Typography, Button, Box, Stack, Tooltip, Skeleton } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -28,19 +28,16 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   // Show loading panel if fights are loading or missing
   if (fightsLoading) {
     return (
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 200,
-          }}
-        >
-          <CircularProgress sx={{ mb: 2 }} />
-          <Typography variant="h6">Loading Report Data...</Typography>
+      <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+          <Skeleton variant="rounded" width={96} height={32} />
         </Box>
+        <Skeleton variant="rounded" width={180} height={36} sx={{ mb: 2 }} />
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+          <Skeleton variant="text" width={140} height={28} />
+        </Stack>
+        <Skeleton variant="text" width={200} />
+        <Skeleton variant="rectangular" height={220} sx={{ mt: 2 }} />
       </Paper>
     );
   }

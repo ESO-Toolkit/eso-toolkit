@@ -1,12 +1,4 @@
-import {
-  Box,
-  CircularProgress,
-  Paper,
-  Typography,
-  List,
-  ListItem,
-  ListItemButton,
-} from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemButton, Skeleton } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -18,6 +10,7 @@ interface ReportFightsViewProps {
   error: string | null;
   fightId: string | undefined;
   reportId: string | undefined;
+  reportStartTime?: number;
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -26,22 +19,56 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   error,
   fightId,
   reportId,
+  reportStartTime,
 }) => {
   const navigate = useNavigate();
 
-  const handleFightSelect = React.useCallback(
-    (id: number) => {
-      navigate(`/report/${reportId}/fight/${id}`);
-    },
-    [navigate, reportId]
-  );
+  const handleFightSelect = (id: number): void => {
+    navigate(`/report/${reportId}/fight/${id}`);
+  };
+
+  const formatClock = (msEpoch: number): string => {
+    // Use browser locale and timezone; show 12-hour time with AM/PM, no seconds
+    try {
+      return new Intl.DateTimeFormat(undefined, {
+        hour: 'numeric',
+        minute: '2-digit',
+        hour12: true,
+      }).format(new Date(msEpoch));
+    } catch {
+      // Fallback without Intl
+      const d = new Date(msEpoch);
+      let h = d.getHours() % 12;
+      if (h === 0) h = 12;
+      const m = String(d.getMinutes()).padStart(2, '0');
+      const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
+      return `${h}:${m} ${ampm}`;
+    }
+  };
+
+  const formatDuration = (ms: number): string => {
+    const totalSeconds = Math.max(0, Math.round(ms / 1000));
+    const m = Math.floor(totalSeconds / 60);
+    const s = totalSeconds % 60;
+    return m === 0 ? `${s}s` : `${m}:${String(s).padStart(2, '0')}`;
+  };
 
   if (loading) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading fights...</Typography>
-      </Box>
+      <Paper elevation={2} sx={{ p: 3 }}>
+        <Skeleton variant="text" width={180} height={32} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
+        {[...Array(3)].map((_, idx) => (
+          <Box key={idx} sx={{ mb: 2 }}>
+            <Skeleton variant="text" width={140} height={28} sx={{ mb: 1 }} />
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {[...Array(6)].map((__, j) => (
+                <Skeleton key={j} variant="rounded" width={88} height={36} />
+              ))}
+            </Box>
+          </Box>
+        ))}
+      </Paper>
     );
   }
 
@@ -89,29 +116,35 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   {groupName}
                 </Typography>
                 <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {groupFights.map((fight, idx) => {
-                    const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                    const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
-                    return (
-                      <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
-                        <ListItemButton
-                          selected={fightId === String(fight.id)}
-                          onClick={() => handleFightSelect(fight.id)}
-                          sx={{
-                            minWidth: 48,
-                            justifyContent: 'center',
-                            border: 1,
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Typography variant="button" color={isWipe ? 'error' : 'success'}>
-                            {fightLabel}
+                  {groupFights.map((fight, idx) => (
+                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                      <ListItemButton
+                        selected={fightId === String(fight.id)}
+                        onClick={() => handleFightSelect(fight.id)}
+                        sx={{
+                          minWidth: 96,
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          flexDirection: 'column',
+                          py: 1,
+                          transition: 'border-radius 120ms ease',
+                          '&:hover': {
+                            borderRadius: '8px',
+                          },
+                        }}
+                      >
+                        <Typography variant="button">Pull {idx + 1}</Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          {reportStartTime != null
+                            ? `${formatClock(reportStartTime + fight.startTime)} • `
+                            : ''}
+                          <Typography component="span" variant="caption" sx={{ fontWeight: 700 }}>
+                            {formatDuration(fight.endTime - fight.startTime)}
                           </Typography>
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
+                        </Typography>
+                      </ListItemButton>
+                    </ListItem>
+                  ))}
                 </List>
               </Box>
             ));
