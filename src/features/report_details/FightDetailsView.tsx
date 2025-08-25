@@ -25,9 +25,6 @@ import {
   FormControlLabel,
   Switch,
   Stack,
-  List,
-  ListItem,
-  ListItemText,
   Skeleton,
 } from '@mui/material';
 import React from 'react';

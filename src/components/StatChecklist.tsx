@@ -29,7 +29,7 @@ interface StatChecklistProps {
   loading?: boolean;
 }
 
-const StatChecklist: React.FC<StatChecklistProps> = ({
+export const StatChecklist: React.FC<StatChecklistProps> = ({
   sources,
   title = 'Sources',
   loading = false,

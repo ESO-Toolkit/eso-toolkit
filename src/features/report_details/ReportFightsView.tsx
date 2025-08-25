@@ -13,7 +13,7 @@ interface ReportFightsViewProps {
   reportStartTime?: number;
 }
 
-const ReportFightsView: React.FC<ReportFightsViewProps> = ({
+export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fights,
   loading,
   error,
@@ -23,11 +23,11 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const handleFightSelect = (id: number) => {
+  const handleFightSelect = (id: number): void => {
     navigate(`/report/${reportId}/fight/${id}`);
   };
 
-  const formatClock = (msEpoch: number) => {
+  const formatClock = (msEpoch: number): string => {
     // Use browser locale and timezone; show 12-hour time with AM/PM, no seconds
     try {
       return new Intl.DateTimeFormat(undefined, {
@@ -46,7 +46,7 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     }
   };
 
-  const formatDuration = (ms: number) => {
+  const formatDuration = (ms: number): string => {
     const totalSeconds = Math.max(0, Math.round(ms / 1000));
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
@@ -154,5 +154,3 @@ const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     </>
   );
 };
-
-export default ReportFightsView;

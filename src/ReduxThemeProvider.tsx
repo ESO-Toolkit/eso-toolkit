@@ -28,49 +28,31 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     []
   );
 
-  const theme = React.useMemo(() => createTheme({
-    palette: {
-      mode: darkMode ? 'dark' : 'dark', // dark-only for now
-      background: { default: tokens.bg, paper: tokens.panel },
-      primary: { main: tokens.accent },
-      secondary: { main: tokens.accent2 },
-      success: { main: tokens.ok },
-      warning: { main: tokens.warn },
-      error: { main: tokens.danger },
-      divider: tokens.border,
-      text: { primary: tokens.text, secondary: tokens.muted },
-    },
-    shape: { borderRadius: 10 },
-    typography: {
-      // Inter variable as the default UI/body font; Space Grotesk for headings
-      fontFamily:
-        "Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
-      h1: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-      h2: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-      h3: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-      h4: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-      h5: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-      h6: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
-    },
-    components: {
-      MuiCssBaseline: {
-        styleOverrides: {
-          html: { height: '100%' },
-          body: {
-            minHeight: '100%',
-            overflowX: 'hidden',
-            background:
-              'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               #0b1220',
-            color: tokens.text,
-            // Enable variable font optical sizing where supported
-            fontOpticalSizing: 'auto',
-          },
-          '*, *::before, *::after': { boxSizing: 'border-box' },
+  const theme = React.useMemo(
+    () =>
+      createTheme({
+        palette: {
+          mode: darkMode ? 'dark' : 'dark', // dark-only for now
+          background: { default: tokens.bg, paper: tokens.panel },
+          primary: { main: tokens.accent },
+          secondary: { main: tokens.accent2 },
+          success: { main: tokens.ok },
+          warning: { main: tokens.warn },
+          error: { main: tokens.danger },
+          divider: tokens.border,
+          text: { primary: tokens.text, secondary: tokens.muted },
         },
         shape: { borderRadius: 10 },
         typography: {
+          // Inter variable as the default UI/body font; Space Grotesk for headings
           fontFamily:
-            "system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+            "Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, 'Helvetica Neue', Arial",
+          h1: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+          h2: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+          h3: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+          h4: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+          h5: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
+          h6: { fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 600 },
         },
         components: {
           MuiCssBaseline: {
@@ -80,8 +62,10 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 minHeight: '100%',
                 overflowX: 'hidden',
                 background:
-                  'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               #0b1220',
+                  'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%), radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%), #0b1220',
                 color: tokens.text,
+                // Enable variable font optical sizing where supported
+                fontOpticalSizing: 'auto',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
             },
