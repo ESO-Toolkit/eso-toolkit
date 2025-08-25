@@ -27,6 +27,7 @@ const CPM_EXCLUSION_LIST = Object.freeze(
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {
+  // Get report/fight context for CPM and deeplink
   const { reportId, fightId } = useReportFightParams();
 
   // Use hooks to get data
@@ -102,12 +103,7 @@ export const PlayersPanel: React.FC = () => {
   // Compute CPM (casts per minute) per player for the current fight, excluding specific abilities per provided filter
   const cpmByPlayer = React.useMemo(() => {
     const result: Record<string, number> = {};
-
-    if (!fight) {
-      return result;
-    }
-
-    const test: Record<number, number> = {};
+    if (!fight) return result;
 
     for (const ev of castEvents) {
       if (ev.type === 'cast' && !ev.fake) {
@@ -115,10 +111,6 @@ export const PlayersPanel: React.FC = () => {
         const abilityId: number | undefined = ev.abilityGameID;
         if (!CPM_EXCLUSION_LIST.has(abilityId)) {
           result[src] = (result[src] || 0) + 1;
-        }
-
-        if (src === 1) {
-          test[abilityId] = (test[abilityId] || 0) + 1;
         }
       }
     }
@@ -135,8 +127,6 @@ export const PlayersPanel: React.FC = () => {
         result[k] = 0;
       }
     }
-
-    console.log(result);
 
     return result;
   }, [castEvents, fight]);

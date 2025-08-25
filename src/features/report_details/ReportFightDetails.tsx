@@ -2,22 +2,15 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
-import { useAuth } from '../../AuthContext';
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { FightFragment } from '../../graphql/generated';
 import { useReportFightParams } from '../../hooks/useReportFightParams';
-import { fetchReportData } from '../../store/report/reportSlice';
 import { RootState } from '../../store/storeWithHistory';
-import { useAppDispatch } from '../../store/useAppDispatch';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
 
 export const ReportFightDetails: React.FC = () => {
   const { reportId, fightId } = useReportFightParams();
   const [searchParams] = useSearchParams();
-  const dispatch = useAppDispatch();
-
-  const { accessToken } = useAuth();
-  const client = useEsoLogsClientInstance();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const fights = useSelector((state: RootState) => state.report.fights);
@@ -26,16 +19,8 @@ export const ReportFightDetails: React.FC = () => {
 
   // FIXED: Memoize fight lookup to prevent infinite renders in child components
   const fight = React.useMemo(() => {
-    return fights.find((f) => f.id === Number(fightId));
+    return fights.find((f: FightFragment) => f.id === Number(fightId));
   }, [fights, fightId]);
-
-  // Only fetch report fights data - individual panels will fetch their own data
-  React.useEffect(() => {
-    if (reportId && accessToken) {
-      // The thunk now handles checking if data needs to be fetched internally
-      dispatch(fetchReportData({ reportId, client }));
-    }
-  }, [reportId, accessToken, dispatch, client]);
 
   // Get selectedTabId from query param if present
   const selectedTabId = searchParams.has('selectedTabId')

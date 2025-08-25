@@ -26,18 +26,19 @@ import {
   Switch,
   Stack,
   Skeleton,
+  ListItem,
+  ListItemText,
+  List,
 } from '@mui/material';
 import React from 'react';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { LogEvent } from '../../types/combatlogEvents';
 
-import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
 import { AbilitiesDebugPanel } from './debug/AbilitiesDebugPanel';
-import { Diagnostics } from './debug/Diagnostics';
 import { EventsGrid } from './debug/EventsGrid';
 import { EventsPanel } from './debug/EventsPanel';
 import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
@@ -236,8 +237,54 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Typography>
           </Box>
         )}
-        {showExperimentalTabs && validSelectedTab === 12 && <Diagnostics />}
-        {showExperimentalTabs && validSelectedTab === 13 && <ActorsPanel />}
+        {showExperimentalTabs && validSelectedTab === 11 && (
+          <Box mt={2}>
+            <Typography variant="h6" gutterBottom>
+              Diagnostics
+            </Typography>
+            <Box mb={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
+                Total Events: {events.length.toLocaleString()}
+              </Typography>
+            </Box>
+            <Box mt={2}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 'bold', mb: 1 }}>
+                Events by Type:
+              </Typography>
+              <List dense>
+                {(
+                  Object.entries(
+                    events.reduce(
+                      (acc, event) => {
+                        const type = event.type.toLowerCase();
+                        acc[type] = (acc[type] || 0) + 1;
+                        return acc;
+                      },
+                      {} as Record<string, number>
+                    )
+                  ) as Array<[string, number]>
+                )
+                  .sort(([, a], [, b]) => b - a) // Sort by count descending
+                  .map(([type, count]) => (
+                    <ListItem key={type} sx={{ py: 0.5, px: 0 }}>
+                      <ListItemText
+                        primary={
+                          <Typography component="span">
+                            <Typography component="span" sx={{ fontWeight: 'medium', mr: 1 }}>
+                              {type}:
+                            </Typography>
+                            <Typography component="span" color="text.secondary">
+                              {count.toLocaleString()}
+                            </Typography>
+                          </Typography>
+                        }
+                      />
+                    </ListItem>
+                  ))}
+              </List>
+            </Box>
+          </Box>
+        )}
       </Box>
     </React.Fragment>
   );

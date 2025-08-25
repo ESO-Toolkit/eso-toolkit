@@ -1,18 +1,19 @@
 import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import {
-  useReportFightParams,
   useDamageEvents,
   useHealingEvents,
   useBuffEvents,
   useDebuffEvents,
+  useDeathEvents,
+  useCastEvents,
+  useCombatantInfoEvents,
   useReportMasterData,
+  useReportFightParams,
 } from '../../hooks';
-import { selectDeathEvents } from '../../store/events_data/selectors';
 
 import { FightDetailsView } from './FightDetailsView';
 
@@ -26,12 +27,24 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   const { reportId } = useReportFightParams();
 
   // Use the new hooks for data fetching
-  const { damageEvents } = useDamageEvents();
-  const { healingEvents } = useHealingEvents();
-  const { buffEvents } = useBuffEvents();
-  const { debuffEvents } = useDebuffEvents();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
+  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const deathEvents = useSelector(selectDeathEvents);
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { castEvents, isCastEventsLoading } = useCastEvents();
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+
+  const isLoading =
+    isDamageEventsLoading ||
+    isHealingEventsLoading ||
+    isBuffEventsLoading ||
+    isMasterDataLoading ||
+    isDebuffEventsLoading ||
+    isDeathEventsLoading ||
+    isCastEventsLoading ||
+    isCombatantInfoEventsLoading;
 
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
@@ -55,12 +68,30 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       healingEvents.length +
       buffEvents.length +
       debuffEvents.length +
-      deathEvents.length;
+      deathEvents.length +
+      castEvents.length +
+      combatantInfoEvents.length;
     if (totalLength === 0) {
       return [];
     }
-    return [...damageEvents, ...healingEvents, ...buffEvents, ...debuffEvents, ...deathEvents];
-  }, [damageEvents, healingEvents, buffEvents, debuffEvents, deathEvents]);
+    return [
+      ...damageEvents,
+      ...healingEvents,
+      ...buffEvents,
+      ...debuffEvents,
+      ...deathEvents,
+      ...castEvents,
+      ...combatantInfoEvents,
+    ];
+  }, [
+    damageEvents,
+    healingEvents,
+    buffEvents,
+    debuffEvents,
+    deathEvents,
+    castEvents,
+    combatantInfoEvents,
+  ]);
 
   // Calculate total number of available tabs
   const totalTabs = showExperimentalTabs ? 14 : 8;
@@ -85,12 +116,12 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       return [];
     }
 
-    const rtn = [];
+    const rtn: ReportActorFragment[] = [];
 
     for (const npc of Object.values(fight.enemyNPCs)) {
       const actor = npc?.id ? reportMasterData.actorsById[npc.id] : undefined;
 
-      if (actor) {
+      if (actor?.id && actor?.name) {
         rtn.push(actor);
       }
     }
@@ -127,11 +158,11 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   }, [showExperimentalTabs, setSearchParams]);
 
   // Only render content when master data is loaded
-  if (isMasterDataLoading) {
+  if (isLoading) {
     return (
       <FightDetailsView
-        fight={fight}
         reportCode={reportId}
+        fight={fight}
         selectedTabId={selectedTabId}
         validSelectedTab={validSelectedTab}
         showExperimentalTabs={showExperimentalTabs}
@@ -150,8 +181,8 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
 
   return (
     <FightDetailsView
-      fight={fight}
       reportCode={reportId}
+      fight={fight}
       selectedTabId={selectedTabId}
       validSelectedTab={validSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
