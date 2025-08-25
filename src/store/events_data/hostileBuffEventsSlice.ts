@@ -19,7 +19,7 @@ interface IntervalFetchResult {
   error?: string;
 }
 
-export interface BuffEventsState {
+export interface HostileBuffEventsState {
   events: BuffEvent[];
   loading: boolean;
   error: string | null;
@@ -31,7 +31,7 @@ export interface BuffEventsState {
   };
 }
 
-const initialState: BuffEventsState = {
+const initialState: HostileBuffEventsState = {
   events: [],
   loading: false,
   error: null,
@@ -94,44 +94,41 @@ const fetchEventsForInterval = async (
   return allEvents as BuffEvent[];
 };
 
-export const fetchBuffEvents = createAsyncThunk<
+export const fetchHostileBuffEvents = createAsyncThunk<
   { events: BuffEvent[]; intervalResults: IntervalFetchResult[] },
   { reportCode: string; fight: FightFragment; client: EsoLogsClient; intervalSize?: number },
   { state: RootState; rejectValue: string }
 >(
-  'buffEvents/fetchBuffEvents',
+  'hostileBuffEvents/fetchHostileBuffEvents',
   async ({ reportCode, fight, client, intervalSize = 30000 }) => {
-    const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     const intervals = createTimeIntervals(fight.startTime, fight.endTime, intervalSize);
 
-    // Create promises for all interval-hostility combinations
-    const fetchPromises = intervals.flatMap((interval) =>
-      hostilityTypes.map(async (hostilityType): Promise<IntervalFetchResult> => {
-        try {
-          const events = await fetchEventsForInterval(
-            client,
-            reportCode,
-            fight,
-            interval.startTime,
-            interval.endTime,
-            hostilityType
-          );
+    // Create promises for all interval combinations (only enemies)
+    const fetchPromises = intervals.map(async (interval): Promise<IntervalFetchResult> => {
+      try {
+        const events = await fetchEventsForInterval(
+          client,
+          reportCode,
+          fight,
+          interval.startTime,
+          interval.endTime,
+          HostilityType.Enemies
+        );
 
-          return {
-            startTime: interval.startTime,
-            endTime: interval.endTime,
-            events,
-          };
-        } catch (error) {
-          return {
-            startTime: interval.startTime,
-            endTime: interval.endTime,
-            events: [],
-            error: error instanceof Error ? error.message : 'Unknown error',
-          };
-        }
-      })
-    );
+        return {
+          startTime: interval.startTime,
+          endTime: interval.endTime,
+          events,
+        };
+      } catch (error) {
+        return {
+          startTime: interval.startTime,
+          endTime: interval.endTime,
+          events: [],
+          error: error instanceof Error ? error.message : 'Unknown error',
+        };
+      }
+    });
 
     // Execute all promises in parallel
     const intervalResults = await Promise.all(fetchPromises);
@@ -145,11 +142,11 @@ export const fetchBuffEvents = createAsyncThunk<
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
-      const state = getState().events.buffs;
+      const state = getState().events.hostileBuffs;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
 
-      // Check if buff events are already cached for this fight with the same interval size
+      // Check if hostile buff events are already cached for this fight
       const isCached =
         state.cacheMetadata.lastFetchedReportId === requestedReportId &&
         state.cacheMetadata.lastFetchedFightId === requestedFightId;
@@ -170,11 +167,11 @@ export const fetchBuffEvents = createAsyncThunk<
   }
 );
 
-const buffEventsSlice = createSlice({
-  name: 'buffEvents',
+const hostileBuffEventsSlice = createSlice({
+  name: 'hostileBuffEvents',
   initialState,
   reducers: {
-    clearBuffEvents(state) {
+    clearHostileBuffEvents(state) {
       state.events = [];
       state.loading = false;
       state.error = null;
@@ -187,11 +184,11 @@ const buffEventsSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchBuffEvents.pending, (state) => {
+      .addCase(fetchHostileBuffEvents.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchBuffEvents.fulfilled, (state, action) => {
+      .addCase(fetchHostileBuffEvents.fulfilled, (state, action) => {
         state.events = action.payload.events;
         state.loading = false;
         state.error = null;
@@ -202,12 +199,12 @@ const buffEventsSlice = createSlice({
           lastFetchedTimestamp: Date.now(),
         };
       })
-      .addCase(fetchBuffEvents.rejected, (state, action) => {
+      .addCase(fetchHostileBuffEvents.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message || 'Failed to fetch buff events';
+        state.error = action.error.message || 'Failed to fetch hostile buff events';
       });
   },
 });
 
-export const { clearBuffEvents } = buffEventsSlice.actions;
-export default buffEventsSlice.reducer;
+export const { clearHostileBuffEvents } = hostileBuffEventsSlice.actions;
+export default hostileBuffEventsSlice.reducer;

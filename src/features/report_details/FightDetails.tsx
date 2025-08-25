@@ -3,16 +3,7 @@ import React from 'react';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
-import {
-  useDamageEvents,
-  useHealingEvents,
-  useBuffEvents,
-  useDebuffEvents,
-  useDeathEvents,
-  useCastEvents,
-  useCombatantInfoEvents,
-  useReportMasterData,
-} from '../../hooks';
+import { useReportMasterData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
@@ -27,24 +18,10 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   const { reportId } = useSelectedReportAndFight();
 
   // Use the new hooks for data fetching
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { castEvents, isCastEventsLoading } = useCastEvents();
-  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
 
-  const isLoading =
-    isDamageEventsLoading ||
-    isHealingEventsLoading ||
-    isBuffEventsLoading ||
-    isMasterDataLoading ||
-    isDebuffEventsLoading ||
-    isDeathEventsLoading ||
-    isCastEventsLoading ||
-    isCombatantInfoEventsLoading;
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+
+  const isLoading = isMasterDataLoading;
 
   const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
@@ -59,39 +36,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
     },
     [setSearchParams]
   );
-
-  // Create a minimal events array for components that need it (like debug tabs)
-  // OPTIMIZED: Only includes the event types we actually fetch, with empty array optimization
-  const events = React.useMemo(() => {
-    const totalLength =
-      damageEvents.length +
-      healingEvents.length +
-      buffEvents.length +
-      debuffEvents.length +
-      deathEvents.length +
-      castEvents.length +
-      combatantInfoEvents.length;
-    if (totalLength === 0) {
-      return [];
-    }
-    return [
-      ...damageEvents,
-      ...healingEvents,
-      ...buffEvents,
-      ...debuffEvents,
-      ...deathEvents,
-      ...castEvents,
-      ...combatantInfoEvents,
-    ];
-  }, [
-    damageEvents,
-    healingEvents,
-    buffEvents,
-    debuffEvents,
-    deathEvents,
-    castEvents,
-    combatantInfoEvents,
-  ]);
 
   // Calculate total number of available tabs
   const totalTabs = showExperimentalTabs ? 15 : 8;
@@ -168,7 +112,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
         showExperimentalTabs={showExperimentalTabs}
         targets={targets}
         selectedTargetId={selectedTargetId}
-        events={events}
         loading={true}
         onNavigateToTab={navigateToTab}
         onTargetChange={handleTargetChange}
@@ -188,7 +131,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       showExperimentalTabs={showExperimentalTabs}
       targets={targets}
       selectedTargetId={selectedTargetId}
-      events={events}
       loading={false}
       onNavigateToTab={navigateToTab}
       onTargetChange={handleTargetChange}

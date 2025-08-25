@@ -1,14 +1,13 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useBuffEvents, useReportMasterData } from '../../../hooks';
+import { useFriendlyBuffEvents, useReportMasterData } from '../../../hooks';
 import { BuffEvent } from '../../../types/combatlogEvents';
 
 import { BuffUptimesView } from './BuffUptimesView';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
 }
 
 interface BuffUptime {
@@ -21,8 +20,8 @@ interface BuffUptime {
   applications: number;
 }
 
-export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selectedTargetId }) => {
-  const { buffEvents, isBuffEventsLoading } = useBuffEvents();
+export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   // Extract stable fight properties
@@ -32,12 +31,8 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
 
   // Calculate buff uptimes for selected target
   const buffUptimes = React.useMemo(() => {
-    if (!selectedTargetId || !fightDuration || !buffEvents || !reportMasterData?.abilitiesById) {
-      return [];
-    }
-
     // Filter buff events for the selected target, focusing on friendly interactions
-    const targetBuffEvents = buffEvents.filter((event: BuffEvent) => {
+    const targetBuffEvents = friendlyBuffEvents.filter((event: BuffEvent) => {
       // Only include events where:
       // 1. The target is the selected target
       // 2. The source is friendly (buff applied by friendly player)
@@ -118,23 +113,11 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight, selec
 
     // Sort by uptime percentage descending
     return uptimes.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
-  }, [selectedTargetId, buffEvents, fightDuration, fightEndTime, reportMasterData?.abilitiesById]);
+  }, [friendlyBuffEvents, fightDuration, fightEndTime, reportMasterData?.abilitiesById]);
 
-  if (isMasterDataLoading || isBuffEventsLoading) {
-    return (
-      <BuffUptimesView
-        selectedTargetId={selectedTargetId || null}
-        buffUptimes={[]}
-        isLoading={true}
-      />
-    );
+  if (isMasterDataLoading || isFriendlyBuffEventsLoading) {
+    return <BuffUptimesView buffUptimes={[]} isLoading={true} />;
   }
 
-  return (
-    <BuffUptimesView
-      selectedTargetId={selectedTargetId || null}
-      buffUptimes={buffUptimes}
-      isLoading={false}
-    />
-  );
+  return <BuffUptimesView buffUptimes={buffUptimes} isLoading={false} />;
 };

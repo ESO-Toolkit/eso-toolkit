@@ -43,8 +43,7 @@ import {
 import React, { useMemo, useState } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCombatantInfoEvents, usePlayerData } from '../../../hooks';
-import { CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
 
 interface TalentsGridPanelProps {
@@ -62,7 +61,6 @@ interface TalentRow {
 }
 
 export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => {
-  const { combatantInfoEvents } = useCombatantInfoEvents();
   const { playerData } = usePlayerData();
 
   // TanStack Table states
@@ -93,9 +91,11 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
 
       talents.forEach((talent: PlayerTalent) => {
         if (talentMap.has(talent.guid)) {
-          const existingTalent = talentMap.get(talent.guid)!;
-          existingTalent.playerCount += 1;
-          existingTalent.playerNames.push(playerName);
+          const existingTalent = talentMap.get(talent.guid);
+          if (existingTalent) {
+            existingTalent.playerCount += 1;
+            existingTalent.playerNames.push(playerName);
+          }
         } else {
           talentMap.set(talent.guid, {
             guid: talent.guid,

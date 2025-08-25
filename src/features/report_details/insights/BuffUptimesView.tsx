@@ -21,16 +21,11 @@ interface BuffUptime {
 }
 
 interface BuffUptimesViewProps {
-  selectedTargetId: string | null;
   buffUptimes: BuffUptime[];
   isLoading: boolean;
 }
 
-export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
-  selectedTargetId,
-  buffUptimes,
-  isLoading,
-}) => {
+export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({ buffUptimes, isLoading }) => {
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
@@ -39,22 +34,6 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
         </Typography>
         <Skeleton variant="rectangular" width="100%" height={40} />
         <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
-      </Box>
-    );
-  }
-
-  if (!selectedTargetId) {
-    return (
-      <Box sx={{ mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Buff Uptimes
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          Shows buffs applied by friendly players to the selected target
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
-          Please select a target to view buff uptimes.
-        </Typography>
       </Box>
     );
   }
@@ -131,7 +110,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
         </List>
       ) : (
         <Typography variant="body2" color="text.secondary">
-          No friendly buff events found for the selected target.
+          No friendly buff events found.
         </Typography>
       )}
     </Box>

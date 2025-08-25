@@ -2,30 +2,20 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import {
-  useDamageEvents,
-  useBuffEvents,
-  useDebuffEvents,
-  useCombatantInfoEvents,
-  useReportMasterData,
-} from '../../../hooks';
+import { useCombatantInfoEvents, useReportMasterData } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 
 interface CriticalDamagePanelProps {
   fight: FightFragment;
-  reportCode?: string;
 }
 
 /**
  * Smart component that handles data processing and state management for critical damage panel
  */
-export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, reportCode }) => {
+export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight }) => {
   // Use hooks to get data
-  const { isDamageEventsLoading } = useDamageEvents();
-  const { isBuffEventsLoading } = useBuffEvents();
-  const { isDebuffEventsLoading } = useDebuffEvents();
   const { isCombatantInfoEventsLoading } = useCombatantInfoEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
@@ -37,20 +27,8 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight,
 
   // Compute loading state in component
   const isLoading = useMemo(() => {
-    return (
-      isDamageEventsLoading ||
-      isBuffEventsLoading ||
-      isDebuffEventsLoading ||
-      isCombatantInfoEventsLoading ||
-      isMasterDataLoading
-    );
-  }, [
-    isDamageEventsLoading,
-    isBuffEventsLoading,
-    isDebuffEventsLoading,
-    isCombatantInfoEventsLoading,
-    isMasterDataLoading,
-  ]);
+    return isCombatantInfoEventsLoading || isMasterDataLoading;
+  }, [isCombatantInfoEventsLoading, isMasterDataLoading]);
 
   // Process player data
   const players = React.useMemo(() => {

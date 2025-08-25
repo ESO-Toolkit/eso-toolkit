@@ -1,25 +1,27 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import { clearAllEvents } from './actions';
-import buffEventsReducer from './buffEventsSlice';
 import castEventsReducer from './castEventsSlice';
 import combatantInfoEventsReducer from './combatantInfoEventsSlice';
 import damageEventsReducer from './damageEventsSlice';
 import deathEventsReducer from './deathEventsSlice';
 import debuffEventsReducer from './debuffEventsSlice';
+import friendlyBuffEventsReducer from './friendlyBuffEventsSlice';
 import healingEventsReducer from './healingEventsSlice';
+import hostileBuffEventsReducer from './hostileBuffEventsSlice';
 import resourceEventsReducer from './resourceEventsSlice';
 
 // This acts as the layer of indirection from the root state
 // Instead of having events.damageEvents, we'll have events.damage.events
 const combinedEventsReducer = combineReducers({
-  buffs: buffEventsReducer,
   casts: castEventsReducer,
   combatantInfo: combatantInfoEventsReducer,
   damage: damageEventsReducer,
   deaths: deathEventsReducer,
   debuffs: debuffEventsReducer,
+  friendlyBuffs: friendlyBuffEventsReducer,
   healing: healingEventsReducer,
+  hostileBuffs: hostileBuffEventsReducer,
   resources: resourceEventsReducer,
 });
 

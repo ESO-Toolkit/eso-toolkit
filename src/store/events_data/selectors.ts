@@ -18,7 +18,10 @@ import { RootState } from '../storeWithHistory';
 export const selectEvents = (state: RootState): RootState['events'] => state.events;
 export const selectDamageEvents = (state: RootState): DamageEvent[] => state.events.damage.events;
 export const selectHealingEvents = (state: RootState): HealEvent[] => state.events.healing.events;
-export const selectBuffEvents = (state: RootState): BuffEvent[] => state.events.buffs.events;
+export const selectFriendlyBuffEvents = (state: RootState): BuffEvent[] =>
+  state.events.friendlyBuffs.events;
+export const selectHostileBuffEvents = (state: RootState): BuffEvent[] =>
+  state.events.hostileBuffs.events;
 export const selectDeathEvents = (state: RootState): DeathEvent[] => state.events.deaths.events;
 export const selectCombatantInfoEvents = (state: RootState): CombatantInfoEvent[] =>
   state.events.combatantInfo.events;
@@ -31,10 +34,10 @@ export const selectResourceEvents = (state: RootState): ResourceChangeEvent[] =>
 export const selectDamageEventsLoading = (state: RootState): boolean => state.events.damage.loading;
 export const selectHealingEventsLoading = (state: RootState): boolean =>
   state.events.healing.loading;
-export const selectBuffEventsLoading = (state: RootState): boolean => state.events.buffs.loading;
-export const selectBuffEventsProgress = (
-  state: RootState
-): { total: number; completed: number; failed: number } => state.events.buffs.intervalProgress;
+export const selectFriendlyBuffEventsLoading = (state: RootState): boolean =>
+  state.events.friendlyBuffs.loading;
+export const selectHostileBuffEventsLoading = (state: RootState): boolean =>
+  state.events.hostileBuffs.loading;
 export const selectDeathEventsLoading = (state: RootState): boolean => state.events.deaths.loading;
 export const selectCombatantInfoEventsLoading = (state: RootState): boolean =>
   state.events.combatantInfo.loading;
@@ -64,7 +67,6 @@ export const selectAllEvents = createSelector(
   [
     selectDamageEvents,
     selectHealingEvents,
-    selectBuffEvents,
     selectDeathEvents,
     selectCombatantInfoEvents,
     selectDebuffEvents,
@@ -74,7 +76,6 @@ export const selectAllEvents = createSelector(
   (
     damageEvents,
     healingEvents,
-    buffEvents,
     deathEvents,
     combatantInfoEvents,
     debuffEvents,
@@ -83,7 +84,6 @@ export const selectAllEvents = createSelector(
   ) => [
     ...damageEvents,
     ...healingEvents,
-    ...buffEvents,
     ...deathEvents,
     ...combatantInfoEvents,
     ...debuffEvents,
@@ -97,7 +97,6 @@ export const selectEventsLoadingState = createSelector(
   [
     selectDamageEventsLoading,
     selectHealingEventsLoading,
-    selectBuffEventsLoading,
     selectDeathEventsLoading,
     selectCombatantInfoEventsLoading,
     selectDebuffEventsLoading,
@@ -107,7 +106,6 @@ export const selectEventsLoadingState = createSelector(
   (
     damageLoading,
     healingLoading,
-    buffLoading,
     deathLoading,
     combatantInfoLoading,
     debuffLoading,
@@ -116,7 +114,6 @@ export const selectEventsLoadingState = createSelector(
   ) => ({
     damage: damageLoading,
     healing: healingLoading,
-    buffs: buffLoading,
     deaths: deathLoading,
     combatantInfo: combatantInfoLoading,
     debuffs: debuffLoading,

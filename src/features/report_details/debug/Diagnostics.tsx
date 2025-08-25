@@ -5,7 +5,6 @@ import { useSelector } from 'react-redux';
 import {
   selectDamageEvents,
   selectHealingEvents,
-  selectBuffEvents,
   selectDeathEvents,
   selectCombatantInfoEvents,
   selectDebuffEvents,
@@ -17,7 +16,6 @@ export const Diagnostics: React.FC = () => {
   // SIMPLIFIED: Use individual selectors instead of complex combined selector
   const damageEvents = useSelector(selectDamageEvents);
   const healingEvents = useSelector(selectHealingEvents);
-  const buffEvents = useSelector(selectBuffEvents);
   const deathEvents = useSelector(selectDeathEvents);
   const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
   const debuffEvents = useSelector(selectDebuffEvents);
@@ -28,7 +26,6 @@ export const Diagnostics: React.FC = () => {
     return (
       damageEvents.length +
       healingEvents.length +
-      buffEvents.length +
       deathEvents.length +
       combatantInfoEvents.length +
       debuffEvents.length +
@@ -38,7 +35,6 @@ export const Diagnostics: React.FC = () => {
   }, [
     damageEvents.length,
     healingEvents.length,
-    buffEvents.length,
     deathEvents.length,
     combatantInfoEvents.length,
     debuffEvents.length,
@@ -50,7 +46,6 @@ export const Diagnostics: React.FC = () => {
     () => [
       { type: 'damageEvents', count: damageEvents.length },
       { type: 'healingEvents', count: healingEvents.length },
-      { type: 'buffEvents', count: buffEvents.length },
       { type: 'deathEvents', count: deathEvents.length },
       { type: 'combatantInfoEvents', count: combatantInfoEvents.length },
       { type: 'debuffEvents', count: debuffEvents.length },
@@ -60,7 +55,6 @@ export const Diagnostics: React.FC = () => {
     [
       damageEvents.length,
       healingEvents.length,
-      buffEvents.length,
       deathEvents.length,
       combatantInfoEvents.length,
       debuffEvents.length,
@@ -105,4 +99,3 @@ export const Diagnostics: React.FC = () => {
     </Box>
   );
 };
-

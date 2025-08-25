@@ -4,21 +4,19 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchBuffEvents } from '../store/events_data/buffEventsSlice';
+import { fetchFriendlyBuffEvents } from '../store/events_data/friendlyBuffEventsSlice';
 import {
-  selectBuffEvents,
-  selectBuffEventsLoading,
-  selectBuffEventsProgress,
+  selectFriendlyBuffEvents,
+  selectFriendlyBuffEventsLoading,
 } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
 
-export function useBuffEvents(): {
-  buffEvents: BuffEvent[];
-  isBuffEventsLoading: boolean;
+export function useFriendlyBuffEvents(): {
+  friendlyBuffEvents: BuffEvent[];
+  isFriendlyBuffEventsLoading: boolean;
   selectedFight: FightFragment | null;
-  progress: { total: number; completed: number; failed: number };
 } {
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useSelectedReportAndFight();
@@ -35,7 +33,7 @@ export function useBuffEvents(): {
   React.useEffect(() => {
     if (reportId && selectedFight && client) {
       dispatch(
-        fetchBuffEvents({
+        fetchFriendlyBuffEvents({
           reportCode: reportId,
           fight: selectedFight,
           client,
@@ -46,12 +44,11 @@ export function useBuffEvents(): {
     }
   }, [dispatch, reportId, selectedFight, client]);
 
-  const buffEvents = useSelector(selectBuffEvents);
-  const isBuffEventsLoading = useSelector(selectBuffEventsLoading);
-  const progress = useSelector(selectBuffEventsProgress);
+  const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
+  const isFriendlyBuffEventsLoading = useSelector(selectFriendlyBuffEventsLoading);
 
   return React.useMemo(
-    () => ({ buffEvents, isBuffEventsLoading, selectedFight, progress }),
-    [buffEvents, isBuffEventsLoading, selectedFight, progress]
+    () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
+    [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight]
   );
 }
