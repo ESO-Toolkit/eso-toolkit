@@ -2,11 +2,18 @@
   "name": "eso-log-aggregator",
   "version": "0.1.0",
   "private": true,
+  "sideEffects": [
+    "*.css",
+    "*.scss",
+    "*.sass",
+    "*.less",
+    "./src/index.tsx",
+    "./src/setupTests.ts"
+  ],
   "dependencies": {
     "@apollo/client": "^3.13.9",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
-    "@graphiql/toolkit": "^0.11.3",
     "@graphql-codegen/near-operation-file-preset": "^3.1.0",
     "@graphql-typed-document-node/core": "^3.2.0",
     "@reduxjs/toolkit": "^2.8.2",
@@ -22,7 +29,6 @@
     "axios": "^1.11.0",
     "chart.js": "^4.5.0",
     "chartjs-plugin-annotation": "^3.1.0",
-    "graphiql": "^5.2.0",
     "graphql": "^16.11.0",
     "history": "^5.3.0",
     "react": "^19.1.1",
@@ -37,6 +43,9 @@
   "scripts": {
     "start": "craco start",
     "build": "craco build",
+    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/659.*.chunk.js",
+    "analyze-all": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "analyze-bundle": "npm run build && node analyze-bundle.js",
     "test": "craco test --watchAll=false",
     "test:watch": "craco test",
     "type-check": "tsc --noEmit",
@@ -90,17 +99,21 @@
     "@swc/core": "^1.13.5",
     "@types/axios": "^0.9.36",
     "@types/react-router-dom": "^5.3.3",
+    "babel-plugin-import": "^1.13.8",
     "craco-alias": "^3.0.1",
     "eslint": "^8.57.1",
     "eslint-plugin-storybook": "^9.1.2",
+    "ignore-loader": "^0.1.2",
     "prettier": "^3.6.2",
     "prop-types": "^15.8.1",
     "raw-loader": "^4.0.2",
     "react-scripts": "^5.0.1",
+    "source-map-explorer": "^2.5.3",
     "storybook": "^9.1.2",
     "swc-loader": "^0.2.6",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5",
-    "webpack": "^5.101.3"
+    "webpack": "^5.101.3",
+    "webpack-bundle-analyzer": "^4.10.2"
   }
 }

@@ -1,6 +1,10 @@
 import LinkIcon from '@mui/icons-material/Link';
-import { Box, Paper, Button, TextField } from '@mui/material';
-import React from 'react';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
@@ -8,16 +12,37 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { AuthProvider } from './AuthContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
-import { LiveLog } from './features/live_logging/LiveLog';
-import { ReportFightDetails } from './features/report_details/ReportFightDetails';
-import { ReportFights } from './features/report_details/ReportFights';
 import { AppLayout } from './layouts/AppLayout';
-import { OAuthRedirect } from './OAuthRedirect';
 import { clearAllEvents } from './store/events_data/actions';
 import { clearMasterData } from './store/master_data/masterDataSlice';
 import { clearReport } from './store/report/reportSlice';
 import store, { persistor } from './store/storeWithHistory';
 import { useAppDispatch } from './store/useAppDispatch';
+
+// Code splitting for major features
+const LiveLog = React.lazy(() =>
+  import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog }))
+);
+const ReportFightDetails = React.lazy(() =>
+  import('./features/report_details/ReportFightDetails').then((module) => ({
+    default: module.ReportFightDetails,
+  }))
+);
+const ReportFights = React.lazy(() =>
+  import('./features/report_details/ReportFights').then((module) => ({
+    default: module.ReportFights,
+  }))
+);
+const OAuthRedirect = React.lazy(() =>
+  import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect }))
+);
+
+// Loading fallback component
+const LoadingFallback: React.FC = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" height="200px">
+    <CircularProgress />
+  </Box>
+);
 
 const MainApp: React.FC = () => {
   const [logUrl, setLogUrl] = React.useState('');
@@ -130,7 +155,11 @@ const AppRoutes: React.FC = () => {
   const publicUrl = process.env.PUBLIC_URL || '';
   const currentPath = window.location.pathname.replace(publicUrl, '');
   if (currentPath === '/oauth-redirect') {
-    return <OAuthRedirect />;
+    return (
+      <Suspense fallback={<LoadingFallback />}>
+        <OAuthRedirect />
+      </Suspense>
+    );
   }
 
   return (
@@ -141,19 +170,42 @@ const AppRoutes: React.FC = () => {
       }}
     >
       <Routes>
-        <Route path="/oauth-redirect" element={<OAuthRedirect />} />
+        <Route
+          path="/oauth-redirect"
+          element={
+            <Suspense fallback={<LoadingFallback />}>
+              <OAuthRedirect />
+            </Suspense>
+          }
+        />
         <Route element={<AppLayout />}>
           {/* Pass fights as prop via state, fallback to empty array if not present */}
-          <Route path="/report/:reportId/fight/:fightId" element={<ReportFightDetails />} />
+          <Route
+            path="/report/:reportId/fight/:fightId"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <ReportFightDetails />
+              </Suspense>
+            }
+          />
           <Route
             path="/report/:reportId/live"
             element={
-              <LiveLog>
-                <ReportFightDetails />
-              </LiveLog>
+              <Suspense fallback={<LoadingFallback />}>
+                <LiveLog>
+                  <ReportFightDetails />
+                </LiveLog>
+              </Suspense>
             }
           />
-          <Route path="/report/:reportId" element={<ReportFights />} />
+          <Route
+            path="/report/:reportId"
+            element={
+              <Suspense fallback={<LoadingFallback />}>
+                <ReportFights />
+              </Suspense>
+            }
+          />
           <Route path="/*" element={<MainApp />} />
         </Route>
       </Routes>
