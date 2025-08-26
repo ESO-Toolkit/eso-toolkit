@@ -12,6 +12,17 @@ import {
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities, MundusStones } from '../../../types/abilities';
 import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { PlayerGear } from '../../../types/playerDetails';
+import {
+  ARENA_SET_NAMES,
+  isDoubleSetCount,
+  isPerfectedGear,
+  MONSTER_ONE_PIECE_HINTS,
+  MYTHIC_SET_NAMES,
+  normalizeGearName,
+  PlayerGearItemData,
+  PlayerGearSetRecord,
+} from '../../../utils/gearUtilities';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
@@ -244,6 +255,103 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData]);
 
+  const playerGear = React.useMemo(() => {
+    const result: Record<number, PlayerGearSetRecord[]> = {};
+
+    if (!playerData?.playersById) {
+      return result;
+    }
+
+    for (const player of Object.values(playerData.playersById)) {
+      const gear = player?.combatantInfo?.gear ?? [];
+
+      const setDataByBase: Record<string, PlayerGearItemData> = {};
+
+      gear.forEach((g: PlayerGear, idx) => {
+        if (!g.setName) return;
+        const increment = isDoubleSetCount(g, idx, gear) ? 2 : 1;
+
+        const isPerfected = isPerfectedGear(g);
+        const baseDisplay = g.setName.replace(/^Perfected\s+/, '');
+        const baseKey = normalizeGearName(baseDisplay);
+
+        if (!setDataByBase[baseKey]) {
+          setDataByBase[baseKey] = {
+            total: 0,
+            perfected: 0,
+            setID: g.setID,
+            hasPerfected: false,
+            hasRegular: false,
+            baseDisplay,
+          };
+        }
+        const entry = setDataByBase[baseKey];
+        entry.total += increment;
+        if (isPerfected) {
+          entry.perfected += increment;
+          entry.hasPerfected = true;
+        } else {
+          entry.hasRegular = true;
+        }
+        if (!entry.setID && g.setID) entry.setID = g.setID;
+      });
+
+      // Build sortable records from aggregated set data
+      const records = Object.entries(setDataByBase).map<PlayerGearSetRecord>(([baseKey, data]) => {
+        const labelName =
+          data.perfected === data.total ? `Perfected ${data.baseDisplay}` : data.baseDisplay;
+        const count = data.total;
+        const n = normalizeGearName(labelName);
+        const isMonster = MONSTER_ONE_PIECE_HINTS.has(n);
+        const isMythic = MYTHIC_SET_NAMES.has(n);
+        const isArena = ARENA_SET_NAMES.has(n);
+        const isHighland4 = count === 4 && n === normalizeGearName('Highland Sentinel');
+        const isFivePiece = count >= 5;
+        const isThreePiece = count === 3;
+        // Determine desired order category
+        let category = 99;
+        if (isMonster)
+          category = 0; // monster (1p or 2p) first
+        else if (isFivePiece)
+          category = 1; // 5-piece bonuses
+        else if (isHighland4)
+          category = 2; // 4-piece Highland Sentinel
+        else if (isThreePiece)
+          category = 3; // 3-piece (e.g., Potentates)
+        else if (isMythic)
+          category = 4; // mythic
+        else if (isArena)
+          category = 5; // arena weapons
+        else category = 6; // everything else last
+
+        // Secondary ordering within monsters: 2p before 1p
+        const secondary = isMonster ? (count === 2 ? 0 : 1) : 0;
+
+        return {
+          key: baseKey,
+          data,
+          labelName,
+          count,
+          category,
+          secondary,
+          sortName: data.baseDisplay.toLowerCase(),
+        };
+      });
+
+      records.sort((a, b) => {
+        if (a.category !== b.category) return a.category - b.category;
+        if (a.secondary !== b.secondary) return a.secondary - b.secondary;
+        // Prefer higher piece counts within same category (except monsters handled above)
+        if (a.count !== b.count) return b.count - a.count;
+        return a.sortName.localeCompare(b.sortName);
+      });
+
+      result[player.id] = records;
+    }
+
+    return result;
+  }, [playerData?.playersById]);
+
   // Show loading if any data is still loading
   if (isLoading) {
     return (
@@ -257,6 +365,7 @@ export const PlayersPanel: React.FC = () => {
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
+        playerGear={playerGear}
       />
     );
   }
@@ -272,6 +381,7 @@ export const PlayersPanel: React.FC = () => {
       reportId={reportId}
       fightId={fightId}
       isLoading={false}
+      playerGear={playerGear}
     />
   );
 };

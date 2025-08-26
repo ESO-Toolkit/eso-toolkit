@@ -1,12 +1,17 @@
 import { PlayerGear } from '../types/playerDetails';
 
+import { PlayerGearSetRecord } from './gearUtilities';
+
 export interface BuildIssue {
   gearName: string;
   enchantQuality: number;
   message: string;
 }
 
-export function detectBuildIssues(gear: PlayerGear[]): BuildIssue[] {
+export function detectBuildIssues(
+  gear: PlayerGear[],
+  playerGearAnalysis: PlayerGearSetRecord[]
+): BuildIssue[] {
   if (!gear) return [];
   const issues: BuildIssue[] = [];
   gear.forEach((g) => {
@@ -36,5 +41,19 @@ export function detectBuildIssues(gear: PlayerGear[]): BuildIssue[] {
       });
     }
   });
+
+  playerGearAnalysis.forEach((rec) => {
+    if (rec.count >= 5 && rec.data.hasPerfected && rec.data.hasRegular && rec.data.perfected < 5) {
+      const missing = 5 - rec.data.perfected;
+      if (missing > 0) {
+        issues.push({
+          gearName: rec.labelName,
+          enchantQuality: 5,
+          message: `Missing ${missing} Perfected piece(s) in ${rec.labelName} for the 5-piece bonus`,
+        });
+      }
+    }
+  });
+
   return issues;
 }

@@ -12,6 +12,7 @@ import {
   CombatantGear,
   CombatantAura,
 } from '../../../types/combatlogEvents';
+import { getSetCount } from '../../../utils/gearUtilities';
 
 import { PlayerPenetrationDetailsView } from './PlayerPenetrationDetailsView';
 
@@ -160,11 +161,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Find the combatantinfo event for this player in this specific fight
     const combatantInfoEvent = combatantInfoEvents.find(
-      (event: CombatantInfoEvent) =>
-        event.type === 'combatantinfo' &&
-        String(event.sourceID) === id &&
-        'fight' in event &&
-        event.fight === fight.id
+      (event) => String(event.sourceID) === id && event.fight === fight.id
     );
 
     const latestData = combatantInfoEvent;
@@ -177,9 +174,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Check Velothi Ur-Mage's Amulet buff from player auras
     const hasVelothiAmulet = latestAuras.some(
-      (aura: CombatantAura) =>
-        aura.ability === KnownAbilities.VELOTHI_UR_MAGE_BUFF ||
-        aura.name?.includes("Velothi Ur-Mage's Amulet")
+      (aura: CombatantAura) => aura.ability === KnownAbilities.VELOTHI_UR_MAGE_BUFF
     );
 
     // Add Velothi Ur-Mage's Amulet
@@ -238,10 +233,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     basePenetration += ansuulsPenetration;
 
     // Check Tide-born Wildstalker 4-piece set bonus
-    const tidebornGearCount =
-      latestGear?.filter(
-        (gear: CombatantGear) => gear.setID === KnownSetIDs.TIDEBORN_WILDSTALKER_SET
-      ).length || 0;
+    const tidebornGearCount = getSetCount(latestGear, KnownSetIDs.TIDEBORN_WILDSTALKER_SET);
     const hasTidebornWildstalker4Piece = tidebornGearCount >= 4;
     const tidebornPenetration = hasTidebornWildstalker4Piece
       ? PenetrationValues.TIDEBORN_WILDSTALKER_4_PIECE
