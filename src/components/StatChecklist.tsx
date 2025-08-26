@@ -17,7 +17,6 @@ import React from 'react';
 
 export interface StatChecklistSource {
   name: string;
-  value: number;
   wasActive: boolean;
   description: string;
   link?: string;

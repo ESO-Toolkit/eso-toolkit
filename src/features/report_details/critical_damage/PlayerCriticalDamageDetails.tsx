@@ -1,10 +1,17 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCombatantInfoEvents, usePlayerData } from '../../../hooks';
-import { KnownAbilities, CriticalDamageValues } from '../../../types/abilities';
-import { CombatantGear, CombatantInfoEvent, CombatantAura } from '../../../types/combatlogEvents';
+import {
+  useCombatantInfoEvents,
+  useDebuffEvents,
+  useFriendlyBuffEvents,
+  usePlayerData,
+} from '../../../hooks';
 
+import {
+  getCritDamageFromComputedSource,
+  getEnabledCriticalDamageSources,
+} from './CritDamageUtils';
 import {
   PlayerCriticalDamageDetailsView,
   PlayerCriticalDamageData,
@@ -18,42 +25,6 @@ interface PlayerCriticalDamageDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 
-// Helper functions
-const getRelevantCombatantInfo = (
-  combatantInfoEvents: CombatantInfoEvent[],
-  playerId: number
-): CombatantInfoEvent | null => {
-  const playerEvents = combatantInfoEvents.filter((event) => event.sourceID === playerId);
-  return playerEvents.length > 0 ? playerEvents[0] : null;
-};
-
-const getCriticalDamageFromGear = (gear: CombatantGear[]): number => {
-  // Since CombatantGear doesn't have bonuses property in the type,
-  // we'll return 0 for now and calculate from set bonuses if needed
-  return 0;
-};
-
-const getCriticalDamageFromAuras = (auras: CombatantAura[]): number => {
-  return auras.reduce((total, aura) => {
-    const abilityId = aura.ability;
-
-    switch (abilityId) {
-      case KnownAbilities.LUCENT_ECHOES:
-        return total + CriticalDamageValues.LUCENT_ECHOES;
-      case KnownAbilities.FATED_FORTUNE_STAGE_ONE:
-        return total + CriticalDamageValues.FATED_FORTUNE;
-      case KnownAbilities.HEMORRHAGE:
-        return total + CriticalDamageValues.HEMORRHAGE;
-      case KnownAbilities.PIERCING_SPEAR:
-        return total + CriticalDamageValues.PIERCING_SPEAR;
-      case KnownAbilities.ADVANCED_SPECIES:
-        return total + CriticalDamageValues.ADVANCED_SPECIES;
-      default:
-        return total;
-    }
-  }, 0);
-};
-
 export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
   id,
   name,
@@ -63,8 +34,14 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 }) => {
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
 
-  const isLoading = isCombatantInfoEventsLoading || isPlayerDataLoading;
+  const isLoading =
+    isCombatantInfoEventsLoading ||
+    isPlayerDataLoading ||
+    isFriendlyBuffEventsLoading ||
+    isDebuffEventsLoading;
 
   // Get player data
   const player = React.useMemo(() => {
@@ -74,39 +51,70 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
 
   // Get player's combatant info
   const combatantInfo = React.useMemo(() => {
-    if (!combatantInfoEvents || !player) return null;
-    return getRelevantCombatantInfo(combatantInfoEvents, player.id);
+    if (!player) return null;
+    return combatantInfoEvents.find((info) => info.sourceID === player.id) || null;
   }, [combatantInfoEvents, player]);
+
+  const enabledSources = React.useMemo(() => {
+    return getEnabledCriticalDamageSources(friendlyBuffEvents, debuffEvents, combatantInfo).map(
+      (s) => ({
+        ...s,
+        wasActive: true,
+      })
+    );
+  }, [combatantInfo, debuffEvents, friendlyBuffEvents]);
 
   // Calculate critical damage data
   const criticalDamageData = React.useMemo((): PlayerCriticalDamageData | null => {
-    if (!combatantInfo || !player) return null;
+    if (!player) return null;
 
-    const baseCriticalDamage = 150; // Base critical damage percentage
+    const baseCriticalDamage = 50; // Base critical damage percentage
 
-    // Get initial critical damage from gear and permanent auras
     let gearCriticalDamage = 0;
-    if (combatantInfo.gear) {
-      gearCriticalDamage = getCriticalDamageFromGear(combatantInfo.gear);
-    }
-
     let auraCriticalDamage = 0;
-    if (combatantInfo.auras) {
-      auraCriticalDamage = getCriticalDamageFromAuras(combatantInfo.auras);
+    let computedCriticalDamage = 0;
+    let buffCriticalDamage = 0;
+    let debuffCriticalDamage = 0;
+
+    for (const source of enabledSources) {
+      switch (source.source) {
+        case 'aura':
+          auraCriticalDamage += source.value;
+          break;
+        case 'gear':
+          gearCriticalDamage += source.value;
+          break;
+        case 'computed':
+          computedCriticalDamage += getCritDamageFromComputedSource(
+            source,
+            playerData?.playersById[player.id],
+            combatantInfo
+          );
+          break;
+        case 'buff':
+          buffCriticalDamage += source.value;
+          break;
+        case 'debuff':
+          debuffCriticalDamage += source.value;
+          break;
+      }
     }
 
-    const totalCriticalDamage = baseCriticalDamage + gearCriticalDamage + auraCriticalDamage;
+    const permCriticalDamage =
+      baseCriticalDamage + gearCriticalDamage + auraCriticalDamage + computedCriticalDamage;
+
+    const uptimeCriticalDamage = buffCriticalDamage + debuffCriticalDamage;
 
     // Create a simple data point for the fight
     const dataPoints = [
       {
         timestamp: fight.startTime,
-        criticalDamage: totalCriticalDamage,
+        criticalDamage: permCriticalDamage + uptimeCriticalDamage,
         relativeTime: 0,
       },
       {
         timestamp: fight.endTime,
-        criticalDamage: totalCriticalDamage,
+        criticalDamage: permCriticalDamage + uptimeCriticalDamage,
         relativeTime: (fight.endTime - fight.startTime) / 1000,
       },
     ];
@@ -116,51 +124,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       playerName: player.name,
       dataPoints,
     };
-  }, [combatantInfo, player, fight]);
-
-  // Calculate critical damage sources
-  const criticalDamageSources = React.useMemo(() => {
-    if (!combatantInfo) return [];
-
-    const sources = [];
-
-    // Add base critical damage
-    sources.push({
-      name: 'Base Critical Damage',
-      value: 150,
-      wasActive: true,
-      description: 'Base critical damage for all players',
-    });
-
-    // Add aura-based sources
-    if (combatantInfo.auras) {
-      combatantInfo.auras.forEach((aura) => {
-        const abilityId = aura.ability;
-
-        switch (abilityId) {
-          case KnownAbilities.LUCENT_ECHOES:
-            sources.push({
-              name: 'Lucent Echoes',
-              value: CriticalDamageValues.LUCENT_ECHOES,
-              wasActive: true,
-              description: 'Critical damage from Lucent Echoes buff',
-            });
-            break;
-          case KnownAbilities.FATED_FORTUNE_STAGE_ONE:
-            sources.push({
-              name: 'Fated Fortune',
-              value: CriticalDamageValues.FATED_FORTUNE,
-              wasActive: true,
-              description: 'Critical damage from Fated Fortune passive',
-            });
-            break;
-          // Add more cases as needed
-        }
-      });
-    }
-
-    return sources;
-  }, [combatantInfo]);
+  }, [enabledSources, player, fight, playerData?.playersById, combatantInfo]);
 
   const fightDurationSeconds = (fight.endTime - fight.startTime) / 1000;
 
@@ -176,7 +140,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       expanded={expanded}
       isLoading={isLoading}
       criticalDamageData={criticalDamageData}
-      criticalDamageSources={criticalDamageSources}
+      criticalDamageSources={enabledSources}
       criticalMultiplier={null}
       fightDurationSeconds={fightDurationSeconds}
       onExpandChange={onExpandChange}

@@ -28,6 +28,8 @@ import { StatChecklist } from '../../../components/StatChecklist';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
+import { CriticalDamageSource, CriticalDamageSourceWithActiveState } from './CritDamageUtils';
+
 // Register Chart.js components
 ChartJS.register(
   CategoryScale,
@@ -70,14 +72,6 @@ export interface PlayerCriticalDamageData {
   dataPoints: CriticalDamageDataPoint[];
 }
 
-interface CriticalDamageSource {
-  name: string;
-  value: number;
-  wasActive: boolean;
-  description: string;
-  link?: string; // Optional external link for detailed analysis
-}
-
 interface CriticalMultiplierInfo {
   abilityName: string;
   abilityId: number;
@@ -98,7 +92,7 @@ interface PlayerCriticalDamageDetailsViewProps {
   expanded: boolean;
   isLoading: boolean;
   criticalDamageData: PlayerCriticalDamageData | null;
-  criticalDamageSources: CriticalDamageSource[];
+  criticalDamageSources: CriticalDamageSourceWithActiveState[];
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationSeconds: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -156,7 +150,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             </Typography>
           </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography variant="body2" color={maxCriticalDamage > 125 ? 'success' : 'secondary'}>
+            <Typography variant="body2" color={maxCriticalDamage >= 125 ? 'success' : 'secondary'}>
               Max: {maxCriticalDamage}% crit damage
             </Typography>
             {criticalMultiplier && (
@@ -237,15 +231,6 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   {criticalMultiplier.unaccountedCritDamagePercent > 0 &&
                     ' (This could be from unknown sources like gear sets, mundus stones, or other effects)'}
                 </Typography>
-
-                <Typography variant="body2" sx={{ mb: 1, fontWeight: 'bold' }}>
-                  Active Critical Damage Sources at Critical Hit:
-                </Typography>
-                {criticalMultiplier.activeSources.map((source, index) => (
-                  <Typography key={index} variant="body2" sx={{ ml: 2, mb: 0.5 }}>
-                    • {source.name}: +{source.value}% ({source.description})
-                  </Typography>
-                ))}
 
                 <Typography
                   variant="body2"
