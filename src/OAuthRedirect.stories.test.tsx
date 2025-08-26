@@ -9,7 +9,7 @@ describe('OAuthRedirect Storybook Snapshot', () => {
   it('matches the default story snapshot', () => {
     const { container } = render(
       <AuthProvider>
-        <MemoryRouter>
+        <MemoryRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
           <OAuthRedirect />
         </MemoryRouter>
       </AuthProvider>

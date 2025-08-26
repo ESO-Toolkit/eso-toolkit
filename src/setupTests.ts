@@ -2,10 +2,11 @@
 // allows you to do things like:
 // expect(element).toHaveTextContent(/react/i)
 // learn more: https://github.com/testing-library/jest-dom
+import { TextEncoder, TextDecoder } from 'util';
+
 import '@testing-library/jest-dom';
 
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
-import { TextEncoder, TextDecoder } from 'util';
 
 if (typeof global.TextEncoder === 'undefined') {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
