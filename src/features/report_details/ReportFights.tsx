@@ -1,45 +1,20 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/generated';
+import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { clearAllEvents } from '../../store/events_data/actions';
-import { clearMasterData } from '../../store/master_data/masterDataSlice';
-import { fetchReportData } from '../../store/report/reportSlice';
-import { RootState } from '../../store/storeWithHistory';
-import { useAppDispatch } from '../../store/useAppDispatch';
 
 import { ReportFightsView } from './ReportFightsView';
 
 export const ReportFights: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
-  const dispatch = useAppDispatch();
-  const client = useEsoLogsClientInstance();
-
-  const fights = useSelector((state: RootState) => state.report.data?.fights);
-  const loading = useSelector((state: RootState) => state.report.loading);
-  const error = useSelector((state: RootState) => state.report.error);
-  const currentReportId = useSelector((state: RootState) => state.report.reportId);
-
-  React.useEffect(() => {
-    if (reportId && client) {
-      // Clear existing data when fetching a new report
-      if (currentReportId !== reportId) {
-        dispatch(clearAllEvents());
-        dispatch(clearMasterData());
-      }
-      // The thunk now handles checking if data needs to be fetched internally
-      dispatch(fetchReportData({ reportId, client }));
-    }
-  }, [reportId, client, currentReportId, dispatch]);
+  const { reportData, isReportLoading } = useReportData();
 
   return (
     <ReportFightsView
-      fights={(fights || []).filter(Boolean) as FightFragment[]}
-      loading={loading}
-      error={error}
+      fights={reportData?.fights?.filter(Boolean) as FightFragment[]}
+      loading={isReportLoading}
       fightId={fightId || undefined}
       reportId={reportId || undefined}
     />
