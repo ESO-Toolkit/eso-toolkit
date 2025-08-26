@@ -5,10 +5,10 @@ import { useNavigate } from 'react-router-dom';
 import { FightFragment } from '../../graphql/generated';
 
 interface ReportFightsViewProps {
-  fights: FightFragment[];
+  fights: FightFragment[] | null | undefined;
   loading: boolean;
-  fightId: string | undefined;
-  reportId: string | undefined;
+  fightId: string | undefined | null;
+  reportId: string | undefined | null;
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -47,7 +47,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   return (
     <>
-      {fights.length > 0 && fightId == null && (
+      {fights?.length && (
         <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
             Select a Fight
