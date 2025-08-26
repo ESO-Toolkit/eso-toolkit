@@ -7,7 +7,7 @@ import {
   selectEventPlayers,
 } from '../../../store/events_data/actions';
 import { selectMasterData } from '../../../store/master_data/masterDataSelectors';
-import { CastEvent, ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
+import { ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 

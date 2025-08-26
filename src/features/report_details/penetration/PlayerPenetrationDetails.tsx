@@ -34,7 +34,6 @@ import {
 } from '../../../store/events_data/actions';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../../../types/abilities';
 import {
-  BuffEvent,
   DebuffEvent,
   CombatantInfoEvent,
   CombatantGear,

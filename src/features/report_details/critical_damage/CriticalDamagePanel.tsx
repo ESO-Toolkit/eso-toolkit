@@ -2,8 +2,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCombatantInfoEvents, usePlayerData, useReportMasterData } from '../../../hooks';
-import { resolveActorName } from '../../../utils/resolveActorName';
+import { usePlayerData } from '../../../hooks';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 
