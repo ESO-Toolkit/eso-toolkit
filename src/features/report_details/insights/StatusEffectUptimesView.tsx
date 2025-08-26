@@ -1,3 +1,4 @@
+import { OpenInNew as OpenInNewIcon } from '@mui/icons-material';
 import {
   Box,
   Typography,
@@ -11,30 +12,55 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import React from 'react';
 
-interface StatusEffectUptime {
+export interface StatusEffectUptime {
   abilityGameID: number;
   abilityName: string;
   totalDuration: number;
   uptime: number;
   uptimePercentage: number;
   applications: number;
+  isDebuff: boolean;
 }
 
 interface StatusEffectUptimesViewProps {
   selectedTargetId: string | null;
   statusEffectUptimes: StatusEffectUptime[];
   isLoading: boolean;
+  reportId: string | null;
+  fightId: string | null;
+  showingBossTargets: boolean;
 }
 
 export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
   selectedTargetId,
   statusEffectUptimes,
   isLoading,
+  reportId,
+  fightId,
+  showingBossTargets,
 }) => {
-  if (!selectedTargetId) {
+  const createEsoLogsUrl = (abilityGameID: number, isDebuff: boolean): string | null => {
+    // Only create URL for specific selected targets, not when showing all boss targets
+    if (!reportId || !fightId) return null;
+
+    let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=1&ability=${abilityGameID}`;
+
+    if (isDebuff) {
+      url += '&spells=debuffs';
+    }
+
+    if (selectedTargetId) {
+      url += `&source=${selectedTargetId}`;
+    }
+
+    return url;
+  };
+  if (!selectedTargetId && !showingBossTargets) {
     return (
       <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
         <Typography variant="h6" gutterBottom>
@@ -57,13 +83,18 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   }
 
   if (statusEffectUptimes.length === 0) {
-    return <Alert severity="info">No status effects found for the selected target.</Alert>;
+    const message = showingBossTargets
+      ? 'No status effects found for boss targets.'
+      : 'No status effects found for the selected target.';
+    return <Alert severity="info">{message}</Alert>;
   }
 
   return (
     <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Target ID: {selectedTargetId}
+        {showingBossTargets
+          ? 'Showing status effects for all boss targets'
+          : `Target ID: ${selectedTargetId}`}
       </Typography>
 
       <TableContainer>
@@ -74,6 +105,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
               <TableCell align="right">Applications</TableCell>
               <TableCell align="right">Duration</TableCell>
               <TableCell align="right">Uptime %</TableCell>
+              <TableCell align="right">ESO Logs</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -84,14 +116,16 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
                 }
                 const minutes = Math.floor(seconds / 60);
                 const remainingSeconds = seconds % 60;
-                return `${minutes}m ${remainingSeconds.toFixed(1)}s`;
+                return `${minutes}m ${remainingSeconds.toFixed(0)}s`;
               };
 
               const getUptimeColor = (percentage: number): 'success' | 'warning' | 'error' => {
                 if (percentage >= 80) return 'success';
-                if (percentage >= 60) return 'warning';
+                if (percentage >= 40) return 'warning';
                 return 'error';
               };
+
+              const esoLogsUrl = createEsoLogsUrl(uptime.abilityGameID, uptime.isDebuff);
 
               return (
                 <TableRow key={uptime.abilityGameID}>
@@ -112,8 +146,25 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
                       label={`${uptime.uptimePercentage.toFixed(1)}%`}
                       size="small"
                       color={getUptimeColor(uptime.uptimePercentage)}
-                      variant="filled"
+                      variant="outlined"
                     />
+                  </TableCell>
+                  <TableCell align="right">
+                    {esoLogsUrl ? (
+                      <Tooltip title="View on ESO Logs">
+                        <IconButton
+                          size="small"
+                          onClick={() => window.open(esoLogsUrl, '_blank')}
+                          sx={{ color: 'primary.main' }}
+                        >
+                          <OpenInNewIcon fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
+                    ) : (
+                      <Typography variant="caption" color="text.disabled">
+                        -
+                      </Typography>
+                    )}
                   </TableCell>
                 </TableRow>
               );
@@ -124,5 +175,3 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
     </Paper>
   );
 };
-
-// No default export needed

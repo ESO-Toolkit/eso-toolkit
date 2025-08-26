@@ -24,7 +24,6 @@ interface InsightsPanelViewProps {
   abilityEquipped: Record<string, string[]>;
   buffActors: Record<string, Set<string>>;
   firstDamageDealer: string | null;
-  selectedTargetId?: string;
   isLoading: boolean;
 }
 
@@ -37,7 +36,6 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   abilityEquipped,
   buffActors,
   firstDamageDealer,
-  selectedTargetId,
   isLoading,
 }) => {
   if (isLoading) {
@@ -159,9 +157,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         <Typography variant="h6" gutterBottom>
           Status Effects & Uptimes
         </Typography>
-        <StatusEffectUptimesPanel fight={fight} selectedTargetId={selectedTargetId} />
+        <StatusEffectUptimesPanel fight={fight} />
         <BuffUptimesPanel fight={fight} />
-        <DebuffUptimesPanel fight={fight} selectedTargetId={selectedTargetId} />
+        <DebuffUptimesPanel fight={fight} />
       </Paper>
 
       {/* Damage Breakdown */}

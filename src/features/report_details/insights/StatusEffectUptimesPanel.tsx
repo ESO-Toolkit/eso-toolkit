@@ -1,45 +1,92 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useReportMasterData } from '../../../hooks';
+import { useHostileBuffEvents, useReportMasterData } from '../../../hooks';
 import { useDebuffEvents } from '../../../hooks/useDebuffEvents';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
-import { DebuffEvent } from '../../../types/combatlogEvents';
+import { BuffEvent, DebuffEvent } from '../../../types/combatlogEvents';
 
-import { StatusEffectUptimesView } from './StatusEffectUptimesView';
+import { StatusEffectUptime, StatusEffectUptimesView } from './StatusEffectUptimesView';
 
-// Define the specific status effect abilities to track
-const STATUS_EFFECT_ABILITIES = new Set([
-  KnownAbilities.BURNING,
-  KnownAbilities.POISONED,
+// Define the specific status effect debuff abilities to track
+const STATUS_EFFECT_BUFF_ABILITIES = new Set([
   KnownAbilities.OVERCHARGED,
   KnownAbilities.SUNDERED,
   KnownAbilities.CONCUSSION,
   KnownAbilities.CHILL,
-  KnownAbilities.HEMMORRHAGING,
   KnownAbilities.DISEASED,
+]);
+
+// Define the specific status effect debuff abilities to track
+const STATUS_EFFECT_DEBUFF_ABILITIES = new Set([
+  KnownAbilities.BURNING,
+  KnownAbilities.POISONED,
+  KnownAbilities.HEMMORRHAGING,
 ]);
 
 interface StatusEffectUptimesPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
 }
 
-interface StatusEffectUptime {
-  abilityGameID: number;
-  abilityName: string;
-  totalDuration: number;
-  uptime: number;
-  uptimePercentage: number;
-  applications: number;
+/**
+ * Calculate uptime and application count for a specific debuff ability
+ * @param events - Sorted array of debuff events for a single ability
+ * @param fightEndTime - End time of the fight (for handling active debuffs at fight end)
+ * @returns Object with totalDuration (ms) and applications count
+ */
+function calculateDebuffUptime(
+  events: (DebuffEvent | BuffEvent)[],
+  fightEndTime: number | undefined
+): { totalDuration: number; applications: number } {
+  let totalDuration = 0;
+  let applications = 0;
+  let debuffStartTime: number | null = null;
+  let activeApplications = 0; // Track how many applications are currently active
+
+  events.forEach((event) => {
+    switch (event.type) {
+      case 'applydebuff':
+      case 'applybuff':
+        applications++;
+        activeApplications++;
+
+        // If this is the first active application, start timing
+        if (debuffStartTime === null) {
+          debuffStartTime = event.timestamp;
+        }
+        break;
+
+      case 'removedebuff':
+      case 'removebuff':
+        activeApplications--;
+
+        // If this was the last active application, stop timing
+        if (activeApplications <= 0 && debuffStartTime !== null) {
+          totalDuration += event.timestamp - debuffStartTime;
+          debuffStartTime = null;
+          activeApplications = 0; // Ensure it doesn't go negative
+        }
+        break;
+    }
+  });
+
+  // If debuff is still active at fight end, add remaining duration
+  if (debuffStartTime !== null && fightEndTime) {
+    totalDuration += fightEndTime - debuffStartTime;
+  }
+
+  return { totalDuration, applications };
 }
 
-export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({
-  fight,
-  selectedTargetId,
-}) => {
+export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> = ({ fight }) => {
+  const selectedTargetId = useSelector(selectSelectedTargetId);
+  const { reportId, fightId } = useSelectedReportAndFight();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
 
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
@@ -48,26 +95,42 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
 
   // Calculate status effect uptimes
   const statusEffectUptimes = React.useMemo(() => {
-    if (!selectedTargetId || !fightDuration || !debuffEvents || !reportMasterData?.abilitiesById) {
+    if (!fightDuration || !debuffEvents || !reportMasterData?.abilitiesById) {
       return [];
     }
 
-    const targetId = Number(selectedTargetId);
-
-    // Filter debuff events for the selected target and only include our specific status effects
+    // Filter debuff events for the target(s) and only include our specific status effects
     const targetDebuffEvents = debuffEvents.filter(
       (event: DebuffEvent) =>
-        event.targetID === targetId && STATUS_EFFECT_ABILITIES.has(event.abilityGameID)
+        (!selectedTargetId
+          ? !event.targetIsFriendly
+          : selectedTargetId === String(event.targetID)) &&
+        STATUS_EFFECT_DEBUFF_ABILITIES.has(event.abilityGameID)
     );
 
-    if (targetDebuffEvents.length === 0) {
-      return [];
-    }
+    const targetBuffEvents = hostileBuffEvents.filter(
+      (event: BuffEvent) =>
+        (!selectedTargetId
+          ? !event.targetIsFriendly
+          : selectedTargetId === String(event.targetID)) &&
+        STATUS_EFFECT_BUFF_ABILITIES.has(event.abilityGameID)
+    );
 
     // Group events by ability
-    const eventsByAbility = new Map<number, DebuffEvent[]>();
+    const eventsByAbility = new Map<number, (BuffEvent | DebuffEvent)[]>();
 
     targetDebuffEvents.forEach((event) => {
+      const abilityId = event.abilityGameID;
+      if (!eventsByAbility.has(abilityId)) {
+        eventsByAbility.set(abilityId, []);
+      }
+      const events = eventsByAbility.get(abilityId);
+      if (events) {
+        events.push(event);
+      }
+    });
+
+    targetBuffEvents.forEach((event) => {
       const abilityId = event.abilityGameID;
       if (!eventsByAbility.has(abilityId)) {
         eventsByAbility.set(abilityId, []);
@@ -84,28 +147,8 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       // Sort events by timestamp
       const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
 
-      let totalDuration = 0;
-      let applications = 0;
-      let currentStartTime: number | null = null;
-
-      sortedEvents.forEach((event) => {
-        if (event.type === 'applydebuff') {
-          if (currentStartTime === null) {
-            currentStartTime = event.timestamp;
-            applications++;
-          }
-        } else if (event.type === 'removedebuff') {
-          if (currentStartTime !== null) {
-            totalDuration += event.timestamp - currentStartTime;
-            currentStartTime = null;
-          }
-        }
-      });
-
-      // If still active at fight end, add remaining duration
-      if (currentStartTime !== null && fightEndTime) {
-        totalDuration += fightEndTime - currentStartTime;
-      }
+      // Use helper function to calculate uptime and applications
+      const { totalDuration, applications } = calculateDebuffUptime(sortedEvents, fightEndTime);
 
       const ability = reportMasterData.abilitiesById[abilityGameID];
       const abilityName = ability?.name || `Unknown (${abilityGameID})`;
@@ -119,6 +162,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
           uptime: totalDuration / 1000, // Convert to seconds
           uptimePercentage,
           applications,
+          isDebuff: STATUS_EFFECT_DEBUFF_ABILITIES.has(abilityGameID),
         });
       }
     });
@@ -131,23 +175,30 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     fightDuration,
     fightEndTime,
     reportMasterData?.abilitiesById,
+    hostileBuffEvents,
   ]);
 
-  if (isMasterDataLoading || isDebuffEventsLoading) {
+  if (isMasterDataLoading || isDebuffEventsLoading || isHostileBuffEventsLoading) {
     return (
       <StatusEffectUptimesView
-        selectedTargetId={selectedTargetId || null}
+        selectedTargetId={selectedTargetId}
         statusEffectUptimes={[]}
         isLoading={true}
+        reportId={reportId}
+        fightId={fightId}
+        showingBossTargets={!selectedTargetId}
       />
     );
   }
 
   return (
     <StatusEffectUptimesView
-      selectedTargetId={selectedTargetId || null}
+      selectedTargetId={selectedTargetId}
       statusEffectUptimes={statusEffectUptimes}
       isLoading={false}
+      reportId={reportId}
+      fightId={fightId}
+      showingBossTargets={!selectedTargetId}
     />
   );
 };

@@ -1,9 +1,13 @@
 import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { useReportMasterData } from '../../hooks';
+import { selectSelectedTargetId } from '../../store/ui/uiSelectors';
+import { setSelectedTargetId } from '../../store/ui/uiSlice';
+import { useAppDispatch } from '../../store/useAppDispatch';
 
 import { FightDetailsView } from './FightDetailsView';
 
@@ -14,6 +18,8 @@ interface FightDetailsProps {
 
 export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
+  const selectedTargetId = useSelector(selectSelectedTargetId);
 
   // Use the new hooks for data fetching
 
@@ -48,9 +54,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
     }
   }, [showExperimentalTabs, selectedTab, navigateToTab]);
 
-  // Get selected target from URL params
-  const selectedTargetId = searchParams.get('target') || '';
-
   // Get available targets (NPCs/Bosses that participated in this fight)
   // OPTIMIZED: Only calculate when experimental tabs are enabled since that's when targets are used
   const targets = React.useMemo(() => {
@@ -72,19 +75,11 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   }, [reportMasterData.actorsById, fight.enemyNPCs]);
 
   const handleTargetChange = React.useCallback(
-    (event: SelectChangeEvent) => {
+    (event: SelectChangeEvent<string | null>) => {
       const targetId = event.target.value;
-      setSearchParams((prevParams) => {
-        const newParams = new URLSearchParams(prevParams);
-        if (targetId) {
-          newParams.set('target', targetId);
-        } else {
-          newParams.delete('target');
-        }
-        return newParams;
-      });
+      dispatch(setSelectedTargetId(targetId));
     },
-    [setSearchParams]
+    [dispatch]
   );
 
   const toggleExperimentalTabs = React.useCallback(() => {
