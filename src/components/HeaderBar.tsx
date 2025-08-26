@@ -3,8 +3,8 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../auth';
-import { useAuth } from '../AuthContext';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
+import { useAuth } from '../features/auth/AuthContext';
 
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();

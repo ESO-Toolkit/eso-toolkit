@@ -10,8 +10,8 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { AuthProvider } from './AuthContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
+import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
 import { clearAllEvents } from './store/events_data/actions';
 import { clearMasterData } from './store/master_data/masterDataSlice';

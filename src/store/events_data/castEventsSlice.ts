@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
-import { createEsoLogsClient } from '../../esologsClient';
+import { EsoLogsClient } from '../../esologsClient';
 import {
   FightFragment,
   GetCastEventsDocument,
@@ -36,13 +36,11 @@ const initialState: CastEventsState = {
 
 export const fetchCastEvents = createAsyncThunk<
   CastEvent[],
-  { reportCode: string; fight: FightFragment; accessToken: string },
+  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
   { state: RootState; rejectValue: string }
 >(
   'castEvents/fetchCastEvents',
-  async ({ reportCode, fight, accessToken }) => {
-    const client = createEsoLogsClient(accessToken);
-
+  async ({ reportCode, fight, client }) => {
     // Fetch both friendly and enemy cast events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: (CastEvent | BeginCastEvent)[] = [];

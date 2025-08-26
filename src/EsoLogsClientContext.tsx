@@ -1,8 +1,8 @@
 import { ApolloProvider } from '@apollo/client';
 import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
 
-import { useAuth } from './AuthContext';
 import { EsoLogsClient } from './esologsClient';
+import { useAuth } from './features/auth/AuthContext';
 
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
