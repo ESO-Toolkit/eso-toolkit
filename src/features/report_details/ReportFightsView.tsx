@@ -8,7 +8,6 @@ import { FightFragment } from '../../graphql/generated';
 interface ReportFightsViewProps {
   fights: FightFragment[];
   loading: boolean;
-  error: string | null;
   fightId: string | undefined;
   reportId: string | undefined;
   reportStartTime: number | null | undefined;
@@ -17,7 +16,6 @@ interface ReportFightsViewProps {
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fights,
   loading,
-  error,
   fightId,
   reportId,
   reportStartTime,
@@ -74,32 +72,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
-  // Fallback when nothing is loading and there are no fights to show
-  if (!loading && fights.length === 0) {
-    return (
-      <Paper elevation={2} sx={{ p: 3 }}>
-        {error && (
-          <Typography color="error" sx={{ mb: 2 }}>
-            {error}
-          </Typography>
-        )}
-        <Typography variant="h6" sx={{ mb: 1 }}>
-          No data loaded yet
-        </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Paste an ESO Logs report URL above and click "Load Log" to view fights.
-        </Typography>
-      </Paper>
-    );
-  }
-
   return (
     <>
-      {error && (
-        <Typography color="error" sx={{ mb: 2 }}>
-          {error}
-        </Typography>
-      )}
       {fights.length > 0 && fightId == null && (
         <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>

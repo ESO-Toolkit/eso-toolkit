@@ -1,20 +1,15 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/generated';
+import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
-import { clearAllEvents } from '../../store/events_data/actions';
-import { clearMasterData } from '../../store/master_data/masterDataSlice';
-import { fetchReportData } from '../../store/report/reportSlice';
-import { RootState } from '../../store/storeWithHistory';
-import { useAppDispatch } from '../../store/useAppDispatch';
 
 import { ReportFightsView } from './ReportFightsView';
 
 export const ReportFights: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
+<<<<<<< HEAD
   const dispatch = useAppDispatch();
   const client = useEsoLogsClientInstance();
 
@@ -35,12 +30,14 @@ export const ReportFights: React.FC = () => {
       dispatch(fetchReportData({ reportId, client }));
     }
   }, [reportId, client, currentReportId, dispatch]);
+=======
+  const { reportData, isReportLoading } = useReportData();
+>>>>>>> f658e58 (Fixed reports not loading correctly (#34))
 
   return (
     <ReportFightsView
-      fights={(fights || []).filter(Boolean) as FightFragment[]}
-      loading={loading}
-      error={error}
+      fights={reportData?.fights?.filter(Boolean) as FightFragment[]}
+      loading={isReportLoading}
       fightId={fightId || undefined}
       reportId={reportId || undefined}
       reportStartTime={reportStartTime}
