@@ -7,6 +7,7 @@ import Skeleton from '@mui/material/Skeleton';
 import Typography from '@mui/material/Typography';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { alpha } from '@mui/material/styles';
 
 import { FightFragment } from '../../graphql/generated';
 
@@ -57,6 +58,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     const m = Math.floor(totalSeconds / 60);
     const s = totalSeconds % 60;
     return m === 0 ? `${s}s` : `${m}:${String(s).padStart(2, '0')}`;
+  };
+
+  // Outcome resolver for subtle coloring
+  const getFightOutcome = (f: FightFragment | null | undefined): 'kill' | 'wipe' | 'trash' => {
+    const p = f?.bossPercentage;
+    if (p == null) return 'trash';
+    // Treat small float variance as kill
+    if (p <= 0.1) return 'kill';
+    return 'wipe';
   };
 
   if (loading) {
@@ -126,16 +136,40 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       <ListItemButton
                         selected={fightId === String(fight.id)}
                         onClick={() => handleFightSelect(fight.id)}
-                        sx={{
-                          minWidth: 96,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          flexDirection: 'column',
-                          py: 1,
-                          transition: 'border-radius 120ms ease',
-                          '&:hover': {
-                            borderRadius: '8px',
-                          },
+                        sx={(theme) => {
+                          const outcome = getFightOutcome(fight);
+                          const baseColor =
+                            outcome === 'kill'
+                              ? theme.palette.success.main
+                              : outcome === 'wipe'
+                              ? theme.palette.error.main
+                              : theme.palette.grey[500];
+                          const bg = alpha(baseColor, 0.08);
+                          const bgHover = alpha(baseColor, 0.14);
+                          return {
+                            minWidth: 96,
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            flexDirection: 'column',
+                            py: 1,
+                            px: 1.25,
+                            borderRadius: '4px',
+                            backgroundColor: bg,
+                            transition: 'border-radius 120ms ease, background-color 120ms ease',
+                            '&:hover': {
+                              borderRadius: '4px',
+                              backgroundColor: bgHover,
+                            },
+                            // Override selected state to keep same color scheme
+                            '&&.Mui-selected': {
+                              backgroundColor: bg,
+                              borderRadius: '4px',
+                            },
+                            '&&.Mui-selected:hover': {
+                              backgroundColor: bgHover,
+                              borderRadius: '4px',
+                            },
+                          };
                         }}
                       >
                         <Typography variant="button">Pull {idx + 1}</Typography>
