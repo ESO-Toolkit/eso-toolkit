@@ -72,5 +72,3 @@ export const TargetSelector: React.FC = () => {
     </Box>
   );
 };
-
-export const MemoizedTargetSelector = React.memo(TargetSelector);
