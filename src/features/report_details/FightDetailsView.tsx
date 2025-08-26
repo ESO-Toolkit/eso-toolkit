@@ -50,10 +50,10 @@ interface FightDetailsViewProps {
   validSelectedTab: number;
   showExperimentalTabs: boolean;
   targets: Array<{ id: string; name: string }>;
-  selectedTargetId: string;
+  selectedTargetId: string | null;
   loading: boolean;
   onNavigateToTab: (tabIdx: number) => void;
-  onTargetChange: (event: SelectChangeEvent) => void;
+  onTargetChange: (event: SelectChangeEvent<string | null>) => void;
   onToggleExperimentalTabs: () => void;
 }
 
@@ -179,9 +179,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {validSelectedTab === 3 && <DamageDonePanel fight={fight} />}
         {validSelectedTab === 4 && <HealingDonePanel fight={fight} />}
         {validSelectedTab === 6 && <CriticalDamagePanel fight={fight} />}
-        {validSelectedTab === 7 && (
-          <PenetrationPanel fight={fight} selectedTargetId={selectedTargetId} />
-        )}
+        {validSelectedTab === 7 && <PenetrationPanel fight={fight} />}
         {showExperimentalTabs && validSelectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
         {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
         {showExperimentalTabs && validSelectedTab === 10 && <TargetEventsPanel />}
