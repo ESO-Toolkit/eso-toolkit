@@ -387,15 +387,20 @@ const getGearChipProps = (setName: string, count: number): Partial<ChipProps> =>
 // Detect common ESO food/drink buffs by aura name
 const FOOD_REGEXPS: RegExp[] = [
   /Artaeum\s+Takeaway\s+Broth/i,
-  /Clockwork\s+Citrus\s+Filet/i,
   /Bewitched\s+Sugar\s+Skulls/i,
-  /Witchmother.?s\s+Potent\s+Brew/i,
-  /Ghastly\s+Eye\s+Bowl/i,
-  /Lava\s+Foot\s+Soup.*Saltrice/i,
-  /Dubious\s+Camoran\s+Throne/i,
+  /Clockwork\s+Citrus\s+Filet/i,
   /Crown\s+Fortifying\s+Meal/i,
   /Crown\s+Vigorous\s+Tincture/i,
+  /Dubious\s+Camoran\s+Throne/i,
+  /Eye\s+Scream/i,
+  /Ghastly\s+Eye\s+Bowl/i,
+  /Increase\s+All\s+Primary\s+Stats/i,
+  /Increase\s+Max\s+Health\s+&\s+Magicka/i,
+  /Increase\s+Max\s+Health\s+&\s+Stamina/i,
+  /Jewels\s+of\s+Misrule/i,
+  /Lava\s+Foot\s+Soup.*Saltrice/i,
   /Orzorga/i,
+  /Witchmother.?s\s+Potent\s+Brew/i,
 ];
 
 function detectFoodFromAuras(
