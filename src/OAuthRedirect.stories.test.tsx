@@ -2,7 +2,7 @@ import { render } from '@testing-library/react';
 import React from 'react';
 import { MemoryRouter } from 'react-router-dom';
 
-import { AuthProvider } from './AuthContext';
+import { AuthProvider } from './features/auth/AuthContext';
 import { OAuthRedirect } from './OAuthRedirect';
 
 describe('OAuthRedirect Storybook Snapshot', () => {

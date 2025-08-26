@@ -9,8 +9,8 @@ import {
   CLIENT_ID,
   REDIRECT_URI,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
-} from './auth';
-import { useAuth } from './AuthContext';
+} from './features/auth/auth';
+import { useAuth } from './features/auth/AuthContext';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
 export const OAuthRedirect: React.FC = () => {
