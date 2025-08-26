@@ -6,29 +6,31 @@ import { FightFragmentDoc } from './shared-fragments.generated';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export const ReportFragmentDoc = gql`
-    fragment Report on Report {
-  code
-  startTime
-  endTime
-  title
-  visibility
-  zone {
-    name
-  }
-  fights {
-    ...Fight
-  }
-}
-    ${FightFragmentDoc}`;
-export const GetReportByCodeDocument = gql`
-    query getReportByCode($code: String!) {
-  reportData {
-    report(code: $code) {
-      ...Report
+  fragment Report on Report {
+    code
+    startTime
+    endTime
+    title
+    visibility
+    zone {
+      name
+    }
+    fights {
+      ...Fight
     }
   }
-}
-    ${ReportFragmentDoc}`;
+  ${FightFragmentDoc}
+`;
+export const GetReportByCodeDocument = gql`
+  query getReportByCode($code: String!) {
+    reportData {
+      report(code: $code) {
+        ...Report
+      }
+    }
+  }
+  ${ReportFragmentDoc}
+`;
 
 /**
  * __useGetReportByCodeQuery__
@@ -46,19 +48,52 @@ export const GetReportByCodeDocument = gql`
  *   },
  * });
  */
-export function useGetReportByCodeQuery(baseOptions: Apollo.QueryHookOptions<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables> & ({ variables: Types.GetReportByCodeQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-      }
-export function useGetReportByCodeLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-        }
-export function useGetReportByCodeSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(GetReportByCodeDocument, options);
-        }
+export function useGetReportByCodeQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    Types.GetReportByCodeQuery,
+    Types.GetReportByCodeQueryVariables
+  > &
+    ({ variables: Types.GetReportByCodeQueryVariables; skip?: boolean } | { skip: boolean })
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
+    GetReportByCodeDocument,
+    options
+  );
+}
+export function useGetReportByCodeLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    Types.GetReportByCodeQuery,
+    Types.GetReportByCodeQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
+    GetReportByCodeDocument,
+    options
+  );
+}
+export function useGetReportByCodeSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetReportByCodeQuery,
+        Types.GetReportByCodeQueryVariables
+      >
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
+    GetReportByCodeDocument,
+    options
+  );
+}
 export type GetReportByCodeQueryHookResult = ReturnType<typeof useGetReportByCodeQuery>;
 export type GetReportByCodeLazyQueryHookResult = ReturnType<typeof useGetReportByCodeLazyQuery>;
-export type GetReportByCodeSuspenseQueryHookResult = ReturnType<typeof useGetReportByCodeSuspenseQuery>;
-export type GetReportByCodeQueryResult = Apollo.QueryResult<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>;
+export type GetReportByCodeSuspenseQueryHookResult = ReturnType<
+  typeof useGetReportByCodeSuspenseQuery
+>;
+export type GetReportByCodeQueryResult = Apollo.QueryResult<
+  Types.GetReportByCodeQuery,
+  Types.GetReportByCodeQueryVariables
+>;

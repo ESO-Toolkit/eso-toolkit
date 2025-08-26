@@ -642,20 +642,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
         }}
       >
         {playerActors &&
-          Object.values(playerActors).map((actor) => {
-            // Get player details from events.players by actor id
-            const player = actor.id ? playerActors[String(actor.id)] : undefined;
-
-            if (!player) {
-              return null;
-            }
-
+          Object.values(playerActors).map((player) => {
             const talents = player?.combatantInfo?.talents ?? [];
             const gear = player?.combatantInfo?.gear ?? [];
             const armorWeights = getArmorWeightCounts(gear);
             const buildIssues = detectBuildIssues(gear);
             return (
-              <Box key={actor.id} sx={{ minWidth: 0, display: 'flex' }}>
+              <Box key={player.id} sx={{ minWidth: 0, display: 'flex' }}>
                 <Card
                   variant="outlined"
                   className="u-hover-lift u-fade-in-up"
@@ -674,19 +667,21 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                       {/* Left column: identity, talents, gear, issues */}
                       <Box flex={0} minWidth={0}>
                         <Box display="flex" alignItems="center" mb={1.5}>
-                          {actor.icon ? (
+                          {player.icon ? (
                             <Avatar
-                              src={`https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`}
-                              alt={String(resolveActorName(actor))}
+                              src={`https://assets.rpglogs.com/img/eso/icons/${player.icon}.png`}
+                              alt={String(resolveActorName(player))}
                               sx={{ mr: 2.5 }}
                             />
                           ) : (
                             <Avatar sx={{ mr: 2.5 }} />
                           )}
                           <Box>
-                            <Box display="flex" alignItems="center" gap={1.25}>
-                              <Typography variant="subtitle1">{resolveActorName(actor)}</Typography>
-                              <Box display="inline-flex" alignItems="center" gap={0.5}>
+                            <Box display="flex" alignItems="center" gap={0.75}>
+                              <Typography variant="subtitle1">
+                                {resolveActorName(player)}
+                              </Typography>
+                              <Box display="inline-flex" alignItems="center" gap={0.35}>
                                 <ShieldOutlinedIcon
                                   sx={{ color: 'text.secondary', fontSize: 12 }}
                                 />
@@ -726,10 +721,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               // Prefer showing the three ESO skill lines for the detected class.
                               const baseKey = toClassKey(player.type);
                               const sublines = CLASS_SUBLINES[baseKey];
-                              const classes = parseClasses(actor.type);
+                              const classes = parseClasses(player.type);
                               const fallbackList = classes.length
                                 ? classes
-                                : ([actor.type].filter(Boolean) as string[]);
+                                : ([player.type].filter(Boolean) as string[]);
                               const list = sublines ? sublines : fallbackList.slice(0, 3);
                               const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
                               const icon = CLASS_ICON_MAP[baseKey];
@@ -739,8 +734,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     display: 'flex',
                                     alignItems: 'center',
                                     minWidth: 0,
-                                    mt: 0.75,
-                                    mb: 0.75,
+                                    mt: 0.25,
+                                    mb: 0.5,
                                     pr: 1,
                                     pl: 0,
                                   }}
@@ -750,7 +745,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       sx={{
                                         display: 'inline-flex',
                                         alignItems: 'center',
-                                        gap: 0.75,
+                                        gap: 0.5,
                                         whiteSpace: 'nowrap',
                                       }}
                                     >
@@ -760,7 +755,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                             sx={{
                                               display: 'inline-flex',
                                               alignItems: 'center',
-                                              gap: 0.5,
+                                              gap: 0.35,
                                             }}
                                           >
                                             {idx > 0 && (
@@ -823,7 +818,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     >
                                       <Tooltip
                                         title={(() => {
-                                          const clsKey = toClassKey(actor.type);
+                                          const clsKey = toClassKey(player.type);
                                           const rich = buildTooltipPropsFromClassAndName(
                                             clsKey,
                                             talent.name
@@ -915,7 +910,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       >
                                         <Tooltip
                                           title={(() => {
-                                            const clsKey = toClassKey(actor.type);
+                                            const clsKey = toClassKey(player.type);
                                             const rich = buildTooltipPropsFromClassAndName(
                                               clsKey,
                                               talent.name
@@ -1158,13 +1153,17 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                       >
                         {(() => {
                           const hasMundus = !!(
-                            actor.id && mundusBuffsByPlayer[String(actor.id)]?.length
+                            player.id && mundusBuffsByPlayer[String(player.id)]?.length
                           );
-                          const deathsVal = actor.id ? (deathsByPlayer[String(actor.id)] ?? 0) : 0;
-                          const resVal = actor.id ? (resurrectsByPlayer[String(actor.id)] ?? 0) : 0;
-                          const cpmVal = actor.id ? (cpmByPlayer[String(actor.id)] ?? 0) : 0;
-                          const foodAura = actor.id
-                            ? detectFoodFromAuras(aurasByPlayer[String(actor.id)])
+                          const deathsVal = player.id
+                            ? (deathsByPlayer[String(player.id)] ?? 0)
+                            : 0;
+                          const resVal = player.id
+                            ? (resurrectsByPlayer[String(player.id)] ?? 0)
+                            : 0;
+                          const cpmVal = player.id ? (cpmByPlayer[String(player.id)] ?? 0) : 0;
+                          const foodAura = player.id
+                            ? detectFoodFromAuras(aurasByPlayer[String(player.id)])
                             : undefined;
                           return (
                             <Box
@@ -1200,7 +1199,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 >
                                   {hasMundus && (
                                     <>
-                                      {(mundusBuffsByPlayer[String(actor.id)] ?? []).map(
+                                      {(mundusBuffsByPlayer[String(player.id)] ?? []).map(
                                         (buff, idx) => (
                                           <Box
                                             key={idx}
@@ -1332,7 +1331,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                   </Tooltip>
                                 </Typography>
                               </Box>
-                              {actor.id && aurasByPlayer[String(actor.id)]?.length > 0 && (
+                              {player.id && aurasByPlayer[String(player.id)]?.length > 0 && (
                                 <Box sx={{}}>
                                   <Typography
                                     variant="body2"
@@ -1347,7 +1346,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     gap={1}
                                     sx={{ minHeight: 40 }}
                                   >
-                                    {aurasByPlayer[String(actor.id)]
+                                    {aurasByPlayer[String(player.id)]
                                       .slice()
                                       .sort((a, b) => a.name.localeCompare(b.name))
                                       .slice(0, 3)
@@ -1361,7 +1360,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           }
                                           size="small"
                                           title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
-                                          sx={buildVariantSx('indigo')}
+                                          sx={[
+                                            buildVariantSx('indigo'),
+                                            { '& .MuiChip-label': { fontSize: '0.58rem' } },
+                                          ]}
                                         />
                                       ))}
                                   </Box>

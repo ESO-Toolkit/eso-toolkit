@@ -6,4 +6,3 @@ export interface Ability {
 }
 
 export type AbilitiesLookup = Record<string, Ability>;
-
