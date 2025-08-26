@@ -26,9 +26,11 @@ import { Line } from 'react-chartjs-2';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import {
+  CriticalDamageSource,
+  CriticalDamageSourceWithActiveState,
+} from '../../../utils/CritDamageUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-import { CriticalDamageSource, CriticalDamageSourceWithActiveState } from './CritDamageUtils';
 
 // Register Chart.js components
 ChartJS.register(

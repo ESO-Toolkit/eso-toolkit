@@ -1,8 +1,7 @@
 import { KnownAbilities } from '../../../types/abilities';
 import { ApplyBuffEvent, RemoveBuffEvent } from '../../../types/combatlogEvents';
-
-import { BuffLookupData, createBuffLookup } from './BuffLookupUtils';
-import { calculateDynamicCriticalDamageAtTimestamp } from './CritDamageUtils';
+import { BuffLookupData, createBuffLookup } from '../../../utils/BuffLookupUtils';
+import { calculateDynamicCriticalDamageAtTimestamp } from '../../../utils/CritDamageUtils';
 
 interface TestDataPoint {
   timestamp: number;

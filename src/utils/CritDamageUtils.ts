@@ -1,11 +1,12 @@
-import { arcanistData } from '../../../data/skillsets/arcanist';
-import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../../../types/abilities';
-import { CombatantInfoEvent } from '../../../types/combatlogEvents';
-import { GearType } from '../../../types/playerDetails';
-import { getSetCount } from '../../../utils/gearUtilities';
+import { arcanistData } from '../data/skillsets/arcanist';
+import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
+import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
+import { CombatantInfoEvent } from '../types/combatlogEvents';
+import { GearType } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActive as checkBuffActiveAtTimestamp } from './BuffLookupUtils';
+import { getSetCount } from './gearUtilities';
+
 
 interface BaseCriticalDamageSource {
   name: string;

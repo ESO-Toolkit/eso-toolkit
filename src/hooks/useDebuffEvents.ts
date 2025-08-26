@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { BuffLookupData } from '../features/report_details/critical_damage/BuffLookupUtils';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchDebuffEvents } from '../store/events_data/debuffEventsSlice';
@@ -14,6 +13,7 @@ import {
 } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { DebuffEvent } from '../types/combatlogEvents';
+import { BuffLookupData } from '../utils/BuffLookupUtils';
 
 export function useDebuffEvents(): {
   debuffEvents: DebuffEvent[];

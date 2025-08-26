@@ -1,5 +1,5 @@
-import { BuffEvent } from '../../../types/combatlogEvents';
-import { DebuffEvent } from '../../../types/combatlogEvents';
+import { BuffEvent } from '../types/combatlogEvents';
+import { DebuffEvent } from '../types/combatlogEvents';
 
 // Efficient buff lookup data structure
 interface BuffTimeInterval {
@@ -111,11 +111,16 @@ export function createBuffLookup(buffEvents: BuffEvent[], fightEndTime?: number)
 export function isBuffActive(
   buffLookup: BuffLookupData,
   abilityGameID: number,
-  timestamp: number
+  timestamp?: number
 ): boolean {
   const intervals = buffLookup.buffIntervals.get(abilityGameID);
   if (!intervals || intervals.length === 0) {
     return false;
+  }
+
+  // If timestamp is undefined, return true if the buff was active during any interval
+  if (timestamp === undefined) {
+    return intervals.length > 0;
   }
 
   // Check if any interval contains the timestamp (regardless of target)

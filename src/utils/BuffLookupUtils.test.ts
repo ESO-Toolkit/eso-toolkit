@@ -1,12 +1,12 @@
-import { BuffEvent, DebuffEvent } from '../../../types/combatlogEvents';
+import { BuffEvent, DebuffEvent } from '../types/combatlogEvents';
 
 import {
   createBuffLookup,
   createDebuffLookup,
-  isBuffActive,
-  isBuffActiveOnTarget,
-  isBuffActiveOnAnyTarget,
   getActiveTargets,
+  isBuffActive,
+  isBuffActiveOnAnyTarget,
+  isBuffActiveOnTarget,
 } from './BuffLookupUtils';
 
 describe('BuffLookupUtils', () => {
