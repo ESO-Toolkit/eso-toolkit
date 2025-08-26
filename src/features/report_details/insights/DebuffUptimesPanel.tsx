@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useDebuffEvents, useReportMasterData } from '../../../hooks';
+import { KnownAbilities } from '../../../types/abilities';
 import { DebuffEvent } from '../../../types/combatlogEvents';
 
 import { DebuffUptimesView } from './DebuffUptimesView';
@@ -20,6 +21,23 @@ interface DebuffUptime {
   uptimePercentage: number;
   applications: number;
 }
+
+// Define the specific status effect debuff abilities to track
+const IMPORTANT_DEBUFF_ABILITIES = new Set([
+  KnownAbilities.MINOR_BREACH,
+  KnownAbilities.RUNIC_SUNDER,
+  KnownAbilities.MAJOR_BREACH,
+  KnownAbilities.ENGULFING_FLAMES,
+  KnownAbilities.MINOR_VULNERABILITY,
+  KnownAbilities.MINOR_BRITTLE,
+
+  KnownAbilities.TOUCH_OF_ZEN,
+  KnownAbilities.MINOR_LIFESTEAL,
+  KnownAbilities.CRUSHER,
+  KnownAbilities.MAJOR_COWARDICE,
+  KnownAbilities.MAJOR_VULNERABILITY,
+  KnownAbilities.OFF_BALANCE,
+]);
 
 export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
   fight,

@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useFriendlyBuffEvents, useReportMasterData } from '../../../hooks';
+import { KnownAbilities } from '../../../types/abilities';
 import { BuffEvent } from '../../../types/combatlogEvents';
 
 import { BuffUptimesView } from './BuffUptimesView';
@@ -20,9 +21,37 @@ interface BuffUptime {
   applications: number;
 }
 
+// Define the specific status effect debuff abilities to track
+const IMPORTANT_BUFF_ABILITIES = new Set([
+  KnownAbilities.MINOR_SAVAGERY,
+  KnownAbilities.MAJOR_SAVAGERY,
+  KnownAbilities.MINOR_SORCERY,
+  KnownAbilities.PEARLESCENT_WARD,
+  KnownAbilities.LUCENT_ECHOES,
+  KnownAbilities.MAJOR_COURAGE,
+
+  KnownAbilities.MAJOR_RESOLVE,
+  KnownAbilities.ENLIVENING_OVERFLOW,
+  KnownAbilities.MINOR_BERSERK,
+  KnownAbilities.MINOR_COURAGE,
+  KnownAbilities.EMPOWER,
+
+  KnownAbilities.MINOR_HEROISM,
+  KnownAbilities.POWERFUL_ASSAULT,
+  KnownAbilities.MINOR_BRUTALITY,
+  KnownAbilities.MINOR_FORCE,
+  KnownAbilities.MAJOR_SLAYER,
+
+  KnownAbilities.GRAND_REJUVENATION,
+  KnownAbilities.MAJOR_BERSERK,
+]);
+
 export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  
+  // State for toggling between important buffs only and all buffs
+  const [showAllBuffs, setShowAllBuffs] = React.useState(false);
 
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
@@ -30,7 +59,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
   const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
 
   // Calculate buff uptimes for selected target
-  const buffUptimes = React.useMemo(() => {
+  const allBuffUptimes = React.useMemo(() => {
     // Filter buff events for the selected target, focusing on friendly interactions
     const targetBuffEvents = friendlyBuffEvents.filter((event: BuffEvent) => {
       // Only include events where:
@@ -115,9 +144,22 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     return uptimes.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [friendlyBuffEvents, fightDuration, fightEndTime, reportMasterData?.abilitiesById]);
 
+  // Filter buff uptimes based on showAllBuffs state
+  const buffUptimes = React.useMemo(() => {
+    if (showAllBuffs) {
+      return allBuffUptimes;
+    }
+    
+    // Filter to show only important buffs
+    return allBuffUptimes.filter((buff) => {
+      const abilityId = parseInt(buff.abilityGameID, 10);
+      return IMPORTANT_BUFF_ABILITIES.has(abilityId);
+    });
+  }, [allBuffUptimes, showAllBuffs]);
+
   if (isMasterDataLoading || isFriendlyBuffEventsLoading) {
-    return <BuffUptimesView buffUptimes={[]} isLoading={true} />;
+    return <BuffUptimesView buffUptimes={[]} isLoading={true} showAllBuffs={showAllBuffs} onToggleShowAll={setShowAllBuffs} />;
   }
 
-  return <BuffUptimesView buffUptimes={buffUptimes} isLoading={false} />;
+  return <BuffUptimesView buffUptimes={buffUptimes} isLoading={false} showAllBuffs={showAllBuffs} onToggleShowAll={setShowAllBuffs} />;
 };

@@ -146,10 +146,7 @@ export enum KnownAbilities {
   MAJOR_BRITTLE = 145977,
   // Minor Brittle - increases critical damage by 10% (debuff)
   MINOR_BRITTLE = 146697,
-  // Minor Force - increases critical damage by 10%
-  MINOR_FORCE = 61746,
-  // Major Force - increases critical damage by 20%
-  MAJOR_FORCE = 61747,
+
   // Major Breach - reduces target's physical and spell resistance
   MAJOR_BREACH = 61743,
 
@@ -201,7 +198,38 @@ export enum KnownAbilities {
 
   RESURRECT = 26770,
 
+  // Specific Named Buffs and Debuffs
+  EMPOWER = 61737,
+  ENLIVENING_OVERFLOW = 156011,
+  GRAND_REJUVENATION = 99781,
+  ENGULFING_FLAMES = 31104,
+  PEARLESCENT_WARD = 172621,
+  POWERFUL_ASSAULT = 61771,
+  TOUCH_OF_ZEN = 126597,
+  CRUSHER = 17906,
+  OFF_BALANCE = 62988,
+
+  // Major Buffs and Debuffs
+  MAJOR_BERSERK = 61745,
+  MAJOR_COURAGE = 109966,
+  MAJOR_FORCE = 61747,
+  MAJOR_RESOLVE = 61694,
+  MAJOR_SAVAGERY = 61898,
+  MAJOR_SLAYER = 93109,
+  MAJOR_VULNERABILITY = 106754,
+  MAJOR_COWARDICE = 147643,
+
+  // Minor Buffs and Debuffs
+  MINOR_BERSERK = 61744,
+  MINOR_BRUTALITY = 61662,
+  MINOR_COURAGE = 121878,
+  MINOR_FORCE = 61746,
+  MINOR_HEROISM = 61708,
+  MINOR_SAVAGERY = 61666,
   MINOR_SLAYER = 147226,
+  MINOR_SORCERY = 62800,
+  MINOR_VULNERABILITY = 79717,
+  MINOR_LIFESTEAL = 86304,
 
   // TODO: Add more penetration-related abilities
   // Examples:

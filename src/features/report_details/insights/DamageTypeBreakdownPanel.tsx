@@ -25,6 +25,35 @@ interface DamageTypeBreakdown {
   averageDamage: number;
 }
 
+const MAGIC_DAMAGE_TYPES = Object.freeze(
+  new Set([
+    DamageTypeFlags.MAGIC,
+    DamageTypeFlags.FIRE,
+    DamageTypeFlags.FROST,
+    DamageTypeFlags.SHOCK,
+  ])
+);
+
+// Direct damage = isTick != true or abilityId = 38857
+
+// AOE Damage
+/*
+ability.id IN (126633,75752,133494,227072,172672,102136,183123,186370,189869,185407,191078,183006,32711,32714,32948,20252,20930,98438,32792,32794,115572,117809,117854,117715,118011,123082,118766,122392,118314,143944,143946,118720,23202,23667,29809,29806,23232,23214,23196,23208,24329,77186,94424,181331,88802,100218,26869,80172,26794,44432,26879,26871,108936,62912,62951,62990,85127,40267,40252,40252,61502,62547,62529,38891,38792,126474,38745,42029,85432,41990,80107,126720,41839,217348,217459,222678,40161,38690,63474,63471,40469,215779)
+*/
+
+// Poison ability.type IN (8,256)
+
+// Status Effects  ability.id IN (18084,95136,95134,178127,148801,178118,21929,178123)
+
+const MARTIAL_DAMAGE_TYPES = Object.freeze(
+  new Set([
+    DamageTypeFlags.PHYSICAL,
+    DamageTypeFlags.BLEED,
+    DamageTypeFlags.POISON,
+    DamageTypeFlags.DISEASE,
+  ])
+);
+
 export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fight }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
