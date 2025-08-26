@@ -5,8 +5,8 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
-import { selectDamageEvents, selectDamageEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
+import { selectDamageEvents, selectDamageEventsLoading } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { DamageEvent } from '../types/combatlogEvents';
 

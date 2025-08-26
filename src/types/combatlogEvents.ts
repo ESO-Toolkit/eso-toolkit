@@ -151,7 +151,10 @@ export interface BeginCastEvent {
   castTrackID: number;
   sourceResources: Resources;
   targetResources: Resources;
+  fake?: boolean;
 }
+
+export type UnifiedCastEvent = BeginCastEvent | CastEvent;
 
 export interface ApplyBuffStackEvent {
   timestamp: number;
@@ -234,6 +237,18 @@ export interface RemoveBuffStackEvent {
   stack: number;
 }
 
+export interface RemoveDebuffStackEvent {
+  timestamp: number;
+  type: 'removedebuffstack';
+  sourceID: number;
+  sourceIsFriendly: boolean;
+  targetID: number;
+  targetIsFriendly: boolean;
+  abilityGameID: number;
+  fight: number;
+  stack: number;
+}
+
 export type BuffEvent =
   | ApplyBuffEvent
   | ApplyBuffStackEvent
@@ -248,13 +263,12 @@ export type DebuffEvent =
 
 export type LogEvent =
   | ApplyBuffStackEvent
-  | BeginCastEvent
   | BuffEvent
-  | CastEvent
   | CombatantInfoEvent
   | DamageEvent
   | DeathEvent
   | DebuffEvent
   | HealEvent
   | PlayerEnterCombatEvent
-  | ResourceChangeEvent;
+  | ResourceChangeEvent
+  | UnifiedCastEvent;

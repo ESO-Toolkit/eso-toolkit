@@ -9,7 +9,7 @@ interface EsoLogsClientContextType {
   isReady: boolean;
 }
 
-const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
+export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const { accessToken, isLoggedIn } = useAuth();

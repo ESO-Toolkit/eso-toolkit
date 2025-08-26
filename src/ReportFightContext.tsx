@@ -1,6 +1,6 @@
 import React, { createContext, useContext, ReactNode } from 'react';
 
-import { useReportFightParams } from './hooks';
+import { useReportFightParams } from './hooks/useReportFightParams';
 
 interface ReportFightContextType {
   reportId: string | undefined | null;

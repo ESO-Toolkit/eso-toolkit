@@ -3,7 +3,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
-import { startPKCEAuth } from '../auth';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../auth';
 import { useAuth } from '../AuthContext';
 
 export const HeaderBar: React.FC = () => {
@@ -24,7 +24,7 @@ export const HeaderBar: React.FC = () => {
   };
 
   const handleLogout = (): void => {
-    localStorage.removeItem('access_token');
+    localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
     rebindAccessToken();
     navigate('/');
   };

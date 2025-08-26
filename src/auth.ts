@@ -4,6 +4,8 @@ export const REDIRECT_URI = `${window.location.origin}${process.env.PUBLIC_URL |
 export const CLIENT_ID = '9faa9dc1-0bea-4609-84e0-a4e02bbe0271';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 
+export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
+
 export function setPkceCodeVerifier(verifier: string): void {
   localStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
 }
@@ -16,7 +18,7 @@ const generateCodeVerifier = (): string => {
   const array = new Uint32Array(32);
   window.crypto.getRandomValues(array);
   const verifier = Array.from(array, (dec) => ('0' + dec.toString(16)).slice(-2)).join('');
-  localStorage.setItem('eso_code_verifier', verifier);
+  localStorage.setItem(PKCE_CODE_VERIFIER_KEY, verifier);
   return verifier;
 };
 

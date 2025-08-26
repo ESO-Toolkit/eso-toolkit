@@ -5,11 +5,11 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchFriendlyBuffEvents } from '../store/events_data/friendlyBuffEventsSlice';
+import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectFriendlyBuffEvents,
   selectFriendlyBuffEventsLoading,
-} from '../store/events_data/selectors';
-import { selectReportFights } from '../store/report/reportSelectors';
+} from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
 
