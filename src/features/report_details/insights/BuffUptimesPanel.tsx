@@ -1,24 +1,16 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useFriendlyBuffEvents, useReportMasterData } from '../../../hooks';
+import { useReportMasterData } from '../../../hooks';
+import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
-import { BuffEvent } from '../../../types/combatlogEvents';
 
+import { BuffUptime } from './BuffUptimeProgressBar';
 import { BuffUptimesView } from './BuffUptimesView';
 
 interface BuffUptimesPanelProps {
   fight: FightFragment;
-}
-
-interface BuffUptime {
-  abilityGameID: string;
-  abilityName: string;
-  icon?: string;
-  totalDuration: number;
-  uptime: number;
-  uptimePercentage: number;
-  applications: number;
 }
 
 // Define the specific status effect debuff abilities to track
@@ -47,9 +39,10 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
 ]);
 
 export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
-  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { reportId, fightId } = useSelectedReportAndFight();
+  const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  
+
   // State for toggling between important buffs only and all buffs
   const [showAllBuffs, setShowAllBuffs] = React.useState(false);
 
@@ -60,96 +53,97 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
 
   // Calculate buff uptimes for selected target
   const allBuffUptimes = React.useMemo(() => {
-    // Filter buff events for the selected target, focusing on friendly interactions
-    const targetBuffEvents = friendlyBuffEvents.filter((event: BuffEvent) => {
-      // Only include events where:
-      // 1. The target is the selected target
-      // 2. The source is friendly (buff applied by friendly player)
-      // 3. The target is friendly (buff applied to friendly player)
-      return event.sourceIsFriendly === true && event.targetIsFriendly === true;
-    });
-
-    if (targetBuffEvents.length === 0) {
+    if (!friendlyBuffsLookup || !reportMasterData?.abilitiesById || !fight?.friendlyPlayers) {
       return [];
     }
 
-    // Group events by ability
-    const eventsByAbility = new Map<string, BuffEvent[]>();
+    const uptimes: BuffUptime[] = [];
+    const friendlyPlayerIds = new Set(
+      fight.friendlyPlayers.filter((id): id is number => id !== null)
+    );
+    const friendlyPlayerCount = friendlyPlayerIds.size;
 
-    targetBuffEvents.forEach((event) => {
-      const abilityId = String(event.abilityGameID);
-      const ability = reportMasterData.abilitiesById[event.abilityGameID];
+    if (friendlyPlayerCount === 0) {
+      return [];
+    }
+
+    // Iterate through all buff intervals in the lookup
+    friendlyBuffsLookup.buffIntervals.forEach((intervals, abilityGameID) => {
+      const ability = reportMasterData.abilitiesById[abilityGameID];
 
       // Only include buffs (type === '2')
       if (ability?.type !== '2') {
         return;
       }
 
-      if (!eventsByAbility.has(abilityId)) {
-        eventsByAbility.set(abilityId, []);
-      }
-      const events = eventsByAbility.get(abilityId);
-      if (events) {
-        events.push(event);
-      }
-    });
-
-    const uptimes: BuffUptime[] = [];
-
-    eventsByAbility.forEach((events, abilityGameID) => {
-      // Sort events by timestamp
-      const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
-
-      let totalDuration = 0;
-      let applications = 0;
-      let currentStartTime: number | null = null;
-
-      sortedEvents.forEach((event) => {
-        if (event.type === 'applybuff') {
-          if (currentStartTime === null) {
-            currentStartTime = event.timestamp;
-            applications++;
+      // Group intervals by target player
+      const intervalsByPlayer = new Map<number, typeof intervals>();
+      intervals.forEach((interval) => {
+        if (friendlyPlayerIds.has(interval.targetID)) {
+          if (!intervalsByPlayer.has(interval.targetID)) {
+            intervalsByPlayer.set(interval.targetID, []);
           }
-        } else if (event.type === 'removebuff') {
-          if (currentStartTime !== null) {
-            totalDuration += event.timestamp - currentStartTime;
-            currentStartTime = null;
+          const playerIntervals = intervalsByPlayer.get(interval.targetID);
+          if (playerIntervals) {
+            playerIntervals.push(interval);
           }
         }
       });
 
-      // If still active at fight end, add remaining duration
-      if (currentStartTime !== null && fightEndTime) {
-        totalDuration += fightEndTime - currentStartTime;
+      if (intervalsByPlayer.size === 0) {
+        return;
       }
 
-      const ability = reportMasterData.abilitiesById[abilityGameID];
-      const abilityName = ability?.name || `Unknown (${abilityGameID})`;
-      const uptimePercentage = (totalDuration / fightDuration) * 100;
+      // Calculate total duration and applications per player, then average
+      let totalDurationSum = 0;
+      let totalApplicationsSum = 0;
+      let playersWithBuff = 0;
 
-      if (totalDuration > 0) {
+      intervalsByPlayer.forEach((playerIntervals) => {
+        let playerTotalDuration = 0;
+        const playerApplications = playerIntervals.length;
+
+        playerIntervals.forEach((interval) => {
+          playerTotalDuration += interval.end - interval.start;
+        });
+
+        if (playerTotalDuration > 0) {
+          totalDurationSum += playerTotalDuration;
+          totalApplicationsSum += playerApplications;
+          playersWithBuff++;
+        }
+      });
+
+      if (playersWithBuff > 0) {
+        // Average the duration and applications across players with the buff
+        const averageDuration = totalDurationSum / playersWithBuff;
+        const averageApplications = Math.round(totalApplicationsSum / playersWithBuff);
+
+        const abilityName = ability?.name || `Unknown (${abilityGameID})`;
+        const uptimePercentage = (averageDuration / fightDuration) * 100;
+
         uptimes.push({
-          abilityGameID,
+          abilityGameID: String(abilityGameID),
           abilityName,
           icon: ability?.icon ? String(ability.icon) : undefined,
-          totalDuration,
-          uptime: totalDuration / 1000, // Convert to seconds
+          totalDuration: averageDuration,
+          uptime: averageDuration / 1000, // Convert to seconds
           uptimePercentage,
-          applications,
+          applications: averageApplications,
         });
       }
     });
 
     // Sort by uptime percentage descending
     return uptimes.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
-  }, [friendlyBuffEvents, fightDuration, fightEndTime, reportMasterData?.abilitiesById]);
+  }, [friendlyBuffsLookup, fightDuration, reportMasterData?.abilitiesById, fight?.friendlyPlayers]);
 
   // Filter buff uptimes based on showAllBuffs state
   const buffUptimes = React.useMemo(() => {
     if (showAllBuffs) {
       return allBuffUptimes;
     }
-    
+
     // Filter to show only important buffs
     return allBuffUptimes.filter((buff) => {
       const abilityId = parseInt(buff.abilityGameID, 10);
@@ -158,8 +152,26 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
   }, [allBuffUptimes, showAllBuffs]);
 
   if (isMasterDataLoading || isFriendlyBuffEventsLoading) {
-    return <BuffUptimesView buffUptimes={[]} isLoading={true} showAllBuffs={showAllBuffs} onToggleShowAll={setShowAllBuffs} />;
+    return (
+      <BuffUptimesView
+        buffUptimes={[]}
+        isLoading={true}
+        showAllBuffs={showAllBuffs}
+        onToggleShowAll={setShowAllBuffs}
+        reportId={reportId}
+        fightId={fightId}
+      />
+    );
   }
 
-  return <BuffUptimesView buffUptimes={buffUptimes} isLoading={false} showAllBuffs={showAllBuffs} onToggleShowAll={setShowAllBuffs} />;
+  return (
+    <BuffUptimesView
+      buffUptimes={buffUptimes}
+      isLoading={false}
+      showAllBuffs={showAllBuffs}
+      onToggleShowAll={setShowAllBuffs}
+      reportId={reportId}
+      fightId={fightId}
+    />
+  );
 };
