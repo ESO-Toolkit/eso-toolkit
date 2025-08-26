@@ -30,6 +30,7 @@ import React from 'react';
 
 import { FightFragment } from '../../graphql/generated';
 
+import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
@@ -178,6 +179,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
         {showExperimentalTabs && validSelectedTab === 10 && <TargetEventsPanel />}
         {showExperimentalTabs && validSelectedTab === 11 && <DiagnosticsPanel />}
+        {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
       </Box>
     </React.Fragment>
   );
