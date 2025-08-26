@@ -37,11 +37,10 @@ const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE],
       },
-    }).concat(routerMiddleware),
+    }),
 });
 
 export const persistor = persistStore(store);
-export const reduxHistory = createReduxHistory(store);
 
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;

@@ -1,6 +1,5 @@
 const path = require('path');
 const os = require('os');
-const CircularDependencyPlugin = require('circular-dependency-plugin');
 
 module.exports = {
   webpack: {
@@ -15,18 +14,6 @@ module.exports = {
     },
     configure: (webpackConfig, { env }) => {
       const isDevelopment = env === 'development';
-
-      // 1. Filesystem caching for much faster rebuilds
-      if (isDevelopment) {
-        webpackConfig.cache = {
-          type: 'filesystem',
-          buildDependencies: {
-            config: [__filename],
-          },
-          cacheDirectory: path.resolve(__dirname, 'node_modules/.cache/webpack'),
-          version: `${process.env.NODE_ENV || 'development'}-${require('./package.json').version}`,
-        };
-      }
 
       // 2. Optimized module resolution
       webpackConfig.resolve = {
@@ -62,15 +49,29 @@ module.exports = {
                       refresh: isDevelopment,
                       development: isDevelopment,
                     },
+                    optimizer: isDevelopment
+                      ? undefined
+                      : {
+                          globals: {
+                            vars: {
+                              'process.env.NODE_ENV': isDevelopment
+                                ? '"development"'
+                                : '"production"',
+                            },
+                          },
+                        },
                   },
                   target: 'es2020',
                   loose: true,
                   keepClassNames: isDevelopment,
+                  experimental: {
+                    keepImportAttributes: true,
+                  },
                 },
-                sourceMaps: isDevelopment,
+                sourceMaps: true, // Always generate source maps
                 minify: !isDevelopment,
                 env: {
-                  targets: 'defaults',
+                  targets: isDevelopment ? 'last 1 chrome version' : 'defaults',
                 },
               },
             },
@@ -82,7 +83,7 @@ module.exports = {
 
       // 4. Development-specific optimizations
       if (isDevelopment) {
-        // Use fastest source map for development
+        // Use fastest source map for development while preserving debugging capability
         webpackConfig.devtool = 'eval-cheap-module-source-map';
 
         // Skip expensive optimizations
@@ -94,94 +95,32 @@ module.exports = {
           usedExports: false,
           sideEffects: false,
           concatenateModules: false,
-        };
-      }
-
-      // Add circular dependency detection plugin
-      webpackConfig.plugins = webpackConfig.plugins || [];
-      webpackConfig.plugins.push(
-        new CircularDependencyPlugin({
-          // exclude detection of files based on a RegExp
-          exclude: /node_modules/,
-          // include specific files based on a RegExp
-          include: /src/,
-          // add errors to webpack instead of warnings
-          failOnError: env === 'production',
-          // allow import cycles that include an asyncronous import,
-          // e.g. via import(/* webpackChunkName: "foo" */ './foo').
-          allowAsyncCycles: false,
-          // set the current working directory for displaying module paths
-          cwd: process.cwd(),
-          // log detected circular dependencies
-          onDetected({ module: webpackModule, paths, compilation }) {
-            if (env === 'development') {
-              console.error('\n🔄 Circular dependency detected:');
-              console.error(paths.join(' -> '));
-              console.error('Module:', webpackModule);
-              console.error(''); // Add spacing
-            }
-            compilation.warnings.push(
-              new Error(`Circular dependency detected: ${paths.join(' -> ')}`)
-            );
-          },
-        })
-      );
-
-      // Custom webpack configuration
-
-      // Enable source maps in production for better debugging
-      if (env === 'production') {
-        webpackConfig.devtool = 'source-map';
-      }
-
-      // Optimize bundle splitting for better caching
-      if (
-        env === 'production' &&
-        webpackConfig.optimization &&
-        webpackConfig.optimization.splitChunks
-      ) {
-        webpackConfig.optimization.splitChunks.cacheGroups = {
-          ...webpackConfig.optimization.splitChunks.cacheGroups,
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
-            enforce: true,
-            priority: 20,
-          },
-          mui: {
-            test: /[\\/]node_modules[\\/]@mui[\\/]/,
-            name: 'mui',
-            chunks: 'all',
-            priority: 30,
-          },
-          apollo: {
-            test: /[\\/]node_modules[\\/]@apollo[\\/]/,
-            name: 'apollo',
-            chunks: 'all',
-            priority: 30,
-          },
-          redux: {
-            test: /[\\/]node_modules[\\/](redux|@reduxjs)[\\/]/,
-            name: 'redux',
-            chunks: 'all',
-            priority: 30,
-          },
-          react: {
-            test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-            name: 'react',
-            chunks: 'all',
-            priority: 40,
-          },
+          providedExports: false,
+          innerGraph: false,
+          mangleExports: false,
+          flagIncludedChunks: false,
+          mergeDuplicateChunks: false,
+          realContentHash: false,
         };
 
-        // Parallel processing
-        webpackConfig.parallelism = Math.max(1, os.cpus().length - 1);
+        // Enhanced caching for faster rebuilds
+        webpackConfig.cache = {
+          type: 'filesystem',
+          cacheDirectory: path.resolve(__dirname, 'node_modules/.cache/webpack'),
+          buildDependencies: {
+            config: [__filename],
+          },
+          name: 'development',
+          version: '1.0.0',
+        };
 
-        // Watch options for faster file watching
+        // Parallel processing - use more cores for faster compilation
+        webpackConfig.parallelism = os.cpus().length;
+
+        // Enhanced watch options for faster file watching
         webpackConfig.watchOptions = {
-          ignored: /node_modules/,
-          aggregateTimeout: 300,
+          ignored: ['**/node_modules/**', '**/build/**', '**/.git/**'],
+          aggregateTimeout: 200, // Reduced from 300ms for faster rebuilds
           poll: false,
         };
 
@@ -194,11 +133,46 @@ module.exports = {
           chunkModules: false,
           modules: false,
           assets: false,
+          warnings: false,
+          builtAt: false,
+          env: false,
+          hash: false,
+          version: false,
+          entrypoints: false,
+        };
+
+        // Faster module resolution
+        webpackConfig.resolve.unsafeCache = true;
+
+        // Faster build performance options
+        webpackConfig.snapshot = {
+          module: {
+            timestamp: true,
+            hash: false,
+          },
+          resolve: {
+            timestamp: true,
+            hash: false,
+          },
         };
       } else {
         // Production optimizations
-        webpackConfig.devtool = false;
+        webpackConfig.devtool = 'source-map'; // Source maps in production for debugging
 
+        // Add circular dependency detection in production only
+        const CircularDependencyPlugin = require('circular-dependency-plugin');
+        webpackConfig.plugins = webpackConfig.plugins || [];
+        webpackConfig.plugins.push(
+          new CircularDependencyPlugin({
+            exclude: /node_modules/,
+            include: /src/,
+            failOnError: true,
+            allowAsyncCycles: false,
+            cwd: process.cwd(),
+          })
+        );
+
+        // Production bundle splitting
         webpackConfig.optimization.splitChunks = {
           chunks: 'all',
           cacheGroups: {
@@ -206,13 +180,32 @@ module.exports = {
               test: /[\\/]node_modules[\\/]/,
               name: 'vendors',
               chunks: 'all',
-              priority: 10,
+              enforce: true,
+              priority: 20,
+            },
+            mui: {
+              test: /[\\/]node_modules[\\/]@mui[\\/]/,
+              name: 'mui',
+              chunks: 'all',
+              priority: 30,
+            },
+            apollo: {
+              test: /[\\/]node_modules[\\/]@apollo[\\/]/,
+              name: 'apollo',
+              chunks: 'all',
+              priority: 30,
+            },
+            redux: {
+              test: /[\\/]node_modules[\\/](redux|@reduxjs)[\\/]/,
+              name: 'redux',
+              chunks: 'all',
+              priority: 30,
             },
             react: {
               test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
               name: 'react',
               chunks: 'all',
-              priority: 20,
+              priority: 40,
             },
           },
         };
@@ -227,13 +220,28 @@ module.exports = {
     historyApiFallback: true,
     compress: false, // Disable compression for faster dev builds
     hot: true,
+    liveReload: false, // Use HMR instead of full page reloads
     client: {
       logging: 'error', // Reduce console noise
       overlay: false, // Disable error overlay for faster development
+      progress: false, // Disable progress reporting for faster startup
     },
     devMiddleware: {
-      stats: 'minimal', // Minimal logging
+      stats: 'errors-warnings', // Even more minimal logging
       writeToDisk: false,
+      publicPath: '/',
+    },
+    static: {
+      directory: path.resolve(__dirname, 'public'),
+      publicPath: '/',
+      watch: {
+        ignored: ['**/node_modules/**', '**/build/**'],
+      },
+    },
+    // Faster startup by reducing file system operations
+    setupExitSignals: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
     },
   },
   eslint: {
