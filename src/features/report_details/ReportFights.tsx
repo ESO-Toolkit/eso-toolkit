@@ -23,6 +23,7 @@ export const ReportFights: React.FC = () => {
         loading={isReportLoading}
         fightId={fightId}
         reportId={reportId}
+        reportStartTime={reportData?.startTime ?? null}
       />
     );
   }
@@ -40,7 +41,11 @@ export const ReportFights: React.FC = () => {
       loading={isReportLoading}
       fightId={fightId}
       reportId={reportId}
+<<<<<<< HEAD
 >>>>>>> 66d4400 (Fixed report fights not loading (#35))
+=======
+      reportStartTime={reportData?.startTime ?? null}
+>>>>>>> ca1e706 (ReportFights list: show start time and duration; pass reportStartTime from report data)
     />
   );
 };
