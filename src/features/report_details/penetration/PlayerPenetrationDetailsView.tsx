@@ -52,6 +52,7 @@ export interface PlayerPenetrationData {
   dataPoints: PenetrationDataPoint[];
   max: number;
   effective: number;
+  timeAtCapPercentage: number;
 }
 
 interface PenetrationSource {
@@ -62,6 +63,10 @@ interface PenetrationSource {
   link?: string; // Optional external link for detailed analysis
 }
 
+export interface PenetrationSourceWithActiveState extends PenetrationSource {
+  wasActive: boolean;
+}
+
 interface PlayerPenetrationDetailsViewProps {
   id: string;
   player: PlayerDetailsWithRole;
@@ -69,7 +74,7 @@ interface PlayerPenetrationDetailsViewProps {
   expanded: boolean;
   isLoading: boolean;
   penetrationData: PlayerPenetrationData | null;
-  penetrationSources: PenetrationSource[];
+  penetrationSources: PenetrationSourceWithActiveState[];
   playerBasePenetration: number;
   fightDurationSeconds: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -116,20 +121,34 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               {resolveActorName(player)}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography
-              variant="body2"
-              color={penetrationData.max > 18200 ? 'success' : 'secondary'}
-            >
-              Max: {penetrationData.max} pen
-            </Typography>
-            <Typography
-              variant="body2"
-              color={penetrationData.effective > 18200 ? 'success' : 'secondary'}
-            >
-              Effective: {penetrationData.effective.toFixed(0)} pen
-            </Typography>
-          </Box>
+          {!isLoading && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <Typography
+                variant="body2"
+                color={penetrationData.max > 18200 ? 'success' : 'secondary'}
+              >
+                Max: {penetrationData.max} pen
+              </Typography>
+              <Typography
+                variant="body2"
+                color={penetrationData.effective > 18200 ? 'success' : 'secondary'}
+              >
+                Effective: {penetrationData.effective.toFixed(0)} pen
+              </Typography>
+              <Typography
+                variant="body2"
+                color={
+                  penetrationData.timeAtCapPercentage >= 80
+                    ? 'success'
+                    : penetrationData.timeAtCapPercentage >= 50
+                      ? 'warning'
+                      : 'secondary'
+                }
+              >
+                At Cap: {penetrationData.timeAtCapPercentage.toFixed(1)}% of time
+              </Typography>
+            </Box>
+          )}
         </Box>
       </AccordionSummary>
       <AccordionDetails>
