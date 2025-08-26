@@ -6,11 +6,16 @@ import { alpha } from '@mui/material/styles';
 import { FightFragment } from '../../graphql/generated';
 
 interface ReportFightsViewProps {
-  fights: FightFragment[];
+  fights: FightFragment[] | null | undefined;
   loading: boolean;
+<<<<<<< HEAD
   fightId: string | undefined;
   reportId: string | undefined;
   reportStartTime: number | null | undefined;
+=======
+  fightId: string | undefined | null;
+  reportId: string | undefined | null;
+>>>>>>> 66d4400 (Fixed report fights not loading (#35))
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -74,7 +79,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   return (
     <>
-      {fights.length > 0 && fightId == null && (
+      {fights?.length && (
         <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
           <Typography variant="h5" gutterBottom>
             Select a Fight
