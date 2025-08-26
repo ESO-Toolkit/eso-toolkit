@@ -5,11 +5,11 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchCombatantInfoEvents } from '../store/events_data/combatantInfoEventsSlice';
+import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectCombatantInfoEvents,
   selectCombatantInfoEventsLoading,
-} from '../store/events_data/selectors';
-import { selectReportFights } from '../store/report/reportSelectors';
+} from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 

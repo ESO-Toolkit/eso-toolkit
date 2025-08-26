@@ -2,14 +2,14 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import {
   BuffEvent,
-  CastEvent,
   CombatantInfoEvent,
   DamageEvent,
   DeathEvent,
   DebuffEvent,
   HealEvent,
   ResourceChangeEvent,
-} from '../../types/combatlogEvents.d';
+  UnifiedCastEvent,
+} from '../../types/combatlogEvents';
 import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectReport } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
@@ -26,7 +26,7 @@ export const selectDeathEvents = (state: RootState): DeathEvent[] => state.event
 export const selectCombatantInfoEvents = (state: RootState): CombatantInfoEvent[] =>
   state.events.combatantInfo.events;
 export const selectDebuffEvents = (state: RootState): DebuffEvent[] => state.events.debuffs.events;
-export const selectCastEvents = (state: RootState): CastEvent[] => state.events.casts.events;
+export const selectCastEvents = (state: RootState): UnifiedCastEvent[] => state.events.casts.events;
 export const selectResourceEvents = (state: RootState): ResourceChangeEvent[] =>
   state.events.resources.events;
 

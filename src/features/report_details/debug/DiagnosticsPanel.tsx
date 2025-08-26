@@ -12,7 +12,7 @@ import {
   selectHealingEvents,
   selectHostileBuffEvents,
   selectResourceEvents,
-} from '../../../store/events_data/selectors';
+} from '../../../store/selectors/eventsSelectors';
 
 export const DiagnosticsPanel: React.FC = () => {
   const damageEvents = useSelector(selectDamageEvents);

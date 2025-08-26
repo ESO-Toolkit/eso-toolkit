@@ -1,7 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
-import { clearAllEvents } from './actions';
 import castEventsReducer from './castEventsSlice';
+import { clearAllEvents } from './clearAction';
 import combatantInfoEventsReducer from './combatantInfoEventsSlice';
 import damageEventsReducer from './damageEventsSlice';
 import deathEventsReducer from './deathEventsSlice';

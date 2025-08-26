@@ -2,12 +2,12 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-
-import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 
+import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
+
 interface CriticalDamagePanelProps {
-  players: Record<string, PlayerDetailsWithRole> | undefined;
+  players: Record<string | number, PlayerDetailsWithRole> | undefined | null;
   fight: FightFragment;
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -24,16 +24,17 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box>
-      {Object.values(players).map((player) => (
-        <PlayerCriticalDamageDetails
-          key={player.id}
-          id={player.id}
-          name={player.name}
-          fight={fight}
-          expanded={expandedPanels[player.id] || false}
-          onExpandChange={onExpandChange(player.id)}
-        />
-      ))}
+      {players &&
+        Object.values(players).map((player) => (
+          <PlayerCriticalDamageDetails
+            key={player.id}
+            id={player.id}
+            name={player.name}
+            fight={fight}
+            expanded={expandedPanels[player.id] || false}
+            onExpandChange={onExpandChange(player.id)}
+          />
+        ))}
     </Box>
   );
 };

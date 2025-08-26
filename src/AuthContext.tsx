@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
+
 interface AuthContextType {
   accessToken: string;
   isLoggedIn: boolean;
@@ -11,18 +13,18 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string>(
-    () => localStorage.getItem('access_token') || ''
+    () => localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || ''
   );
 
   // Re-bind access token from localStorage
   const rebindAccessToken = React.useCallback(() => {
-    setAccessToken(localStorage.getItem('access_token') || '');
+    setAccessToken(localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '');
   }, [setAccessToken]);
 
   useEffect(() => {
     // Listen for changes to localStorage (e.g., from OAuthRedirect)
     const handler = (): void => {
-      setAccessToken(localStorage.getItem('access_token') || '');
+      setAccessToken(localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '');
     };
     window.addEventListener('storage', handler);
     return () => window.removeEventListener('storage', handler);

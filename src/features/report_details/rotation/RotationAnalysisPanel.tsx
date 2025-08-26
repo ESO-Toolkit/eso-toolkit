@@ -7,7 +7,7 @@ import {
   selectEventPlayers,
 } from '../../../store/events_data/actions';
 import { selectMasterData } from '../../../store/master_data/masterDataSelectors';
-import { CastEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
+import { CastEvent, ResourceChangeEvent, UnifiedCastEvent } from '../../../types/combatlogEvents';
 
 import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
 
@@ -74,8 +74,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     const analysisMap: Record<string, RotationAnalysis> = {};
 
     // Process cast events for each player
-    castEvents.forEach((event: CastEvent) => {
-      const castEvent = event as CastEvent;
+    castEvents.forEach((castEvent: UnifiedCastEvent) => {
       const playerId = String(castEvent.sourceID || '');
       const playerInfo = playersById[playerId] as
         | { displayName?: string; name?: string }

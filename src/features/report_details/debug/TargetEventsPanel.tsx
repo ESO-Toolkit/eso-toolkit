@@ -3,8 +3,8 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useCurrentFight } from '../../../hooks/useCurrentFight';
-import { selectAllEvents } from '../../../store/events_data/selectors';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
+import { selectAllEvents } from '../../../store/selectors/eventsSelectors';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { LogEvent } from '../../../types/combatlogEvents';
 

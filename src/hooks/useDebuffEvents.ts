@@ -5,8 +5,8 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchDebuffEvents } from '../store/events_data/debuffEventsSlice';
-import { selectDebuffEvents, selectDebuffEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
+import { selectDebuffEvents, selectDebuffEventsLoading } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { DebuffEvent } from '../types/combatlogEvents';
 

@@ -26,7 +26,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
 
   const handleExpandChange = React.useCallback(
-    (playerId: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+    (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => {
       setExpandedPanels((prev) => ({
         ...prev,
         [playerId]: isExpanded,

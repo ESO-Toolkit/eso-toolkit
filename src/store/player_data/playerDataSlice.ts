@@ -5,7 +5,7 @@ import { GetPlayersForReportDocument } from '../../graphql/generated';
 import { PlayerDetails, PlayerDetailsEntry } from '../../types/playerDetails';
 
 export interface PlayerDataState {
-  playersById: Record<string | number, PlayerDetailsEntry>;
+  playersById: Record<string | number, PlayerDetailsWithRole>;
   loading: boolean;
   loaded: boolean;
   error: string | null;

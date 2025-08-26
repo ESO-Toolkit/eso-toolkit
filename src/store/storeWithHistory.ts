@@ -1,6 +1,4 @@
 import { configureStore } from '@reduxjs/toolkit';
-import { createHashHistory } from 'history';
-import { createReduxHistoryContext } from 'redux-first-history';
 import {
   persistStore,
   persistReducer,
@@ -26,16 +24,10 @@ const uiPersistConfig = {
   transforms: [],
 };
 
-const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
-  history: createHashHistory(),
-  reduxTravelling: true,
-});
-
 const store = configureStore({
   reducer: {
     events: eventsReducer,
     ui: persistReducer<ReturnType<typeof uiReducer>>(uiPersistConfig, uiReducer),
-    router: routerReducer,
     masterData: masterDataReducer,
     playerData: playerDataReducer,
     report: reportReducer,
