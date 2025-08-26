@@ -95,6 +95,43 @@ export type AbilitiesLookup = Record<string, Ability>;
  * Known ESO ability IDs for penetration calculations
  */
 export enum KnownAbilities {
+  // Champion Points
+  REAVING_BLOWS = 142007,
+  SLIPPERY = 142094,
+  SPRINTER = 142079,
+  GILDED_FINGERS = 142210,
+
+  // Shared Passives
+  UNDAUNTED_METTLE = 55386,
+  UNDAUNTED_COMMAND = 55676,
+  SKILLED_TRACKER = 45596,
+  MAGICKA_AID = 39255,
+  WIND_WALKER = 45565,
+  CONCENTRATION = 45562,
+  GRACE = 45549,
+  EVOCATION = 45557,
+  EVASION = 150054,
+
+  // Class Passives
+  HEMORRHAGE = 45060,
+  FATED_FORTUNE_STAGE_ONE = 184847,
+  PRESSURE_POINTS = 45053,
+  HARNESSED_QUINTESSENCE = 184858,
+  MASTER_ASSASSIN = 45038,
+  EXECUTIONER = 36630,
+  PSYCHIC_LESION = 184873,
+  WARMTH = 45012,
+  SPLINTERED_SECRETS = 184887,
+  COMBUSTION = 45011,
+  FOLLOW_UP = 45446,
+
+  // Racial Passives
+  HIGHBORN = 35965,
+  ELEMENTAL_TALENT = 45276,
+
+  // Scribed Skills
+  SHOCKING_BANNER = 217706,
+
   // Status Effects
   BURNING = 18084,
   POISONED = 21929,
@@ -134,26 +171,14 @@ export enum KnownAbilities {
   // Roar of Alkosh - Monster set that reduces target resistance
   ROAR_OF_ALKOSH = 102094,
 
-  // Concentration - Light Armor passive that provides penetration per piece
-  CONCENTRATION = 45562,
-
-  // Splintered Secrets - Herald of the Tome passive that provides penetration per slotted tome ability
-  SPLINTERED_SECRETS = 184887,
-
   // Velothi Ur-Mage's Amulet - Mythic set buff
   VELOTHI_UR_MAGE_BUFF = 193447,
 
   // Lucent Echoes - Buff that provides 11% critical damage
   LUCENT_ECHOES = 220015,
 
-  // Fated Fortune - Passive that provides 12% critical damage
-  FATED_FORTUNE_STAGE_ONE = 194875,
-
-  // Hemorrhage - Passive that provides 10% critical damage
-  HEMORRHAGE = 45597,
-
   // Piercing Spear - Passive that provides 12% critical damage
-  PIERCING_SPEAR = 45273,
+  PIERCING_SPEAR = 44046,
 
   // Dexterity - Passive that provides 2% crit damage per piece of medium armor
   DEXTERITY = 45241,
@@ -175,6 +200,8 @@ export enum KnownAbilities {
   TAUNT = 38254,
 
   RESURRECT = 26770,
+
+  MINOR_SLAYER = 147226,
 
   // TODO: Add more penetration-related abilities
   // Examples:
@@ -250,6 +277,10 @@ export enum CriticalDamageValues {
 
   // The Shadow mundus stone provides ~12% critical damage
   THE_SHADOW = 12,
+
+  FIGHTING_FINESSE = 8,
+
+  MINOR_BRITTLE = 10,
 
   // TODO: Add more critical damage values
   // Examples:

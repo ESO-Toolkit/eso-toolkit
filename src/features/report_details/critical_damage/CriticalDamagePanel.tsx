@@ -34,6 +34,17 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
     []
   );
 
+  // Get all players for accordion
+  const players = React.useMemo(() => {
+    if (!playerData?.playersById) {
+      return [];
+    }
+
+    return Object.values(playerData?.playersById)
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .sort((a, b) => a.role.localeCompare(b.role));
+  }, [playerData?.playersById]);
+
   // Show loading state while fetching data
   if (isLoading) {
     return (
@@ -46,7 +57,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
 
   return (
     <CriticalDamagePanelView
-      players={playerData?.playersById}
+      players={players}
       fight={fight}
       expandedPanels={expandedPanels}
       onExpandChange={handleExpandChange}

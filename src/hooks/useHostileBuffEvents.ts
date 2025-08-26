@@ -2,13 +2,14 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
+import { BuffLookupData } from '../features/report_details/critical_damage/BuffLookupUtils';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchHostileBuffEvents } from '../store/events_data/hostileBuffEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectHostileBuffEvents,
   selectHostileBuffEventsLoading,
+  selectHostileBuffLookup,
 } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
@@ -16,7 +17,6 @@ import { BuffEvent } from '../types/combatlogEvents';
 export function useHostileBuffEvents(): {
   hostileBuffEvents: BuffEvent[];
   isHostileBuffEventsLoading: boolean;
-  selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useSelectedReportAndFight();
@@ -48,7 +48,23 @@ export function useHostileBuffEvents(): {
   const isHostileBuffEventsLoading = useSelector(selectHostileBuffEventsLoading);
 
   return React.useMemo(
-    () => ({ hostileBuffEvents, isHostileBuffEventsLoading, selectedFight }),
-    [hostileBuffEvents, isHostileBuffEventsLoading, selectedFight]
+    () => ({ hostileBuffEvents, isHostileBuffEventsLoading }),
+    [hostileBuffEvents, isHostileBuffEventsLoading]
+  );
+}
+
+export function useHostileBuffsLookup(): {
+  hostileBuffsLookup: BuffLookupData;
+  isHostileBuffEventsLoading: boolean;
+} {
+  const isHostileBuffEventsLoading = useSelector(selectHostileBuffEventsLoading);
+  const buffLookup = useSelector(selectHostileBuffLookup);
+
+  return React.useMemo(
+    () => ({
+      hostileBuffsLookup: buffLookup,
+      isHostileBuffEventsLoading: isHostileBuffEventsLoading,
+    }),
+    [buffLookup, isHostileBuffEventsLoading]
   );
 }

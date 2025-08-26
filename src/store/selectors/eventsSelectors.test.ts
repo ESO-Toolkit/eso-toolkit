@@ -1,0 +1,345 @@
+import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
+import { RootState } from '../storeWithHistory';
+
+import {
+  selectFriendlyBuffLookup,
+  selectHostileBuffLookup,
+  selectDebuffLookup,
+  selectCombinedBuffLookup,
+} from './eventsSelectors';
+
+// Mock state structure
+const createMockState = (overrides: Partial<RootState> = {}): RootState =>
+  ({
+    events: {
+      friendlyBuffs: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      hostileBuffs: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      debuffs: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      damage: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      healing: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      deaths: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      combatantInfo: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      casts: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+      resources: {
+        events: [],
+        loading: false,
+        error: null,
+        cacheMetadata: {
+          lastFetchedReportId: null,
+          lastFetchedFightId: null,
+          lastFetchedTimestamp: null,
+        },
+      },
+    },
+    report: {
+      reportId: 'test-report',
+      data: {
+        fights: [
+          {
+            id: '1',
+            startTime: 1000,
+            endTime: 2000,
+            name: 'Test Fight',
+            friendlyPlayers: [1, 2],
+            enemyNPCs: [3, 4],
+            enemyPlayers: [],
+            maps: [{ id: 1 }],
+          },
+        ],
+        masterData: {
+          actors: [],
+          abilities: [],
+          gameZones: [],
+        },
+      },
+      loading: false,
+      error: null,
+    },
+    masterData: {
+      actorsById: {},
+      abilitiesById: {},
+      gameZonesById: {},
+    },
+    ...overrides,
+  }) as RootState;
+
+// Helper to create a mock buff event
+const createMockBuffEvent = (
+  timestamp: number,
+  abilityGameID: number,
+  targetID: number,
+  type: 'applybuff' | 'removebuff' = 'applybuff'
+): BuffEvent => ({
+  timestamp,
+  type,
+  sourceID: 1,
+  sourceIsFriendly: true,
+  targetID,
+  targetIsFriendly: true,
+  abilityGameID,
+  fight: 1,
+  extraAbilityGameID: 0,
+});
+
+// Helper to create a mock debuff event
+const createMockDebuffEvent = (
+  timestamp: number,
+  abilityGameID: number,
+  targetID: number,
+  type: 'applydebuff' | 'removedebuff' = 'applydebuff'
+): DebuffEvent => ({
+  timestamp,
+  type,
+  sourceID: 1,
+  sourceIsFriendly: false,
+  targetID,
+  targetIsFriendly: true,
+  abilityGameID,
+  fight: 1,
+});
+
+describe('Buff Lookup Selectors', () => {
+  describe('selectFriendlyBuffLookup', () => {
+    it('should return empty buffLookup when loading', () => {
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          friendlyBuffs: {
+            ...createMockState().events.friendlyBuffs,
+            loading: true,
+          },
+        },
+      });
+
+      const result = selectFriendlyBuffLookup(state);
+
+      expect(result.buffIntervals.size).toBe(0);
+    });
+
+    it('should return empty buffLookup when no events', () => {
+      const state = createMockState();
+
+      const result = selectFriendlyBuffLookup(state);
+
+      expect(result.buffIntervals.size).toBe(0);
+    });
+
+    it('should create buffLookup when events are available', () => {
+      const buffEvents = [
+        createMockBuffEvent(1100, 123, 10),
+        createMockBuffEvent(1500, 123, 10, 'removebuff'),
+      ];
+
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          friendlyBuffs: {
+            ...createMockState().events.friendlyBuffs,
+            events: buffEvents,
+          },
+        },
+      });
+
+      const result = selectFriendlyBuffLookup(state);
+
+      expect(result.buffIntervals).toBeDefined();
+      expect(result.buffIntervals.has(123)).toBe(true);
+    });
+  });
+
+  describe('selectHostileBuffLookup', () => {
+    it('should return empty buffLookup when loading', () => {
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          hostileBuffs: {
+            ...createMockState().events.hostileBuffs,
+            loading: true,
+          },
+        },
+      });
+
+      const result = selectHostileBuffLookup(state);
+
+      expect(result.buffIntervals.size).toBe(0);
+    });
+
+    it('should create buffLookup when events are available', () => {
+      const buffEvents = [
+        createMockBuffEvent(1100, 456, 20),
+        createMockBuffEvent(1500, 456, 20, 'removebuff'),
+      ];
+
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          hostileBuffs: {
+            ...createMockState().events.hostileBuffs,
+            events: buffEvents,
+          },
+        },
+      });
+
+      const result = selectHostileBuffLookup(state);
+
+      expect(result.buffIntervals).toBeDefined();
+      expect(result.buffIntervals.has(456)).toBe(true);
+    });
+  });
+
+  describe('selectDebuffLookup', () => {
+    it('should return empty buffLookup when loading', () => {
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          debuffs: {
+            ...createMockState().events.debuffs,
+            loading: true,
+          },
+        },
+      });
+
+      const result = selectDebuffLookup(state);
+
+      expect(result.buffIntervals.size).toBe(0);
+    });
+
+    it('should create debuffLookup when events are available', () => {
+      const debuffEvents = [
+        createMockDebuffEvent(1100, 789, 30),
+        createMockDebuffEvent(1500, 789, 30, 'removedebuff'),
+      ];
+
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          debuffs: {
+            ...createMockState().events.debuffs,
+            events: debuffEvents,
+          },
+        },
+      });
+
+      const result = selectDebuffLookup(state);
+
+      expect(result.buffIntervals).toBeDefined();
+      expect(result.buffIntervals.has(789)).toBe(true);
+    });
+  });
+
+  describe('selectCombinedBuffLookup', () => {
+    it('should return empty buffLookup when either friendly or hostile buffs are loading', () => {
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          friendlyBuffs: {
+            ...createMockState().events.friendlyBuffs,
+            loading: true,
+          },
+        },
+      });
+
+      const result = selectCombinedBuffLookup(state);
+
+      expect(result.buffIntervals.size).toBe(0);
+    });
+
+    it('should combine friendly and hostile buff events', () => {
+      const friendlyEvents = [createMockBuffEvent(1100, 123, 10)];
+      const hostileEvents = [createMockBuffEvent(1200, 456, 20)];
+
+      const state = createMockState({
+        events: {
+          ...createMockState().events,
+          friendlyBuffs: {
+            ...createMockState().events.friendlyBuffs,
+            events: friendlyEvents,
+          },
+          hostileBuffs: {
+            ...createMockState().events.hostileBuffs,
+            events: hostileEvents,
+          },
+        },
+      });
+
+      const result = selectCombinedBuffLookup(state);
+
+      expect(result.buffIntervals).toBeDefined();
+      // Should contain both abilities
+      expect(result.buffIntervals.has(123)).toBe(true);
+      expect(result.buffIntervals.has(456)).toBe(true);
+    });
+  });
+});

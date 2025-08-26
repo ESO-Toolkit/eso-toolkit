@@ -1,6 +1,11 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
+  createBuffLookup,
+  createDebuffLookup,
+  BuffLookupData,
+} from '../../features/report_details/critical_damage/BuffLookupUtils';
+import {
   BuffEvent,
   CombatantInfoEvent,
   DamageEvent,
@@ -11,7 +16,7 @@ import {
   UnifiedCastEvent,
 } from '../../types/combatlogEvents';
 import { selectActorsById } from '../master_data/masterDataSelectors';
-import { selectReport } from '../report/reportSelectors';
+import { selectReport, selectReportFights } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 
 // Basic event selectors for the new modular structure
@@ -120,4 +125,91 @@ export const selectEventsLoadingState = createSelector(
     casts: castLoading,
     resources: resourceLoading,
   })
+);
+
+/**
+ * Selector for friendly buff lookup data with loading state.
+ * Returns null for buffLookup if no events or still loading.
+ */
+export const selectFriendlyBuffLookup = createSelector(
+  [selectFriendlyBuffEvents, selectFriendlyBuffEventsLoading, selectReportFights],
+  (buffEvents, isLoading, fights): BuffLookupData => {
+    if (isLoading || !buffEvents || buffEvents.length === 0) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Get fight end time for proper buff duration handling
+    const fightEndTime = fights && fights[0] ? fights[0]?.endTime : undefined;
+
+    return createBuffLookup(buffEvents, fightEndTime);
+  }
+);
+
+/**
+ * Selector for hostile buff lookup data with loading state.
+ * Returns null for buffLookup if no events or still loading.
+ */
+export const selectHostileBuffLookup = createSelector(
+  [selectHostileBuffEvents, selectHostileBuffEventsLoading, selectReportFights],
+  (buffEvents, isLoading, fights): BuffLookupData => {
+    if (isLoading || !buffEvents || buffEvents.length === 0) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Get fight end time for proper buff duration handling
+    const fightEndTime = fights && fights[0] ? fights[0]?.endTime : undefined;
+
+    return createBuffLookup(buffEvents, fightEndTime);
+  }
+);
+
+/**
+ * Selector for debuff lookup data with loading state.
+ * Returns null for buffLookup if no events or still loading.
+ */
+export const selectDebuffLookup = createSelector(
+  [selectDebuffEvents, selectDebuffEventsLoading, selectReportFights],
+  (debuffEvents, isLoading, fights): BuffLookupData => {
+    if (isLoading || !debuffEvents || debuffEvents.length === 0) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Get fight end time for proper debuff duration handling
+    const fightEndTime = fights && fights[0] ? fights[0]?.endTime : undefined;
+
+    return createDebuffLookup(debuffEvents, fightEndTime);
+  }
+);
+
+/**
+ * Selector for combined friendly and hostile buff lookup data.
+ * Merges both friendly and hostile buffs into a single lookup structure.
+ */
+export const selectCombinedBuffLookup = createSelector(
+  [
+    selectFriendlyBuffEvents,
+    selectHostileBuffEvents,
+    selectFriendlyBuffEventsLoading,
+    selectHostileBuffEventsLoading,
+    selectReportFights,
+  ],
+  (friendlyEvents, hostileEvents, friendlyLoading, hostileLoading, fights): BuffLookupData => {
+    const isLoading = friendlyLoading || hostileLoading;
+
+    if (isLoading) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Combine events from both sources
+    const combinedEvents = [...(friendlyEvents || []), ...(hostileEvents || [])];
+
+    if (combinedEvents.length === 0) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Get fight end time for proper buff duration handling
+    const fightEndTime = fights && fights[0] ? fights[0]?.endTime : undefined;
+
+    return createBuffLookup(combinedEvents, fightEndTime);
+  }
 );
