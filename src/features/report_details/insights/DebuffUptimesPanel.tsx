@@ -1,25 +1,18 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useDebuffEvents, useReportMasterData } from '../../../hooks';
+import { useReportMasterData } from '../../../hooks';
+import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
+import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
-import { DebuffEvent } from '../../../types/combatlogEvents';
 
+import { BuffUptime } from './BuffUptimeProgressBar';
 import { DebuffUptimesView } from './DebuffUptimesView';
 
 interface DebuffUptimesPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
-}
-
-interface DebuffUptime {
-  abilityGameID: string;
-  abilityName: string;
-  icon?: string;
-  totalDuration: number;
-  uptime: number;
-  uptimePercentage: number;
-  applications: number;
 }
 
 // Define the specific status effect debuff abilities to track
@@ -39,104 +32,149 @@ const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.OFF_BALANCE,
 ]);
 
-export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
-  fight,
-  selectedTargetId,
-}) => {
-  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
+export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight }) => {
+  const { reportId, fightId } = useSelectedReportAndFight();
+  const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const selectedTargetId = useSelector(selectSelectedTargetId);
+
+  // State for toggling between important debuffs only and all debuffs
+  const [showAllDebuffs, setShowAllDebuffs] = React.useState(false);
 
   // Extract stable fight properties
   const fightStartTime = fight?.startTime;
   const fightEndTime = fight?.endTime;
   const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
 
-  // Calculate debuff uptimes for selected target
-  const debuffUptimes = React.useMemo(() => {
-    if (!selectedTargetId || !fightDuration || !debuffEvents || !reportMasterData?.abilitiesById) {
-      return [];
+  // Get boss target IDs when no specific target is selected
+  const bossTargetIds = React.useMemo(() => {
+    if (selectedTargetId !== null || !fight?.enemyNPCs) {
+      return null;
     }
 
-    const targetId = Number(selectedTargetId);
-
-    // Filter debuff events for the selected target, focusing on debuffs applied by friendlies
-    const targetDebuffEvents = debuffEvents.filter((event: DebuffEvent) => {
-      const eventTargetId = event.targetID;
-
-      // Only include events where:
-      // 1. The target is the selected target
-      // 2. The source is friendly (debuff applied by friendly player)
-      return eventTargetId === targetId && event.sourceIsFriendly === true;
+    const bossIds: string[] = [];
+    
+    // Check each enemy NPC to see if they're a boss
+    Object.values(fight.enemyNPCs).forEach((npc) => {
+      if (npc?.id) {
+        const actor = reportMasterData.actorsById[npc.id];
+        if (actor?.subType === 'Boss' && actor.id !== null && actor.id !== undefined) {
+          bossIds.push(String(actor.id));
+        }
+      }
     });
 
-    if (targetDebuffEvents.length === 0) {
+    return bossIds.length > 0 ? bossIds : null;
+  }, [selectedTargetId, fight?.enemyNPCs, reportMasterData.actorsById]);
+
+  // Calculate debuff uptimes for selected target or average across boss targets
+  const allDebuffUptimes = React.useMemo(() => {
+    if (!debuffsLookup || !fightDuration) {
       return [];
     }
 
-    // Group events by ability
-    const eventsByAbility = new Map<string, DebuffEvent[]>();
+    const uptimes: BuffUptime[] = [];
 
-    targetDebuffEvents.forEach((event) => {
-      const abilityId = String(event.abilityGameID);
-      const ability = reportMasterData.abilitiesById[event.abilityGameID];
+    // Iterate through all debuff intervals in the lookup
+    debuffsLookup.buffIntervals.forEach((intervals, abilityGameID) => {
+      const ability = reportMasterData.abilitiesById[abilityGameID];
 
-      // Only include debuffs (type === '3')
-      if (ability?.type !== '3') {
+      let targetIntervals;
+      
+      if (selectedTargetId !== null) {
+        // Filter intervals for specific target
+        targetIntervals = intervals.filter(
+          (interval) => String(interval.targetID) === selectedTargetId
+        );
+      } else if (bossTargetIds) {
+        // Filter intervals for all boss targets
+        targetIntervals = intervals.filter((interval) =>
+          bossTargetIds.includes(String(interval.targetID))
+        );
+      } else {
+        // No specific target and no bosses found - show all targets
+        targetIntervals = intervals;
+      }
+
+      if (targetIntervals.length === 0) {
         return;
       }
 
-      if (!eventsByAbility.has(abilityId)) {
-        eventsByAbility.set(abilityId, []);
-      }
-      const events = eventsByAbility.get(abilityId);
-      if (events) {
-        events.push(event);
-      }
-    });
+      if (selectedTargetId !== null || !bossTargetIds) {
+        // Single target calculation (specific target or fallback to all targets)
+        let totalDuration = 0;
+        const applications = targetIntervals.length;
 
-    const uptimes: DebuffUptime[] = [];
-
-    eventsByAbility.forEach((events, abilityGameID) => {
-      // Sort events by timestamp
-      const sortedEvents = events.sort((a, b) => a.timestamp - b.timestamp);
-
-      let totalDuration = 0;
-      let applications = 0;
-      let currentStartTime: number | null = null;
-
-      sortedEvents.forEach((event) => {
-        if (event.type === 'applydebuff') {
-          if (currentStartTime === null) {
-            currentStartTime = event.timestamp;
-            applications++;
+        targetIntervals.forEach((interval) => {
+          const start = Math.max(interval.start, fightStartTime);
+          const end = Math.min(interval.end, fightEndTime);
+          if (end > start) {
+            totalDuration += end - start;
           }
-        } else if (event.type === 'removedebuff') {
-          if (currentStartTime !== null) {
-            totalDuration += event.timestamp - currentStartTime;
-            currentStartTime = null;
+        });
+
+        if (totalDuration > 0) {
+          const abilityName = ability?.name || `Unknown (${abilityGameID})`;
+          const uptimePercentage = (totalDuration / fightDuration) * 100;
+
+          uptimes.push({
+            abilityGameID: String(abilityGameID),
+            abilityName,
+            icon: ability?.icon ? String(ability.icon) : undefined,
+            totalDuration,
+            uptime: totalDuration / 1000, // Convert to seconds
+            uptimePercentage,
+            applications,
+          });
+        }
+      } else {
+        // Average across multiple boss targets
+        const targetUptimes = new Map<string, { totalDuration: number; applications: number }>();
+
+        // Calculate uptimes per target
+        targetIntervals.forEach((interval) => {
+          const targetId = String(interval.targetID);
+          const start = Math.max(interval.start, fightStartTime);
+          const end = Math.min(interval.end, fightEndTime);
+          const duration = end > start ? end - start : 0;
+
+          if (duration > 0) {
+            const existing = targetUptimes.get(targetId) || { totalDuration: 0, applications: 0 };
+            targetUptimes.set(targetId, {
+              totalDuration: existing.totalDuration + duration,
+              applications: existing.applications + 1,
+            });
+          }
+        });
+
+        if (targetUptimes.size > 0) {
+          // Calculate averages
+          let totalUptimeSum = 0;
+          let totalApplicationsSum = 0;
+
+          targetUptimes.forEach(({ totalDuration, applications }) => {
+            totalUptimeSum += (totalDuration / fightDuration) * 100; // Convert to percentage
+            totalApplicationsSum += applications;
+          });
+
+          const averageUptimePercentage = totalUptimeSum / targetUptimes.size;
+          const averageApplications = Math.round(totalApplicationsSum / targetUptimes.size);
+          const averageTotalDuration = (averageUptimePercentage / 100) * fightDuration;
+
+          if (averageUptimePercentage > 0) {
+            const abilityName = ability?.name || `Unknown (${abilityGameID})`;
+
+            uptimes.push({
+              abilityGameID: String(abilityGameID),
+              abilityName,
+              icon: ability?.icon ? String(ability.icon) : undefined,
+              totalDuration: averageTotalDuration,
+              uptime: averageTotalDuration / 1000, // Convert to seconds
+              uptimePercentage: averageUptimePercentage,
+              applications: averageApplications,
+            });
           }
         }
-      });
-
-      // If still active at fight end, add remaining duration
-      if (currentStartTime !== null && fightEndTime) {
-        totalDuration += fightEndTime - currentStartTime;
-      }
-
-      const ability = reportMasterData.abilitiesById[abilityGameID];
-      const abilityName = ability?.name || `Unknown (${abilityGameID})`;
-      const uptimePercentage = (totalDuration / fightDuration) * 100;
-
-      if (totalDuration > 0) {
-        uptimes.push({
-          abilityGameID,
-          abilityName,
-          icon: ability?.icon ? String(ability.icon) : undefined,
-          totalDuration,
-          uptime: totalDuration / 1000, // Convert to seconds
-          uptimePercentage,
-          applications,
-        });
       }
     });
 
@@ -144,11 +182,26 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
     return uptimes.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
     selectedTargetId,
-    debuffEvents,
+    bossTargetIds,
+    debuffsLookup,
     fightDuration,
+    fightStartTime,
     fightEndTime,
     reportMasterData?.abilitiesById,
   ]);
+
+  // Filter debuff uptimes based on showAllDebuffs state
+  const debuffUptimes = React.useMemo(() => {
+    if (showAllDebuffs) {
+      return allDebuffUptimes;
+    }
+
+    // Filter to show only important debuffs
+    return allDebuffUptimes.filter((debuff) => {
+      const abilityId = parseInt(debuff.abilityGameID, 10);
+      return IMPORTANT_DEBUFF_ABILITIES.has(abilityId);
+    });
+  }, [allDebuffUptimes, showAllDebuffs]);
 
   if (isMasterDataLoading || isDebuffEventsLoading) {
     return (
@@ -156,6 +209,11 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
         selectedTargetId={selectedTargetId || null}
         debuffUptimes={[]}
         isLoading={true}
+        showAllDebuffs={showAllDebuffs}
+        onToggleShowAll={setShowAllDebuffs}
+        reportId={reportId}
+        fightId={fightId}
+        bossTargetIds={bossTargetIds}
       />
     );
   }
@@ -165,6 +223,11 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({
       selectedTargetId={selectedTargetId || null}
       debuffUptimes={debuffUptimes}
       isLoading={false}
+      showAllDebuffs={showAllDebuffs}
+      onToggleShowAll={setShowAllDebuffs}
+      reportId={reportId}
+      fightId={fightId}
+      bossTargetIds={bossTargetIds}
     />
   );
 };
