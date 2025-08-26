@@ -7,6 +7,7 @@ import InsightsIcon from '@mui/icons-material/Insights';
 import ListIcon from '@mui/icons-material/List';
 import MapIcon from '@mui/icons-material/Map';
 import PeopleIcon from '@mui/icons-material/People';
+import Person from '@mui/icons-material/Person';
 import SecurityIcon from '@mui/icons-material/Security';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
@@ -163,6 +164,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && (
             <Tooltip title="Diagnostics">
               <Tab icon={<BugReportIcon />} />
+            </Tooltip>
+          )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Actors">
+              <Tab icon={<Person />} />
             </Tooltip>
           )}
         </Tabs>
