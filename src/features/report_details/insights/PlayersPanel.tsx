@@ -5,12 +5,13 @@ import {
   useCombatantInfoEvents,
   useCurrentFight,
   useDeathEvents,
+  useFriendlyBuffEvents,
   usePlayerData,
   useReportMasterData,
 } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities, MundusStones } from '../../../types/abilities';
-import { CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
@@ -36,6 +37,7 @@ export const PlayersPanel: React.FC = () => {
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const fight = useCurrentFight();
 
   const { abilitiesById } = reportMasterData;
@@ -46,14 +48,21 @@ export const PlayersPanel: React.FC = () => {
     isPlayerDataLoading ||
     isCombatantInfoEventsLoading ||
     isCastEventsLoading ||
-    isDeathEventsLoading;
-
+    isDeathEventsLoading ||
+    isFriendlyBuffEventsLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};
 
-    // Get all mundus stone ability IDs from the enum
-    const mundusStoneIds = Object.values(MundusStones) as number[];
+    if (!combatantInfoEvents || !abilitiesById) return result;
+
+    // Get numeric mundus stone ability IDs from the enum (filter out string keys)
+    const mundusStoneIds = Object.values(MundusStones).filter(
+      (v): v is number => typeof v === 'number'
+    );
+    // Secondary: detect by ability name in case logs use alternate IDs (e.g., "Bonus (2): The Atronach")
+    const mundusNameRegex =
+      /^(?:Boon:|Bonus\s*\(2\):)?\s*The\s+(Warrior|Mage|Serpent|Thief|Lady|Steed|Lord|Apprentice|Ritual|Lover|Atronach|Shadow|Tower)\b/i;
 
     // Initialize arrays for each player
     if (playerData) {
@@ -62,43 +71,62 @@ export const PlayersPanel: React.FC = () => {
           const playerId = String(actor.id);
           result[playerId] = [];
 
-          // Find the latest combatantinfo event for this player
-          const combatantInfoEventsForPlayer = combatantInfoEvents
-            .filter((event): event is CombatantInfoEvent => {
-              return (
-                event.type === 'combatantinfo' &&
-                'sourceID' in event &&
-                String(event.sourceID) === playerId
-              );
-            })
-            .sort((a, b) => {
-              return (b.timestamp || 0) - (a.timestamp || 0);
-            }); // Most recent first
+          // Gather ALL combatantinfo events for this player and union mundus auras across them
+          const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
+            (event: CombatantInfoEvent): event is CombatantInfoEvent =>
+              event.type === 'combatantinfo' &&
+              'sourceID' in event &&
+              String(event.sourceID) === playerId
+          );
 
-          const latestCombatantInfo = combatantInfoEventsForPlayer[0];
-          if (latestCombatantInfo && latestCombatantInfo.auras) {
-            // Check each aura to see if it's a mundus stone
-            latestCombatantInfo.auras.forEach((aura) => {
-              if (mundusStoneIds.includes(aura.ability)) {
-                const ability = reportMasterData.abilitiesById[aura.ability];
-                const mundusName = ability?.name || aura.name || `Unknown Mundus (${aura.ability})`;
+          if (combatantInfoEventsForPlayer.length > 0) {
+            const seen = new Set<number>();
+            for (const cie of combatantInfoEventsForPlayer) {
+              const auras = cie.auras || [];
+              for (const aura of auras as CombatantAura[]) {
+                const ability = abilitiesById[aura.ability];
+                const name = ability?.name || aura.name || '';
+                const isMundusById = mundusStoneIds.includes(aura.ability);
+                const isMundusByName = mundusNameRegex.test(name);
+                if (!isMundusById && !isMundusByName) continue;
+                if (seen.has(aura.ability)) continue;
+                seen.add(aura.ability);
+                const mundusName = name || `Unknown Mundus (${aura.ability})`;
+                const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
+                result[playerId].push({ name: cleaned, id: aura.ability });
+              }
+            }
+          }
 
-                // Only add if not already present
-                if (!result[playerId].some((buff) => buff.id === aura.ability)) {
-                  result[playerId].push({
-                    name: mundusName,
-                    id: aura.ability,
-                  });
+          // Fallback: If none found via combatantinfo, scan applybuff events for mundus on this player
+          if (result[playerId].length === 0) {
+            for (const ev of friendlyBuffEvents) {
+              if (ev.type === 'applybuff') {
+                const abilityId = ev.abilityGameID;
+                // mundus applies to self; match either source or target to this player
+                const appliesToPlayer =
+                  (ev.targetID != null && String(ev.targetID) === playerId) ||
+                  (ev.sourceID != null && String(ev.sourceID) === playerId);
+                if (typeof abilityId === 'number' && appliesToPlayer) {
+                  const ability = abilitiesById[abilityId];
+                  const name = ability?.name || '';
+                  const isMundus = mundusStoneIds.includes(abilityId) || mundusNameRegex.test(name);
+                  if (isMundus) {
+                    const mundusName = name || `Mundus (${abilityId})`;
+                    const cleaned = mundusName.replace(/^(?:Boon:|Bonus\s*\(2\):)\s*/i, '').trim();
+                    result[playerId].push({ name: cleaned, id: abilityId });
+                    break; // one mundus is sufficient
+                  }
                 }
               }
-            });
+            }
           }
         }
       });
     }
 
     return result;
-  }, [combatantInfoEvents, reportMasterData.abilitiesById, playerData]);
+  }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
 
   // Compute CPM (casts per minute) per player for the current fight, excluding specific abilities per provided filter
   const cpmByPlayer = React.useMemo(() => {

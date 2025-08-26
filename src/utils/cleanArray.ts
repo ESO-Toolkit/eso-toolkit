@@ -6,4 +6,3 @@ export function cleanArray<T>(arr: Array<T | null | undefined> | null | undefine
 
   return arr.filter((item): item is T => item != null);
 }
-
