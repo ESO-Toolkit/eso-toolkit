@@ -5,8 +5,8 @@ import { useAuth } from '../AuthContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchCastEvents } from '../store/events_data/castEventsSlice';
-import { selectCastEvents, selectCastEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
+import { selectCastEvents, selectCastEventsLoading } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function useCastEvents(): {

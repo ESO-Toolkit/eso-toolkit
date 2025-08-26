@@ -1,5 +1,3 @@
-import { createAction } from '@reduxjs/toolkit';
-
 import { PlayerGear, PlayerTalent } from '../../types/playerDetails';
 
 // Shared types from the old events slice
@@ -53,11 +51,11 @@ export {
   type ResourceEventsState,
 } from './resourceEventsSlice';
 
-// Combined clear action that clears all event slices
-export const clearAllEvents = createAction('events/clearAll');
+// Re-export clear action from separate module to avoid circular dependency
+export { clearAllEvents } from './clearAction';
 
 // Main events reducer
 export { eventsReducer } from './index';
 
 // Export selectors
-export * from './selectors';
+export * from '../selectors/eventsSelectors';

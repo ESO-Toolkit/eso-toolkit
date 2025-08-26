@@ -34,7 +34,6 @@ import {
 } from '../../../store/events_data/actions';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../../../types/abilities';
 import {
-  BuffEvent,
   DebuffEvent,
   CombatantInfoEvent,
   CombatantGear,
@@ -172,13 +171,13 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   const [penetrationSources, setPenetrationSources] = React.useState<PenetrationSource[]>([]);
 
   // Helper function to check if an ability matches any penetration effect
-  const matchesPenetrationEffect = React.useCallback((event: BuffEvent): boolean => {
+  const matchesPenetrationEffect = React.useCallback((event: DebuffEvent): boolean => {
     return PENETRATION_EFFECTS.some((effect) => event.abilityGameID === effect.abilityId);
   }, []);
 
   // Helper function to find which penetration effect matches an event
   const findPenetrationEffect = React.useCallback(
-    (event: BuffEvent): PenetrationEffect | undefined => {
+    (event: DebuffEvent): PenetrationEffect | undefined => {
       return PENETRATION_EFFECTS.find((effect) => effect.abilityId === event.abilityGameID);
     },
     []
@@ -217,8 +216,8 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       .filter((event: DebuffEvent) => {
         return (
           (event.type === 'applydebuff' || event.type === 'removedebuff') &&
-          String(event.targetID ?? event.target ?? '') === selectedTargetId &&
-          matchesPenetrationEffect(event as BuffEvent)
+          String(event.targetID) === selectedTargetId &&
+          matchesPenetrationEffect(event)
         );
       })
       .sort((a: DebuffEvent, b: DebuffEvent) => a.timestamp - b.timestamp);
@@ -477,12 +476,8 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Check debuff-based sources (optimized to filter once)
     const debuffApplications = new Map<number, number>();
-    fightDebuffEvents.forEach((event: DebuffEvent) => {
-      if (
-        event.type === 'applydebuff' &&
-        String(event.targetID ?? event.target ?? '') === selectedTargetId
-      ) {
-        const buffEvent = event as BuffEvent;
+    fightDebuffEvents.forEach((buffEvent: DebuffEvent) => {
+      if (buffEvent.type === 'applydebuff' && String(buffEvent.targetID) === selectedTargetId) {
         const effect = findPenetrationEffect(buffEvent);
         if (effect) {
           debuffApplications.set(
@@ -537,17 +532,16 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Process debuff events to track penetration changes over time
     // Use pre-computed and memoized debuff events for better performance
-    targetDebuffEvents.forEach((event: { type: string; [key: string]: unknown }) => {
-      const buffEvent = event as unknown as BuffEvent;
+    targetDebuffEvents.forEach((buffEvent: DebuffEvent) => {
       const effect = findPenetrationEffect(buffEvent);
       if (!effect) return;
 
-      if (event.type === 'applydebuff') {
+      if (buffEvent.type === 'applydebuff') {
         if (!activeDebuffs.has(effect.abilityId)) {
           activeDebuffs.add(effect.abilityId);
           currentPenetration += effect.penetrationValue;
         }
-      } else if (event.type === 'removedebuff') {
+      } else if (buffEvent.type === 'removedebuff') {
         if (activeDebuffs.has(effect.abilityId)) {
           activeDebuffs.delete(effect.abilityId);
           currentPenetration -= effect.penetrationValue;
@@ -555,9 +549,9 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       }
 
       dataPoints.push({
-        timestamp: event.timestamp as number,
+        timestamp: buffEvent.timestamp as number,
         penetration: currentPenetration,
-        relativeTime: ((event.timestamp as number) - fightStart) / 1000,
+        relativeTime: ((buffEvent.timestamp as number) - fightStart) / 1000,
       });
     });
 

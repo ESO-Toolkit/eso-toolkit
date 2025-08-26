@@ -5,8 +5,11 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchResourceEvents } from '../store/events_data/resourceEventsSlice';
-import { selectResourceEvents, selectResourceEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
+import {
+  selectResourceEvents,
+  selectResourceEventsLoading,
+} from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { ResourceChangeEvent } from '../types/combatlogEvents';
 

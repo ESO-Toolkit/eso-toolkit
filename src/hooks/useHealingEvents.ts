@@ -5,8 +5,11 @@ import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchHealingEvents } from '../store/events_data/healingEventsSlice';
-import { selectHealingEvents, selectHealingEventsLoading } from '../store/events_data/selectors';
 import { selectReportFights } from '../store/report/reportSelectors';
+import {
+  selectHealingEvents,
+  selectHealingEventsLoading,
+} from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { HealEvent } from '../types/combatlogEvents';
 

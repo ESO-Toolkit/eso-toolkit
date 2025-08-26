@@ -9,7 +9,13 @@ import {
   HostilityType,
 } from '../../graphql/generated';
 import { DamageEvent, LogEvent } from '../../types/combatlogEvents';
-import { RootState } from '../storeWithHistory';
+
+// Local interface to avoid circular dependency with RootState
+interface LocalRootState {
+  events: {
+    damage: DamageEventsState;
+  };
+}
 
 export interface DamageEventsState {
   events: DamageEvent[];
@@ -34,13 +40,16 @@ const initialState: DamageEventsState = {
   },
 };
 
-export const fetchDamageEvents = createAsyncThunk<
-  DamageEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
-  { state: RootState; rejectValue: string }
->(
+export const fetchDamageEvents = createAsyncThunk(
   'damageEvents/fetchDamageEvents',
-  async ({ reportCode, fight, client }) => {
+  async (
+    {
+      reportCode,
+      fight,
+      client,
+    }: { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+    { getState, rejectWithValue }
+  ) => {
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
@@ -72,7 +81,7 @@ export const fetchDamageEvents = createAsyncThunk<
   },
   {
     condition: ({ reportCode, fight }, { getState }) => {
-      const state = getState().events.damage;
+      const state = (getState() as LocalRootState).events.damage;
       const requestedReportId = reportCode;
       const requestedFightId = Number(fight.id);
 

@@ -8,11 +8,11 @@ import {
   GetCastEventsQuery,
   HostilityType,
 } from '../../graphql/generated';
-import { CastEvent, LogEvent } from '../../types/combatlogEvents';
+import { BeginCastEvent, CastEvent, UnifiedCastEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
 export interface CastEventsState {
-  events: CastEvent[];
+  events: UnifiedCastEvent[];
   loading: boolean;
   error: string | null;
   // Cache metadata for better cache management
@@ -45,7 +45,7 @@ export const fetchCastEvents = createAsyncThunk<
 
     // Fetch both friendly and enemy cast events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
-    let allEvents: LogEvent[] = [];
+    let allEvents: (CastEvent | BeginCastEvent)[] = [];
 
     for (const hostilityType of hostilityTypes) {
       let nextPageTimestamp: number | null = null;

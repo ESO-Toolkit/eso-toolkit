@@ -4,7 +4,12 @@ import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
-import { getPkceCodeVerifier, CLIENT_ID, REDIRECT_URI } from './auth';
+import {
+  getPkceCodeVerifier,
+  CLIENT_ID,
+  REDIRECT_URI,
+  LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+} from './auth';
 import { useAuth } from './AuthContext';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
@@ -40,7 +45,7 @@ export const OAuthRedirect: React.FC = () => {
         });
         if (!response.ok) throw new Error('Token exchange failed');
         const data = await response.json();
-        localStorage.setItem('access_token', data.access_token);
+        localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
         rebindAccessToken();
         navigate('/');
       } catch (err) {
