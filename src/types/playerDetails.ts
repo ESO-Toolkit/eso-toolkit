@@ -11,6 +11,35 @@ export interface PlayerTalent {
   flags: number;
 }
 
+export enum GearSlot {
+  HEAD = 0,
+  CHEST = 1,
+  SHOULDERS = 2,
+  WAIST = 3,
+  HANDS = 4,
+  LEGS = 5,
+  FEET = 6,
+  NECK = 7,
+  RING1 = 8,
+  RING2 = 9,
+  MAIN_HAND = 10,
+  OFF_HAND = 11,
+  BACKUP_MAIN_HAND = 12,
+  BACKUP_OFF_HAND = 13,
+}
+
+export enum GearType {
+  LIGHT = 1,
+  MEDIUM = 2,
+  HEAVY = 3,
+  JEWELRY_OR_TWO_HANDED_SWORD = 4,
+  RESO_STAFF = 9,
+  DAGGER = 11,
+  FROST_STAFF = 13,
+  INFERNO_STAFF = 12,
+  LIGHTNING_STAFF = 15,
+}
+
 export interface PlayerGear {
   id: number;
   slot: number;
@@ -22,7 +51,7 @@ export interface PlayerGear {
   enchantType: number;
   enchantQuality: number;
   setID: number;
-  type?: number;
+  type: GearType;
   setName?: string;
   flags?: number;
 }

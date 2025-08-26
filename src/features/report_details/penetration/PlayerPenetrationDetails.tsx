@@ -1,32 +1,10 @@
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import {
-  Box,
-  Typography,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Paper,
-} from '@mui/material';
-import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip as ChartTooltip,
-  Legend,
-  Filler,
-} from 'chart.js';
-import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 
-import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
 import { useCombatantInfoEvents, useDebuffEvents, usePlayerData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../../../types/abilities';
 import {
@@ -35,19 +13,12 @@ import {
   CombatantGear,
   CombatantAura,
 } from '../../../types/combatlogEvents';
+import { getSetCount } from '../../../utils/gearUtilities';
 
-// Register Chart.js components
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  ChartTooltip,
-  Legend,
-  Filler,
-  annotationPlugin
-);
+import {
+  PlayerPenetrationData,
+  PlayerPenetrationDetailsView,
+} from './PlayerPenetrationDetailsView';
 
 // Configuration for all penetration effects
 interface PenetrationEffect {
@@ -112,12 +83,6 @@ interface PenetrationDataPoint {
   relativeTime: number; // Time since fight start in seconds
 }
 
-interface PlayerPenetrationData {
-  playerId: string;
-  playerName: string;
-  dataPoints: PenetrationDataPoint[];
-}
-
 interface PenetrationSource {
   name: string;
   value: number;
@@ -130,6 +95,7 @@ interface PlayerPenetrationDetailsProps {
   id: string;
   name: string;
   fight: FightFragment;
+  player: PlayerDetailsWithRole;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
@@ -138,6 +104,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   id,
   name,
   fight,
+  player,
   expanded = false,
   onExpandChange,
 }) => {
@@ -194,11 +161,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Find the combatantinfo event for this player in this specific fight
     const combatantInfoEvent = combatantInfoEvents.find(
-      (event: CombatantInfoEvent) =>
-        event.type === 'combatantinfo' &&
-        String(event.sourceID) === id &&
-        'fight' in event &&
-        event.fight === fight.id
+      (event) => String(event.sourceID) === id && event.fight === fight.id
     );
 
     const latestData = combatantInfoEvent;
@@ -211,9 +174,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Check Velothi Ur-Mage's Amulet buff from player auras
     const hasVelothiAmulet = latestAuras.some(
-      (aura: CombatantAura) =>
-        aura.ability === KnownAbilities.VELOTHI_UR_MAGE_BUFF ||
-        aura.name?.includes("Velothi Ur-Mage's Amulet")
+      (aura: CombatantAura) => aura.ability === KnownAbilities.VELOTHI_UR_MAGE_BUFF
     );
 
     // Add Velothi Ur-Mage's Amulet
@@ -272,10 +233,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     basePenetration += ansuulsPenetration;
 
     // Check Tide-born Wildstalker 4-piece set bonus
-    const tidebornGearCount =
-      latestGear?.filter(
-        (gear: CombatantGear) => gear.setID === KnownSetIDs.TIDEBORN_WILDSTALKER_SET
-      ).length || 0;
+    const tidebornGearCount = getSetCount(latestGear, KnownSetIDs.TIDEBORN_WILDSTALKER_SET);
     const hasTidebornWildstalker4Piece = tidebornGearCount >= 4;
     const tidebornPenetration = hasTidebornWildstalker4Piece
       ? PenetrationValues.TIDEBORN_WILDSTALKER_4_PIECE
@@ -568,6 +526,13 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       playerId: id,
       playerName: name,
       dataPoints: voxelizedDataPoints,
+      max: Math.max(
+        ...voxelizedDataPoints.map((point: PenetrationDataPoint) => point.penetration),
+        0
+      ),
+      effective:
+        voxelizedDataPoints.reduce((acc, cv) => acc + cv.penetration, 0) /
+        voxelizedDataPoints.length,
     };
 
     return playerPenetrationData;
@@ -588,202 +553,33 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
   if (!penetrationData) {
     return (
-      <Accordion expanded={expanded} onChange={onExpandChange}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {name}
-          </Typography>
-        </AccordionSummary>
-        <AccordionDetails>
-          <Typography>No penetration data available for this player.</Typography>
-        </AccordionDetails>
-      </Accordion>
+      <PlayerPenetrationDetailsView
+        id={id}
+        name={name}
+        expanded={expanded}
+        isLoading={isLoading}
+        player={player}
+        penetrationData={null}
+        penetrationSources={[]}
+        playerBasePenetration={0}
+        fightDurationSeconds={(fight.endTime - fight.startTime) / 1000}
+        onExpandChange={onExpandChange}
+      />
     );
   }
+
   return (
-    <Accordion expanded={expanded} onChange={onExpandChange}>
-      <AccordionSummary
-        expandIcon={<ExpandMoreIcon />}
-        aria-controls={`panel-${id}-content`}
-        id={`panel-${id}-header`}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {name}
-          </Typography>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography variant="body2" color="text.secondary">
-              Max:{' '}
-              {Math.max(
-                ...penetrationData.dataPoints.map(
-                  (point: PenetrationDataPoint) => point.penetration
-                ),
-                0
-              )}{' '}
-              pen
-            </Typography>
-          </Box>
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails>
-        {/* Only render content when panel is expanded */}
-        {expanded && (
-          <Box>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Player ID:</strong> {id}
-            </Typography>
-
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Data Points:</strong> {penetrationData.dataPoints.length}
-            </Typography>
-
-            {/* Penetration Sources Checklist */}
-            <StatChecklist
-              sources={penetrationSources}
-              title="Penetration Sources"
-              loading={isLoading}
-            />
-
-            {/* Penetration vs Time Chart */}
-            <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Penetration vs Time
-              </Typography>
-              <Box sx={{ width: '100%', height: 300 }}>
-                <Line
-                  data={{
-                    labels: penetrationData.dataPoints.map((point) =>
-                      point.relativeTime.toFixed(1)
-                    ),
-                    datasets: [
-                      {
-                        label: 'Penetration',
-                        data: penetrationData.dataPoints.map((point) => ({
-                          x: point.relativeTime,
-                          y: point.penetration,
-                        })),
-                        borderColor: '#1976d2',
-                        backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        stepped: 'after',
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0,
-                      },
-                    ],
-                  }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                      intersect: false,
-                      mode: 'index',
-                    },
-                    plugins: {
-                      legend: {
-                        display: false,
-                      },
-                      tooltip: {
-                        callbacks: {
-                          title: (context) => `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
-                          label: (context) => `${context.parsed.y} penetration`,
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          goalLine: {
-                            type: 'line',
-                            yMin: 18200,
-                            yMax: 18200,
-                            borderColor: '#ff6b6b',
-                            borderWidth: 2,
-                            borderDash: [5, 5],
-                            label: {
-                              content: 'Goal: 18,200',
-                              display: true,
-                              position: 'end',
-                              backgroundColor: 'rgba(255, 107, 107, 0.8)',
-                              color: 'white',
-                              font: {
-                                size: 12,
-                              },
-                              padding: 4,
-                            },
-                          },
-                          baseLine: {
-                            type: 'line',
-                            yMin: playerBasePenetration,
-                            yMax: playerBasePenetration,
-                            borderColor: '#2196f3',
-                            borderWidth: 2,
-                            borderDash: [3, 3],
-                            label: {
-                              content: `Base: ${playerBasePenetration.toLocaleString()}`,
-                              display: true,
-                              position: 'start',
-                              backgroundColor: 'rgba(33, 150, 243, 0.8)',
-                              color: 'white',
-                              font: {
-                                size: 12,
-                              },
-                              padding: 4,
-                            },
-                          },
-                        },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        type: 'linear',
-                        display: true,
-                        min: 0,
-                        max: (fight.endTime - fight.startTime) / 1000,
-                        title: {
-                          display: true,
-                          text: 'Time (seconds)',
-                        },
-                        ticks: {
-                          callback: function (value) {
-                            return `${Number(value).toFixed(1)}s`;
-                          },
-                        },
-                      },
-                      y: {
-                        display: true,
-                        title: {
-                          display: true,
-                          text: 'Penetration',
-                        },
-                        min: 0,
-                        max: 20000,
-                        ticks: {
-                          callback: function (value) {
-                            return `${value}`;
-                          },
-                        },
-                      },
-                    },
-                    elements: {
-                      point: {
-                        hoverRadius: 6,
-                      },
-                    },
-                    animation: {
-                      duration: 0, // Disable animations for better performance
-                    },
-                  }}
-                />
-              </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-                Shows penetration changes over the duration of the fight. Data voxelized to 1-second
-                intervals (highest value per interval). Data points:{' '}
-                {penetrationData.dataPoints.length}
-              </Typography>
-            </Paper>
-          </Box>
-        )}
-      </AccordionDetails>
-    </Accordion>
+    <PlayerPenetrationDetailsView
+      id={id}
+      name={name}
+      expanded={expanded}
+      isLoading={isLoading}
+      penetrationData={penetrationData}
+      player={player}
+      penetrationSources={penetrationSources}
+      playerBasePenetration={playerBasePenetration}
+      fightDurationSeconds={(fight.endTime - fight.startTime) / 1000}
+      onExpandChange={onExpandChange}
+    />
   );
 };

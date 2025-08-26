@@ -1,3 +1,10 @@
+export interface Ability {
+  id: number;
+  name?: string;
+  icon?: string;
+  // Add other fields as needed from the API
+}
+
 /**
  * ESO damage type flags - each bit represents a damage type
  */

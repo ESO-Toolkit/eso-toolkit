@@ -26,152 +26,20 @@ import sorcererIcon from '../../../assets/sorcerer.png';
 import templarIcon from '../../../assets/templar-white.png';
 import wardenIcon from '../../../assets/warden-white.png';
 import arcanistIcon from '../../../assets/white-arcanist.png';
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { PlayerGear } from '../../../types/playerDetails';
+import { GearType, PlayerGear } from '../../../types/playerDetails';
 import { detectBuildIssues } from '../../../utils/detectBuildIssues';
+import {
+  ARENA_SET_NAMES,
+  MONSTER_ONE_PIECE_HINTS,
+  MYTHIC_SET_NAMES,
+  normalizeGearName,
+  PlayerGearSetRecord,
+} from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { buildTooltipPropsFromClassAndName } from '../../../utils/skillTooltipMapper';
-
-// Helpers for gear classification and chip coloring
-const normalizeName = (name?: string): string =>
-  (name || '')
-    .toLowerCase()
-    .replace(/^perfected\s+/, '')
-    .replace(/’/g, "'")
-    .trim();
-
-const ARENA_SET_NAMES = new Set(
-  [
-    // Maelstrom Arena
-    'Crushing Wall',
-    'Precise Regeneration',
-    'Thunderous Volley',
-    'Merciless Charge',
-    'Cruel Flurry',
-    'Rampaging Slash',
-    // Dragonstar Arena (Master)
-    'Destructive Impact',
-    'Grand Rejuvenation',
-    'Caustic Bow',
-    'Titanic Cleave',
-    'Stinging Slashes',
-    'Puncturing Remedy',
-    // Blackrose Prison
-    'Wild Impulse',
-    "Mender's Ward",
-    'Mender’s Ward',
-    'Virulent Shot',
-    'Radial Uppercut',
-    'Spectral Cloak',
-    'Gallant Charge',
-    // Asylum Sanctorium
-    'Concentrated Force',
-    'Timeless Blessing',
-    'Piercing Spray',
-    'Disciplined Slash',
-    'Chaotic Whirlwind',
-    'Defensive Position',
-    // Vateshran Hollows
-    'Wrath of Elements',
-    'Frenzied Momentum',
-    'Void Bash',
-    "Executioner's Blade",
-    'Point-Blank Snipe',
-    'Force Overflow',
-  ].map((n) => normalizeName(n))
-);
-
-const MYTHIC_SET_NAMES = new Set(
-  [
-    "Bloodlord's Embrace",
-    'Thrassian Stranglers',
-    'Snow Treaders',
-    'Ring of the Wild Hunt',
-    "Malacath's Band of Brutality",
-    'Torc of Tonal Constancy',
-    'Ring of the Pale Order',
-    'Pearls of Ehlnofey',
-    'Gaze of Sithis',
-    "Harpooner's Wading Kilt",
-    "Death Dealer's Fete",
-    "Shapeshifter's Chain",
-    'Markyn Ring of Majesty',
-    "Belharza's Band",
-    'Spaulder of Ruin',
-    "Lefthander's Aegis Belt",
-    "Mora's Whispers",
-    'Oakensoul Ring',
-    "Sea-Serpent's Coil",
-    'Dov-Rha Sabatons',
-    "Faun's Lark Cladding",
-    "Stormweaver's Cavort",
-    "Syrabane's Ward",
-    "Velothi Ur-Mage's Amulet",
-    'Esoteric Environment Greaves',
-    'Cryptcanon Vestments',
-    'Torc of the Last Ayleid King',
-    'Rourken Steamguards',
-    "The Shadow Queen's Cowl",
-    'The Saint and the Seducer',
-  ].map((n) => normalizeName(n))
-);
-
-// One-piece monster sets (purple); normalized substrings
-const MONSTER_ONE_PIECE_HINTS = [
-  'Anthelmir’s Construct',
-  'Archdruid Devyric',
-  'Balorgh',
-  'Baron Thirsk',
-  'Bloodspawn',
-  'Chokethorn',
-  'Domihaus',
-  'Earthgore',
-  'Engine Guardian',
-  'Euphotic Gatekeeper',
-  'Galenwe’s Lament',
-  'Glorgoloch the Destroyer',
-  'Grundwulf',
-  'Iceheart',
-  'Ilambris',
-  'Kjalnar’s Nightmare',
-  'Lady Thorn',
-  'Lady Malydga',
-  'Lord Warden',
-  'Maarselok',
-  'Magma Incarnate',
-  'Maw of the Infernal',
-  'Mighty Chudan',
-  'Molag Kena',
-  'Mother Ciannait',
-  'Nazaray',
-  'Nerien’eth',
-  'Nightflame',
-  'Nobilis Eternus',
-  'Ozezan the Inferno',
-  'Pirate Skeleton',
-  'Prior Thierric',
-  'Roksa the Warped',
-  'Saint Delyn',
-  'Scourge Harvester',
-  'Selene',
-  'Sellistrix',
-  'Sentinel of Rkugamz',
-  'Shadowrend',
-  'Slimecraw',
-  'Spawn of Mephala',
-  'Stonekeeper',
-  'Stormfist',
-  'Swarm Mother',
-  'Thurvokun',
-  'Tremorscale',
-  'Troll King',
-  'Valkyn Skoria',
-  'Velidreth',
-  'Vykosa',
-  'Zaan',
-  'Symphony of Blades',
-].map((n) => normalizeName(n));
 
 // Glossy Chip styling (glassmorphism + shine) and color variants
 const legendaryGlow = keyframes`
@@ -343,7 +211,7 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
 };
 
 const getGearChipProps = (setName: string, count: number): Partial<ChipProps> => {
-  const n = normalizeName(setName);
+  const n = normalizeGearName(setName);
   // Mythics first (explicit list)
   if (MYTHIC_SET_NAMES.has(n)) {
     return {
@@ -357,7 +225,7 @@ const getGearChipProps = (setName: string, count: number): Partial<ChipProps> =>
     };
   }
   // Special case: 4-piece Highland Sentinel uses a specific font color
-  if (count === 4 && n === normalizeName('Highland Sentinel')) {
+  if (count === 4 && n === normalizeGearName('Highland Sentinel')) {
     return {
       sx: buildVariantSx('lime'),
     };
@@ -369,13 +237,13 @@ const getGearChipProps = (setName: string, count: number): Partial<ChipProps> =>
     };
   }
   // Two-piece monsters
-  if (count === 2 && MONSTER_ONE_PIECE_HINTS.some((h) => n.includes(h))) {
+  if (count === 2 && MONSTER_ONE_PIECE_HINTS.has(n)) {
     return {
       sx: buildVariantSx('purple'),
     };
   }
   // One-piece monsters
-  if (count === 1 && MONSTER_ONE_PIECE_HINTS.some((h) => n.includes(h))) {
+  if (count === 1 && MONSTER_ONE_PIECE_HINTS.has(n)) {
     return {
       sx: buildVariantSx('lightBlue'),
     };
@@ -442,6 +310,7 @@ interface PlayersPanelViewProps {
   reportId?: string | null;
   fightId?: string | null;
   isLoading: boolean;
+  playerGear: Record<number, PlayerGearSetRecord[]>;
 }
 
 const CLASS_ICON_MAP: Record<string, string | undefined> = {
@@ -584,6 +453,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   reportId,
   fightId,
   isLoading,
+  playerGear,
 }) => {
   // Encoded pins filter provided by user for casts view
   const CASTS_PINS =
@@ -601,21 +471,21 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
     let heavy = 0,
       medium = 0,
       light = 0;
-    if (!Array.isArray(gear)) return { heavy, medium, light };
-    const norm = (s?: string): string => (s || '').toLowerCase();
+
     for (const g of gear) {
       if (!g || g.id === 0) continue;
-      if (typeof g.type === 'number') {
-        if (g.type === 3) heavy += 1;
-        else if (g.type === 2) medium += 1;
-        else if (g.type === 1) light += 1;
-        continue;
+
+      switch (g.type) {
+        case GearType.HEAVY:
+          heavy += 1;
+          break;
+        case GearType.MEDIUM:
+          medium += 1;
+          break;
+        case GearType.LIGHT:
+          light += 1;
+          break;
       }
-      const n = norm(g.name);
-      if (!n) continue;
-      if (n.includes('heavy')) heavy += 1;
-      else if (n.includes('medium')) medium += 1;
-      else if (n.includes('light')) light += 1;
     }
     return { heavy, medium, light };
   };
@@ -651,7 +521,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
             const talents = player?.combatantInfo?.talents ?? [];
             const gear = player?.combatantInfo?.gear ?? [];
             const armorWeights = getArmorWeightCounts(gear);
-            const buildIssues = detectBuildIssues(gear);
+            const buildIssues = detectBuildIssues(gear, playerGear[player.id] || []);
             return (
               <Box key={player.id} sx={{ minWidth: 0, display: 'flex' }}>
                 <Card
@@ -672,15 +542,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                       {/* Left column: identity, talents, gear, issues */}
                       <Box flex={0} minWidth={0}>
                         <Box display="flex" alignItems="center" mb={1.5}>
-                          {player.icon ? (
-                            <Avatar
-                              src={`https://assets.rpglogs.com/img/eso/icons/${player.icon}.png`}
-                              alt={String(resolveActorName(player))}
-                              sx={{ mr: 2.5 }}
-                            />
-                          ) : (
-                            <Avatar sx={{ mr: 2.5 }} />
-                          )}
+                          <PlayerIcon player={player} />
                           <Box>
                             <Box display="flex" alignItems="center" gap={0.75}>
                               <Typography variant="subtitle1">
@@ -990,153 +852,18 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
                                 {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
                                 <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={48}>
-                                  {(() => {
-                                    type BaseSet = {
-                                      total: number;
-                                      perfected: number;
-                                      setID?: number;
-                                      hasPerfected: boolean;
-                                      hasRegular: boolean;
-                                      baseDisplay: string;
-                                    };
-                                    const setDataByBase: Record<string, BaseSet> = {};
-
-                                    const twoHandedKeywords = [
-                                      'greatsword',
-                                      'battle axe',
-                                      'maul',
-                                      'bow',
-                                      'inferno staff',
-                                      'ice staff',
-                                      'lightning staff',
-                                      'flame staff',
-                                      'destruction staff',
-                                      'restoration staff',
-                                    ];
-                                    const isTwoHandedWeapon = (name?: string): boolean => {
-                                      if (!name) return false;
-                                      const n = name.toLowerCase();
-                                      return twoHandedKeywords.some((k) => n.includes(k));
-                                    };
-
-                                    gear.forEach((g: PlayerGear) => {
-                                      if (!g.setName) return;
-                                      const increment = isTwoHandedWeapon(g.name) ? 2 : 1;
-
-                                      const isPerfected = /^perfected\s+/i.test(g.setName);
-                                      const baseDisplay = g.setName.replace(/^Perfected\s+/, '');
-                                      const baseKey = normalizeName(baseDisplay);
-
-                                      if (!setDataByBase[baseKey]) {
-                                        setDataByBase[baseKey] = {
-                                          total: 0,
-                                          perfected: 0,
-                                          setID: g.setID,
-                                          hasPerfected: false,
-                                          hasRegular: false,
-                                          baseDisplay,
-                                        };
-                                      }
-                                      const entry = setDataByBase[baseKey];
-                                      entry.total += increment;
-                                      if (isPerfected) {
-                                        entry.perfected += increment;
-                                        entry.hasPerfected = true;
-                                      } else {
-                                        entry.hasRegular = true;
-                                      }
-                                      if (!entry.setID && g.setID) entry.setID = g.setID;
-                                    });
-
-                                    // Build sortable records from aggregated set data
-                                    const records = Object.entries(setDataByBase).map(
-                                      ([baseKey, data]) => {
-                                        const labelName =
-                                          data.perfected === data.total
-                                            ? `Perfected ${data.baseDisplay}`
-                                            : data.baseDisplay;
-                                        const count = data.total;
-                                        const n = normalizeName(labelName);
-                                        const isMonster = MONSTER_ONE_PIECE_HINTS.some((h) =>
-                                          n.includes(h)
-                                        );
-                                        const isMythic = MYTHIC_SET_NAMES.has(n);
-                                        const isArena = ARENA_SET_NAMES.has(n);
-                                        const isHighland4 =
-                                          count === 4 && n === normalizeName('Highland Sentinel');
-                                        const isFivePiece = count >= 5;
-                                        const isThreePiece = count === 3;
-                                        // Determine desired order category
-                                        let category = 99;
-                                        if (isMonster)
-                                          category = 0; // monster (1p or 2p) first
-                                        else if (isFivePiece)
-                                          category = 1; // 5-piece bonuses
-                                        else if (isHighland4)
-                                          category = 2; // 4-piece Highland Sentinel
-                                        else if (isThreePiece)
-                                          category = 3; // 3-piece (e.g., Potentates)
-                                        else if (isMythic)
-                                          category = 4; // mythic
-                                        else if (isArena)
-                                          category = 5; // arena weapons
-                                        else category = 6; // everything else last
-
-                                        // Secondary ordering within monsters: 2p before 1p
-                                        const secondary = isMonster ? (count === 2 ? 0 : 1) : 0;
-
-                                        return {
-                                          key: baseKey,
-                                          data,
-                                          labelName,
-                                          count,
-                                          category,
-                                          secondary,
-                                          sortName: data.baseDisplay.toLowerCase(),
-                                        };
-                                      }
+                                  {playerGear[player.id]?.map((rec, idx) => {
+                                    const chipProps = getGearChipProps(rec.labelName, rec.count);
+                                    return (
+                                      <Chip
+                                        key={idx}
+                                        label={`${rec.count} ${rec.labelName}`}
+                                        size="small"
+                                        title={`Set ID: ${rec.data.setID ?? ''}`}
+                                        {...chipProps}
+                                      />
                                     );
-
-                                    records.sort((a, b) => {
-                                      if (a.category !== b.category) return a.category - b.category;
-                                      if (a.secondary !== b.secondary)
-                                        return a.secondary - b.secondary;
-                                      // Prefer higher piece counts within same category (except monsters handled above)
-                                      if (a.count !== b.count) return b.count - a.count;
-                                      return a.sortName.localeCompare(b.sortName);
-                                    });
-
-                                    const chips: React.ReactNode[] = [];
-                                    records.forEach((rec, idx) => {
-                                      const chipProps = getGearChipProps(rec.labelName, rec.count);
-                                      chips.push(
-                                        <Chip
-                                          key={idx}
-                                          label={`${rec.count} ${rec.labelName}`}
-                                          size="small"
-                                          title={`Set ID: ${rec.data.setID ?? ''}`}
-                                          {...chipProps}
-                                        />
-                                      );
-
-                                      if (
-                                        rec.count >= 5 &&
-                                        rec.data.hasPerfected &&
-                                        rec.data.hasRegular &&
-                                        rec.data.perfected < 5
-                                      ) {
-                                        const missing = 5 - rec.data.perfected;
-                                        if (missing > 0) {
-                                          buildIssues.push({
-                                            gearName: rec.labelName,
-                                            enchantQuality: 5,
-                                            message: `Missing ${missing} Perfected piece(s) in ${rec.labelName} for the 5-piece bonus`,
-                                          });
-                                        }
-                                      }
-                                    });
-                                    return chips;
-                                  })()}
+                                  })}
                                 </Box>
                               </Box>
                             )}
