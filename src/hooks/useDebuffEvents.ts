@@ -54,7 +54,7 @@ export function useDebuffEvents(): {
 }
 
 export function useDebuffLookup(): {
-  hostileBuffsLookup: BuffLookupData | null;
+  debuffsLookup: BuffLookupData | null;
   isDebuffEventsLoading: boolean;
 } {
   const { isDebuffEventsLoading } = useDebuffEvents();
@@ -62,7 +62,7 @@ export function useDebuffLookup(): {
 
   return React.useMemo(
     () => ({
-      hostileBuffsLookup: buffLookup,
+      debuffsLookup: buffLookup,
       isDebuffEventsLoading: isDebuffEventsLoading,
     }),
     [buffLookup, isDebuffEventsLoading]

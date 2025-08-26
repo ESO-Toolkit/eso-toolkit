@@ -340,6 +340,44 @@ describe('BuffLookupUtils', () => {
         expect(getActiveTargets(lookup, 12345, 4000)).toEqual([1, 2]);
         expect(getActiveTargets(lookup, 67890, 4000)).toEqual([1]);
       });
+
+      it('should compute correct buff duration for never-removed buffs', () => {
+        const fightEndTime = 8000; // 8 second fight duration
+        const buffApplyTime = 2500; // Buff applied at 2.5s
+
+        const buffEvents: BuffEvent[] = [
+          createApplyBuffEvent(buffApplyTime, 12345, 1),
+          // No remove event - buff should last until fight end
+        ];
+
+        const lookup = createBuffLookup(buffEvents, fightEndTime);
+
+        // Verify buff is active at various timestamps
+        expect(isBuffActiveOnTarget(lookup, 12345, buffApplyTime, 1)).toBe(true); // At apply time
+        expect(isBuffActiveOnTarget(lookup, 12345, 5000, 1)).toBe(true); // Mid-fight
+        expect(isBuffActiveOnTarget(lookup, 12345, fightEndTime - 1, 1)).toBe(true); // Just before fight end
+        expect(isBuffActiveOnTarget(lookup, 12345, fightEndTime + 1, 1)).toBe(false); // Just after fight end
+
+        // Verify the buff duration is calculated correctly
+        const buffData = lookup.buffIntervals.get(12345);
+        expect(buffData).toBeDefined();
+
+        if (buffData) {
+          const interval = buffData.find((interval) => interval.targetID === 1);
+          expect(interval).toBeDefined();
+
+          if (interval) {
+            expect(interval.start).toBe(buffApplyTime);
+            expect(interval.end).toBe(fightEndTime);
+
+            // Verify the computed duration
+            const expectedDuration = fightEndTime - buffApplyTime; // Should be 5.5 seconds (5500ms)
+            const actualDuration = interval.end - interval.start;
+            expect(actualDuration).toBe(expectedDuration);
+            expect(actualDuration).toBe(5500); // 8000 - 2500 = 5500ms
+          }
+        }
+      });
     });
 
     describe('Event ordering', () => {

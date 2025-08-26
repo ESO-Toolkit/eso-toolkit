@@ -59,7 +59,7 @@ export function useFriendlyBuffLookup(): {
   friendlyBuffsLookup: BuffLookupData;
   isFriendlyBuffEventsLoading: boolean;
 } {
-  const isFriendlyBuffEventsLoading = useSelector(selectFriendlyBuffEventsLoading);
+  const { isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
   const buffLookup = useSelector(selectFriendlyBuffLookup);
 
   return React.useMemo(

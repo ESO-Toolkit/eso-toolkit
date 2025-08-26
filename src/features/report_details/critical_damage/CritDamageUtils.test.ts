@@ -6,6 +6,7 @@ import {
   isBuffActive,
   isDebuffActive,
   getEnabledCriticalDamageSources,
+  getAllCriticalDamageSourcesWithActiveState,
   isBuffActiveAtTimestamp,
   isDebuffActiveAtTimestamp,
   calculateCriticalDamageAtTimestamp,
@@ -411,6 +412,59 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       // All results should be the same since buff is active throughout
       expect(optimizedResults.every((result) => result === optimizedResults[0])).toBe(true);
+    });
+  });
+
+  describe('getAllCriticalDamageSourcesWithActiveState', () => {
+    it('should return all sources with active state', () => {
+      const buffEvents: BuffEvent[] = [
+        {
+          timestamp: 1000,
+          type: 'applybuff',
+          sourceID: 1,
+          sourceIsFriendly: true,
+          targetID: 2,
+          targetIsFriendly: true,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ];
+
+      const buffLookup = createBuffLookup(buffEvents);
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+
+      const sources = getAllCriticalDamageSourcesWithActiveState(buffLookup, emptyDebuffLookup, null);
+
+      // Should return all sources (both active and inactive)
+      expect(sources.length).toBeGreaterThan(0);
+      expect(sources.every(source => typeof source.wasActive === 'boolean')).toBe(true);
+
+      // Find the Lucent Echoes source and verify it's marked as active
+      const lucentEchoesSource = sources.find(source => 
+        source.source === 'buff' && 
+        'ability' in source && 
+        source.ability === KnownAbilities.LUCENT_ECHOES
+      );
+      expect(lucentEchoesSource?.wasActive).toBe(true);
+
+      // Verify that other sources that aren't active are marked as inactive
+      const inactiveSources = sources.filter(source => !source.wasActive);
+      expect(inactiveSources.length).toBeGreaterThan(0);
+    });
+
+    it('should return all sources as inactive when no buffs/debuffs are present', () => {
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+
+      const sources = getAllCriticalDamageSourcesWithActiveState(emptyBuffLookup, emptyDebuffLookup, null);
+
+      // Should return all sources
+      expect(sources.length).toBeGreaterThan(0);
+      
+      // Most sources should be inactive (except possibly some computed ones)
+      const buffSources = sources.filter(source => source.source === 'buff' || source.source === 'debuff');
+      expect(buffSources.every(source => source.wasActive === false)).toBe(true);
     });
   });
 });

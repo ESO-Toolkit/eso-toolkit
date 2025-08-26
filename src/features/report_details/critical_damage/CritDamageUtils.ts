@@ -209,6 +209,43 @@ export function getEnabledCriticalDamageSources(
   return result;
 }
 
+export function getAllCriticalDamageSourcesWithActiveState(
+  buffLookup: BuffLookupData,
+  debuffLookup: BuffLookupData,
+  combatantInfo: CombatantInfoEvent | null
+): CriticalDamageSourceWithActiveState[] {
+  const result: CriticalDamageSourceWithActiveState[] = [];
+
+  for (const source of CRITICAL_DAMAGE_SOURCES) {
+    let wasActive = false;
+
+    switch (source.source) {
+      case 'aura':
+        wasActive = isAuraActive(combatantInfo, source.ability);
+        break;
+      case 'buff':
+        wasActive = isBuffActive(buffLookup, source.ability);
+        break;
+      case 'debuff':
+        wasActive = isDebuffActive(debuffLookup, source.ability);
+        break;
+      case 'gear':
+        wasActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
+        break;
+      case 'computed':
+        wasActive = isComputedSourceActive(combatantInfo, source);
+        break;
+    }
+
+    result.push({
+      ...source,
+      wasActive,
+    });
+  }
+
+  return result;
+}
+
 export function calculateCriticalDamageAtTimestamp(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,

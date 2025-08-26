@@ -8,7 +8,7 @@ import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
 import {
   calculateDynamicCriticalDamageAtTimestamp,
   calculateStaticCriticalDamage,
-  getEnabledCriticalDamageSources,
+  getAllCriticalDamageSourcesWithActiveState,
 } from './CritDamageUtils';
 import {
   PlayerCriticalDamageDetailsView,
@@ -33,7 +33,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
-  const { hostileBuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
+  const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
 
   const isLoading =
     isCombatantInfoEventsLoading ||
@@ -53,23 +53,16 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     return combatantInfoEvents.find((info) => info.sourceID === player.id) || null;
   }, [combatantInfoEvents, player]);
 
-  const enabledSources = React.useMemo(() => {
-    if (!friendlyBuffsLookup || !hostileBuffsLookup) {
+  const allSources = React.useMemo(() => {
+    if (!friendlyBuffsLookup || !debuffsLookup) {
       return [];
     }
-    return getEnabledCriticalDamageSources(
-      friendlyBuffsLookup,
-      hostileBuffsLookup,
-      combatantInfo
-    ).map((s) => ({
-      ...s,
-      wasActive: true,
-    }));
-  }, [combatantInfo, friendlyBuffsLookup, hostileBuffsLookup]);
+    return getAllCriticalDamageSourcesWithActiveState(friendlyBuffsLookup, debuffsLookup, combatantInfo);
+  }, [combatantInfo, friendlyBuffsLookup, debuffsLookup]);
 
   // Calculate critical damage data
   const criticalDamageData = React.useMemo((): PlayerCriticalDamageData | null => {
-    if (!player || !friendlyBuffsLookup || !hostileBuffsLookup) return null;
+    if (!player || !friendlyBuffsLookup || !debuffsLookup) return null;
 
     const fightDurationMs = fight.endTime - fight.startTime;
     const fightDurationSeconds = Math.ceil(fightDurationMs / 1000);
@@ -86,6 +79,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     let maxCriticalDamage = 50; // Default base critical damage
     let totalCriticalDamage = 0;
     let dataPointCount = 0;
+    let timeAtCapCount = 0; // Count of data points at critical damage cap (125%)
 
     for (let i = 0; i <= fightDurationSeconds; i++) {
       const timestamp = fight.startTime + i * 1000;
@@ -94,7 +88,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       // Calculate dynamic critical damage (buffs/debuffs) for this timestamp
       const dynamicCriticalDamage = calculateDynamicCriticalDamageAtTimestamp(
         friendlyBuffsLookup,
-        hostileBuffsLookup,
+        debuffsLookup,
         timestamp
       );
 
@@ -111,11 +105,17 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       maxCriticalDamage = Math.max(maxCriticalDamage, criticalDamage);
       totalCriticalDamage += criticalDamage;
       dataPointCount++;
+
+      // Check if at critical damage cap (125%)
+      if (criticalDamage >= 125) {
+        timeAtCapCount++;
+      }
     }
 
     // Calculate final statistics from running tallies
     const maximumCriticalDamage = maxCriticalDamage;
     const effectiveCriticalDamage = dataPointCount > 0 ? totalCriticalDamage / dataPointCount : 50; // Default base critical damage
+    const timeAtCapPercentage = dataPointCount > 0 ? (timeAtCapCount / dataPointCount) * 100 : 0;
 
     return {
       playerId: player.id,
@@ -123,16 +123,10 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       dataPoints,
       effectiveCriticalDamage,
       maximumCriticalDamage,
+      timeAtCapPercentage,
       criticalDamageAlerts: [], // TODO: Implement critical damage alerts if needed
     };
-  }, [
-    player,
-    fight,
-    friendlyBuffsLookup,
-    hostileBuffsLookup,
-    combatantInfo,
-    playerData?.playersById,
-  ]);
+  }, [player, fight, friendlyBuffsLookup, debuffsLookup, combatantInfo, playerData?.playersById]);
 
   const fightDurationSeconds = (fight.endTime - fight.startTime) / 1000;
 
@@ -148,7 +142,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       expanded={expanded}
       isLoading={isLoading}
       criticalDamageData={criticalDamageData}
-      criticalDamageSources={enabledSources}
+      criticalDamageSources={allSources}
       criticalMultiplier={null}
       fightDurationSeconds={fightDurationSeconds}
       onExpandChange={onExpandChange}

@@ -85,6 +85,7 @@ export interface PlayerCriticalDamageData {
   dataPoints: CriticalDamageDataPoint[];
   effectiveCriticalDamage: number;
   maximumCriticalDamage: number;
+  timeAtCapPercentage: number;
   criticalDamageAlerts: CriticalDamageAlert[];
 }
 
@@ -171,14 +172,27 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 variant="body2"
                 color={maxCriticalDamage >= 125 ? 'success' : 'secondary'}
               >
-                Max: {maxCriticalDamage}% crit damage
+                Max: {maxCriticalDamage}%
               </Typography>
 
               <Typography
                 variant="body2"
                 color={criticalDamageData.effectiveCriticalDamage >= 125 ? 'success' : 'secondary'}
               >
-                Effective: {criticalDamageData.effectiveCriticalDamage.toFixed(1)}% crit damage
+                Effective: {criticalDamageData.effectiveCriticalDamage.toFixed(1)}%
+              </Typography>
+
+              <Typography
+                variant="body2"
+                color={
+                  criticalDamageData.timeAtCapPercentage >= 80
+                    ? 'success'
+                    : criticalDamageData.timeAtCapPercentage >= 50
+                      ? 'warning'
+                      : 'secondary'
+                }
+              >
+                At Cap: {criticalDamageData.timeAtCapPercentage.toFixed(1)}% of time
               </Typography>
             </Box>
           )}
