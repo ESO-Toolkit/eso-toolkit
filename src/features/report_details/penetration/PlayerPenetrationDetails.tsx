@@ -22,16 +22,12 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
 
 import { StatChecklist } from '../../../components/StatChecklist';
 import { FightFragment } from '../../../graphql/generated';
+import { useCombatantInfoEvents, useDebuffEvents, usePlayerData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import {
-  selectDebuffEvents,
-  selectCombatantInfoEvents,
-  selectEventPlayers,
-} from '../../../store/events_data/actions';
+import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../../../types/abilities';
 import {
   DebuffEvent,
@@ -146,26 +142,14 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   onExpandChange,
 }) => {
   // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
-  const debuffEvents = useSelector(selectDebuffEvents);
-  const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
-  const eventPlayersArray = useSelector(selectEventPlayers);
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
+  const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
 
-  // Convert players array to record for efficient lookup
-  const eventPlayers = React.useMemo(() => {
-    const result: Record<string, unknown> = {};
-    eventPlayersArray.forEach((player) => {
-      if (player?.id) {
-        result[String(player.id)] = player;
-      }
-    });
-    return result;
-  }, [eventPlayersArray]);
+  const isLoading = isDebuffEventsLoading || isCombatantInfoEventsLoading || isPlayerDataLoading;
 
-  const [searchParams] = useSearchParams();
   const { reportId, fightId } = useSelectedReportAndFight();
-
-  // Get selected target from URL params
-  const selectedTargetId = searchParams.get('target') || '';
+  const selectedTargetId = useSelector(selectSelectedTargetId);
 
   // State for computed data
   const [penetrationSources, setPenetrationSources] = React.useState<PenetrationSource[]>([]);
@@ -183,36 +167,11 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     []
   );
 
-  // Memoize expensive computations - combine optimized events and filter for fight timeframe
-  const fightCombatantInfoEvents = React.useMemo(() => {
-    if (!combatantInfoEvents || !fight?.startTime || !fight?.endTime) return [];
-
-    const fightStart = fight.startTime;
-    const fightEnd = fight.endTime;
-
-    // Filter combatant info events for the fight timeframe
-    return combatantInfoEvents.filter(
-      (event: CombatantInfoEvent) => event.timestamp >= fightStart && event.timestamp <= fightEnd
-    );
-  }, [combatantInfoEvents, fight?.startTime, fight?.endTime]);
-
-  const fightDebuffEvents = React.useMemo(() => {
-    if (!debuffEvents || !fight?.startTime || !fight?.endTime) return [];
-
-    const fightStart = fight.startTime;
-    const fightEnd = fight.endTime;
-
-    // Filter debuff events for the fight timeframe
-    return debuffEvents.filter(
-      (event: DebuffEvent) => event.timestamp >= fightStart && event.timestamp <= fightEnd
-    );
-  }, [debuffEvents, fight?.startTime, fight?.endTime]);
-
   // Memoize filtered debuff events for the selected target
   const targetDebuffEvents = React.useMemo(() => {
-    if (!selectedTargetId || !fightDebuffEvents.length) return [];
+    if (!selectedTargetId || !debuffEvents.length) return [];
 
-    return fightDebuffEvents
+    return debuffEvents
       .filter((event: DebuffEvent) => {
         return (
           (event.type === 'applydebuff' || event.type === 'removedebuff') &&
@@ -221,27 +180,20 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
         );
       })
       .sort((a: DebuffEvent, b: DebuffEvent) => a.timestamp - b.timestamp);
-  }, [fightDebuffEvents, selectedTargetId, matchesPenetrationEffect]);
+  }, [debuffEvents, selectedTargetId, matchesPenetrationEffect]);
 
   // Calculate base penetration for this specific player
   const playerBasePenetration = React.useMemo(() => {
-    if (
-      !fightCombatantInfoEvents.length ||
-      !selectedTargetId ||
-      !fight?.startTime ||
-      !fight?.endTime
-    ) {
+    if (!combatantInfoEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
       return 0;
     }
 
     // Get player data from eventPlayers for talents and find combatantinfo auras
-    const player = eventPlayers[id] as
-      | { combatantInfo?: { talents?: { guid: number }[] } }
-      | undefined;
+    const player = playerData?.playersById[id];
     const talents = player?.combatantInfo?.talents ?? [];
 
     // Find the combatantinfo event for this player in this specific fight
-    const combatantInfoEvent = fightCombatantInfoEvents.find(
+    const combatantInfoEvent = combatantInfoEvents.find(
       (event: CombatantInfoEvent) =>
         event.type === 'combatantinfo' &&
         String(event.sourceID) === id &&
@@ -333,16 +285,11 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     basePenetration += tidebornPenetration;
 
     return basePenetration;
-  }, [fightCombatantInfoEvents, selectedTargetId, fight, id, eventPlayers]);
+  }, [combatantInfoEvents, selectedTargetId, fight, id, playerData]);
 
   // Compute penetration data for this specific player
   const penetrationData = React.useMemo(() => {
-    if (
-      !fightCombatantInfoEvents.length ||
-      !selectedTargetId ||
-      !fight?.startTime ||
-      !fight?.endTime
-    ) {
+    if (!combatantInfoEvents.length || !selectedTargetId || !fight?.startTime || !fight?.endTime) {
       return;
     }
 
@@ -353,13 +300,11 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     const sources: PenetrationSource[] = [];
 
     // Get player data from eventPlayers for talents and find combatantinfo auras
-    const player = eventPlayers[id] as
-      | { combatantInfo?: { talents?: { guid: number }[] } }
-      | undefined;
+    const player = playerData?.playersById[id];
     const talents = player?.combatantInfo?.talents ?? [];
 
     // Find the combatantinfo event for this player in this specific fight
-    const combatantInfoEvent = fightCombatantInfoEvents.find(
+    const combatantInfoEvent = combatantInfoEvents.find(
       (event: CombatantInfoEvent) =>
         event.type === 'combatantinfo' &&
         String(event.sourceID) === id &&
@@ -476,7 +421,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     // Check debuff-based sources (optimized to filter once)
     const debuffApplications = new Map<number, number>();
-    fightDebuffEvents.forEach((buffEvent: DebuffEvent) => {
+    debuffEvents.forEach((buffEvent: DebuffEvent) => {
       if (buffEvent.type === 'applydebuff' && String(buffEvent.targetID) === selectedTargetId) {
         const effect = findPenetrationEffect(buffEvent);
         if (effect) {
@@ -619,25 +564,25 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
     const voxelizedDataPoints = voxelizeDataPoints(dataPoints);
 
-    const playerData: PlayerPenetrationData = {
+    const playerPenetrationData: PlayerPenetrationData = {
       playerId: id,
       playerName: name,
       dataPoints: voxelizedDataPoints,
     };
 
-    return playerData;
+    return playerPenetrationData;
   }, [
     id,
     name,
-    fightCombatantInfoEvents,
-    fightDebuffEvents,
+    combatantInfoEvents,
+    debuffEvents,
     targetDebuffEvents,
     fight,
     selectedTargetId,
     reportId,
     fightId,
-    eventPlayers,
     findPenetrationEffect,
+    playerData,
     playerBasePenetration,
   ]);
 
@@ -696,7 +641,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
             <StatChecklist
               sources={penetrationSources}
               title="Penetration Sources"
-              loading={!penetrationSources.length}
+              loading={isLoading}
             />
 
             {/* Penetration vs Time Chart */}
@@ -842,5 +787,3 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     </Accordion>
   );
 };
-
-export const MemoizedPlayerPenetrationDetails = React.memo(PlayerPenetrationDetails);
