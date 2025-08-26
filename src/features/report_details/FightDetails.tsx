@@ -4,7 +4,6 @@ import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { useReportMasterData } from '../../hooks';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
 
@@ -15,7 +14,6 @@ interface FightDetailsProps {
 
 export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { reportId } = useSelectedReportAndFight();
 
   // Use the new hooks for data fetching
 
@@ -105,14 +103,17 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   if (isLoading) {
     return (
       <FightDetailsView
-        reportCode={reportId}
         fight={fight}
         selectedTabId={selectedTabId}
         validSelectedTab={validSelectedTab}
         showExperimentalTabs={showExperimentalTabs}
-        targets={targets}
+        targets={targets
+          .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
+          .filter((t) => t.id && t.name)}
         selectedTargetId={selectedTargetId}
-        loading={true}
+        events={[]}
+        eventsLoaded={false}
+        masterDataLoaded={false}
         onNavigateToTab={navigateToTab}
         onTargetChange={handleTargetChange}
         onToggleExperimentalTabs={toggleExperimentalTabs}
@@ -124,14 +125,17 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
 
   return (
     <FightDetailsView
-      reportCode={reportId}
       fight={fight}
       selectedTabId={selectedTabId}
       validSelectedTab={validSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
-      targets={targets}
+      targets={targets
+        .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
+        .filter((t) => t.id && t.name)}
       selectedTargetId={selectedTargetId}
-      loading={false}
+      events={[]}
+      eventsLoaded={false}
+      masterDataLoaded={false}
       onNavigateToTab={navigateToTab}
       onTargetChange={handleTargetChange}
       onToggleExperimentalTabs={toggleExperimentalTabs}

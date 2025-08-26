@@ -38,4 +38,3 @@ export function detectBuildIssues(gear: PlayerGear[]): BuildIssue[] {
   });
   return issues;
 }
-

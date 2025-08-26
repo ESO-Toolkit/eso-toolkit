@@ -1,9 +1,9 @@
+import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import {
   Box,
   Typography,
-  Grid,
   Card,
   CardContent,
   Avatar,
@@ -19,15 +19,19 @@ import { keyframes, SxProps } from '@mui/system';
 import React from 'react';
 
 import dkIcon from '../../../assets/dk-white.png';
+import mundusIcon from '../../../assets/MundusStone.png';
 import necromancerIcon from '../../../assets/necromancer-white.png';
 import nightbladeIcon from '../../../assets/nightblade-white.png';
 import sorcererIcon from '../../../assets/sorcerer.png';
 import templarIcon from '../../../assets/templar-white.png';
 import wardenIcon from '../../../assets/warden-white.png';
 import arcanistIcon from '../../../assets/white-arcanist.png';
-import { PlayerDetailsEntry, PlayerGear } from '../../../types/playerDetails';
+import { SkillTooltip } from '../../../components/SkillTooltip';
+import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { PlayerGear } from '../../../types/playerDetails';
 import { detectBuildIssues } from '../../../utils/detectBuildIssues';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import { buildTooltipPropsFromClassAndName } from '../../../utils/skillTooltipMapper';
 
 // Helpers for gear classification and chip coloring
 const normalizeName = (name?: string): string =>
@@ -424,7 +428,7 @@ function abbreviateFood(name: string): string {
 }
 
 interface PlayersPanelViewProps {
-  playerActors: Record<string, PlayerDetailsEntry> | undefined;
+  playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   deathsByPlayer: Record<string, number>;
@@ -454,6 +458,17 @@ const CLASS_SUBLINES: Record<string, [string, string, string]> = {
   nightblade: ['Assassination', 'Shadow', 'Siphoning'],
   dragonknight: ['Ardent Flame', 'Draconic Power', 'Earthen Heart'],
   sorcerer: ['Dark Magic', 'Daedric Summoning', 'Storm Calling'],
+};
+
+// Short display labels for sublines to keep single-line layout without scaling
+const CLASS_SUBLINES_SHORT: Record<string, [string, string, string]> = {
+  arcanist: ['Herald', 'Soldier', 'Curative'],
+  necromancer: ['Grave', 'Bone', 'Living'],
+  warden: ['Animal', 'Green', 'Winter'],
+  templar: ['Aedric', "Dawn's", 'Restoring'],
+  nightblade: ['Assassin', 'Shadow', 'Siphon'],
+  dragonknight: ['Flame', 'Draconic', 'Earthen'],
+  sorcerer: ['Dark', 'Daedric', 'Storm'],
 };
 
 function parseClasses(input?: string | null): string[] {
@@ -491,6 +506,68 @@ function toClassKey(name?: string | null): string {
     .trim();
   return CLASS_ALIASES[k] || k;
 }
+
+// Utility: auto-fit single-line content by scaling down if it overflows
+const OneLineAutoFit: React.FC<{ minScale?: number; children: React.ReactNode }> = ({
+  minScale = 0.8,
+  children,
+}) => {
+  const outerRef = React.useRef<HTMLDivElement | null>(null);
+  const innerRef = React.useRef<HTMLDivElement | null>(null);
+  const [scale, setScale] = React.useState(1);
+
+  React.useLayoutEffect(() => {
+    const outer = outerRef.current;
+    const inner = innerRef.current;
+    if (!outer || !inner) return;
+
+    const measure = (): void => {
+      const available = outer.clientWidth;
+      const needed = inner.scrollWidth;
+      if (available <= 0 || needed <= 0) return setScale(1);
+      const next = Math.max(minScale, Math.min(1, available / needed));
+      setScale(next);
+    };
+
+    measure();
+    const listeners: Array<() => void> = [];
+    let ro: ResizeObserver | null = null;
+    const g: typeof globalThis | undefined =
+      typeof globalThis !== 'undefined' ? globalThis : undefined;
+    if (g && typeof g.ResizeObserver !== 'undefined') {
+      ro = new g.ResizeObserver(measure);
+      ro.observe(outer);
+      ro.observe(inner);
+    } else if (typeof window !== 'undefined') {
+      const onResize = (): void => measure();
+      window.addEventListener('resize', onResize);
+      listeners.push(() => window.removeEventListener('resize', onResize));
+    }
+    return () => {
+      if (ro && typeof ro.disconnect === 'function') ro.disconnect();
+      listeners.forEach((fn) => fn());
+    };
+  }, [minScale]);
+
+  return (
+    <Box
+      ref={outerRef}
+      sx={{ minWidth: 0, width: '100%', overflow: 'hidden', whiteSpace: 'nowrap' }}
+    >
+      <Box
+        ref={innerRef}
+        sx={{
+          display: 'inline-block',
+          transform: `scale(${scale})`,
+          transformOrigin: 'left center',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {children}
+      </Box>
+    </Box>
+  );
+};
 
 export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   playerActors,
@@ -556,9 +633,19 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
       <Typography variant="h6" gutterBottom>
         Players
       </Typography>
-      <Grid container spacing={2}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+          gap: 2,
+          alignItems: 'stretch',
+        }}
+      >
         {playerActors &&
-          Object.values(playerActors).map((player) => {
+          Object.values(playerActors).map((actor) => {
+            // Get player details from events.players by actor id
+            const player = actor.id ? playerActors[String(actor.id)] : undefined;
+
             if (!player) {
               return null;
             }
@@ -568,26 +655,29 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
             const armorWeights = getArmorWeightCounts(gear);
             const buildIssues = detectBuildIssues(gear);
             return (
-              <Box key={player.id} sx={{ width: '100%', mb: 2 }}>
+              <Box key={actor.id} sx={{ minWidth: 0, display: 'flex' }}>
                 <Card
                   variant="outlined"
                   className="u-hover-lift u-fade-in-up"
-                  sx={{ width: '100%' }}
+                  sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
                 >
-                  <CardContent sx={{ p: 2 }}>
+                  <CardContent
+                    sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
+                  >
                     <Box
                       display="flex"
-                      flexDirection={{ xs: 'column', md: 'row' }}
+                      flexDirection="column"
                       alignItems="stretch"
                       gap={2}
+                      sx={{ flex: 1, minHeight: 0, justifyContent: 'space-between' }}
                     >
                       {/* Left column: identity, talents, gear, issues */}
-                      <Box flex={1} minWidth={0}>
+                      <Box flex={0} minWidth={0}>
                         <Box display="flex" alignItems="center" mb={1.5}>
-                          {player.icon ? (
+                          {actor.icon ? (
                             <Avatar
-                              src={`https://assets.rpglogs.com/img/eso/icons/${player.icon}.png`}
-                              alt={String(resolveActorName(player))}
+                              src={`https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`}
+                              alt={String(resolveActorName(actor))}
                               sx={{ mr: 2.5 }}
                             />
                           ) : (
@@ -595,9 +685,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                           )}
                           <Box>
                             <Box display="flex" alignItems="center" gap={1.25}>
-                              <Typography variant="subtitle1">
-                                {resolveActorName(player)}
-                              </Typography>
+                              <Typography variant="subtitle1">{resolveActorName(actor)}</Typography>
                               <Box display="inline-flex" alignItems="center" gap={0.5}>
                                 <ShieldOutlinedIcon
                                   sx={{ color: 'text.secondary', fontSize: 12 }}
@@ -638,269 +726,445 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               // Prefer showing the three ESO skill lines for the detected class.
                               const baseKey = toClassKey(player.type);
                               const sublines = CLASS_SUBLINES[baseKey];
-                              const classes = parseClasses(player.type);
+                              const classes = parseClasses(actor.type);
                               const fallbackList = classes.length
                                 ? classes
-                                : ([player.type].filter(Boolean) as string[]);
+                                : ([actor.type].filter(Boolean) as string[]);
                               const list = sublines ? sublines : fallbackList.slice(0, 3);
+                              const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
                               const icon = CLASS_ICON_MAP[baseKey];
-                              const joined = list.join(' • ');
                               return (
                                 <Box
                                   sx={{
                                     display: 'flex',
                                     alignItems: 'center',
-                                    gap: 0.5,
                                     minWidth: 0,
                                     mt: 0.75,
                                     mb: 0.75,
+                                    pr: 1,
+                                    pl: 0,
                                   }}
                                 >
-                                  {icon && (
-                                    <img
-                                      src={icon}
-                                      alt={String(baseKey)}
-                                      width={12}
-                                      height={12}
-                                      style={{ opacity: 0.8, flexShrink: 0 }}
-                                    />
-                                  )}
-                                  <Tooltip title={joined}>
-                                    <Typography
-                                      variant="caption"
-                                      color="text.secondary"
+                                  <OneLineAutoFit minScale={0.9}>
+                                    <Box
                                       sx={{
-                                        lineHeight: 1.05,
-                                        fontSize: '0.70rem',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: 0.75,
                                         whiteSpace: 'nowrap',
-                                        overflow: 'hidden',
-                                        textOverflow: 'ellipsis',
-                                        display: 'block',
-                                        minWidth: 0,
-                                        maxWidth: '100%',
                                       }}
                                     >
-                                      {joined}
-                                    </Typography>
-                                  </Tooltip>
+                                      {displayList.map((name, idx) => (
+                                        <Tooltip key={idx} title={list[idx] || name}>
+                                          <Box
+                                            sx={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: 0.5,
+                                            }}
+                                          >
+                                            {idx > 0 && (
+                                              <Typography
+                                                variant="caption"
+                                                sx={{ color: 'text.secondary', opacity: 0.7 }}
+                                              >
+                                                •
+                                              </Typography>
+                                            )}
+                                            {icon && (
+                                              <img
+                                                src={icon}
+                                                alt={String(baseKey)}
+                                                width={12}
+                                                height={12}
+                                                style={{ opacity: 0.8, flexShrink: 0 }}
+                                              />
+                                            )}
+                                            <Typography
+                                              variant="caption"
+                                              color="text.secondary"
+                                              noWrap
+                                              sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
+                                            >
+                                              {name}
+                                            </Typography>
+                                          </Box>
+                                        </Tooltip>
+                                      ))}
+                                    </Box>
+                                  </OneLineAutoFit>
                                 </Box>
                               );
                             })()}
                           </Box>
-                          {(() => {
-                            // Prefer showing the three ESO skill lines for the detected class.
-                            const baseKey = toClassKey(player.type);
-                            const sublines = CLASS_SUBLINES[baseKey];
-                            const classes = parseClasses(player.type);
-                            const fallbackList = classes.length
-                              ? classes
-                              : ([player.type].filter(Boolean) as string[]);
-                            const list = sublines ? sublines : fallbackList.slice(0, 3);
-                            const icon = CLASS_ICON_MAP[baseKey];
-                            const joined = list.join(' • ');
-                            return (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 0.5,
-                                  minWidth: 0,
-                                  mt: 0.75,
-                                  mb: 0.75,
-                                }}
-                              >
-                                {icon && (
-                                  <img
-                                    src={icon}
-                                    alt={String(baseKey)}
-                                    width={12}
-                                    height={12}
-                                    style={{ opacity: 0.8, flexShrink: 0 }}
-                                  />
-                                )}
-                                <Tooltip title={joined}>
-                                  <Typography
-                                    variant="caption"
-                                    color="text.secondary"
-                                    sx={{
-                                      lineHeight: 1.05,
-                                      fontSize: '0.70rem',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      display: 'block',
-                                      minWidth: 0,
-                                      maxWidth: '100%',
-                                    }}
-                                  >
-                                    {joined}
-                                  </Typography>
-                                </Tooltip>
-                              </Box>
-                            );
-                          })()}
                         </Box>
                         {/* Talents (title removed for cleaner UI) */}
                         {talents.length > 0 && (
                           <Box mb={1.5}>
                             <Box display="flex" flexWrap="wrap" gap={1.25} mb={1.25}>
-                              {talents.slice(0, 6).map((talent, idx) => (
-                                <Avatar
-                                  key={idx}
-                                  src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
-                                  alt={talent.name}
-                                  variant="rounded"
-                                  sx={{
-                                    width: 32,
-                                    height: 32,
-                                    border: '1px solid var(--border)',
-                                    boxShadow: 'rgb(0 0 0) 0px 2px 4px',
-                                  }}
-                                  title={`${talent.name} (ID: ${talent.guid})`}
-                                />
-                              ))}
+                              {talents.slice(0, 6).map((talent, idx) => {
+                                const isUltimate = idx === 5;
+                                return (
+                                  <React.Fragment key={idx}>
+                                    {isUltimate && (
+                                      <Box
+                                        sx={{
+                                          width: 2,
+                                          height: 34,
+                                          bgcolor: 'rgba(124,207,252,0.55)',
+                                          borderRadius: 0.5,
+                                          flexShrink: 0,
+                                        }}
+                                      />
+                                    )}
+                                    <Box
+                                      component="span"
+                                      sx={{ display: 'inline-flex', alignItems: 'center' }}
+                                    >
+                                      <Tooltip
+                                        title={(() => {
+                                          const clsKey = toClassKey(actor.type);
+                                          const rich = buildTooltipPropsFromClassAndName(
+                                            clsKey,
+                                            talent.name
+                                          );
+                                          const base = {
+                                            name: talent.name,
+                                            description: `${talent.name} (ID: ${talent.guid})`,
+                                          };
+                                          return (
+                                            <SkillTooltip
+                                              {...(rich ?? base)}
+                                              name={
+                                                isUltimate
+                                                  ? `${rich?.name ?? base.name} (Ultimate)`
+                                                  : (rich?.name ?? base.name)
+                                              }
+                                              iconUrl={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                            />
+                                          );
+                                        })()}
+                                        placement="top-start"
+                                        enterDelay={0}
+                                        arrow
+                                        slotProps={{
+                                          popper: {
+                                            modifiers: [
+                                              {
+                                                name: 'preventOverflow',
+                                                options: { padding: 8, rootBoundary: 'viewport' },
+                                              },
+                                              {
+                                                name: 'flip',
+                                                options: {
+                                                  fallbackPlacements: [
+                                                    'top',
+                                                    'bottom',
+                                                    'left',
+                                                    'right',
+                                                  ],
+                                                },
+                                              },
+                                              { name: 'offset', options: { offset: [0, 8] } },
+                                            ],
+                                          },
+                                          tooltip: { sx: { maxWidth: 320, p: 0 } },
+                                        }}
+                                      >
+                                        <Avatar
+                                          src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                          alt={talent.name}
+                                          variant="rounded"
+                                          sx={{
+                                            width: isUltimate ? 34 : 32,
+                                            height: isUltimate ? 34 : 32,
+                                            border: isUltimate
+                                              ? '1.5px solid #b3b3b3f2'
+                                              : '1px solid #b5b8bd59',
+                                            boxShadow: isUltimate
+                                              ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
+                                              : 'none',
+                                          }}
+                                        />
+                                      </Tooltip>
+                                    </Box>
+                                  </React.Fragment>
+                                );
+                              })}
                             </Box>
                             {talents.length > 6 && (
                               <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
-                                {talents.slice(6).map((talent, idx) => (
-                                  <Avatar
-                                    key={idx}
-                                    src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
-                                    alt={talent.name}
-                                    variant="rounded"
-                                    sx={{
-                                      width: 32,
-                                      height: 32,
-                                      border: '1px solid var(--border)',
-                                      boxShadow: 'rgb(0 0 0) 0px 2px 4px',
-                                    }}
-                                    title={`${talent.name} (ID: ${talent.guid})`}
-                                  />
-                                ))}
+                                {talents.slice(6).map((talent, idx) => {
+                                  const isUltimate = idx === 5;
+                                  return (
+                                    <React.Fragment key={idx}>
+                                      {isUltimate && (
+                                        <Box
+                                          sx={{
+                                            width: 2,
+                                            height: 34,
+                                            bgcolor: 'rgba(124,207,252,0.55)',
+                                            borderRadius: 0.5,
+                                            flexShrink: 0,
+                                          }}
+                                        />
+                                      )}
+                                      <Box
+                                        component="span"
+                                        sx={{ display: 'inline-flex', alignItems: 'center' }}
+                                      >
+                                        <Tooltip
+                                          title={(() => {
+                                            const clsKey = toClassKey(actor.type);
+                                            const rich = buildTooltipPropsFromClassAndName(
+                                              clsKey,
+                                              talent.name
+                                            );
+                                            const base = {
+                                              name: talent.name,
+                                              description: `${talent.name} (ID: ${talent.guid})`,
+                                            };
+                                            return (
+                                              <SkillTooltip
+                                                {...(rich ?? base)}
+                                                name={
+                                                  isUltimate
+                                                    ? `${rich?.name ?? base.name} (Ultimate)`
+                                                    : (rich?.name ?? base.name)
+                                                }
+                                                iconUrl={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                              />
+                                            );
+                                          })()}
+                                          placement="top-start"
+                                          enterDelay={0}
+                                          arrow
+                                          slotProps={{
+                                            popper: {
+                                              modifiers: [
+                                                {
+                                                  name: 'preventOverflow',
+                                                  options: { padding: 8, rootBoundary: 'viewport' },
+                                                },
+                                                {
+                                                  name: 'flip',
+                                                  options: {
+                                                    fallbackPlacements: [
+                                                      'top',
+                                                      'bottom',
+                                                      'left',
+                                                      'right',
+                                                    ],
+                                                  },
+                                                },
+                                                { name: 'offset', options: { offset: [0, 8] } },
+                                              ],
+                                            },
+                                            tooltip: { sx: { maxWidth: 320, p: 0 } },
+                                          }}
+                                        >
+                                          <Avatar
+                                            src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                            alt={talent.name}
+                                            variant="rounded"
+                                            sx={{
+                                              width: isUltimate ? 34 : 32,
+                                              height: isUltimate ? 34 : 32,
+                                              border: isUltimate
+                                                ? '1.5px solid #b3b3b3f2'
+                                                : '1px solid #b5b8bd59',
+                                              boxShadow: isUltimate
+                                                ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
+                                                : 'none',
+                                            }}
+                                          />
+                                        </Tooltip>
+                                      </Box>
+                                    </React.Fragment>
+                                  );
+                                })}
                               </Box>
                             )}
-                          </Box>
-                        )}
-                        {/* Gear */}
-                        {gear.length > 0 && (
-                          <Box mt={1.25}>
-                            {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
-                            <Box display="flex" flexWrap="wrap" gap={1.25}>
-                              {(() => {
-                                type BaseSet = {
-                                  total: number;
-                                  perfected: number;
-                                  setID?: number;
-                                  hasPerfected: boolean;
-                                  hasRegular: boolean;
-                                  baseDisplay: string;
-                                };
-                                const setDataByBase: Record<string, BaseSet> = {};
-
-                                const twoHandedKeywords = [
-                                  'greatsword',
-                                  'battle axe',
-                                  'maul',
-                                  'bow',
-                                  'inferno staff',
-                                  'ice staff',
-                                  'lightning staff',
-                                  'flame staff',
-                                  'destruction staff',
-                                  'restoration staff',
-                                ];
-                                const isTwoHandedWeapon = (name?: string): boolean => {
-                                  if (!name) return false;
-                                  const n = name.toLowerCase();
-                                  return twoHandedKeywords.some((k) => n.includes(k));
-                                };
-
-                                gear.forEach((g: PlayerGear) => {
-                                  if (!g.setName) return;
-                                  const increment = isTwoHandedWeapon(g.name) ? 2 : 1;
-
-                                  const isPerfected = /^perfected\s+/i.test(g.setName);
-                                  const baseDisplay = g.setName.replace(/^Perfected\s+/, '');
-                                  const baseKey = normalizeName(baseDisplay);
-
-                                  if (!setDataByBase[baseKey]) {
-                                    setDataByBase[baseKey] = {
-                                      total: 0,
-                                      perfected: 0,
-                                      setID: g.setID,
-                                      hasPerfected: false,
-                                      hasRegular: false,
-                                      baseDisplay,
+                            {/* Gear */}
+                            {gear.length > 0 && (
+                              <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
+                                {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
+                                <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={48}>
+                                  {(() => {
+                                    type BaseSet = {
+                                      total: number;
+                                      perfected: number;
+                                      setID?: number;
+                                      hasPerfected: boolean;
+                                      hasRegular: boolean;
+                                      baseDisplay: string;
                                     };
-                                  }
-                                  const entry = setDataByBase[baseKey];
-                                  entry.total += increment;
-                                  if (isPerfected) {
-                                    entry.perfected += increment;
-                                    entry.hasPerfected = true;
-                                  } else {
-                                    entry.hasRegular = true;
-                                  }
-                                  if (!entry.setID && g.setID) entry.setID = g.setID;
-                                });
+                                    const setDataByBase: Record<string, BaseSet> = {};
 
-                                const chips: React.ReactNode[] = [];
-                                Object.entries(setDataByBase).forEach(([baseKey, data], idx) => {
-                                  const labelName =
-                                    data.perfected === data.total
-                                      ? `Perfected ${data.baseDisplay}`
-                                      : data.baseDisplay;
-                                  const count = data.total;
-                                  const chipProps = getGearChipProps(labelName, count);
-                                  chips.push(
-                                    <Chip
-                                      key={idx}
-                                      label={`${count} ${labelName}`}
-                                      size="small"
-                                      title={`Set ID: ${data.setID ?? ''}`}
-                                      {...chipProps}
-                                    />
-                                  );
+                                    const twoHandedKeywords = [
+                                      'greatsword',
+                                      'battle axe',
+                                      'maul',
+                                      'bow',
+                                      'inferno staff',
+                                      'ice staff',
+                                      'lightning staff',
+                                      'flame staff',
+                                      'destruction staff',
+                                      'restoration staff',
+                                    ];
+                                    const isTwoHandedWeapon = (name?: string): boolean => {
+                                      if (!name) return false;
+                                      const n = name.toLowerCase();
+                                      return twoHandedKeywords.some((k) => n.includes(k));
+                                    };
 
-                                  if (
-                                    count >= 5 &&
-                                    data.hasPerfected &&
-                                    data.hasRegular &&
-                                    data.perfected < 5
-                                  ) {
-                                    const missing = 5 - data.perfected;
-                                    if (missing > 0) {
-                                      buildIssues.push({
-                                        gearName: labelName,
-                                        enchantQuality: 5,
-                                        message: `Missing ${missing} Perfected piece(s) in ${labelName} for the 5-piece bonus`,
-                                      });
-                                    }
-                                  }
-                                });
-                                return chips;
-                              })()}
-                            </Box>
+                                    gear.forEach((g: PlayerGear) => {
+                                      if (!g.setName) return;
+                                      const increment = isTwoHandedWeapon(g.name) ? 2 : 1;
+
+                                      const isPerfected = /^perfected\s+/i.test(g.setName);
+                                      const baseDisplay = g.setName.replace(/^Perfected\s+/, '');
+                                      const baseKey = normalizeName(baseDisplay);
+
+                                      if (!setDataByBase[baseKey]) {
+                                        setDataByBase[baseKey] = {
+                                          total: 0,
+                                          perfected: 0,
+                                          setID: g.setID,
+                                          hasPerfected: false,
+                                          hasRegular: false,
+                                          baseDisplay,
+                                        };
+                                      }
+                                      const entry = setDataByBase[baseKey];
+                                      entry.total += increment;
+                                      if (isPerfected) {
+                                        entry.perfected += increment;
+                                        entry.hasPerfected = true;
+                                      } else {
+                                        entry.hasRegular = true;
+                                      }
+                                      if (!entry.setID && g.setID) entry.setID = g.setID;
+                                    });
+
+                                    // Build sortable records from aggregated set data
+                                    const records = Object.entries(setDataByBase).map(
+                                      ([baseKey, data]) => {
+                                        const labelName =
+                                          data.perfected === data.total
+                                            ? `Perfected ${data.baseDisplay}`
+                                            : data.baseDisplay;
+                                        const count = data.total;
+                                        const n = normalizeName(labelName);
+                                        const isMonster = MONSTER_ONE_PIECE_HINTS.some((h) =>
+                                          n.includes(h)
+                                        );
+                                        const isMythic = MYTHIC_SET_NAMES.has(n);
+                                        const isArena = ARENA_SET_NAMES.has(n);
+                                        const isHighland4 =
+                                          count === 4 && n === normalizeName('Highland Sentinel');
+                                        const isFivePiece = count >= 5;
+                                        const isThreePiece = count === 3;
+                                        // Determine desired order category
+                                        let category = 99;
+                                        if (isMonster)
+                                          category = 0; // monster (1p or 2p) first
+                                        else if (isFivePiece)
+                                          category = 1; // 5-piece bonuses
+                                        else if (isHighland4)
+                                          category = 2; // 4-piece Highland Sentinel
+                                        else if (isThreePiece)
+                                          category = 3; // 3-piece (e.g., Potentates)
+                                        else if (isMythic)
+                                          category = 4; // mythic
+                                        else if (isArena)
+                                          category = 5; // arena weapons
+                                        else category = 6; // everything else last
+
+                                        // Secondary ordering within monsters: 2p before 1p
+                                        const secondary = isMonster ? (count === 2 ? 0 : 1) : 0;
+
+                                        return {
+                                          key: baseKey,
+                                          data,
+                                          labelName,
+                                          count,
+                                          category,
+                                          secondary,
+                                          sortName: data.baseDisplay.toLowerCase(),
+                                        };
+                                      }
+                                    );
+
+                                    records.sort((a, b) => {
+                                      if (a.category !== b.category) return a.category - b.category;
+                                      if (a.secondary !== b.secondary)
+                                        return a.secondary - b.secondary;
+                                      // Prefer higher piece counts within same category (except monsters handled above)
+                                      if (a.count !== b.count) return b.count - a.count;
+                                      return a.sortName.localeCompare(b.sortName);
+                                    });
+
+                                    const chips: React.ReactNode[] = [];
+                                    records.forEach((rec, idx) => {
+                                      const chipProps = getGearChipProps(rec.labelName, rec.count);
+                                      chips.push(
+                                        <Chip
+                                          key={idx}
+                                          label={`${rec.count} ${rec.labelName}`}
+                                          size="small"
+                                          title={`Set ID: ${rec.data.setID ?? ''}`}
+                                          {...chipProps}
+                                        />
+                                      );
+
+                                      if (
+                                        rec.count >= 5 &&
+                                        rec.data.hasPerfected &&
+                                        rec.data.hasRegular &&
+                                        rec.data.perfected < 5
+                                      ) {
+                                        const missing = 5 - rec.data.perfected;
+                                        if (missing > 0) {
+                                          buildIssues.push({
+                                            gearName: rec.labelName,
+                                            enchantQuality: 5,
+                                            message: `Missing ${missing} Perfected piece(s) in ${rec.labelName} for the 5-piece bonus`,
+                                          });
+                                        }
+                                      }
+                                    });
+                                    return chips;
+                                  })()}
+                                </Box>
+                              </Box>
+                            )}
                           </Box>
                         )}
 
                         {/* Build Issues details moved under right column */}
                       </Box>
-                      {/* Right column: Player info box aligned right */}
-                      <Box sx={{ width: { xs: '100%', md: 300 } }}>
+                      {/* Right column content stacked below left, full width */}
+                      <Box
+                        sx={{
+                          width: '100%',
+                          mt: 'auto',
+                          pt: 1,
+                          display: 'flex',
+                          flexDirection: 'column',
+                          minHeight: 0,
+                        }}
+                      >
                         {(() => {
                           const hasMundus = !!(
-                            player.id && mundusBuffsByPlayer[String(player.id)]?.length
+                            actor.id && mundusBuffsByPlayer[String(actor.id)]?.length
                           );
-                          const deathsVal = player.id
-                            ? (deathsByPlayer[String(player.id)] ?? 0)
-                            : 0;
-                          const resVal = player.id
-                            ? (resurrectsByPlayer[String(player.id)] ?? 0)
-                            : 0;
-                          const cpmVal = player.id ? (cpmByPlayer[String(player.id)] ?? 0) : 0;
-                          const foodAura = player.id
-                            ? detectFoodFromAuras(aurasByPlayer[String(player.id)])
+                          const deathsVal = actor.id ? (deathsByPlayer[String(actor.id)] ?? 0) : 0;
+                          const resVal = actor.id ? (resurrectsByPlayer[String(actor.id)] ?? 0) : 0;
+                          const cpmVal = actor.id ? (cpmByPlayer[String(actor.id)] ?? 0) : 0;
+                          const foodAura = actor.id
+                            ? detectFoodFromAuras(aurasByPlayer[String(actor.id)])
                             : undefined;
                           return (
                             <Box
@@ -919,6 +1183,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                   alignItems: 'center',
                                   justifyContent: 'flex-start',
                                   minWidth: 0,
+                                  minHeight: 28,
                                 }}
                               >
                                 <Box
@@ -935,7 +1200,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 >
                                   {hasMundus && (
                                     <>
-                                      {(mundusBuffsByPlayer[String(player.id)] ?? []).map(
+                                      {(mundusBuffsByPlayer[String(actor.id)] ?? []).map(
                                         (buff, idx) => (
                                           <Box
                                             key={idx}
@@ -947,18 +1212,43 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                               border: '1px solid',
                                               borderColor: 'var(--border)',
                                               borderRadius: 9999,
-                                              px: 0.75,
+                                              pl: 0.5,
+                                              pr: '14px',
                                               py: 0.25,
-                                              fontSize: 11,
+                                              gap: 0.5,
+                                              fontSize: 10,
                                               lineHeight: 1,
                                               color: 'primary.main',
                                               whiteSpace: 'nowrap',
                                               verticalAlign: 'middle',
-                                              fontFamily: 'Space Grotesk, sans-serif',
-                                              fontWeight: 200,
+                                              textTransform: 'uppercase',
+                                              fontWeight: 'bold',
                                             }}
                                           >
-                                            {buff.name.replace(/^Boon:\\s*/i, '')}
+                                            <img
+                                              src={mundusIcon}
+                                              alt=""
+                                              style={{
+                                                width: 12,
+                                                height: 12,
+                                                display: 'inline-block',
+                                              }}
+                                            />
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                display: 'inline-block',
+                                                minWidth: 0,
+                                                maxWidth: '10ch',
+                                                overflow: 'hidden',
+                                                textOverflow: 'ellipsis',
+                                                whiteSpace: 'nowrap',
+                                              }}
+                                            >
+                                              {buff.name
+                                                .replace(/^Boon:\s*/i, '')
+                                                .replace(/^The\s+/i, '')}
+                                            </Box>
                                           </Box>
                                         )
                                       )}
@@ -980,23 +1270,28 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     textOverflow: 'ellipsis',
                                   }}
                                 >
-                                  {foodAura && (
-                                    <>
-                                      <Tooltip title={`Food/Drink: ${foodAura.name}`}>
-                                        <span
-                                          style={{ display: 'inline-flex', alignItems: 'center' }}
-                                        >
-                                          <span role="img" aria-label="food">
-                                            🍲
-                                          </span>
-                                          <Box component="span" sx={{ display: 'none' }}>
-                                            &nbsp;{abbreviateFood(foodAura.name)}
-                                          </Box>
-                                        </span>
-                                      </Tooltip>{' '}
-                                      •{' '}
-                                    </>
-                                  )}
+                                  <Tooltip
+                                    title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+                                  >
+                                    <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                                      <span role="img" aria-label="food">
+                                        🍲
+                                      </span>
+                                      &nbsp;
+                                      <Box
+                                        component="span"
+                                        sx={{
+                                          display: 'inline',
+                                          fontWeight: 700,
+                                          fontSize: 11,
+                                          letterSpacing: '.02em',
+                                        }}
+                                      >
+                                        {foodAura ? abbreviateFood(foodAura.name) : 'NONE'}
+                                      </Box>
+                                    </span>
+                                  </Tooltip>{' '}
+                                  •{' '}
                                   <Tooltip title="Deaths in this fight">
                                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <span role="img" aria-label="deaths">
@@ -1037,13 +1332,22 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                   </Tooltip>
                                 </Typography>
                               </Box>
-                              {player.id && aurasByPlayer[String(player.id)]?.length > 0 && (
+                              {actor.id && aurasByPlayer[String(actor.id)]?.length > 0 && (
                                 <Box sx={{}}>
-                                  <Typography variant="body2" fontWeight="bold" sx={{ mb: 1 }}>
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="bold"
+                                    sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+                                  >
                                     Notable Auras
                                   </Typography>
-                                  <Box display="flex" flexWrap="wrap" gap={1}>
-                                    {aurasByPlayer[String(player.id)]
+                                  <Box
+                                    display="flex"
+                                    flexWrap="wrap"
+                                    gap={1}
+                                    sx={{ minHeight: 40 }}
+                                  >
+                                    {aurasByPlayer[String(actor.id)]
                                       .slice()
                                       .sort((a, b) => a.name.localeCompare(b.name))
                                       .slice(0, 3)
@@ -1066,6 +1370,39 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             </Box>
                           );
                         })()}
+                        {buildIssues.length === 0 && (
+                          <Box
+                            sx={{
+                              mt: 1,
+                              border: '1px solid',
+                              borderColor: 'success.main',
+                              backgroundColor: 'rgba(76,175,80,0.07)',
+                              borderRadius: 1,
+                              borderTopLeftRadius: '5px',
+                              borderTopRightRadius: '5px',
+                              borderTop: '1px solid #54775496',
+                              px: 2,
+                              height: 48,
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <CheckCircleOutlineIcon sx={{ color: 'success.main' }} />
+                              <Typography
+                                variant="body2"
+                                fontWeight="bold"
+                                sx={{
+                                  color: 'success.main',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                }}
+                              >
+                                Build checks out
+                              </Typography>
+                            </Box>
+                          </Box>
+                        )}
                         {buildIssues.length > 0 && (
                           <Accordion
                             variant="outlined"
@@ -1073,6 +1410,15 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               mt: 1,
                               borderColor: 'warning.main',
                               backgroundColor: 'rgba(255,193,7,0.07)',
+                              borderTop: '1px solid #5c574d',
+                              borderTopLeftRadius: '5px',
+                              borderTopRightRadius: '5px',
+                              overflow: 'hidden',
+                              '&.Mui-expanded': {
+                                borderTop: 'none',
+                                borderTopLeftRadius: '5px',
+                                borderTopRightRadius: '5px',
+                              },
                             }}
                           >
                             <AccordionSummary
@@ -1104,7 +1450,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     variant="body2"
                                     sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
                                   >
-                                    <span aria-hidden style={{ width: 18 }}>
+                                    <span aria-hidden="true" style={{ width: 18 }}>
                                       •
                                     </span>
                                     <span>
@@ -1125,7 +1471,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
               </Box>
             );
           })}
-      </Grid>
+      </Box>
     </Box>
   );
 };
