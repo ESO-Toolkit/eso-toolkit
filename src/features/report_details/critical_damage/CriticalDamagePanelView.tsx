@@ -7,7 +7,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 
 interface CriticalDamagePanelProps {
-  players: Record<string | number, PlayerDetailsWithRole> | undefined | null;
+  players: PlayerDetailsWithRole[];
   fight: FightFragment;
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -24,17 +24,16 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box>
-      {players &&
-        Object.values(players).map((player) => (
-          <PlayerCriticalDamageDetails
-            key={player.id}
-            id={player.id}
-            name={player.name}
-            fight={fight}
-            expanded={expandedPanels[player.id] || false}
-            onExpandChange={onExpandChange(player.id)}
-          />
-        ))}
+      {players.map((player) => (
+        <PlayerCriticalDamageDetails
+          key={player.id}
+          id={player.id}
+          name={player.name}
+          fight={fight}
+          expanded={expandedPanels[player.id] || false}
+          onExpandChange={onExpandChange(player.id)}
+        />
+      ))}
     </Box>
   );
 };
