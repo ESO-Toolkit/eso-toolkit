@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { FightFragment } from '../../../graphql/generated';
 import { useCombatantInfoEvents, useDebuffEvents, usePlayerData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities, KnownSetIDs, PenetrationValues } from '../../../types/abilities';
 import {
@@ -14,7 +15,10 @@ import {
 } from '../../../types/combatlogEvents';
 import { getSetCount } from '../../../utils/gearUtilities';
 
-import { PlayerPenetrationDetailsView } from './PlayerPenetrationDetailsView';
+import {
+  PlayerPenetrationData,
+  PlayerPenetrationDetailsView,
+} from './PlayerPenetrationDetailsView';
 
 // Configuration for all penetration effects
 interface PenetrationEffect {
@@ -79,12 +83,6 @@ interface PenetrationDataPoint {
   relativeTime: number; // Time since fight start in seconds
 }
 
-interface PlayerPenetrationData {
-  playerId: string;
-  playerName: string;
-  dataPoints: PenetrationDataPoint[];
-}
-
 interface PenetrationSource {
   name: string;
   value: number;
@@ -97,6 +95,7 @@ interface PlayerPenetrationDetailsProps {
   id: string;
   name: string;
   fight: FightFragment;
+  player: PlayerDetailsWithRole;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
@@ -105,6 +104,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   id,
   name,
   fight,
+  player,
   expanded = false,
   onExpandChange,
 }) => {
@@ -526,6 +526,13 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       playerId: id,
       playerName: name,
       dataPoints: voxelizedDataPoints,
+      max: Math.max(
+        ...voxelizedDataPoints.map((point: PenetrationDataPoint) => point.penetration),
+        0
+      ),
+      effective:
+        voxelizedDataPoints.reduce((acc, cv) => acc + cv.penetration, 0) /
+        voxelizedDataPoints.length,
     };
 
     return playerPenetrationData;
@@ -551,6 +558,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
         name={name}
         expanded={expanded}
         isLoading={isLoading}
+        player={player}
         penetrationData={null}
         penetrationSources={[]}
         playerBasePenetration={0}
@@ -567,6 +575,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       expanded={expanded}
       isLoading={isLoading}
       penetrationData={penetrationData}
+      player={player}
       penetrationSources={penetrationSources}
       playerBasePenetration={playerBasePenetration}
       fightDurationSeconds={(fight.endTime - fight.startTime) / 1000}

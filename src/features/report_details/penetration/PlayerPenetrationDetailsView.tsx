@@ -22,7 +22,10 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
+import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Register Chart.js components
 ChartJS.register(
@@ -43,10 +46,12 @@ interface PenetrationDataPoint {
   relativeTime: number; // Time since fight start in seconds
 }
 
-interface PlayerPenetrationData {
+export interface PlayerPenetrationData {
   playerId: string;
   playerName: string;
   dataPoints: PenetrationDataPoint[];
+  max: number;
+  effective: number;
 }
 
 interface PenetrationSource {
@@ -59,6 +64,7 @@ interface PenetrationSource {
 
 interface PlayerPenetrationDetailsViewProps {
   id: string;
+  player: PlayerDetailsWithRole;
   name: string;
   expanded: boolean;
   isLoading: boolean;
@@ -76,6 +82,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   isLoading,
   penetrationData,
   penetrationSources,
+  player,
   playerBasePenetration,
   fightDurationSeconds,
   onExpandChange,
@@ -103,19 +110,24 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         id={`panel-${id}-header`}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
-          <Typography variant="subtitle1" fontWeight="bold">
-            {name}
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            <PlayerIcon player={player} />
+            <Typography variant="subtitle1" fontWeight="bold">
+              {resolveActorName(player)}
+            </Typography>
+          </Box>
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography variant="body2" color="text.secondary">
-              Max:{' '}
-              {Math.max(
-                ...penetrationData.dataPoints.map(
-                  (point: PenetrationDataPoint) => point.penetration
-                ),
-                0
-              )}{' '}
-              pen
+            <Typography
+              variant="body2"
+              color={penetrationData.max > 18200 ? 'success' : 'secondary'}
+            >
+              Max: {penetrationData.max} pen
+            </Typography>
+            <Typography
+              variant="body2"
+              color={penetrationData.effective > 18200 ? 'success' : 'secondary'}
+            >
+              Effective: {penetrationData.effective.toFixed(0)} pen
             </Typography>
           </Box>
         </Box>

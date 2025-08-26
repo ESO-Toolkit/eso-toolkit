@@ -26,6 +26,7 @@ import sorcererIcon from '../../../assets/sorcerer.png';
 import templarIcon from '../../../assets/templar-white.png';
 import wardenIcon from '../../../assets/warden-white.png';
 import arcanistIcon from '../../../assets/white-arcanist.png';
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { GearType, PlayerGear } from '../../../types/playerDetails';
@@ -541,15 +542,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                       {/* Left column: identity, talents, gear, issues */}
                       <Box flex={0} minWidth={0}>
                         <Box display="flex" alignItems="center" mb={1.5}>
-                          {player.icon ? (
-                            <Avatar
-                              src={`https://assets.rpglogs.com/img/eso/icons/${player.icon}.png`}
-                              alt={String(resolveActorName(player))}
-                              sx={{ mr: 2.5 }}
-                            />
-                          ) : (
-                            <Avatar sx={{ mr: 2.5 }} />
-                          )}
+                          <PlayerIcon player={player} />
                           <Box>
                             <Box display="flex" alignItems="center" gap={0.75}>
                               <Typography variant="subtitle1">
