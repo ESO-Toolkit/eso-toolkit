@@ -140,7 +140,6 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTar
       abilityEquipped={abilityEquipped}
       buffActors={buffActors}
       firstDamageDealer={firstDamageDealer}
-      selectedTargetId={selectedTargetId}
       isLoading={
         isFriendlyBuffEventsLoading ||
         isDamageEventsLoading ||

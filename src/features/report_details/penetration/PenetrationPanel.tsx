@@ -1,25 +1,27 @@
 import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData, usePlayerData } from '../../../hooks';
+import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { PenetrationPanelView } from './PenetrationPanelView';
 
 interface PenetrationPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
 }
 
 /**
  * Smart component that handles data processing and state management for penetration panel
  */
-export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selectedTargetId }) => {
+export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { reportMasterData } = useReportMasterData();
   const { playerData } = usePlayerData();
+  const selectedTargetId = useSelector(selectSelectedTargetId);
 
   // Extract data from hooks with memoization
   const actorsById = React.useMemo(
@@ -90,5 +92,3 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight, selec
     />
   );
 };
-
-export const MemoizedPenetrationPanel = React.memo(PenetrationPanel);

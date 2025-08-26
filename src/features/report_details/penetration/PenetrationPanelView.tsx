@@ -22,7 +22,7 @@ interface PlayerData {
 interface PenetrationPanelViewProps {
   players: PlayerData[];
   selectedPlayerId: string;
-  selectedTargetId?: string;
+  selectedTargetId: string | null;
   fight: FightFragment;
   onPlayerChange: (event: SelectChangeEvent) => void;
 }

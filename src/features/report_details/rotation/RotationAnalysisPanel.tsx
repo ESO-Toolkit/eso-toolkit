@@ -222,5 +222,3 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
 
   return <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />;
 };
-
-export const MemoizedRotationAnalysisPanel = React.memo(RotationAnalysisPanel);
