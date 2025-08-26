@@ -5,53 +5,28 @@ import { useNavigate } from 'react-router-dom';
 import { FightFragment } from '../../graphql/generated';
 
 interface ReportFightsViewProps {
-  fights: Array<FightFragment | null> | undefined | null;
+  fights: FightFragment[];
   loading: boolean;
   error: string | null;
   fightId: string | undefined;
   reportId: string | undefined;
-  reportStartTime?: number;
 }
 
-export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
+const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fights,
   loading,
   error,
   fightId,
   reportId,
-  reportStartTime,
 }) => {
   const navigate = useNavigate();
 
-  const handleFightSelect = (id: number): void => {
-    navigate(`/report/${reportId}/fight/${id}`);
-  };
-
-  const formatClock = (msEpoch: number): string => {
-    // Use browser locale and timezone; show 12-hour time with AM/PM, no seconds
-    try {
-      return new Intl.DateTimeFormat(undefined, {
-        hour: 'numeric',
-        minute: '2-digit',
-        hour12: true,
-      }).format(new Date(msEpoch));
-    } catch {
-      // Fallback without Intl
-      const d = new Date(msEpoch);
-      let h = d.getHours() % 12;
-      if (h === 0) h = 12;
-      const m = String(d.getMinutes()).padStart(2, '0');
-      const ampm = d.getHours() >= 12 ? 'PM' : 'AM';
-      return `${h}:${m} ${ampm}`;
-    }
-  };
-
-  const formatDuration = (ms: number): string => {
-    const totalSeconds = Math.max(0, Math.round(ms / 1000));
-    const m = Math.floor(totalSeconds / 60);
-    const s = totalSeconds % 60;
-    return m === 0 ? `${s}s` : `${m}:${String(s).padStart(2, '0')}`;
-  };
+  const handleFightSelect = React.useCallback(
+    (id: number) => {
+      navigate(`/report/${reportId}/fight/${id}`);
+    },
+    [navigate, reportId]
+  );
 
   if (loading) {
     return (
@@ -73,11 +48,16 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   }
 
   // Fallback when nothing is loading and there are no fights to show
-  if (!fights?.length) {
+  if (!loading && fights.length === 0) {
     return (
       <Paper elevation={2} sx={{ p: 3 }}>
+        {error && (
+          <Typography color="error" sx={{ mb: 2 }}>
+            {error}
+          </Typography>
+        )}
         <Typography variant="h6" sx={{ mb: 1 }}>
-          Could not find requested fight.
+          No data loaded yet
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
           Paste an ESO Logs report URL above and click "Load Log" to view fights.
@@ -100,11 +80,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           </Typography>
           {(() => {
             const groups: { [key: string]: FightFragment[] } = {};
-            fights.forEach((fight: FightFragment | null) => {
-              if (fight === null) {
-                return;
-              }
-
+            fights.forEach((fight: FightFragment) => {
               const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
               if (!groups[groupName]) groups[groupName] = [];
               groups[groupName].push(fight);
@@ -115,35 +91,29 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   {groupName}
                 </Typography>
                 <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {groupFights.map((fight, idx) => (
-                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
-                      <ListItemButton
-                        selected={fightId === String(fight.id)}
-                        onClick={() => handleFightSelect(fight.id)}
-                        sx={{
-                          minWidth: 96,
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          flexDirection: 'column',
-                          py: 1,
-                          transition: 'border-radius 120ms ease',
-                          '&:hover': {
-                            borderRadius: '8px',
-                          },
-                        }}
-                      >
-                        <Typography variant="button">Pull {idx + 1}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {reportStartTime != null
-                            ? `${formatClock(reportStartTime + fight.startTime)} • `
-                            : ''}
-                          <Typography component="span" variant="caption" sx={{ fontWeight: 700 }}>
-                            {formatDuration(fight.endTime - fight.startTime)}
+                  {groupFights.map((fight, idx) => {
+                    const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                    const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
+                    return (
+                      <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                        <ListItemButton
+                          selected={fightId === String(fight.id)}
+                          onClick={() => handleFightSelect(fight.id)}
+                          sx={{
+                            minWidth: 48,
+                            justifyContent: 'center',
+                            border: 1,
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="button" color={isWipe ? 'error' : 'success'}>
+                            {fightLabel}
                           </Typography>
-                        </Typography>
-                      </ListItemButton>
-                    </ListItem>
-                  ))}
+                        </ListItemButton>
+                      </ListItem>
+                    );
+                  })}
                 </List>
               </Box>
             ));
@@ -153,3 +123,5 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     </>
   );
 };
+
+export default ReportFightsView;

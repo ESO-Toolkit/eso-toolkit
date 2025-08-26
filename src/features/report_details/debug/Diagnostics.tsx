@@ -105,4 +105,3 @@ export const Diagnostics: React.FC = () => {
     </Box>
   );
 };
-

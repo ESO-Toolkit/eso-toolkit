@@ -5,26 +5,42 @@ import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
 
-import { FightDetails } from './FightDetails';
+import FightDetails from './FightDetails';
 
 interface ReportFightDetailsViewProps {
-  fight: FightFragment | undefined | null;
+  fight: FightFragment | undefined;
   fightsLoading: boolean;
+  fightsError: string | null;
+  masterDataLoading: boolean;
+  masterDataLoaded: boolean;
+  eventsLoading: boolean;
+  currentFetchFightId: number | null;
   selectedTabId?: number;
   reportId: string | undefined;
   fightId: string | undefined;
 }
 
-export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
+const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fight,
   fightsLoading,
+  fightsError,
+  masterDataLoading,
+  masterDataLoaded,
+  eventsLoading,
+  currentFetchFightId,
   selectedTabId,
   reportId,
+  fightId,
 }) => {
   const navigate = useNavigate();
 
-  // Show loading panel if fights are loading or missing
-  if (fightsLoading) {
+  // Show loading panel if fights, master data, or events are loading, or fights are missing
+  if (
+    fightsLoading ||
+    masterDataLoading ||
+    !masterDataLoaded ||
+    (eventsLoading && currentFetchFightId === Number(fightId))
+  ) {
     return (
       <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
         <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
@@ -38,6 +54,10 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <Skeleton variant="rectangular" height={220} sx={{ mt: 2 }} />
       </Paper>
     );
+  }
+
+  if (fightsError) {
+    return <Typography color="error">Error loading fights: {fightsError}</Typography>;
   }
 
   if (!fight) {
@@ -106,3 +126,5 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
     </Paper>
   );
 };
+
+export default ReportFightDetailsView;

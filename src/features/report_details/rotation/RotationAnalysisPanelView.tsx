@@ -1,3 +1,4 @@
+ 
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -50,7 +51,7 @@ interface RotationAnalysisPanelViewProps {
   fight: { startTime?: number; endTime?: number };
 }
 
-export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
+const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
   rotationAnalyses,
   fight,
 }) => {
@@ -187,3 +188,5 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
     </Box>
   );
 };
+
+export default React.memo(RotationAnalysisPanelView);

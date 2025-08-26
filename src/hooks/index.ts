@@ -16,4 +16,3 @@ export { useCastEvents } from './useCastEvents';
 
 // Utility hooks
 export { useReportFightParams } from './useReportFightParams';
-export { useCurrentFight } from './useCurrentFight';

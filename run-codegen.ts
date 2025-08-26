@@ -6,13 +6,14 @@ import { config } from 'dotenv';
 
 config({ path: resolve(__dirname, '.env') });
 
+const EXISTING_TOKEN = process.env.ESOLOGS_TOKEN;
 const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
 const TOKEN_URL =
   process.env.OAUTH_PROVIDER_TOKEN_URL || 'https://www.esologs.com/oauth/token';
 
-if (!CLIENT_ID || !CLIENT_SECRET) {
-  console.error('Missing OAUTH_CLIENT_ID or OAUTH_CLIENT_SECRET in .env');
+if (!EXISTING_TOKEN && (!CLIENT_ID || !CLIENT_SECRET)) {
+  console.error('Missing ESOLOGS_TOKEN or OAUTH_CLIENT_ID/OAUTH_CLIENT_SECRET in .env');
   process.exit(1);
 }
 
@@ -49,7 +50,7 @@ async function getAccessToken(): Promise<string> {
 }
 
 (async () => {
-  const token = await getAccessToken();
+  const token = EXISTING_TOKEN || (await getAccessToken());
   if (!token) {
     console.error('No access token received.');
     process.exit(1);

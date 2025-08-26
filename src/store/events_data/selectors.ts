@@ -47,7 +47,7 @@ export const selectEventPlayers = createSelector(
   [selectActorsById, selectReport],
   (actorsById, report) => {
     // Default to first fight if no selectedFightId
-    const fight = report.data?.fights?.[0];
+    const fight = report.fights?.[0];
     const friendlyPlayers = fight?.friendlyPlayers ?? [];
     return friendlyPlayers
       .filter((id): id is number => typeof id === 'number' && id !== null)
@@ -121,3 +121,4 @@ export const selectEventsLoadingState = createSelector(
     resources: resourceLoading,
   })
 );
+

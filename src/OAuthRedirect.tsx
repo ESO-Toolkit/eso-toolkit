@@ -65,3 +65,8 @@ export const OAuthRedirect: React.FC = () => {
     </Container>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default OAuthRedirect;
+>>>>>>> pr-21

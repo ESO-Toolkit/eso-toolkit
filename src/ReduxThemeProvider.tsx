@@ -62,7 +62,11 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 minHeight: '100%',
                 overflowX: 'hidden',
                 background:
+<<<<<<< HEAD
                   'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%), radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%), #0b1220',
+=======
+                  'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               #0b1220',
+>>>>>>> pr-21
                 color: tokens.text,
                 // Enable variable font optical sizing where supported
                 fontOpticalSizing: 'auto',
@@ -234,3 +238,8 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     </ThemeProvider>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default ReduxThemeProvider;
+>>>>>>> pr-21

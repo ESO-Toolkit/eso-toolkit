@@ -109,7 +109,7 @@ interface PlayerCriticalDamageDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 
-export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
+const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
   id,
   name,
   fight,
@@ -1267,13 +1267,6 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
         {/* Only render content when panel is expanded */}
         {expanded && (
           <Box>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Player ID:</strong> {id}
-            </Typography>
-
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Data Points:</strong> {criticalDamageData.dataPoints.length}
-            </Typography>
 
             {/* Critical Damage Sources Checklist */}
             <StatChecklist
@@ -1474,7 +1467,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
                           text: 'Critical Damage (%)',
                         },
                         min: 50,
-                        max: 135, // Set range from 50% to 135% for critical damage
+                        max: 135,
                         ticks: {
                           callback: function (value) {
                             return `${value}%`;
@@ -1498,3 +1491,5 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     </Accordion>
   );
 };
+
+export default PlayerCriticalDamageDetails;

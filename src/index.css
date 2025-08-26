@@ -1,8 +1,24 @@
 body {
   margin: 0;
   font-family:
+<<<<<<< HEAD
     Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell',
     'Fira Sans', 'Droid Sans', 'Helvetica Neue', Arial, sans-serif;
+=======
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    'Roboto',
+    'Oxygen',
+    'Ubuntu',
+    'Cantarell',
+    'Fira Sans',
+    'Droid Sans',
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+>>>>>>> pr-21
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }

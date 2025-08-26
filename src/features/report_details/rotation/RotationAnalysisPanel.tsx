@@ -5,23 +5,16 @@ import {
   selectCastEvents,
   selectResourceEvents,
   selectEventPlayers,
-} from '../../../store/events_data/actions';
+} from '../../../store/events_data/selectors';
 import { selectMasterData } from '../../../store/master_data/masterDataSelectors';
-import { CastEvent, ResourceChangeEvent } from '../../../types/combatlogEvents';
+import { CastEvent, ResourceChangeEvent } from '../../../types/combatlogEvents.d';
 
-import { RotationAnalysisPanelView } from './RotationAnalysisPanelView';
+import RotationAnalysisPanelView from './RotationAnalysisPanelView';
+
+type PlayerLike = { id?: number | string; displayName?: string; name?: string };
 
 interface RotationAnalysisPanelProps {
   fight: { startTime?: number; endTime?: number };
-}
-
-interface RotationAnalysis {
-  playerId: string;
-  playerName: string;
-  abilities: AbilityUsage[];
-  averageAPM: number; // Actions per minute
-  resourceEfficiency: ResourceEfficiencyData;
-  rotationPattern: string[];
 }
 
 interface AbilityUsage {
@@ -46,40 +39,46 @@ interface ResourceEfficiencyData {
   };
 }
 
-/**
- * Analyzes player skill rotations and resource management from cast and resource events
- */
-export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
-  // SIMPLIFIED: Use basic selectors directly instead of complex object-creating selectors
+interface RotationAnalysis {
+  playerId: string;
+  playerName: string;
+  abilities: AbilityUsage[];
+  averageAPM: number; // Actions per minute
+  resourceEfficiency: ResourceEfficiencyData;
+  rotationPattern: string[];
+}
+
+// Analyzes player skill rotations and resource management from cast and resource events
+const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fight }) => {
   const castEvents = useSelector(selectCastEvents);
   const resourceEvents = useSelector(selectResourceEvents);
-  const playersArray = useSelector(selectEventPlayers);
+  const playersArray = useSelector(selectEventPlayers) as unknown as PlayerLike[];
   const masterData = useSelector(selectMasterData);
 
   // Convert players array to record for efficient lookup
   const playersById = React.useMemo(() => {
-    const result: Record<string, unknown> = {};
-    playersArray.forEach((player) => {
-      if (player?.id) {
-        result[String(player.id)] = player;
+    const result: Record<string, PlayerLike> = {};
+    (playersArray ?? []).forEach((player: PlayerLike) => {
+      const pid = player?.id;
+      if (pid !== undefined && pid !== null) {
+        result[String(pid)] = player;
       }
     });
     return result;
   }, [playersArray]);
 
   const rotationAnalyses = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime || !castEvents || !resourceEvents) return [];
+    if (!fight?.startTime || !fight?.endTime) return [];
 
-    const fightDuration = (fight.endTime - fight.startTime) / 1000; // Duration in seconds
+    const fightDuration = (fight.endTime - fight.startTime) / 1000; // seconds
     const analysisMap: Record<string, RotationAnalysis> = {};
 
     // Process cast events for each player
-    castEvents.forEach((event: CastEvent) => {
+    (castEvents ?? []).forEach((event) => {
       const castEvent = event as CastEvent;
-      const playerId = String(castEvent.sourceID || '');
-      const playerInfo = playersById[playerId] as
-        | { displayName?: string; name?: string }
-        | undefined;
+      const playerId = String(castEvent.sourceID ?? '');
+      if (!playerId) return;
+      const playerInfo = playersById[playerId] as PlayerLike | undefined;
       const playerName = playerInfo?.displayName || playerInfo?.name || `Player ${playerId}`;
 
       if (!analysisMap[playerId]) {
@@ -97,8 +96,8 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       }
 
       // Track ability usage
-      const abilityId = castEvent.abilityGameID || 'unknown';
-      const ability = masterData.abilitiesById[abilityId];
+      const abilityId = castEvent.abilityGameID ?? 'unknown';
+      const ability = masterData.abilitiesById?.[abilityId as any];
       const abilityName = ability?.name || `Ability ${abilityId}`;
 
       let abilityUsage = analysisMap[playerId].abilities.find((a) => a.abilityId === abilityId);
@@ -140,10 +139,11 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       }
     > = {};
 
-    resourceEvents.forEach((event: ResourceChangeEvent) => {
+    (resourceEvents ?? []).forEach((event) => {
       const resourceEvent = event as ResourceChangeEvent;
       if (resourceEvent.type === 'resourcechange') {
-        const playerId = String(resourceEvent.targetID || '');
+        const playerId = String(resourceEvent.targetID ?? '');
+        if (!playerId) return;
 
         if (!resourceDataByPlayer[playerId]) {
           resourceDataByPlayer[playerId] = {
@@ -156,30 +156,27 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
 
         // Track resource levels over time
         if (resourceEvent.targetResources) {
-          if (resourceEvent.targetResources.magicka !== undefined) {
-            resourceDataByPlayer[playerId].magickaLevels.push(
-              resourceEvent.targetResources.magicka
-            );
+          const tr = resourceEvent.targetResources;
+          if (tr.magicka !== undefined) {
+            resourceDataByPlayer[playerId].magickaLevels.push(tr.magicka);
           }
-          if (resourceEvent.targetResources.stamina !== undefined) {
-            resourceDataByPlayer[playerId].staminaLevels.push(
-              resourceEvent.targetResources.stamina
-            );
+          if (tr.stamina !== undefined) {
+            resourceDataByPlayer[playerId].staminaLevels.push(tr.stamina);
           }
         }
 
         // Track resource waste (when at max and trying to gain more)
-        if (resourceEvent.resourceChangeType && resourceEvent.resourceChange > 0) {
+        if (resourceEvent.resourceChangeType !== undefined && resourceEvent.resourceChange > 0) {
           const currentResource =
-            resourceEvent.targetResources?.magicka || resourceEvent.targetResources?.stamina || 0;
-          const maxResource = 100; // Assuming percentage-based resources
+            resourceEvent.targetResources?.magicka ??
+            resourceEvent.targetResources?.stamina ??
+            0;
+          const maxResource = 100; // percentage-based assumption
 
           if (currentResource >= maxResource) {
             if (resourceEvent.resourceChangeType === 0) {
-              // Magicka
               resourceDataByPlayer[playerId].magickaWaste += resourceEvent.resourceChange;
             } else if (resourceEvent.resourceChangeType === 6) {
-              // Stamina
               resourceDataByPlayer[playerId].staminaWaste += resourceEvent.resourceChange;
             }
           }
@@ -198,10 +195,9 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           analysisMap[playerId].resourceEfficiency.magicka.lowestPoint = Math.min(
             ...data.magickaLevels
           );
+          const magickaTotal = data.magickaWaste + data.magickaLevels.reduce((s, l) => s + l, 0);
           analysisMap[playerId].resourceEfficiency.magicka.wastePercentage =
-            (data.magickaWaste /
-              (data.magickaWaste + data.magickaLevels.reduce((sum, l) => sum + l, 0))) *
-            100;
+            magickaTotal > 0 ? (data.magickaWaste / magickaTotal) * 100 : 0;
         }
 
         if (data.staminaLevels.length > 0) {
@@ -210,18 +206,17 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           analysisMap[playerId].resourceEfficiency.stamina.lowestPoint = Math.min(
             ...data.staminaLevels
           );
+          const staminaTotal = data.staminaWaste + data.staminaLevels.reduce((s, l) => s + l, 0);
           analysisMap[playerId].resourceEfficiency.stamina.wastePercentage =
-            (data.staminaWaste /
-              (data.staminaWaste + data.staminaLevels.reduce((sum, l) => sum + l, 0))) *
-            100;
+            staminaTotal > 0 ? (data.staminaWaste / staminaTotal) * 100 : 0;
         }
       }
     });
 
     return Object.values(analysisMap);
-  }, [fight, castEvents, resourceEvents, masterData, playersById]);
+  }, [fight?.startTime, fight?.endTime, castEvents, resourceEvents, masterData, playersById]);
 
   return <RotationAnalysisPanelView rotationAnalyses={rotationAnalyses} fight={fight} />;
 };
 
-export const MemoizedRotationAnalysisPanel = React.memo(RotationAnalysisPanel);
+export default React.memo(RotationAnalysisPanel);

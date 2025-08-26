@@ -29,7 +29,7 @@ interface StatChecklistProps {
   loading?: boolean;
 }
 
-export const StatChecklist: React.FC<StatChecklistProps> = ({
+const StatChecklist: React.FC<StatChecklistProps> = ({
   sources,
   title = 'Sources',
   loading = false,
@@ -146,3 +146,6 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
     </Box>
   );
 };
+
+export default StatChecklist;
+export { StatChecklist };

@@ -1,7 +1,7 @@
 import { ReportActor } from '../graphql/generated';
 
 export function resolveActorName(
-  actor: ReportActor | undefined,
+  actor: ReportActor | import('../graphql/generated').ReportActorFragment | undefined,
   fallbackId?: string | number | null,
   fallbackName?: string | null
 ): string {

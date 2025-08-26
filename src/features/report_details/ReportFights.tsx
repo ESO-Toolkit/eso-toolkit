@@ -1,48 +1,47 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { useAuth } from '../../AuthContext';
+import { useReportFightParams } from '../../hooks/useReportFightParams';
 import { clearAllEvents } from '../../store/events_data/actions';
 import { clearMasterData } from '../../store/master_data/masterDataSlice';
 import { fetchReportData } from '../../store/report/reportSlice';
 import { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
 
-import { ReportFightsView } from './ReportFightsView';
+import ReportFightsView from './ReportFightsView';
 
-export const ReportFights: React.FC = () => {
-  // Get current selected report and fight from context
-  const { reportId, fightId } = useSelectedReportAndFight();
+const ReportFights: React.FC = () => {
+  const { reportId, fightId } = useReportFightParams();
   const dispatch = useAppDispatch();
-  const client = useEsoLogsClientInstance();
+  const { accessToken } = useAuth();
 
-  const fights = useSelector((state: RootState) => state.report.data?.fights);
+  const fights = useSelector((state: RootState) => state.report.fights);
   const loading = useSelector((state: RootState) => state.report.loading);
   const error = useSelector((state: RootState) => state.report.error);
   const currentReportId = useSelector((state: RootState) => state.report.reportId);
-  const startTime = useSelector((state: RootState) => state.report.data?.startTime);
 
   React.useEffect(() => {
-    if (reportId && client) {
+    if (reportId && accessToken) {
       // Clear existing data when fetching a new report
       if (currentReportId !== reportId) {
         dispatch(clearAllEvents());
         dispatch(clearMasterData());
       }
       // The thunk now handles checking if data needs to be fetched internally
-      dispatch(fetchReportData({ reportId, client }));
+      dispatch(fetchReportData({ reportId, accessToken }));
     }
-  }, [reportId, client, currentReportId, dispatch]);
+  }, [reportId, accessToken, currentReportId, dispatch]);
 
   return (
     <ReportFightsView
       fights={fights}
       loading={loading}
       error={error}
-      fightId={fightId || undefined}
-      reportId={reportId || undefined}
-      reportStartTime={startTime}
+      fightId={fightId}
+      reportId={reportId}
     />
   );
 };
+
+export default ReportFights;

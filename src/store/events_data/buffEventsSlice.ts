@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
-import { EsoLogsClient } from '../../esologsClient';
+import { createEsoLogsClient } from '../../esologsClient';
 import {
   FightFragment,
   GetBuffEventsDocument,
@@ -36,11 +36,13 @@ const initialState: BuffEventsState = {
 
 export const fetchBuffEvents = createAsyncThunk<
   BuffEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+  { reportCode: string; fight: FightFragment; accessToken: string },
   { state: RootState; rejectValue: string }
 >(
   'buffEvents/fetchBuffEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({ reportCode, fight, accessToken }) => {
+    const client = createEsoLogsClient(accessToken);
+
     // Fetch both friendly and enemy buff events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
@@ -49,7 +51,7 @@ export const fetchBuffEvents = createAsyncThunk<
       let nextPageTimestamp: number | null = null;
 
       do {
-        const response: GetBuffEventsQuery = await client.query({
+        const response: GetBuffEventsQuery = await client.query<GetBuffEventsQuery>({
           query: GetBuffEventsDocument,
           variables: {
             code: reportCode,
@@ -60,7 +62,7 @@ export const fetchBuffEvents = createAsyncThunk<
           },
         });
 
-        const page = response.reportData?.report?.events;
+        const page: any = response.reportData?.report?.events;
         if (page?.data) {
           allEvents = allEvents.concat(page.data);
         }
@@ -84,7 +86,7 @@ export const fetchBuffEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh) {
+      if (isCached && isFresh && state.events.length > 0) {
         return false; // Prevent thunk execution
       }
 

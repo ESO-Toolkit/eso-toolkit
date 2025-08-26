@@ -15,12 +15,12 @@ import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { setSelectedTargetId } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
-export const TargetSelector: React.FC = () => {
+const TargetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
   const players = useSelector(selectEventPlayers);
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
-  const handleTargetChange = (event: SelectChangeEvent<string>): void => {
+  const handleTargetChange = (event: SelectChangeEvent<string>) => {
     const value = event.target.value;
     dispatch(setSelectedTargetId(value === '' ? null : value));
   };
@@ -73,4 +73,4 @@ export const TargetSelector: React.FC = () => {
   );
 };
 
-export const MemoizedTargetSelector = React.memo(TargetSelector);
+export default React.memo(TargetSelector);

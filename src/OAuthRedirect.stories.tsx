@@ -8,4 +8,8 @@ const story = {
 };
 export default story;
 
+<<<<<<< HEAD
 export const Default = (): React.ReactElement => <OAuthRedirect />;
+=======
+export const Default = () => <OAuthRedirect />;
+>>>>>>> pr-21

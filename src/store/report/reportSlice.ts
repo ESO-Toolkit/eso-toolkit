@@ -1,12 +1,13 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { EsoLogsClient } from '../../esologsClient';
-import { ReportFragment } from '../../graphql/generated';
-import { GetReportByCodeDocument } from '../../graphql/generated';
+import { createEsoLogsClient } from '../../esologsClient';
+import { GetReportByCodeQuery, FightFragment } from '../../graphql/generated';
+import { GetReportByCodeDocument } from '../../graphql/reports.generated';
 
 export interface ReportState {
   reportId: string;
-  data: ReportFragment | null;
+  data: GetReportByCodeQuery | null;
+  fights: FightFragment[];
   loading: boolean;
   error: string | null;
 }
@@ -14,32 +15,44 @@ export interface ReportState {
 const initialState: ReportState = {
   reportId: '',
   data: null,
+  fights: [],
   loading: false,
   error: null,
 };
 
 export const fetchReportData = createAsyncThunk<
-  { reportId: string; data: ReportFragment },
-  { reportId: string; client: EsoLogsClient },
+  { reportId: string; data: GetReportByCodeQuery; fights: FightFragment[] },
+  { reportId: string; accessToken: string },
   { rejectValue: string }
->('report/fetchReportData', async ({ reportId, client }, { rejectWithValue, getState }) => {
+>('report/fetchReportData', async ({ reportId, accessToken }, { rejectWithValue, getState }) => {
   // Check if we already have this report data
   const state = getState() as { report: ReportState };
   if (state.report.reportId === reportId && state.report.data && !state.report.loading) {
     // Return cached data without making API call
-    return { data: state.report.data, reportId: state.report.reportId };
+    return {
+      reportId,
+      data: state.report.data,
+      fights: state.report.fights,
+    };
   }
 
   try {
-    const response = await client.query({
+    const client = createEsoLogsClient(accessToken);
+    const { data } = await client.query({
       query: GetReportByCodeDocument,
       variables: { code: reportId },
+      context: {
+        headers: {
+          Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+        },
+      },
     });
-
-    if (!response.reportData?.report) {
+    const report = data?.reportData?.report;
+    if (!report) {
       return rejectWithValue('Report not found or not public.');
     }
-    return { data: response.reportData.report, reportId: reportId };
+    const fights = (report.fights ?? []) as FightFragment[];
+    return { reportId, data, fights };
   } catch (err) {
     const hasMessage = (e: unknown): e is { message: string } =>
       typeof e === 'object' &&
@@ -63,6 +76,7 @@ const reportSlice = createSlice({
     clearReport(state) {
       state.reportId = '';
       state.data = null;
+      state.fights = [];
       state.loading = false;
       state.error = null;
     },
@@ -78,6 +92,7 @@ const reportSlice = createSlice({
       .addCase(fetchReportData.fulfilled, (state, action) => {
         state.reportId = action.payload.reportId;
         state.data = action.payload.data;
+        state.fights = action.payload.fights;
         state.loading = false;
         state.error = null;
       })

@@ -62,3 +62,8 @@ export const GraphiQLPage: React.FC = () => {
     </Container>
   );
 };
+<<<<<<< HEAD
+=======
+
+export default GraphiQLPage;
+>>>>>>> pr-21

@@ -1,4 +1,4 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Skeleton, Stack, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
@@ -11,7 +11,7 @@ import {
 } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
-import { CriticalDamagePanelView } from './CriticalDamagePanelView';
+import CriticalDamagePanelView from './CriticalDamagePanelView';
 
 interface CriticalDamagePanelProps {
   fight: FightFragment;
@@ -21,7 +21,7 @@ interface CriticalDamagePanelProps {
 /**
  * Smart component that handles data processing and state management for critical damage panel
  */
-export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, reportCode }) => {
+const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight, reportCode }) => {
   // Use hooks to get data
   const { isDamageEventsLoading } = useDamageEvents();
   const { isBuffEventsLoading } = useBuffEvents();
@@ -78,9 +78,12 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight,
   // Show loading state while fetching data
   if (isLoading && players.length === 0) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading critical damage data...</Typography>
+      <Box mt={2}>
+        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+          <Skeleton variant="rounded" width={180} height={36} />
+          <Skeleton variant="rounded" width={220} height={32} />
+        </Stack>
+        <Skeleton variant="rectangular" height={160} />
       </Box>
     );
   }
@@ -94,3 +97,5 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight,
     />
   );
 };
+
+export default CriticalDamagePanel;

@@ -8,6 +8,8 @@ interface EventsPanelViewProps {
   events: LogEvent[] | null;
 }
 
-export const EventsPanelView: React.FC<EventsPanelViewProps> = ({ events }) => {
+const EventsPanelView: React.FC<EventsPanelViewProps> = ({ events }) => {
   return <EventsGrid events={events || []} />;
 };
+
+export default EventsPanelView;

@@ -1,8 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
-import { EsoLogsClient } from '../../esologsClient';
+import { createEsoLogsClient } from '../../esologsClient';
 import {
   GetReportMasterDataDocument,
+  GetReportMasterDataQuery,
+  GetReportMasterDataQueryVariables,
   ReportAbilityFragment,
   ReportActorFragment,
 } from '../../graphql/generated';
@@ -48,25 +50,26 @@ export interface MasterDataPayload {
 
 export const fetchReportMasterData = createAsyncThunk<
   MasterDataPayload,
-  { reportCode: string; client: EsoLogsClient },
+  { reportCode: string; accessToken: string },
   { rejectValue: string }
 >(
   'masterData/fetchReportMasterData',
-  async ({ reportCode, client }, { rejectWithValue }) => {
+  async ({ reportCode, accessToken }, { rejectWithValue }) => {
     try {
-      const response = await client.query({
+      const client = createEsoLogsClient(accessToken);
+      const data = await client.query<GetReportMasterDataQuery, GetReportMasterDataQueryVariables>({
         query: GetReportMasterDataDocument,
         variables: { code: reportCode },
       });
-      const masterData = response.reportData?.report?.masterData;
-      const actors = cleanArray(masterData?.actors) ?? [];
+      const masterData = data.reportData?.report?.masterData;
+      const actors = cleanArray<ReportActorFragment>(masterData?.actors) ?? [];
       const actorsById: Record<string | number, ReportActorFragment> = {};
       for (const actor of actors) {
         if (actor && (typeof actor.id === 'string' || typeof actor.id === 'number')) {
           actorsById[actor.id] = actor;
         }
       }
-      const abilities = cleanArray(masterData?.abilities) ?? [];
+      const abilities = cleanArray<ReportAbilityFragment>(masterData?.abilities) ?? [];
       const abilitiesById: Record<string | number, ReportAbilityFragment> = {};
       for (const ability of abilities) {
         if (ability && (typeof ability.gameID === 'string' || typeof ability.gameID === 'number')) {

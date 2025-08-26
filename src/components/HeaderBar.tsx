@@ -132,3 +132,5 @@ export const HeaderBar: React.FC = () => {
     </AppBar>
   );
 };
+
+export default HeaderBar;

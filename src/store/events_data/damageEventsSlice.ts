@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
-import { EsoLogsClient } from '../../esologsClient';
+import { createEsoLogsClient } from '../../esologsClient';
 import {
   FightFragment,
   GetDamageEventsDocument,
@@ -36,11 +36,13 @@ const initialState: DamageEventsState = {
 
 export const fetchDamageEvents = createAsyncThunk<
   DamageEvent[],
-  { reportCode: string; fight: FightFragment; client: EsoLogsClient },
+  { reportCode: string; fight: FightFragment; accessToken: string },
   { state: RootState; rejectValue: string }
 >(
   'damageEvents/fetchDamageEvents',
-  async ({ reportCode, fight, client }) => {
+  async ({ reportCode, fight, accessToken }) => {
+    const client = createEsoLogsClient(accessToken);
+
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];
     let allEvents: LogEvent[] = [];
@@ -57,6 +59,11 @@ export const fetchDamageEvents = createAsyncThunk<
             startTime: nextPageTimestamp ?? fight.startTime,
             endTime: fight.endTime,
             hostilityType: hostilityType,
+          },
+          context: {
+            headers: {
+              Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
+            },
           },
         });
 
@@ -84,7 +91,7 @@ export const fetchDamageEvents = createAsyncThunk<
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
 
-      if (isCached && isFresh) {
+      if (isCached && isFresh && state.events.length > 0) {
         return false; // Prevent thunk execution
       }
 

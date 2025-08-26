@@ -3,7 +3,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 
-import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
+import PlayerCriticalDamageDetails from './PlayerCriticalDamageDetails';
 
 interface PlayerData {
   id: string;
@@ -20,7 +20,7 @@ interface CriticalDamagePanelProps {
 /**
  * Dumb component that only handles rendering the critical damage panel UI
  */
-export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
+const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   players,
   fight,
   expandedPanels,
@@ -41,3 +41,5 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
     </Box>
   );
 };
+
+export default CriticalDamagePanelView;

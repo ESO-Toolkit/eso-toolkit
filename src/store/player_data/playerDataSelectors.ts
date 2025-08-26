@@ -4,9 +4,8 @@ import { RootState } from '../storeWithHistory';
 
 // PLAYER DATA SELECTORS - Read from playerData slice
 
-export const selectPlayerData = (state: RootState): RootState['playerData'] => state.playerData;
-export const selectPlayersById = (state: RootState): RootState['playerData']['playersById'] =>
-  state.playerData.playersById;
+export const selectPlayerData = (state: RootState) => state.playerData;
+export const selectPlayersById = (state: RootState) => state.playerData.playersById;
 
 // Player data loading state
 export const selectPlayerDataLoadingState = createSelector(
@@ -34,5 +33,5 @@ export const selectPlayersArray = createSelector([selectPlayersById], (playersBy
 );
 
 // Get player by ID
-export const selectPlayerById = (playerId: string | number): ReturnType<typeof createSelector> =>
+export const selectPlayerById = (playerId: string | number) =>
   createSelector([selectPlayersById], (playersById) => playersById[playerId]);
