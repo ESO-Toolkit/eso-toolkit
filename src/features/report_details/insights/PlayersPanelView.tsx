@@ -1092,10 +1092,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           }
                                           size="small"
                                           title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
-                                          sx={[
-                                            buildVariantSx('indigo'),
-                                            { '& .MuiChip-label': { fontSize: '0.58rem' } },
-                                          ]}
+                                          sx={{
+                                            ...buildVariantSx('indigo'),
+                                            '& .MuiChip-label': { fontSize: '0.58rem' },
+                                          }}
                                         />
                                       ))}
                                   </Box>

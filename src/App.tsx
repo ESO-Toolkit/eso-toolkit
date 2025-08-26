@@ -163,7 +163,7 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <HashRouter>
+    <HashRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
       <Routes>
         <Route
           path="/oauth-redirect"
