@@ -66,10 +66,26 @@ interface CriticalDamageDataPoint {
   relativeTime: number; // Time since fight start in seconds
 }
 
+interface CriticalDamageAlert {
+  abilityId: number;
+  abilityName: string;
+  timestamp: number;
+  relativeTime: number;
+  expectedCriticalDamage: number;
+  actualCriticalDamage: number;
+  normalDamage: number;
+  actualCriticalMultiplier: number;
+  expectedCriticalMultiplier: number;
+  discrepancyPercent: number;
+}
+
 export interface PlayerCriticalDamageData {
   playerId: number;
   playerName: string;
   dataPoints: CriticalDamageDataPoint[];
+  effectiveCriticalDamage: number;
+  maximumCriticalDamage: number;
+  criticalDamageAlerts: CriticalDamageAlert[];
 }
 
 interface CriticalMultiplierInfo {
@@ -149,21 +165,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               {resolveActorName(player)}
             </Typography>
           </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-            <Typography variant="body2" color={maxCriticalDamage >= 125 ? 'success' : 'secondary'}>
-              Max: {maxCriticalDamage}% crit damage
-            </Typography>
-            {criticalMultiplier && (
-              <Typography variant="body2" color="#d32f2f" sx={{ fontWeight: 'bold' }}>
-                Crit Multiplier: {criticalMultiplier.criticalMultiplier.toFixed(2)}x
-                {criticalMultiplier.unaccountedCritDamagePercent > 0 && (
-                  <span style={{ color: '#ff9800', fontSize: '0.75rem', marginLeft: '4px' }}>
-                    (+{criticalMultiplier.unaccountedCritDamagePercent.toFixed(1)}% unknown)
-                  </span>
-                )}
+          {!isLoading && (
+            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+              <Typography
+                variant="body2"
+                color={maxCriticalDamage >= 125 ? 'success' : 'secondary'}
+              >
+                Max: {maxCriticalDamage}% crit damage
               </Typography>
-            )}
-          </Box>
+
+              <Typography
+                variant="body2"
+                color={criticalDamageData.effectiveCriticalDamage >= 125 ? 'success' : 'secondary'}
+              >
+                Effective: {criticalDamageData.effectiveCriticalDamage.toFixed(1)}% crit damage
+              </Typography>
+            </Box>
+          )}
         </Box>
       </AccordionSummary>
       <AccordionDetails>

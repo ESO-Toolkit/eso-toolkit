@@ -2,11 +2,16 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { BuffLookupData } from '../features/report_details/critical_damage/BuffLookupUtils';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchDebuffEvents } from '../store/events_data/debuffEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
-import { selectDebuffEvents, selectDebuffEventsLoading } from '../store/selectors/eventsSelectors';
+import {
+  selectDebuffEvents,
+  selectDebuffEventsLoading,
+  selectDebuffLookup,
+} from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { DebuffEvent } from '../types/combatlogEvents';
 
@@ -45,5 +50,21 @@ export function useDebuffEvents(): {
   return React.useMemo(
     () => ({ debuffEvents, isDebuffEventsLoading, selectedFight }),
     [debuffEvents, isDebuffEventsLoading, selectedFight]
+  );
+}
+
+export function useDebuffLookup(): {
+  hostileBuffsLookup: BuffLookupData | null;
+  isDebuffEventsLoading: boolean;
+} {
+  const { isDebuffEventsLoading } = useDebuffEvents();
+  const buffLookup = useSelector(selectDebuffLookup);
+
+  return React.useMemo(
+    () => ({
+      hostileBuffsLookup: buffLookup,
+      isDebuffEventsLoading: isDebuffEventsLoading,
+    }),
+    [buffLookup, isDebuffEventsLoading]
   );
 }

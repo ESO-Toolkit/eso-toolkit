@@ -1,9 +1,11 @@
 import { arcanistData } from '../../../data/skillsets/arcanist';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../../../types/abilities';
-import { BuffEvent, CombatantInfoEvent, DebuffEvent } from '../../../types/combatlogEvents';
+import { CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { GearType } from '../../../types/playerDetails';
 import { getSetCount } from '../../../utils/gearUtilities';
+
+import { BuffLookupData, isBuffActive as checkBuffActiveAtTimestamp } from './BuffLookupUtils';
 
 interface BaseCriticalDamageSource {
   name: string;
@@ -119,12 +121,30 @@ export function isAuraActive(
   return combatantInfo.auras.some((aura) => aura.ability === abilityId);
 }
 
-export function isBuffActive(buffEvents: BuffEvent[], abilityId: KnownAbilities): boolean {
-  return buffEvents.some((buff) => buff.abilityGameID === abilityId);
+export function isBuffActive(buffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
+  const intervals = buffLookup.buffIntervals.get(abilityId);
+  return intervals !== undefined && intervals.length > 0;
 }
 
-export function isDebuffActive(debuffEvents: DebuffEvent[], abilityId: KnownAbilities): boolean {
-  return debuffEvents.some((debuff) => debuff.abilityGameID === abilityId);
+export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
+  const intervals = debuffLookup.buffIntervals.get(abilityId);
+  return intervals !== undefined && intervals.length > 0;
+}
+
+export function isBuffActiveAtTimestamp(
+  buffLookup: BuffLookupData,
+  abilityId: KnownAbilities,
+  timestamp: number
+): boolean {
+  return checkBuffActiveAtTimestamp(buffLookup, abilityId, timestamp);
+}
+
+export function isDebuffActiveAtTimestamp(
+  debuffLookup: BuffLookupData,
+  abilityId: KnownAbilities,
+  timestamp: number
+): boolean {
+  return checkBuffActiveAtTimestamp(debuffLookup, abilityId, timestamp);
 }
 
 export function isGearSourceActive(
@@ -154,8 +174,8 @@ export function isComputedSourceActive(
 }
 
 export function getEnabledCriticalDamageSources(
-  buffEvents: BuffEvent[],
-  debuffEvents: DebuffEvent[],
+  buffLookup: BuffLookupData,
+  debuffLookup: BuffLookupData,
   combatantInfo: CombatantInfoEvent | null
 ): CriticalDamageSource[] {
   const result = [];
@@ -168,10 +188,10 @@ export function getEnabledCriticalDamageSources(
         isActive = isAuraActive(combatantInfo, source.ability);
         break;
       case 'buff':
-        isActive = isBuffActive(buffEvents, source.ability);
+        isActive = isBuffActive(buffLookup, source.ability);
         break;
       case 'debuff':
-        isActive = isDebuffActive(debuffEvents, source.ability);
+        isActive = isDebuffActive(debuffLookup, source.ability);
         break;
       case 'gear':
         isActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
@@ -187,6 +207,146 @@ export function getEnabledCriticalDamageSources(
   }
 
   return result;
+}
+
+export function calculateCriticalDamageAtTimestamp(
+  buffLookup: BuffLookupData,
+  debuffLookup: BuffLookupData,
+  combatantInfo: CombatantInfoEvent | null,
+  playerData: PlayerDetailsWithRole | undefined,
+  timestamp: number
+): number {
+  const baseCriticalDamage = 50; // Base critical damage percentage
+
+  let gearCriticalDamage = 0;
+  let auraCriticalDamage = 0;
+  let computedCriticalDamage = 0;
+  let buffCriticalDamage = 0;
+  let debuffCriticalDamage = 0;
+
+  for (const source of CRITICAL_DAMAGE_SOURCES) {
+    let isActive = false;
+
+    switch (source.source) {
+      case 'aura':
+        isActive = isAuraActive(combatantInfo, source.ability);
+        if (isActive) {
+          auraCriticalDamage += source.value;
+        }
+        break;
+      case 'buff':
+        isActive = isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp);
+        if (isActive) {
+          buffCriticalDamage += source.value;
+        }
+        break;
+      case 'debuff':
+        isActive = isDebuffActiveAtTimestamp(debuffLookup, source.ability, timestamp);
+        if (isActive) {
+          debuffCriticalDamage += source.value;
+        }
+        break;
+      case 'gear':
+        isActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
+        if (isActive) {
+          gearCriticalDamage += source.value;
+        }
+        break;
+      case 'computed':
+        isActive = isComputedSourceActive(combatantInfo, source);
+        if (isActive) {
+          computedCriticalDamage += getCritDamageFromComputedSource(
+            source,
+            playerData,
+            combatantInfo
+          );
+        }
+        break;
+    }
+  }
+
+  return (
+    baseCriticalDamage +
+    gearCriticalDamage +
+    auraCriticalDamage +
+    computedCriticalDamage +
+    buffCriticalDamage +
+    debuffCriticalDamage
+  );
+}
+
+export function calculateStaticCriticalDamage(
+  combatantInfo: CombatantInfoEvent | null,
+  playerData: PlayerDetailsWithRole | undefined
+): number {
+  const baseCriticalDamage = 50; // Base critical damage percentage
+
+  let gearCriticalDamage = 0;
+  let auraCriticalDamage = 0;
+  let computedCriticalDamage = 0;
+
+  for (const source of CRITICAL_DAMAGE_SOURCES) {
+    let isActive = false;
+
+    switch (source.source) {
+      case 'aura':
+        isActive = isAuraActive(combatantInfo, source.ability);
+        if (isActive) {
+          auraCriticalDamage += source.value;
+        }
+        break;
+      case 'gear':
+        isActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
+        if (isActive) {
+          gearCriticalDamage += source.value;
+        }
+        break;
+      case 'computed':
+        isActive = isComputedSourceActive(combatantInfo, source);
+        if (isActive) {
+          computedCriticalDamage += getCritDamageFromComputedSource(
+            source,
+            playerData,
+            combatantInfo
+          );
+        }
+        break;
+      // Skip buff and debuff sources - these are dynamic
+    }
+  }
+
+  return baseCriticalDamage + gearCriticalDamage + auraCriticalDamage + computedCriticalDamage;
+}
+
+export function calculateDynamicCriticalDamageAtTimestamp(
+  buffLookup: BuffLookupData,
+  debuffLookup: BuffLookupData,
+  timestamp: number
+): number {
+  let buffCriticalDamage = 0;
+  let debuffCriticalDamage = 0;
+
+  for (const source of CRITICAL_DAMAGE_SOURCES) {
+    let isActive = false;
+
+    switch (source.source) {
+      case 'buff':
+        isActive = isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp);
+        if (isActive) {
+          buffCriticalDamage += source.value;
+        }
+        break;
+      case 'debuff':
+        isActive = isDebuffActiveAtTimestamp(debuffLookup, source.ability, timestamp);
+        if (isActive) {
+          debuffCriticalDamage += source.value;
+        }
+        break;
+      // Skip static sources - these are calculated once
+    }
+  }
+
+  return buffCriticalDamage + debuffCriticalDamage;
 }
 
 export function getCritDamageFromComputedSource(

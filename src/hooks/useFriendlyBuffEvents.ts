@@ -2,6 +2,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
+import { BuffLookupData } from '../features/report_details/critical_damage/BuffLookupUtils';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchFriendlyBuffEvents } from '../store/events_data/friendlyBuffEventsSlice';
@@ -9,6 +10,7 @@ import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectFriendlyBuffEvents,
   selectFriendlyBuffEventsLoading,
+  selectFriendlyBuffLookup,
 } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
@@ -50,5 +52,21 @@ export function useFriendlyBuffEvents(): {
   return React.useMemo(
     () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
     [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight]
+  );
+}
+
+export function useFriendlyBuffLookup(): {
+  friendlyBuffsLookup: BuffLookupData;
+  isFriendlyBuffEventsLoading: boolean;
+} {
+  const isFriendlyBuffEventsLoading = useSelector(selectFriendlyBuffEventsLoading);
+  const buffLookup = useSelector(selectFriendlyBuffLookup);
+
+  return React.useMemo(
+    () => ({
+      friendlyBuffsLookup: buffLookup,
+      isFriendlyBuffEventsLoading: isFriendlyBuffEventsLoading,
+    }),
+    [buffLookup, isFriendlyBuffEventsLoading]
   );
 }
