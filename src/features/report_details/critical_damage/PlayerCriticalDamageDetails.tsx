@@ -4,12 +4,12 @@ import { FightFragment } from '../../../graphql/generated';
 import { useCombatantInfoEvents, usePlayerData } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
 import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
-
 import {
   calculateDynamicCriticalDamageAtTimestamp,
   calculateStaticCriticalDamage,
   getAllCriticalDamageSourcesWithActiveState,
-} from './CritDamageUtils';
+} from '../../../utils/CritDamageUtils';
+
 import {
   PlayerCriticalDamageDetailsView,
   PlayerCriticalDamageData,
@@ -57,7 +57,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     if (!friendlyBuffsLookup || !debuffsLookup) {
       return [];
     }
-    return getAllCriticalDamageSourcesWithActiveState(friendlyBuffsLookup, debuffsLookup, combatantInfo);
+    return getAllCriticalDamageSourcesWithActiveState(
+      friendlyBuffsLookup,
+      debuffsLookup,
+      combatantInfo
+    );
   }, [combatantInfo, friendlyBuffsLookup, debuffsLookup]);
 
   // Calculate critical damage data

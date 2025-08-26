@@ -1,11 +1,6 @@
 import { createSelector } from '@reduxjs/toolkit';
 
 import {
-  createBuffLookup,
-  createDebuffLookup,
-  BuffLookupData,
-} from '../../features/report_details/critical_damage/BuffLookupUtils';
-import {
   BuffEvent,
   CombatantInfoEvent,
   DamageEvent,
@@ -15,6 +10,7 @@ import {
   ResourceChangeEvent,
   UnifiedCastEvent,
 } from '../../types/combatlogEvents';
+import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
 import { selectActorsById } from '../master_data/masterDataSelectors';
 import { selectReport, selectReportFights } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';

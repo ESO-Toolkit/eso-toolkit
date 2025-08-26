@@ -1,5 +1,3 @@
-import { BuffEvent, DebuffEvent } from '../../../types/combatlogEvents';
-
 import {
   createBuffLookup,
   createDebuffLookup,
@@ -7,7 +5,9 @@ import {
   isBuffActiveOnTarget,
   isBuffActiveOnAnyTarget,
   getActiveTargets,
-} from './BuffLookupUtils';
+} from '../features/report_details/critical_damage/BuffLookupUtils';
+import { BuffEvent, DebuffEvent } from '../types/combatlogEvents';
+
 
 describe('BuffLookupUtils', () => {
   // Mock buff events for testing

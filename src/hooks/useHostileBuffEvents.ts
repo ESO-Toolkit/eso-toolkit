@@ -2,7 +2,6 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { BuffLookupData } from '../features/report_details/critical_damage/BuffLookupUtils';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { fetchHostileBuffEvents } from '../store/events_data/hostileBuffEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
@@ -13,6 +12,7 @@ import {
 } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
 import { BuffEvent } from '../types/combatlogEvents';
+import { BuffLookupData } from '../utils/BuffLookupUtils';
 
 export function useHostileBuffEvents(): {
   hostileBuffEvents: BuffEvent[];

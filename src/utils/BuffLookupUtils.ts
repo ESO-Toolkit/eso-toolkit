@@ -1,5 +1,5 @@
-import { BuffEvent } from '../../../types/combatlogEvents';
-import { DebuffEvent } from '../../../types/combatlogEvents';
+import { BuffEvent } from '../types/combatlogEvents';
+import { DebuffEvent } from '../types/combatlogEvents';
 
 // Efficient buff lookup data structure
 interface BuffTimeInterval {
