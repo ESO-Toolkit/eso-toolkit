@@ -1,7 +1,6 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
 
-import { useReportData } from '../../hooks';
+import { useReportData, useSelectedTabId } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
@@ -9,7 +8,6 @@ import { ReportFightDetailsView } from './ReportFightDetailsView';
 export const ReportFightDetails: React.FC = () => {
   // Get current selected report and fight from context
   const { reportId, fightId } = useSelectedReportAndFight();
-  const [searchParams] = useSearchParams();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const { reportData, isReportLoading } = useReportData();
@@ -19,16 +17,14 @@ export const ReportFightDetails: React.FC = () => {
     return reportData?.fights?.find((f) => String(f?.id) === String(fightId));
   }, [reportData?.fights, fightId]);
 
-  // Get selectedTabId from query param if present
-  const selectedTabId = searchParams.has('selectedTabId')
-    ? Number(searchParams.get('selectedTabId'))
-    : undefined;
+  // Get selectedTabId from UI state and URL query params
+  const selectedTabId = useSelectedTabId();
 
   return (
     <ReportFightDetailsView
       fight={fight}
       fightsLoading={isReportLoading}
-      selectedTabId={selectedTabId}
+      selectedTabId={selectedTabId ?? undefined}
       reportId={reportId || undefined}
       fightId={fightId || undefined}
     />

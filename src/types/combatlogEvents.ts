@@ -18,6 +18,7 @@ export interface DamageEvent {
   sourceResources: Resources;
   targetResources: Resources;
   blocked?: number;
+  tick?: boolean;
 }
 
 export interface DeathEvent {

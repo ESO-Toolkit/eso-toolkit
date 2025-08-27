@@ -10,6 +10,7 @@ import { HashRouter, Routes, Route } from 'react-router-dom';
 import { useNavigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
@@ -133,15 +134,17 @@ const MainApp: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <ReduxProvider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
-        <AuthProvider>
-          <EsoLogsClientProvider>
-            <AppRoutes />
-          </EsoLogsClientProvider>
-        </AuthProvider>
-      </PersistGate>
-    </ReduxProvider>
+    <ErrorBoundary>
+      <ReduxProvider store={store}>
+        <PersistGate loading={null} persistor={persistor}>
+          <AuthProvider>
+            <EsoLogsClientProvider>
+              <AppRoutes />
+            </EsoLogsClientProvider>
+          </AuthProvider>
+        </PersistGate>
+      </ReduxProvider>
+    </ErrorBoundary>
   );
 };
 
@@ -156,9 +159,11 @@ const AppRoutes: React.FC = () => {
   const currentPath = window.location.pathname.replace(publicUrl, '');
   if (currentPath === '/oauth-redirect') {
     return (
-      <Suspense fallback={<LoadingFallback />}>
-        <OAuthRedirect />
-      </Suspense>
+      <ErrorBoundary>
+        <Suspense fallback={<LoadingFallback />}>
+          <OAuthRedirect />
+        </Suspense>
+      </ErrorBoundary>
     );
   }
 
@@ -168,9 +173,11 @@ const AppRoutes: React.FC = () => {
         <Route
           path="/oauth-redirect"
           element={
-            <Suspense fallback={<LoadingFallback />}>
-              <OAuthRedirect />
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<LoadingFallback />}>
+                <OAuthRedirect />
+              </Suspense>
+            </ErrorBoundary>
           }
         />
         <Route element={<AppLayout />}>
@@ -178,27 +185,33 @@ const AppRoutes: React.FC = () => {
           <Route
             path="/report/:reportId/fight/:fightId"
             element={
-              <Suspense fallback={<LoadingFallback />}>
-                <ReportFightDetails />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <ReportFightDetails />
+                </Suspense>
+              </ErrorBoundary>
             }
           />
           <Route
             path="/report/:reportId/live"
             element={
-              <Suspense fallback={<LoadingFallback />}>
-                <LiveLog>
-                  <ReportFightDetails />
-                </LiveLog>
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <LiveLog>
+                    <ReportFightDetails />
+                  </LiveLog>
+                </Suspense>
+              </ErrorBoundary>
             }
           />
           <Route
             path="/report/:reportId"
             element={
-              <Suspense fallback={<LoadingFallback />}>
-                <ReportFights />
-              </Suspense>
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <ReportFights />
+                </Suspense>
+              </ErrorBoundary>
             }
           />
           <Route path="/*" element={<MainApp />} />

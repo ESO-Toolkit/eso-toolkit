@@ -1,14 +1,4 @@
-import {
-  Box,
-  Typography,
-  List,
-  ListItem,
-  ListItemText,
-  LinearProgress,
-  Avatar,
-  Skeleton,
-  Chip,
-} from '@mui/material';
+import { Box, Typography, List, ListItem, Avatar, Skeleton } from '@mui/material';
 import React from 'react';
 
 import { DamageTypeFlags } from '../../../types/abilities';
@@ -33,30 +23,50 @@ interface DamageTypeBreakdownViewProps {
 const DAMAGE_TYPE_COLORS: Record<DamageTypeFlags, string> = {
   [DamageTypeFlags.BLEED]: '#DC2626', // Bleed - Dark Red
   [DamageTypeFlags.DISEASE]: '#8B5CF6', // Disease - Violet
-  [DamageTypeFlags.DROWN]: '#0EA5E9', // Drown - Cyan
   [DamageTypeFlags.FIRE]: '#EF4444', // Fire - Red
   [DamageTypeFlags.FROST]: '#3B82F6', // Frost - Blue
   [DamageTypeFlags.GENERIC]: '#6B7280', // Generic - Gray
   [DamageTypeFlags.MAGIC]: '#6366F1', // Magic - Purple
-  [DamageTypeFlags.NONE]: '#9CA3AF', // None - Light Gray
   [DamageTypeFlags.PHYSICAL]: '#8B5A2B', // Physical - Brown
   [DamageTypeFlags.POISON]: '#10B981', // Poison - Green
   [DamageTypeFlags.SHOCK]: '#FBBF24', // Shock - Yellow
+};
+
+// Color mapping for custom damage categories by display name
+const CUSTOM_DAMAGE_TYPE_COLORS: Record<string, string> = {
+  Magic: '#6366F1', // Magic - Purple
+  Martial: '#8B5A2B', // Martial - Brown
+  Direct: '#F59E0B', // Direct - Amber
+  Poison: '#10B981', // Poison - Green
+  'Damage over Time': '#EF4444', // DOT - Red
+  'Area of Effect': '#8B5CF6', // AOE - Violet
+  'Status Effects': '#EC4899', // Status Effects - Pink
+  Fire: '#EF4444', // Fire - Red
 };
 
 // Icon mapping for different damage types
 const DAMAGE_TYPE_ICONS: Record<DamageTypeFlags, string> = {
   [DamageTypeFlags.BLEED]: '🩸', // Bleed
   [DamageTypeFlags.DISEASE]: '🦠', // Disease
-  [DamageTypeFlags.DROWN]: '🌊', // Drown
   [DamageTypeFlags.FIRE]: '🔥', // Fire
   [DamageTypeFlags.FROST]: '❄️', // Frost
   [DamageTypeFlags.GENERIC]: '💥', // Generic
   [DamageTypeFlags.MAGIC]: '✨', // Magic
-  [DamageTypeFlags.NONE]: '⭕', // None
   [DamageTypeFlags.PHYSICAL]: '⚔️', // Physical
   [DamageTypeFlags.POISON]: '☠️', // Poison
   [DamageTypeFlags.SHOCK]: '⚡', // Shock
+};
+
+// Icon mapping for custom damage categories by display name
+const CUSTOM_DAMAGE_TYPE_ICONS: Record<string, string> = {
+  Magic: '✨', // Magic
+  Martial: '⚔️', // Martial
+  Direct: '🎯', // Direct
+  Poison: '☠️', // Poison
+  'Damage over Time': '🔄', // DOT
+  'Area of Effect': '💥', // AOE
+  'Status Effects': '🌟', // Status Effects
+  Fire: '🔥', // Fire
 };
 
 export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = ({
@@ -98,90 +108,134 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
         <List disablePadding>
           {damageTypeBreakdown.map((damageType) => {
             const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
-            const color = DAMAGE_TYPE_COLORS[damageType.damageType];
-            const icon = DAMAGE_TYPE_ICONS[damageType.damageType];
+            // Try custom mapping first (by display name), then fall back to enum-based mapping
+            const color =
+              CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
+              DAMAGE_TYPE_COLORS[damageType.damageType] ||
+              '#6B7280'; // Default gray
+            const icon =
+              CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
+              DAMAGE_TYPE_ICONS[damageType.damageType] ||
+              '💥'; // Default explosion
 
             return (
-              <ListItem key={damageType.damageType} sx={{ py: 1 }} divider>
-                <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1.25 }}>
-                  <Avatar
+              <ListItem key={damageType.damageType} sx={{ py: 1.5 }} divider>
+                <Box sx={{ width: '100%' }}>
+                  {/* Progress bar container with content inside */}
+                  <Box
                     sx={{
-                      width: 32,
-                      height: 32,
-                      bgcolor: color,
-                      fontSize: '1rem',
+                      position: 'relative',
+                      height: 48,
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      bgcolor: (theme) =>
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,255,255,0.08)'
+                          : 'rgba(0,0,0,0.06)',
                     }}
-                    variant="rounded"
                   >
-                    {icon}
-                  </Avatar>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <ListItemText
-                      primary={damageType.displayName}
-                      secondary={
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatNumber(damageType.totalDamage)} damage
+                    {/* Progress bar fill */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        height: '100%',
+                        width: `${Math.max(0, Math.min(100, percentage))}%`,
+                        bgcolor: color,
+                        borderRadius: 2,
+                        transition: 'width 0.3s ease-in-out',
+                      }}
+                    />
+
+                    {/* Content overlay */}
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: '100%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 2,
+                        zIndex: 1,
+                      }}
+                    >
+                      {/* Icon */}
+                      <Avatar
+                        sx={{
+                          width: 32,
+                          height: 32,
+                          bgcolor: 'transparent',
+                          fontSize: '1.2rem',
+                          filter:
+                            'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
+                          textShadow:
+                            '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
+                        }}
+                        variant="rounded"
+                      >
+                        {icon}
+                      </Avatar>
+
+                      {/* Labels */}
+                      <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 700,
+                            color: 'white',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                            lineHeight: 1.2,
+                          }}
+                        >
+                          {damageType.displayName}
+                        </Typography>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'rgba(255,255,255,0.9)',
+                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              fontWeight: 500,
+                            }}
+                          >
+                            {formatNumber(damageType.totalDamage)} dmg
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'rgba(255,255,255,0.7)',
+                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                            }}
+                          >
                             •
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {damageType.hitCount} hits
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            •
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'rgba(255,255,255,0.9)',
+                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              fontWeight: 500,
+                            }}
+                          >
                             {formatNumber(Math.round(damageType.averageDamage))} avg
                           </Typography>
-                          {damageType.criticalRate > 0 && (
-                            <>
-                              <Typography variant="caption" color="text.secondary">
-                                •
-                              </Typography>
-                              <Chip
-                                label={`${damageType.criticalRate.toFixed(1)}% crit`}
-                                size="small"
-                                sx={{
-                                  height: 16,
-                                  fontSize: '0.625rem',
-                                  bgcolor: 'warning.main',
-                                  color: 'warning.contrastText',
-                                }}
-                              />
-                            </>
-                          )}
                         </Box>
-                      }
-                      primaryTypographyProps={{
-                        variant: 'body2',
-                        noWrap: true,
-                        sx: { fontWeight: 600 },
-                      }}
-                    />
-                    <LinearProgress
-                      variant="determinate"
-                      value={Math.max(0, Math.min(100, percentage))}
-                      sx={{
-                        height: 8,
-                        borderRadius: 999,
-                        mt: 1,
-                        bgcolor: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 999,
-                          bgcolor: color,
-                        },
-                      }}
-                    />
-                  </Box>
-                  <Box sx={{ width: 60, textAlign: 'right' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {percentage.toFixed(1)}%
-                    </Typography>
+                      </Box>
+
+                      {/* Percentage */}
+                      <Box sx={{ textAlign: 'right' }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 700,
+                            color: 'white',
+                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                          }}
+                        >
+                          {percentage.toFixed(1)}%
+                        </Typography>
+                      </Box>
+                    </Box>
                   </Box>
                 </Box>
               </ListItem>

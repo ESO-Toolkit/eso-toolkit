@@ -1,13 +1,8 @@
-import { SelectChangeEvent } from '@mui/material';
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom';
 
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { useReportMasterData } from '../../hooks';
-import { selectSelectedTargetId } from '../../store/ui/uiSelectors';
-import { setSelectedTargetId } from '../../store/ui/uiSlice';
-import { useAppDispatch } from '../../store/useAppDispatch';
 
 import { FightDetailsView } from './FightDetailsView';
 
@@ -18,8 +13,6 @@ interface FightDetailsProps {
 
 export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const dispatch = useAppDispatch();
-  const selectedTargetId = useSelector(selectSelectedTargetId);
 
   // Use the new hooks for data fetching
 
@@ -74,14 +67,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
     return rtn;
   }, [reportMasterData.actorsById, fight.enemyNPCs]);
 
-  const handleTargetChange = React.useCallback(
-    (event: SelectChangeEvent<string | null>) => {
-      const targetId = event.target.value;
-      dispatch(setSelectedTargetId(targetId));
-    },
-    [dispatch]
-  );
-
   const toggleExperimentalTabs = React.useCallback(() => {
     setSearchParams((prevParams) => {
       const newParams = new URLSearchParams(prevParams);
@@ -105,10 +90,8 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
         targets={targets
           .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
           .filter((t) => t.id && t.name)}
-        selectedTargetId={selectedTargetId}
         loading={isLoading}
         onNavigateToTab={navigateToTab}
-        onTargetChange={handleTargetChange}
         onToggleExperimentalTabs={toggleExperimentalTabs}
       />
     );
@@ -125,10 +108,8 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       targets={targets
         .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
         .filter((t) => t.id && t.name)}
-      selectedTargetId={selectedTargetId}
       loading={false}
       onNavigateToTab={navigateToTab}
-      onTargetChange={handleTargetChange}
       onToggleExperimentalTabs={toggleExperimentalTabs}
     />
   );

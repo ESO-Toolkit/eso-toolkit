@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Profiler } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import {
@@ -13,13 +13,12 @@ import { InsightsPanelView } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
 }
 
 const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
 
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
@@ -134,18 +133,25 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTar
   }, [damageEvents, playerData?.playersById, fight.friendlyPlayers]);
 
   return (
-    <InsightsPanelView
-      fight={fight}
-      durationSeconds={durationSeconds}
-      abilityEquipped={abilityEquipped}
-      buffActors={buffActors}
-      firstDamageDealer={firstDamageDealer}
-      isLoading={
-        isFriendlyBuffEventsLoading ||
-        isDamageEventsLoading ||
-        isPlayerDataLoading ||
-        isMasterDataLoading
-      }
-    />
+    <Profiler
+      id="InsightsPanel"
+      onRender={(id, phase, actualDuration) => {
+        console.log({ id, phase, actualDuration });
+      }}
+    >
+      <InsightsPanelView
+        fight={fight}
+        durationSeconds={durationSeconds}
+        abilityEquipped={abilityEquipped}
+        buffActors={buffActors}
+        firstDamageDealer={firstDamageDealer}
+        isLoading={
+          isFriendlyBuffEventsLoading ||
+          isDamageEventsLoading ||
+          isPlayerDataLoading ||
+          isMasterDataLoading
+        }
+      />
+    </Profiler>
   );
 };

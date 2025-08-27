@@ -4,7 +4,8 @@ export interface UIState {
   darkMode: boolean;
   sidebarOpen: boolean;
   showExperimentalTabs: boolean;
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
+  selectedTabId: number | null;
 }
 
 const initialState: UIState = {
@@ -12,6 +13,7 @@ const initialState: UIState = {
   sidebarOpen: false,
   showExperimentalTabs: false,
   selectedTargetId: null,
+  selectedTabId: null,
 };
 
 const uiSlice = createSlice({
@@ -33,8 +35,11 @@ const uiSlice = createSlice({
     toggleExperimentalTabs(state) {
       state.showExperimentalTabs = !state.showExperimentalTabs;
     },
-    setSelectedTargetId(state, action: PayloadAction<string | null>) {
+    setSelectedTargetId(state, action: PayloadAction<number | null>) {
       state.selectedTargetId = action.payload;
+    },
+    setSelectedTabId(state, action: PayloadAction<number | null>) {
+      state.selectedTabId = action.payload;
     },
   },
 });
@@ -46,5 +51,6 @@ export const {
   setShowExperimentalTabs,
   toggleExperimentalTabs,
   setSelectedTargetId,
+  setSelectedTabId,
 } = uiSlice.actions;
 export default uiSlice.reducer;

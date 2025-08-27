@@ -19,7 +19,7 @@ export const ReportFights: React.FC = () => {
   if (isReportLoading) {
     return (
       <ReportFightsView
-        fights={[]}
+        fights={undefined}
         loading={isReportLoading}
         fightId={fightId}
         reportId={reportId}

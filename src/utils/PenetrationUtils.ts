@@ -336,7 +336,7 @@ export function calculateDynamicPenetrationAtTimestamp(
   buffLookup: BuffLookupData | null,
   debuffLookup: BuffLookupData | null,
   timestamp: number,
-  targetId?: number
+  targetId: number | null
 ): number {
   let buffPenetration = 0;
   let debuffPenetration = 0;
@@ -374,7 +374,7 @@ export function calculatePenetrationAtTimestamp(
   combatantInfo: CombatantInfoEvent | null,
   playerData: PlayerDetailsWithRole | undefined,
   timestamp: number,
-  targetId?: number
+  targetId: number | null
 ): number {
   const staticPenetration = calculateStaticPenetration(combatantInfo, playerData);
   const dynamicPenetration = calculateDynamicPenetrationAtTimestamp(

@@ -96,80 +96,104 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   }
   return (
     <>
-      <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Fight Insights
-        </Typography>
-
-        <Box>
-          <Typography>
-            <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
-          </Typography>
-        </Box>
-
-        {firstDamageDealer && (
-          <Box>
-            <Typography>
-              <strong>First Damage Dealer:</strong> {firstDamageDealer}
+      {/* Main insights grid layout */}
+      <Box
+        sx={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 2,
+        }}
+      >
+        {/* Fight Insights Header - Full Width */}
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <Typography variant="h6" gutterBottom>
+              Fight Insights
             </Typography>
-          </Box>
-        )}
 
-        <Box>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Abilities Equipped:
-          </Typography>
-          <List dense>
-            {ABILITY_NAMES.map((name) => (
-              <ListItem key={name} sx={{ mb: 1 }}>
-                <ListItemText
-                  primary={name}
-                  secondary={
-                    abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
+            <Box>
+              <Typography>
+                <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
+              </Typography>
+            </Box>
+
+            {firstDamageDealer && (
+              <Box>
+                <Typography>
+                  <strong>First Damage Dealer:</strong> {firstDamageDealer}
+                </Typography>
+              </Box>
+            )}
+
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Abilities Equipped:
+              </Typography>
+              <List dense>
+                {ABILITY_NAMES.map((name) => (
+                  <ListItem key={name} sx={{ mb: 1 }}>
+                    <ListItemText
+                      primary={name}
+                      secondary={
+                        abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+                Champion Points Equipped:
+              </Typography>
+              <List dense>
+                {CHAMPION_POINT_NAMES.map((name) => (
+                  <ListItem key={name} sx={{ mb: 1 }}>
+                    <ListItemText
+                      primary={name}
+                      secondary={
+                        buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
+                      }
+                    />
+                  </ListItem>
+                ))}
+              </List>
+            </Box>
+          </Paper>
+        </Box>
+        {/* All panels in flexbox with 2 items per row */}
+
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <StatusEffectUptimesPanel fight={fight} />
+          </Paper>
         </Box>
 
-        <Box>
-          <Typography variant="subtitle1" sx={{ mb: 1 }}>
-            Champion Points Equipped:
-          </Typography>
-          <List dense>
-            {CHAMPION_POINT_NAMES.map((name) => (
-              <ListItem key={name} sx={{ mb: 1 }}>
-                <ListItemText
-                  primary={name}
-                  secondary={
-                    buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
-                  }
-                />
-              </ListItem>
-            ))}
-          </List>
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <BuffUptimesPanel fight={fight} />
+          </Paper>
         </Box>
-      </Paper>
 
-      {/* Target Selection and Status Effect/Buff Uptimes */}
-      <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Status Effects & Uptimes
-        </Typography>
-        <StatusEffectUptimesPanel fight={fight} />
-        <BuffUptimesPanel fight={fight} />
-        <DebuffUptimesPanel fight={fight} />
-      </Paper>
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <DebuffUptimesPanel fight={fight} />
+          </Paper>
+        </Box>
 
-      {/* Damage Breakdown */}
-      <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-        <Typography variant="h6" gutterBottom>
-          Damage Analysis
-        </Typography>
-        <DamageBreakdownPanel fight={fight} />
-        <DamageTypeBreakdownPanel fight={fight} />
-      </Paper>
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <DamageBreakdownPanel fight={fight} />
+          </Paper>
+        </Box>
+
+        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <DamageTypeBreakdownPanel fight={fight} />
+          </Paper>
+        </Box>
+      </Box>
     </>
   );
 };
