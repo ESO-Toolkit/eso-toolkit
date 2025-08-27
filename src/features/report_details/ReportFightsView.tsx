@@ -1,6 +1,7 @@
-import { Box, Paper, Typography, List, ListItem, ListItemButton, Skeleton } from '@mui/material';
+import { Box, Paper, Typography, List, ListItem, ListItemButton, Skeleton, Collapse, Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
 import { FightFragment } from '../../graphql/generated';
 
@@ -88,25 +89,105 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     [navigate, reportId]
   );
 
-  const groups = React.useMemo(() => {
-    const result: Record<string, FightFragment[]> = {};
-    if (!fights) {
-      return {};
+  const encounters = React.useMemo(() => {
+    if (!fights) return [];
+
+    // First, filter and sort all valid fights by start time
+    const validFights = fights
+      .filter(fight => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
+      .sort((a, b) => a.startTime - b.startTime);
+
+    // Separate boss fights and trash fights
+    const bossFights = validFights.filter(fight => fight.difficulty != null);
+    const trashFights = validFights.filter(fight => fight.difficulty == null);
+
+    // Create encounter objects with related trash
+    const encounterList: {
+      id: string;
+      name: string;
+      bossFights: FightFragment[];
+      preTrash: FightFragment[];
+      postTrash: FightFragment[];
+    }[] = [];
+    
+    for (let i = 0; i < bossFights.length; i++) {
+      const currentBoss = bossFights[i];
+      const nextBoss = bossFights[i + 1];
+      
+      // Find trash before this boss (after previous boss or from start)
+      const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
+      const preTrash = trashFights.filter(trash => 
+        trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime
+      );
+      
+      // Find trash after this boss (before next boss or until end)
+      const nextBossStart = nextBoss ? nextBoss.startTime : Number.MAX_SAFE_INTEGER;
+      const postTrash = trashFights.filter(trash => 
+        trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
+      );
+      
+      // Group boss fights with the same name
+      const existingEncounter = encounterList.find(enc => enc.name === (currentBoss.name || 'Unknown Boss'));
+      if (existingEncounter) {
+        existingEncounter.bossFights.push(currentBoss);
+        existingEncounter.preTrash.push(...preTrash);
+        existingEncounter.postTrash.push(...postTrash);
+      } else {
+        encounterList.push({
+          id: `encounter-${i}`,
+          name: currentBoss.name || 'Unknown Boss',
+          bossFights: [currentBoss],
+          preTrash,
+          postTrash
+        });
+      }
+    }
+    
+    // Handle any remaining trash that doesn't fit near bosses
+    const allCategorizedTrash = encounterList.flatMap(enc => [...enc.preTrash, ...enc.postTrash]);
+    const uncategorizedTrash = trashFights.filter(trash => 
+      !allCategorizedTrash.some(cat => cat.id === trash.id)
+    );
+    
+    if (uncategorizedTrash.length > 0) {
+      encounterList.push({
+        id: 'misc-trash',
+        name: 'Miscellaneous Trash',
+        bossFights: [],
+        preTrash: uncategorizedTrash,
+        postTrash: []
+      });
     }
 
-    fights.forEach((fight: FightFragment) => {
-      // Filter out invalid fights (no start/end time or invalid duration)
-      if (!fight.startTime || !fight.endTime || fight.endTime <= fight.startTime) {
-        return;
-      }
-      
-      const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
-      if (!result[groupName]) result[groupName] = [];
-      result[groupName].push(fight);
-    });
-
-    return result;
+    return encounterList;
   }, [fights]);
+
+  const [expandedEncounters, setExpandedEncounters] = React.useState<Set<string>>(new Set());
+  const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
+
+  const toggleEncounter = (encounterId: string) => {
+    setExpandedEncounters(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(encounterId)) {
+        newSet.delete(encounterId);
+      } else {
+        newSet.add(encounterId);
+      }
+      return newSet;
+    });
+  };
+
+  const toggleTrashForEncounter = (encounterId: string) => {
+    setShowTrashForEncounter(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(encounterId)) {
+        newSet.delete(encounterId);
+      } else {
+        newSet.add(encounterId);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
     return (
@@ -135,255 +216,272 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
+  const renderFightCard = (fight: FightFragment, idx: number) => {
+    const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+    const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+    const isWipe = rawIsWipe && !isFalsePositive;
+    const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
+    
+    // Debug logging for false positive detection
+    if (rawIsWipe && bossHealthPercent >= 99) {
+      console.log(`Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`);
+    }
+    
+    const backgroundFillPercent = isWipe ? bossHealthPercent : 100;
+    
+    return (
+      <ListItem key={fight.id} sx={{ p: 0 }}>
+        <ListItemButton
+          selected={fightId === String(fight.id)}
+          onClick={() => handleFightSelect(fight.id)}
+          sx={{
+            width: '100%',
+            height: 64,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textAlign: 'center',
+            border: 1,
+            borderColor: 'divider',
+            borderRadius: 1,
+            py: 0.5,
+            px: 1,
+            position: 'relative',
+            backgroundColor: 'transparent',
+            transition: 'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
+            '&:hover': {
+              backgroundColor: 'rgba(255,255,255,0.025)'
+            },
+            '&:active': {
+              transform: 'translateY(0.5px)'
+            },
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              bottom: 0,
+              right: `${100 - backgroundFillPercent}%`,
+              background: isWipe
+                ? (() => {
+                    const healthPercent = bossHealthPercent;
+                    if (healthPercent >= 80) {
+                      return `linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)`;
+                    } else if (healthPercent >= 50) {
+                      return `linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)`;
+                    } else if (healthPercent >= 20) {
+                      return `linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)`;
+                    } else if (healthPercent >= 8) {
+                      return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)`;
+                    } else {
+                      return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)`;
+                    }
+                  })()
+                : 'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
+              boxShadow: isWipe
+                ? '0 0 6px rgba(255, 99, 71, 0.45)'
+                : '0 0 6px rgba(76, 217, 100, 0.45)',
+              borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
+              opacity: 0.15,
+              zIndex: 0,
+            },
+          }}
+        >
+          {/* Wipe badge */}
+          <Box
+            sx={{
+              position: 'absolute',
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -120%)',
+              px: 0.6,
+              py: 0.15,
+              fontSize: '0.65rem',
+              lineHeight: 1,
+              textAlign: 'center',
+              borderRadius: 10,
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              background: isWipe
+                ? (() => {
+                    const healthPercent = bossHealthPercent;
+                    if (healthPercent >= 80) {
+                      return 'linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(239, 68, 68, 0.18) 100%)';
+                    } else if (healthPercent >= 50) {
+                      return 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(251, 146, 60, 0.16) 100%)';
+                    } else if (healthPercent >= 20) {
+                      return 'linear-gradient(135deg, rgba(251, 146, 60, 0.22) 0%, rgba(252, 211, 77, 0.14) 100%)';
+                    } else if (healthPercent >= 8) {
+                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(253, 230, 138, 0.12) 100%)';
+                    } else {
+                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(163, 230, 53, 0.12) 100%)';
+                    }
+                  })()
+                : 'transparent',
+              border: '1px solid rgba(255,255,255,0.18)',
+              boxShadow: isWipe
+                ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
+                : 'none',
+              color: isWipe 
+                ? (() => {
+                    const healthPercent = bossHealthPercent;
+                    if (healthPercent >= 80) {
+                      return '#ffb3b3';
+                    } else if (healthPercent >= 50) {
+                      return '#ffcc99';
+                    } else if (healthPercent >= 20) {
+                      return '#ffe066';
+                    } else if (healthPercent >= 8) {
+                      return '#ffed99';
+                    } else {
+                      return '#ccff99';
+                    }
+                  })()
+                : 'transparent',
+              textShadow: isWipe ? '0 1px 2px rgba(0,0,0,0.45)' : 'none',
+              pointerEvents: 'none',
+              transition: 'opacity 120ms ease',
+              opacity: isWipe ? 1 : 0,
+            }}
+          >
+            {bossHealthPercent}%
+          </Box>
+          {!isWipe && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -120%)',
+                width: 24,
+                height: 16,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                borderRadius: 8,
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                background: isFalsePositive 
+                  ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(76, 217, 100, 0.15) 100%)'
+                  : 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
+                border: isFalsePositive 
+                  ? '1px solid rgba(255, 193, 7, 0.4)'
+                  : '1px solid rgba(76, 217, 100, 0.3)',
+                boxShadow: isFalsePositive
+                  ? '0 4px 12px rgba(255, 193, 7, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                  : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                zIndex: 2
+              }}
+            >
+              <Typography sx={{ 
+                color: isFalsePositive ? '#ffc107' : '#4ade80', 
+                fontSize: '0.75rem', 
+                lineHeight: 1, 
+                fontWeight: 600 
+              }}>
+                {isFalsePositive ? '⚠' : '✓'}
+              </Typography>
+            </Box>
+          )}
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              color: 'text.secondary',
+              fontSize: '0.66rem',
+              lineHeight: 1.1,
+              whiteSpace: 'nowrap',
+              position: 'absolute',
+              bottom: 6,
+              left: '50%',
+              transform: 'translateX(-50%)',
+              zIndex: 2
+            }}
+          >
+            {fight.startTime && fight.endTime && (
+              <>
+                {formatTimestamp(fight.startTime)}{'\u00A0'}•{'\u00A0'}{formatDuration(fight.startTime, fight.endTime)}
+              </>
+            )}
+          </Typography>
+        </ListItemButton>
+      </ListItem>
+    );
+  };
+
   return (
     <>
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom>
           Select a Fight
         </Typography>
-        {Object.entries(groups).map(([groupName, groupFights]) => (
-          <Box key={groupName} sx={{ mb: 2 }}>
-            <Typography variant="h6" sx={{ mb: 1 }}>
-              {groupName}
-            </Typography>
-            <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
-              {(() => {
-                // Sort fights by startTime to get chronological order
-                const sortedFights = [...groupFights].sort((a, b) => a.startTime - b.startTime);
-                
-                return sortedFights.map((fight, idx) => {
-                  const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                  const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                  const isWipe = rawIsWipe && !isFalsePositive;
-                  const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
-                  
-                  // Debug logging for false positive detection
-                  if (rawIsWipe && bossHealthPercent >= 99) {
-                    console.log(`Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`);
-                  }
-                  
-                  // Sequential numbering across all fights
-                  const fightNumber = idx + 1;
-                  
-                  // Calculate background fill based on boss health remaining
-                  // If boss has 96% health, show 96% width
-                  const backgroundFillPercent = isWipe ? bossHealthPercent : 100;
-                  
-                  return (
-                    <ListItem key={fight.id} sx={{ p: 0 }}>
-                      <ListItemButton
-                        selected={fightId === String(fight.id)}
-                        onClick={() => handleFightSelect(fight.id)}
-                        sx={{
-                          width: '100%',
-                          height: 64,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          border: 1,
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          py: 0.5,
-                          px: 1,
-                          position: 'relative',
-                          backgroundColor: 'transparent',
-                          transition: 'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
-                          '&:hover': {
-                            backgroundColor: 'rgba(255,255,255,0.025)'
-                          },
-                          '&:active': {
-                            transform: 'translateY(0.5px)'
-                          },
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            right: `${100 - backgroundFillPercent}%`,
-                            background: isWipe
-                              ? (() => {
-                                  // Create gradient based on boss health % (higher health = more red, lower health = more green)
-                                  const healthPercent = bossHealthPercent;
-                                  
-                                  // Red zone (80-100% boss health): Deep red to red-orange
-                                  if (healthPercent >= 80) {
-                                    return `linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)`;
-                                  }
-                                  // Orange zone (50-79% boss health): Red-orange to orange
-                                  else if (healthPercent >= 50) {
-                                    return `linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)`;
-                                  }
-                                  // Yellow-orange zone (20-49% boss health): Orange to yellow-orange
-                                  else if (healthPercent >= 20) {
-                                    return `linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)`;
-                                  }
-                                  // Yellow zone (8-19% boss health): Yellow; no green yet
-                                  else if (healthPercent >= 8) {
-                                    return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)`;
-                                  }
-                                  // Yellow-green zone (1-7% boss health): Yellow to yellowish-green
-                                  else {
-                                    return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)`;
-                                  }
-                                })()
-                              : 'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
-                            boxShadow: isWipe
-                              ? '0 0 6px rgba(255, 99, 71, 0.45)'
-                              : '0 0 6px rgba(76, 217, 100, 0.45)',
-                            borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
-                            opacity: 0.15,
-                            zIndex: 0,
-                          },
+        {encounters.map((encounter) => (
+          <Accordion 
+            key={encounter.id} 
+            expanded={expandedEncounters.has(encounter.id)}
+            onChange={() => toggleEncounter(encounter.id)}
+            sx={{ mb: 2, '&:before': { display: 'none' } }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 2 }}>
+                <Typography variant="h6">
+                  {encounter.name} ({encounter.bossFights.length} attempts)
+                </Typography>
+                {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={showTrashForEncounter.has(encounter.id)}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          toggleTrashForEncounter(encounter.id);
                         }}
-                      >
-                        {/* Wipe badge centered above fight label */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -120%)',
-                            px: 0.6,
-                            py: 0.15,
-                            fontSize: '0.65rem',
-                            lineHeight: 1,
-                            textAlign: 'center',
-                            borderRadius: 10,
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)',
-                            background:
-                              isWipe
-                                ? (() => {
-                                    const healthPercent = bossHealthPercent;
-                                    
-                                    // Red zone (80-100% boss health): Deep red
-                                    if (healthPercent >= 80) {
-                                      return 'linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(239, 68, 68, 0.18) 100%)';
-                                    }
-                                    // Orange zone (50-79% boss health): Red-orange to orange
-                                    else if (healthPercent >= 50) {
-                                      return 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(251, 146, 60, 0.16) 100%)';
-                                    }
-                                    // Yellow-orange zone (20-49% boss health): Orange to yellow-orange
-                                    else if (healthPercent >= 20) {
-                                      return 'linear-gradient(135deg, rgba(251, 146, 60, 0.22) 0%, rgba(252, 211, 77, 0.14) 100%)';
-                                    }
-                                    // Yellow zone (8-19% boss health): Yellow only
-                                    else if (healthPercent >= 8) {
-                                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(253, 230, 138, 0.12) 100%)';
-                                    }
-                                    // Yellow-green zone (1-7% boss health): Yellow to yellowish-green
-                                    else {
-                                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(163, 230, 53, 0.12) 100%)';
-                                    }
-                                  })()
-                                : 'transparent',
-                            border: '1px solid rgba(255,255,255,0.18)',
-                            boxShadow:
-                              isWipe
-                                ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
-                                : 'none',
-                            color: isWipe 
-                              ? (() => {
-                                  const healthPercent = bossHealthPercent;
-                                  
-                                  // Red zone (80-100% boss health): Light red text
-                                  if (healthPercent >= 80) {
-                                    return '#ffb3b3';
-                                  }
-                                  // Orange zone (50-79% boss health): Light orange text
-                                  else if (healthPercent >= 50) {
-                                    return '#ffcc99';
-                                  }
-                                  // Yellow-orange zone (20-49% boss health): Light yellow text
-                                  else if (healthPercent >= 20) {
-                                    return '#ffe066';
-                                  }
-                                  // Yellow zone (8-19% boss health): Light yellow text (no green yet)
-                                  else if (healthPercent >= 8) {
-                                    return '#ffed99';
-                                  }
-                                  // Yellow-green zone (1-7% boss health): Light yellow-green text
-                                  else {
-                                    return '#ccff99';
-                                  }
-                                })()
-                              : 'transparent',
-                            textShadow: isWipe ? '0 1px 2px rgba(0,0,0,0.45)' : 'none',
-                            pointerEvents: 'none',
-                            transition: 'opacity 120ms ease',
-                            opacity: isWipe ? 1 : 0,
-                          }}
-                        >
-                          {bossHealthPercent}%
-                        </Box>
-                        {!isWipe && (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: '50%',
-                              left: '50%',
-                              transform: 'translate(-50%, -120%)',
-                              width: 24,
-                              height: 16,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              borderRadius: 8,
-                              backdropFilter: 'blur(8px)',
-                              WebkitBackdropFilter: 'blur(8px)',
-                              background: isFalsePositive 
-                                ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(76, 217, 100, 0.15) 100%)'
-                                : 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
-                              border: isFalsePositive 
-                                ? '1px solid rgba(255, 193, 7, 0.4)'
-                                : '1px solid rgba(76, 217, 100, 0.3)',
-                              boxShadow: isFalsePositive
-                                ? '0 4px 12px rgba(255, 193, 7, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
-                                : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
-                              zIndex: 2
-                            }}
-                          >
-                            <Typography sx={{ 
-                              color: isFalsePositive ? '#ffc107' : '#4ade80', 
-                              fontSize: '0.75rem', 
-                              lineHeight: 1, 
-                              fontWeight: 600 
-                            }}>
-                              {isFalsePositive ? '⚠' : '✓'}
-                            </Typography>
-                          </Box>
-                        )}
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: 'text.secondary',
-                            fontSize: '0.66rem',
-                            lineHeight: 1.1,
-                            whiteSpace: 'nowrap',
-                            position: 'absolute',
-                            bottom: 6,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                            zIndex: 2
-                          }}
-                        >
-                          {fight.startTime && fight.endTime && (
-                            <>
-                              {formatTimestamp(fight.startTime)}{'\u00A0'}•{'\u00A0'}{formatDuration(fight.startTime, fight.endTime)}
-                            </>
-                          )}
-                        </Typography>
-                      </ListItemButton>
-                    </ListItem>
-                  );
-                });
-              })()}
-            </List>
-          </Box>
+                        size="small"
+                      />
+                    }
+                    label={`Show Trash (${encounter.preTrash.length + encounter.postTrash.length})`}
+                    sx={{ ml: 'auto', mr: 0 }}
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                )}
+              </Box>
+            </AccordionSummary>
+            <AccordionDetails>
+              {/* Pre-boss trash */}
+              <Collapse in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}>
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}>
+                    Pre-encounter trash
+                  </Typography>
+                  <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                    {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                  </List>
+                </Box>
+              </Collapse>
+
+              {/* Boss fights */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'medium' }}>
+                  Boss attempts
+                </Typography>
+                <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                  {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
+                </List>
+              </Box>
+
+              {/* Post-boss trash */}
+              <Collapse in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}>
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}>
+                    Post-encounter trash
+                  </Typography>
+                  <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                    {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                  </List>
+                </Box>
+              </Collapse>
+            </AccordionDetails>
+          </Accordion>
         ))}
       </Paper>
     </>
