@@ -1,24 +1,16 @@
-import LinkIcon from '@mui/icons-material/Link';
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
-import Paper from '@mui/material/Paper';
-import TextField from '@mui/material/TextField';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
-import { useNavigate } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { LandingPage } from './components/LandingPage';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
-import { clearAllEvents } from './store/events_data/actions';
-import { clearMasterData } from './store/master_data/masterDataSlice';
-import { clearReport } from './store/report/reportSlice';
 import store, { persistor } from './store/storeWithHistory';
-import { useAppDispatch } from './store/useAppDispatch';
 
 // Code splitting for major features
 const LiveLog = React.lazy(() =>
@@ -46,90 +38,7 @@ const LoadingFallback: React.FC = () => (
 );
 
 const MainApp: React.FC = () => {
-  const [logUrl, setLogUrl] = React.useState('');
-  const navigate = useNavigate();
-  const dispatch = useAppDispatch();
-
-  const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
-    setLogUrl(e.target.value);
-  };
-
-  const extractReportInfo = (url: string): { reportId: string; fightId: string | null } | null => {
-    // Example URLs:
-    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM
-    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM#fight=5
-    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM?fight=5
-    // https://www.esologs.com/reports/dVZXRHYNCDWqLmbM/5
-
-    const reportMatch = url.match(/reports\/([A-Za-z0-9]+)/);
-    if (!reportMatch) return null;
-
-    const reportId = reportMatch[1];
-
-    // Try to extract fight ID from various URL patterns
-    let fightId: string | null = null;
-
-    // Pattern: #fight=5
-    const hashFightMatch = url.match(/#fight=(\d+)/);
-    if (hashFightMatch) {
-      fightId = hashFightMatch[1];
-    }
-
-    // Pattern: ?fight=5 or &fight=5
-    const queryFightMatch = url.match(/[?&]fight=(\d+)/);
-    if (queryFightMatch) {
-      fightId = queryFightMatch[1];
-    }
-
-    // Pattern: /reports/reportId/fightId
-    const pathFightMatch = url.match(/reports\/[A-Za-z0-9]+\/(\d+)/);
-    if (pathFightMatch) {
-      fightId = pathFightMatch[1];
-    }
-
-    return { reportId, fightId };
-  };
-
-  const handleLoadLog = (): void => {
-    const result = extractReportInfo(logUrl);
-    if (result) {
-      // Clear current fight, events, and report data before navigating
-      dispatch(clearAllEvents());
-      dispatch(clearMasterData());
-      dispatch(clearReport());
-
-      if (result.fightId) {
-        navigate(`/report/${result.reportId}/fight/${result.fightId}`);
-      } else {
-        navigate(`/report/${result.reportId}`);
-      }
-    } else {
-      alert('Invalid ESOLogs report URL');
-    }
-  };
-
-  return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        <TextField
-          label="ESOLogs.com Log URL"
-          variant="outlined"
-          value={logUrl}
-          onChange={handleLogUrlChange}
-          fullWidth
-          InputProps={{ startAdornment: <LinkIcon sx={{ mr: 1 }} /> }}
-        />
-        <Button
-          variant="contained"
-          color="secondary"
-          sx={{ minWidth: 180 }}
-          onClick={handleLoadLog}
-        >
-          Load Log
-        </Button>
-      </Box>
-    </Paper>
-  );
+  return <LandingPage />;
 };
 
 const App: React.FC = () => {
