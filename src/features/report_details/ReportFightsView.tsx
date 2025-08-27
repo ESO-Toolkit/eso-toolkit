@@ -26,6 +26,46 @@ function formatDuration(startTime: number, endTime: number): string {
   }
 }
 
+/**
+ * Detects if a fight marked as 100% wipe is likely a false positive (actually a kill)
+ * Uses heuristics based on fight duration, difficulty, and boss percentage
+ */
+function isFalsePositiveWipe(fight: FightFragment): boolean {
+  if (!fight.bossPercentage || fight.bossPercentage < 99.5) {
+    return false; // Not a 100% wipe
+  }
+  
+  const durationMs = fight.endTime - fight.startTime;
+  const durationSeconds = durationMs / 1000;
+  
+  // More aggressive heuristics for false positive detection:
+  
+  // 1. Very short fights (< 45 seconds) with high boss health are likely false positives
+  if (durationSeconds < 45 && fight.bossPercentage >= 95) {
+    return true;
+  }
+  
+  // 2. Exactly 100.0% is very suspicious (ESO bug)
+  if (Math.abs(fight.bossPercentage - 100) < 0.1) {
+    return true;
+  }
+  
+  // 3. Any fight with 100% that lasted more than 10 seconds but less than 5 minutes
+  if (fight.bossPercentage >= 99.9 && durationSeconds > 10 && durationSeconds < 300) {
+    return true;
+  }
+  
+  // 4. Normal/veteran difficulty with very high boss health in reasonable time
+  if ((fight.difficulty === 0 || fight.difficulty === 1) && 
+      fight.bossPercentage >= 98 && 
+      durationSeconds > 15 && 
+      durationSeconds < 600) {
+    return true;
+  }
+  
+  return false;
+}
+
 interface ReportFightsViewProps {
   fights: FightFragment[] | null | undefined;
   loading: boolean;
@@ -112,8 +152,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 const sortedFights = [...groupFights].sort((a, b) => a.startTime - b.startTime);
                 
                 return sortedFights.map((fight, idx) => {
-                  const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                  const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                  const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                  const isWipe = rawIsWipe && !isFalsePositive;
                   const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
+                  
+                  // Debug logging for false positive detection
+                  if (rawIsWipe && bossHealthPercent >= 99) {
+                    console.log(`Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`);
+                  }
                   
                   // Sequential numbering across all fights
                   const fightNumber = idx + 1;
@@ -288,14 +335,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               borderRadius: 8,
                               backdropFilter: 'blur(8px)',
                               WebkitBackdropFilter: 'blur(8px)',
-                              background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
-                              border: '1px solid rgba(76, 217, 100, 0.3)',
-                              boxShadow: '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+                              background: isFalsePositive 
+                                ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(76, 217, 100, 0.15) 100%)'
+                                : 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
+                              border: isFalsePositive 
+                                ? '1px solid rgba(255, 193, 7, 0.4)'
+                                : '1px solid rgba(76, 217, 100, 0.3)',
+                              boxShadow: isFalsePositive
+                                ? '0 4px 12px rgba(255, 193, 7, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                                : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
                               zIndex: 2
                             }}
                           >
-                            <Typography sx={{ color: '#4ade80', fontSize: '0.75rem', lineHeight: 1, fontWeight: 600 }}>
-                              ✓
+                            <Typography sx={{ 
+                              color: isFalsePositive ? '#ffc107' : '#4ade80', 
+                              fontSize: '0.75rem', 
+                              lineHeight: 1, 
+                              fontWeight: 600 
+                            }}>
+                              {isFalsePositive ? '⚠' : '✓'}
                             </Typography>
                           </Box>
                         )}
