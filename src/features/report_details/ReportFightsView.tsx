@@ -117,11 +117,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   
                   // Sequential numbering across all fights
                   const fightNumber = idx + 1;
-                  const fightLabel = isWipe ? `WIPE ${fightNumber}` : `CLEAR ${fightNumber}`;
                   
-                  // Calculate bottom border width based on damage dealt
-                  // If boss has 60% health, show 40% width (100% - 60%)
-                  const damageDealtPercent = isWipe ? (100 - bossHealthPercent) : 100;
+                  // Calculate background fill based on boss health remaining
+                  // If boss has 96% health, show 96% width
+                  const backgroundFillPercent = isWipe ? bossHealthPercent : 100;
                   
                   return (
                     <ListItem key={fight.id} sx={{ p: 0 }}>
@@ -131,6 +130,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         sx={{
                           width: '100%',
                           height: 64,
+                          display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -155,9 +155,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             top: 0,
                             left: 0,
                             bottom: 0,
-                            right: `${100 - damageDealtPercent}%`,
+                            right: `${100 - backgroundFillPercent}%`,
                             background: isWipe
-                              ? 'linear-gradient(90deg, rgba(255, 99, 71, 0.65) 0%, rgba(255, 165, 0, 0.55) 100%)'
+                              ? (() => {
+                                  // Create gradient based on boss health % (higher health = more red, lower health = more green)
+                                  const healthPercent = bossHealthPercent;
+                                  
+                                  // Red zone (80-100% boss health): Deep red to red-orange
+                                  if (healthPercent >= 80) {
+                                    return `linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)`;
+                                  }
+                                  // Orange zone (50-79% boss health): Red-orange to orange
+                                  else if (healthPercent >= 50) {
+                                    return `linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)`;
+                                  }
+                                  // Yellow-orange zone (20-49% boss health): Orange to yellow-orange
+                                  else if (healthPercent >= 20) {
+                                    return `linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)`;
+                                  }
+                                  // Yellow zone (8-19% boss health): Yellow; no green yet
+                                  else if (healthPercent >= 8) {
+                                    return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)`;
+                                  }
+                                  // Yellow-green zone (1-7% boss health): Yellow to yellowish-green
+                                  else {
+                                    return `linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)`;
+                                  }
+                                })()
                               : 'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
                             boxShadow: isWipe
                               ? '0 0 6px rgba(255, 99, 71, 0.45)'
@@ -168,29 +192,79 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           },
                         }}
                       >
-                        {/* Wipe badge in the corner (keeps height compact) */}
+                        {/* Wipe badge centered above fight label */}
                         <Box
                           sx={{
                             position: 'absolute',
-                            top: 6,
-                            right: 6,
+                            top: '50%',
+                            left: '50%',
+                            transform: 'translate(-50%, -120%)',
                             px: 0.6,
-                            py: 0.1,
-                            fontSize: '0.66rem',
-                            lineHeight: 1.1,
+                            py: 0.15,
+                            fontSize: '0.65rem',
+                            lineHeight: 1,
+                            textAlign: 'center',
                             borderRadius: 10,
                             backdropFilter: 'blur(8px)',
                             WebkitBackdropFilter: 'blur(8px)',
                             background:
                               isWipe
-                                ? 'linear-gradient(135deg, rgba(255, 82, 82, 0.22) 0%, rgba(255, 149, 0, 0.14) 100%)'
+                                ? (() => {
+                                    const healthPercent = bossHealthPercent;
+                                    
+                                    // Red zone (80-100% boss health): Deep red
+                                    if (healthPercent >= 80) {
+                                      return 'linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(239, 68, 68, 0.18) 100%)';
+                                    }
+                                    // Orange zone (50-79% boss health): Red-orange to orange
+                                    else if (healthPercent >= 50) {
+                                      return 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(251, 146, 60, 0.16) 100%)';
+                                    }
+                                    // Yellow-orange zone (20-49% boss health): Orange to yellow-orange
+                                    else if (healthPercent >= 20) {
+                                      return 'linear-gradient(135deg, rgba(251, 146, 60, 0.22) 0%, rgba(252, 211, 77, 0.14) 100%)';
+                                    }
+                                    // Yellow zone (8-19% boss health): Yellow only
+                                    else if (healthPercent >= 8) {
+                                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(253, 230, 138, 0.12) 100%)';
+                                    }
+                                    // Yellow-green zone (1-7% boss health): Yellow to yellowish-green
+                                    else {
+                                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(163, 230, 53, 0.12) 100%)';
+                                    }
+                                  })()
                                 : 'transparent',
                             border: '1px solid rgba(255,255,255,0.18)',
                             boxShadow:
                               isWipe
                                 ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
                                 : 'none',
-                            color: isWipe ? '#ffb199' : 'transparent',
+                            color: isWipe 
+                              ? (() => {
+                                  const healthPercent = bossHealthPercent;
+                                  
+                                  // Red zone (80-100% boss health): Light red text
+                                  if (healthPercent >= 80) {
+                                    return '#ffb3b3';
+                                  }
+                                  // Orange zone (50-79% boss health): Light orange text
+                                  else if (healthPercent >= 50) {
+                                    return '#ffcc99';
+                                  }
+                                  // Yellow-orange zone (20-49% boss health): Light yellow text
+                                  else if (healthPercent >= 20) {
+                                    return '#ffe066';
+                                  }
+                                  // Yellow zone (8-19% boss health): Light yellow text (no green yet)
+                                  else if (healthPercent >= 8) {
+                                    return '#ffed99';
+                                  }
+                                  // Yellow-green zone (1-7% boss health): Light yellow-green text
+                                  else {
+                                    return '#ccff99';
+                                  }
+                                })()
+                              : 'transparent',
                             textShadow: isWipe ? '0 1px 2px rgba(0,0,0,0.45)' : 'none',
                             pointerEvents: 'none',
                             transition: 'opacity 120ms ease',
@@ -199,23 +273,52 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         >
                           {bossHealthPercent}%
                         </Box>
-                        <Typography variant="button" sx={{ color: '#ffffff', mb: 0.25, position: 'relative', zIndex: 2, fontSize: '0.78rem', lineHeight: 1.1, letterSpacing: 0.2 }}>
-                          {fightLabel}
-                        </Typography>
-                        {fight.startTime && fight.endTime && (
-                          <Typography 
-                            variant="caption" 
-                            sx={{ 
-                              color: 'text.secondary',
-                              fontSize: '0.68rem',
-                              lineHeight: 1.1,
-                              position: 'relative',
+                        {!isWipe && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: '50%',
+                              left: '50%',
+                              transform: 'translate(-50%, -120%)',
+                              width: 24,
+                              height: 16,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              borderRadius: 8,
+                              backdropFilter: 'blur(8px)',
+                              WebkitBackdropFilter: 'blur(8px)',
+                              background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
+                              border: '1px solid rgba(76, 217, 100, 0.3)',
+                              boxShadow: '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
                               zIndex: 2
                             }}
                           >
-                            {formatTimestamp(fight.startTime)} • {formatDuration(fight.startTime, fight.endTime)}
-                          </Typography>
+                            <Typography sx={{ color: '#4ade80', fontSize: '0.75rem', lineHeight: 1, fontWeight: 600 }}>
+                              ✓
+                            </Typography>
+                          </Box>
                         )}
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            fontSize: '0.66rem',
+                            lineHeight: 1.1,
+                            whiteSpace: 'nowrap',
+                            position: 'absolute',
+                            bottom: 6,
+                            left: '50%',
+                            transform: 'translateX(-50%)',
+                            zIndex: 2
+                          }}
+                        >
+                          {fight.startTime && fight.endTime && (
+                            <>
+                              {formatTimestamp(fight.startTime)}{'\u00A0'}•{'\u00A0'}{formatDuration(fight.startTime, fight.endTime)}
+                            </>
+                          )}
+                        </Typography>
                       </ListItemButton>
                     </ListItem>
                   );
