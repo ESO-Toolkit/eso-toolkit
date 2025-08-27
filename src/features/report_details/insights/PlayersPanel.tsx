@@ -366,6 +366,8 @@ export const PlayersPanel: React.FC = () => {
         reportId={reportId}
         fightId={fightId}
         playerGear={playerGear}
+        fightStartTime={fight?.startTime}
+        fightEndTime={fight?.endTime}
       />
     );
   }
@@ -382,6 +384,8 @@ export const PlayersPanel: React.FC = () => {
       fightId={fightId}
       isLoading={false}
       playerGear={playerGear}
+      fightStartTime={fight?.startTime}
+      fightEndTime={fight?.endTime}
     />
   );
 };

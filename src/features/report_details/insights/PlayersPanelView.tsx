@@ -300,6 +300,24 @@ function abbreviateFood(name: string): string {
         .join('');
 }
 
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', { 
+    hour12: false, 
+    hour: '2-digit', 
+    minute: '2-digit', 
+    second: '2-digit' 
+  });
+}
+
+function formatDuration(startTime: number, endTime: number): string {
+  const durationMs = endTime - startTime;
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+}
+
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
@@ -311,6 +329,8 @@ interface PlayersPanelViewProps {
   fightId?: string | null;
   isLoading: boolean;
   playerGear: Record<number, PlayerGearSetRecord[]>;
+  fightStartTime?: number;
+  fightEndTime?: number;
 }
 
 const CLASS_ICON_MAP: Record<string, string | undefined> = {
@@ -454,6 +474,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   fightId,
   isLoading,
   playerGear,
+  fightStartTime,
+  fightEndTime,
 }) => {
   // Encoded pins filter provided by user for casts view
   const CASTS_PINS =
@@ -505,9 +527,36 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Players
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">
+          Players
+        </Typography>
+        {fightStartTime && fightEndTime && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'text.secondary',
+                fontSize: '0.75rem',
+                fontFamily: 'monospace'
+              }}
+            >
+              {formatTimestamp(fightStartTime)} - {formatTimestamp(fightEndTime)}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'primary.main',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                fontFamily: 'monospace'
+              }}
+            >
+              {formatDuration(fightStartTime, fightEndTime)}
+            </Typography>
+          </Box>
+        )}
+      </Box>
       <Box
         sx={{
           display: 'grid',
