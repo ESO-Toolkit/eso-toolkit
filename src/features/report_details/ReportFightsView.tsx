@@ -4,6 +4,28 @@ import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
 
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  return date.toLocaleTimeString('en-US', { 
+    hour12: true, 
+    hour: 'numeric', 
+    minute: '2-digit'
+  });
+}
+
+function formatDuration(startTime: number, endTime: number): string {
+  const durationMs = endTime - startTime;
+  const totalSeconds = Math.floor(durationMs / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  
+  if (minutes > 0) {
+    return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  } else {
+    return `${seconds}s`;
+  }
+}
+
 interface ReportFightsViewProps {
   fights: FightFragment[] | null | undefined;
   loading: boolean;
@@ -33,6 +55,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     }
 
     fights.forEach((fight: FightFragment) => {
+      // Filter out invalid fights (no start/end time or invalid duration)
+      if (!fight.startTime || !fight.endTime || fight.endTime <= fight.startTime) {
+        return;
+      }
+      
       const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
       if (!result[groupName]) result[groupName] = [];
       result[groupName].push(fight);
@@ -89,16 +116,31 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       selected={fightId === String(fight.id)}
                       onClick={() => handleFightSelect(fight.id)}
                       sx={{
-                        minWidth: 48,
-                        justifyContent: 'center',
+                        minWidth: 140,
+                        flexDirection: 'column',
+                        alignItems: 'center',
                         border: 1,
                         borderColor: 'divider',
                         borderRadius: 1,
+                        py: 1,
+                        px: 1.5,
                       }}
                     >
-                      <Typography variant="button" color={isWipe ? 'error' : 'success'}>
+                      <Typography variant="button" color={isWipe ? 'error' : 'success'} sx={{ mb: 0.5 }}>
                         {fightLabel}
                       </Typography>
+                      {fight.startTime && fight.endTime && (
+                        <Typography 
+                          variant="caption" 
+                          sx={{ 
+                            color: 'text.secondary',
+                            fontSize: '0.7rem',
+                            lineHeight: 1
+                          }}
+                        >
+                          {formatTimestamp(fight.startTime)} • {formatDuration(fight.startTime, fight.endTime)}
+                        </Typography>
+                      )}
                     </ListItemButton>
                   </ListItem>
                 );
