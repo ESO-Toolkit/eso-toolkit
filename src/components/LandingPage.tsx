@@ -1,7 +1,7 @@
 import LinkIcon from '@mui/icons-material/Link';
 import { Box, Button, Container, TextField, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { clearAllEvents } from '../store/events_data/actions';
@@ -16,7 +16,6 @@ const LandingContainer = styled(Box)(({ theme }) => ({
   position: 'relative',
   overflow: 'visible',
 }));
-
 
 const HeroSection = styled(Box)(({ theme }) => ({
   minHeight: '80vh',
@@ -45,7 +44,8 @@ const HeroSection = styled(Box)(({ theme }) => ({
     transform: 'translateX(-50%)',
     width: '600px',
     height: '300px',
-    background: 'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
+    background:
+      'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
     borderRadius: '50%',
     filter: 'blur(40px)',
     zIndex: 0,
@@ -117,7 +117,8 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     wordBreak: 'keep-all',
     overflowWrap: 'normal',
     display: 'inline-block',
-    textShadow: '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+    textShadow:
+      '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
   },
   '& .highlight-text': {
     position: 'relative',
@@ -192,7 +193,8 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   },
   '&:hover': {
     transform: 'translateY(-4px)',
-    boxShadow: '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+    boxShadow:
+      '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
     borderColor: 'rgba(56, 189, 248, 0.4)',
   },
   [theme.breakpoints.down('sm')]: {
@@ -355,7 +357,6 @@ const BadgeContainer = styled(Box)({
   marginBottom: '2rem',
 });
 
-
 export const LandingPage: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
   const navigate = useNavigate();
@@ -407,35 +408,29 @@ export const LandingPage: React.FC = () => {
     }
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
-
   return (
     <LandingContainer>
-
       <HeroSection id="home">
         <HeroContent className="u-fade-in-up">
           <HeroTitle variant="h1">
             <span className="light-text">Essential Tools</span>
             <br />
-            <span className="no-wrap">For <span className="highlight-text">Your ESO Journey</span></span>
+            <span className="no-wrap">
+              For <span className="highlight-text">Your ESO Journey</span>
+            </span>
           </HeroTitle>
           <HeroSubtitle>
-            Optimize your builds, create stunning messages, and manage your guild with powerful, 
+            Optimize your builds, create stunning messages, and manage your guild with powerful,
             easy-to-use tools designed for Elder Scrolls Online players.
           </HeroSubtitle>
-          
+
           <LogInputContainer>
             <TextField
               label="ESOLogs.com Log URL"
               variant="outlined"
               value={logUrl}
               onChange={handleLogUrlChange}
-              sx={{ 
+              sx={{
                 flex: 1,
                 '& .MuiOutlinedInput-root': {
                   backgroundColor: 'transparent',
@@ -473,14 +468,14 @@ export const LandingPage: React.FC = () => {
                   fontSize: '1rem',
                 },
               }}
-              InputProps={{ 
-                startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} /> 
+              InputProps={{
+                startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
               }}
             />
             <Button
               variant="contained"
               color="secondary"
-              sx={{ 
+              sx={{
                 minWidth: 200,
                 height: 64,
                 background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
@@ -502,7 +497,8 @@ export const LandingPage: React.FC = () => {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
+                  background:
+                    'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
                   opacity: 0,
                   transition: 'opacity 0.3s ease',
                 },
@@ -513,7 +509,8 @@ export const LandingPage: React.FC = () => {
                   left: '-100%',
                   width: '100%',
                   height: '100%',
-                  background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                  background:
+                    'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
                   transition: 'left 0.6s ease',
                 },
                 '&:hover': {
@@ -535,19 +532,16 @@ export const LandingPage: React.FC = () => {
               Load Log
             </Button>
           </LogInputContainer>
-
         </HeroContent>
       </HeroSection>
 
       <ToolsSection id="tools">
         <BadgeContainer>
-          <MarketingBadge>
-            ⚔️ Battle-Tested by ESO Veterans
-          </MarketingBadge>
+          <MarketingBadge>⚔️ Battle-Tested by ESO Veterans</MarketingBadge>
         </BadgeContainer>
         <SectionTitle>Our Tools</SectionTitle>
         <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
-        
+
         <ToolsGrid>
           <ToolCard>
             <ToolIcon>📝</ToolIcon>
@@ -555,8 +549,8 @@ export const LandingPage: React.FC = () => {
               Text Editor
             </Typography>
             <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
-              Create eye-catching MOTD and group finder posts with our visual editor. 
-              Design messages that stand out with custom styles and formatting.
+              Create eye-catching MOTD and group finder posts with our visual editor. Design
+              messages that stand out with custom styles and formatting.
             </Typography>
             <ToolFeatures>
               <li>Visual interface for easy formatting</li>
@@ -573,8 +567,8 @@ export const LandingPage: React.FC = () => {
               Build Calculator
             </Typography>
             <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
-              Optimize your character's stats with our comprehensive calculator. 
-              Track penetration, critical damage, and armor to hit those crucial caps.
+              Optimize your character's stats with our comprehensive calculator. Track penetration,
+              critical damage, and armor to hit those crucial caps.
             </Typography>
             <ToolFeatures>
               <li>Penetration optimizer (18,200 cap)</li>
@@ -591,8 +585,8 @@ export const LandingPage: React.FC = () => {
               ESO Log Analyzer
             </Typography>
             <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
-              Deep dive into your ESO combat logs with advanced analytics. 
-              Analyze player performance, damage patterns, and raid insights with detailed breakdowns.
+              Deep dive into your ESO combat logs with advanced analytics. Analyze player
+              performance, damage patterns, and raid insights with detailed breakdowns.
             </Typography>
             <ToolFeatures>
               <li>Combat performance analysis</li>
@@ -600,8 +594,14 @@ export const LandingPage: React.FC = () => {
               <li>Skill usage tracking</li>
               <li>Real-time fight insights</li>
             </ToolFeatures>
-            <ToolAction 
-              onClick={() => window.open('https://github.com/bkrupa/eso-log-aggregator', '_blank', 'noopener,noreferrer')}
+            <ToolAction
+              onClick={() =>
+                window.open(
+                  'https://github.com/bkrupa/eso-log-aggregator',
+                  '_blank',
+                  'noopener,noreferrer'
+                )
+              }
             >
               View on GitHub
             </ToolAction>
@@ -614,8 +614,8 @@ export const LandingPage: React.FC = () => {
               Discord Roster Bot
             </Typography>
             <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
-              Manage your guild roster effortlessly with our Discord bot. 
-              Track members, roles, and raid signups all in one place.
+              Manage your guild roster effortlessly with our Discord bot. Track members, roles, and
+              raid signups all in one place.
             </Typography>
             <ToolFeatures>
               <li>Automated roster management</li>
@@ -633,9 +633,9 @@ export const LandingPage: React.FC = () => {
       <ToolsSection id="about">
         <SectionTitle>Built By Players, For Players</SectionTitle>
         <SectionSubtitle>
-          ESO Helper Tools is a community-driven project dedicated to enhancing your 
-          Elder Scrolls Online experience. Our tools are constantly updated to match 
-          the latest game patches and meta changes.
+          ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
+          Online experience. Our tools are constantly updated to match the latest game patches and
+          meta changes.
         </SectionSubtitle>
       </ToolsSection>
 
@@ -650,10 +650,38 @@ export const LandingPage: React.FC = () => {
         }}
       >
         <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', mb: 2, flexWrap: 'wrap' }}>
-          <a href="https://esohelper.tools/text-editor" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>Text Editor</a>
-          <a href="https://esohelper.tools/calculator" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>Calculator</a>
-          <a href="https://discord.gg/mMjwcQYFdc" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>Discord</a>
-          <a href="https://github.com/esohelper" target="_blank" rel="noopener noreferrer" style={{ color: '#94a3b8', textDecoration: 'none' }}>GitHub</a>
+          <a
+            href="https://esohelper.tools/text-editor"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#94a3b8', textDecoration: 'none' }}
+          >
+            Text Editor
+          </a>
+          <a
+            href="https://esohelper.tools/calculator"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#94a3b8', textDecoration: 'none' }}
+          >
+            Calculator
+          </a>
+          <a
+            href="https://discord.gg/mMjwcQYFdc"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#94a3b8', textDecoration: 'none' }}
+          >
+            Discord
+          </a>
+          <a
+            href="https://github.com/esohelper"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: '#94a3b8', textDecoration: 'none' }}
+          >
+            GitHub
+          </a>
         </Box>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
           © 2024 ESO Helper Tools. Not affiliated with ZeniMax Online Studios or Bethesda.
