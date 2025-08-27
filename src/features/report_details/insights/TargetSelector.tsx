@@ -10,36 +10,55 @@ import {
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { selectEventPlayers } from '../../../store/events_data/actions';
+import { useReportMasterData } from '../../../hooks';
+import { useSelectedFight } from '../../../hooks/useSelectedFight';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { setSelectedTargetId } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
 export const TargetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
-  const players = useSelector(selectEventPlayers);
+
+  const fight = useSelectedFight();
+  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
-  const handleTargetChange = (event: SelectChangeEvent<string>): void => {
-    const value = event.target.value;
-    dispatch(setSelectedTargetId(value === '' ? null : value));
-  };
+  const handleTargetChange = React.useCallback(
+    (event: SelectChangeEvent<string | null>): void => {
+      const value = event.target.value;
+      dispatch(setSelectedTargetId(!value ? null : value));
+    },
+    [dispatch]
+  );
 
-  const playersList = React.useMemo(() => {
-    return Object.values(players).map((player) => ({
-      id: String(player.id || ''),
-      name: player.displayName || player.name || `Player ${player.id}`,
-    }));
-  }, [players]);
-
-  // Auto-select first player if none is selected and players are available
-  React.useEffect(() => {
-    if (!selectedTargetId && playersList.length > 0) {
-      dispatch(setSelectedTargetId(playersList[0].id));
+  const targetsList = React.useMemo(() => {
+    if (!fight?.enemyNPCs) {
+      return [];
     }
-  }, [selectedTargetId, playersList, dispatch]);
 
-  if (playersList.length === 0) {
+    const result = [];
+    for (const npc of fight?.enemyNPCs) {
+      if (!npc?.id) {
+        continue;
+      }
+
+      const enemy = reportMasterData?.actorsById?.[npc.id];
+      if (enemy) {
+        result.push({
+          id: enemy.id,
+          name: enemy.name,
+        });
+      }
+    }
+
+    return result;
+  }, [reportMasterData, fight?.enemyNPCs]);
+
+  if (isMasterDataLoading) {
+    return null;
+  }
+
+  if (!fight?.enemyNPCs?.length) {
     return (
       <Box sx={{ mb: 2 }}>
         <Typography variant="body2" color="text.secondary">
@@ -62,9 +81,9 @@ export const TargetSelector: React.FC = () => {
           <MenuItem value="">
             <em>No target selected</em>
           </MenuItem>
-          {playersList.map((player) => (
-            <MenuItem key={player.id} value={player.id}>
-              {player.name} (ID: {player.id})
+          {targetsList.map((target) => (
+            <MenuItem key={target.id} value={target.id || ''}>
+              {target.name} (ID: {target.id})
             </MenuItem>
           ))}
         </Select>

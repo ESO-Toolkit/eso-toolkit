@@ -10,11 +10,8 @@ interface BuffUptimesViewProps {
   onToggleShowAll: (showAll: boolean) => void;
   reportId: string | null;
   fightId: string | null;
+  selectedTargetId: string | null;
 }
-
-const createEsoLogsUrl = (reportId: string, fightId: string, abilityGameID: string): string => {
-  return `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=0&ability=${abilityGameID}&spells=buffs`;
-};
 
 export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   buffUptimes,
@@ -23,13 +20,8 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
   onToggleShowAll,
   reportId,
   fightId,
+  selectedTargetId,
 }) => {
-  const handleBuffClick = (abilityGameID: string): void => {
-    if (reportId && fightId) {
-      const url = createEsoLogsUrl(reportId, fightId, abilityGameID);
-      window.open(url, '_blank');
-    }
-  };
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
@@ -77,8 +69,9 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
                 >
                   <BuffUptimeProgressBar
                     buff={buff}
-                    clickable={!!(reportId && fightId)}
-                    onClick={() => handleBuffClick(buff.abilityGameID)}
+                    reportId={reportId}
+                    fightId={fightId}
+                    selectedTargetId={selectedTargetId}
                   />
                 </ListItem>
               );

@@ -9,24 +9,11 @@ export interface StatusEffectUptime extends BuffUptime {
 
 interface StatusEffectUptimesViewProps {
   selectedTargetId: string | null;
-  statusEffectUptimes: StatusEffectUptime[];
+  statusEffectUptimes: StatusEffectUptime[] | undefined;
   isLoading: boolean;
   reportId: string | null;
   fightId: string | null;
-  bossTargetIds: string[] | null;
 }
-
-const createEsoLogsUrl = (
-  reportId: string,
-  fightId: string,
-  abilityGameID: string,
-  selectedTargetId: string,
-  isDebuff: boolean
-): string => {
-  const hostility = isDebuff ? '1' : '0';
-  const spells = isDebuff ? 'debuffs' : 'buffs';
-  return `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=${hostility}&ability=${abilityGameID}&spells=${spells}&target=${selectedTargetId}`;
-};
 
 export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = ({
   selectedTargetId,
@@ -34,15 +21,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
   isLoading,
   reportId,
   fightId,
-  bossTargetIds,
 }) => {
-  const handleStatusEffectClick = (abilityGameID: string, isDebuff: boolean): void => {
-    if (reportId && fightId && selectedTargetId) {
-      const url = createEsoLogsUrl(reportId, fightId, abilityGameID, selectedTargetId, isDebuff);
-      window.open(url, '_blank');
-    }
-  };
-
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
@@ -64,13 +43,11 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {selectedTargetId
           ? 'Shows status effects applied to the selected target'
-          : bossTargetIds && bossTargetIds.length > 0
-          ? 'Shows average status effect uptimes across all boss targets'
           : 'Shows status effects applied to all targets'}
         {selectedTargetId && '. Click on a status effect to view in ESO Logs'}.
       </Typography>
 
-      {statusEffectUptimes.length > 0 ? (
+      {statusEffectUptimes && statusEffectUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
             {statusEffectUptimes.map((statusEffect) => {
@@ -80,15 +57,17 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
                   sx={{
                     py: 1,
                     '&:hover': {
-                      backgroundColor: reportId && fightId && selectedTargetId ? 'action.hover' : 'transparent',
+                      backgroundColor:
+                        reportId && fightId && selectedTargetId ? 'action.hover' : 'transparent',
                     },
                   }}
                   divider
                 >
                   <BuffUptimeProgressBar
                     buff={statusEffect}
-                    clickable={!!(reportId && fightId && selectedTargetId)}
-                    onClick={() => handleStatusEffectClick(statusEffect.abilityGameID, statusEffect.isDebuff)}
+                    reportId={reportId}
+                    fightId={fightId}
+                    selectedTargetId={selectedTargetId}
                   />
                 </ListItem>
               );
@@ -99,8 +78,6 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         <Typography variant="body2" color="text.secondary">
           {selectedTargetId
             ? 'No status effects found for the selected target.'
-            : bossTargetIds && bossTargetIds.length > 0
-            ? 'No status effects found for boss targets.'
             : 'No status effects found.'}
         </Typography>
       )}

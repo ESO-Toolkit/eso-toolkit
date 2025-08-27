@@ -20,6 +20,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightsLoading,
   selectedTabId,
   reportId,
+  fightId,
 }) => {
   const navigate = useNavigate();
 
@@ -41,7 +42,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   }
 
   if (!fight) {
-    return <Typography variant="h6">Fight not found.</Typography>;
+    return <Typography variant="h6">Fight ({fightId}) not found.</Typography>;
   }
 
   return (

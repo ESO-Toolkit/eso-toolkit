@@ -1,6 +1,8 @@
 import { Box, Typography, LinearProgress, Avatar } from '@mui/material';
 import React from 'react';
 
+import { HostilityType } from '../../../graphql/generated';
+
 export interface BuffUptime {
   abilityGameID: string;
   abilityName: string;
@@ -8,30 +10,70 @@ export interface BuffUptime {
   totalDuration: number;
   uptime: number;
   uptimePercentage: number;
+  isDebuff: boolean;
   applications: number;
+  hostilityType: HostilityType;
 }
 
 interface BuffUptimeProgressBarProps {
   buff: BuffUptime;
-  onClick?: () => void;
-  clickable?: boolean;
+  reportId: string | null;
+  fightId: string | null;
+  selectedTargetId: string | null;
 }
+
+const createEsoLogsUrl = (
+  reportId: string | null,
+  fightId: string | null,
+  abilityGameID: string,
+  selectedTargetId: string | null,
+  isDebuff: boolean,
+  hostility: HostilityType
+): string => {
+  let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=${hostility}&ability=${abilityGameID}`;
+
+  if (isDebuff) {
+    url += `&spells=auras`;
+  }
+
+  if (selectedTargetId) {
+    url += `&target=${selectedTargetId}`;
+  } else {
+    url += '&sourceclass=Boss';
+  }
+
+  return url;
+};
 
 export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   buff,
-  onClick,
-  clickable = false,
+  reportId,
+  fightId,
+  selectedTargetId,
 }) => {
   const pct = Math.max(0, Math.min(100, buff.uptimePercentage));
+
+  const onClick = React.useCallback((): void => {
+    const url = createEsoLogsUrl(
+      reportId,
+      fightId,
+      buff.abilityGameID,
+      selectedTargetId,
+      buff.isDebuff,
+      buff.hostilityType
+    );
+
+    window.open(url, '_blank');
+  }, [reportId, fightId, buff.abilityGameID, selectedTargetId, buff.isDebuff, buff.hostilityType]);
 
   return (
     <Box
       sx={{
         width: '100%',
         position: 'relative',
-        cursor: clickable ? 'pointer' : 'default',
+        cursor: 'pointer',
         '&:hover': {
-          opacity: clickable ? 0.9 : 1,
+          opacity: 0.9,
         },
       }}
       onClick={onClick}

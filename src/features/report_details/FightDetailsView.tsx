@@ -19,9 +19,6 @@ import {
   Tooltip,
   FormControl,
   InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
   FormControlLabel,
   Switch,
   Stack,
@@ -42,6 +39,7 @@ import { TargetEventsPanel } from './debug/TargetEventsPanel';
 import { HealingDonePanel } from './healing/HealingDonePanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
+import { TargetSelector } from './insights/TargetSelector';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
 
 interface FightDetailsViewProps {
@@ -50,10 +48,8 @@ interface FightDetailsViewProps {
   validSelectedTab: number;
   showExperimentalTabs: boolean;
   targets: Array<{ id: string; name: string }>;
-  selectedTargetId: string | null;
   loading: boolean;
   onNavigateToTab: (tabIdx: number) => void;
-  onTargetChange: (event: SelectChangeEvent<string | null>) => void;
   onToggleExperimentalTabs: () => void;
 }
 
@@ -61,11 +57,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
   validSelectedTab,
   showExperimentalTabs,
-  targets,
-  selectedTargetId,
   loading,
   onNavigateToTab,
-  onTargetChange,
   onToggleExperimentalTabs,
 }) => {
   // Only render content when events for the current fight are loaded
@@ -92,18 +85,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <InputLabel>Target Enemy</InputLabel>
-          <Select
-            value={selectedTargetId}
-            label="Target Enemy"
-            onChange={onTargetChange}
-            displayEmpty
-          >
-            {targets.map((target) => (
-              <MenuItem key={target.id} value={target.id}>
-                {target.name} ({target.id})
-              </MenuItem>
-            ))}
-          </Select>
+          <TargetSelector />
         </FormControl>
         <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, and Diagnostics">
           <FormControlLabel

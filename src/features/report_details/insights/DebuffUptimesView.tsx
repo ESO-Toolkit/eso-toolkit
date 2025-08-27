@@ -11,17 +11,7 @@ interface DebuffUptimesViewProps {
   onToggleShowAll: (showAll: boolean) => void;
   reportId: string | null;
   fightId: string | null;
-  bossTargetIds: string[] | null;
 }
-
-const createEsoLogsUrl = (
-  reportId: string,
-  fightId: string,
-  abilityGameID: string,
-  selectedTargetId: string
-): string => {
-  return `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=1&ability=${abilityGameID}&spells=debuffs&target=${selectedTargetId}`;
-};
 
 export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   selectedTargetId,
@@ -31,14 +21,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
   onToggleShowAll,
   reportId,
   fightId,
-  bossTargetIds,
 }) => {
-  const handleDebuffClick = (abilityGameID: string): void => {
-    if (reportId && fightId && selectedTargetId) {
-      const url = createEsoLogsUrl(reportId, fightId, abilityGameID, selectedTargetId);
-      window.open(url, '_blank');
-    }
-  };
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
@@ -66,11 +49,9 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
         {selectedTargetId
           ? 'Shows debuffs applied by friendly players to the selected target'
-          : bossTargetIds && bossTargetIds.length > 0
-          ? 'Shows average debuff uptimes across all boss targets'
           : 'Shows debuffs applied by friendly players to all targets'}
-        {!showAllDebuffs && ' (filtered to important debuffs only)'}. 
-        {selectedTargetId && 'Click on a debuff to view in ESO Logs.'}
+        {!showAllDebuffs && ' (filtered to important debuffs only)'}.
+        {reportId && fightId && ' Click on a debuff to view in ESO Logs.'}
       </Typography>
 
       {debuffUptimes.length > 0 ? (
@@ -90,8 +71,9 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
                 >
                   <BuffUptimeProgressBar
                     buff={debuff}
-                    clickable={!!(reportId && fightId && selectedTargetId)}
-                    onClick={() => handleDebuffClick(debuff.abilityGameID)}
+                    reportId={reportId}
+                    fightId={fightId}
+                    selectedTargetId={selectedTargetId}
                   />
                 </ListItem>
               );
@@ -103,14 +85,10 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
           {showAllDebuffs
             ? selectedTargetId
               ? 'No friendly debuff events found for the selected target.'
-              : bossTargetIds && bossTargetIds.length > 0
-              ? 'No friendly debuff events found for boss targets.'
               : 'No friendly debuff events found.'
             : selectedTargetId
-            ? 'No important debuff events found for the selected target. Try showing all debuffs.'
-            : bossTargetIds && bossTargetIds.length > 0
-            ? 'No important debuff events found for boss targets. Try showing all debuffs.'
-            : 'No important debuff events found. Try showing all debuffs.'}
+              ? 'No important debuff events found for the selected target. Try showing all debuffs.'
+              : 'No important debuff events found. Try showing all debuffs.'}
         </Typography>
       )}
     </Box>

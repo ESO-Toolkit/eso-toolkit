@@ -13,13 +13,12 @@ import { InsightsPanelView } from './InsightsPanelView';
 
 interface InsightsPanelProps {
   fight: FightFragment;
-  selectedTargetId?: string;
 }
 
 const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
-export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight, selectedTargetId }) => {
+export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const durationSeconds = (fight.endTime - fight.startTime) / 1000;
 
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
