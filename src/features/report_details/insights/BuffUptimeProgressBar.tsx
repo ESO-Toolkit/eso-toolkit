@@ -17,14 +17,14 @@ interface BuffUptimeProgressBarProps {
   buff: BuffUptime;
   reportId: string | null;
   fightId: string | null;
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
 }
 
 const createEsoLogsUrl = (
   reportId: string | null,
   fightId: string | null,
   abilityGameID: string,
-  selectedTargetId: string | null,
+  selectedTargetId: number | null,
   isDebuff: boolean,
   hostility: 0 | 1
 ): string => {

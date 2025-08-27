@@ -4,7 +4,7 @@ import React from 'react';
 import { BuffUptime, BuffUptimeProgressBar } from './BuffUptimeProgressBar';
 
 interface StatusEffectUptimesViewProps {
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
   statusEffectUptimes: BuffUptime[] | undefined;
   isLoading: boolean;
   reportId: string | null;

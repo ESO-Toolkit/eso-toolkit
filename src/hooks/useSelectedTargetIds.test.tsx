@@ -143,7 +143,7 @@ const mockMasterData = {
 };
 
 // Create mock store
-const createMockStore = (selectedTargetId: string | null = null): Store => {
+const createMockStore = (selectedTargetId: number | null = null): Store => {
   const initialState = {
     ui: {
       darkMode: false,
@@ -167,7 +167,7 @@ interface TestWrapperProps {
   children: React.ReactNode;
   reportId?: string | null;
   fightId?: string | null;
-  selectedTargetId?: string | null;
+  selectedTargetId?: number | null;
 }
 
 const TestWrapper: React.FC<TestWrapperProps> = ({
@@ -208,13 +208,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId="100">
+        <TestWrapper fightId="1" selectedTargetId={100}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set(['100']));
+    expect(result.current).toEqual(new Set([100]));
   });
 
   it('should return boss targets when no specific target is selected', () => {
@@ -237,7 +237,7 @@ describe('useSelectedTargetIds', () => {
     });
 
     // Should return both boss NPCs (100 and 200), but not the regular NPC (300)
-    expect(result.current).toEqual(new Set(['100', '200']));
+    expect(result.current).toEqual(new Set([100, 200]));
   });
 
   it('should return empty set when no fight is found', () => {
@@ -434,7 +434,7 @@ describe('useSelectedTargetIds', () => {
     });
 
     // Should only include the valid boss NPC, ignoring the null ID
-    expect(result.current).toEqual(new Set(['100']));
+    expect(result.current).toEqual(new Set([100]));
   });
 
   it('should handle actors that do not exist in master data', () => {
@@ -472,7 +472,7 @@ describe('useSelectedTargetIds', () => {
     });
 
     // Should only include the actor that exists and is a boss
-    expect(result.current).toEqual(new Set(['100']));
+    expect(result.current).toEqual(new Set([100]));
   });
 
   it('should update when fight ID changes', () => {
@@ -495,7 +495,7 @@ describe('useSelectedTargetIds', () => {
     });
 
     // Initial result - fight with bosses
-    expect(result.current).toEqual(new Set(['100', '200']));
+    expect(result.current).toEqual(new Set([100, 200]));
 
     // Rerender with different fight ID - fight without enemies
     rerender();
@@ -524,14 +524,14 @@ describe('useSelectedTargetIds', () => {
     // Select a non-boss NPC explicitly
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId="300">
+        <TestWrapper fightId="1" selectedTargetId={300}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Should return the selected target even though it's not a boss
-    expect(result.current).toEqual(new Set(['300']));
+    expect(result.current).toEqual(new Set([300]));
   });
 
   it('should handle null reportMasterData gracefully', () => {
@@ -589,14 +589,14 @@ describe('useSelectedTargetIds', () => {
     });
 
     const firstResult = result.current;
-    expect(firstResult).toEqual(new Set(['100', '200']));
+    expect(firstResult).toEqual(new Set([100, 200]));
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
     expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(secondResult).toEqual(new Set(['100', '200']));
+    expect(secondResult).toEqual(new Set([100, 200]));
   });
 
   it('should return stable reference for selected target when params do not change', () => {
@@ -612,20 +612,20 @@ describe('useSelectedTargetIds', () => {
 
     const { result, rerender } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId="100">
+        <TestWrapper fightId="1" selectedTargetId={100}>
           {children}
         </TestWrapper>
       ),
     });
 
     const firstResult = result.current;
-    expect(firstResult).toEqual(new Set(['100']));
+    expect(firstResult).toEqual(new Set([100]));
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
     expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(secondResult).toEqual(new Set(['100']));
+    expect(secondResult).toEqual(new Set([100]));
   });
 });

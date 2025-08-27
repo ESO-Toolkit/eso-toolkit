@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FightFragment, HostilityType } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
@@ -63,7 +63,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     }
 
     const friendlyPlayerIds = new Set(
-      fight.friendlyPlayers.filter((id): id is number => id !== null).map((id) => String(id))
+      fight.friendlyPlayers.filter((id): id is number => id !== null)
     );
 
     if (friendlyPlayerIds.size === 0) {

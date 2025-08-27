@@ -50,7 +50,7 @@ export const TargetEventsPanel: React.FC = () => {
     <Box mt={2}>
       <Typography variant="h6" gutterBottom>
         Events for Target:{' '}
-        {targets.find((t) => t && String(t.id) === selectedTargetId)?.name || selectedTargetId}
+        {targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId}
       </Typography>
       {(() => {
         // Filter events for the selected target during this fight
@@ -60,8 +60,8 @@ export const TargetEventsPanel: React.FC = () => {
             if (event.timestamp < fight.startTime || event.timestamp > fight.endTime) return false;
 
             // Check if this event involves the selected target
-            const eventTargetId = 'targetID' in event ? String(event.targetID || '') : '';
-            const eventSourceId = 'sourceID' in event ? String(event.sourceID || '') : '';
+            const eventTargetId = 'targetID' in event ? event.targetID : null;
+            const eventSourceId = 'sourceID' in event ? event.sourceID : null;
 
             return eventTargetId === selectedTargetId || eventSourceId === selectedTargetId;
           })
@@ -71,7 +71,7 @@ export const TargetEventsPanel: React.FC = () => {
           <EventsGrid
             events={targetEvents}
             title={`Target Events for ${
-              targets.find((t) => t && String(t.id) === selectedTargetId)?.name || selectedTargetId
+              targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId
             }`}
             height={600}
           />

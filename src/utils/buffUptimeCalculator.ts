@@ -1,5 +1,3 @@
-import { HostilityType } from '../graphql/generated';
-
 export interface BuffInterval {
   start: number;
   end: number;
@@ -27,9 +25,9 @@ export interface BuffUptimeCalculatorOptions {
   /** Set of ability IDs to include in calculations */
   abilityIds: Set<number>;
   /** Optional set of source IDs to filter by */
-  sourceIds?: Set<string>;
+  sourceIds?: Set<number>;
   /** Optional set of target IDs to filter by */
-  targetIds?: Set<string>;
+  targetIds?: Set<number>;
   /** Fight start time for clipping intervals */
   fightStartTime: number;
   /** Fight end time for clipping intervals */
@@ -80,12 +78,12 @@ export function computeBuffUptimes(
     // Apply filtering based on source and target IDs
     const filteredIntervals = intervals.filter((interval) => {
       // Filter by target IDs if specified
-      if (targetIds && !targetIds.has(String(interval.targetID))) {
+      if (targetIds && !targetIds.has(interval.targetID)) {
         return false;
       }
 
       // Filter by source IDs if specified
-      if (sourceIds && interval.sourceID && !sourceIds.has(String(interval.sourceID))) {
+      if (sourceIds && interval.sourceID && !sourceIds.has(interval.sourceID)) {
         return false;
       }
 

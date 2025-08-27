@@ -8,7 +8,7 @@ import { PlayerPenetrationDetails } from './PlayerPenetrationDetails';
 
 interface PenetrationPanelViewProps {
   players: PlayerDetailsWithRole[];
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
   fight: FightFragment;
   expandedPlayers: Record<string, boolean>;
   onPlayerExpandChange: (

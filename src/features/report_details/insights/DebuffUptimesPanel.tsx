@@ -1,7 +1,7 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment, HostilityType } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';

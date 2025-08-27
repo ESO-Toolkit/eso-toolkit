@@ -1,10 +1,9 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { FightFragment, HostilityType } from '../../../graphql/generated';
+import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
-import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
 import { useHostileBuffsLookup } from '../../../hooks/useHostileBuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';

@@ -10,7 +10,7 @@ interface BuffUptimesViewProps {
   onToggleShowAll: (showAll: boolean) => void;
   reportId: string | null;
   fightId: string | null;
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
 }
 
 export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({

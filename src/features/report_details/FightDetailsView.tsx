@@ -18,7 +18,6 @@ import {
   Tab,
   Tooltip,
   FormControl,
-  InputLabel,
   FormControlLabel,
   Switch,
   Stack,
@@ -84,7 +83,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       {/* Target Selection and Experimental Toggle */}
       <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Target Enemy</InputLabel>
           <TargetSelector />
         </FormControl>
         <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, and Diagnostics">

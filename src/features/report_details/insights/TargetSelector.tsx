@@ -24,9 +24,11 @@ export const TargetSelector: React.FC = () => {
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
   const handleTargetChange = React.useCallback(
-    (event: SelectChangeEvent<string | null>): void => {
+    (event: SelectChangeEvent<number | null>): void => {
       const value = event.target.value;
-      dispatch(setSelectedTargetId(!value ? null : value));
+      dispatch(
+        setSelectedTargetId(!value ? null : typeof value === 'string' ? Number(value) : value)
+      );
     },
     [dispatch]
   );

@@ -6,7 +6,7 @@ import { selectSelectedTargetId } from '../store/ui/uiSelectors';
 
 import { useReportData, useReportMasterData } from '.';
 
-export function useSelectedTargetIds(): Set<string> {
+export function useSelectedTargetIds(): Set<number> {
   const { fightId } = useSelectedReportAndFight();
   const selectedTargetId = useSelector(selectSelectedTargetId);
   const { reportData } = useReportData();
@@ -16,10 +16,8 @@ export function useSelectedTargetIds(): Set<string> {
     return reportData?.fights?.find((f) => String(f?.id) === fightId);
   }, [reportData?.fights, fightId]);
 
-  const [targetIds, setTargetIds] = React.useState<Set<string>>(new Set());
-
-  React.useEffect(() => {
-    let newTargetIds: Set<string>;
+  return React.useMemo(() => {
+    let newTargetIds: Set<number>;
 
     if (selectedTargetId) {
       newTargetIds = new Set([selectedTargetId]);
@@ -36,21 +34,10 @@ export function useSelectedTargetIds(): Set<string> {
             const actor = reportMasterData?.actorsById?.[npc.id];
             return actor && actor.subType === 'Boss';
           })
-          .map((npc) => npc.id.toString())
+          .map((npc) => npc.id)
       );
     }
 
-    // Only update state if the set contents have actually changed
-    const currentTargetIdsArray = Array.from(targetIds).sort();
-    const newTargetIdsArray = Array.from(newTargetIds).sort();
-
-    if (
-      currentTargetIdsArray.length !== newTargetIdsArray.length ||
-      !currentTargetIdsArray.every((id, index) => id === newTargetIdsArray[index])
-    ) {
-      setTargetIds(newTargetIds);
-    }
-  }, [fight?.enemyNPCs, reportMasterData?.actorsById, selectedTargetId, targetIds]);
-
-  return targetIds;
+    return newTargetIds;
+  }, [fight?.enemyNPCs, reportMasterData?.actorsById, selectedTargetId]);
 }

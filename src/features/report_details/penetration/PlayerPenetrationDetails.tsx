@@ -95,7 +95,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
         null, // No buff lookup needed currently
         debuffsLookup,
         voxelTimestamp,
-        selectedTargetId ? parseInt(selectedTargetId, 10) : undefined
+        selectedTargetId
       );
 
       const totalPenetration = playerBasePenetration + dynamicPenetration;

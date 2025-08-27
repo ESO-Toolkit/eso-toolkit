@@ -1,5 +1,3 @@
-import { HostilityType } from '../graphql/generated';
-
 import {
   BuffInterval,
   BuffLookup,
@@ -52,7 +50,7 @@ describe('buffUptimeCalculator', () => {
     fightDuration: FIGHT_DURATION,
     abilitiesById: mockAbilitiesById,
     isDebuff: false,
-    hostilityType: HostilityType.Enemies,
+    hostilityType: 1,
   };
 
   describe('computeBuffUptimes', () => {
@@ -93,7 +91,7 @@ describe('buffUptimeCalculator', () => {
         uptimePercentage: 50, // 50% of 10-second fight
         applications: 1,
         isDebuff: false,
-        hostilityType: HostilityType.Enemies,
+        hostilityType: 1,
       });
     });
 
@@ -121,7 +119,7 @@ describe('buffUptimeCalculator', () => {
         uptimePercentage: 50, // 50% of fight
         applications: 2,
         isDebuff: false,
-        hostilityType: HostilityType.Enemies,
+        hostilityType: 1,
       });
     });
 
@@ -178,7 +176,7 @@ describe('buffUptimeCalculator', () => {
 
       const options = {
         ...baseOptions,
-        targetIds: new Set([String(MOCK_TARGET_ID_1)]),
+        targetIds: new Set([MOCK_TARGET_ID_1]),
       };
 
       const result = computeBuffUptimes(buffLookup, options);
@@ -211,7 +209,7 @@ describe('buffUptimeCalculator', () => {
 
       const options = {
         ...baseOptions,
-        sourceIds: new Set([String(MOCK_SOURCE_ID_1)]),
+        sourceIds: new Set([MOCK_SOURCE_ID_1]),
       };
 
       const result = computeBuffUptimes(buffLookup, options);
@@ -298,17 +296,17 @@ describe('buffUptimeCalculator', () => {
       ]);
       const buffLookup = createBuffLookup(intervals);
 
-      const options = {
+      const options: BuffUptimeCalculatorOptions = {
         ...baseOptions,
         isDebuff: true,
-        hostilityType: HostilityType.Friendlies,
+        hostilityType: 0,
       };
 
       const result = computeBuffUptimes(buffLookup, options);
 
       expect(result).toHaveLength(1);
       expect(result[0].isDebuff).toBe(true);
-      expect(result[0].hostilityType).toBe(HostilityType.Friendlies);
+      expect(result[0].hostilityType).toBe(0);
     });
 
     it('should ignore intervals with zero or negative duration', () => {
@@ -371,8 +369,8 @@ describe('buffUptimeCalculator', () => {
 
       const options = {
         ...baseOptions,
-        targetIds: new Set([String(MOCK_TARGET_ID_1)]),
-        sourceIds: new Set([String(MOCK_SOURCE_ID_1)]),
+        targetIds: new Set([MOCK_TARGET_ID_1]),
+        sourceIds: new Set([MOCK_SOURCE_ID_1]),
       };
 
       const result = computeBuffUptimes(buffLookup, options);
@@ -396,7 +394,7 @@ describe('buffUptimeCalculator', () => {
 
       const options = {
         ...baseOptions,
-        targetIds: new Set([String(MOCK_TARGET_ID_1), String(MOCK_TARGET_ID_2)]), // Specify 2 targets
+        targetIds: new Set([MOCK_TARGET_ID_1, MOCK_TARGET_ID_2]), // Specify 2 targets
       };
 
       const result = computeBuffUptimes(buffLookup, options);

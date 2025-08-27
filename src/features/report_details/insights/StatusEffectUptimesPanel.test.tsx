@@ -3,7 +3,6 @@
  * These tests verify that the panel correctly uses the computeBuffUptimes utility function
  */
 
-import { HostilityType } from '../../../graphql/generated';
 import { KnownAbilities } from '../../../types/abilities';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
@@ -37,13 +36,13 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
     const result = computeBuffUptimes(debuffsLookup, {
       abilityIds: STATUS_EFFECT_DEBUFF_ABILITIES,
-      targetIds: new Set(['111']),
+      targetIds: new Set([111]),
       fightStartTime: FIGHT_START,
       fightEndTime: FIGHT_END,
       fightDuration: FIGHT_DURATION,
       abilitiesById: mockAbilitiesById,
       isDebuff: true,
-      hostilityType: HostilityType.Friendlies,
+      hostilityType: 0,
     });
 
     // Should return debuffs sorted by uptime percentage (highest first)
@@ -54,14 +53,14 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     expect(result[0].abilityName).toBe('Burning');
     expect(result[0].uptimePercentage).toBe(50);
     expect(result[0].isDebuff).toBe(true);
-    expect(result[0].hostilityType).toBe(HostilityType.Friendlies);
+    expect(result[0].hostilityType).toBe(0);
 
     // Poisoned: 30% uptime
     expect(result[1].abilityGameID).toBe(String(KnownAbilities.POISONED));
     expect(result[1].abilityName).toBe('Poisoned');
     expect(result[1].uptimePercentage).toBe(30);
     expect(result[1].isDebuff).toBe(true);
-    expect(result[1].hostilityType).toBe(HostilityType.Friendlies);
+    expect(result[1].hostilityType).toBe(0);
   });
 
   it('should correctly calculate buff uptimes using the utility function', () => {
@@ -82,13 +81,13 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
     const result = computeBuffUptimes(friendlyBuffsLookup, {
       abilityIds: STATUS_EFFECT_BUFF_ABILITIES,
-      targetIds: new Set(['111']),
+      targetIds: new Set([111]),
       fightStartTime: FIGHT_START,
       fightEndTime: FIGHT_END,
       fightDuration: FIGHT_DURATION,
       abilitiesById: mockAbilitiesById,
       isDebuff: false,
-      hostilityType: HostilityType.Enemies,
+      hostilityType: 1,
     });
 
     expect(result).toHaveLength(1);
@@ -98,7 +97,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     expect(result[0].abilityName).toBe('Overcharged');
     expect(result[0].uptimePercentage).toBe(70);
     expect(result[0].isDebuff).toBe(false);
-    expect(result[0].hostilityType).toBe(HostilityType.Enemies);
+    expect(result[0].hostilityType).toBe(1);
   });
 
   it('should handle combined buff and debuff results sorting correctly', () => {
@@ -116,7 +115,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
     const debuffResults = computeBuffUptimes(debuffsLookup, {
       abilityIds: new Set([KnownAbilities.BURNING]),
-      targetIds: new Set(['111']),
+      targetIds: new Set([111]),
       fightStartTime: FIGHT_START,
       fightEndTime: FIGHT_END,
       fightDuration: FIGHT_DURATION,
@@ -127,7 +126,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
     const buffResults = computeBuffUptimes(friendlyBuffsLookup, {
       abilityIds: new Set([KnownAbilities.OVERCHARGED]),
-      targetIds: new Set(['111']),
+      targetIds: new Set([111]),
       fightStartTime: FIGHT_START,
       fightEndTime: FIGHT_END,
       fightDuration: FIGHT_DURATION,
@@ -158,7 +157,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     expect(
       computeBuffUptimes(null, {
         abilityIds: new Set([KnownAbilities.BURNING]),
-        targetIds: new Set(['111']),
+        targetIds: new Set([111]),
         fightStartTime: FIGHT_START,
         fightEndTime: FIGHT_END,
         fightDuration: FIGHT_DURATION,
@@ -178,7 +177,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     expect(
       computeBuffUptimes(mockLookup, {
         abilityIds: new Set([KnownAbilities.BURNING]),
-        targetIds: new Set(['111']),
+        targetIds: new Set([111]),
         fightStartTime: FIGHT_START,
         fightEndTime: FIGHT_START, // Zero duration
         fightDuration: 0,

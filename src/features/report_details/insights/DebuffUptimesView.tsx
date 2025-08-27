@@ -4,7 +4,7 @@ import React from 'react';
 import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
 
 interface DebuffUptimesViewProps {
-  selectedTargetId: string | null;
+  selectedTargetId: number | null;
   debuffUptimes: BuffUptime[];
   isLoading: boolean;
   showAllDebuffs: boolean;

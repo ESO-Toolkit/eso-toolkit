@@ -1,7 +1,9 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
+import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { DamageTypeFlags, KnownAbilities } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
@@ -144,6 +146,8 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
+  const selectedTargetId = useSelector(selectSelectedTargetId);
+
   // Calculate damage breakdown by damage type
   const { damageTypeBreakdown, totalDamage } = React.useMemo(() => {
     if (!damageEvents || !reportMasterData?.abilitiesById) {
@@ -211,6 +215,11 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
 
     damageEvents.forEach((event) => {
       if (event.sourceIsFriendly !== true || event.targetIsFriendly) {
+        return;
+      }
+
+      // Only include events where the target is in selectedTargets
+      if (selectedTargetId && selectedTargetId !== event.targetID) {
         return;
       }
 
@@ -460,7 +469,7 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
     breakdown.sort((a, b) => b.totalDamage - a.totalDamage);
 
     return { damageTypeBreakdown: breakdown, totalDamage };
-  }, [damageEvents, fight.friendlyPlayers, reportMasterData?.abilitiesById]);
+  }, [damageEvents, reportMasterData?.abilitiesById, selectedTargetId]);
 
   if (isMasterDataLoading || isDamageEventsLoading) {
     return <DamageTypeBreakdownView damageTypeBreakdown={[]} totalDamage={0} isLoading={true} />;
