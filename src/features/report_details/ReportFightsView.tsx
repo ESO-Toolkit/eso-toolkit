@@ -107,44 +107,85 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               {groupName}
             </Typography>
             <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {groupFights.map((fight, idx) => {
-                const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
-                return (
-                  <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
-                    <ListItemButton
-                      selected={fightId === String(fight.id)}
-                      onClick={() => handleFightSelect(fight.id)}
-                      sx={{
-                        minWidth: 140,
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        border: 1,
-                        borderColor: 'divider',
-                        borderRadius: 1,
-                        py: 1,
-                        px: 1.5,
-                      }}
-                    >
-                      <Typography variant="button" color={isWipe ? 'error' : 'success'} sx={{ mb: 0.5 }}>
-                        {fightLabel}
-                      </Typography>
-                      {fight.startTime && fight.endTime && (
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
-                            color: 'text.secondary',
-                            fontSize: '0.7rem',
-                            lineHeight: 1
-                          }}
-                        >
-                          {formatTimestamp(fight.startTime)} • {formatDuration(fight.startTime, fight.endTime)}
+              {(() => {
+                // Sort fights by startTime to get chronological order
+                const sortedFights = [...groupFights].sort((a, b) => a.startTime - b.startTime);
+                
+                return sortedFights.map((fight, idx) => {
+                  const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                  const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
+                  
+                  // Sequential numbering across all fights
+                  const fightNumber = idx + 1;
+                  const fightLabel = isWipe ? `WIPE ${fightNumber}` : `CLEAR ${fightNumber}`;
+                  
+                  // Calculate bottom border width based on damage dealt
+                  // If boss has 60% health, show 40% width (100% - 60%)
+                  const damageDealtPercent = isWipe ? (100 - bossHealthPercent) : 100;
+                  
+                  return (
+                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                      <ListItemButton
+                        selected={fightId === String(fight.id)}
+                        onClick={() => handleFightSelect(fight.id)}
+                        sx={{
+                          minWidth: 140,
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          border: 1,
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          py: 1,
+                          px: 1.5,
+                          position: 'relative',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            width: `${damageDealtPercent}%`,
+                            height: '3px',
+                            backgroundColor: isWipe ? '#ff5722' : '#4caf50',
+                            borderRadius: '0 0 4px 4px',
+                          },
+                        }}
+                      >
+                        <Typography variant="button" color={isWipe ? 'error' : 'success'} sx={{ mb: 0.5, position: 'relative', zIndex: 2 }}>
+                          {fightLabel}
                         </Typography>
-                      )}
-                    </ListItemButton>
-                  </ListItem>
-                );
-              })}
+                        {isWipe && (
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              color: 'text.primary',
+                              fontWeight: 'bold',
+                              mb: 0.5,
+                              position: 'relative',
+                              zIndex: 2
+                            }}
+                          >
+                            {bossHealthPercent}% HP
+                          </Typography>
+                        )}
+                        {fight.startTime && fight.endTime && (
+                          <Typography 
+                            variant="caption" 
+                            sx={{ 
+                              color: 'text.secondary',
+                              fontSize: '0.7rem',
+                              lineHeight: 1,
+                              position: 'relative',
+                              zIndex: 2
+                            }}
+                          >
+                            {formatTimestamp(fight.startTime)} • {formatDuration(fight.startTime, fight.endTime)}
+                          </Typography>
+                        )}
+                      </ListItemButton>
+                    </ListItem>
+                  );
+                });
+              })()}
             </List>
           </Box>
         ))}
