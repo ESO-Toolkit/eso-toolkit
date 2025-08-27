@@ -21,7 +21,7 @@ const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_BREACH,
   KnownAbilities.RUNIC_SUNDER,
   KnownAbilities.MAJOR_BREACH,
-  KnownAbilities.ENGULFING_FLAMES,
+  KnownAbilities.ENGULFING_FLAMES_BUFF,
   KnownAbilities.MINOR_VULNERABILITY,
   KnownAbilities.MINOR_BRITTLE,
 

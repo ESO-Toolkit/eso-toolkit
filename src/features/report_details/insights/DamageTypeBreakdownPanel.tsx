@@ -2,11 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useDamageEvents, useReportMasterData } from '../../../hooks';
-import {
-  DamageTypeFlags,
-  DAMAGE_TYPE_DISPLAY_NAMES,
-  getDamageTypesFromFlags,
-} from '../../../types/abilities';
+import { DamageTypeFlags, KnownAbilities } from '../../../types/abilities';
 import { DamageEvent } from '../../../types/combatlogEvents';
 
 import { DamageTypeBreakdownView } from './DamageTypeBreakdownView';
@@ -26,7 +22,7 @@ interface DamageTypeBreakdown {
 }
 
 const MAGIC_DAMAGE_TYPES = Object.freeze(
-  new Set([
+  new Set<string>([
     DamageTypeFlags.MAGIC,
     DamageTypeFlags.FIRE,
     DamageTypeFlags.FROST,
@@ -34,19 +30,109 @@ const MAGIC_DAMAGE_TYPES = Object.freeze(
   ])
 );
 
-// Direct damage = isTick != true or abilityId = 38857
-
 // AOE Damage
-/*
-ability.id IN (126633,75752,133494,227072,172672,102136,183123,186370,189869,185407,191078,183006,32711,32714,32948,20252,20930,98438,32792,32794,115572,117809,117854,117715,118011,123082,118766,122392,118314,143944,143946,118720,23202,23667,29809,29806,23232,23214,23196,23208,24329,77186,94424,181331,88802,100218,26869,80172,26794,44432,26879,26871,108936,62912,62951,62990,85127,40267,40252,40252,61502,62547,62529,38891,38792,126474,38745,42029,85432,41990,80107,126720,41839,217348,217459,222678,40161,38690,63474,63471,40469,215779)
-*/
+const AOE_ABILITY_IDS = Object.freeze(
+  new Set([
+    KnownAbilities.ELEMENTAL_RING, // 126633
+    KnownAbilities.ELEMENTAL_BLOCKADE, // 75752
+    KnownAbilities.ELEMENTAL_STORM, // 133494
+    KnownAbilities.ELEMENTAL_STORM_TICK, // 227072
+    KnownAbilities.ELEMENTAL_SUSCEPTIBILITY, // 172672
+    KnownAbilities.WALL_OF_ELEMENTS, // 102136
+    KnownAbilities.DESTRUCTIVE_REACH, // 183123
+    KnownAbilities.DESTRUCTIVE_CLENCH, // 186370
+    KnownAbilities.FROST_REACH, // 189869
+    KnownAbilities.FLAME_REACH, // 185407
+    KnownAbilities.SHOCK_REACH, // 191078
+    KnownAbilities.ELEMENTAL_DRAIN, // 183006
+    KnownAbilities.VOLLEY, // 32711
+    KnownAbilities.ENDLESS_HAIL, // 32714
+    KnownAbilities.ARROW_BARRAGE, // 32948
+    KnownAbilities.CALTROPS, // 20252
+    KnownAbilities.RAZOR_CALTROPS, // 20930
+    KnownAbilities.ANTI_CAVALRY_CALTROPS, // 98438
+    KnownAbilities.TRAP_BEAST, // 32792
+    KnownAbilities.REARMING_TRAP, // 32794
+    KnownAbilities.LIGHTWEIGHT_BEAST_TRAP, // 115572
+    KnownAbilities.BARBED_TRAP, // 117809
+    KnownAbilities.CUTTING_DIVE, // 117854
+    KnownAbilities.SCREAMING_CLIFF_RACER, // 117715
+    KnownAbilities.DIVE, // 118011
+    KnownAbilities.GROWING_SWARM, // 123082
+    KnownAbilities.FETCHER_INFECTION, // 118766
+    KnownAbilities.INFECTIOUS_CLAWS, // 122392
+    KnownAbilities.SCORCH, // 118314
+    KnownAbilities.SUBTERRANEAN_ASSAULT, // 143944
+    KnownAbilities.DEEP_FISSURE, // 143946
+    KnownAbilities.ERUPTION, // 118720
+    KnownAbilities.IMPULSE, // 23202
+    KnownAbilities.ELEMENTAL_RING_2, // 23667
+    KnownAbilities.PULSAR, // 29809
+    KnownAbilities.ELEMENTAL_DRAIN_2, // 29806
+    KnownAbilities.FORCE_PULSE, // 23232
+    KnownAbilities.CRUSHING_SHOCK, // 23214
+    KnownAbilities.FORCE_SHOCK, // 23196
+    KnownAbilities.DESTRUCTIVE_TOUCH, // 23208
+    KnownAbilities.DESTRUCTIVE_CLENCH_2, // 24329
+    KnownAbilities.DESTRUCTIVE_REACH_2, // 77186
+    KnownAbilities.ELEMENTAL_STORM_2, // 94424
+    KnownAbilities.ELEMENTAL_RAGE, // 181331
+    KnownAbilities.EYE_OF_THE_STORM, // 88802
+    KnownAbilities.ELEMENTAL_STORM_3, // 100218
+    KnownAbilities.WALL_OF_FIRE, // 26869
+    KnownAbilities.BLOCKADE_OF_FIRE, // 80172
+    KnownAbilities.UNSTABLE_WALL_OF_FIRE, // 26794
+    KnownAbilities.ENGULFING_FLAMES_SKILL, // ENGULFING_FLAMES (different from the named buff version)
+    KnownAbilities.WALL_OF_FROST, // 26879
+    KnownAbilities.UNSTABLE_WALL_OF_FROST, // 26871
+    KnownAbilities.BLOCKADE_OF_FROST, // 108936
+    KnownAbilities.WINTERS_REVENGE, // 62912
+    KnownAbilities.GLACIAL_PRESENCE, // 62951
+    KnownAbilities.ICY_ESCAPE, // 62990
+    KnownAbilities.FROZEN_GATE, // 85127
+    KnownAbilities.WALL_OF_STORMS, // 40267
+    KnownAbilities.UNSTABLE_WALL_OF_STORMS, // 40252
+    KnownAbilities.BLOCKADE_OF_STORMS, // 61502
+    KnownAbilities.BOUNDLESS_STORM, // 62547
+    KnownAbilities.HURRICANE, // 62529
+    KnownAbilities.LIQUID_LIGHTNING, // 38891
+    KnownAbilities.LIGHTNING_FLOOD, // 38792
+    KnownAbilities.LIGHTNING_SPLASH, // 126474
+    KnownAbilities.BLAZING_SPEAR, // 38745
+    KnownAbilities.SPEAR_SHARDS, // 42029
+    KnownAbilities.LUMINOUS_SHARDS, // 85432
+    KnownAbilities.SOLAR_BARRAGE, // 41990
+    KnownAbilities.SOLAR_DISTURBANCE, // 80107
+    KnownAbilities.DARK_FLARE, // 126720
+    KnownAbilities.NOVA, // 41839
+    KnownAbilities.SOLAR_PRISON, // 217348
+    KnownAbilities.SOLAR_DISTURBANCE_2, // 217459
+    KnownAbilities.SUPERNOVA, // 222678
+    KnownAbilities.NECROTIC_ORB, // 40161
+    KnownAbilities.MYSTIC_ORB, // 38690
+    KnownAbilities.ENERGY_ORB, // 63474
+    KnownAbilities.HEALING_COMBUSTION, // 63471
+    KnownAbilities.SCALDING_RUNE, // 40469
+    KnownAbilities.VOLCANIC_RUNE, // 215779
+  ])
+);
 
-// Poison ability.type IN (8,256)
-
-// Status Effects  ability.id IN (18084,95136,95134,178127,148801,178118,21929,178123)
+// Status Effects - ability.id IN (18084,95136,95134,178127,148801,178118,21929,178123)
+const STATUS_EFFECT_ABILITY_IDS = Object.freeze(
+  new Set([
+    18084, // Status effect ability
+    95136, // Status effect ability
+    95134, // Status effect ability
+    178127, // Status effect ability
+    148801, // Status effect ability
+    178118, // Status effect ability
+    21929, // Status effect ability
+    178123, // Status effect ability
+  ])
+);
 
 const MARTIAL_DAMAGE_TYPES = Object.freeze(
-  new Set([
+  new Set<string>([
     DamageTypeFlags.PHYSICAL,
     DamageTypeFlags.BLEED,
     DamageTypeFlags.POISON,
@@ -64,98 +150,311 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       return { damageTypeBreakdown: [], totalDamage: 0 };
     }
 
-    // Group damage by damage type
-    const damageByType = new Map<
-      string,
-      {
-        totalDamage: number;
-        hitCount: number;
-        criticalHits: number;
-        events: DamageEvent[];
-      }
-    >();
+    // Create consolidated damage categories directly
+    const magicDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const martialDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const directDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const poisonDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const dotDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const aoeDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const statusEffectDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
+
+    const fireDamageData = {
+      totalDamage: 0,
+      hitCount: 0,
+      criticalHits: 0,
+      events: [] as DamageEvent[],
+    };
 
     let totalDamage = 0;
 
     damageEvents.forEach((event) => {
-      if (
-        event.sourceIsFriendly !== true ||
-        !fight.friendlyPlayers?.includes(event.sourceID) ||
-        event.targetIsFriendly
-      ) {
+      if (event.sourceIsFriendly !== true || event.targetIsFriendly) {
         return;
       }
 
+      const isDirectDamage =
+        event.tick !== true || event.abilityGameID === KnownAbilities.RAPID_STRIKES;
+
       const ability = reportMasterData.abilitiesById[event.abilityGameID];
+      const fullCritHitCount = event.hitType === 2 ? 1 : 0;
 
-      // Parse ability type as a number (flag value) with fallback to 0
-      let abilityTypeFlags = 0;
-      if (ability?.type) {
-        // Try to parse as number, fallback to 0 if parsing fails
-        const parsedType = parseInt(ability.type, 10);
-        abilityTypeFlags = isNaN(parsedType) ? 0 : parsedType;
+      totalDamage += event.amount;
+
+      // Add to direct damage category if it's direct damage
+      if (isDirectDamage) {
+        directDamageData.totalDamage += event.amount;
+        directDamageData.hitCount += 1;
+        directDamageData.criticalHits += fullCritHitCount;
+        directDamageData.events.push(event);
       }
 
-      // If no valid flags, treat as generic damage
-      if (abilityTypeFlags === 0) {
-        abilityTypeFlags = DamageTypeFlags.GENERIC;
+      // Add to poison damage category if damage type is poison (type == 8 or type == 256)
+      if (ability.type === DamageTypeFlags.POISON || ability.type === DamageTypeFlags.DISEASE) {
+        poisonDamageData.totalDamage += event.amount;
+        poisonDamageData.hitCount += 1;
+        poisonDamageData.criticalHits += fullCritHitCount;
+        poisonDamageData.events.push(event);
       }
 
-      // Extract individual damage type flags
-      const damageTypeFlags = getDamageTypesFromFlags(abilityTypeFlags);
+      // Add to DOT damage category if it's a tick event
+      if (event.tick === true) {
+        dotDamageData.totalDamage += event.amount;
+        dotDamageData.hitCount += 1;
+        dotDamageData.criticalHits += fullCritHitCount;
+        dotDamageData.events.push(event);
+      }
 
-      // If ability has multiple damage types, split the damage proportionally
-      const damagePerType = (event.amount || 0) / damageTypeFlags.length;
+      // Add to AOE damage category if it's an AOE ability
+      if (AOE_ABILITY_IDS.has(event.abilityGameID)) {
+        aoeDamageData.totalDamage += event.amount;
+        aoeDamageData.hitCount += 1;
+        aoeDamageData.criticalHits += fullCritHitCount;
+        aoeDamageData.events.push(event);
+      }
 
-      damageTypeFlags.forEach((damageTypeData) => {
-        const damageTypeKey = damageTypeData.flag.toString();
+      // Add to status effect damage category if it's a status effect ability
+      if (STATUS_EFFECT_ABILITY_IDS.has(event.abilityGameID)) {
+        statusEffectDamageData.totalDamage += event.amount;
+        statusEffectDamageData.hitCount += 1;
+        statusEffectDamageData.criticalHits += fullCritHitCount;
+        statusEffectDamageData.events.push(event);
+      }
 
-        if (!damageByType.has(damageTypeKey)) {
-          damageByType.set(damageTypeKey, {
-            totalDamage: 0,
-            hitCount: 0,
-            criticalHits: 0,
-            events: [],
-          });
-        }
+      // Add to fire damage category if it's a fire ability (ability.type == 4)
+      if (ability.type === '4') {
+        fireDamageData.totalDamage += event.amount;
+        fireDamageData.hitCount += 1;
+        fireDamageData.criticalHits += fullCritHitCount;
+        fireDamageData.events.push(event);
+      }
 
-        const typeData = damageByType.get(damageTypeKey);
-        if (!typeData) {
-          return;
-        }
+      // Directly consolidate into appropriate categories
+      if (ability.type && MAGIC_DAMAGE_TYPES.has(ability.type)) {
+        magicDamageData.totalDamage += event.amount;
+        magicDamageData.hitCount += 1;
+        magicDamageData.criticalHits += fullCritHitCount;
+        magicDamageData.events.push(event);
+      }
 
-        totalDamage += damagePerType;
-        typeData.totalDamage += damagePerType;
-        typeData.hitCount += 1 / damageTypeFlags.length; // Proportional hit count
-        typeData.events.push(event);
-
-        // Check if it's a critical hit (hitType === 2)
-        if (event.hitType === 2) {
-          typeData.criticalHits += 1 / damageTypeFlags.length; // Proportional crit count
-        }
-      });
+      if (ability.type && MARTIAL_DAMAGE_TYPES.has(ability.type)) {
+        martialDamageData.totalDamage += event.amount;
+        martialDamageData.hitCount += 1;
+        martialDamageData.criticalHits += fullCritHitCount;
+        martialDamageData.events.push(event);
+      }
     });
 
     const breakdown: DamageTypeBreakdown[] = [];
 
-    damageByType.forEach((data, damageTypeKey) => {
-      const damageTypeFlag = parseInt(damageTypeKey, 10) as DamageTypeFlags;
-      const displayName = DAMAGE_TYPE_DISPLAY_NAMES[damageTypeFlag] || `Unknown (${damageTypeKey})`;
-      const criticalRate = data.hitCount > 0 ? (data.criticalHits / data.hitCount) * 100 : 0;
-      const averageDamage = data.hitCount > 0 ? data.totalDamage / data.hitCount : 0;
+    // Add magic damage if present
+    if (magicDamageData.totalDamage > 0) {
+      const criticalRate =
+        magicDamageData.hitCount > 0
+          ? (magicDamageData.criticalHits / magicDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        magicDamageData.hitCount > 0 ? magicDamageData.totalDamage / magicDamageData.hitCount : 0;
 
-      if (data.totalDamage > 0) {
-        breakdown.push({
-          damageType: damageTypeFlag,
-          displayName,
-          totalDamage: data.totalDamage,
-          hitCount: Math.round(data.hitCount), // Round fractional hit counts
-          criticalHits: Math.round(data.criticalHits), // Round fractional crit counts
-          criticalRate,
-          averageDamage,
-        });
-      }
-    });
+      breakdown.push({
+        damageType: DamageTypeFlags.MAGIC,
+        displayName: 'Magic',
+        totalDamage: magicDamageData.totalDamage,
+        hitCount: Math.round(magicDamageData.hitCount),
+        criticalHits: Math.round(magicDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add martial damage if present
+    if (martialDamageData.totalDamage > 0) {
+      const criticalRate =
+        martialDamageData.hitCount > 0
+          ? (martialDamageData.criticalHits / martialDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        martialDamageData.hitCount > 0
+          ? martialDamageData.totalDamage / martialDamageData.hitCount
+          : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.PHYSICAL,
+        displayName: 'Martial',
+        totalDamage: martialDamageData.totalDamage,
+        hitCount: Math.round(martialDamageData.hitCount),
+        criticalHits: Math.round(martialDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add direct damage if present
+    if (directDamageData.totalDamage > 0) {
+      const criticalRate =
+        directDamageData.hitCount > 0
+          ? (directDamageData.criticalHits / directDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        directDamageData.hitCount > 0
+          ? directDamageData.totalDamage / directDamageData.hitCount
+          : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.GENERIC, // Use generic as placeholder for direct damage
+        displayName: 'Direct',
+        totalDamage: directDamageData.totalDamage,
+        hitCount: Math.round(directDamageData.hitCount),
+        criticalHits: Math.round(directDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add poison damage if present
+    if (poisonDamageData.totalDamage > 0) {
+      const criticalRate =
+        poisonDamageData.hitCount > 0
+          ? (poisonDamageData.criticalHits / poisonDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        poisonDamageData.hitCount > 0
+          ? poisonDamageData.totalDamage / poisonDamageData.hitCount
+          : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.POISON,
+        displayName: 'Poison',
+        totalDamage: poisonDamageData.totalDamage,
+        hitCount: Math.round(poisonDamageData.hitCount),
+        criticalHits: Math.round(poisonDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add DOT damage if present
+    if (dotDamageData.totalDamage > 0) {
+      const criticalRate =
+        dotDamageData.hitCount > 0
+          ? (dotDamageData.criticalHits / dotDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        dotDamageData.hitCount > 0 ? dotDamageData.totalDamage / dotDamageData.hitCount : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.GENERIC, // Use generic as placeholder for DOT damage
+        displayName: 'Damage over Time',
+        totalDamage: dotDamageData.totalDamage,
+        hitCount: Math.round(dotDamageData.hitCount),
+        criticalHits: Math.round(dotDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add AOE damage if present
+    if (aoeDamageData.totalDamage > 0) {
+      const criticalRate =
+        aoeDamageData.hitCount > 0
+          ? (aoeDamageData.criticalHits / aoeDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        aoeDamageData.hitCount > 0 ? aoeDamageData.totalDamage / aoeDamageData.hitCount : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.GENERIC, // Use generic as placeholder for AOE damage
+        displayName: 'Area of Effect',
+        totalDamage: aoeDamageData.totalDamage,
+        hitCount: Math.round(aoeDamageData.hitCount),
+        criticalHits: Math.round(aoeDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add status effect damage if present
+    if (statusEffectDamageData.totalDamage > 0) {
+      const criticalRate =
+        statusEffectDamageData.hitCount > 0
+          ? (statusEffectDamageData.criticalHits / statusEffectDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        statusEffectDamageData.hitCount > 0
+          ? statusEffectDamageData.totalDamage / statusEffectDamageData.hitCount
+          : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.GENERIC, // Use generic as placeholder for status effect damage
+        displayName: 'Status Effects',
+        totalDamage: statusEffectDamageData.totalDamage,
+        hitCount: Math.round(statusEffectDamageData.hitCount),
+        criticalHits: Math.round(statusEffectDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
+
+    // Add fire damage if present
+    if (fireDamageData.totalDamage > 0) {
+      const criticalRate =
+        fireDamageData.hitCount > 0
+          ? (fireDamageData.criticalHits / fireDamageData.hitCount) * 100
+          : 0;
+      const averageDamage =
+        fireDamageData.hitCount > 0 ? fireDamageData.totalDamage / fireDamageData.hitCount : 0;
+
+      breakdown.push({
+        damageType: DamageTypeFlags.FIRE,
+        displayName: 'Fire',
+        totalDamage: fireDamageData.totalDamage,
+        hitCount: Math.round(fireDamageData.hitCount),
+        criticalHits: Math.round(fireDamageData.criticalHits),
+        criticalRate,
+        averageDamage,
+      });
+    }
 
     // Sort by total damage descending
     breakdown.sort((a, b) => b.totalDamage - a.totalDamage);
