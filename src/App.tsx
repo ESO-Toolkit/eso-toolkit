@@ -109,26 +109,81 @@ const MainApp: React.FC = () => {
   };
 
   return (
-    <Paper elevation={3} sx={{ p: 3, mb: 3 }}>
-      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-        <TextField
-          label="ESOLogs.com Log URL"
-          variant="outlined"
-          value={logUrl}
-          onChange={handleLogUrlChange}
-          fullWidth
-          InputProps={{ startAdornment: <LinkIcon sx={{ mr: 1 }} /> }}
-        />
-        <Button
-          variant="contained"
-          color="secondary"
-          sx={{ minWidth: 180 }}
-          onClick={handleLoadLog}
-        >
-          Load Log
-        </Button>
-      </Box>
-    </Paper>
+    <Box 
+      sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 2, 
+        mb: 4,
+        p: 3,
+        background: 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)',
+        border: '1px solid #1f2937',
+        borderRadius: 3,
+        boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
+        transition: 'all 0.3s ease',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.08)',
+          borderColor: 'rgba(56, 189, 248, 0.25)',
+        }
+      }}
+      className="u-fade-in-up"
+    >
+      <TextField
+        label="ESOLogs.com Log URL"
+        variant="outlined"
+        value={logUrl}
+        onChange={handleLogUrlChange}
+        sx={{ 
+          flex: 1,
+          '& .MuiOutlinedInput-root': {
+            backgroundColor: 'rgba(15, 23, 42, 0.4)',
+            borderRadius: 2,
+            '& fieldset': {
+              borderColor: 'rgba(56, 189, 248, 0.2)',
+            },
+            '&:hover fieldset': {
+              borderColor: 'rgba(56, 189, 248, 0.4)',
+            },
+            '&.Mui-focused fieldset': {
+              borderColor: '#38bdf8',
+              boxShadow: '0 0 0 3px rgba(56, 189, 248, 0.15)',
+            },
+          },
+          '& .MuiInputLabel-root': {
+            color: '#94a3b8',
+            '&.Mui-focused': {
+              color: '#38bdf8',
+            },
+          },
+        }}
+        InputProps={{ 
+          startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8' }} /> 
+        }}
+      />
+      <Button
+        variant="contained"
+        color="secondary"
+        sx={{ 
+          minWidth: 140,
+          height: 56,
+          background: 'linear-gradient(135deg, #38bdf8, #00e1ff)',
+          color: '#0b1220',
+          fontWeight: 600,
+          borderRadius: 2,
+          boxShadow: '0 4px 15px rgba(56, 189, 248, 0.25)',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            filter: 'brightness(1.05)',
+            boxShadow: '0 6px 25px rgba(56, 189, 248, 0.35)',
+            transform: 'translateY(-1px)',
+          },
+        }}
+        onClick={handleLoadLog}
+      >
+        Load Log
+      </Button>
+    </Box>
   );
 };
 
