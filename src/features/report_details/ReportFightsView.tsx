@@ -106,7 +106,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             <Typography variant="h6" sx={{ mb: 1 }}>
               {groupName}
             </Typography>
-            <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
               {(() => {
                 // Sort fights by startTime to get chronological order
                 const sortedFights = [...groupFights].sort((a, b) => a.startTime - b.startTime);
@@ -124,56 +124,91 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   const damageDealtPercent = isWipe ? (100 - bossHealthPercent) : 100;
                   
                   return (
-                    <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                    <ListItem key={fight.id} sx={{ p: 0 }}>
                       <ListItemButton
                         selected={fightId === String(fight.id)}
                         onClick={() => handleFightSelect(fight.id)}
                         sx={{
-                          minWidth: 140,
+                          width: '100%',
+                          height: 64,
                           flexDirection: 'column',
                           alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
                           border: 1,
                           borderColor: 'divider',
                           borderRadius: 1,
-                          py: 1,
-                          px: 1.5,
+                          py: 0.5,
+                          px: 1,
                           position: 'relative',
+                          backgroundColor: 'transparent',
+                          transition: 'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
+                          '&:hover': {
+                            backgroundColor: 'rgba(255,255,255,0.025)'
+                          },
+                          '&:active': {
+                            transform: 'translateY(0.5px)'
+                          },
                           '&::after': {
                             content: '""',
                             position: 'absolute',
-                            bottom: 0,
+                            top: 0,
                             left: 0,
-                            width: `${damageDealtPercent}%`,
-                            height: '3px',
-                            backgroundColor: isWipe ? '#ff5722' : '#4caf50',
-                            borderRadius: '0 0 4px 4px',
+                            bottom: 0,
+                            right: `${100 - damageDealtPercent}%`,
+                            background: isWipe
+                              ? 'linear-gradient(90deg, rgba(255, 99, 71, 0.65) 0%, rgba(255, 165, 0, 0.55) 100%)'
+                              : 'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
+                            boxShadow: isWipe
+                              ? '0 0 6px rgba(255, 99, 71, 0.45)'
+                              : '0 0 6px rgba(76, 217, 100, 0.45)',
+                            borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
+                            opacity: 0.15,
+                            zIndex: 0,
                           },
                         }}
                       >
-                        <Typography variant="button" color={isWipe ? 'error' : 'success'} sx={{ mb: 0.5, position: 'relative', zIndex: 2 }}>
+                        {/* Wipe badge in the corner (keeps height compact) */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 6,
+                            right: 6,
+                            px: 0.6,
+                            py: 0.1,
+                            fontSize: '0.66rem',
+                            lineHeight: 1.1,
+                            borderRadius: 10,
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            background:
+                              isWipe
+                                ? 'linear-gradient(135deg, rgba(255, 82, 82, 0.22) 0%, rgba(255, 149, 0, 0.14) 100%)'
+                                : 'transparent',
+                            border: '1px solid rgba(255,255,255,0.18)',
+                            boxShadow:
+                              isWipe
+                                ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
+                                : 'none',
+                            color: isWipe ? '#ffb199' : 'transparent',
+                            textShadow: isWipe ? '0 1px 2px rgba(0,0,0,0.45)' : 'none',
+                            pointerEvents: 'none',
+                            transition: 'opacity 120ms ease',
+                            opacity: isWipe ? 1 : 0,
+                          }}
+                        >
+                          {bossHealthPercent}%
+                        </Box>
+                        <Typography variant="button" sx={{ color: '#ffffff', mb: 0.25, position: 'relative', zIndex: 2, fontSize: '0.78rem', lineHeight: 1.1, letterSpacing: 0.2 }}>
                           {fightLabel}
                         </Typography>
-                        {isWipe && (
-                          <Typography 
-                            variant="body2" 
-                            sx={{ 
-                              color: 'text.primary',
-                              fontWeight: 'bold',
-                              mb: 0.5,
-                              position: 'relative',
-                              zIndex: 2
-                            }}
-                          >
-                            {bossHealthPercent}% HP
-                          </Typography>
-                        )}
                         {fight.startTime && fight.endTime && (
                           <Typography 
                             variant="caption" 
                             sx={{ 
                               color: 'text.secondary',
-                              fontSize: '0.7rem',
-                              lineHeight: 1,
+                              fontSize: '0.68rem',
+                              lineHeight: 1.1,
                               position: 'relative',
                               zIndex: 2
                             }}
