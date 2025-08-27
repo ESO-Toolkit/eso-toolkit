@@ -101,7 +101,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     const bossFights = validFights.filter(fight => fight.difficulty != null);
     const trashFights = validFights.filter(fight => fight.difficulty == null);
 
-    // Create encounter objects with related trash
+    // Create encounter objects with trial instance detection
     const encounterList: {
       id: string;
       name: string;
@@ -110,9 +110,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       postTrash: FightFragment[];
     }[] = [];
     
+    // Track encounter instances by name
+    const encounterInstances: Record<string, number> = {};
+    
     for (let i = 0; i < bossFights.length; i++) {
       const currentBoss = bossFights[i];
       const nextBoss = bossFights[i + 1];
+      const baseName = currentBoss.name || 'Unknown Boss';
       
       // Find trash before this boss (after previous boss or from start)
       const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
@@ -126,16 +130,60 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
       );
       
-      // Group boss fights with the same name
-      const existingEncounter = encounterList.find(enc => enc.name === (currentBoss.name || 'Unknown Boss'));
+      // Check if this should be a new instance of the same encounter
+      const existingEncounter = encounterList.find(enc => enc.name.startsWith(baseName));
+      let shouldCreateNewInstance = false;
+      
       if (existingEncounter) {
+        // Get the last fight from the existing encounter
+        const lastFight = existingEncounter.bossFights[existingEncounter.bossFights.length - 1];
+        
+        // Calculate time gap
+        const timeGapMinutes = (currentBoss.startTime - lastFight.endTime) / (1000 * 60);
+        
+        // Check if there are other boss fights in between (different encounter)
+        const fightsBetween = bossFights.filter(fight => 
+          fight.startTime > lastFight.endTime && 
+          fight.startTime < currentBoss.startTime &&
+          fight.name !== baseName
+        );
+        
+        // Check if the group made significant progress past this boss before resetting
+        // Look for successful kills of different bosses after the last attempt
+        const progressMade = bossFights.some(fight => 
+          fight.startTime > lastFight.endTime && 
+          fight.startTime < currentBoss.startTime &&
+          fight.name !== baseName &&
+          (!fight.bossPercentage || fight.bossPercentage < 0.01) // Successful kill
+        );
+        
+        // Create new instance if:
+        // 1. Long time gap (>15 minutes) - likely different session
+        // 2. Different bosses killed in between - progressed past this encounter
+        // 3. Significant progress made (killed other bosses successfully)
+        shouldCreateNewInstance = timeGapMinutes > 15 || progressMade || 
+          (fightsBetween.length > 0 && fightsBetween.some(f => !f.bossPercentage || f.bossPercentage < 0.01));
+      }
+      
+      if (existingEncounter && !shouldCreateNewInstance) {
+        // Add to existing encounter
         existingEncounter.bossFights.push(currentBoss);
         existingEncounter.preTrash.push(...preTrash);
         existingEncounter.postTrash.push(...postTrash);
       } else {
+        // Create new encounter instance
+        if (!encounterInstances[baseName]) {
+          encounterInstances[baseName] = 1;
+        } else {
+          encounterInstances[baseName]++;
+        }
+        
+        const instanceNumber = encounterInstances[baseName];
+        const displayName = instanceNumber > 1 ? `${baseName} (Run ${instanceNumber})` : baseName;
+        
         encounterList.push({
-          id: `encounter-${i}`,
-          name: currentBoss.name || 'Unknown Boss',
+          id: `encounter-${baseName}-${instanceNumber}`,
+          name: displayName,
           bossFights: [currentBoss],
           preTrash,
           postTrash
