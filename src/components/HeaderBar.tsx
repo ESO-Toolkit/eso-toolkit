@@ -65,7 +65,7 @@ export const HeaderBar: React.FC = () => {
               <span role="img" aria-label="sword">
                 ⚔️
               </span>
-              ESO Insights Helper
+              ESO Helper
             </Typography>
           </Button>
         </Box>
