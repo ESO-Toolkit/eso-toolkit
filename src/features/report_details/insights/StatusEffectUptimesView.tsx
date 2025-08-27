@@ -1,15 +1,11 @@
 import { Box, Typography, List, ListItem, Skeleton } from '@mui/material';
 import React from 'react';
 
-import { BuffUptimeProgressBar, BuffUptime } from './BuffUptimeProgressBar';
-
-export interface StatusEffectUptime extends BuffUptime {
-  isDebuff: boolean;
-}
+import { BuffUptime, BuffUptimeProgressBar } from './BuffUptimeProgressBar';
 
 interface StatusEffectUptimesViewProps {
   selectedTargetId: string | null;
-  statusEffectUptimes: StatusEffectUptime[] | undefined;
+  statusEffectUptimes: BuffUptime[] | undefined;
   isLoading: boolean;
   reportId: string | null;
   fightId: string | null;

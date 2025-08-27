@@ -69,7 +69,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       fightDuration,
       abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: true,
-      hostilityType: HostilityType.Friendlies,
+      hostilityType: 1,
     });
   }, [
     debuffsLookup,

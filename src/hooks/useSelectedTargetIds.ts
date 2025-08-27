@@ -16,26 +16,41 @@ export function useSelectedTargetIds(): Set<string> {
     return reportData?.fights?.find((f) => String(f?.id) === fightId);
   }, [reportData?.fights, fightId]);
 
-  return React.useMemo(() => {
+  const [targetIds, setTargetIds] = React.useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    let newTargetIds: Set<string>;
+
     if (selectedTargetId) {
-      return new Set([selectedTargetId]);
+      newTargetIds = new Set([selectedTargetId]);
+    } else if (!fight?.enemyNPCs) {
+      newTargetIds = new Set();
+    } else {
+      newTargetIds = new Set(
+        fight.enemyNPCs
+          .filter((npc): npc is { id: number } => {
+            if (!npc?.id) {
+              return false;
+            }
+
+            const actor = reportMasterData?.actorsById?.[npc.id];
+            return actor && actor.subType === 'Boss';
+          })
+          .map((npc) => npc.id.toString())
+      );
     }
 
-    if (!fight?.enemyNPCs) {
-      return new Set();
+    // Only update state if the set contents have actually changed
+    const currentTargetIdsArray = Array.from(targetIds).sort();
+    const newTargetIdsArray = Array.from(newTargetIds).sort();
+
+    if (
+      currentTargetIdsArray.length !== newTargetIdsArray.length ||
+      !currentTargetIdsArray.every((id, index) => id === newTargetIdsArray[index])
+    ) {
+      setTargetIds(newTargetIds);
     }
+  }, [fight?.enemyNPCs, reportMasterData?.actorsById, selectedTargetId, targetIds]);
 
-    return new Set(
-      fight.enemyNPCs
-        .filter((npc): npc is { id: number } => {
-          if (!npc?.id) {
-            return false;
-          }
-
-          const actor = reportMasterData?.actorsById?.[npc.id];
-          return actor && actor.subType === 'Boss';
-        })
-        .map((npc) => npc.id.toString())
-    );
-  }, [fight?.enemyNPCs, reportMasterData?.actorsById, selectedTargetId]);
+  return targetIds;
 }

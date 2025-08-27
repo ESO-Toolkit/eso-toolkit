@@ -20,7 +20,7 @@ export interface BuffUptimeResult {
   uptimePercentage: number;
   applications: number;
   isDebuff: boolean;
-  hostilityType: HostilityType;
+  hostilityType: 0 | 1;
 }
 
 export interface BuffUptimeCalculatorOptions {
@@ -41,7 +41,7 @@ export interface BuffUptimeCalculatorOptions {
   /** Whether these are debuffs (true) or buffs (false) */
   isDebuff: boolean;
   /** Hostility type for the results */
-  hostilityType: HostilityType;
+  hostilityType: 0 | 1;
 }
 
 /**

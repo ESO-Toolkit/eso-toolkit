@@ -24,6 +24,7 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
       variables: {
         code: reportId,
       },
+      fetchPolicy: 'no-cache',
     });
     const lastFight =
       response.reportData?.report?.fights &&

@@ -1,14 +1,21 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import { ReportFragment } from '../../graphql/generated';
 import { GetReportByCodeDocument } from '../../graphql/generated';
+import { RootState } from '../storeWithHistory';
 
 export interface ReportState {
   reportId: string;
   data: ReportFragment | null;
   loading: boolean;
   error: string | null;
+  // Cache metadata for better cache management
+  cacheMetadata: {
+    lastFetchedReportId: string | null;
+    lastFetchedTimestamp: number | null;
+  };
 }
 
 const initialState: ReportState = {
@@ -16,42 +23,66 @@ const initialState: ReportState = {
   data: null,
   loading: false,
   error: null,
+  cacheMetadata: {
+    lastFetchedReportId: null,
+    lastFetchedTimestamp: null,
+  },
 };
 
 export const fetchReportData = createAsyncThunk<
   { reportId: string; data: ReportFragment },
   { reportId: string; client: EsoLogsClient },
-  { rejectValue: string }
->('report/fetchReportData', async ({ reportId, client }, { rejectWithValue, getState }) => {
-  // Check if we already have this report data
-  const state = getState() as { report: ReportState };
-  if (state.report.reportId === reportId && state.report.data && !state.report.loading) {
-    // Return cached data without making API call
-    return { data: state.report.data, reportId: state.report.reportId };
-  }
+  { state: RootState; rejectValue: string }
+>(
+  'report/fetchReportData',
+  async ({ reportId, client }, { rejectWithValue }) => {
+    try {
+      const response = await client.query({
+        query: GetReportByCodeDocument,
+        variables: { code: reportId },
+      });
 
-  try {
-    const response = await client.query({
-      query: GetReportByCodeDocument,
-      variables: { code: reportId },
-    });
+      if (!response.reportData?.report) {
+        return rejectWithValue('Report not found or not public.');
+      }
+      return { data: response.reportData.report, reportId: reportId };
+    } catch (err) {
+      const hasMessage = (e: unknown): e is { message: string } =>
+        typeof e === 'object' &&
+        e !== null &&
+        'message' in e &&
+        typeof (e as { message: unknown }).message === 'string';
+      if (hasMessage(err)) {
+        return rejectWithValue(err.message);
+      }
+      return rejectWithValue('Failed to fetch report data');
+    }
+  },
+  {
+    condition: ({ reportId }, { getState }) => {
+      const state = getState().report;
+      const requestedReportId = reportId;
 
-    if (!response.reportData?.report) {
-      return rejectWithValue('Report not found or not public.');
-    }
-    return { data: response.reportData.report, reportId: reportId };
-  } catch (err) {
-    const hasMessage = (e: unknown): e is { message: string } =>
-      typeof e === 'object' &&
-      e !== null &&
-      'message' in e &&
-      typeof (e as { message: unknown }).message === 'string';
-    if (hasMessage(err)) {
-      return rejectWithValue(err.message);
-    }
-    return rejectWithValue('Failed to fetch report data');
+      // Check if report data is already cached for this report
+      const isCached = 
+        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
+        state.data !== null;
+      const isFresh =
+        state.cacheMetadata.lastFetchedTimestamp &&
+        Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+
+      if (isCached && isFresh) {
+        return false; // Prevent thunk execution - use cached data
+      }
+
+      if (state.loading) {
+        return false; // Prevent duplicate execution while already loading
+      }
+
+      return true; // Allow thunk execution
+    },
   }
-});
+);
 
 const reportSlice = createSlice({
   name: 'report',
@@ -65,6 +96,10 @@ const reportSlice = createSlice({
       state.data = null;
       state.loading = false;
       state.error = null;
+      state.cacheMetadata = {
+        lastFetchedReportId: null,
+        lastFetchedTimestamp: null,
+      };
     },
   },
   extraReducers: (builder) => {
@@ -80,6 +115,11 @@ const reportSlice = createSlice({
         state.data = action.payload.data;
         state.loading = false;
         state.error = null;
+        // Update cache metadata
+        state.cacheMetadata = {
+          lastFetchedReportId: action.payload.reportId,
+          lastFetchedTimestamp: Date.now(),
+        };
       })
       .addCase(fetchReportData.rejected, (state, action) => {
         state.loading = false;

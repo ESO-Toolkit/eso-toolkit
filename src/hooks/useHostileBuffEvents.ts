@@ -57,7 +57,7 @@ export function useHostileBuffsLookup(): {
   hostileBuffsLookup: BuffLookupData;
   isHostileBuffEventsLoading: boolean;
 } {
-  const isHostileBuffEventsLoading = useSelector(selectHostileBuffEventsLoading);
+  const { isHostileBuffEventsLoading } = useHostileBuffEvents();
   const buffLookup = useSelector(selectHostileBuffLookup);
 
   return React.useMemo(

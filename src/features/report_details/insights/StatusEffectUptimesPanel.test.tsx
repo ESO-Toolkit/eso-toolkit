@@ -5,8 +5,7 @@
 
 import { HostilityType } from '../../../graphql/generated';
 import { KnownAbilities } from '../../../types/abilities';
-
-import { computeBuffUptimes } from './utils/buffUptimeCalculator';
+import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
 // Note: This is primarily testing the integration of the utility function
 // Full component integration tests would require complex mock setup
@@ -123,7 +122,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
       fightDuration: FIGHT_DURATION,
       abilitiesById: mockAbilitiesById,
       isDebuff: true,
-      hostilityType: HostilityType.Friendlies,
+      hostilityType: 0,
     });
 
     const buffResults = computeBuffUptimes(friendlyBuffsLookup, {
@@ -134,7 +133,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
       fightDuration: FIGHT_DURATION,
       abilitiesById: mockAbilitiesById,
       isDebuff: false,
-      hostilityType: HostilityType.Enemies,
+      hostilityType: 1,
     });
 
     // Simulate what the component does - combine and sort by uptime percentage
@@ -165,7 +164,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
         fightDuration: FIGHT_DURATION,
         abilitiesById: mockAbilitiesById,
         isDebuff: true,
-        hostilityType: HostilityType.Friendlies,
+        hostilityType: 0,
       })
     ).toEqual([]);
 
@@ -185,7 +184,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
         fightDuration: 0,
         abilitiesById: mockAbilitiesById,
         isDebuff: true,
-        hostilityType: HostilityType.Friendlies,
+        hostilityType: 0,
       })
     ).toEqual([]);
   });

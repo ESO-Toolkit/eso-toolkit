@@ -5,6 +5,7 @@ import { FightFragment, HostilityType } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
 import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
+import { useHostileBuffsLookup } from '../../../hooks/useHostileBuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
@@ -38,7 +39,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   const { reportId, fightId } = useSelectedReportAndFight();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
-  const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
+  const { hostileBuffsLookup, isHostileBuffEventsLoading } = useHostileBuffsLookup();
   const realTargetIds = useSelectedTargetIds();
 
   // Extract stable fight properties
@@ -60,10 +61,10 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       fightDuration,
       abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: true,
-      hostilityType: HostilityType.Friendlies,
+      hostilityType: 1,
     });
 
-    const buffUptimes = computeBuffUptimes(friendlyBuffsLookup, {
+    const buffUptimes = computeBuffUptimes(hostileBuffsLookup, {
       abilityIds: STATUS_EFFECT_BUFF_ABILITIES,
       targetIds: realTargetIds,
       fightStartTime,
@@ -71,7 +72,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       fightDuration,
       abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: false,
-      hostilityType: HostilityType.Enemies,
+      hostilityType: 1,
     });
 
     // Combine and sort all uptimes
@@ -80,7 +81,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     );
   }, [
     debuffsLookup,
-    friendlyBuffsLookup,
+    hostileBuffsLookup,
     fightDuration,
     fightStartTime,
     fightEndTime,
@@ -88,7 +89,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
     realTargetIds,
   ]);
 
-  if (isMasterDataLoading || isDebuffEventsLoading || isFriendlyBuffEventsLoading) {
+  if (isMasterDataLoading || isDebuffEventsLoading || isHostileBuffEventsLoading) {
     return (
       <StatusEffectUptimesView
         selectedTargetId={selectedTargetId}

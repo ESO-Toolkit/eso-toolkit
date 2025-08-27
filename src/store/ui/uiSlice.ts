@@ -5,6 +5,7 @@ export interface UIState {
   sidebarOpen: boolean;
   showExperimentalTabs: boolean;
   selectedTargetId: string | null;
+  selectedTabId: number | null;
 }
 
 const initialState: UIState = {
@@ -12,6 +13,7 @@ const initialState: UIState = {
   sidebarOpen: false,
   showExperimentalTabs: false,
   selectedTargetId: null,
+  selectedTabId: null,
 };
 
 const uiSlice = createSlice({
@@ -36,6 +38,9 @@ const uiSlice = createSlice({
     setSelectedTargetId(state, action: PayloadAction<string | null>) {
       state.selectedTargetId = action.payload;
     },
+    setSelectedTabId(state, action: PayloadAction<number | null>) {
+      state.selectedTabId = action.payload;
+    },
   },
 });
 
@@ -46,5 +51,6 @@ export const {
   setShowExperimentalTabs,
   toggleExperimentalTabs,
   setSelectedTargetId,
+  setSelectedTabId,
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -88,7 +88,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
       fightDuration,
       abilitiesById: reportMasterData.abilitiesById,
       isDebuff: false,
-      hostilityType: HostilityType.Friendlies,
+      hostilityType: 0,
     });
   }, [
     friendlyBuffsLookup,

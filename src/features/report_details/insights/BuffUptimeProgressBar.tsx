@@ -1,8 +1,6 @@
 import { Box, Typography, LinearProgress, Avatar } from '@mui/material';
 import React from 'react';
 
-import { HostilityType } from '../../../graphql/generated';
-
 export interface BuffUptime {
   abilityGameID: string;
   abilityName: string;
@@ -12,7 +10,7 @@ export interface BuffUptime {
   uptimePercentage: number;
   isDebuff: boolean;
   applications: number;
-  hostilityType: HostilityType;
+  hostilityType: 0 | 1;
 }
 
 interface BuffUptimeProgressBarProps {
@@ -28,7 +26,7 @@ const createEsoLogsUrl = (
   abilityGameID: string,
   selectedTargetId: string | null,
   isDebuff: boolean,
-  hostility: HostilityType
+  hostility: 0 | 1
 ): string => {
   let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=${hostility}&ability=${abilityGameID}`;
 
@@ -38,7 +36,7 @@ const createEsoLogsUrl = (
 
   if (selectedTargetId) {
     url += `&target=${selectedTargetId}`;
-  } else {
+  } else if (hostility === 1) {
     url += '&sourceclass=Boss';
   }
 

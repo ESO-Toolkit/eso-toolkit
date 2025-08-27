@@ -26,6 +26,21 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     [navigate, reportId]
   );
 
+  const groups = React.useMemo(() => {
+    const result: Record<string, FightFragment[]> = {};
+    if (!fights) {
+      return {};
+    }
+
+    fights.forEach((fight: FightFragment) => {
+      const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
+      if (!result[groupName]) result[groupName] = [];
+      result[groupName].push(fight);
+    });
+
+    return result;
+  }, [fights]);
+
   if (loading) {
     return (
       <Paper elevation={2} sx={{ p: 3 }}>
@@ -45,55 +60,53 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
+  if (!fights?.length) {
+    return (
+      <Paper elevation={2} sx={{ p: 3 }}>
+        <Typography variant="body1">No fights available</Typography>
+      </Paper>
+    );
+  }
+
   return (
     <>
-      {fights?.length && (
-        <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-          <Typography variant="h5" gutterBottom>
-            Select a Fight
-          </Typography>
-          {(() => {
-            const groups: { [key: string]: FightFragment[] } = {};
-            fights.forEach((fight: FightFragment) => {
-              const groupName = fight.difficulty == null ? 'Trash' : fight.name || 'Unknown';
-              if (!groups[groupName]) groups[groupName] = [];
-              groups[groupName].push(fight);
-            });
-            return Object.entries(groups).map(([groupName, groupFights]) => (
-              <Box key={groupName} sx={{ mb: 2 }}>
-                <Typography variant="h6" sx={{ mb: 1 }}>
-                  {groupName}
-                </Typography>
-                <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                  {groupFights.map((fight, idx) => {
-                    const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                    const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
-                    return (
-                      <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
-                        <ListItemButton
-                          selected={fightId === String(fight.id)}
-                          onClick={() => handleFightSelect(fight.id)}
-                          sx={{
-                            minWidth: 48,
-                            justifyContent: 'center',
-                            border: 1,
-                            borderColor: 'divider',
-                            borderRadius: 1,
-                          }}
-                        >
-                          <Typography variant="button" color={isWipe ? 'error' : 'success'}>
-                            {fightLabel}
-                          </Typography>
-                        </ListItemButton>
-                      </ListItem>
-                    );
-                  })}
-                </List>
-              </Box>
-            ));
-          })()}
-        </Paper>
-      )}
+      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Select a Fight
+        </Typography>
+        {Object.entries(groups).map(([groupName, groupFights]) => (
+          <Box key={groupName} sx={{ mb: 2 }}>
+            <Typography variant="h6" sx={{ mb: 1 }}>
+              {groupName}
+            </Typography>
+            <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+              {groupFights.map((fight, idx) => {
+                const isWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                const fightLabel = isWipe ? `Wipe ${idx + 1}` : `Clear ${idx + 1}`;
+                return (
+                  <ListItem key={fight.id} sx={{ width: 'auto', p: 0 }}>
+                    <ListItemButton
+                      selected={fightId === String(fight.id)}
+                      onClick={() => handleFightSelect(fight.id)}
+                      sx={{
+                        minWidth: 48,
+                        justifyContent: 'center',
+                        border: 1,
+                        borderColor: 'divider',
+                        borderRadius: 1,
+                      }}
+                    >
+                      <Typography variant="button" color={isWipe ? 'error' : 'success'}>
+                        {fightLabel}
+                      </Typography>
+                    </ListItemButton>
+                  </ListItem>
+                );
+              })}
+            </List>
+          </Box>
+        ))}
+      </Paper>
     </>
   );
 };
