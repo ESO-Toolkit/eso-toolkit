@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -150,7 +150,6 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
   const navigate = useNavigate();
-  const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
