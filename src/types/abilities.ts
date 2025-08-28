@@ -109,17 +109,18 @@ export enum KnownAbilities {
   EVASION = 150054,
 
   // Class Passives
-  HEMORRHAGE = 45060,
-  FATED_FORTUNE_STAGE_ONE = 184847,
-  PRESSURE_POINTS = 45053,
-  HARNESSED_QUINTESSENCE = 184858,
-  MASTER_ASSASSIN = 45038,
-  EXECUTIONER = 36630,
-  PSYCHIC_LESION = 184873,
-  WARMTH = 45012,
-  SPLINTERED_SECRETS = 184887,
+  ADVANCED_SPECIES = 184809,
   COMBUSTION = 45011,
+  EXECUTIONER = 36630,
+  FATED_FORTUNE_STAGE_ONE = 184847,
   FOLLOW_UP = 45446,
+  HARNESSED_QUINTESSENCE = 184858,
+  HEMORRHAGE = 45060,
+  MASTER_ASSASSIN = 45038,
+  PRESSURE_POINTS = 45053,
+  PSYCHIC_LESION = 184873,
+  SPLINTERED_SECRETS = 184887,
+  WARMTH = 45012,
 
   // Racial Passives
   HIGHBORN = 35965,
@@ -130,24 +131,18 @@ export enum KnownAbilities {
 
   // Status Effects
   BURNING = 18084,
-  POISONED = 21929,
-  OVERCHARGED = 178118,
-  SUNDERED = 178123,
-  CONCUSSION = 95134,
   CHILL = 95136,
-  HEMMORRHAGING = 148801,
+  CONCUSSION = 95134,
   DISEASED = 178127,
+  HEMMORRHAGING = 148801,
+  OVERCHARGED = 178118,
+  POISONED = 21929,
+  SUNDERED = 178123,
 
-  // Major Brittle - increases critical damage by 20% (debuff)
-  MAJOR_BRITTLE = 145977,
-  // Minor Brittle - increases critical damage by 10% (debuff)
-  MINOR_BRITTLE = 146697,
-
-  // Major Breach - reduces target's physical and spell resistance
-  MAJOR_BREACH = 61743,
-
-  // Minor Breach - reduces target's physical and spell resistance (lesser amount)
-  MINOR_BREACH = 61742,
+  // Elemental Weakness Debuffs
+  FLAME_WEAKNESS = 142610,
+  FROST_WEAKNESS = 142652,
+  SHOCK_WEAKNESS = 142653,
 
   // Crusher enchant - weapon enchant that reduces target resistance
   CRUSHER_ENCHANT = 17906,
@@ -186,8 +181,8 @@ export enum KnownAbilities {
   FULMINATING_RUNE = 182988,
   RECUPERATIVE_TREATISE = 183047,
 
-  // Advanced Species - Passive that provides 15% critical damage
-  ADVANCED_SPECIES = 184809,
+  // Feline Ambush - Aura that grants 12% critical damage
+  FELINE_AMBUSH = 192901,
 
   // Taunted Debuffs
   TAUNT = 38254,
@@ -291,25 +286,29 @@ export enum KnownAbilities {
 
   // Major Buffs and Debuffs
   MAJOR_BERSERK = 61745,
+  MAJOR_BREACH = 61743,
+  MAJOR_BRITTLE = 145977,
   MAJOR_COURAGE = 109966,
+  MAJOR_COWARDICE = 147643,
   MAJOR_FORCE = 61747,
   MAJOR_RESOLVE = 61694,
   MAJOR_SAVAGERY = 61898,
   MAJOR_SLAYER = 93109,
   MAJOR_VULNERABILITY = 106754,
-  MAJOR_COWARDICE = 147643,
 
   // Minor Buffs and Debuffs
   MINOR_BERSERK = 61744,
+  MINOR_BREACH = 61742,
+  MINOR_BRITTLE = 146697,
   MINOR_BRUTALITY = 61662,
   MINOR_COURAGE = 121878,
   MINOR_FORCE = 61746,
   MINOR_HEROISM = 61708,
+  MINOR_LIFESTEAL = 86304,
   MINOR_SAVAGERY = 61666,
   MINOR_SLAYER = 147226,
   MINOR_SORCERY = 62800,
   MINOR_VULNERABILITY = 79717,
-  MINOR_LIFESTEAL = 86304,
 
   // TODO: Add more penetration-related abilities
   // Examples:
@@ -389,6 +388,37 @@ export enum CriticalDamageValues {
   FIGHTING_FINESSE = 8,
 
   MINOR_BRITTLE = 10,
+  MAJOR_BRITTLE = 20,
+
+  MINOR_FORCE = 10,
+  MAJOR_FORCE = 20,
+
+  // Sul-Xan's Torment provides 12% critical damage with 5 pieces
+  SUL_XAN_TORMENT = 12,
+
+  // Mora Scribe's Thesis provides 12% critical damage with 5 pieces
+  MORA_SCRIBE_THESIS = 12,
+
+  // Harpooner's Wading Kilt provides 10% critical damage when equipped
+  HARPOONER_WADING_KILT = 10,
+
+  // Animal Companions provides 5% critical damage per ability slotted
+  ANIMAL_COMPANIONS_PER_ABILITY = 5,
+
+  // Dual Wield (Twin Blade and Blunt) provides 6% critical damage per axe equipped
+  DUAL_WIELD_AXES = 6,
+
+  // Two Handed (Heavy Weapons) provides 12% critical damage with battle axe
+  TWO_HANDED_BATTLE_AXE = 12,
+
+  // Feline Ambush provides 12% critical damage
+  FELINE_AMBUSH = 12,
+
+  // Backstabber provides 10% critical damage
+  BACKSTABBER = 10,
+
+  // Elemental Catalyst provides 5% critical damage per elemental weakness debuff
+  ELEMENTAL_CATALYST_PER_WEAKNESS = 5,
 
   // TODO: Add more critical damage values
   // Examples:
@@ -404,6 +434,9 @@ export enum KnownSetIDs {
   VELOTHI_UR_MAGE = 694,
   ANSUULS_TORMENT_SET = 707,
   TIDEBORN_WILDSTALKER_SET = 809,
+  SUL_XAN_TORMENT_SET = 708, // Sul-Xan's Torment set
+  MORA_SCRIBE_THESIS_SET = 709, // Mora Scribe's Thesis set
+  HARPOONER_WADING_KILT_SET = 710, // Harpooner's Wading Kilt set
 
   // TODO: Add other set IDs as needed
 }

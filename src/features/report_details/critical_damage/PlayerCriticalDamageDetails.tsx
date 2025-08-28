@@ -75,7 +75,8 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     // These don't change over time, so we only calculate them once
     const staticCriticalDamage = calculateStaticCriticalDamage(
       combatantInfo,
-      playerData?.playersById[player.id]
+      playerData?.playersById[player.id],
+      debuffsLookup
     );
 
     // Create data points and calculate statistics in a single pass

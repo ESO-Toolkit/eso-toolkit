@@ -19,8 +19,9 @@ import { startPKCEAuth } from './auth';
 export const Login: React.FC = () => {
   const theme = useTheme();
 
-  const handleLogin = (): void => {
+  const handleLogin = (): boolean => {
     startPKCEAuth();
+    return false;
   };
 
   return (
