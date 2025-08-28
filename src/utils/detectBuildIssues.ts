@@ -2,11 +2,26 @@ import { PlayerGear } from '../types/playerDetails';
 
 import { PlayerGearSetRecord } from './gearUtilities';
 
-export interface BuildIssue {
-  gearName: string;
-  enchantQuality: number;
+interface BaseIssue {
   message: string;
 }
+
+export interface EnchantQualityIssue extends BaseIssue {
+  gearName: string;
+  enchantQuality: number;
+}
+
+export interface GearQualityIssue extends BaseIssue {
+  gearName: string;
+  gearQuality: number;
+}
+
+export interface GearLevelIssue extends BaseIssue {
+  gearName: string;
+  gearLevel: number;
+}
+
+export type BuildIssue = EnchantQualityIssue | GearLevelIssue | GearQualityIssue;
 
 export function detectBuildIssues(
   gear: PlayerGear[],
@@ -36,8 +51,17 @@ export function detectBuildIssues(
     if (g.quality !== 5) {
       issues.push({
         gearName: g.name || 'Unnamed Gear',
-        enchantQuality: g.quality,
+        gearQuality: g.quality,
         message: `${g.name || 'Unnamed Gear'}: Gear quality is ${g.quality} (should be 5)`,
+      });
+    }
+
+    // CP level check: flag gear below CP 160
+    if (g.championPoints < 160) {
+      issues.push({
+        gearName: g.name || 'Unnamed Gear',
+        gearLevel: g.championPoints,
+        message: `${g.name || 'Unnamed Gear'}: CP level is ${g.championPoints} (should be 160)`,
       });
     }
   });
