@@ -22,7 +22,7 @@ export const SENTRY_CONFIG = Object.freeze({
   release: process.env.REACT_APP_VERSION || '1.0.0',
 
   // Additional configuration
-  debug: process.env.NODE_ENV !== 'production',
+  debug: false, // Disable verbose logging in all environments
   integrations: {
     // Enable user interaction tracking
     userInteractions: true,

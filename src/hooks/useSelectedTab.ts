@@ -1,16 +1,15 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
 
 import { selectSelectedTabId } from '../store/ui/uiSelectors';
-import { setSelectedTabId } from '../store/ui/uiSlice';
-import { useAppDispatch } from '../store/useAppDispatch';
+
+import { useUrlParamSync } from './useUrlParamSync';
 
 /**
  * Hook for managing the selected tab state.
  *
  * This hook manages tab selection with the following priority:
- * 1. URL query parameter (selectedTabId) - highest priority for deep linking
+ * 1. URL query parameter (selectedTab) - highest priority for deep linking
  * 2. Redux UI state (selectedTabId) - persisted state across navigation
  * 3. Default value provided to the hook
  *
@@ -21,55 +20,24 @@ export function useSelectedTab(defaultTabId: number | null = null): {
   selectedTabId: number | null;
   setSelectedTab: (tabId: number | null) => void;
 } {
-  const dispatch = useAppDispatch();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { selectedTabId: urlSelectedTabId, updateSelectedTab } = useUrlParamSync();
   const selectedTabIdFromState = useSelector(selectSelectedTabId);
 
-  // Get selectedTabId from query param if present, otherwise use Redux state, then default
+  // Get selectedTabId from URL param if present, otherwise use Redux state, then default
   const selectedTabId = React.useMemo(() => {
-    const queryTabId = searchParams.get('selectedTabId');
-    if (queryTabId !== null) {
-      const parsedTabId = Number(queryTabId);
-      if (!isNaN(parsedTabId)) {
-        return parsedTabId;
-      }
-      // If query param is invalid, fall through to use state/default
+    // URL params take priority, then Redux state, then default
+    if (urlSelectedTabId !== null) {
+      return urlSelectedTabId;
     }
     return selectedTabIdFromState ?? defaultTabId;
-  }, [searchParams, selectedTabIdFromState, defaultTabId]);
-
-  // Sync Redux state with URL parameter on mount and when URL changes
-  React.useEffect(() => {
-    const queryTabId = searchParams.get('selectedTabId');
-    if (queryTabId !== null) {
-      const parsedTabId = Number(queryTabId);
-      const tabId = !isNaN(parsedTabId) ? parsedTabId : null;
-      if (tabId !== selectedTabIdFromState) {
-        dispatch(setSelectedTabId(tabId));
-      }
-    }
-  }, [searchParams, selectedTabIdFromState, dispatch]);
+  }, [urlSelectedTabId, selectedTabIdFromState, defaultTabId]);
 
   const setSelectedTab = React.useCallback(
     (tabId: number | null) => {
-      // Update Redux state
-      dispatch(setSelectedTabId(tabId));
-
-      // Update URL query parameter
-      setSearchParams(
-        (prevSearchParams) => {
-          const newSearchParams = new URLSearchParams(prevSearchParams);
-          if (tabId !== null) {
-            newSearchParams.set('selectedTabId', tabId.toString());
-          } else {
-            newSearchParams.delete('selectedTabId');
-          }
-          return newSearchParams;
-        },
-        { replace: true }
-      );
+      // Update both Redux state and URL parameter via the URL sync hook
+      updateSelectedTab(tabId, true); // Use replace=true to avoid adding history entries
     },
-    [dispatch, setSearchParams]
+    [updateSelectedTab]
   );
 
   return {
@@ -88,18 +56,14 @@ export function useSelectedTab(defaultTabId: number | null = null): {
  * @returns The currently selected tab ID
  */
 export function useSelectedTabId(defaultTabId: number | null = null): number | null {
-  const [searchParams] = useSearchParams();
+  const { selectedTabId: urlSelectedTabId } = useUrlParamSync();
   const selectedTabIdFromState = useSelector(selectSelectedTabId);
 
   return React.useMemo(() => {
-    const queryTabId = searchParams.get('selectedTabId');
-    if (queryTabId !== null) {
-      const parsedTabId = Number(queryTabId);
-      if (!isNaN(parsedTabId)) {
-        return parsedTabId;
-      }
-      // If query param is invalid, fall through to use state/default
+    // URL params take priority, then Redux state, then default
+    if (urlSelectedTabId !== null) {
+      return urlSelectedTabId;
     }
     return selectedTabIdFromState ?? defaultTabId;
-  }, [searchParams, selectedTabIdFromState, defaultTabId]);
+  }, [urlSelectedTabId, selectedTabIdFromState, defaultTabId]);
 }

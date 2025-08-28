@@ -106,7 +106,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
 
       {damageTypeBreakdown.length > 0 ? (
         <List disablePadding>
-          {damageTypeBreakdown.map((damageType) => {
+          {damageTypeBreakdown.map((damageType, idx) => {
             const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
             // Try custom mapping first (by display name), then fall back to enum-based mapping
             const color =
@@ -119,7 +119,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
               '💥'; // Default explosion
 
             return (
-              <ListItem key={damageType.damageType} sx={{ py: 1.5 }} divider>
+              <ListItem key={idx} sx={{ py: 1.5 }} divider>
                 <Box sx={{ width: '100%' }}>
                   {/* Progress bar container with content inside */}
                   <Box

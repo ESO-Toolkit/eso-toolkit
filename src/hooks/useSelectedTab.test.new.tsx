@@ -2,9 +2,9 @@ import { renderHook, act } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { createStore, combineReducers } from 'redux';
 
-import type { UIState } from '../store/ui/uiSlice';
-import { createMockStore } from '../test/utils/createMockStore';
+import uiSlice from '../store/ui/uiSlice';
 
 import { useSelectedTab, useSelectedTabId } from './useSelectedTab';
 
@@ -24,20 +24,32 @@ const setMockSelectedTabId = (value: number | null): void => {
   mockSelectedTabId = value;
 };
 
-// Create a test-specific wrapper around the shared mock store
-const createTestMockStore = (initialState: { ui?: Partial<UIState> } = {}): ReturnType<typeof createMockStore> => {
-  return createMockStore({
-    initialState,
-    disableSerializableCheck: true, // Disable for test simplicity
+// Create a mock store
+const createMockStore = (
+  initialState: { ui?: Partial<ReturnType<typeof uiSlice>> } = {}
+): ReturnType<typeof createStore> => {
+  const rootReducer = combineReducers({
+    ui: uiSlice,
+  });
+  return createStore(rootReducer, {
+    ui: {
+      darkMode: true,
+      sidebarOpen: false,
+      showExperimentalTabs: false,
+      selectedTargetId: null,
+      selectedPlayerId: null,
+      selectedTabId: null,
+      ...(initialState.ui || {}),
+    },
   });
 };
 
 // Test wrapper component
 const TestWrapper: React.FC<{
   children: React.ReactNode;
-  store?: ReturnType<typeof createTestMockStore>;
+  store?: ReturnType<typeof createMockStore>;
 }> = ({ children, store }) => {
-  const mockStore = store || createTestMockStore();
+  const mockStore = store || createMockStore();
   return <Provider store={mockStore}>{children}</Provider>;
 };
 
@@ -57,7 +69,7 @@ describe('useSelectedTab', () => {
 
   it('should return URL param value over default and state', () => {
     setMockSelectedTabId(3);
-    const store = createTestMockStore({
+    const store = createMockStore({
       ui: { selectedTabId: 2 },
     });
 
@@ -70,7 +82,7 @@ describe('useSelectedTab', () => {
 
   it('should return state value over default when no URL param', () => {
     setMockSelectedTabId(null);
-    const store = createTestMockStore({
+    const store = createMockStore({
       ui: { selectedTabId: 2 },
     });
 
@@ -124,7 +136,7 @@ describe('useSelectedTabId', () => {
 
   it('should return URL param value over default and state', () => {
     setMockSelectedTabId(3);
-    const store = createTestMockStore({
+    const store = createMockStore({
       ui: { selectedTabId: 2 },
     });
 
@@ -137,7 +149,7 @@ describe('useSelectedTabId', () => {
 
   it('should return state value over default when no URL param', () => {
     setMockSelectedTabId(null);
-    const store = createTestMockStore({
+    const store = createMockStore({
       ui: { selectedTabId: 2 },
     });
 

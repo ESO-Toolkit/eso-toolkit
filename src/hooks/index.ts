@@ -19,3 +19,6 @@ export { useCastEvents } from './useCastEvents';
 export { useReportFightParams } from './useReportFightParams';
 export { useCurrentFight } from './useCurrentFight';
 export { useSelectedTab, useSelectedTabId } from './useSelectedTab';
+
+// URL parameter sync hooks
+export { useUrlParamSync, useUrlParams } from './useUrlParamSync';
