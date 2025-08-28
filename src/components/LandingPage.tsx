@@ -26,6 +26,16 @@ const HeroSection = styled(Box)(({ theme }) => ({
   position: 'relative',
   paddingTop: '0px',
   overflow: 'visible',
+  [theme.breakpoints.down('md')]: {
+    minHeight: '70vh',
+    padding: '2rem 4vw 0rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    minHeight: '60vh',
+    padding: '1rem 2vw 0rem',
+    alignItems: 'flex-start',
+    paddingTop: '0rem',
+  },
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -61,24 +71,29 @@ const HeroSection = styled(Box)(({ theme }) => ({
   },
 }));
 
-const HeroContent = styled(Box)({
+const HeroContent = styled(Box)(({ theme }) => ({
   textAlign: 'center',
   zIndex: 1,
   maxWidth: 'none',
   width: '100%',
   paddingInline: '32px',
   overflow: 'visible',
-});
+  [theme.breakpoints.down('md')]: {
+    paddingInline: '24px',
+  },
+  [theme.breakpoints.down('sm')]: {
+    paddingInline: '16px',
+  },
+}));
 
 const HeroTitle = styled(Typography)(({ theme }) => ({
-  fontSize: 'clamp(4.5rem, 5vw, 3rem)',
   fontWeight: 900,
   background: 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   backgroundClip: 'text',
   letterSpacing: '-0.02em',
-  lineHeight: 1.4,
+  lineHeight: 1.2,
   textShadow: `
     0 0 20px rgba(56, 189, 248, 0.5),
     0 0 40px rgba(56, 189, 248, 0.3),
@@ -88,19 +103,30 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     0 16px 32px rgba(0, 0, 0, 0.1)
   `,
   animation: 'shimmer 3s ease-in-out infinite',
-  maxWidth: 'none',
-  width: 'auto',
-  display: 'inline-block',
-  paddingInline: '1rem',
-  margin: '0rem auto 2rem auto',
-  transform: 'translateX(-50%)',
-  left: '50%',
-  position: 'relative',
-  zIndex: 2,
-  overflow: 'visible',
-  wordBreak: 'normal',
-  overflowWrap: 'normal',
+  margin: '0 auto 2rem auto',
   textAlign: 'center',
+  width: '100%',
+  maxWidth: '100%',
+  padding: '0 1rem',
+  fontSize: '5rem',
+  [theme.breakpoints.down('lg')]: {
+    fontSize: '4rem',
+    padding: '0 0.75rem',
+  },
+  [theme.breakpoints.down('md')]: {
+    fontSize: '3rem',
+    lineHeight: 1.3,
+    padding: '0 0.5rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '2.5rem',
+    lineHeight: 1.4,
+    padding: '0 0.25rem',
+  },
+  [theme.breakpoints.down(480)]: {
+    fontSize: '2rem',
+    lineHeight: 1.5,
+  },
   '@keyframes shimmer': {
     '0%, 100%': { opacity: 1 },
     '50%': { opacity: 0.85 },
@@ -113,12 +139,13 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     backgroundClip: 'text !important',
   },
   '& .no-wrap': {
-    whiteSpace: 'nowrap',
-    wordBreak: 'keep-all',
-    overflowWrap: 'normal',
     display: 'inline-block',
     textShadow:
       '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+    [theme.breakpoints.down('sm')]: {
+      whiteSpace: 'normal',
+      wordBreak: 'break-word',
+    },
   },
   '& .highlight-text': {
     position: 'relative',
@@ -131,7 +158,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
       content: '""',
       position: 'absolute',
       bottom: '-2px',
-      left: '37%',
+      left: '50%',
       transform: 'translateX(-50%)',
       width: '80%',
       height: '4px',
@@ -163,10 +190,30 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
 }));
 
 const HeroSubtitle = styled(Typography)(({ theme }) => ({
-  fontSize: 'clamp(1.1rem, 2vw, 1.4rem)',
-  color: theme.palette.text.secondary,
-  marginBottom: '3rem',
-  lineHeight: 1.6,
+  fontSize: '1.5rem',
+  color: 'rgba(255, 255, 255, 0.9)',
+  marginTop: theme.spacing(3),
+  marginBottom: theme.spacing(6),
+  fontWeight: 400,
+  lineHeight: 1.5,
+  maxWidth: '600px',
+  margin: '24px auto 48px auto',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1.25rem',
+    maxWidth: '500px',
+    margin: '20px auto 40px auto',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.1rem',
+    maxWidth: '400px',
+    margin: '16px auto 32px auto',
+    lineHeight: 1.6,
+  },
+  [theme.breakpoints.down(480)]: {
+    fontSize: '1rem',
+    maxWidth: '320px',
+    margin: '12px auto 24px auto',
+  },
 }));
 
 const LogInputContainer = styled(Box)(({ theme }) => ({
@@ -180,8 +227,10 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   borderRadius: '16px',
   boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-  overflow: 'hidden',
+  overflow: 'visible',
   position: 'relative',
+  maxWidth: '600px',
+  margin: '0 auto',
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -197,9 +246,22 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
       '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
     borderColor: 'rgba(56, 189, 248, 0.4)',
   },
+  [theme.breakpoints.down('md')]: {
+    maxWidth: '500px',
+    borderRadius: '12px',
+  },
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
     alignItems: 'stretch',
+    maxWidth: '400px',
+    borderRadius: '8px',
+    '&:hover': {
+      transform: 'none',
+    },
+  },
+  [theme.breakpoints.down(480)]: {
+    maxWidth: '320px',
+    margin: '0 auto',
   },
 }));
 
@@ -213,16 +275,40 @@ const SectionTitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   fontSize: '2.5rem',
   fontWeight: 700,
-  marginBottom: '1rem',
-  marginTop: '6rem',
+  marginBottom: '1.5rem',
+  marginTop: '8rem',
   color: theme.palette.text.primary,
+  [theme.breakpoints.down('md')]: {
+    fontSize: '2.2rem',
+    marginTop: '6rem',
+    marginBottom: '1.25rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '2rem',
+    marginTop: '4rem',
+    marginBottom: '1rem',
+  },
 }));
 
 const SectionSubtitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   color: theme.palette.text.secondary,
-  marginBottom: '3rem',
+  marginBottom: '4rem',
   fontSize: '1.2rem',
+  lineHeight: 1.6,
+  maxWidth: '600px',
+  margin: '0 auto 4rem auto',
+  [theme.breakpoints.down('md')]: {
+    fontSize: '1.1rem',
+    marginBottom: '3rem',
+    maxWidth: '500px',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1rem',
+    marginBottom: '2.5rem',
+    maxWidth: '400px',
+    paddingInline: '1rem',
+  },
 }));
 
 const ToolsGrid = styled(Box)(({ theme }) => ({
@@ -351,11 +437,16 @@ const MarketingBadge = styled(Box)({
   },
 });
 
-const BadgeContainer = styled(Box)({
+const BadgeContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
   justifyContent: 'center',
-  marginBottom: '2rem',
-});
+  marginBottom: '3rem',
+  marginTop: '2rem',
+  [theme.breakpoints.down('sm')]: {
+    marginBottom: '2rem',
+    marginTop: '1rem',
+  },
+}));
 
 export const LandingPage: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
@@ -434,8 +525,8 @@ export const LandingPage: React.FC = () => {
                 flex: 1,
                 '& .MuiOutlinedInput-root': {
                   backgroundColor: 'transparent',
-                  borderRadius: '16px 0 0 16px',
-                  height: '64px',
+                  borderRadius: { xs: '8px 8px 0 0', sm: '16px 0 0 16px' },
+                  height: { xs: '56px', sm: '64px' },
                   padding: '0 1.5rem',
                   border: 'none',
                   '& fieldset': {
@@ -450,22 +541,26 @@ export const LandingPage: React.FC = () => {
                 },
                 '& .MuiInputLabel-root': {
                   color: '#94a3b8',
-                  left: '1.5rem',
-                  top: '2px',
+                  left: '3.5rem',
+                  top: { xs: '2px', sm: '4px' },
+                  fontSize: { xs: '0.85rem', sm: '0.95rem' },
                   '&.Mui-focused': {
                     color: '#38bdf8',
                   },
                   '&.MuiInputLabel-shrink': {
-                    transform: 'translate(1.5rem, -6px) scale(0.75)',
+                    transform: { 
+                      xs: 'translate(3.5rem, -12px) scale(0.75)', 
+                      sm: 'translate(3.5rem, -10px) scale(0.75)' 
+                    },
                     backgroundColor: 'rgba(15, 23, 42, 0.9)',
-                    padding: '0 8px',
+                    padding: '2px 8px',
                     borderRadius: '4px',
                   },
                 },
                 '& .MuiInputBase-input': {
-                  padding: '18px 0',
+                  padding: { xs: '16px 0', sm: '18px 0' },
                   color: '#e5e7eb',
-                  fontSize: '1rem',
+                  fontSize: { xs: '0.9rem', sm: '1rem' },
                 },
               }}
               InputProps={{
@@ -476,13 +571,14 @@ export const LandingPage: React.FC = () => {
               variant="contained"
               color="secondary"
               sx={{
-                minWidth: 200,
-                height: 64,
+                minWidth: { xs: 'auto', sm: 200 },
+                width: { xs: '100%', sm: 'auto' },
+                height: { xs: 56, sm: 64 },
                 background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
                 color: '#0b1220',
                 fontWeight: 700,
-                fontSize: '1.1rem',
-                borderRadius: '0 16px 16px 0',
+                fontSize: { xs: '1rem', sm: '1.1rem' },
+                borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
                 border: 'none',
                 boxShadow: 'none',
                 position: 'relative',
@@ -515,7 +611,7 @@ export const LandingPage: React.FC = () => {
                 },
                 '&:hover': {
                   background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #00e1ff 100%)',
-                  transform: 'scale(1.02)',
+                  transform: { xs: 'none', sm: 'scale(1.02)' },
                   '&::before': {
                     opacity: 1,
                   },
@@ -524,7 +620,7 @@ export const LandingPage: React.FC = () => {
                   },
                 },
                 '&:active': {
-                  transform: 'scale(1.01)',
+                  transform: { xs: 'none', sm: 'scale(1.01)' },
                 },
               }}
               onClick={handleLoadLog}
@@ -684,7 +780,7 @@ export const LandingPage: React.FC = () => {
           </a>
         </Box>
         <Typography sx={{ color: 'text.secondary', fontSize: '0.9rem' }}>
-          © 2024 ESO Helper Tools. Not affiliated with ZeniMax Online Studios or Bethesda.
+          2024 ESO Helper Tools. Not affiliated with ZeniMax Online Studios or Bethesda.
         </Typography>
       </Box>
     </LandingContainer>
