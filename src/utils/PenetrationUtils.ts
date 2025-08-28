@@ -194,7 +194,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     value: PenetrationValues.VELOTHI_UR_MAGE_AMULET,
     ability: KnownAbilities.VELOTHI_UR_MAGE_BUFF,
     name: "Velothi Ur-Mage's Amulet",
-    description: 'Mythic amulet buff providing flat penetration',
+    description: 'Mythic amulet buff providing 1650 penetration',
     source: 'aura',
   },
   {
@@ -222,19 +222,20 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   {
     key: PenetrationComputedSourceKey.SPLINTERED_SECRETS,
     name: 'Splintered Secrets (Herald of the Tome)',
-    description: '620 penetration per stack per Herald ability slotted',
+    description: '620 penetration per stack per Herald of the Tome ability slotted',
     source: 'computed',
   },
   {
     key: PenetrationComputedSourceKey.FORCE_OF_NATURE,
     name: 'Force of Nature',
-    description: '660 penetration per status effect (TODO: compute status effects)',
+    description:
+      '660 penetration per status effect - [NOT FULLY IMPLEMENTED: status effect counting not implemented]',
     source: 'computed',
   },
   {
     key: PenetrationComputedSourceKey.PIERCING,
     name: 'Piercing',
-    description: '700 penetration (TODO: implement proper conditions)',
+    description: '700 penetration - [NOT FULLY IMPLEMENTED: proper conditions not implemented]',
     source: 'computed',
   },
   {
@@ -277,7 +278,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     key: PenetrationComputedSourceKey.HEW_AND_SUNDER,
     name: 'Hew and Sunder',
     description:
-      '1236 penetration per enemy within 8 meters when you deal damage with a Heavy Attack (5-piece set)',
+      '1236 penetration per enemy within 8 meters when you deal damage with a Heavy Attack (5-piece set) - [NOT FULLY IMPLEMENTED: enemy counting within 8 meters not implemented]',
     source: 'computed',
   },
   // Debuff-based sources

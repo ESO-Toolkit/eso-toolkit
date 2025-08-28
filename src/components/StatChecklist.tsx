@@ -1,3 +1,4 @@
+import WarningIcon from '@mui/icons-material/Warning';
 import {
   Box,
   Typography,
@@ -12,6 +13,7 @@ import {
   FormControlLabel,
   Switch,
   Skeleton,
+  Tooltip,
 } from '@mui/material';
 import React from 'react';
 
@@ -89,53 +91,68 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
       <Card variant="outlined" className="u-hover-lift u-fade-in-up">
         <CardContent sx={{ p: 2 }}>
           <List dense>
-            {visibleSources.map((source, index) => (
-              <ListItem key={index} disablePadding>
-                <ListItemIcon sx={{ minWidth: 36 }}>
-                  <Checkbox
-                    checked={source.wasActive}
-                    disabled
-                    size="small"
-                    color={source.wasActive ? 'success' : 'default'}
-                  />
-                </ListItemIcon>
-                <ListItemText
-                  primary={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {visibleSources.map((source, index) => {
+              const isUnimplemented = source.description.includes('[NOT FULLY IMPLEMENTED');
+
+              return (
+                <ListItem key={index} disablePadding>
+                  <ListItemIcon sx={{ minWidth: 36 }}>
+                    <Checkbox
+                      checked={source.wasActive}
+                      disabled
+                      size="small"
+                      color={source.wasActive ? 'success' : 'default'}
+                    />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            textDecoration: source.wasActive ? 'none' : 'line-through',
+                            color: source.wasActive ? 'text.primary' : 'text.disabled',
+                          }}
+                        >
+                          {source.name}
+                        </Typography>
+                        {isUnimplemented && (
+                          <Tooltip title="This source is not fully implemented yet">
+                            <WarningIcon
+                              sx={{
+                                fontSize: 16,
+                                color: 'warning.main',
+                                ml: 0.5,
+                              }}
+                            />
+                          </Tooltip>
+                        )}
+                      </Box>
+                    }
+                    secondary={
                       <Typography
-                        variant="body2"
+                        variant="caption"
                         sx={{
-                          textDecoration: source.wasActive ? 'none' : 'line-through',
-                          color: source.wasActive ? 'text.primary' : 'text.disabled',
+                          color: source.wasActive ? 'text.secondary' : 'text.disabled',
                         }}
                       >
-                        {source.name}
+                        {source.description}
+                        {source.link && (
+                          <Link
+                            href={source.link}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ ml: 1, fontSize: 'inherit' }}
+                          >
+                            View on ESO Logs
+                          </Link>
+                        )}
                       </Typography>
-                    </Box>
-                  }
-                  secondary={
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        color: source.wasActive ? 'text.secondary' : 'text.disabled',
-                      }}
-                    >
-                      {source.description}
-                      {source.link && (
-                        <Link
-                          href={source.link}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          sx={{ ml: 1, fontSize: 'inherit' }}
-                        >
-                          View on ESO Logs
-                        </Link>
-                      )}
-                    </Typography>
-                  }
-                />
-              </ListItem>
-            ))}
+                    }
+                  />
+                </ListItem>
+              );
+            })}
           </List>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
             ✓ = Source was active during this fight | ✗ = Source was not used
