@@ -1,4 +1,4 @@
-import { Box } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
@@ -24,6 +24,10 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box>
+      <Typography variant="h4" gutterBottom>
+        Critical Damage Analysis
+      </Typography>
+
       {players.map((player) => (
         <PlayerCriticalDamageDetails
           key={player.id}
