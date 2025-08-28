@@ -250,4 +250,21 @@ module.exports = {
   typescript: {
     enableTypeChecking: false, // Disable TypeScript checking for faster builds
   },
+  jest: {
+    configure: (jestConfig) => {
+      // Add coverage configuration when COVERAGE environment variable is set
+      if (process.env.COVERAGE || process.argv.includes('--coverage')) {
+        const coverageConfig = require('./jest.cra.config.js');
+        return {
+          ...jestConfig,
+          ...coverageConfig,
+          // Preserve existing setup
+          setupFilesAfterEnv: jestConfig.setupFilesAfterEnv || ['<rootDir>/src/setupTests.ts'],
+          testEnvironment: jestConfig.testEnvironment || 'jsdom',
+        };
+      }
+      
+      return jestConfig;
+    },
+  },
 };

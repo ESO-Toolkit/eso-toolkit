@@ -49,6 +49,16 @@
     "benchmark": "node benchmark-dev-server.js",
     "test": "craco test --watchAll=false",
     "test:watch": "craco test",
+        "test:coverage": "set COVERAGE=true && craco test --coverage --watchAll=false",
+    "test:coverage:watch": "set COVERAGE=true && craco test --coverage --watchAll",
+    "test:coverage:ci": "set NODE_ENV=ci && set COVERAGE_MODE=ci && set COVERAGE=true && craco test --coverage --watchAll=false",
+    "test:coverage:report": "npm run test:coverage && npm run coverage:open",
+    "coverage:open": "start coverage/lcov-report/index.html",
+    "coverage:analyze": "node scripts/coverage-analyzer.js",
+    "coverage:analyze:watch": "node scripts/coverage-analyzer.js --watch",
+    "coverage:analyze:threshold": "node scripts/coverage-analyzer.js --threshold",
+    "coverage:badges": "node scripts/coverage-badge-generator.js",
+    "coverage:full": "npm run test:coverage && npm run coverage:badges && npm run coverage:analyze",
     "type-check": "tsc --noEmit",
     "validate": "npm run type-check && npm run lint",
     "lint": "eslint ./src --ext .ts,.tsx",
@@ -60,7 +70,48 @@
     "codegen": "ts-node run-codegen.ts",
     "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts"
   },
-  "jest": {},
+  "jest": {
+    "collectCoverageFrom": [
+      "src/**/*.{ts,tsx}",
+      "!src/**/*.d.ts",
+      "!src/**/*.stories.{ts,tsx}",
+      "!src/**/*.test.{ts,tsx}",
+      "!src/test/**/*",
+      "!src/setupTests.ts",
+      "!src/index.tsx",
+      "!src/reportWebVitals.ts",
+      "!src/graphql/generated.ts",
+      "!src/**/generated.ts",
+      "!src/**/*.generated.ts"
+    ],
+    "coverageReporters": [
+      "text",
+      "text-summary",
+      "lcov",
+      "html",
+      "json"
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 70,
+        "functions": 75,
+        "lines": 80,
+        "statements": 80
+      },
+      "./src/utils/**/*.{ts,tsx}": {
+        "branches": 80,
+        "functions": 85,
+        "lines": 90,
+        "statements": 90
+      },
+      "./src/hooks/**/*.{ts,tsx}": {
+        "branches": 75,
+        "functions": 80,
+        "lines": 85,
+        "statements": 85
+      }
+    }
+  },
   "eslintConfig": {
     "extends": [
       "react-app",
