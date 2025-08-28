@@ -122,32 +122,32 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   maxWidth: '100%',
   padding: '0',
   paddingBottom: '12px',
-  fontSize: 'clamp(3.5rem, 5vw, 6rem)',
+  fontSize: 'clamp(2rem, 6vw, 4.5rem)',
   overflow: 'visible',
-  wordWrap: 'break-word',
-  hyphens: 'auto',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  height: 'auto',
+  minHeight: 'fit-content',
   [theme.breakpoints.up('xl')]: {
-    fontSize: 'clamp(4rem, 4vw, 7rem)',
+    fontSize: 'clamp(2.5rem, 5vw, 5.1rem)',
   },
   [theme.breakpoints.down('lg')]: {
-    fontSize: 'clamp(3.2rem, 5.5vw, 4.5rem)',
-    padding: '0',
+    fontSize: 'clamp(2.2rem, 6vw, 4rem)',
   },
   [theme.breakpoints.down('md')]: {
-    fontSize: 'clamp(2.8rem, 5vw, 3.8rem)',
+    fontSize: 'clamp(2.5rem, 5vw, 3rem)',
     lineHeight: 1.5,
-    padding: '0',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(2.9rem, 6vw, 3.2rem)',
+    fontSize: 'clamp(2.8rem, 6vw, 2.5rem)',
     lineHeight: 1.5,
-    padding: '0',
     marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(2.3rem, 7vw, 2.8rem)',
+    fontSize: 'clamp(2.2rem, 7vw, 2rem)',
     lineHeight: 1.5,
-    padding: '0',
   },
   '@keyframes shimmer': {
     '0%, 100%': { opacity: 1 },
@@ -159,17 +159,18 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     WebkitBackgroundClip: 'text !important',
     WebkitTextFillColor: 'transparent !important',
     backgroundClip: 'text !important',
-  },
-  '& .no-wrap': {
-    display: 'inline-block',
-    textShadow:
-      '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+    display: 'block',
+    width: '100%',
+    textAlign: 'center',
     whiteSpace: 'nowrap',
-    wordBreak: 'keep-all',
-    [theme.breakpoints.down('sm')]: {
-      whiteSpace: 'normal',
-      wordBreak: 'break-word',
-    },
+    overflow: 'visible',
+  },
+  '& .gradient-text': {
+    display: 'block',
+    width: '100%',
+    textAlign: 'center',
+    whiteSpace: 'nowrap',
+    overflow: 'visible',
   },
   '& .highlight-text': {
     position: 'relative',
@@ -228,13 +229,13 @@ const HeroSubtitle = styled(Typography)(({ theme }) => ({
     margin: '20px auto 40px auto',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1.1rem',
-    maxWidth: '400px',
+    fontSize: '1.2em',
+    minWidth: '100%',
     margin: '16px auto 32px auto',
     lineHeight: 1.6,
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: '1rem',
+    fontSize: '1.1m',
     margin: '12px auto 24px auto',
   },
 }));
@@ -274,8 +275,9 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
+    margin: '1rem 0 2.5rem 0',
     alignItems: 'stretch',
-    maxWidth: '400px',
+    minWidth: '100%',
     borderRadius: '8px',
     '&:hover': {
       transform: 'none',
@@ -625,8 +627,7 @@ export const LandingPage: React.FC = () => {
         <HeroContent className="u-fade-in-up">
           <HeroTitle variant="h1">
             <span className="light-text">Essential Tools</span>
-            <br />
-            <span className="no-wrap">For <span className="highlight-text">Your ESO Journey</span></span>
+            <span className="gradient-text">For <span className="highlight-text">Your ESO Journey</span></span>
           </HeroTitle>
           <HeroSubtitle>
             Optimize your builds, create stunning messages, and manage your guild with powerful, 
