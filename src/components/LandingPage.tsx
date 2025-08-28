@@ -104,10 +104,16 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   width: '100%',
   maxWidth: '100%',
   padding: '0 1rem',
-  fontSize: 'clamp(3rem, 4.5vw, 4.5rem)',
+  fontSize: 'clamp(2.8rem, 4vw, 4rem)',
   overflow: 'hidden',
+  wordWrap: 'break-word',
+  hyphens: 'auto',
+  '@media (min-width: 239px) and (max-width: 621px)': {
+    fontSize: '2.4rem',
+    padding: '0 0.5rem',
+  },
   [theme.breakpoints.down('lg')]: {
-    fontSize: '4rem',
+    fontSize: '3.5rem',
     padding: '0 0.75rem',
   },
   [theme.breakpoints.down('md')]: {
@@ -143,13 +149,24 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
 
     textShadow:
       '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
-    whiteSpace: 'nowrap',
-    wordBreak: 'keep-all',
+    '@media (min-width: 629px)': {
+      whiteSpace: 'nowrap',
+      wordBreak: 'keep-all',
+    },
     '@media (max-width: 628px)': {
       whiteSpace: 'normal',
       wordBreak: 'break-word',
     },
-
+    '@media (min-width: 1200px) and (max-width: 1527px)': {
+      whiteSpace: 'nowrap',
+      wordBreak: 'keep-all',
+    },
+    '@media (min-width: 1528px)': {
+      whiteSpace: 'nowrap',
+      wordBreak: 'keep-all',
+      fontSize: '3.2rem',
+      maxWidth: '85vw',
+    },
   },
   '& .highlight-text': {
     position: 'relative',
