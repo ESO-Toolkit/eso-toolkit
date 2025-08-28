@@ -604,3 +604,4 @@ export const arcanistData: SkillsetData = {
     },
   },
 };
+
