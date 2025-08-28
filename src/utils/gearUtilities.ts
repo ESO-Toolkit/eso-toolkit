@@ -1,13 +1,13 @@
-import { CombatantGear } from '../types/combatlogEvents';
-import { GearSlot, GearType, PlayerGear } from '../types/playerDetails';
+import { CombatantInfoEvent } from '../types/combatlogEvents';
+import { GearSlot, GearTrait, PlayerGear, WeaponType } from '../types/playerDetails';
 
 const DOUBLE_SET_TYPES = Object.freeze(
   new Set([
-    GearType.FROST_STAFF,
-    GearType.INFERNO_STAFF,
-    GearType.LIGHTNING_STAFF,
-    GearType.RESO_STAFF,
-    GearType.JEWELRY_OR_TWO_HANDED_SWORD,
+    WeaponType.FROST_STAFF,
+    WeaponType.INFERNO_STAFF,
+    WeaponType.LIGHTNING_STAFF,
+    WeaponType.RESO_STAFF,
+    WeaponType.TWO_HANDED_SWORD,
   ])
 );
 
@@ -34,23 +34,16 @@ export function isPerfectedGear(gear: PlayerGear): boolean {
   return gear.setName !== undefined && /^perfected\s+/i.test(gear.setName);
 }
 
-export function isDoubleSetCount(
-  gear: CombatantGear | PlayerGear,
-  slot: number,
-  allGear: (CombatantGear | PlayerGear)[]
-): boolean {
+export function isDoubleSetCount(gear: PlayerGear, slot: number, allGear: PlayerGear[]): boolean {
   return (
-    DOUBLE_SET_TYPES.has(gear.type) &&
+    DOUBLE_SET_TYPES.has(gear.type as WeaponType) &&
     ((slot === GearSlot.MAIN_HAND && allGear[GearSlot.OFF_HAND].id === 0) ||
       (slot === GearSlot.BACKUP_MAIN_HAND && allGear[GearSlot.BACKUP_OFF_HAND].id === 0))
   );
 }
 
 // Utility function to count gear pieces for a given set ID
-export const getSetCount = (
-  gear: (CombatantGear | PlayerGear)[] | undefined,
-  setID: number
-): number => {
+export const getSetCount = (gear: PlayerGear[] | undefined, setID: number): number => {
   if (gear === undefined) {
     return 0;
   }
@@ -219,3 +212,245 @@ export const MONSTER_ONE_PIECE_HINTS = Object.freeze(
     ].map((n) => normalizeGearName(n))
   )
 );
+
+// ========================================
+// WEAPON TYPE CLASSIFICATION UTILITIES
+// ========================================
+
+/**
+ * Helper function to determine if a weapon type is 1-handed
+ */
+export function isOneHandedWeapon(weaponType: WeaponType): boolean {
+  const oneHandedTypes = [WeaponType.AXE, WeaponType.SWORD, WeaponType.DAGGER, WeaponType.MACE];
+  return oneHandedTypes.includes(weaponType);
+}
+
+/**
+ * Helper function to determine if a weapon type is 2-handed (excluding staves)
+ */
+export function isTwoHandedWeapon(weaponType: WeaponType): boolean {
+  const twoHandedTypes = [WeaponType.TWO_HANDED_SWORD, WeaponType.TWO_HANDED_AXE, WeaponType.MAUL];
+  return twoHandedTypes.includes(weaponType);
+}
+
+/**
+ * Helper function to determine if a weapon type is a staff (2-handed magical weapon)
+ */
+export function isStaff(weaponType: WeaponType): boolean {
+  const staffTypes = [
+    WeaponType.INFERNO_STAFF,
+    WeaponType.FROST_STAFF,
+    WeaponType.LIGHTNING_STAFF,
+    WeaponType.RESO_STAFF,
+  ];
+  return staffTypes.includes(weaponType);
+}
+
+/**
+ * Helper function to determine if a weapon type is any 2-handed weapon (including staves)
+ */
+export function isAnyTwoHandedWeapon(weaponType: WeaponType): boolean {
+  return isTwoHandedWeapon(weaponType) || isStaff(weaponType);
+}
+
+// ========================================
+// GEAR ANALYSIS UTILITIES
+// ========================================
+
+/**
+ * Count 1H weapons with sharpened trait across all weapon slots
+ */
+export function countOneHandedSharpenedWeapons(combatantInfo: CombatantInfoEvent): number {
+  if (!combatantInfo.gear) return 0;
+
+  let count = 0;
+  const weaponSlots = [
+    GearSlot.MAIN_HAND,
+    GearSlot.OFF_HAND,
+    GearSlot.BACKUP_MAIN_HAND,
+    GearSlot.BACKUP_OFF_HAND,
+  ];
+
+  for (const slotIndex of weaponSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (
+        weapon &&
+        weapon.id !== 0 &&
+        isOneHandedWeapon(weapon.type as WeaponType) &&
+        weapon.trait === GearTrait.SHARPENED
+      ) {
+        count++;
+      }
+    }
+  }
+
+  return count;
+}
+
+/**
+ * Check if any 2H weapon (excluding staves) has sharpened trait
+ */
+export function hasTwoHandedSharpenedWeapon(combatantInfo: CombatantInfoEvent): boolean {
+  if (!combatantInfo.gear) return false;
+
+  const mainHandSlots = [GearSlot.MAIN_HAND, GearSlot.BACKUP_MAIN_HAND];
+
+  for (const slotIndex of mainHandSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (
+        weapon &&
+        weapon.id !== 0 &&
+        isTwoHandedWeapon(weapon.type as WeaponType) &&
+        weapon.trait === GearTrait.SHARPENED
+      ) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Count axes (1H) in all weapon slots for dual wield critical damage bonuses
+ */
+export function countAxesInWeaponSlots(combatantInfo: CombatantInfoEvent | null): number {
+  if (!combatantInfo || !combatantInfo.gear) return 0;
+
+  let axeCount = 0;
+
+  // Check main hand, off hand, backup main hand, and backup off hand slots
+  // The gear array is indexed by slot number
+  const weaponSlotIndices = [
+    GearSlot.MAIN_HAND,
+    GearSlot.OFF_HAND,
+    GearSlot.BACKUP_MAIN_HAND,
+    GearSlot.BACKUP_OFF_HAND,
+  ];
+
+  for (const slotIndex of weaponSlotIndices) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (
+        weapon &&
+        (weapon.type === WeaponType.AXE || weapon.type === WeaponType.TWO_HANDED_AXE) &&
+        weapon.id !== 0
+      ) {
+        axeCount++;
+      }
+    }
+  }
+
+  return axeCount;
+}
+
+/**
+ * Check if a two-handed axe is equipped in main hand or backup main hand
+ */
+export function hasTwoHandedAxeEquipped(combatantInfo: CombatantInfoEvent | null): boolean {
+  if (!combatantInfo || !combatantInfo.gear) return false;
+
+  // Check main hand and backup main hand slots for two-handed axes
+  const mainHandSlots = [GearSlot.MAIN_HAND, GearSlot.BACKUP_MAIN_HAND];
+
+  for (const slotIndex of mainHandSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (weapon && weapon.type === WeaponType.TWO_HANDED_AXE && weapon.id !== 0) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Check if a two-handed maul is equipped in main hand or backup main hand
+ */
+export function hasTwoHandedMaulEquipped(combatantInfo: CombatantInfoEvent | null): boolean {
+  if (!combatantInfo || !combatantInfo.gear) return false;
+
+  // Check main hand and backup main hand slots for two-handed mauls
+  const mainHandSlots = [GearSlot.MAIN_HAND, GearSlot.BACKUP_MAIN_HAND];
+
+  for (const slotIndex of mainHandSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (weapon && weapon.type === WeaponType.MAUL && weapon.id !== 0) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Count dual wield weapons (1H weapons in main hand and off hand simultaneously)
+ * Twin Blade and Blunt passive provides penetration per dual wield weapon equipped
+ */
+export function countDualWieldWeapons(combatantInfo: CombatantInfoEvent | null): number {
+  if (!combatantInfo || !combatantInfo.gear) return 0;
+
+  let count = 0;
+
+  // Check main hand + off hand combination
+  const mainHandSlots = [
+    { main: GearSlot.MAIN_HAND, off: GearSlot.OFF_HAND },
+    { main: GearSlot.BACKUP_MAIN_HAND, off: GearSlot.BACKUP_OFF_HAND },
+  ];
+
+  for (const { main, off } of mainHandSlots) {
+    if (main < combatantInfo.gear.length && off < combatantInfo.gear.length) {
+      const mainHandWeapon = combatantInfo.gear[main];
+      const offHandWeapon = combatantInfo.gear[off];
+
+      // Check if we have 1H weapons in both slots
+      if (
+        mainHandWeapon &&
+        mainHandWeapon.id !== 0 &&
+        isOneHandedWeapon(mainHandWeapon.type as WeaponType) &&
+        offHandWeapon &&
+        offHandWeapon.id !== 0 &&
+        isOneHandedWeapon(offHandWeapon.type as WeaponType)
+      ) {
+        // Count both weapons in the dual wield setup
+        count += 2;
+      }
+    }
+  }
+
+  return count;
+}
+
+/**
+ * Count potential maces in weapon slots for Twin Blade and Blunt passive
+ * This is specifically for the "per mace equipped" description
+ */
+export function countMacesInWeaponSlots(combatantInfo: CombatantInfoEvent | null): number {
+  if (!combatantInfo || !combatantInfo.gear) return 0;
+
+  let maceCount = 0;
+
+  // Check all weapon slots for potential maces
+  const weaponSlots = [
+    GearSlot.MAIN_HAND,
+    GearSlot.OFF_HAND,
+    GearSlot.BACKUP_MAIN_HAND,
+    GearSlot.BACKUP_OFF_HAND,
+  ];
+
+  for (const slotIndex of weaponSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (weapon && weapon.id !== 0 && weapon.type === WeaponType.MACE) {
+        maceCount++;
+      }
+    }
+  }
+
+  return maceCount;
+}

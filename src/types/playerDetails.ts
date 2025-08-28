@@ -28,16 +28,32 @@ export enum GearSlot {
   BACKUP_OFF_HAND = 13,
 }
 
-export enum GearType {
+export enum ArmorType {
   LIGHT = 1,
   MEDIUM = 2,
   HEAVY = 3,
-  JEWELRY_OR_TWO_HANDED_SWORD = 4,
+  JEWELRY = 4,
+}
+
+export enum WeaponType {
+  AXE = 1,
+  MACE = 2,
+  SWORD = 3,
+  TWO_HANDED_SWORD = 4,
+  TWO_HANDED_AXE = 5,
+  MAUL = 6,
   RESO_STAFF = 9,
   DAGGER = 11,
-  FROST_STAFF = 13,
   INFERNO_STAFF = 12,
+  FROST_STAFF = 13,
+  SHIELD = 14,
   LIGHTNING_STAFF = 15,
+}
+
+export type GearType = WeaponType | ArmorType;
+
+export enum GearTrait {
+  SHARPENED = 32,
 }
 
 export interface PlayerGear {
@@ -47,7 +63,7 @@ export interface PlayerGear {
   icon: string;
   name?: string;
   championPoints: number;
-  trait: number;
+  trait: GearTrait;
   enchantType: number;
   enchantQuality: number;
   setID: number;

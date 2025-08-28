@@ -1,3 +1,5 @@
+import { PlayerGear } from './playerDetails';
+
 export enum HitType {
   Normal = 1,
   Critical = 2,
@@ -68,21 +70,8 @@ export interface CombatantInfoEvent {
   type: 'combatantinfo';
   fight: number;
   sourceID: number;
-  gear: CombatantGear[];
+  gear: PlayerGear[];
   auras: CombatantAura[];
-}
-
-export interface CombatantGear {
-  id: number;
-  quality: number;
-  icon: string;
-  name: string;
-  championPoints: number;
-  trait: number;
-  enchantType: number;
-  enchantQuality: number;
-  setID: number;
-  type: number;
 }
 
 export interface CombatantAura {

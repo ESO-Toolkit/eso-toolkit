@@ -1,7 +1,7 @@
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { KnownAbilities, CriticalDamageValues, KnownSetIDs } from '../types/abilities';
 import { BuffEvent, DebuffEvent, CombatantInfoEvent } from '../types/combatlogEvents';
-import { GearType } from '../types/playerDetails';
+import { ArmorType, PlayerGear } from '../types/playerDetails';
 
 import { BuffLookupData, createBuffLookup, createDebuffLookup } from './BuffLookupUtils';
 import {
@@ -501,7 +501,7 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
   });
 
   const createMockPlayerData = (
-    combatantInfoEvent?: CombatantInfoEvent
+    overrides: Partial<PlayerDetailsWithRole> = {}
   ): PlayerDetailsWithRole => ({
     name: 'Test Player',
     id: 1,
@@ -516,13 +516,11 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
     healthstoneUse: 0,
     combatantInfo: {
       stats: [100, 200, 300],
-      talents: combatantInfoEvent?.gear ? [] : [], // Keep it simple for now
-      gear: combatantInfoEvent?.gear || [],
-      covenantID: 0,
-      soulbindID: 0,
-      specID: 0,
+      talents: [],
+      gear: [],
     },
     role: 'dps' as const,
+    ...overrides,
   });
 
   describe('CRITICAL_DAMAGE_SOURCES completeness', () => {
@@ -625,7 +623,7 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
           enchantType: 0,
           enchantQuality: 0,
           setID: KnownSetIDs.SUL_XAN_TORMENT_SET,
-          type: GearType.LIGHT,
+          type: ArmorType.LIGHT,
         })),
       });
 
@@ -640,7 +638,7 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
           enchantType: 0,
           enchantQuality: 0,
           setID: KnownSetIDs.SUL_XAN_TORMENT_SET,
-          type: GearType.LIGHT,
+          type: ArmorType.LIGHT,
         })),
       });
 
@@ -664,7 +662,7 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
           enchantType: 0,
           enchantQuality: 0,
           setID: KnownSetIDs.MORA_SCRIBE_THESIS_SET,
-          type: GearType.HEAVY,
+          type: ArmorType.HEAVY,
         })),
       });
 
@@ -686,7 +684,7 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
             enchantType: 0,
             enchantQuality: 0,
             setID: KnownSetIDs.HARPOONER_WADING_KILT_SET,
-            type: GearType.LIGHT,
+            type: ArmorType.LIGHT,
           },
         ],
       });
@@ -726,14 +724,11 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
         combatantInfo: {
           stats: [100, 200, 300],
           talents: [
-            { name: 'Fulminating Rune', id: 1, type: 1, abilityIcon: '' },
-            { name: 'Writhing Runeblades', id: 2, type: 1, abilityIcon: '' },
-            { name: 'Some Other Skill', id: 3, type: 1, abilityIcon: '' },
+            { name: 'Fulminating Rune', guid: 1, type: 1, abilityIcon: '', flags: 0 },
+            { name: 'Writhing Runeblades', guid: 2, type: 1, abilityIcon: '', flags: 0 },
+            { name: 'Some Other Skill', guid: 3, type: 1, abilityIcon: '', flags: 0 },
           ],
           gear: [],
-          covenantID: 0,
-          soulbindID: 0,
-          specID: 0,
         },
         role: 'dps' as const,
       };
@@ -809,14 +804,20 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
     });
 
     it('should handle Animal Companions computation correctly', () => {
+      const mockCombatantEvent = createMockCombatantInfo({
+        gear: [] as PlayerGear[],
+      });
+
       const mockPlayerDataWithWarden = createMockPlayerData({
-        combatantInfo: createMockCombatantInfo({
+        combatantInfo: {
+          stats: [100, 200, 300],
           talents: [
-            { name: 'Betty Netch', id: 1, type: 1, abilityIcon: '' },
-            { name: 'Dive', id: 2, type: 1, abilityIcon: '' },
-            { name: 'Some Other Skill', id: 3, type: 1, abilityIcon: '' },
+            { name: 'Betty Netch', guid: 1, type: 1, abilityIcon: '', flags: 0 },
+            { name: 'Dive', guid: 2, type: 1, abilityIcon: '', flags: 0 },
+            { name: 'Some Other Skill', guid: 3, type: 1, abilityIcon: '', flags: 0 },
           ],
-        }),
+          gear: [],
+        },
       });
 
       const source = CRITICAL_DAMAGE_SOURCES.find(
@@ -824,15 +825,13 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
       );
       if (source && 'key' in source) {
         const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
-        expect(
-          isComputedSourceActive(mockPlayerDataWithWarden.combatantInfo, source, emptyDebuffLookup)
-        ).toBe(false); // Returns false because it checks for ADVANCED_SPECIES aura, not talents
+        expect(isComputedSourceActive(mockCombatantEvent, source, emptyDebuffLookup)).toBe(false); // Returns false because it checks for ADVANCED_SPECIES aura, not talents
 
         // Note: The actual calculation depends on warden data matching
         const damage = getCritDamageFromComputedSource(
           source,
           mockPlayerDataWithWarden,
-          mockPlayerDataWithWarden.combatantInfo
+          mockCombatantEvent
         );
         expect(damage).toBeGreaterThanOrEqual(0);
       }
@@ -949,11 +948,17 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
           enchantType: 0,
           enchantQuality: 0,
           setID: 0,
-          type: GearType.MEDIUM,
+          type: ArmorType.MEDIUM,
         })),
       });
 
-      const playerData = createMockPlayerData({ combatantInfo });
+      const playerData = createMockPlayerData({
+        combatantInfo: {
+          stats: [100, 200, 300],
+          talents: [],
+          gear: combatantInfo.gear,
+        },
+      });
       const buffLookup = createBuffLookup(buffEvents);
       const debuffLookup = createDebuffLookup(debuffEvents);
 
@@ -1011,7 +1016,13 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
         emptyBuffLookup,
         emptyDebuffLookup,
         emptyCombatant,
-        createMockPlayerData({ combatantInfo: emptyCombatant }),
+        createMockPlayerData({
+          combatantInfo: {
+            stats: [100, 200, 300],
+            talents: [],
+            gear: [],
+          },
+        }),
         1000
       );
 
