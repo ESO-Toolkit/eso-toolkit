@@ -58,12 +58,11 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         components: {
           MuiCssBaseline: {
             styleOverrides: {
-              html: { height: '100%' },
+              html: { height: '100%', overflow: 'visible' },
               body: {
                 minHeight: '100%',
-                overflowX: 'hidden',
-                background:
-                  'radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%),\n               #0b1220',
+                overflow: 'visible',
+                background: tokens.bg,
                 color: tokens.text,
                 // Enable variable font optical sizing where supported
                 fontOpticalSizing: 'auto',

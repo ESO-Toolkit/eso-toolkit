@@ -14,40 +14,46 @@ const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: theme.palette.background.default,
   position: 'relative',
-  overflow: 'hidden',
+  overflowX: 'hidden',
+  overflowY: 'visible',
   width: '100%',
   maxWidth: '100vw',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
 }));
-
 
 const HeroSection = styled(Box)(({ theme }) => ({
   minHeight: '80vh',
   display: 'flex',
-  alignItems: 'center',
+  alignItems: 'flex-start',
   justifyContent: 'center',
-  padding: '0rem 5vw 0rem',
+  padding: '0rem 2rem 0rem',
   position: 'relative',
-  paddingTop: '0px',
+  paddingTop: '2.5rem',
   overflow: 'visible',
+  width: '100%',
+  maxWidth: '100vw',
   [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
-    padding: '2rem 4vw 0rem',
+    padding: '2rem 1rem 0rem',
   },
   [theme.breakpoints.down('sm')]: {
     minHeight: '60vh',
-    padding: '1rem 2vw 0rem',
+    padding: '1rem 1rem 0rem',
     alignItems: 'flex-start',
     paddingTop: '0rem',
   },
   '&::before': {
     content: '""',
-    position: 'absolute',
-    top: '-50%',
-    left: '-50%',
-    width: '200%',
-    height: '200%',
-    background: 'radial-gradient(circle at center, rgba(56, 189, 248, 0.03) 0%, transparent 50%)',
-    animation: 'rotate 30s linear infinite',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    width: '100vw',
+    height: '100vh',
+    background: 'radial-gradient(ellipse 120% 80% at 50% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 60%)',
+    pointerEvents: 'none',
+    zIndex: -1,
   },
   '&::after': {
     content: '""',
@@ -76,15 +82,20 @@ const HeroSection = styled(Box)(({ theme }) => ({
 const HeroContent = styled(Box)(({ theme }) => ({
   textAlign: 'center',
   zIndex: 1,
-  maxWidth: 'none',
   width: '100%',
-  paddingInline: '32px',
+  maxWidth: '100%',
+  margin: '0 auto',
+  paddingInline: '0',
   overflow: 'visible',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
   [theme.breakpoints.down('md')]: {
-    paddingInline: '24px',
+    paddingInline: '0',
   },
   [theme.breakpoints.down('sm')]: {
-    paddingInline: '16px',
+    paddingInline: '0',
   },
 }));
 
@@ -109,32 +120,34 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   width: '100%',
   maxWidth: '100%',
-  padding: '0 1rem',
-  fontSize: 'clamp(2.8rem, 4vw, 4rem)',
-  overflow: 'hidden',
+  padding: '0',
+  paddingBottom: '12px',
+  fontSize: 'clamp(3.5rem, 5vw, 6rem)',
+  overflow: 'visible',
   wordWrap: 'break-word',
   hyphens: 'auto',
-  '@media (min-width: 239px) and (max-width: 621px)': {
-    fontSize: '2.4rem',
-    padding: '0 0.5rem',
+  [theme.breakpoints.up('xl')]: {
+    fontSize: 'clamp(4rem, 4vw, 7rem)',
   },
   [theme.breakpoints.down('lg')]: {
-    fontSize: '3.5rem',
-    padding: '0 0.75rem',
+    fontSize: 'clamp(3.2rem, 5.5vw, 4.5rem)',
+    padding: '0',
   },
   [theme.breakpoints.down('md')]: {
-    fontSize: '3rem',
+    fontSize: 'clamp(2.8rem, 5vw, 3.8rem)',
     lineHeight: 1.5,
-    padding: '0 0.5rem',
+    padding: '0',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(2.2rem, 4vw, 2.5rem)',
+    fontSize: 'clamp(2.9rem, 6vw, 3.2rem)',
     lineHeight: 1.5,
-    padding: '0 0.25rem',
+    padding: '0',
+    marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: '2rem',
-    lineHeight: 1.5,
+    fontSize: 'clamp(2rem, 7vw, 2.8rem)',
+    lineHeight: 1.1,
+    padding: '0',
   },
   '@keyframes shimmer': {
     '0%, 100%': { opacity: 1 },
@@ -149,27 +162,13 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   },
   '& .no-wrap': {
     display: 'inline-block',
-
     textShadow:
       '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
-
-    '@media (min-width: 629px)': {
-      whiteSpace: 'nowrap',
-      wordBreak: 'keep-all',
-    },
-    '@media (max-width: 628px)': {
+    whiteSpace: 'nowrap',
+    wordBreak: 'keep-all',
+    [theme.breakpoints.down('sm')]: {
       whiteSpace: 'normal',
       wordBreak: 'break-word',
-    },
-    '@media (min-width: 1200px) and (max-width: 1527px)': {
-      whiteSpace: 'nowrap',
-      wordBreak: 'keep-all',
-    },
-    '@media (min-width: 1528px)': {
-      whiteSpace: 'nowrap',
-      wordBreak: 'keep-all',
-      fontSize: '3.2rem',
-      maxWidth: '85vw',
     },
   },
   '& .highlight-text': {
@@ -472,6 +471,80 @@ const BadgeContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
+const FloatingElements = styled(Box)({
+  position: 'fixed',
+  top: 0,
+  left: 0,
+  width: '100vw',
+  height: '100vh',
+  pointerEvents: 'none',
+  zIndex: 0,
+  overflow: 'visible',
+});
+
+const FloatingElementsDesktop = styled(FloatingElements)(({ theme }) => ({
+  display: 'block',
+  [theme.breakpoints.down('sm')]: { display: 'none' },
+}));
+
+const FloatingIcon = styled(Box)<{ delay?: number; duration?: number; x?: string; y?: string }>(
+  ({ delay = 0, duration = 8, x = '20%', y = '20%' }) => ({
+    position: 'absolute',
+    left: x,
+    top: y,
+    fontSize: '2rem',
+    opacity: 0.15,
+    color: '#38bdf8',
+    animation: `floatingIcon ${duration}s ease-in-out ${delay}s infinite alternate`,
+    '@keyframes floatingIcon': {
+      '0%': {
+        transform: 'translateY(0px) rotate(0deg)',
+        opacity: 0.1,
+      },
+      '50%': {
+        opacity: 0.2,
+      },
+      '100%': {
+        transform: 'translateY(-20px) rotate(5deg)',
+        opacity: 0.15,
+      },
+    },
+  })
+);
+
+const GeometricShape = styled(Box)<{ delay?: number; size?: string; x?: string; y?: string }>(
+  ({ delay = 0, size = '40px', x = '10%', y = '30%' }) => ({
+    position: 'absolute',
+    left: x,
+    top: y,
+    width: size,
+    height: size,
+    border: '1px solid rgba(56, 189, 248, 0.2)',
+    borderRadius: '50%',
+    animation: `geometricPulse ${6 + delay}s ease-in-out infinite`,
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: '50%',
+      left: '50%',
+      transform: 'translate(-50%, -50%)',
+      width: '60%',
+      height: '60%',
+      background: 'radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%)',
+      borderRadius: '50%',
+    },
+    '@keyframes geometricPulse': {
+      '0%, 100%': {
+        transform: 'scale(1) rotate(0deg)',
+        opacity: 0.3,
+      },
+      '50%': {
+        transform: 'scale(1.1) rotate(180deg)',
+        opacity: 0.6,
+      },
+    },
+  })
+);
 
 export const LandingPage: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
@@ -530,6 +603,26 @@ export const LandingPage: React.FC = () => {
     <LandingContainer>
 
       <HeroSection id="home">
+        <FloatingElementsDesktop>
+          {/* ESO-themed floating runes in rainbow arch formation */}
+          <FloatingIcon delay={0} duration={10} x="12%" y="40%">⚡</FloatingIcon>
+          <FloatingIcon delay={2} duration={12} x="26%" y="22%">🔥</FloatingIcon>
+          <FloatingIcon delay={2} duration={12} x="16%" y="29%">🏹</FloatingIcon>
+          <FloatingIcon delay={4} duration={9} x="45%" y="17%">❄️</FloatingIcon>
+          <FloatingIcon delay={1} duration={11} x="74%" y="24%">🌟</FloatingIcon>
+          <FloatingIcon delay={3} duration={8} x="85%" y="40%">⚔️</FloatingIcon>
+          <FloatingIcon delay={5} duration={13} x="60%" y="19%">🛡️</FloatingIcon>
+          
+          {/* Geometric shapes complementing the arch */}
+          <GeometricShape delay={0} size="25px" x="20%" y="22%" />
+          <GeometricShape delay={2} size="30px" x="33%" y="19%" />
+          <GeometricShape delay={4} size="28px" x="60%" y="19%" />
+          <GeometricShape delay={1} size="25px" x="80%" y="35%" />
+          <GeometricShape delay={3} size="22px" x="45%" y="19%" />
+        </FloatingElementsDesktop>
+
+        
+
         <HeroContent className="u-fade-in-up">
           <HeroTitle variant="h1">
             <span className="light-text">Essential Tools</span>
