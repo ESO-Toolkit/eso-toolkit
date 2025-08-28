@@ -145,8 +145,8 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(2rem, 7vw, 2.8rem)',
-    lineHeight: 1.1,
+    fontSize: 'clamp(2.3rem, 7vw, 2.8rem)',
+    lineHeight: 1.5,
     padding: '0',
   },
   '@keyframes shimmer': {
@@ -235,7 +235,6 @@ const HeroSubtitle = styled(Typography)(({ theme }) => ({
   },
   [theme.breakpoints.down(480)]: {
     fontSize: '1rem',
-    maxWidth: '320px',
     margin: '12px auto 24px auto',
   },
 }));
@@ -283,8 +282,8 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
     },
   },
   [theme.breakpoints.down(480)]: {
-    maxWidth: '320px',
-    margin: '0 auto',
+    minWidth: '100%',
+    margin: '1rem 0 1.5rem 0',
   },
 }));
 
