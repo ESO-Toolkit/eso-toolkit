@@ -18,7 +18,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -39,6 +39,14 @@ jobs:
           PUBLIC_URL="/$REPO_NAME/" npm run build
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Move Storybook to build directory
+        run: |
+          mkdir -p build/storybook
+          cp -r storybook-static/* build/storybook/
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

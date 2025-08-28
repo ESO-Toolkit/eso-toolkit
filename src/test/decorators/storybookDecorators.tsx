@@ -1,8 +1,6 @@
 import { ApolloProvider } from '@apollo/client';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
-import type { EnhancedStore } from '@reduxjs/toolkit';
-import { configureStore } from '@reduxjs/toolkit';
 import { Decorator } from '@storybook/react';
 import React from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
@@ -11,13 +9,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { EsoLogsClient } from '../../esologsClient';
 import { EsoLogsClientContext } from '../../EsoLogsClientContext';
 import { ReportFightContext } from '../../ReportFightContext';
-import { eventsReducer } from '../../store/events_data';
-import masterDataReducer from '../../store/master_data/masterDataSlice';
-import playerDataReducer from '../../store/player_data/playerDataSlice';
-import reportReducer from '../../store/report/reportSlice';
-import uiReducer from '../../store/ui/uiSlice';
 import { MockData } from '../mocks/combatLogMocks';
 import { storybookDarkTheme } from '../themes/storybookThemes';
+import { createMockStore } from '../utils/createMockStore';
 
 // Mock data provider component
 const MockDataProvider: React.FC<{ children: React.ReactNode; mockData: MockData }> = ({
@@ -82,30 +76,8 @@ const MockReportFightProvider: React.FC<{
 };
 
 /**
- * Creates a mock Redux store that mirrors the production storeWithHistory
- * but adapted for Storybook testing:
- * - Uses memory history instead of hash history
- * - Skips persistence (no redux-persist)
- * - Disables serializable checks for simplicity
- * - Includes all the same reducers as production
+ * Mock Redux Provider for Storybook that uses the same store structure as production
  */
-const createMockStore = (): EnhancedStore => {
-  return configureStore({
-    reducer: {
-      events: eventsReducer,
-      ui: uiReducer, // Skip persistence for Storybook
-      masterData: masterDataReducer,
-      playerData: playerDataReducer,
-      report: reportReducer,
-    },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
-        serializableCheck: false, // Disable for Storybook simplicity
-      }),
-  });
-};
-
-// Mock Redux Provider for Storybook that uses the same store structure as production
 const MockReduxProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const store = React.useMemo(() => createMockStore(), []);
   return <ReduxProvider store={store}>{children}</ReduxProvider>;
@@ -173,10 +145,7 @@ export const withEsoLogDecoratorsAndLocalStorage = (
   return (Story, context) => (
     <MockLocalStorageProvider localStorageValues={localStorageValues}>
       <MockReduxProvider>
-        <MemoryRouter 
-          initialEntries={['/']} 
-          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        >
+        <MemoryRouter initialEntries={['/']}>
           <MockEsoLogsClientProvider>
             <ThemeProvider theme={storybookDarkTheme}>
               <CssBaseline />
@@ -201,10 +170,7 @@ export const withEsoLogDecoratorsAndLocalStorage = (
  */
 export const withBasicDecorators: Decorator = (Story) => (
   <MockReduxProvider>
-    <MemoryRouter 
-      initialEntries={['/']} 
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-    >
+    <MemoryRouter initialEntries={['/']}>
       <ThemeProvider theme={storybookDarkTheme}>
         <CssBaseline />
         <div style={{ padding: '20px' }}>
@@ -279,10 +245,7 @@ export const withReduxProvider: Decorator = (Story) => (
 export const withCustomReportFightContext = (reportId: string, fightId: string): Decorator => {
   return (Story) => (
     <MockReduxProvider>
-      <MemoryRouter 
-        initialEntries={['/']} 
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-      >
+      <MemoryRouter initialEntries={['/']}>
         <ThemeProvider theme={storybookDarkTheme}>
           <CssBaseline />
           <MockReportFightProvider reportId={reportId} fightId={fightId}>

@@ -13,6 +13,8 @@ export const selectShowExperimentalTabs = (
 ): RootState['ui']['showExperimentalTabs'] => state.ui.showExperimentalTabs;
 export const selectSelectedTargetId = (state: RootState): RootState['ui']['selectedTargetId'] =>
   state.ui.selectedTargetId;
+export const selectSelectedPlayerId = (state: RootState): RootState['ui']['selectedPlayerId'] =>
+  state.ui.selectedPlayerId;
 export const selectSelectedTabId = (state: RootState): RootState['ui']['selectedTabId'] =>
   state.ui.selectedTabId;
 
@@ -22,5 +24,6 @@ export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
   sidebarOpen: ui.sidebarOpen,
   showExperimentalTabs: ui.showExperimentalTabs,
   selectedTargetId: ui.selectedTargetId,
+  selectedPlayerId: ui.selectedPlayerId,
   selectedTabId: ui.selectedTabId,
 }));

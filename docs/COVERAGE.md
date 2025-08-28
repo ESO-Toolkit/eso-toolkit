@@ -8,12 +8,12 @@ The project uses Jest for test coverage analysis with custom utilities for enhan
 
 ### Coverage Targets
 
-| Metric | Global Target | Utils Target | Hooks Target | Store Target |
-|--------|--------------|--------------|--------------|--------------|
-| Lines | 80% | 90% | 85% | 85% |
-| Functions | 75% | 85% | 80% | 80% |
-| Branches | 70% | 80% | 75% | 75% |
-| Statements | 80% | 90% | 85% | 85% |
+| Metric     | Global Target | Utils Target | Hooks Target | Store Target |
+| ---------- | ------------- | ------------ | ------------ | ------------ |
+| Lines      | 80%           | 90%          | 85%          | 85%          |
+| Functions  | 75%           | 85%          | 80%          | 80%          |
+| Branches   | 70%           | 80%          | 75%          | 75%          |
+| Statements | 80%           | 90%          | 85%          | 85%          |
 
 ## 🚀 Quick Start
 
@@ -66,6 +66,7 @@ npm run coverage:analyze:watch
 ## 🔧 Configuration Files
 
 ### `jest.coverage.config.js`
+
 Main Jest coverage configuration with environment-specific settings:
 
 - **Development**: Lenient thresholds for faster iteration
@@ -73,6 +74,7 @@ Main Jest coverage configuration with environment-specific settings:
 - **Strict**: High thresholds for quality-critical code
 
 ### `craco.coverage.config.js`
+
 CRACO integration for seamless Jest coverage with Create React App.
 
 ### Environment Variables
@@ -98,6 +100,7 @@ NODE_ENV=development COVERAGE_MODE=development npm run test:coverage
 ### Coverage Badges
 
 Generated SVG badges for documentation:
+
 - `coverage/badges/coverage-overall.svg`
 - `coverage/badges/coverage-lines.svg`
 - `coverage/badges/coverage-functions.svg`
@@ -148,24 +151,25 @@ Generates professional coverage badges and status files:
 ## 🔍 Coverage Collection Rules
 
 ### Included Files
+
 ```javascript
 [
   'src/**/*.{ts,tsx}',
   // Specific includes for business logic
-]
+];
 ```
 
 ### Excluded Files
+
 ```javascript
 [
-  '!src/**/*.d.ts',           // TypeScript declarations
-  '!src/**/*.stories.*',      // Storybook stories
-  '!src/**/*.test.*',         // Test files themselves
-  '!src/test/**/*',           // Test utilities
+  '!src/**/*.d.ts', // TypeScript declarations
+  '!src/**/*.test.*', // Test files themselves
+  '!src/test/**/*', // Test utilities
   '!src/graphql/generated.*', // Generated GraphQL code
-  '!src/setupTests.ts',       // Test setup
-  '!src/index.tsx',           // Entry point
-]
+  '!src/setupTests.ts', // Test setup
+  '!src/index.tsx', // Entry point
+];
 ```
 
 ## 📋 Coverage Best Practices
@@ -192,11 +196,11 @@ describe('calculateDamage', () => {
   it('should handle critical hits', () => {
     // Test critical hit calculation
   });
-  
+
   it('should handle edge case with zero damage', () => {
     // Test boundary conditions
   });
-  
+
   it('should throw error with invalid input', () => {
     // Test error conditions
   });
@@ -207,11 +211,11 @@ describe('DamageDisplay', () => {
   it('should render damage value correctly', () => {
     // Test rendering logic
   });
-  
+
   it('should handle loading state', () => {
     // Test different states
   });
-  
+
   it('should call onUpdate when damage changes', () => {
     // Test interaction logic
   });
@@ -238,6 +242,7 @@ describe('DamageDisplay', () => {
 ### Coverage Status Checks
 
 The coverage utilities generate status files that can be used for:
+
 - Pull request status checks
 - Coverage trending analysis
 - Quality gates in deployment pipelines
@@ -281,4 +286,4 @@ COVERAGE_MODE=development npm run test:coverage
 
 ---
 
-*This coverage system is designed to provide comprehensive insights into code quality while maintaining developer productivity. For questions or improvements, please contribute to the project documentation.*
+_This coverage system is designed to provide comprehensive insights into code quality while maintaining developer productivity. For questions or improvements, please contribute to the project documentation._
