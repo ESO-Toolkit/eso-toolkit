@@ -78,7 +78,11 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   WebkitTextFillColor: 'transparent',
   backgroundClip: 'text',
   letterSpacing: '-0.02em',
+<<<<<<< Updated upstream
   lineHeight: 1.4,
+=======
+  lineHeight: 1.5,
+>>>>>>> Stashed changes
   textShadow: `
     0 0 20px rgba(56, 189, 248, 0.5),
     0 0 40px rgba(56, 189, 248, 0.3),
@@ -101,6 +105,32 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   wordBreak: 'normal',
   overflowWrap: 'normal',
   textAlign: 'center',
+<<<<<<< Updated upstream
+=======
+  width: '100%',
+  maxWidth: '100%',
+  padding: '0 1rem',
+  fontSize: 'clamp(3rem, 4.5vw, 4.5rem)',
+  overflow: 'hidden',
+  [theme.breakpoints.down('lg')]: {
+    fontSize: '4rem',
+    padding: '0 0.75rem',
+  },
+  [theme.breakpoints.down('md')]: {
+    fontSize: '3rem',
+    lineHeight: 1.5,
+    padding: '0 0.5rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: 'clamp(2.2rem, 4vw, 2.5rem)',
+    lineHeight: 1.5,
+    padding: '0 0.25rem',
+  },
+  [theme.breakpoints.down(480)]: {
+    fontSize: '2rem',
+    lineHeight: 1.5,
+  },
+>>>>>>> Stashed changes
   '@keyframes shimmer': {
     '0%, 100%': { opacity: 1 },
     '50%': { opacity: 0.85 },
@@ -117,7 +147,18 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     wordBreak: 'keep-all',
     overflowWrap: 'normal',
     display: 'inline-block',
+<<<<<<< Updated upstream
     textShadow: '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+=======
+    textShadow:
+      '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
+    whiteSpace: 'nowrap',
+    wordBreak: 'keep-all',
+    '@media (max-width: 628px)': {
+      whiteSpace: 'normal',
+      wordBreak: 'break-word',
+    },
+>>>>>>> Stashed changes
   },
   '& .highlight-text': {
     position: 'relative',
