@@ -183,7 +183,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
       content: '""',
       position: 'absolute',
       bottom: '-2px',
-      left: '50%',
+      left: '37%',
       transform: 'translateX(-50%)',
       width: '80%',
       height: '4px',
@@ -601,7 +601,7 @@ export const LandingPage: React.FC = () => {
                 minWidth: 200,
                 height: 64,
                 background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
-                color: '#0b1220',
+                color: '#ffffff',
                 fontWeight: 700,
                 fontSize: { xs: '1rem', sm: '1.1rem' },
                 borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
@@ -610,8 +610,16 @@ export const LandingPage: React.FC = () => {
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                textTransform: 'none',
-                letterSpacing: '0.5px',
+                textTransform: 'uppercase',
+                letterSpacing: '1px',
+                textShadow: `
+                  0 2px 4px rgba(0, 0, 0, 0),
+                  0 4px 8px rgba(0, 0, 0, 0.7),
+                  0 8px 16px rgba(0, 0, 0, 0.5),
+                  0 0 15px rgba(14, 165, 233, 0.6),
+                  0 0 30px rgba(56, 189, 248, 0.4),
+                  0 1px 0 rgba(255, 255, 255, 0.2)
+                `,
                 '&::before': {
                   content: '""',
                   position: 'absolute',
@@ -649,7 +657,7 @@ export const LandingPage: React.FC = () => {
               }}
               onClick={handleLoadLog}
             >
-              Load Log
+              Analyze Log
             </Button>
           </LogInputContainer>
 
