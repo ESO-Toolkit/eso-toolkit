@@ -125,6 +125,17 @@ export enum KnownAbilities {
   // Racial Passives
   HIGHBORN = 35965,
   ELEMENTAL_TALENT = 45276,
+  HUNTERS_EYE_PASSIVE = 45576, // Wood Elf passive providing 950 penetration
+
+  // Class Passives and Abilities
+  DISMEMBER_PASSIVE = 61697, // Grave Lord passive providing 3271 penetration
+
+  // Computed penetration passives
+  PIERCING_PASSIVE = 45233, // Provides 700 penetration
+  FORCE_OF_NATURE_PASSIVE = 126597, // TODO: find correct ID - provides 660 per status effect
+  HEAVY_WEAPONS_PASSIVE = 45265, // Two-handed passive providing 2974 with maul
+  TWIN_BLADE_AND_BLUNT_PASSIVE = 45477, // Dual wield passive providing 1487 per mace
+  CRYSTAL_WEAPON_BUFF = 126045, // Crystal Weapon buff providing 1000 penetration
 
   // Scribed Skills
   SHOCKING_BANNER = 217706,
@@ -317,6 +328,35 @@ export enum KnownAbilities {
 }
 
 /**
+ * Keys for computed penetration sources
+ */
+export enum PenetrationComputedSourceKey {
+  // ========================================
+  // GROUPED ARMOR SET COMPUTED SOURCES
+  // ========================================
+  ARMOR_SETS_7918 = 'armor_sets_7918',
+  ARMOR_SETS_3460 = 'armor_sets_3460',
+  ARMOR_SETS_1496 = 'armor_sets_1496',
+  ARMOR_SETS_1487 = 'armor_sets_1487',
+  ARMOR_SETS_1190 = 'armor_sets_1190',
+
+  // ========================================
+  // INDIVIDUAL COMPUTED SOURCES
+  // ========================================
+  CONCENTRATION = 'concentration',
+  SPLINTERED_SECRETS = 'splintered_secrets',
+  FORCE_OF_NATURE = 'force_of_nature',
+  PIERCING = 'piercing',
+  HEAVY_WEAPONS = 'heavy_weapons',
+  TWIN_BLADE_AND_BLUNT = 'twin_blade_and_blunt',
+  CRYSTAL_WEAPON = 'crystal_weapon',
+  BALORGH = 'balorgh',
+  SHARPENED_1H = 'sharpened_1h',
+  SHARPENED_2H = 'sharpened_2h',
+  HEW_AND_SUNDER = 'hew_and_sunder',
+}
+
+/**
  * Penetration values for different effects
  */
 export enum PenetrationValues {
@@ -350,11 +390,77 @@ export enum PenetrationValues {
   // Splintered Secrets provides 620 penetration per stack per slotted Herald of the Tome ability
   SPLINTERED_SECRETS_PER_ABILITY = 620,
 
-  // Ansuul's Torment 4-piece provides 1487 penetration
-  ANSUULS_TORMENT_4_PIECE = 1487,
+  // Twin Blade and Blunt passive provides 1487 penetration per mace (legacy - see PER_TYPE for current)
+  TWIN_BLADE_AND_BLUNT_PER_MACE = 1487,
 
-  // Tide-born Wildstalker 4-piece provides 1487 penetration
-  TIDEBORN_WILDSTALKER_4_PIECE = 1487,
+  // Crystal Weapon buff provides 1000 penetration
+  CRYSTAL_WEAPON = 1000,
+
+  // ========================================
+  // COMPUTED PENETRATION VALUES FOR GROUPED SETS
+  // ========================================
+
+  // Computed sources for grouped armor sets by penetration value
+  ARMOR_SETS_7918_PENETRATION = 7918, // Very High penetration sets
+  ARMOR_SETS_3460_PENETRATION = 3460, // High penetration sets
+  ARMOR_SETS_2974_PENETRATION = 2974, // Medium-High penetration sets
+  ARMOR_SETS_1496_PENETRATION = 1496, // Perfect sets penetration
+  ARMOR_SETS_1487_PENETRATION = 1487, // Standard sets penetration (most common)
+  ARMOR_SETS_1236_PENETRATION = 1236, // Variable/Per Enemy penetration sets
+  ARMOR_SETS_1190_PENETRATION = 1190, // Arena weapon penetration sets
+
+  // ========================================
+  // ARMOR SETS GROUPED BY PENETRATION VALUE
+  // ========================================
+
+  // 11500 Penetration - Ultra High
+  BALORGH_2_PIECE = 11500, // Balorgh (2-piece)
+
+  // 7918 Penetration - Very High
+  SHATTERED_FATE_5_PIECE = 7918, // Shattered Fate (5-piece)
+
+  // 3460 Penetration - High
+  SPRIGGANS_THORNS_5_PIECE = 3460, // Spriggan's Thorns (5-piece)
+
+  // 2974 Penetration - Medium-High
+  CORPSEBURSTER_MINOR_BREACH = 2974, // Corpseburster applies Minor Breach
+
+  // 950 Penetration - Low-Medium
+  HUNTERS_EYE = 950, // Hunter's Eye passive
+
+  // 700 Penetration - Low
+  PIERCING_PENETRATION = 700, // Piercing passive
+
+  // 660 Penetration - Variable (Per Status Effect)
+  FORCE_OF_NATURE_PER_STATUS = 660, // Force of Nature - per status effect
+
+  // 620 Penetration - Low
+  // (No current sets - reserved)
+
+  // ========================================
+  // SPECIAL/NON-ARMOR PENETRATION VALUES
+  // ========================================
+
+  // Dismember passive provides 3271 penetration
+  DISMEMBER = 3271,
+
+  // Heavy Weapons passive provides 2974 penetration with two-handed maul
+  HEAVY_WEAPONS_PENETRATION = 2974,
+
+  // Twin Blade and Blunt passive provides 2108 penetration per weapon type (changed from per mace)
+  TWIN_BLADE_AND_BLUNT_PER_TYPE = 2108,
+
+  // Balorgh provides 11500 penetration when you ult (2-piece)
+  BALORGH_PENETRATION = 11500,
+
+  // Sharpened trait on 1H weapons provides 1638 per weapon
+  SHARPENED_1H_PER_WEAPON = 1638,
+
+  // Sharpened trait on 2H weapons provides 3276
+  SHARPENED_2H_PENETRATION = 3276,
+
+  // Hew and Sunder provides 1236 penetration per enemy within 8 meters (5-piece)
+  HEW_AND_SUNDER_PER_ENEMY = 1236,
 
   // TODO: Add more penetration values
   // etc.
@@ -437,6 +543,44 @@ export enum KnownSetIDs {
   SUL_XAN_TORMENT_SET = 708, // Sul-Xan's Torment set
   MORA_SCRIBE_THESIS_SET = 709, // Mora Scribe's Thesis set
   HARPOONER_WADING_KILT_SET = 710, // Harpooner's Wading Kilt set
+  SHATTERED_FATE_SET = 711, // Shattered Fate set
+  SPRIGGANS_THORNS_SET = 712, // Spriggan's Thorns set
+  BALORGH_SET = 713, // Balorgh set
+  AERIES_CRY_SET = 714, // Aerie's Cry set
+  AURORANS_THUNDER_SET = 715, // Auroran's Thunder set
+  ARMS_OF_RELEQUEN_SET = 716, // Arms of Relequen set
+  ARMS_OF_THE_ANCESTORS_SET = 717, // Arms of the Ancestors set
+  ARCHDRUID_DEVYRIC_SET = 718, // Archdruid Devyric set
+  BLACK_GEM_MONSTROSITY_SET = 719, // Black Gem Monstrosity set
+  COLOVIAN_HIGHLANDS_GENERAL_SET = 720, // Colovian Highlands General set
+  CINDERS_OF_ANTHELMIR_SET = 721, // Cinders of Anthelmir set
+  CORPSEBURSTER_SET = 722, // Corpseburster set
+  PERFECT_ARMS_OF_RELEQUEN_SET = 723, // Perfect Arms of Relequen set
+  PERFECT_AURORAN_THUNDER_SET = 724, // Perfect Auroran's Thunder set
+  PERFECT_ANSUULS_TORMENT_SET = 725, // Perfect Ansuul's Torment set
+  DARK_CONVERGENCE_SET = 726, // Dark Convergence set
+  DRAUGRKINS_GRIP_SET = 727, // Draugrkin's Grip set
+  DRO_ZAKARS_CLAWS_SET = 728, // Dro'Zakar's Claws set
+  FLAME_BLOSSOM_SET = 729, // Flame Blossom set
+  GRISLY_GOURMET_SET = 730, // Grisly Gourmet set
+  GRYPHONS_REPRISAL_SET = 731, // Gryphon's Reprisal set
+  HEW_AND_SUNDER_SET = 732, // Hew and Sunder set
+  HROTHGARS_CHILL_SET = 733, // Hrothgar's Chill set
+  ICY_CONJURER_SET = 734, // Icy Conjurer set
+  JERENSIS_BLADESTORM_SET = 735, // Jerensi's Bladestorm set
+  KAZPIANS_CRUEL_SIGNET_SET = 736, // Kazpian's Cruel Signet set
+  KRAGH_SET = 737, // Kra'gh set
+  LADY_MALYGDA_SET = 738, // Lady Malygda set
+  LANGUOR_OF_PERYITE_SET = 739, // Languor of Peryite set
+  LEGACY_OF_KARTH_SET = 740, // Legacy of Karth set
+  NEW_MOON_ACOLYTE_SET = 741, // New Moon Acolyte set
+  NOCTURNALS_PLOY_SET = 742, // Nocturnal's Ploy set
+  NOXIOUS_BOULDER_SET = 743, // Noxious Boulder set
+  OBLIVIONS_FOE_SET = 744, // Oblivion's Foe set
+  PELINALS_WRATH_SET = 745, // Pelinal's Wrath set
+  PERFECTED_CRUSHING_WALL_SET = 746, // Perfected Crushing Wall set
+  PERFECTED_KAZPIANS_CRUEL_SIGNET_SET = 747, // Perfected Kazpian's Cruel Signet set
+  PERFECTED_MERCILESS_CHARGE_SET = 748, // Perfected Merciless Charge set
 
   // TODO: Add other set IDs as needed
 }

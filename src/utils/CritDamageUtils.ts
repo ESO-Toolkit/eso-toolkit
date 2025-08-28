@@ -3,10 +3,10 @@ import { wardenData } from '../data/skillsets/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
-import { GearType } from '../types/playerDetails';
+import { ArmorType } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActive as checkBuffActiveAtTimestamp } from './BuffLookupUtils';
-import { getSetCount } from './gearUtilities';
+import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
 interface BaseCriticalDamageSource {
   name: string;
@@ -259,11 +259,9 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.ADVANCED_SPECIES:
       return isAuraActive(combatantInfo, KnownAbilities.ADVANCED_SPECIES);
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
-      // TODO Need to get weapon type for dual wield axes
-      return false;
+      return countAxesInWeaponSlots(combatantInfo) > 0;
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
-      // TODO Detect if a two-handed battle axe is equipped
-      return false;
+      return hasTwoHandedAxeEquipped(combatantInfo);
     case ComputedCriticalDamageSources.BACKSTABBER:
       // TODO Detect if the backstabber CP is equipped
       return false;
@@ -517,7 +515,7 @@ export function getCritDamageFromComputedSource(
       );
       return arcAbilities.length * CriticalDamageValues.FATED_FORTUNE;
     case ComputedCriticalDamageSources.DEXTERITY:
-      const mediumGear = combatantInfo.gear?.filter((item) => item.type === GearType.MEDIUM);
+      const mediumGear = combatantInfo.gear?.filter((item) => item.type === ArmorType.MEDIUM);
       return mediumGear.length * CriticalDamageValues.DEXTERITY_PER_PIECE;
     case ComputedCriticalDamageSources.FIGHTING_FINESSE:
       return CriticalDamageValues.FIGHTING_FINESSE;
@@ -549,11 +547,12 @@ export function getCritDamageFromComputedSource(
       );
       return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
-      // TODO Get the actual weapon type
-      return 0;
+      const axeCount = countAxesInWeaponSlots(combatantInfo);
+      return axeCount * CriticalDamageValues.DUAL_WIELD_AXES;
     case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
-      // TODO Get the actual weapon type
-      return 0;
+      return hasTwoHandedAxeEquipped(combatantInfo)
+        ? CriticalDamageValues.TWO_HANDED_BATTLE_AXE
+        : 0;
     case ComputedCriticalDamageSources.BACKSTABBER:
       // Always active as requested
       return CriticalDamageValues.BACKSTABBER;

@@ -4,12 +4,12 @@ import {
   ApplyBuffEvent,
   ApplyDebuffEvent,
   CombatantAura,
-  CombatantGear,
   CombatantInfoEvent,
   DamageEvent,
   HitType,
   Resources,
 } from '../../types/combatlogEvents';
+import { PlayerGear, GearTrait } from '../../types/playerDetails';
 
 // Mock data interfaces
 export interface MockData {
@@ -48,14 +48,15 @@ export const createMockFight = (overrides?: Partial<FightFragment>): FightFragme
     ...overrides,
   }) as FightFragment;
 
-export const createMockCombatantGear = (type = 1): CombatantGear => ({
+export const createMockCombatantGear = (type = 1): PlayerGear => ({
   id: 1,
+  slot: 1,
   type,
   quality: 4,
   icon: 'test-icon.jpg',
   name: 'Mock Gear Item',
   championPoints: 160,
-  trait: 1,
+  trait: GearTrait.SHARPENED,
   enchantType: 1,
   enchantQuality: 4,
   setID: 123,

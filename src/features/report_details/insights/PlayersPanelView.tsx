@@ -29,7 +29,7 @@ import arcanistIcon from '../../../assets/white-arcanist.png';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { GearType, PlayerGear } from '../../../types/playerDetails';
+import { ArmorType, PlayerGear } from '../../../types/playerDetails';
 import { detectBuildIssues } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
@@ -247,11 +247,11 @@ function abbreviateFood(name: string): string {
 
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { 
-    hour12: false, 
-    hour: '2-digit', 
-    minute: '2-digit', 
-    second: '2-digit' 
+  return date.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
   });
 }
 
@@ -441,13 +441,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
       if (!g || g.id === 0) continue;
 
       switch (g.type) {
-        case GearType.HEAVY:
+        case ArmorType.HEAVY:
           heavy += 1;
           break;
-        case GearType.MEDIUM:
+        case ArmorType.MEDIUM:
           medium += 1;
           break;
-        case GearType.LIGHT:
+        case ArmorType.LIGHT:
           light += 1;
           break;
       }
@@ -471,28 +471,26 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   return (
     <Box sx={{ p: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
-          Players
-        </Typography>
+        <Typography variant="h6">Players</Typography>
         {fightStartTime && fightEndTime && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 color: 'text.secondary',
                 fontSize: '0.75rem',
-                fontFamily: 'monospace'
+                fontFamily: 'monospace',
               }}
             >
               {formatTimestamp(fightStartTime)} - {formatTimestamp(fightEndTime)}
             </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
+            <Typography
+              variant="body2"
+              sx={{
                 color: 'primary.main',
                 fontSize: '0.75rem',
                 fontWeight: 'bold',
-                fontFamily: 'monospace'
+                fontFamily: 'monospace',
               }}
             >
               {formatDuration(fightStartTime, fightEndTime)}
