@@ -1,6 +1,6 @@
 {
   "extends": ["react-app", "plugin:@typescript-eslint/recommended"],
-  "plugins": ["@typescript-eslint", "import"],
+  "plugins": ["storybook", "@typescript-eslint", "import"],
   "rules": {
     "import/no-default-export": "error",
     "import/order": [
@@ -23,9 +23,17 @@
   },
   "overrides": [
     {
-      "files": ["src/index.tsx", "src/App.tsx", "src/reportWebVitals.ts", "**/*.stories.tsx"],
+      "files": ["src/index.tsx", "src/App.tsx", "src/reportWebVitals.ts"],
       "rules": {
         "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)"], // Target Storybook story files
+      "rules": {
+        "import/no-default-export": "off", // Disable no-default-export for story files
+        "storybook/default-exports": "error" // Ensure a default export exists in stories
+        // ... other Storybook-specific rules if needed
       }
     },
     {

@@ -40,6 +40,14 @@ jobs:
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
 
+      - name: Build Storybook
+        run: npm run build-storybook
+
+      - name: Move Storybook to build directory
+        run: |
+          mkdir -p build/storybook
+          cp -r storybook-static/* build/storybook/
+
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4
         with:

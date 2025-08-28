@@ -12,8 +12,6 @@ if "%1"=="lint-fix" goto lint-fix
 if "%1"=="format" goto format
 if "%1"=="dev" goto dev
 if "%1"=="clean" goto clean
-if "%1"=="storybook" goto storybook
-if "%1"=="build-storybook" goto build-storybook
 if "%1"=="codegen" goto codegen
 if "%1"=="fetch-abilities" goto fetch-abilities
 if "%1"=="all" goto all
@@ -36,8 +34,6 @@ echo   lint-fix      - Run ESLint and automatically fix issues
 echo   format        - Format code with Prettier
 echo   dev           - Start development server
 echo   clean         - Clean build artifacts
-echo   storybook     - Start Storybook development server
-echo   build-storybook - Build Storybook for production
 echo   codegen       - Generate GraphQL types
 echo   fetch-abilities - Fetch abilities data
 echo   all           - Run clean, install, lint, test, and build
@@ -91,16 +87,6 @@ if exist build rmdir /s /q build
 if exist node_modules\.cache rmdir /s /q node_modules\.cache
 if exist .eslintcache del .eslintcache
 exit /b 0
-
-:storybook
-echo Starting Storybook...
-npm run storybook
-exit /b %errorlevel%
-
-:build-storybook
-echo Building Storybook...
-npm run build-storybook
-exit /b %errorlevel%
 
 :codegen
 echo Generating GraphQL types...

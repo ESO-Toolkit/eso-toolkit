@@ -1,6 +1,6 @@
 /**
  * CRACO Coverage Configuration
- * 
+ *
  * This configuration extends CRACO with enhanced Jest coverage settings
  * for the ESO Log Aggregator project.
  */
@@ -47,10 +47,7 @@ module.exports = {
           '/coverage/',
           '/build/',
           '/dist/',
-          '\\.stories\\.',
-          '/storybook-static/',
           'src/test/',
-          'src/stories/',
         ],
         // Improved test timeout for coverage runs
         testTimeout: process.env.NODE_ENV === 'ci' ? 30000 : 10000,

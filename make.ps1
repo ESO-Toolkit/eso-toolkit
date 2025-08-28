@@ -18,8 +18,6 @@ function Show-Help {
     Write-Host "  format        - Format code with Prettier"
     Write-Host "  dev           - Start development server"
     Write-Host "  clean         - Clean build artifacts"
-    Write-Host "  storybook     - Start Storybook development server"
-    Write-Host "  build-storybook - Build Storybook for production"
     Write-Host "  codegen       - Generate GraphQL types"
     Write-Host "  fetch-abilities - Fetch abilities data"
     Write-Host "  all           - Run clean, install, lint, test, and build"
@@ -74,16 +72,6 @@ function Clean-Build {
     if (Test-Path ".eslintcache") { Remove-Item -Force ".eslintcache" }
 }
 
-function Start-Storybook {
-    Write-Host "Starting Storybook..." -ForegroundColor Yellow
-    npm run storybook
-}
-
-function Build-Storybook {
-    Write-Host "Building Storybook..." -ForegroundColor Yellow
-    npm run build-storybook
-}
-
 function Run-Codegen {
     Write-Host "Generating GraphQL types..." -ForegroundColor Yellow
     npm run codegen
@@ -128,8 +116,6 @@ switch ($Command.ToLower()) {
     "format" { Format-Code }
     "dev" { Start-Dev }
     "clean" { Clean-Build }
-    "storybook" { Start-Storybook }
-    "build-storybook" { Build-Storybook }
     "codegen" { Run-Codegen }
     "fetch-abilities" { Fetch-Abilities }
     "all" { Run-All }

@@ -96,7 +96,7 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <HashRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
+    <HashRouter>
       <ErrorBoundary>
         <Routes>
           <Route

@@ -173,10 +173,7 @@ export const withEsoLogDecoratorsAndLocalStorage = (
   return (Story, context) => (
     <MockLocalStorageProvider localStorageValues={localStorageValues}>
       <MockReduxProvider>
-        <MemoryRouter 
-          initialEntries={['/']} 
-          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        >
+        <MemoryRouter initialEntries={['/']}>
           <MockEsoLogsClientProvider>
             <ThemeProvider theme={storybookDarkTheme}>
               <CssBaseline />
@@ -201,10 +198,7 @@ export const withEsoLogDecoratorsAndLocalStorage = (
  */
 export const withBasicDecorators: Decorator = (Story) => (
   <MockReduxProvider>
-    <MemoryRouter 
-      initialEntries={['/']} 
-      future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-    >
+    <MemoryRouter initialEntries={['/']}>
       <ThemeProvider theme={storybookDarkTheme}>
         <CssBaseline />
         <div style={{ padding: '20px' }}>
@@ -279,10 +273,7 @@ export const withReduxProvider: Decorator = (Story) => (
 export const withCustomReportFightContext = (reportId: string, fightId: string): Decorator => {
   return (Story) => (
     <MockReduxProvider>
-      <MemoryRouter 
-        initialEntries={['/']} 
-        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-      >
+      <MemoryRouter initialEntries={['/']}>
         <ThemeProvider theme={storybookDarkTheme}>
           <CssBaseline />
           <MockReportFightProvider reportId={reportId} fightId={fightId}>

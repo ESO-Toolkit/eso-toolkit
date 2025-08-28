@@ -1,6 +1,6 @@
 /**
  * Jest Coverage Configuration - CRA Compatible
- * 
+ *
  * Only includes options supported by Create React App.
  */
 
@@ -91,17 +91,11 @@ module.exports = {
     '!src/reportWebVitals.ts',
     '!src/react-app-env.d.ts',
   ],
-  
-  coverageReporters: [
-    'text',
-    'text-summary', 
-    'html',
-    'lcov',
-    'json',
-  ],
-  
+
+  coverageReporters: ['text', 'text-summary', 'html', 'lcov', 'json'],
+
   coverageThreshold: thresholds[coverageMode],
-  
+
   coveragePathIgnorePatterns: [
     '/node_modules/',
     '/coverage/',
@@ -111,7 +105,7 @@ module.exports = {
     '/storybook-static/',
     'src/test/',
   ],
-  
+
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -122,7 +116,7 @@ module.exports = {
     '^@graphql/(.*)$': '<rootDir>/src/graphql/$1',
     '^@test/(.*)$': '<rootDir>/src/test/$1',
   },
-  
+
   transformIgnorePatterns: [
     '[/\\\\]node_modules[/\\\\].+\\.(js|jsx|mjs|cjs|ts|tsx)$',
     '^.+\\.module\\.(css|sass|scss)$',

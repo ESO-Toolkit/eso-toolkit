@@ -1,7 +1,7 @@
 # ESO Log Aggregator Makefile
 # This Makefile provides convenient commands for common development tasks
 
-.PHONY: help install build test lint lint-fix format clean dev storybook codegen fetch-abilities all
+.PHONY: help install build test lint lint-fix format clean dev codegen fetch-abilities all
 
 # Default target
 help:
@@ -16,8 +16,6 @@ help:
 	@echo "  format        - Format code with Prettier"
 	@echo "  dev           - Start development server"
 	@echo "  clean         - Clean build artifacts"
-	@echo "  storybook     - Start Storybook development server"
-	@echo "  build-storybook - Build Storybook for production"
 	@echo "  codegen       - Generate GraphQL types"
 	@echo "  fetch-abilities - Fetch abilities data"
 	@echo "  all           - Run clean, install, lint, test, and build"
@@ -68,16 +66,6 @@ clean:
 	rm -rf build/
 	rm -rf node_modules/.cache/
 	rm -rf .eslintcache
-
-# Start Storybook development server
-storybook:
-	@echo "Starting Storybook..."
-	npm run storybook
-
-# Build Storybook for production
-build-storybook:
-	@echo "Building Storybook..."
-	npm run build-storybook
 
 # Generate GraphQL types
 codegen:
