@@ -14,7 +14,9 @@ const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: theme.palette.background.default,
   position: 'relative',
-  overflow: 'visible',
+  overflow: 'hidden',
+  width: '100%',
+  maxWidth: '100vw',
 }));
 
 
