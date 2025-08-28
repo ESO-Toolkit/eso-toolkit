@@ -78,11 +78,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   WebkitTextFillColor: 'transparent',
   backgroundClip: 'text',
   letterSpacing: '-0.02em',
-<<<<<<< Updated upstream
-  lineHeight: 1.4,
-=======
   lineHeight: 1.5,
->>>>>>> Stashed changes
   textShadow: `
     0 0 20px rgba(56, 189, 248, 0.5),
     0 0 40px rgba(56, 189, 248, 0.3),
