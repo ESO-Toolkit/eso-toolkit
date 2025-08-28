@@ -1,4 +1,18 @@
-import { Box, Paper, Typography, List, ListItem, ListItemButton, Skeleton, Collapse, Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
+import {
+  Box,
+  Paper,
+  Typography,
+  List,
+  ListItem,
+  ListItemButton,
+  Skeleton,
+  Collapse,
+  Switch,
+  FormControlLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
@@ -7,10 +21,10 @@ import { FightFragment } from '../../graphql/generated';
 
 function formatTimestamp(timestamp: number): string {
   const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', { 
-    hour12: true, 
-    hour: 'numeric', 
-    minute: '2-digit'
+  return date.toLocaleTimeString('en-US', {
+    hour12: true,
+    hour: 'numeric',
+    minute: '2-digit',
   });
 }
 
@@ -19,7 +33,7 @@ function formatDuration(startTime: number, endTime: number): string {
   const totalSeconds = Math.floor(durationMs / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  
+
   if (minutes > 0) {
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   } else {
@@ -35,35 +49,37 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   if (!fight.bossPercentage || fight.bossPercentage < 99.5) {
     return false; // Not a 100% wipe
   }
-  
+
   const durationMs = fight.endTime - fight.startTime;
   const durationSeconds = durationMs / 1000;
-  
+
   // More aggressive heuristics for false positive detection:
-  
+
   // 1. Very short fights (< 45 seconds) with high boss health are likely false positives
   if (durationSeconds < 45 && fight.bossPercentage >= 95) {
     return true;
   }
-  
+
   // 2. Exactly 100.0% is very suspicious (ESO bug)
   if (Math.abs(fight.bossPercentage - 100) < 0.1) {
     return true;
   }
-  
+
   // 3. Any fight with 100% that lasted more than 10 seconds but less than 5 minutes
   if (fight.bossPercentage >= 99.9 && durationSeconds > 10 && durationSeconds < 300) {
     return true;
   }
-  
+
   // 4. Normal/veteran difficulty with very high boss health in reasonable time
-  if ((fight.difficulty === 0 || fight.difficulty === 1) && 
-      fight.bossPercentage >= 98 && 
-      durationSeconds > 15 && 
-      durationSeconds < 600) {
+  if (
+    (fight.difficulty === 0 || fight.difficulty === 1) &&
+    fight.bossPercentage >= 98 &&
+    durationSeconds > 15 &&
+    durationSeconds < 600
+  ) {
     return true;
   }
-  
+
   return false;
 }
 
@@ -94,12 +110,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
     // First, filter and sort all valid fights by start time
     const validFights = fights
-      .filter(fight => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
+      .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
       .sort((a, b) => a.startTime - b.startTime);
 
     // Separate boss fights and trash fights
-    const bossFights = validFights.filter(fight => fight.difficulty != null);
-    const trashFights = validFights.filter(fight => fight.difficulty == null);
+    const bossFights = validFights.filter((fight) => fight.difficulty != null);
+    const trashFights = validFights.filter((fight) => fight.difficulty == null);
 
     // Create encounter objects with trial instance detection
     const encounterList: {
@@ -109,62 +125,67 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       preTrash: FightFragment[];
       postTrash: FightFragment[];
     }[] = [];
-    
+
     // Track encounter instances by name
     const encounterInstances: Record<string, number> = {};
-    
+
     for (let i = 0; i < bossFights.length; i++) {
       const currentBoss = bossFights[i];
       const nextBoss = bossFights[i + 1];
       const baseName = currentBoss.name || 'Unknown Boss';
-      
+
       // Find trash before this boss (after previous boss or from start)
       const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
-      const preTrash = trashFights.filter(trash => 
-        trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime
+      const preTrash = trashFights.filter(
+        (trash) => trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime
       );
-      
+
       // Find trash after this boss (before next boss or until end)
       const nextBossStart = nextBoss ? nextBoss.startTime : Number.MAX_SAFE_INTEGER;
-      const postTrash = trashFights.filter(trash => 
-        trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
+      const postTrash = trashFights.filter(
+        (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
       );
-      
+
       // Check if this should be a new instance of the same encounter
-      const existingEncounter = encounterList.find(enc => enc.name.startsWith(baseName));
+      const existingEncounter = encounterList.find((enc) => enc.name.startsWith(baseName));
       let shouldCreateNewInstance = false;
-      
+
       if (existingEncounter) {
         // Get the last fight from the existing encounter
         const lastFight = existingEncounter.bossFights[existingEncounter.bossFights.length - 1];
-        
+
         // Calculate time gap
         const timeGapMinutes = (currentBoss.startTime - lastFight.endTime) / (1000 * 60);
-        
+
         // Check if there are other boss fights in between (different encounter)
-        const fightsBetween = bossFights.filter(fight => 
-          fight.startTime > lastFight.endTime && 
-          fight.startTime < currentBoss.startTime &&
-          fight.name !== baseName
+        const fightsBetween = bossFights.filter(
+          (fight) =>
+            fight.startTime > lastFight.endTime &&
+            fight.startTime < currentBoss.startTime &&
+            fight.name !== baseName
         );
-        
+
         // Check if the group made significant progress past this boss before resetting
         // Look for successful kills of different bosses after the last attempt
-        const progressMade = bossFights.some(fight => 
-          fight.startTime > lastFight.endTime && 
-          fight.startTime < currentBoss.startTime &&
-          fight.name !== baseName &&
-          (!fight.bossPercentage || fight.bossPercentage < 0.01) // Successful kill
+        const progressMade = bossFights.some(
+          (fight) =>
+            fight.startTime > lastFight.endTime &&
+            fight.startTime < currentBoss.startTime &&
+            fight.name !== baseName &&
+            (!fight.bossPercentage || fight.bossPercentage < 0.01) // Successful kill
         );
-        
+
         // Create new instance if:
         // 1. Long time gap (>15 minutes) - likely different session
         // 2. Different bosses killed in between - progressed past this encounter
         // 3. Significant progress made (killed other bosses successfully)
-        shouldCreateNewInstance = timeGapMinutes > 15 || progressMade || 
-          (fightsBetween.length > 0 && fightsBetween.some(f => !f.bossPercentage || f.bossPercentage < 0.01));
+        shouldCreateNewInstance =
+          timeGapMinutes > 15 ||
+          progressMade ||
+          (fightsBetween.length > 0 &&
+            fightsBetween.some((f) => !f.bossPercentage || f.bossPercentage < 0.01));
       }
-      
+
       if (existingEncounter && !shouldCreateNewInstance) {
         // Add to existing encounter
         existingEncounter.bossFights.push(currentBoss);
@@ -177,33 +198,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         } else {
           encounterInstances[baseName]++;
         }
-        
+
         const instanceNumber = encounterInstances[baseName];
         const displayName = instanceNumber > 1 ? `${baseName} (Run ${instanceNumber})` : baseName;
-        
+
         encounterList.push({
           id: `encounter-${baseName}-${instanceNumber}`,
           name: displayName,
           bossFights: [currentBoss],
           preTrash,
-          postTrash
+          postTrash,
         });
       }
     }
-    
+
     // Handle any remaining trash that doesn't fit near bosses
-    const allCategorizedTrash = encounterList.flatMap(enc => [...enc.preTrash, ...enc.postTrash]);
-    const uncategorizedTrash = trashFights.filter(trash => 
-      !allCategorizedTrash.some(cat => cat.id === trash.id)
+    const allCategorizedTrash = encounterList.flatMap((enc) => [...enc.preTrash, ...enc.postTrash]);
+    const uncategorizedTrash = trashFights.filter(
+      (trash) => !allCategorizedTrash.some((cat) => cat.id === trash.id)
     );
-    
+
     if (uncategorizedTrash.length > 0) {
       encounterList.push({
         id: 'misc-trash',
         name: 'Miscellaneous Trash',
         bossFights: [],
         preTrash: uncategorizedTrash,
-        postTrash: []
+        postTrash: [],
       });
     }
 
@@ -213,8 +234,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   const [expandedEncounters, setExpandedEncounters] = React.useState<Set<string>>(new Set());
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
 
-  const toggleEncounter = (encounterId: string) => {
-    setExpandedEncounters(prev => {
+  const toggleEncounter = (encounterId: string): void => {
+    setExpandedEncounters((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(encounterId)) {
         newSet.delete(encounterId);
@@ -225,8 +246,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     });
   };
 
-  const toggleTrashForEncounter = (encounterId: string) => {
-    setShowTrashForEncounter(prev => {
+  const toggleTrashForEncounter = (encounterId: string): void => {
+    setShowTrashForEncounter((prev) => {
       const newSet = new Set(prev);
       if (newSet.has(encounterId)) {
         newSet.delete(encounterId);
@@ -264,19 +285,21 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
-  const renderFightCard = (fight: FightFragment, idx: number) => {
+  const renderFightCard = (fight: FightFragment, idx: number): JSX.Element => {
     const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
     const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
     const isWipe = rawIsWipe && !isFalsePositive;
     const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
-    
+
     // Debug logging for false positive detection
     if (rawIsWipe && bossHealthPercent >= 99) {
-      console.log(`Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`);
+      console.log(
+        `Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`
+      );
     }
-    
+
     const backgroundFillPercent = isWipe ? bossHealthPercent : 100;
-    
+
     return (
       <ListItem key={fight.id} sx={{ p: 0 }}>
         <ListItemButton
@@ -297,12 +320,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             px: 1,
             position: 'relative',
             backgroundColor: 'transparent',
-            transition: 'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
+            transition:
+              'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
             '&:hover': {
-              backgroundColor: 'rgba(255,255,255,0.025)'
+              backgroundColor: 'rgba(255,255,255,0.025)',
             },
             '&:active': {
-              transform: 'translateY(0.5px)'
+              transform: 'translateY(0.5px)',
             },
             '&::after': {
               content: '""',
@@ -371,7 +395,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               boxShadow: isWipe
                 ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
                 : 'none',
-              color: isWipe 
+              color: isWipe
                 ? (() => {
                     const healthPercent = bossHealthPercent;
                     if (healthPercent >= 80) {
@@ -410,31 +434,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 borderRadius: 8,
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
-                background: isFalsePositive 
+                background: isFalsePositive
                   ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(76, 217, 100, 0.15) 100%)'
                   : 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
-                border: isFalsePositive 
+                border: isFalsePositive
                   ? '1px solid rgba(255, 193, 7, 0.4)'
                   : '1px solid rgba(76, 217, 100, 0.3)',
                 boxShadow: isFalsePositive
                   ? '0 4px 12px rgba(255, 193, 7, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
                   : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
-                zIndex: 2
+                zIndex: 2,
               }}
             >
-              <Typography sx={{ 
-                color: isFalsePositive ? '#ffc107' : '#4ade80', 
-                fontSize: '0.75rem', 
-                lineHeight: 1, 
-                fontWeight: 600 
-              }}>
+              <Typography
+                sx={{
+                  color: isFalsePositive ? '#ffc107' : '#4ade80',
+                  fontSize: '0.75rem',
+                  lineHeight: 1,
+                  fontWeight: 600,
+                }}
+              >
                 {isFalsePositive ? '⚠' : '✓'}
               </Typography>
             </Box>
           )}
-          <Typography 
-            variant="caption" 
-            sx={{ 
+          <Typography
+            variant="caption"
+            sx={{
               color: 'text.secondary',
               fontSize: '0.66rem',
               lineHeight: 1.1,
@@ -443,12 +469,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               bottom: 6,
               left: '50%',
               transform: 'translateX(-50%)',
-              zIndex: 2
+              zIndex: 2,
             }}
           >
             {fight.startTime && fight.endTime && (
               <>
-                {formatTimestamp(fight.startTime)}{'\u00A0'}•{'\u00A0'}{formatDuration(fight.startTime, fight.endTime)}
+                {formatTimestamp(fight.startTime)}
+                {'\u00A0'}•{'\u00A0'}
+                {formatDuration(fight.startTime, fight.endTime)}
               </>
             )}
           </Typography>
@@ -464,14 +492,22 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           Select a Fight
         </Typography>
         {encounters.map((encounter) => (
-          <Accordion 
-            key={encounter.id} 
+          <Accordion
+            key={encounter.id}
             expanded={expandedEncounters.has(encounter.id)}
             onChange={() => toggleEncounter(encounter.id)}
             sx={{ mb: 2, '&:before': { display: 'none' } }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', pr: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  pr: 2,
+                }}
+              >
                 <Typography variant="h6">
                   {encounter.name} ({encounter.bossFights.length} attempts)
                 </Typography>
@@ -496,12 +532,23 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             </AccordionSummary>
             <AccordionDetails>
               {/* Pre-boss trash */}
-              <Collapse in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}>
+              <Collapse
+                in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
+              >
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                  >
                     Pre-encounter trash
                   </Typography>
-                  <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                  <List
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                      gap: 1,
+                    }}
+                  >
                     {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
                   </List>
                 </Box>
@@ -509,21 +556,41 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
               {/* Boss fights */}
               <Box sx={{ mb: 2 }}>
-                <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.primary', fontWeight: 'medium' }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 1, color: 'text.primary', fontWeight: 'medium' }}
+                >
                   Boss attempts
                 </Typography>
-                <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                <List
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                    gap: 1,
+                  }}
+                >
                   {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
                 </List>
               </Box>
 
               {/* Post-boss trash */}
-              <Collapse in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}>
+              <Collapse
+                in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
+              >
                 <Box>
-                  <Typography variant="subtitle2" sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                  >
                     Post-encounter trash
                   </Typography>
-                  <List sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))', gap: 1 }}>
+                  <List
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                      gap: 1,
+                    }}
+                  >
                     {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
                   </List>
                 </Box>

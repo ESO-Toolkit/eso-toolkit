@@ -263,6 +263,7 @@ function formatDuration(startTime: number, endTime: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
+
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
@@ -469,9 +470,36 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
 
   return (
     <Box sx={{ p: 2 }}>
-      <Typography variant="h6" gutterBottom>
-        Players
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+        <Typography variant="h6">
+          Players
+        </Typography>
+        {fightStartTime && fightEndTime && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'text.secondary',
+                fontSize: '0.75rem',
+                fontFamily: 'monospace'
+              }}
+            >
+              {formatTimestamp(fightStartTime)} - {formatTimestamp(fightEndTime)}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              sx={{ 
+                color: 'primary.main',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                fontFamily: 'monospace'
+              }}
+            >
+              {formatDuration(fightStartTime, fightEndTime)}
+            </Typography>
+          </Box>
+        )}
+      </Box>
       <Box
         sx={{
           display: 'grid',
