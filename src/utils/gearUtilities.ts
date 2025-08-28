@@ -171,7 +171,7 @@ export const MONSTER_ONE_PIECE_HINTS = Object.freeze(
       'Chokethorn',
       'Domihaus',
       'Earthgore',
-      ' Encratis’s Behemoth'
+      'Encratis’s Behemoth',
       'Engine Guardian',
       'Euphotic Gatekeeper',
       'Galenwe’s Lament',

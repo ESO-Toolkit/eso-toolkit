@@ -1,7 +1,7 @@
 import LinkIcon from '@mui/icons-material/Link';
 import { Box, Button, Container, TextField, Typography } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { clearAllEvents } from '../store/events_data/actions';
@@ -456,12 +456,7 @@ export const LandingPage: React.FC = () => {
     }
   };
 
-  const scrollToSection = (sectionId: string) => {
-    const element = document.getElementById(sectionId);
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
+
 
   return (
     <LandingContainer>
