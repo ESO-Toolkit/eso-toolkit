@@ -1,6 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from '../../../auth';
 import {
   basicMockData,
   createMockFight,
@@ -11,8 +10,8 @@ import {
   withLocalStorage,
   withMockReportFightContext,
 } from '../../../test';
+import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from '../../auth/auth';
 
-// Import the real component
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
 
 // Storybook Meta configuration - now using the real component with react-docgen-typescript

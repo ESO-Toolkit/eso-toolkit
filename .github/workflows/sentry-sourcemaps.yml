@@ -1,0 +1,126 @@
+name: Upload Sourcemaps to Sentry
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+
+jobs:
+  upload-sourcemaps:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          # Sentry needs access to commit history for better release tracking
+          fetch-depth: 0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set release version
+        id: version
+        run: |
+          # Use git commit hash as release version
+          RELEASE_VERSION="${GITHUB_SHA:0:8}"
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "release=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
+          echo "Release version: ${RELEASE_VERSION}"
+
+      - name: Build project with sourcemaps
+        run: |
+          # Set environment variables for build
+          export REACT_APP_VERSION="${{ env.RELEASE_VERSION }}"
+          export GENERATE_SOURCEMAP=true
+
+          # Build the project
+          if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
+            PUBLIC_URL="/$REPO_NAME/" npm run build
+          else
+            npm run build
+          fi
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          NODE_ENV: production
+
+      - name: Install Sentry CLI
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+
+      - name: Create Sentry release
+        run: |
+          # Create a new release
+          sentry-cli releases new "${{ env.RELEASE_VERSION }}"
+
+          # Associate commits with the release
+          sentry-cli releases set-commits "${{ env.RELEASE_VERSION }}" --auto
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+
+      - name: Upload sourcemaps to Sentry
+        run: |
+          # Upload sourcemaps
+          sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
+            --url-prefix "~/" \
+            --validate \
+            --strip-common-prefix \
+            ./build/static/js/
+
+          # Upload CSS sourcemaps if they exist
+          if [ -d "./build/static/css" ] && [ "$(ls -A ./build/static/css/*.map 2>/dev/null)" ]; then
+            sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
+              --url-prefix "~/static/css/" \
+              --validate \
+              --strip-common-prefix \
+              ./build/static/css/
+          fi
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+
+      - name: Finalize Sentry release
+        run: |
+          # Mark the release as deployed
+          sentry-cli releases deploys "${{ env.RELEASE_VERSION }}" new \
+            --env production \
+            --name "GitHub Actions Deploy"
+
+          # Finalize the release
+          sentry-cli releases finalize "${{ env.RELEASE_VERSION }}"
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+
+      - name: Clean up sourcemaps (optional)
+        run: |
+          # Remove sourcemap files from build directory to avoid exposing them
+          # Uncomment the following lines if you don't want to serve sourcemaps publicly
+          # find ./build -name "*.map" -type f -delete
+          # echo "Sourcemap files removed from build directory"
+        if: success()
+
+      - name: Notify Sentry deployment success
+        run: |
+          echo "✅ Sourcemaps successfully uploaded to Sentry"
+          echo "Release: ${{ env.RELEASE_VERSION }}"
+          echo "Environment: production"
+        if: success()
+
+      - name: Handle Sentry upload failure
+        run: |
+          echo "❌ Failed to upload sourcemaps to Sentry"
+          echo "Please check your Sentry configuration and secrets"
+          exit 1
+        if: failure()

@@ -11,6 +11,9 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          # Fetch full history for Sentry release tracking
+          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -21,12 +24,71 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Set release version
+        id: version
+        run: |
+          RELEASE_VERSION="${GITHUB_SHA:0:8}"
+          echo "RELEASE_VERSION=${RELEASE_VERSION}" >> $GITHUB_ENV
+          echo "release=${RELEASE_VERSION}" >> $GITHUB_OUTPUT
+
       - name: Build project
         run: |
           REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
+          export REACT_APP_VERSION="${{ env.RELEASE_VERSION }}"
+          export GENERATE_SOURCEMAP=true
           PUBLIC_URL="/$REPO_NAME/" npm run build
         env:
           GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Install Sentry CLI
+        run: |
+          curl -sL https://sentry.io/get-cli/ | bash
+        if: env.SENTRY_AUTH_TOKEN != ''
+
+      - name: Upload sourcemaps to Sentry
+        run: |
+          # Create and finalize Sentry release
+          sentry-cli releases new "${{ env.RELEASE_VERSION }}"
+          sentry-cli releases set-commits "${{ env.RELEASE_VERSION }}" --auto
+
+          # Upload sourcemaps
+          sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
+            --url-prefix "~/" \
+            --validate \
+            --strip-common-prefix \
+            ./build/static/js/
+
+          # Upload CSS sourcemaps if they exist
+          if [ -d "./build/static/css" ] && [ "$(ls -A ./build/static/css/*.map 2>/dev/null)" ]; then
+            sentry-cli releases files "${{ env.RELEASE_VERSION }}" upload-sourcemaps \
+              --url-prefix "~/static/css/" \
+              --validate \
+              --strip-common-prefix \
+              ./build/static/css/
+          fi
+
+          # Mark as deployed and finalize
+          sentry-cli releases deploys "${{ env.RELEASE_VERSION }}" new --env production
+          sentry-cli releases finalize "${{ env.RELEASE_VERSION }}"
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: ${{ secrets.SENTRY_PROJECT }}
+        if: env.SENTRY_AUTH_TOKEN != ''
+
+      - name: Clean up sourcemaps before deployment
+        run: |
+          # Remove sourcemap files to avoid exposing them publicly
+          find ./build -name "*.map" -type f -delete
+          echo "Sourcemap files removed from build directory"
+
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build
+          # Set cname if using a custom domain
+          # cname: www.yourcustomdomain.com
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v4

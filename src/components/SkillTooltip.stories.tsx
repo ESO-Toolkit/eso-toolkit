@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react';
 
-import SkillTooltip, { SkillStat } from './SkillTooltip';
+import { SkillTooltip, SkillStat } from './SkillTooltip';
 
 const meta: Meta<typeof SkillTooltip> = {
   title: 'Components/SkillTooltip',

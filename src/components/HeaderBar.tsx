@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -294,22 +294,22 @@ export const HeaderBar: React.FC = () => {
         <CloseButton onClick={handleDrawerToggle} aria-label="close menu">
           ✕
         </CloseButton>
-        
+
         <MobileMenuContent open={mobileOpen}>
-          <Typography 
-            variant="h4" 
-            sx={{ 
-              fontWeight: 800, 
+          <Typography
+            variant="h4"
+            sx={{
+              fontWeight: 800,
               background: 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              mb: 2
+              mb: 2,
             }}
           >
             ⚔️ ESO Helper
           </Typography>
-          
+
           {navItems.map((item, index) => (
             <MobileNavButton
               key={item.text}
@@ -337,18 +337,18 @@ export const HeaderBar: React.FC = () => {
               {item.text}
             </MobileNavButton>
           ))}
-          
+
           <MobileNavButton
             onClick={isLoggedIn ? handleLogout : handleLogin}
             sx={{
               animationDelay: `${navItems.length * 0.1}s`,
               animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-              background: isLoggedIn 
+              background: isLoggedIn
                 ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
                 : 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)',
               borderColor: isLoggedIn ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
               '&:hover': {
-                background: isLoggedIn 
+                background: isLoggedIn
                   ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
                   : 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)',
                 borderColor: isLoggedIn ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)',
