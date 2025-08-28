@@ -110,91 +110,42 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
         'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
       borderColor: 'rgba(76, 217, 100, 0.3)',
       color: '#5ce572',
-      '& .MuiChip-label': { color: '#5ce572' },
     },
     blue: {
       background:
         'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
       borderColor: 'rgba(0, 122, 255, 0.3)',
       color: '#4da3ff',
-      '& .MuiChip-label': { color: '#4da3ff' },
     },
     lightBlue: {
       background:
         'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
       borderColor: 'rgba(94, 234, 255, 0.35)',
       color: '#7ee8ff',
-      '& .MuiChip-label': { color: '#7ee8ff' },
     },
     purple: {
       background:
         'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
       borderColor: 'rgba(175, 82, 222, 0.3)',
       color: '#c57fff',
-      '& .MuiChip-label': { color: '#c57fff' },
     },
     indigo: {
       background:
         'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
       borderColor: 'rgba(88, 86, 214, 0.3)',
       color: '#8583ff',
-      '& .MuiChip-label': { color: '#8583ff' },
-    },
-    yellow: {
-      background:
-        'linear-gradient(135deg, rgba(255, 235, 59, 0.25) 0%, rgba(255, 235, 59, 0.15) 50%, rgba(255, 235, 59, 0.08) 100%)',
-      borderColor: 'rgba(255, 235, 59, 0.35)',
-      color: '#fff176',
-      '& .MuiChip-label': { color: '#fff176' },
     },
     gold: {
       background:
         'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
       borderColor: 'rgba(255, 193, 7, 0.35)',
       color: '#ffd54f',
-      '& .MuiChip-label': { color: '#ffd54f' },
-    },
-    orange: {
-      background:
-        'linear-gradient(135deg, rgba(255, 149, 0, 0.25) 0%, rgba(255, 149, 0, 0.15) 50%, rgba(255, 149, 0, 0.08) 100%)',
-      borderColor: 'rgba(255, 149, 0, 0.3)',
-      color: '#ffb74d',
-      '& .MuiChip-label': { color: '#ffb74d' },
-    },
-    red: {
-      background:
-        'linear-gradient(135deg, rgba(255, 82, 82, 0.25) 0%, rgba(255, 82, 82, 0.15) 50%, rgba(255, 82, 82, 0.08) 100%)',
-      borderColor: 'rgba(255, 82, 82, 0.3)',
-      color: '#ff6b6b',
-      '& .MuiChip-label': { color: '#ff6b6b' },
-    },
-    pink: {
-      background:
-        'linear-gradient(135deg, rgba(255, 107, 178, 0.25) 0%, rgba(255, 107, 178, 0.15) 50%, rgba(255, 107, 178, 0.08) 100%)',
-      borderColor: 'rgba(255, 107, 178, 0.35)',
-      color: '#ff8fc7',
-      '& .MuiChip-label': { color: '#ff8fc7' },
-    },
-    teal: {
-      background:
-        'linear-gradient(135deg, rgba(0, 200, 190, 0.25) 0%, rgba(0, 200, 190, 0.15) 50%, rgba(0, 200, 190, 0.08) 100%)',
-      borderColor: 'rgba(0, 200, 190, 0.35)',
-      color: '#4dd0c7',
-      '& .MuiChip-label': { color: '#4dd0c7' },
-    },
-    lime: {
-      background:
-        'linear-gradient(135deg, rgba(205, 220, 57, 0.25) 0%, rgba(205, 220, 57, 0.15) 50%, rgba(205, 220, 57, 0.08) 100%)',
-      borderColor: 'rgba(205, 220, 57, 0.35)',
-      color: '#d4e157',
-      '& .MuiChip-label': { color: '#d4e157' },
     },
     silver: {
       background:
         'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
       borderColor: 'rgba(236, 240, 241, 0.35)',
       color: '#ecf0f1',
-      '& .MuiChip-label': { color: '#ecf0f1' },
     },
     legendary: {
       background:
@@ -203,7 +154,6 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
         'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
       border: '1px solid transparent',
       color: '#ffffff',
-      '& .MuiChip-label': { color: '#ffffff' },
       animation: `${legendaryGlow} 3s ease-in-out infinite`,
     },
   };
@@ -292,12 +242,7 @@ function abbreviateFood(name: string): string {
     .filter(Boolean);
   if (words.length === 0) return name;
   const acronym = words.map((w) => (w.length > 0 ? w[0].toUpperCase() : '')).join('');
-  return acronym.length >= 2 && acronym.length <= 4
-    ? acronym
-    : words
-        .slice(0, 3)
-        .map((w) => (w.length > 0 ? w[0].toUpperCase() : ''))
-        .join('');
+  return acronym.length >= 2 && acronym.length <= 4 ? acronym : words.slice(0, 3).map((w) => (w.length > 0 ? w[0].toUpperCase() : '')).join('');
 }
 
 function formatTimestamp(timestamp: number): string {
@@ -343,7 +288,6 @@ const CLASS_ICON_MAP: Record<string, string | undefined> = {
   arcanist: arcanistIcon,
 };
 
-// Canonical ESO class skill lines per class (names only)
 const CLASS_SUBLINES: Record<string, [string, string, string]> = {
   arcanist: ['Herald of the Tome', 'Soldier of Apocrypha', 'Curative Runeforms'],
   necromancer: ['Grave Lord', 'Bone Tyrant', 'Living Death'],
@@ -354,7 +298,6 @@ const CLASS_SUBLINES: Record<string, [string, string, string]> = {
   sorcerer: ['Dark Magic', 'Daedric Summoning', 'Storm Calling'],
 };
 
-// Short display labels for sublines to keep single-line layout without scaling
 const CLASS_SUBLINES_SHORT: Record<string, [string, string, string]> = {
   arcanist: ['Herald', 'Soldier', 'Curative'],
   necromancer: ['Grave', 'Bone', 'Living'],
@@ -376,7 +319,6 @@ function parseClasses(input?: string | null): string[] {
   return (parts.length ? parts : [raw]).slice(0, 3);
 }
 
-// Map common abbreviations and variants to canonical keys used in CLASS_ICON_MAP
 const CLASS_ALIASES: Record<string, string> = {
   dragonknight: 'dragonknight',
   'dragon knight': 'dragonknight',
@@ -527,36 +469,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
 
   return (
     <Box sx={{ p: 2 }}>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">
-          Players
-        </Typography>
-        {fightStartTime && fightEndTime && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: 'text.secondary',
-                fontSize: '0.75rem',
-                fontFamily: 'monospace'
-              }}
-            >
-              {formatTimestamp(fightStartTime)} - {formatTimestamp(fightEndTime)}
-            </Typography>
-            <Typography 
-              variant="body2" 
-              sx={{ 
-                color: 'primary.main',
-                fontSize: '0.75rem',
-                fontWeight: 'bold',
-                fontFamily: 'monospace'
-              }}
-            >
-              {formatDuration(fightStartTime, fightEndTime)}
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      <Typography variant="h6" gutterBottom>
+        Players
+      </Typography>
       <Box
         sx={{
           display: 'grid',
@@ -634,7 +549,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                               </Box>
                             </Box>
                             {(() => {
-                              // Prefer showing the three ESO skill lines for the detected class.
                               const baseKey = toClassKey(player.type);
                               const sublines = CLASS_SUBLINES[baseKey];
                               const classes = parseClasses(player.type);
@@ -896,7 +810,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 })}
                               </Box>
                             )}
-                            {/* Gear */}
                             {gear.length > 0 && (
                               <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
                                 {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}

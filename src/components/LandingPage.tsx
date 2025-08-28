@@ -101,8 +101,6 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   wordBreak: 'normal',
   overflowWrap: 'normal',
   textAlign: 'center',
-<<<<<<< Updated upstream
-=======
   width: '100%',
   maxWidth: '100%',
   padding: '0 1rem',
@@ -126,7 +124,6 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     fontSize: '2rem',
     lineHeight: 1.5,
   },
->>>>>>> Stashed changes
   '@keyframes shimmer': {
     '0%, 100%': { opacity: 1 },
     '50%': { opacity: 0.85 },
@@ -143,9 +140,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     wordBreak: 'keep-all',
     overflowWrap: 'normal',
     display: 'inline-block',
-<<<<<<< Updated upstream
-    textShadow: '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
-=======
+
     textShadow:
       '0 0 15px rgb(56 189 248 / 0%), 0 0 30px rgb(56 189 248 / 0%), 0 0 45px rgba(0, 225, 255, 0.1), 0 2px 4px rgba(0, 0, 0, 0.2), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.05)',
     whiteSpace: 'nowrap',
@@ -154,7 +149,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
       whiteSpace: 'normal',
       wordBreak: 'break-word',
     },
->>>>>>> Stashed changes
+
   },
   '& .highlight-text': {
     position: 'relative',
