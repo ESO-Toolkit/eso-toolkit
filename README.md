@@ -2,6 +2,12 @@
 
 This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
 
+## Useful Links
+
+- [Deployment](https://bkrupa.github.io/eso-log-aggregator/#/)
+- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
+- [Sentry](https://bkrupa.sentry.io/dashboards/)
+
 ## Getting Started
 
 ### Install Dependencies
@@ -42,21 +48,25 @@ npm run build
 ### Running Tests
 
 - **Unit Tests (Jest):**
+
   ```powershell
   npm test
   ```
 
 - **Unit Tests with Coverage:**
+
   ```powershell
   npm run test:coverage
   ```
 
 - **Coverage Analysis:**
+
   ```powershell
   npm run coverage:analyze
   ```
 
 - **Generate Coverage Badges:**
+
   ```powershell
   npm run coverage:badges
   ```
@@ -67,6 +77,7 @@ npm run build
   ```
 
 **Coverage System Features:**
+
 - **Comprehensive Reporting**: HTML, LCOV, JSON, and console output
 - **Enhanced Analysis**: Detailed insights with actionable recommendations
 - **Visual Badges**: SVG badges for documentation integration

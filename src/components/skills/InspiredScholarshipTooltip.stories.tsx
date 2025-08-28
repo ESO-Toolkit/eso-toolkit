@@ -3,7 +3,7 @@ import { ThemeProvider, createTheme } from '@mui/material/styles';
 import type { Meta, StoryObj } from '@storybook/react';
 import React from 'react';
 
-import InspiredScholarshipTooltip from './InspiredScholarshipTooltip';
+import { InspiredScholarshipTooltip } from './InspiredScholarshipTooltip';
 
 const tokens = {
   bg: '#0b1220',

@@ -173,39 +173,42 @@ module.exports = {
         );
 
         // Production bundle splitting
-        webpackConfig.optimization.splitChunks = {
-          chunks: 'all',
-          cacheGroups: {
-            vendor: {
-              test: /[\\/]node_modules[\\/]/,
-              name: 'vendors',
-              chunks: 'all',
-              enforce: true,
-              priority: 20,
-            },
-            mui: {
-              test: /[\\/]node_modules[\\/]@mui[\\/]/,
-              name: 'mui',
-              chunks: 'all',
-              priority: 30,
-            },
-            apollo: {
-              test: /[\\/]node_modules[\\/]@apollo[\\/]/,
-              name: 'apollo',
-              chunks: 'all',
-              priority: 30,
-            },
-            redux: {
-              test: /[\\/]node_modules[\\/](redux|@reduxjs)[\\/]/,
-              name: 'redux',
-              chunks: 'all',
-              priority: 30,
-            },
-            react: {
-              test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
-              name: 'react',
-              chunks: 'all',
-              priority: 40,
+        webpackConfig.optimization = {
+          ...webpackConfig.optimization,
+          splitChunks: {
+            chunks: 'all',
+            cacheGroups: {
+              vendor: {
+                test: /[\\/]node_modules[\\/]/,
+                name: 'vendors',
+                chunks: 'all',
+                enforce: true,
+                priority: 20,
+              },
+              mui: {
+                test: /[\\/]node_modules[\\/]@mui[\\/]/,
+                name: 'mui',
+                chunks: 'all',
+                priority: 30,
+              },
+              apollo: {
+                test: /[\\/]node_modules[\\/]@apollo[\\/]/,
+                name: 'apollo',
+                chunks: 'all',
+                priority: 30,
+              },
+              redux: {
+                test: /[\\/]node_modules[\\/](redux|@reduxjs)[\\/]/,
+                name: 'redux',
+                chunks: 'all',
+                priority: 30,
+              },
+              react: {
+                test: /[\\/]node_modules[\\/](react|react-dom)[\\/]/,
+                name: 'react',
+                chunks: 'all',
+                priority: 40,
+              },
             },
           },
         };
@@ -263,7 +266,7 @@ module.exports = {
           testEnvironment: jestConfig.testEnvironment || 'jsdom',
         };
       }
-      
+
       return jestConfig;
     },
   },

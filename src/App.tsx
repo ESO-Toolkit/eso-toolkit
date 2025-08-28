@@ -5,12 +5,17 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { HashRouter, Routes, Route } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { BugReportFab } from './components/BugReportDialog';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
 import store, { persistor } from './store/storeWithHistory';
+import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
+
+// Initialize Sentry before the app starts
+initializeSentry();
 
 // Code splitting for major features
 const LiveLog = React.lazy(() =>
@@ -42,24 +47,38 @@ const MainApp: React.FC = () => {
 };
 
 const App: React.FC = () => {
+  // Add breadcrumb for app initialization
+  React.useEffect(() => {
+    addBreadcrumb('App component mounted', 'navigation', {
+      timestamp: new Date().toISOString(),
+      userAgent: navigator.userAgent,
+      url: window.location.href,
+    });
+  }, []);
+
   return (
-    <ErrorBoundary>
-      <ReduxProvider store={store}>
-        <PersistGate loading={null} persistor={persistor}>
-          <AuthProvider>
-            <EsoLogsClientProvider>
-              <AppRoutes />
-            </EsoLogsClientProvider>
-          </AuthProvider>
-        </PersistGate>
-      </ReduxProvider>
-    </ErrorBoundary>
+    <ReduxProvider store={store}>
+      <PersistGate loading={null} persistor={persistor}>
+        <AuthProvider>
+          <EsoLogsClientProvider>
+            <AppRoutes />
+            {/* Add floating bug report button in production */}
+            <BugReportFab />
+          </EsoLogsClientProvider>
+        </AuthProvider>
+      </PersistGate>
+    </ReduxProvider>
   );
 };
 
 const AppRoutes: React.FC = () => {
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
+    // Add breadcrumb for page load
+    addBreadcrumb('App routes initialized', 'navigation', {
+      title: document.title,
+      url: window.location.href,
+    });
   }, []);
 
   // Support non-hash OAuth redirect: /oauth-redirect?code=...
@@ -78,54 +97,56 @@ const AppRoutes: React.FC = () => {
 
   return (
     <HashRouter future={{ v7_relativeSplatPath: true, v7_startTransition: true }}>
-      <Routes>
-        <Route
-          path="/oauth-redirect"
-          element={
-            <ErrorBoundary>
-              <Suspense fallback={<LoadingFallback />}>
-                <OAuthRedirect />
-              </Suspense>
-            </ErrorBoundary>
-          }
-        />
-        <Route element={<AppLayout />}>
-          {/* Pass fights as prop via state, fallback to empty array if not present */}
+      <ErrorBoundary>
+        <Routes>
           <Route
-            path="/report/:reportId/fight/:fightId"
+            path="/oauth-redirect"
             element={
               <ErrorBoundary>
                 <Suspense fallback={<LoadingFallback />}>
-                  <ReportFightDetails />
+                  <OAuthRedirect />
                 </Suspense>
               </ErrorBoundary>
             }
           />
-          <Route
-            path="/report/:reportId/live"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback />}>
-                  <LiveLog>
+          <Route element={<AppLayout />}>
+            {/* Pass fights as prop via state, fallback to empty array if not present */}
+            <Route
+              path="/report/:reportId/fight/:fightId"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
                     <ReportFightDetails />
-                  </LiveLog>
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
-          <Route
-            path="/report/:reportId"
-            element={
-              <ErrorBoundary>
-                <Suspense fallback={<LoadingFallback />}>
-                  <ReportFights />
-                </Suspense>
-              </ErrorBoundary>
-            }
-          />
-          <Route path="/*" element={<MainApp />} />
-        </Route>
-      </Routes>
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/report/:reportId/live"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <LiveLog>
+                      <ReportFightDetails />
+                    </LiveLog>
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/report/:reportId"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReportFights />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route path="/*" element={<MainApp />} />
+          </Route>
+        </Routes>
+      </ErrorBoundary>
     </HashRouter>
   );
 };
