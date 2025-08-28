@@ -206,25 +206,29 @@ export function useUrlParamSync(): {
         urlParams.selectedTargetId !== undefined &&
         urlParams.selectedTargetId !== selectedTargetId
       ) {
-        updates.push(() => dispatch(setSelectedTargetId(urlParams.selectedTargetId!)));
+        const targetId = urlParams.selectedTargetId;
+        updates.push(() => dispatch(setSelectedTargetId(targetId)));
       }
 
       if (
         urlParams.selectedPlayerId !== undefined &&
         urlParams.selectedPlayerId !== selectedPlayerId
       ) {
-        updates.push(() => dispatch(setSelectedPlayerId(urlParams.selectedPlayerId!)));
+        const playerId = urlParams.selectedPlayerId;
+        updates.push(() => dispatch(setSelectedPlayerId(playerId)));
       }
 
       if (urlParams.selectedTab !== undefined && urlParams.selectedTab !== selectedTabId) {
-        updates.push(() => dispatch(setSelectedTabId(urlParams.selectedTab!)));
+        const tabId = urlParams.selectedTab;
+        updates.push(() => dispatch(setSelectedTabId(tabId)));
       }
 
       if (
         urlParams.showExperimentalTabs !== undefined &&
         urlParams.showExperimentalTabs !== showExperimentalTabs
       ) {
-        updates.push(() => dispatch(setShowExperimentalTabs(urlParams.showExperimentalTabs!)));
+        const showExperimental = urlParams.showExperimentalTabs;
+        updates.push(() => dispatch(setShowExperimentalTabs(showExperimental)));
       }
 
       // Batch all updates to reduce re-renders
@@ -241,7 +245,7 @@ export function useUrlParamSync(): {
       }
     };
   }, [
-    location.hash,
+    location,
     dispatch,
     selectedTargetId,
     selectedPlayerId,
@@ -302,22 +306,26 @@ export function useUrlParamSync(): {
 
       // Collect only the changes that are actually different
       if (params.selectedTargetId !== undefined && params.selectedTargetId !== selectedTargetId) {
-        updates.push(() => dispatch(setSelectedTargetId(params.selectedTargetId!)));
+        const targetId = params.selectedTargetId;
+        updates.push(() => dispatch(setSelectedTargetId(targetId)));
         hasChanges = true;
       }
       if (params.selectedPlayerId !== undefined && params.selectedPlayerId !== selectedPlayerId) {
-        updates.push(() => dispatch(setSelectedPlayerId(params.selectedPlayerId!)));
+        const playerId = params.selectedPlayerId;
+        updates.push(() => dispatch(setSelectedPlayerId(playerId)));
         hasChanges = true;
       }
       if (params.selectedTab !== undefined && params.selectedTab !== selectedTabId) {
-        updates.push(() => dispatch(setSelectedTabId(params.selectedTab!)));
+        const tabId = params.selectedTab;
+        updates.push(() => dispatch(setSelectedTabId(tabId)));
         hasChanges = true;
       }
       if (
         params.showExperimentalTabs !== undefined &&
         params.showExperimentalTabs !== showExperimentalTabs
       ) {
-        updates.push(() => dispatch(setShowExperimentalTabs(params.showExperimentalTabs!)));
+        const showExperimental = params.showExperimentalTabs;
+        updates.push(() => dispatch(setShowExperimentalTabs(showExperimental)));
         hasChanges = true;
       }
 
@@ -335,7 +343,7 @@ export function useUrlParamSync(): {
   );
 
   // Helper functions - memoized for performance
-  const parseCurrentUrlParams = React.useCallback(() => parseUrlParams(location), [location.hash]);
+  const parseCurrentUrlParams = React.useCallback(() => parseUrlParams(location), [location]);
   const buildCurrentUrlParams = React.useCallback(
     (params: Partial<UrlParams>) => buildUrlParams(params),
     []
