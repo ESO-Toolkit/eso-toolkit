@@ -45,6 +45,38 @@ npm run build
   ```powershell
   npm test
   ```
+
+- **Unit Tests with Coverage:**
+  ```powershell
+  npm run test:coverage
+  ```
+
+- **Coverage Analysis:**
+  ```powershell
+  npm run coverage:analyze
+  ```
+
+- **Generate Coverage Badges:**
+  ```powershell
+  npm run coverage:badges
+  ```
+
+- **Complete Coverage Workflow:**
+  ```powershell
+  npm run coverage:full
+  ```
+
+**Coverage System Features:**
+- **Comprehensive Reporting**: HTML, LCOV, JSON, and console output
+- **Enhanced Analysis**: Detailed insights with actionable recommendations
+- **Visual Badges**: SVG badges for documentation integration
+- **Multi-Environment Support**: Development, CI/CD, and strict mode configurations
+- **Custom Thresholds**: Different targets for utils (90%), hooks (85%), store (85%)
+
+**Coverage Badges:** ![Coverage](coverage/badges/coverage-overall.svg)
+
+For detailed coverage documentation, see [docs/COVERAGE.md](docs/COVERAGE.md).
+
 - **End-to-End Tests (Playwright):**
   ```powershell
   cd apps/testing/eso-log-aggregator-e2e

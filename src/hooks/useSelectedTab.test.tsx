@@ -37,7 +37,12 @@ const TestWrapper: React.FC<{
   const mockStore = store || createMockStore();
   return (
     <Provider store={mockStore}>
-      <MemoryRouter initialEntries={initialEntries}>{children}</MemoryRouter>
+      <MemoryRouter 
+        initialEntries={initialEntries} 
+        future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+      >
+        {children}
+      </MemoryRouter>
     </Provider>
   );
 };

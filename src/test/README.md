@@ -1,8 +1,51 @@
 # Testing Utilities
 
-This directory contains organized testing utilities for Storybook stories and component testing.
+This directory contains organized testing utilities for Storybook stories, component testing, and mock data creation throughout the ESO Log Aggregator project.
 
 ## Directory Structure
+
+```
+src/test/
+├── index.ts                    # Re-exports all testing utilities
+├── utils/                      # NEW: Organized mock utilities (recommended)
+│   ├── index.ts               # Main utility exports
+│   ├── combatLogMockFactories.ts # Combat log event factories
+│   ├── playerMockFactories.ts   # Player and combatant factories
+│   ├── reduxMockFactories.ts    # Redux state factories
+│   ├── testUtilities.ts        # General test helpers
+│   ├── mockDataSets.ts         # Predefined data sets
+│   └── README.md               # Detailed utility documentation
+├── mocks/                      # Legacy mock data (backwards compatibility)
+│   └── combatLogMocks.ts      # Original combat log mocks
+├── decorators/                 # Storybook decorators
+│   └── storybookDecorators.tsx # Standard decorators for stories
+├── themes/                     # Theme configurations
+│   └── storybookThemes.ts     # Material-UI themes for stories
+└── EmptyMockComponent.tsx     # Existing empty mock component
+```
+
+## ⚡ Quick Start - New Code
+
+For new tests and components, use the organized utilities:
+
+```typescript
+import {
+  createMockDamageEvent,
+  createMockPlayerData,
+  basicMockData,
+  MOCK_CONSTANTS,
+} from '../test/utils';
+```
+
+## Legacy Support
+
+Existing test files can continue using their current imports:
+
+```typescript
+import { createMockBuffEvent, basicMockData } from '../test';
+```
+
+Both approaches work thanks to re-exports in the main index file.
 
 ```
 src/test/
