@@ -17,7 +17,7 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { FightFragment } from '../../graphql/generated';
+import { FightFragment, ReportFragment } from '../../graphql/generated';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -92,7 +92,15 @@ interface ReportFightsViewProps {
   fightId: string | undefined | null;
   reportId: string | undefined | null;
   reportStartTime: number | undefined | null;
-  reportData: any; // Add reportData prop
+  reportData: ReportFragment | null | undefined;
+}
+
+interface Encounter {
+  id: string;
+  name: string;
+  bossFights: FightFragment[];
+  preTrash: FightFragment[];
+  postTrash: FightFragment[];
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -101,7 +109,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   fightId,
   reportId,
   reportStartTime,
-  reportData, // Add reportData prop
+  reportData,
 }) => {
   const navigate = useNavigate();
 
@@ -128,13 +136,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     const trialRuns: {
       id: string;
       name: string;
-      encounters: {
-        id: string;
-        name: string;
-        bossFights: FightFragment[];
-        preTrash: FightFragment[];
-        postTrash: FightFragment[];
-      }[];
+      encounters: Encounter[];
     }[] = [];
 
     // Get zone name from the report data
@@ -143,7 +145,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Track boss progression within each zone to detect resets
     const zoneProgressionMap: Record<string, Set<string>> = {};
     const zoneRunCounts: Record<string, number> = {};
-    const currentRunEncounters: Record<string, any[]> = {};
+    const currentRunEncounters: Record<string, Encounter[]> = {};
 
     for (let i = 0; i < bossFights.length; i++) {
       const currentBoss = bossFights[i];
