@@ -12,7 +12,7 @@ const config: StorybookConfig = {
     'msw-storybook-addon',
   ],
 
-  staticDirs: ['./public'],
+  staticDirs: ['../public'],
 
   framework: {
     name: '@storybook/react-webpack5',
