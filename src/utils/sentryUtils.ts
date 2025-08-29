@@ -168,6 +168,16 @@ export const reportError = (
   context?: Record<string, unknown>,
   store?: { getState: () => RootState }
 ): void => {
+  // Only report errors to Sentry in production builds
+  if (process.env.NODE_ENV !== 'production') {
+    // In development, just log to console
+    console.error('Error (not sent to Sentry in development):', error);
+    if (context) {
+      console.error('Context:', context);
+    }
+    return;
+  }
+
   const applicationContext = captureApplicationContext(store);
 
   Sentry.withScope((scope) => {
@@ -200,6 +210,13 @@ export const submitManualBugReport = (
   bugReport: ManualBugReport,
   store?: { getState: () => RootState }
 ): void => {
+  // Only submit bug reports to Sentry in production builds
+  if (process.env.NODE_ENV !== 'production') {
+    // In development, just log to console
+    console.warn('Manual bug report (not sent to Sentry in development):', bugReport);
+    return;
+  }
+
   const applicationContext = captureApplicationContext(store);
 
   Sentry.withScope((scope) => {
@@ -254,11 +271,14 @@ export const submitManualBugReport = (
  * Set user context for all subsequent error reports
  */
 export const setUserContext = (userId: string, email?: string, username?: string): void => {
-  Sentry.setUser({
-    id: userId,
-    email,
-    username,
-  });
+  // Only set user context in Sentry for production builds
+  if (process.env.NODE_ENV === 'production') {
+    Sentry.setUser({
+      id: userId,
+      email,
+      username,
+    });
+  }
 };
 
 /**
@@ -269,12 +289,15 @@ export const addBreadcrumb = (
   category: string,
   data?: Record<string, unknown>
 ): void => {
-  Sentry.addBreadcrumb({
-    message,
-    category,
-    data,
-    timestamp: Date.now() / 1000,
-  });
+  // Only add breadcrumbs in production builds
+  if (process.env.NODE_ENV === 'production') {
+    Sentry.addBreadcrumb({
+      message,
+      category,
+      data,
+      timestamp: Date.now() / 1000,
+    });
+  }
 };
 
 /**
@@ -285,13 +308,24 @@ export const measurePerformance = async <T>(
   operation: () => Promise<T> | T,
   context?: Record<string, unknown>
 ): Promise<T> => {
-  return Sentry.startSpan({ name }, async () => {
+  // Only use Sentry performance monitoring in production builds
+  if (process.env.NODE_ENV === 'production') {
+    return Sentry.startSpan({ name }, async () => {
+      try {
+        const result = await operation();
+        return result;
+      } catch (error) {
+        reportError(error as Error, { operationName: name, ...context }, undefined);
+        throw error;
+      }
+    });
+  } else {
+    // In development, just run the operation without Sentry monitoring
     try {
-      const result = await operation();
-      return result;
+      return await operation();
     } catch (error) {
       reportError(error as Error, { operationName: name, ...context }, undefined);
       throw error;
     }
-  });
+  }
 };
