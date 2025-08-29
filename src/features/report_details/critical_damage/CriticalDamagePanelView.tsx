@@ -3,14 +3,23 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 
 import { PlayerCriticalDamageDetails } from './PlayerCriticalDamageDetails';
+import { PlayerCriticalDamageData } from './PlayerCriticalDamageDetailsView';
+
+interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
+  criticalDamageSources: CriticalDamageSourceWithActiveState[];
+  staticCriticalDamage: number;
+}
 
 interface CriticalDamagePanelProps {
   players: PlayerDetailsWithRole[];
   fight: FightFragment;
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  criticalDamageData: Map<number, PlayerCriticalDamageDataExtended>;
+  isLoading: boolean;
 }
 
 /**
@@ -21,6 +30,8 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   fight,
   expandedPanels,
   onExpandChange,
+  criticalDamageData,
+  isLoading,
 }) => {
   return (
     <Box>
@@ -28,16 +39,22 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
         Critical Damage Analysis
       </Typography>
 
-      {players.map((player) => (
-        <PlayerCriticalDamageDetails
-          key={player.id}
-          id={player.id}
-          name={player.name}
-          fight={fight}
-          expanded={expandedPanels[player.id] || false}
-          onExpandChange={onExpandChange(player.id)}
-        />
-      ))}
+      {players.map((player) => {
+        const playerCriticalDamageData = criticalDamageData.get(player.id);
+
+        return (
+          <PlayerCriticalDamageDetails
+            key={player.id}
+            id={player.id}
+            name={player.name}
+            fight={fight}
+            expanded={expandedPanels[player.id] || false}
+            onExpandChange={onExpandChange(player.id)}
+            criticalDamageData={playerCriticalDamageData || null}
+            isLoading={isLoading}
+          />
+        );
+      })}
     </Box>
   );
 };
