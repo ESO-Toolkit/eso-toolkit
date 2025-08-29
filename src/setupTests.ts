@@ -58,24 +58,10 @@ global.fetch = jest.fn(() =>
   } as unknown as Response)
 );
 
-// Mock window.location for navigation tests
-const mockLocation = {
-  assign: jest.fn(),
-  replace: jest.fn(),
-  reload: jest.fn(),
-  href: 'http://localhost:3000',
-  origin: 'http://localhost:3000',
-  protocol: 'http:',
-  host: 'localhost:3000',
-  hostname: 'localhost',
-  port: '3000',
-  pathname: '/',
-  search: '',
-  hash: '',
-  ancestorOrigins: {} as DOMStringList,
-};
+// JSDOM 26+ provides a working window.location by default
+// No need to mock window.location anymore
 
-Object.defineProperty(window, 'location', {
-  value: mockLocation,
-  writable: true,
-});
+// If tests need specific location methods, they can be mocked individually:
+// Object.defineProperty(window.location, 'assign', { value: jest.fn() });
+// Object.defineProperty(window.location, 'replace', { value: jest.fn() });
+// Object.defineProperty(window.location, 'reload', { value: jest.fn() });

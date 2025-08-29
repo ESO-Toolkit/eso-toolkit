@@ -106,7 +106,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     if (pulseInterval || pulseDamage) {
       const synthesized =
         [
-          pulseInterval ? `Pulses every ${pulseInterval.replace(/^(?i:every )/i, '')}` : undefined,
+          pulseInterval ? `Pulses every ${pulseInterval.replace(/^every /i, '')}` : undefined,
           pulseDamage ? `deals an additional ${pulseDamage}` : undefined,
         ]
           .filter(Boolean)

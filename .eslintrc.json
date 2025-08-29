@@ -23,13 +23,20 @@
   },
   "overrides": [
     {
-      "files": ["src/index.tsx", "src/App.tsx", "src/reportWebVitals.ts"],
+      "files": [
+        "src/index.tsx",
+        "src/App.tsx",
+        "src/reportWebVitals.ts",
+        "vite.config.mjs",
+        "jest.config.js",
+        "src/**/*.d.ts"
+      ],
       "rules": {
         "import/no-default-export": "off"
       }
     },
     {
-      "files": ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)"], // Target Storybook story files
+      "files": ["**/*.stories.@(ts|tsx|js|jsx|mjs|cjs)", ".storybook/main.ts"], // Target Storybook story files
       "rules": {
         "import/no-default-export": "off", // Disable no-default-export for story files
         "storybook/default-exports": "error" // Ensure a default export exists in stories
