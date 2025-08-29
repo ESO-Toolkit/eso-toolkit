@@ -19,8 +19,11 @@ import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
 
-function formatTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
+function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
+  // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
+  const actualTimestamp = reportStartTime + fightStartTime;
+  const date = new Date(actualTimestamp);
+  
   return date.toLocaleTimeString('en-US', {
     hour12: true,
     hour: 'numeric',
@@ -88,6 +91,8 @@ interface ReportFightsViewProps {
   loading: boolean;
   fightId: string | undefined | null;
   reportId: string | undefined | null;
+  reportStartTime: number | undefined | null;
+  reportData: any; // Add reportData prop
 }
 
 export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
@@ -95,6 +100,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   loading,
   fightId,
   reportId,
+  reportStartTime,
+  reportData, // Add reportData prop
 }) => {
   const navigate = useNavigate();
 
@@ -117,22 +124,56 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     const bossFights = validFights.filter((fight) => fight.difficulty != null);
     const trashFights = validFights.filter((fight) => fight.difficulty == null);
 
-    // Create encounter objects with trial instance detection
-    const encounterList: {
+    // Group bosses by zone and detect trial runs
+    const trialRuns: {
       id: string;
       name: string;
-      bossFights: FightFragment[];
-      preTrash: FightFragment[];
-      postTrash: FightFragment[];
+      encounters: {
+        id: string;
+        name: string;
+        bossFights: FightFragment[];
+        preTrash: FightFragment[];
+        postTrash: FightFragment[];
+      }[];
     }[] = [];
 
-    // Track encounter instances by name
-    const encounterInstances: Record<string, number> = {};
+    // Get zone name from the report data
+    const zoneName = reportData?.zone?.name || 'Unknown Zone';
+
+    // Track boss progression within each zone to detect resets
+    const zoneProgressionMap: Record<string, Set<string>> = {};
+    const zoneRunCounts: Record<string, number> = {};
+    const currentRunEncounters: Record<string, any[]> = {};
 
     for (let i = 0; i < bossFights.length; i++) {
       const currentBoss = bossFights[i];
       const nextBoss = bossFights[i + 1];
-      const baseName = currentBoss.name || 'Unknown Boss';
+      const bossName = currentBoss.name || 'Unknown Boss';
+      
+      // Initialize zone tracking if not exists
+      if (!zoneProgressionMap[zoneName]) {
+        zoneProgressionMap[zoneName] = new Set();
+        zoneRunCounts[zoneName] = 1;
+        currentRunEncounters[zoneName] = [];
+      }
+
+      // Check if this boss represents a reset (going back to an earlier boss after progression)
+      const hasProgressedPastThisBoss = zoneProgressionMap[zoneName].has(bossName);
+      const shouldStartNewRun = hasProgressedPastThisBoss && zoneProgressionMap[zoneName].size > 1;
+
+      if (shouldStartNewRun) {
+        // Start a new run - reset progression tracking and increment run count
+        zoneProgressionMap[zoneName] = new Set([bossName]);
+        zoneRunCounts[zoneName]++;
+        currentRunEncounters[zoneName] = [];
+      } else {
+        // Add this boss to the progression
+        zoneProgressionMap[zoneName].add(bossName);
+      }
+
+      const currentRunNumber = zoneRunCounts[zoneName];
+      const trialRunId = `${zoneName}-run-${currentRunNumber}`;
+      const trialRunName = currentRunNumber > 1 ? `${zoneName} Run ${currentRunNumber}` : zoneName;
 
       // Find trash before this boss (after previous boss or from start)
       const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
@@ -146,90 +187,66 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
       );
 
-      // Check if this should be a new instance of the same encounter
-      const existingEncounter = encounterList.find((enc) => enc.name.startsWith(baseName));
-      let shouldCreateNewInstance = false;
-
-      if (existingEncounter) {
-        // Get the last fight from the existing encounter
-        const lastFight = existingEncounter.bossFights[existingEncounter.bossFights.length - 1];
-
-        // Calculate time gap
-        const timeGapMinutes = (currentBoss.startTime - lastFight.endTime) / (1000 * 60);
-
-        // Check if there are other boss fights in between (different encounter)
-        const fightsBetween = bossFights.filter(
-          (fight) =>
-            fight.startTime > lastFight.endTime &&
-            fight.startTime < currentBoss.startTime &&
-            fight.name !== baseName
-        );
-
-        // Check if the group made significant progress past this boss before resetting
-        // Look for successful kills of different bosses after the last attempt
-        const progressMade = bossFights.some(
-          (fight) =>
-            fight.startTime > lastFight.endTime &&
-            fight.startTime < currentBoss.startTime &&
-            fight.name !== baseName &&
-            (!fight.bossPercentage || fight.bossPercentage < 0.01) // Successful kill
-        );
-
-        // Create new instance if:
-        // 1. Long time gap (>15 minutes) - likely different session
-        // 2. Different bosses killed in between - progressed past this encounter
-        // 3. Significant progress made (killed other bosses successfully)
-        shouldCreateNewInstance =
-          timeGapMinutes > 15 ||
-          progressMade ||
-          (fightsBetween.length > 0 &&
-            fightsBetween.some((f) => !f.bossPercentage || f.bossPercentage < 0.01));
+      // Find or create the trial run
+      let currentTrialRun = trialRuns.find((run) => run.id === trialRunId);
+      
+      if (!currentTrialRun) {
+        currentTrialRun = {
+          id: trialRunId,
+          name: trialRunName,
+          encounters: [],
+        };
+        trialRuns.push(currentTrialRun);
       }
 
-      if (existingEncounter && !shouldCreateNewInstance) {
-        // Add to existing encounter
-        existingEncounter.bossFights.push(currentBoss);
-        existingEncounter.preTrash.push(...preTrash);
-        existingEncounter.postTrash.push(...postTrash);
-      } else {
-        // Create new encounter instance
-        if (!encounterInstances[baseName]) {
-          encounterInstances[baseName] = 1;
-        } else {
-          encounterInstances[baseName]++;
-        }
+      // Check if we already have an encounter for this boss in the current run
+      let bossEncounter = currentTrialRun.encounters.find((enc) => enc.name === bossName);
+      
+      if (!bossEncounter) {
+        bossEncounter = {
+          id: `${trialRunId}-${bossName}`,
+          name: bossName,
+          bossFights: [],
+          preTrash: [],
+          postTrash: [],
+        };
+        currentTrialRun.encounters.push(bossEncounter);
+      }
 
-        const instanceNumber = encounterInstances[baseName];
-        const displayName = instanceNumber > 1 ? `${baseName} (Run ${instanceNumber})` : baseName;
-
-        encounterList.push({
-          id: `encounter-${baseName}-${instanceNumber}`,
-          name: displayName,
-          bossFights: [currentBoss],
-          preTrash,
-          postTrash,
-        });
+      // Add boss and pre-trash to the encounter
+      bossEncounter.bossFights.push(currentBoss);
+      bossEncounter.preTrash.push(...preTrash);
+      
+      // Only add post-trash if there's a next boss (not the final boss)
+      if (nextBoss) {
+        bossEncounter.postTrash.push(...postTrash);
       }
     }
 
     // Handle any remaining trash that doesn't fit near bosses
-    const allCategorizedTrash = encounterList.flatMap((enc) => [...enc.preTrash, ...enc.postTrash]);
+    const allCategorizedTrash = trialRuns.flatMap((run) => 
+      run.encounters.flatMap((enc) => [...enc.preTrash, ...enc.postTrash])
+    );
     const uncategorizedTrash = trashFights.filter(
       (trash) => !allCategorizedTrash.some((cat) => cat.id === trash.id)
     );
 
     if (uncategorizedTrash.length > 0) {
-      encounterList.push({
+      trialRuns.push({
         id: 'misc-trash',
         name: 'Miscellaneous Trash',
-        bossFights: [],
-        preTrash: uncategorizedTrash,
-        postTrash: [],
+        encounters: [{
+          id: 'misc-trash-encounter',
+          name: 'Miscellaneous Trash',
+          bossFights: [],
+          preTrash: uncategorizedTrash,
+          postTrash: [],
+        }],
       });
     }
 
-    return encounterList;
-  }, [fights]);
+    return trialRuns;
+  }, [fights, reportData]);
 
   const [expandedEncounters, setExpandedEncounters] = React.useState<Set<string>>(new Set());
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
@@ -290,13 +307,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
     const isWipe = rawIsWipe && !isFalsePositive;
     const bossHealthPercent = fight.bossPercentage ? Math.round(fight.bossPercentage) : 0;
-
-    // Debug logging for false positive detection
-    if (rawIsWipe && bossHealthPercent >= 99) {
-      console.log(
-        `Fight ${fight.id}: rawIsWipe=${rawIsWipe}, isFalsePositive=${isFalsePositive}, isWipe=${isWipe}, bossHealth=${bossHealthPercent}%, duration=${Math.round((fight.endTime - fight.startTime) / 1000)}s, difficulty=${fight.difficulty}`
-      );
-    }
 
     const backgroundFillPercent = isWipe ? bossHealthPercent : 100;
 
@@ -472,9 +482,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               zIndex: 2,
             }}
           >
-            {fight.startTime && fight.endTime && (
+            {fight.startTime && fight.endTime && reportStartTime && (
               <>
-                {formatTimestamp(fight.startTime)}
+                {formatTimestamp(fight.startTime, reportStartTime)}
                 {'\u00A0'}•{'\u00A0'}
                 {formatDuration(fight.startTime, fight.endTime)}
               </>
@@ -491,11 +501,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         <Typography variant="h5" gutterBottom>
           Select a Fight
         </Typography>
-        {encounters.map((encounter) => (
+        {encounters.map((trialRun) => (
           <Accordion
-            key={encounter.id}
-            expanded={expandedEncounters.has(encounter.id)}
-            onChange={() => toggleEncounter(encounter.id)}
+            key={trialRun.id}
+            expanded={expandedEncounters.has(trialRun.id)}
+            onChange={() => toggleEncounter(trialRun.id)}
             sx={{ mb: 2, '&:before': { display: 'none' } }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -509,39 +519,61 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 }}
               >
                 <Typography variant="h6">
-                  {encounter.name} ({encounter.bossFights.length} attempts)
+                  {trialRun.name} ({trialRun.encounters.length} encounters)
                 </Typography>
-                {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={showTrashForEncounter.has(encounter.id)}
-                        onChange={(e) => {
-                          e.stopPropagation();
-                          toggleTrashForEncounter(encounter.id);
-                        }}
-                        size="small"
-                      />
-                    }
-                    label={`Show Trash (${encounter.preTrash.length + encounter.postTrash.length})`}
-                    sx={{ ml: 'auto', mr: 0 }}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                )}
               </Box>
             </AccordionSummary>
             <AccordionDetails>
-              {/* Pre-boss trash */}
-              <Collapse
-                in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
-              >
-                <Box sx={{ mb: 2 }}>
+              {trialRun.encounters.map((encounter) => (
+                <Box key={encounter.id} sx={{ mb: 2 }}>
                   <Typography
                     variant="subtitle2"
-                    sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                    sx={{ mb: 1, color: 'text.primary', fontWeight: 'medium' }}
                   >
-                    Pre-encounter trash
+                    {encounter.name} ({encounter.bossFights.length} attempts)
                   </Typography>
+                  {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={showTrashForEncounter.has(encounter.id)}
+                          onChange={(e) => {
+                            e.stopPropagation();
+                            toggleTrashForEncounter(encounter.id);
+                          }}
+                          size="small"
+                        />
+                      }
+                      label={`Show Trash (${encounter.preTrash.length + encounter.postTrash.length})`}
+                      sx={{ ml: 'auto', mr: 0 }}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  )}
+                  
+                  {/* Pre-encounter trash */}
+                  <Collapse
+                    in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
+                  >
+                    <Box sx={{ mb: 2 }}>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                      >
+                        Pre-encounter trash
+                      </Typography>
+                      <List
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                          gap: 1,
+                        }}
+                      >
+                        {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                      </List>
+                    </Box>
+                  </Collapse>
+                  
+                  {/* Boss fights */}
                   <List
                     sx={{
                       display: 'grid',
@@ -549,52 +581,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       gap: 1,
                     }}
                   >
-                    {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                    {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
                   </List>
-                </Box>
-              </Collapse>
-
-              {/* Boss fights */}
-              <Box sx={{ mb: 2 }}>
-                <Typography
-                  variant="subtitle2"
-                  sx={{ mb: 1, color: 'text.primary', fontWeight: 'medium' }}
-                >
-                  Boss attempts
-                </Typography>
-                <List
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                    gap: 1,
-                  }}
-                >
-                  {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
-                </List>
-              </Box>
-
-              {/* Post-boss trash */}
-              <Collapse
-                in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
-              >
-                <Box>
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                  
+                  {/* Post-encounter trash */}
+                  <Collapse
+                    in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
                   >
-                    Post-encounter trash
-                  </Typography>
-                  <List
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                      gap: 1,
-                    }}
-                  >
-                    {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
-                  </List>
+                    <Box>
+                      <Typography
+                        variant="subtitle2"
+                        sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                      >
+                        Post-encounter trash
+                      </Typography>
+                      <List
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                          gap: 1,
+                        }}
+                      >
+                        {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                      </List>
+                    </Box>
+                  </Collapse>
                 </Box>
-              </Collapse>
+              ))}
             </AccordionDetails>
           </Accordion>
         ))}
