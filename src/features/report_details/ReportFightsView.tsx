@@ -1,3 +1,4 @@
+// Third-party imports
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -18,9 +19,7 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { FightFragment, ReportFragment } from '../../graphql/generated';
-
-// Boss avatar imports
+// Asset imports
 import falgravenpng from '../../assets/vka/falgraven.png';
 import vrolpng from '../../assets/vka/vrol.png';
 import yandirpng from '../../assets/vka/yandir.png';
@@ -31,6 +30,7 @@ import yaselapng from '../../assets/vse/yasela.png';
 import lokkepng from '../../assets/vss/lokke.png';
 import nahvipng from '../../assets/vss/nahvi.png';
 import yolnpng from '../../assets/vss/yoln.png';
+import { FightFragment, ReportFragment } from '../../graphql/generated';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -124,112 +124,193 @@ function getBossAvatar(bossName: string): string | null {
   return bossAvatars[cleanName] || null;
 }
 
-function getTrialNameFromBoss(bossName: string, reportData: any): string {
-  // Determine trial name based on boss name
-  const cleanBossName = bossName.replace(/#\d+$/, '').trim();
+function getTrialNameFromBoss(bossName: string, reportData: ReportFragment | null | undefined): string {
+  const zone = reportData?.zone;
+  const zoneName = (zone?.name || '').toLowerCase();
   
-  // VKA - Veteran Kyne's Aegis
-  if (['Lord Falgravn', 'Falgraven', 'Captain Vrol', 'Vrol', 'Yandir the Butcher'].includes(cleanBossName)) {
-    return "Kyne's Aegis";
-  }
+  // Check boss names FIRST to handle mixed-trial reports
+  const cleanBossName = bossName.toLowerCase();
   
-  // VSE - Veteran Sanity's Edge
-  if ([
-    'Ansuul the Tormentor', 'Spiral Descender', 'Spiral Skein Descender', 
-    'Twelvane', 'Archwizard Twelvane', 'Exarchanic Yaseyla', 'Yasela the Bonecaller',
-    'Cavot Agnan', 'Orphic Shattered Shard'
-  ].includes(cleanBossName)) {
+  // DEBUG: Log boss name matching
+  console.log('🎯 BOSS NAME DEBUG:', {
+    originalBossName: bossName,
+    cleanBossName,
+    zoneName
+  });
+  
+  // Sanity's Edge bosses
+  if (['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela', 'cavot', 'orphic'].some(name => 
+      cleanBossName.includes(name))) {
     return "Sanity's Edge";
   }
   
-  // VSS - Veteran Sunspire  
-  if (['Lokke Coast-Ripper', 'Nahviintaas', 'Yolnahkriin'].includes(cleanBossName)) {
+  // Kyne's Aegis bosses
+  if (['falgravn', 'vrol', 'yandir'].some(name => cleanBossName.includes(name))) {
+    return "Kyne's Aegis";
+  }
+  
+  // Other trials... (keep existing boss checks but update to use includes for partial matches)
+  if (['lokke', 'nahviintaas', 'yolnahkriin'].some(name => cleanBossName.includes(name))) {
     return 'Sunspire';
   }
   
-  // VLC - Veteran Lucent Citadel
-  if ([
-    'Xoryn', 'Count Ryelaz', 'Zilyesset', 'Baron Rize', 'Jresazzel', 'Xynizata'
-  ].includes(cleanBossName)) {
-    return 'Lucent Citadel';
-  }
-  
-  // VCR - Veteran Cloudrest
-  if (['Z\'Maja', 'Galenwe', 'Relequen', 'Siroria'].includes(cleanBossName)) {
+  if (['z\'maja', 'galenwe', 'relequen', 'siroria'].some(name => cleanBossName.includes(name))) {
     return 'Cloudrest';
   }
   
-  // VAS - Veteran Asylum Sanctorium
-  if (['Saint Llothis', 'Saint Felms', 'Saint Olms'].includes(cleanBossName)) {
+  if (['lord felms', 'saint felms', 'saint llothis', 'saint olms'].some(name => cleanBossName.includes(name))) {
     return 'Asylum Sanctorium';
   }
   
-  // VRG - Veteran Rockgrove
-  if (['Oaxiltso', 'Flame-Herald Bahsei', 'Xalvakka'].includes(cleanBossName)) {
+  if (['xoryn', 'count ryelaz', 'zilyesset', 'baron rize', 'jresazzel', 'xynizata'].some(name => cleanBossName.includes(name))) {
+    return 'Lucent Citadel';
+  }
+  
+  if (['oaxiltso', 'flame-herald bahsei', 'xalvakka'].some(name => cleanBossName.includes(name))) {
     return 'Rockgrove';
   }
   
-  // VDSR - Veteran Dreadsail Reef
-  if (['Lylanar and Turlassil', 'Reef Guardian', 'Tideborn Taleria'].includes(cleanBossName)) {
+  if (['lylanar and turlassil', 'sail ripper', 'bow breaker', 'reef guardian', 'tideborn taleria'].some(name => cleanBossName.includes(name))) {
     return 'Dreadsail Reef';
   }
   
-  // VHOF - Veteran Halls of Fabrication
-  if (['Hunter-Killer Fabricant', 'Pinnacle Factotum', 'Archcustodian'].includes(cleanBossName)) {
+  if (['hunter-killer fabricant', 'pinnacle factotum', 'archcustodian'].some(name => cleanBossName.includes(name))) {
     return 'Halls of Fabrication';
   }
   
-  // VMOL - Veteran Maw of Lorkhaj
-  if (['Zhaj\'hassa the Forgotten', 'Vashai', 'Rakkhat'].includes(cleanBossName)) {
+  if (['zhaj\'hassa the forgotten', 'vashai', 'rakkhat'].some(name => cleanBossName.includes(name))) {
     return 'Maw of Lorkhaj';
   }
   
-  // VSO - Veteran Sanctum Ophidia
-  if (['Possessed Manticora', 'Stonebreaker', 'Ozara', 'Serpent'].includes(cleanBossName)) {
+  if (['possessed manticora', 'stonebreaker', 'ozara', 'serpent'].some(name => cleanBossName.includes(name))) {
     return 'Sanctum Ophidia';
   }
   
-  // VHRC - Veteran Hel Ra Citadel
-  if (['Ra Kotu', 'Yokeda Rok\'dun', 'The Warrior'].includes(cleanBossName)) {
+  if (['ra kotu', 'yokeda rok\'dun', 'yokedas', 'the warrior'].some(name => cleanBossName.includes(name))) {
+    console.log('✅ BOSS MATCH: Hel Ra Citadel for', bossName);
     return 'Hel Ra Citadel';
   }
   
-  // VAA - Veteran Aetherian Archive
-  if (['Storm Atronach', 'Stone Atronach', 'Varlariel', 'The Mage'].includes(cleanBossName)) {
+  if (['storm atronach', 'stone atronach', 'varlariel', 'the mage'].some(name => cleanBossName.includes(name))) {
     return 'Aetherian Archive';
   }
   
-  // Fallback to zone name if boss not recognized
+  // Check for trial names in zone name as fallback
+  const trialFromZone = [
+    { names: ["sanity's edge", "vse"], id: "Sanity's Edge" },
+    { names: ["kyne's aegis", "vka"], id: "Kyne's Aegis" },
+    { names: ["sunspire", "vss"], id: "Sunspire" },
+    { names: ["cloudrest", "vcr"], id: "Cloudrest" },
+    { names: ["asylum", "vas"], id: "Asylum Sanctorium" },
+    { names: ["rockgrove", "vrg"], id: "Rockgrove" },
+    { names: ["dreadsail", "vdsr"], id: "Dreadsail Reef" },
+    { names: ["halls of fabrication", "vhof"], id: "Halls of Fabrication" },
+    { names: ["maw of lorkhaj", "vmol"], id: "Maw of Lorkhaj" },
+    { names: ["sanctum ophidia", "vso"], id: "Sanctum Ophidia" },
+    { names: ["hel ra", "vhrc"], id: "Hel Ra Citadel" },
+    { names: ["aetherian", "vaa"], id: "Aetherian Archive" },
+    { names: ["ossein cage"], id: "Ossein Cage" },
+    { names: ["eye of the storm"], id: "Eye of the Storm" }
+  ].find(trial => trial.names.some(name => zoneName.includes(name)));
+  
+  if (trialFromZone) {
+    console.log('🏛️ ZONE FALLBACK MATCH:', { zoneName, matchedTrial: trialFromZone.id, bossName });
+    return trialFromZone.id;
+  }
+  
+  // Final fallback to zone name if boss not recognized
   return reportData?.zone?.name || 'Unknown Trial';
 }
 
-function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
+// Helper function to determine if a trial has per-boss HM or final-boss-only HM
+function getTrialHMType(trialName: string): 'per-boss' | 'final-boss-only' | 'special' {
+  const perBossHMTrials = [
+    'Sunspire', 'Kyne\'s Aegis', 'Rockgrove', 'Dreadsail Reef', 
+    'Sanity\'s Edge', 'Lucent Citadel', 'Ossein Cage'
+  ];
+  
+  const specialTrials = ['Cloudrest', 'Asylum'];
+  
+  if (specialTrials.some(trial => trialName.includes(trial))) {
+    return 'special';
+  }
+  
+  if (perBossHMTrials.some(trial => trialName.includes(trial))) {
+    return 'per-boss';
+  }
+  
+  return 'final-boss-only';
+}
+
+function getDifficultyLabel(difficulty: number | null, trialName: string, bossName?: string): string | null {
   if (difficulty === null || difficulty === undefined) {
     return null;
   }
   
+  // First handle normal/veteran distinction
+  if (difficulty < 10) {
+    return 'Normal';
+  }
+  
+  // Special handling for trials with +X system (Cloudrest/Asylum)
   const isCloudrest = trialName.includes("Cloudrest") || trialName.includes("CR");
   const isAsylum = trialName.includes("Asylum") || trialName.includes("AS");
   
-  // Handle normal/veteran first
-  if (difficulty < 10) {
-    return 'Normal';
-  } else if (difficulty < 110) {
-    return 'Veteran';
-  }
-  
-  // Handle veteran hard modes (difficulty >= 110)
   if (isCloudrest || isAsylum) {
-    // Cloudrest/Asylum mini-boss logic
     if (difficulty === 125) return 'Veteran +3';
     if (difficulty === 124) return 'Veteran +2';
     if (difficulty === 123) return 'Veteran +1';
-    if (difficulty === 122) return 'Veteran +0';
+    if (difficulty === 122) return 'Veteran HM';
     if (difficulty === 121) return 'Veteran';
+    return 'Veteran';
   }
   
-  // Default for other veteran hard modes
+  // General difficulty mapping for all other trials
+  if (difficulty === 121) return 'Veteran';
+  if (difficulty === 122) return 'Veteran HM';
+  
+  // Fallback for other difficulty values
+  if (difficulty >= 120) {
+    return 'Veteran HM';
+  }
+  
   return 'Veteran';
+}
+
+// Helper function to determine trial run difficulty based on all bosses in the run
+function getTrialRunDifficulty(fights: FightFragment[], trialName: string): { difficulty: number | null, label: string | null } {
+  const hmType = getTrialHMType(trialName);
+  
+  if (hmType === 'final-boss-only') {
+    // For final-boss-only HM trials, check if the final boss was attempted in HM
+    const finalBoss = fights[fights.length - 1];
+    const difficulty = finalBoss?.difficulty ?? null;
+    return {
+      difficulty,
+      label: getDifficultyLabel(difficulty, trialName)
+    };
+  } else if (hmType === 'per-boss') {
+    // For per-boss HM trials, if ANY boss was HM, consider it HM
+    const hasHM = fights.some(fight => fight.difficulty === 122);
+    const hasVet = fights.some(fight => fight.difficulty === 121);
+    
+    if (hasHM) {
+      return { difficulty: 122, label: 'Veteran HM' };
+    } else if (hasVet) {
+      return { difficulty: 121, label: 'Veteran' };
+    } else {
+      // Check for normal
+      const hasNormal = fights.some(fight => (fight.difficulty ?? 0) < 10);
+      return { difficulty: hasNormal ? 0 : 121, label: hasNormal ? 'Normal' : 'Veteran' };
+    }
+  } else {
+    // Special trials (Cloudrest/Asylum) - use existing logic
+    const maxDifficulty = Math.max(...fights.map(f => f.difficulty ?? 0));
+    return {
+      difficulty: maxDifficulty,
+      label: getDifficultyLabel(maxDifficulty, trialName)
+    };
+  }
 }
 
 interface ReportFightsViewProps {
@@ -284,13 +365,20 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     let currentRunNumber = 1;
 
     // Group bosses by zone and detect trial runs
-    const trialRuns: {
+    const trialRuns: Array<{
       id: string;
       name: string;
       encounters: Encounter[];
-    }[] = [];
+      startTime: number;
+      endTime: number;
+      difficulty: number | null;
+      difficultyLabel: string | null;
+      fights: FightFragment[];
+      trialName: string;
+      isComplete: boolean;
+    }> = [];
 
-    // Track trial names by run to handle mixed trials in one report
+    // Process each fight
     const trialNamesByRun: Record<number, string> = {};
 
     for (let i = 0; i < bossFights.length; i++) {
@@ -298,10 +386,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       const nextBoss = bossFights[i + 1];
       const bossName = currentBoss.name || 'Unknown Boss';
       const instanceCount = currentBoss.enemyNPCs?.[0]?.instanceCount || 1;
-      const bossInstanceKey = `${bossName}-${instanceCount}`;
+      // Use boss name without instance count for progression tracking
+      // Instance count should only be used for encounter IDs, not for determining resets
+      const bossProgressionKey = bossName; // Just the boss name, not including instance count
+      const bossInstanceKey = `${bossName}-${instanceCount}`; // For unique encounter IDs
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
+      
+      // DEBUG: Log difficulty mapping data
+      console.log('🔍 DIFFICULTY DEBUG:', {
+        bossName,
+        trialName,
+        difficulty: currentBoss.difficulty,
+        startTime: new Date(currentBoss.startTime).toLocaleTimeString(),
+        endTime: new Date(currentBoss.endTime).toLocaleTimeString(),
+        instanceCount,
+        bossPercentage: currentBoss.bossPercentage,
+        currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName)
+      });
       
       // Check if this represents a reset (going back to an earlier boss after progressing)
       let shouldStartNewRun = false;
@@ -309,11 +412,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Special handling for trials with variable boss mechanics
       const isCloudrest = trialName.includes("Cloudrest");
       const isAsylum = trialName.includes("Asylum Sanctorium");
+      const isLucentCitadel = trialName.includes("Lucent Citadel") || trialName.includes("Sanity's Edge");
       
-      if (bossInstancesSeen.has(bossInstanceKey)) {
-        // We've seen this exact boss instance before
+      if (bossInstancesSeen.has(bossProgressionKey)) {
+        // We've seen this boss name before (regardless of instance count)
         // Check if we've progressed past it to other bosses
-        const lastSeenIndex = bossProgressionOrder.lastIndexOf(bossInstanceKey);
+        const lastSeenIndex = bossProgressionOrder.lastIndexOf(bossProgressionKey);
         const bossesAfterLastSeen = bossProgressionOrder.slice(lastSeenIndex + 1);
         const uniqueBossesAfter = [...new Set(bossesAfterLastSeen)];
         
@@ -334,22 +438,83 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                              (!isMainBoss && uniqueBossesAfter.some(boss => 
                                boss.includes("Z'Maja") || boss.includes("Saint Olms")
                              ));
-        } else {
+        } 
+        // Special handling for Lucent Citadel/Sanity's Edge
+        else if (isLucentCitadel) {
+          // For Lucent Citadel, we need to be smart about detecting actual trial resets
+          // 1. If we're seeing the first boss again after seeing later bosses, it's likely a new run
+          // 2. If the boss order is out of sequence, it might be a new run
+          // 3. If there's a significant time gap, it might be a new run
+          
+          // Get the last time we saw this boss
+          const lastSeenFight = bossFights.find(f => 
+            f.name === currentBoss.name && 
+            (f.enemyNPCs?.[0]?.instanceCount || 1) === (currentBoss.enemyNPCs?.[0]?.instanceCount || 1)
+          );
+          
+          if (lastSeenFight) {
+            const timeSinceLastSeen = currentBoss.startTime - lastSeenFight.endTime;
+            
+            // Check if we've seen other bosses since we last saw this one
+            const lastSeenIndex = bossProgressionOrder.lastIndexOf(bossProgressionKey);
+            const bossesAfterLastSeen = bossProgressionOrder.slice(lastSeenIndex + 1);
+            
+            // If we've seen other bosses since this one, it's likely a new run
+            shouldStartNewRun = bossesAfterLastSeen.length > 0;
+            
+            // If it's been a long time (> 30 minutes), it's definitely a new run
+            if (!shouldStartNewRun && timeSinceLastSeen > 1800000) { // 30 minutes
+              shouldStartNewRun = true;
+            }
+          }
+        }
+        else {
           // Original logic for other trials
           shouldStartNewRun = uniqueBossesAfter.length > 0;
         }
       }
 
       if (shouldStartNewRun) {
+        // Debug logging for run splits
+        console.log('🚀 STARTING NEW TRIAL RUN:', {
+          bossName,
+          trialName,
+          currentRunNumber: currentRunNumber + 1,
+          reason: 'shouldStartNewRun = true',
+          bossProgressionKey,
+          bossInstancesSeen: Array.from(bossInstancesSeen),
+          bossProgressionOrder: [...bossProgressionOrder],
+          difficulty: currentBoss.difficulty,
+          instanceCount
+        });
+        
         // Reset progression tracking
         currentRunNumber++;
         bossInstancesSeen.clear();
         bossProgressionOrder.length = 0;
       }
 
+      // Check if we're switching to a different trial - if so, start a new run
+      const currentRunTrialName = trialNamesByRun[currentRunNumber];
+      if (currentRunTrialName && currentRunTrialName !== trialName) {
+        console.log('🔄 TRIAL SWITCH DETECTED:', {
+          currentRunTrialName,
+          newTrialName: trialName,
+          bossName,
+          startingNewRun: true
+        });
+        
+        // Start a new run for the different trial
+        currentRunNumber++;
+        bossInstancesSeen.clear();
+        bossProgressionOrder.length = 0;
+      }
+
       // Track boss progression and trial name for this run
-      bossProgressionOrder.push(bossInstanceKey);
-      bossInstancesSeen.add(bossInstanceKey);
+      bossProgressionOrder.push(bossProgressionKey);
+      bossInstancesSeen.add(bossProgressionKey);
+      
+      // Set the trial name for this run
       trialNamesByRun[currentRunNumber] = trialName;
 
       const trialRunId = `${trialName}-run-${currentRunNumber}`;
@@ -362,24 +527,30 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       let currentTrialRun = trialRuns.find((run) => run.id === trialRunId);
       
       if (!currentTrialRun) {
-        // Determine difficulty label from the first boss fight
-        const difficultyLabel = getDifficultyLabel(currentBoss.difficulty, trialName);
-        const nameWithDifficulty = difficultyLabel ? `${trialRunName} (${difficultyLabel})` : trialRunName;
+        // For now, use the current boss difficulty as initial difficulty
+        // This will be updated later when we finalize the trial run
+        const initialDifficulty = currentBoss.difficulty ?? 0;
+        const initialDifficultyLabel = getDifficultyLabel(initialDifficulty, trialName);
+          
+        const nameWithDifficulty = initialDifficultyLabel 
+          ? `${trialRunName} (${initialDifficultyLabel})` 
+          : trialRunName;
         
-        // Debug logging
-        console.log('Creating trial run:', {
-          bossName: currentBoss.name,
-          difficulty: currentBoss.difficulty,
-          difficultyLabel,
-          nameWithDifficulty
-        });
-        
-        currentTrialRun = {
+        const newTrialRun = {
           id: trialRunId,
           name: nameWithDifficulty,
-          encounters: [],
+          startTime: currentBoss.startTime,
+          endTime: currentBoss.endTime,
+          difficulty: initialDifficulty,
+          difficultyLabel: initialDifficultyLabel,
+          fights: [currentBoss],
+          trialName: trialName,
+          isComplete: false,
+          encounters: []
         };
-        trialRuns.push(currentTrialRun);
+        
+        trialRuns.push(newTrialRun);
+        currentTrialRun = newTrialRun;
       }
 
       // Find trash before this boss (after previous boss or from start)
@@ -394,6 +565,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
       );
 
+      // Ensure currentTrialRun is defined before proceeding
+      if (!currentTrialRun) {
+        console.error('No trial run found for boss:', currentBoss);
+        continue; // Skip to next boss if no trial run is available
+      }
+      
       // Use instanceCount to distinguish separate boss instances
       // Each unique combination of boss name + instanceCount represents a separate encounter
       let bossEncounter = currentTrialRun.encounters.find((enc) => enc.id === `${trialRunId}-${bossInstanceKey}`);
@@ -435,6 +612,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       trialRuns.push({
         id: 'misc-trash',
         name: 'Miscellaneous Trash',
+        startTime: uncategorizedTrash[0]?.startTime || 0,
+        endTime: uncategorizedTrash[uncategorizedTrash.length - 1]?.endTime || 0,
+        difficulty: null,
+        difficultyLabel: null,
+        fights: [],
+        trialName: 'Miscellaneous',
+        isComplete: true,
         encounters: [{
           id: 'misc-trash-encounter',
           name: 'Miscellaneous Trash',
@@ -446,14 +630,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     }
 
     // Post-process to only show run numbers when there are multiple runs of the same zone
-    const zoneRunCounts = trialRuns.reduce((acc, run) => {
+    const zoneRunCounts = trialRuns?.reduce((acc, run) => {
       const baseName = run.name.replace(/ Run \d+$/, ''); // Remove existing run numbers
       acc[baseName] = (acc[baseName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Update trial run names to only show numbers when there are duplicates
-    const updatedTrialRuns = trialRuns.map((run) => {
+    const updatedTrialRuns = trialRuns?.map((run) => {
       const baseName = run.name.replace(/ Run \d+$/, '');
       const runMatch = run.name.match(/ Run (\d+)$/);
       const runNumber = runMatch ? parseInt(runMatch[1]) : 1;
@@ -471,7 +655,24 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       }
     });
 
-    return updatedTrialRuns;
+    // Finalize trial run difficulties based on all bosses in each run
+    const finalizedTrialRuns = updatedTrialRuns.map(run => {
+      const runDifficulty = getTrialRunDifficulty(run.fights, run.trialName);
+      const baseName = run.name.split(' (')[0]; // Remove existing difficulty label
+      
+      const finalName = runDifficulty.label 
+        ? `${baseName} (${runDifficulty.label})` 
+        : baseName;
+      
+      return {
+        ...run,
+        name: finalName,
+        difficulty: runDifficulty.difficulty,
+        difficultyLabel: runDifficulty.label
+      };
+    });
+
+    return finalizedTrialRuns;
   }, [fights, reportData]);
 
   const [expandedEncounters, setExpandedEncounters] = React.useState<Set<string>>(new Set());
@@ -511,7 +712,33 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   if (loading) {
     return (
       <Paper elevation={2} sx={{ p: 3 }}>
-        <Skeleton variant="text" width={180} height={32} sx={{ mb: 1 }} />
+        <Skeleton variant="rounded" width={200} height={40} sx={{ mb: 3 }} />
+        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+          <Skeleton variant="rounded" width={120} height={40} />
+          <Skeleton variant="rounded" width={160} height={40} />
+        </Box>
+        <Box sx={{ mb: 3 }}>
+          <Skeleton variant="text" width={300} height={32} sx={{ mb: 2 }} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: 2 }}>
+            {[...Array(4)].map((_, i) => (
+              <Paper key={i} sx={{ p: 2, height: '100%' }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                  <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
+                  <Skeleton variant="text" width={120} height={24} />
+                </Box>
+                <Skeleton variant="rounded" width="100%" height={120} sx={{ mb: 1.5 }} />
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Skeleton variant="text" width={80} height={20} />
+                  <Skeleton variant="text" width={60} height={20} />
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Skeleton variant="text" width={100} height={20} />
+                  <Skeleton variant="text" width={40} height={20} />
+                </Box>
+              </Paper>
+            ))}
+          </Box>
+        </Box>
         <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
         {[...Array(3)].map((_, idx) => (
           <Box key={idx} sx={{ mb: 2 }}>
@@ -858,9 +1085,17 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
                   const killedBosses = trialRun.encounters.reduce((count, encounter) => {
                     const hasKill = encounter.bossFights.some(fight => {
-                      const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                      const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                      return !rawIsWipe || isFalsePositive; // Kill if not a wipe or false positive
+                      // Use the same kill logic as individual fight cards
+                      const isBossFight = fight.difficulty != null;
+                      if (isBossFight) {
+                        const bossWasKilled = fight.bossPercentage !== null && fight.bossPercentage !== undefined && fight.bossPercentage <= 1.0;
+                        const rawIsWipe = fight.bossPercentage !== null && fight.bossPercentage !== undefined && fight.bossPercentage > 1.0;
+                        const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                        return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
+                      } else {
+                        // For trash fights, assume successful completion
+                        return true;
+                      }
                     });
                     return count + (hasKill ? 1 : 0);
                   }, 0);
@@ -869,6 +1104,17 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   
                   // Determine expected total bosses based on zone name
                   const zoneName = trialRun.name.replace(/#\d+/, '').trim();
+                  
+                  // Debug logging for Ossein Cage
+                  if (zoneName.includes("Ossein Cage")) {
+                    console.log('Ossein Cage trial data:', {
+                      zoneName,
+                      encounteredBosses,
+                      killedBosses,
+                      encounters: trialRun.encounters.map(e => ({ name: e.name, bossFights: e.bossFights.length }))
+                    });
+                  }
+                  
                   let expectedTotalBosses = encounteredBosses; // default fallback
                   
                   // Known trial boss counts
@@ -876,6 +1122,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   else if (zoneName.includes("Cloudrest")) {
                     // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
                     // Use actual encountered count since minis can be skipped
+                    expectedTotalBosses = encounteredBosses;
+                  }
+                  else if (zoneName.includes("Ossein Cage")) {
+                    // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
+                    // Minis don't affect boss naming, use actual encountered count
                     expectedTotalBosses = encounteredBosses;
                   }
                   else if (zoneName.includes("Sunspire")) expectedTotalBosses = 3;
@@ -891,7 +1142,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   else if (zoneName.includes("Halls of Fabrication")) expectedTotalBosses = 5;
                   else if (zoneName.includes("Maw of Lorkhaj")) expectedTotalBosses = 3;
                   else if (zoneName.includes("Aetherian Archive")) expectedTotalBosses = 4;
-                  else if (zoneName.includes("Hel Ra Citadel")) expectedTotalBosses = 4;
+                  else if (zoneName.includes("Hel Ra Citadel")) expectedTotalBosses = 3;
                   else if (zoneName.includes("Sanctum Ophidia")) expectedTotalBosses = 5;
                   
                   // Determine color based on completion against expected total
@@ -954,8 +1205,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     mb: 2,
                     p: 2,
                     borderRadius: 2,
-                    border: '1px solid rgba(255, 255, 255, 0.08)',
-                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.0)',
                     transition: 'all 0.2s ease-in-out',
                     '&:hover': {
                       border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -967,13 +1217,16 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1 }}>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      {getBossAvatar(encounter.name) && (
-                        <Avatar
-                          src={getBossAvatar(encounter.name)!}
-                          alt={encounter.name}
-                          sx={{ width: 32, height: 32 }}
-                        />
-                      )}
+                      {(() => {
+                        const avatarSrc = getBossAvatar(encounter.name);
+                        return avatarSrc && (
+                          <Avatar
+                            src={avatarSrc}
+                            alt={encounter.name}
+                            sx={{ width: 32, height: 32 }}
+                          />
+                        );
+                      })()}
                       <Typography
                         variant="subtitle2"
                         sx={{ color: 'text.primary', fontWeight: 'medium' }}
