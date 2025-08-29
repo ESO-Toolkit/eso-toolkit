@@ -3,19 +3,29 @@
  * This ensures the DataGrid properly respects MUI theme values
  */
 
-import { render, screen } from '@testing-library/react';
+import '@testing-library/jest-dom';
+
 import { createTheme, ThemeProvider } from '@mui/material/styles';
-import { DataGrid } from './DataGrid';
 import { createColumnHelper } from '@tanstack/react-table';
+import { render, screen } from '@testing-library/react';
+
+import { DataGrid } from './DataGrid';
+
+// Test data type
+interface TestDataRow {
+  id: number;
+  name: string;
+  value: number;
+}
 
 // Test data
-const testData = [
+const testData: TestDataRow[] = [
   { id: 1, name: 'Test Item 1', value: 100 },
   { id: 2, name: 'Test Item 2', value: 200 },
 ];
 
-// Test columns
-const columnHelper = createColumnHelper<(typeof testData)[0]>();
+// Test columns with proper typing
+const columnHelper = createColumnHelper<Record<string, unknown>>();
 const testColumns = [
   columnHelper.accessor('id', { header: 'ID' }),
   columnHelper.accessor('name', { header: 'Name' }),
@@ -32,8 +42,8 @@ describe('DataGrid Theme Integration', () => {
     render(
       <ThemeProvider theme={darkTheme}>
         <DataGrid
-          data={testData as Record<string, unknown>[]}
-          columns={testColumns as any}
+          data={testData as unknown as Record<string, unknown>[]}
+          columns={testColumns}
           title="Theme Test Grid"
         />
       </ThemeProvider>
@@ -56,8 +66,8 @@ describe('DataGrid Theme Integration', () => {
     render(
       <ThemeProvider theme={lightTheme}>
         <DataGrid
-          data={testData as Record<string, unknown>[]}
-          columns={testColumns as any}
+          data={testData as unknown as Record<string, unknown>[]}
+          columns={testColumns}
           title="Light Theme Test"
         />
       </ThemeProvider>
@@ -83,8 +93,8 @@ describe('DataGrid Theme Integration', () => {
     render(
       <ThemeProvider theme={customTheme}>
         <DataGrid
-          data={testData as Record<string, unknown>[]}
-          columns={testColumns as any}
+          data={testData as unknown as Record<string, unknown>[]}
+          columns={testColumns}
           title="Custom Theme Test"
           enableFiltering={true}
         />
@@ -103,11 +113,7 @@ describe('DataGrid Theme Integration', () => {
 
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid
-          data={[]}
-          columns={testColumns as any}
-          emptyMessage="No theme test data available"
-        />
+        <DataGrid data={[]} columns={testColumns} emptyMessage="No theme test data available" />
       </ThemeProvider>
     );
 
@@ -119,7 +125,7 @@ describe('DataGrid Theme Integration', () => {
 
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid data={[]} columns={testColumns as any} loading={true} />
+        <DataGrid data={[]} columns={testColumns} loading={true} />
       </ThemeProvider>
     );
 
