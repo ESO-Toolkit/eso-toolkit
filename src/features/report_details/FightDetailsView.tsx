@@ -8,8 +8,10 @@ import ListIcon from '@mui/icons-material/List';
 import MapIcon from '@mui/icons-material/Map';
 import PeopleIcon from '@mui/icons-material/People';
 import Person from '@mui/icons-material/Person';
+import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
+import StarIcon from '@mui/icons-material/Star';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
@@ -40,6 +42,8 @@ import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
+import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
+import { TalentsGridPanel } from './talents/TalentsGridPanel';
 
 interface FightDetailsViewProps {
   fight: FightFragment;
@@ -85,7 +89,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         <FormControl sx={{ minWidth: 200 }}>
           <TargetSelector />
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, and Diagnostics">
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
           <FormControlLabel
             control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
             label="Show Experimental Tabs"
@@ -115,9 +119,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           </Tooltip>
           <Tooltip title="Healing Done">
             <Tab icon={<HealingIcon />} />
-          </Tooltip>
-          <Tooltip title="Buff Uptimes">
-            <Tab icon={<TrendingUpIcon />} />
           </Tooltip>
           <Tooltip title="Critical Damage">
             <Tab icon={<WhatshotIcon />} />
@@ -152,19 +153,75 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<Person />} />
             </Tooltip>
           )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Talents">
+              <Tab icon={<StarIcon />} />
+            </Tooltip>
+          )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Rotation Analysis">
+              <Tab icon={<RepeatIcon />} />
+            </Tooltip>
+          )}
         </Tabs>
-        {validSelectedTab === 0 && <InsightsPanel fight={fight} />}
-        {validSelectedTab === 1 && <PlayersPanel />}
-        {validSelectedTab === 2 && <DeathEventPanel fight={fight} />}
-        {validSelectedTab === 3 && <DamageDonePanel fight={fight} />}
-        {validSelectedTab === 4 && <HealingDonePanel fight={fight} />}
-        {validSelectedTab === 6 && <CriticalDamagePanel fight={fight} />}
-        {validSelectedTab === 7 && <PenetrationPanel fight={fight} />}
-        {showExperimentalTabs && validSelectedTab === 8 && <LocationHeatmapPanel fight={fight} />}
-        {showExperimentalTabs && validSelectedTab === 9 && <EventsPanel />}
-        {showExperimentalTabs && validSelectedTab === 10 && <TargetEventsPanel />}
-        {showExperimentalTabs && validSelectedTab === 11 && <DiagnosticsPanel />}
-        {showExperimentalTabs && validSelectedTab === 12 && <ActorsPanel />}
+        <Box sx={{ display: validSelectedTab === 0 ? 'block' : 'none' }}>
+          <InsightsPanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 1 ? 'block' : 'none' }}>
+          <PlayersPanel />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 2 ? 'block' : 'none' }}>
+          <DeathEventPanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 3 ? 'block' : 'none' }}>
+          <DamageDonePanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 4 ? 'block' : 'none' }}>
+          <HealingDonePanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 5 ? 'block' : 'none' }}>
+          <CriticalDamagePanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 6 ? 'block' : 'none' }}>
+          <PenetrationPanel fight={fight} />
+        </Box>
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 7 ? 'block' : 'none' }}>
+            <LocationHeatmapPanel fight={fight} />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 8 ? 'block' : 'none' }}>
+            <EventsPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 9 ? 'block' : 'none' }}>
+            <TargetEventsPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 10 ? 'block' : 'none' }}>
+            <DiagnosticsPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 11 ? 'block' : 'none' }}>
+            <ActorsPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 12 ? 'block' : 'none' }}>
+            <TalentsGridPanel fight={fight} />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 13 ? 'block' : 'none' }}>
+            <RotationAnalysisPanel fight={fight} />
+          </Box>
+        )}
       </Box>
     </React.Fragment>
   );
