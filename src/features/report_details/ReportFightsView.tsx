@@ -289,6 +289,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   const [expandedEncounters, setExpandedEncounters] = React.useState<Set<string>>(new Set());
   const [showTrashForEncounter, setShowTrashForEncounter] = React.useState<Set<string>>(new Set());
 
+  // Auto-expand accordion if there's only 1 encounter
+  React.useEffect(() => {
+    if (encounters.length === 1) {
+      setExpandedEncounters(new Set([encounters[0].id]));
+    }
+  }, [encounters]);
+
   const toggleEncounter = (encounterId: string): void => {
     setExpandedEncounters((prev) => {
       const newSet = new Set(prev);
@@ -444,7 +451,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(163, 230, 53, 0.12) 100%)';
                     }
                   })()
-                : 'transparent',
+                  : 'transparent',
               border: '1px solid rgba(255,255,255,0.18)',
               boxShadow: isWipe
                 ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
@@ -626,38 +633,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       color = '#ffeb3b'; // yellow - 2 kills in 3-boss trial
                     }
                     
-                    // Modern gradient styling based on PlayersPanelView
-                    const getProgressCircleStyles = (killedBosses: number, expectedTotal: number) => {
-                      if (killedBosses === expectedTotal) {
-                        // Green - complete
-                        return {
-                          background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
-                          borderColor: 'rgba(76, 217, 100, 0.3)',
-                          color: '#5ce572',
-                        };
-                      } else if (
-                        (expectedTotal === 5 && killedBosses >= 3) ||
-                        (expectedTotal === 4 && killedBosses >= 2) ||
-                        (expectedTotal === 3 && killedBosses >= 2)
-                      ) {
-                        // Gold/Yellow - good progress
-                        return {
-                          background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
-                          borderColor: 'rgba(255, 193, 7, 0.35)',
-                          color: '#ffd54f',
-                        };
-                      } else {
-                        // Orange - low progress
-                        return {
-                          background: 'linear-gradient(135deg, rgba(255, 152, 0, 0.25) 0%, rgba(255, 152, 0, 0.15) 50%, rgba(255, 152, 0, 0.08) 100%)',
-                          borderColor: 'rgba(255, 152, 0, 0.3)',
-                          color: '#ff9800',
-                        };
-                      }
-                    };
-
-                    const circleStyles = getProgressCircleStyles(killedBosses, expectedTotalBosses);
-
                     return (
                       <Box 
                         sx={{
@@ -668,16 +643,16 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           borderRadius: '50%',
                           backdropFilter: 'blur(10px)',
                           WebkitBackdropFilter: 'blur(10px)',
-                          border: `1px solid ${circleStyles.borderColor}`,
+                          border: `1px solid ${color}`,
                           boxShadow: '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           fontSize: '10px',
                           fontWeight: 600,
-                          color: circleStyles.color,
+                          color: color,
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                          background: circleStyles.background,
+                          background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
                           transition: 'all 0.3s ease',
                           '&::after': {
                             content: '""',
