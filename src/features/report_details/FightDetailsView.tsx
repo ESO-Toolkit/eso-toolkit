@@ -12,7 +12,6 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import StarIcon from '@mui/icons-material/Star';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
   Box,
