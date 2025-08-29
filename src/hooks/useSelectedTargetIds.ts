@@ -4,7 +4,8 @@ import { useSelector } from 'react-redux';
 import { useSelectedReportAndFight } from '../ReportFightContext';
 import { selectSelectedTargetId } from '../store/ui/uiSelectors';
 
-import { useReportData, useReportMasterData } from '.';
+import { useReportData } from './useReportData';
+import { useReportMasterData } from './useReportMasterData';
 
 export function useSelectedTargetIds(): Set<number> {
   const { fightId } = useSelectedReportAndFight();

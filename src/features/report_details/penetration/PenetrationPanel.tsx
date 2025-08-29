@@ -1,9 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { usePlayerData } from '../../../hooks';
-import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
+import { usePlayerData, useSelectedTargetIds } from '../../../hooks';
 
 import { PenetrationPanelView } from './PenetrationPanelView';
 
@@ -17,7 +15,7 @@ interface PenetrationPanelProps {
 export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { playerData } = usePlayerData();
-  const selectedTargetId = useSelector(selectSelectedTargetId);
+  const selectedTargetIds = useSelectedTargetIds();
 
   // State to manage which accordion panels are expanded
   const [expandedPlayers, setExpandedPlayers] = React.useState<Record<string, boolean>>({});
@@ -47,7 +45,7 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
   return (
     <PenetrationPanelView
       players={players}
-      selectedTargetId={selectedTargetId}
+      selectedTargetIds={selectedTargetIds}
       fight={fight}
       expandedPlayers={expandedPlayers}
       onPlayerExpandChange={handlePlayerExpandChange}

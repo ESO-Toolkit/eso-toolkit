@@ -244,14 +244,7 @@ export function useUrlParamSync(): {
         clearTimeout(timeoutRef.current);
       }
     };
-  }, [
-    location,
-    dispatch,
-    selectedTargetId,
-    selectedPlayerId,
-    selectedTabId,
-    showExperimentalTabs,
-  ]);
+  }, [location, dispatch, selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs]);
 
   // Update functions - memoized to prevent unnecessary re-renders
   const updateSelectedTargetId = React.useCallback(

@@ -1,11 +1,10 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCombatantInfoEvents } from '../../../hooks';
+import { useCombatantInfoEvents, useSelectedTargetIds } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
+import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import {
   getAllPenetrationSourcesWithActiveState,
   calculateStaticPenetration,
@@ -37,7 +36,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
   expanded = false,
   onExpandChange,
 }) => {
-  const selectedTargetId = useSelector(selectSelectedTargetId);
+  const selectedTargetIds = useSelectedTargetIds();
 
   // Get combatant info events
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
@@ -46,21 +45,23 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
   // Get buff/debuff lookups for BuffLookup functionality
   const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
+  const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
 
-  const isLoading = isCombatantInfoEventsLoading || isDebuffEventsLoading;
+  const isLoading =
+    isCombatantInfoEventsLoading || isDebuffEventsLoading || isFriendlyBuffEventsLoading;
 
   // Get all penetration sources with active states using BuffLookup
   const allSources = React.useMemo(() => {
-    if (!debuffsLookup || !playerCombatantInfo) {
+    if (!debuffsLookup || !friendlyBuffsLookup || !playerCombatantInfo) {
       return [];
     }
     return getAllPenetrationSourcesWithActiveState(
-      debuffsLookup,
-      debuffsLookup,
+      friendlyBuffsLookup, // Use buff lookup for friendly buffs
+      debuffsLookup, // Use debuff lookup for enemy debuffs
       playerCombatantInfo,
       player
     );
-  }, [debuffsLookup, playerCombatantInfo, player]);
+  }, [debuffsLookup, friendlyBuffsLookup, playerCombatantInfo, player]);
 
   // Calculate base penetration for this specific player
   const playerBasePenetration = React.useMemo(() => {
@@ -70,7 +71,7 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
 
   // Calculate penetration data using BuffLookup approach
   const penetrationData = React.useMemo(() => {
-    if (!fight?.startTime || !fight?.endTime || !debuffsLookup) {
+    if (!fight?.startTime || !fight?.endTime || !debuffsLookup || !friendlyBuffsLookup) {
       return null;
     }
 
@@ -90,13 +91,24 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
     for (let i = 0; i < numVoxels; i++) {
       const voxelTimestamp = fightStart + i * voxelSizeSeconds * 1000;
 
-      // Calculate dynamic penetration from debuffs using BuffLookup
-      const dynamicPenetration = calculateDynamicPenetrationAtTimestamp(
-        null, // No buff lookup needed currently
-        debuffsLookup,
-        voxelTimestamp,
-        selectedTargetId
-      );
+      // Calculate dynamic penetration from debuffs against all selected targets
+      // Use the best penetration value from all targets (debuffs may apply to different targets)
+      let dynamicPenetration = 0;
+
+      if (selectedTargetIds.size > 0) {
+        // Calculate penetration for each target and take the maximum
+        // This accounts for cases where different debuffs may be on different targets
+        const targetPenetrations = Array.from(selectedTargetIds).map((targetId) =>
+          calculateDynamicPenetrationAtTimestamp(
+            friendlyBuffsLookup, // Check buffs on this player
+            debuffsLookup, // Check debuffs on the target
+            voxelTimestamp,
+            parseInt(id, 10), // Player ID (for buff checks)
+            targetId // Target ID (for debuff checks)
+          )
+        );
+        dynamicPenetration = Math.max(...targetPenetrations, 0);
+      }
 
       const totalPenetration = playerBasePenetration + dynamicPenetration;
 
@@ -126,7 +138,15 @@ export const PlayerPenetrationDetails: React.FC<PlayerPenetrationDetailsProps> =
       effective: effectivePenetration,
       timeAtCapPercentage,
     };
-  }, [fight, debuffsLookup, playerBasePenetration, selectedTargetId, id, name]);
+  }, [
+    fight,
+    debuffsLookup,
+    friendlyBuffsLookup,
+    playerBasePenetration,
+    selectedTargetIds,
+    id,
+    name,
+  ]);
 
   return (
     <PlayerPenetrationDetailsView
