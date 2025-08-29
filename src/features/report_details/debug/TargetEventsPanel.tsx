@@ -52,7 +52,7 @@ export const TargetEventsPanel: React.FC = () => {
       .sort((a: LogEvent, b: LogEvent) => a.timestamp - b.timestamp);
   }, [selectedTargetId, allEvents, fight]);
 
-  const targetName = selectedTargetId 
+  const targetName = selectedTargetId
     ? targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId.toString()
     : '';
 
@@ -62,7 +62,7 @@ export const TargetEventsPanel: React.FC = () => {
         Target Events
         {selectedTargetId && ` for ${targetName}`}
       </Typography>
-      
+
       <EventsGrid
         events={targetEvents}
         title={selectedTargetId ? `Target Events for ${targetName}` : 'Target Events'}
