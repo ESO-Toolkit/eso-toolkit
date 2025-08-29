@@ -1,48 +1,8 @@
-import {
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  FirstPage,
-  LastPage,
-  FilterList,
-} from '@mui/icons-material';
-import {
-  Box,
-  Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Avatar,
-  Chip,
-  TextField,
-  Card,
-  CardContent,
-  Stack,
-  Toolbar,
-  IconButton,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Button,
-} from '@mui/material';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  createColumnHelper,
-  flexRender,
-  type SortingState,
-  type ColumnFiltersState,
-  type PaginationState,
-} from '@tanstack/react-table';
-import React, { useMemo, useState } from 'react';
+import { Box, Typography, Avatar, Chip, Card, CardContent, Stack, Button } from '@mui/material';
+import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import React, { useMemo } from 'react';
 
+import { DataGrid } from '../../../components/DataGrid/DataGrid';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
@@ -66,16 +26,7 @@ interface TalentRow {
 export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => {
   const { playerData } = usePlayerData();
 
-  // TanStack Table states
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'playerCount', desc: true }]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = useState('');
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-
-  // Transform talent data for TanStack Table
+  // Transform talent data for DataGrid
   const talentRows = useMemo((): TalentRow[] => {
     if (!playerData?.playersById || !fight?.friendlyPlayers) return [];
 
@@ -229,102 +180,6 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
     [columnHelper]
   );
 
-  const table = useReactTable({
-    data: talentRows,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
-      pagination,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
-  const CustomToolbar: React.FC = () => (
-    <Toolbar
-      sx={{
-        p: 2,
-        display: 'flex',
-        gap: 2,
-        alignItems: 'center',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <FilterList />
-      <TextField
-        size="small"
-        placeholder="Search talents or players..."
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        sx={{ minWidth: 300 }}
-      />
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel>Page Size</InputLabel>
-        <Select
-          value={table.getState().pagination.pageSize}
-          label="Page Size"
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-        >
-          <MenuItem value={25}>25</MenuItem>
-          <MenuItem value={50}>50</MenuItem>
-          <MenuItem value={100}>100</MenuItem>
-        </Select>
-      </FormControl>
-    </Toolbar>
-  );
-
-  const CustomPagination: React.FC = () => (
-    <Box
-      sx={{
-        p: 2,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderTop: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <Typography variant="body2" color="text.secondary">
-        Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{' '}
-        to{' '}
-        {Math.min(
-          (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-          table.getFilteredRowModel().rows.length
-        )}{' '}
-        of {table.getFilteredRowModel().rows.length} talents
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-          <FirstPage />
-        </IconButton>
-        <IconButton onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          <KeyboardArrowLeft />
-        </IconButton>
-        <Typography variant="body2" sx={{ mx: 2 }}>
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </Typography>
-        <IconButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          <KeyboardArrowRight />
-        </IconButton>
-        <IconButton
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          <LastPage />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-
   if (talentRows.length === 0) {
     return (
       <Box sx={{ p: 2, textAlign: 'center' }}>
@@ -371,62 +226,19 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
           </Stack>
         </Box>
 
-        {/* Talents Table with TanStack */}
-        <Paper sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
-          <CustomToolbar />
-          <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-            <Table stickyHeader>
-              <TableHead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableCell
-                        key={header.id}
-                        sx={{
-                          fontSize: '0.875rem',
-                          fontWeight: 600,
-                          cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                          width: header.getSize(),
-                        }}
-                        onClick={header.column.getToggleSortingHandler()}
-                      >
-                        {header.isPlaceholder ? null : (
-                          <div>
-                            {flexRender(header.column.columnDef.header, header.getContext())}
-                            {{
-                              asc: ' 🔼',
-                              desc: ' 🔽',
-                            }[header.column.getIsSorted() as string] ?? null}
-                          </div>
-                        )}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHead>
-              <TableBody>
-                {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id}>
-                    {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} sx={{ fontSize: '0.875rem' }}>
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </TableCell>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <CustomPagination />
-        </Paper>
-
-        {talentRows.length === 0 && (
-          <Box sx={{ p: 4, textAlign: 'center' }}>
-            <Typography variant="body1" color="text.secondary">
-              No talents found matching your search criteria
-            </Typography>
-          </Box>
-        )}
+        {/* Talents Grid */}
+        <DataGrid
+          data={talentRows as unknown as Record<string, unknown>[]}
+          columns={columns as ColumnDef<Record<string, unknown>>[]}
+          title={`Talents (${talentRows.length} unique)`}
+          height={600}
+          initialPageSize={25}
+          pageSizeOptions={[25, 50, 100]}
+          enableSorting={true}
+          enableFiltering={true}
+          enablePagination={true}
+          emptyMessage="No talents found matching your search criteria"
+        />
       </Stack>
     </Box>
   );

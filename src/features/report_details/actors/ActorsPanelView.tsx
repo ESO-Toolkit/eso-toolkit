@@ -1,44 +1,9 @@
-import {
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  FirstPage,
-  LastPage,
-  FilterList,
-  ContentCopy,
-} from '@mui/icons-material';
-import {
-  Box,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Toolbar,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Tooltip,
-} from '@mui/material';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  createColumnHelper,
-  flexRender,
-  type SortingState,
-  type ColumnFiltersState,
-  type PaginationState,
-} from '@tanstack/react-table';
+import { ContentCopy } from '@mui/icons-material';
+import { IconButton, Tooltip, Typography } from '@mui/material';
+import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
+import { DataGrid } from '../../../components/DataGrid/DataGrid';
 import { ReportActorFragment } from '../../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';
@@ -51,6 +16,7 @@ interface Actor {
   subType: string | null;
   server: string;
   gameID: number;
+  [key: string]: unknown; // Add index signature for DataGrid compatibility
 }
 
 interface ActorsPanelViewProps {
@@ -66,14 +32,6 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
   actorsById,
   combatantInfoEvents,
 }) => {
-  const [sorting, setSorting] = React.useState<SortingState>([{ id: 'name', desc: false }]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState('');
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-
   // Function to copy playersById entry to clipboard
   const copyPlayerData = React.useCallback(
     async (actorId: string | number) => {
@@ -86,7 +44,6 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (playerData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(playerData, null, 2));
-          // Could add a toast notification here if available
           console.log('Player data copied to clipboard');
         } catch (err) {
           console.error('Failed to copy player data:', err);
@@ -114,7 +71,6 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (actorData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(actorData, null, 2));
-          // Could add a toast notification here if available
           console.log('Actor data copied to clipboard');
         } catch (err) {
           console.error('Failed to copy actor data:', err);
@@ -306,145 +262,18 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
     ]
   );
 
-  const table = useReactTable({
-    data: actors,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
-      pagination,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
-  const CustomToolbar: React.FC = () => (
-    <Toolbar
-      sx={{
-        p: 2,
-        display: 'flex',
-        gap: 2,
-        alignItems: 'center',
-        borderBottom: '1px solid',
-        borderColor: 'divider',
-      }}
-    >
-      <FilterList />
-      <TextField
-        size="small"
-        placeholder="Search all columns..."
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        sx={{ minWidth: 200 }}
-      />
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel>Page Size</InputLabel>
-        <Select
-          value={table.getState().pagination.pageSize}
-          label="Page Size"
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-        >
-          <MenuItem value={25}>25</MenuItem>
-          <MenuItem value={50}>50</MenuItem>
-          <MenuItem value={100}>100</MenuItem>
-        </Select>
-      </FormControl>
-    </Toolbar>
-  );
-
-  const CustomPagination: React.FC = () => (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
-      <Typography variant="body2">
-        Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{' '}
-        to{' '}
-        {Math.min(
-          (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-          table.getFilteredRowModel().rows.length
-        )}{' '}
-        of {table.getFilteredRowModel().rows.length} entries
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-          <FirstPage />
-        </IconButton>
-        <IconButton onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          <KeyboardArrowLeft />
-        </IconButton>
-        <Typography variant="body2" sx={{ mx: 2 }}>
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </Typography>
-        <IconButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          <KeyboardArrowRight />
-        </IconButton>
-        <IconButton
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          <LastPage />
-        </IconButton>
-      </Box>
-    </Box>
-  );
-
   return (
-    <Box mt={2}>
-      <Typography variant="h6" gutterBottom>
-        All Actors in Report ({actors.length} total)
-      </Typography>
-      <Paper sx={{ height: 600, width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CustomToolbar />
-        <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-          <Table stickyHeader>
-            <TableHead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableCell
-                      key={header.id}
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                        width: header.getSize(),
-                      }}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHead>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} sx={{ fontSize: '0.875rem' }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <CustomPagination />
-      </Paper>
-    </Box>
+    <DataGrid
+      data={actors}
+      columns={columns as ColumnDef<Actor>[]}
+      title={`All Actors in Report (${actors.length} total)`}
+      height={600}
+      initialPageSize={25}
+      pageSizeOptions={[25, 50, 100]}
+      enableSorting={true}
+      enableFiltering={true}
+      enablePagination={true}
+      emptyMessage="No actors found"
+    />
   );
 };
