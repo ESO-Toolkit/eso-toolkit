@@ -180,48 +180,56 @@ export function useUrlParamSync(): {
   const selectedTabId = useSelector(selectSelectedTabId);
   const showExperimentalTabs = useSelector(selectShowExperimentalTabs);
 
+  // Track if we've done the initial sync from URL to avoid race conditions
+  const [hasInitialSync, setHasInitialSync] = React.useState(false);
+
   // Sync URL params to Redux state on location change
+  // Use a delayed approach to avoid race conditions with redux-persist
   React.useEffect(() => {
     if (!location) return;
 
-    const urlParams = parseUrlParams(location);
+    // Small delay to ensure redux-persist has completed rehydration
+    const timeoutId = setTimeout(
+      () => {
+        const urlParams = parseUrlParams(location);
 
-    // Batch all updates together using React 18 automatic batching
-    const updates: Array<() => void> = [];
+        // Batch all updates together using React 18 automatic batching
+        const updates: Array<() => void> = [];
 
-    // Only update if values are different
-    if (
-      urlParams.selectedTargetId !== undefined &&
-      urlParams.selectedTargetId !== selectedTargetId
-    ) {
-      const value = urlParams.selectedTargetId;
-      updates.push(() => dispatch(setSelectedTargetId(value)));
-    }
+        // Always apply URL params on initial load/location change
+        // Don't compare to Redux state to avoid timing issues
+        if (urlParams.selectedTargetId !== undefined) {
+          const value = urlParams.selectedTargetId;
+          updates.push(() => dispatch(setSelectedTargetId(value)));
+          setHasInitialSync(true);
+        }
 
-    if (
-      urlParams.selectedPlayerId !== undefined &&
-      urlParams.selectedPlayerId !== selectedPlayerId
-    ) {
-      const value = urlParams.selectedPlayerId;
-      updates.push(() => dispatch(setSelectedPlayerId(value)));
-    }
+        if (urlParams.selectedPlayerId !== undefined) {
+          const value = urlParams.selectedPlayerId;
+          updates.push(() => dispatch(setSelectedPlayerId(value)));
+          setHasInitialSync(true);
+        }
 
-    if (urlParams.selectedTab !== undefined && urlParams.selectedTab !== selectedTabId) {
-      const value = urlParams.selectedTab;
-      updates.push(() => dispatch(setSelectedTabId(value)));
-    }
+        if (urlParams.selectedTab !== undefined) {
+          const value = urlParams.selectedTab;
+          updates.push(() => dispatch(setSelectedTabId(value)));
+          setHasInitialSync(true);
+        }
 
-    if (
-      urlParams.showExperimentalTabs !== undefined &&
-      urlParams.showExperimentalTabs !== showExperimentalTabs
-    ) {
-      const value = urlParams.showExperimentalTabs;
-      updates.push(() => dispatch(setShowExperimentalTabs(value)));
-    }
+        if (urlParams.showExperimentalTabs !== undefined) {
+          const value = urlParams.showExperimentalTabs;
+          updates.push(() => dispatch(setShowExperimentalTabs(value)));
+          setHasInitialSync(true);
+        }
 
-    // Execute all updates - React 18 will batch them automatically
-    updates.forEach((update) => update());
-  }, [location, dispatch, selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs]);
+        // Execute all updates - React 18 will batch them automatically
+        updates.forEach((update) => update());
+      },
+      hasInitialSync ? 0 : 100
+    ); // Small delay only on first sync
+
+    return () => clearTimeout(timeoutId);
+  }, [location, dispatch, hasInitialSync, setHasInitialSync]);
 
   // Update functions - optimized with change detection
   const updateSelectedTargetId = React.useCallback(
