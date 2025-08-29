@@ -1,49 +1,17 @@
-import {
-  KeyboardArrowLeft,
-  KeyboardArrowRight,
-  FirstPage,
-  LastPage,
-  FilterList,
-} from '@mui/icons-material';
-import {
-  Box,
-  Button,
-  IconButton,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  TextField,
-  Toolbar,
-  Typography,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-} from '@mui/material';
-import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  createColumnHelper,
-  flexRender,
-  type SortingState,
-  type ColumnFiltersState,
-  type PaginationState,
-} from '@tanstack/react-table';
+import { Button } from '@mui/material';
+import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
+import { DataGrid } from '../../../components/DataGrid/DataGrid';
 import { LogEvent } from '../../../types/combatlogEvents';
 
 interface EventsGridProps {
   events: LogEvent[];
   title?: string;
   height?: number;
+  isTargetMode?: boolean;
+  hasTargetSelected?: boolean;
+  noTargetMessage?: string;
 }
 
 // Transform events data for the table
@@ -57,21 +25,17 @@ type EventRowData = {
   amount: number | null;
   fight: number | null;
   originalEvent: LogEvent;
+  [key: string]: unknown; // Add index signature for DataGrid compatibility
 };
 
 export const EventsGrid: React.FC<EventsGridProps> = ({
   events,
   title = 'Events',
   height = 600,
+  isTargetMode = false,
+  hasTargetSelected = true,
+  noTargetMessage = 'Please select a target to view events associated with that target.',
 }) => {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-  const [globalFilter, setGlobalFilter] = React.useState('');
-  const [pagination, setPagination] = React.useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 25,
-  });
-
   // Transform events data for the table
   const data: EventRowData[] = React.useMemo(() => {
     return events.map((event, index) => ({
@@ -171,136 +135,38 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
     [columnHelper]
   );
 
-  const table = useReactTable({
-    data,
-    columns,
-    state: {
-      sorting,
-      columnFilters,
-      globalFilter,
-      pagination,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onGlobalFilterChange: setGlobalFilter,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
-
-  const CustomToolbar: React.FC = () => (
-    <Toolbar sx={{ p: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-      <FilterList />
-      <TextField
-        size="small"
-        placeholder="Search all columns..."
-        value={globalFilter}
-        onChange={(e) => setGlobalFilter(e.target.value)}
-        sx={{ minWidth: 200 }}
+  // Show target selection message if in target mode but no target is selected
+  if (isTargetMode && !hasTargetSelected) {
+    return (
+      <DataGrid
+        data={[]}
+        columns={columns as ColumnDef<EventRowData>[]}
+        title={title}
+        height={height}
+        initialPageSize={25}
+        pageSizeOptions={[25, 50, 100]}
+        enableSorting={false}
+        enableFiltering={false}
+        enablePagination={false}
+        emptyMessage={noTargetMessage}
       />
-      <FormControl size="small" sx={{ minWidth: 120 }}>
-        <InputLabel>Page Size</InputLabel>
-        <Select
-          value={table.getState().pagination.pageSize}
-          label="Page Size"
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
-        >
-          <MenuItem value={25}>25</MenuItem>
-          <MenuItem value={50}>50</MenuItem>
-          <MenuItem value={100}>100</MenuItem>
-        </Select>
-      </FormControl>
-    </Toolbar>
-  );
-
-  const CustomPagination: React.FC = () => (
-    <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', p: 2 }}>
-      <Typography variant="body2">
-        Showing {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}{' '}
-        to{' '}
-        {Math.min(
-          (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-          table.getFilteredRowModel().rows.length
-        )}{' '}
-        of {table.getFilteredRowModel().rows.length} entries
-      </Typography>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <IconButton onClick={() => table.setPageIndex(0)} disabled={!table.getCanPreviousPage()}>
-          <FirstPage />
-        </IconButton>
-        <IconButton onClick={() => table.previousPage()} disabled={!table.getCanPreviousPage()}>
-          <KeyboardArrowLeft />
-        </IconButton>
-        <Typography variant="body2" sx={{ mx: 2 }}>
-          Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
-        </Typography>
-        <IconButton onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-          <KeyboardArrowRight />
-        </IconButton>
-        <IconButton
-          onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-          disabled={!table.getCanNextPage()}
-        >
-          <LastPage />
-        </IconButton>
-      </Box>
-    </Box>
-  );
+    );
+  }
 
   return (
-    <Box mt={2}>
-      <Typography variant="h6" sx={{ mb: 2 }}>
-        {title} ({events.length.toLocaleString()} total)
-      </Typography>
-      <Paper sx={{ height: height, width: '100%', display: 'flex', flexDirection: 'column' }}>
-        <CustomToolbar />
-        <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-          <Table stickyHeader>
-            <TableHead>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id}>
-                  {headerGroup.headers.map((header) => (
-                    <TableCell
-                      key={header.id}
-                      sx={{
-                        fontSize: '0.875rem',
-                        fontWeight: 600,
-                        cursor: header.column.getCanSort() ? 'pointer' : 'default',
-                        width: header.getSize(),
-                      }}
-                      onClick={header.column.getToggleSortingHandler()}
-                    >
-                      {header.isPlaceholder ? null : (
-                        <div>
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                          {{
-                            asc: ' 🔼',
-                            desc: ' 🔽',
-                          }[header.column.getIsSorted() as string] ?? null}
-                        </div>
-                      )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableHead>
-            <TableBody>
-              {table.getRowModel().rows.map((row) => (
-                <TableRow key={row.id}>
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} sx={{ fontSize: '0.875rem' }}>
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        <CustomPagination />
-      </Paper>
-    </Box>
+    <DataGrid
+      data={data}
+      columns={columns as ColumnDef<EventRowData>[]}
+      title={`${title} (${events.length.toLocaleString()} total)`}
+      height={height}
+      initialPageSize={25}
+      pageSizeOptions={[25, 50, 100]}
+      enableSorting={true}
+      enableFiltering={true}
+      enablePagination={true}
+      emptyMessage={
+        events.length === 0 ? 'No events to display' : 'No events match the current filters'
+      }
+    />
   );
 };

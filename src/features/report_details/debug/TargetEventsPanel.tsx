@@ -33,50 +33,44 @@ export const TargetEventsPanel: React.FC = () => {
     return [...enemies, ...enemyNPCs];
   }, [fight, actorsById]);
 
-  if (!selectedTargetId) {
-    return (
-      <Box mt={2}>
-        <Typography variant="h6" gutterBottom>
-          Target Events
-        </Typography>
-        <Typography variant="body1" color="text.secondary">
-          Please select a target enemy above to view events associated with that target.
-        </Typography>
-      </Box>
-    );
-  }
+  // Filter events for the selected target during this fight (if target is selected)
+  const targetEvents = React.useMemo(() => {
+    if (!selectedTargetId || !fight?.startTime || !fight?.endTime) {
+      return [];
+    }
+
+    return allEvents
+      .filter((event: LogEvent) => {
+        if (event.timestamp < fight.startTime || event.timestamp > fight.endTime) return false;
+
+        // Check if this event involves the selected target
+        const eventTargetId = 'targetID' in event ? event.targetID : null;
+        const eventSourceId = 'sourceID' in event ? event.sourceID : null;
+
+        return eventTargetId === selectedTargetId || eventSourceId === selectedTargetId;
+      })
+      .sort((a: LogEvent, b: LogEvent) => a.timestamp - b.timestamp);
+  }, [selectedTargetId, allEvents, fight]);
+
+  const targetName = selectedTargetId 
+    ? targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId.toString()
+    : '';
 
   return (
     <Box mt={2}>
       <Typography variant="h6" gutterBottom>
-        Events for Target:{' '}
-        {targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId}
+        Target Events
+        {selectedTargetId && ` for ${targetName}`}
       </Typography>
-      {(() => {
-        // Filter events for the selected target during this fight
-        const targetEvents = allEvents
-          .filter((event: LogEvent) => {
-            if (!fight?.startTime || !fight?.endTime) return false;
-            if (event.timestamp < fight.startTime || event.timestamp > fight.endTime) return false;
-
-            // Check if this event involves the selected target
-            const eventTargetId = 'targetID' in event ? event.targetID : null;
-            const eventSourceId = 'sourceID' in event ? event.sourceID : null;
-
-            return eventTargetId === selectedTargetId || eventSourceId === selectedTargetId;
-          })
-          .sort((a: LogEvent, b: LogEvent) => a.timestamp - b.timestamp);
-
-        return (
-          <EventsGrid
-            events={targetEvents}
-            title={`Target Events for ${
-              targets.find((t) => t && t.id === selectedTargetId)?.name || selectedTargetId
-            }`}
-            height={600}
-          />
-        );
-      })()}
+      
+      <EventsGrid
+        events={targetEvents}
+        title={selectedTargetId ? `Target Events for ${targetName}` : 'Target Events'}
+        height={600}
+        isTargetMode={true}
+        hasTargetSelected={!!selectedTargetId}
+        noTargetMessage="Please select a target enemy above to view events associated with that target."
+      />
     </Box>
   );
 };
