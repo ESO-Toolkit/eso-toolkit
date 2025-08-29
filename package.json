@@ -24,8 +24,6 @@
     "@testing-library/jest-dom": "^6.7.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^13.5.0",
-    "@types/jest": "^27.5.2",
-    "@types/node": "^16.18.126",
     "@types/react": "^18.2.79",
     "@types/react-dom": "^18.2.25",
     "axios": "^1.11.0",
@@ -44,18 +42,20 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192 --no-deprecation\" GENERATE_SOURCEMAP=true FAST_REFRESH=true  craco start",
-    "start:dev": "cross-env NODE_OPTIONS=--max-old-space-size=8192 CRACO_CONFIG_FILE=./craco.config.dev.js craco start",
-    "build": "craco build",
-    "analyze": "npm run build && npx webpack-bundle-analyzer build/static/js/659.*.chunk.js",
-    "analyze-all": "npm run build && npx webpack-bundle-analyzer build/static/js/*.js",
+    "dev": "vite",
+    "start": "vite",
+    "start:dev": "vite --mode development",
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
+    "analyze-all": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-bundle": "npm run build && node analyze-bundle.js",
     "benchmark": "node benchmark-dev-server.js",
-    "test": "craco test --watchAll=false",
-    "test:watch": "craco test",
-    "test:coverage": "set COVERAGE=true && craco test --coverage --watchAll=false",
-    "test:coverage:watch": "set COVERAGE=true && craco test --coverage --watchAll",
-    "test:coverage:ci": "set NODE_ENV=ci && set COVERAGE_MODE=ci && set COVERAGE=true && craco test --coverage --watchAll=false",
+    "test": "jest --watchAll=false",
+    "test:watch": "jest",
+    "test:coverage": "set COVERAGE=true && jest --coverage --watchAll=false",
+    "test:coverage:watch": "set COVERAGE=true && jest --coverage --watchAll",
+    "test:coverage:ci": "set NODE_ENV=ci && set COVERAGE_MODE=ci && set COVERAGE=true && jest --coverage --watchAll=false",
     "test:coverage:report": "npm run test:coverage && npm run coverage:open",
     "coverage:open": "start coverage/lcov-report/index.html",
     "coverage:analyze": "node scripts/coverage-analyzer.js",
@@ -68,81 +68,10 @@
     "lint": "eslint ./src --ext .ts,.tsx",
     "lint:fix": "eslint ./src --ext .ts,.tsx --fix",
     "format": "prettier --write ./src/**/*.{ts,tsx,js,jsx,json,css,md}",
-    "eject": "react-scripts eject",
     "codegen": "ts-node run-codegen.ts",
     "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
-  },
-  "jest": {
-    "collectCoverageFrom": [
-      "src/**/*.{ts,tsx}",
-      "!src/**/*.d.ts",
-      "!src/**/*.stories.{ts,tsx}",
-      "!src/**/*.test.{ts,tsx}",
-      "!src/test/**/*",
-      "!src/setupTests.ts",
-      "!src/index.tsx",
-      "!src/reportWebVitals.ts",
-      "!src/graphql/generated.ts",
-      "!src/**/generated.ts",
-      "!src/**/*.generated.ts"
-    ],
-    "coverageReporters": [
-      "text",
-      "text-summary",
-      "lcov",
-      "html",
-      "json"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 70,
-        "functions": 75,
-        "lines": 80,
-        "statements": 80
-      },
-      "./src/utils/**/*.{ts,tsx}": {
-        "branches": 80,
-        "functions": 85,
-        "lines": 90,
-        "statements": 90
-      },
-      "./src/hooks/**/*.{ts,tsx}": {
-        "branches": 75,
-        "functions": 80,
-        "lines": 85,
-        "statements": 85
-      }
-    }
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest",
-      "plugin:storybook/recommended"
-    ],
-    "plugins": [
-      "react-hooks"
-    ],
-    "rules": {
-      "react-hooks/rules-of-hooks": "error",
-      "react-hooks/exhaustive-deps": "warn",
-      "import/prefer-default-export": "off",
-      "import/no-default-export": "error"
-    },
-    "overrides": [
-      {
-        "files": [
-          "*.stories.@(ts|tsx|js|jsx|mjs|cjs)",
-          "**/*.stories.*"
-        ],
-        "rules": {
-          "import/no-default-export": "off",
-          "import/prefer-default-export": "off"
-        }
-      }
-    ]
   },
   "browserslist": {
     "production": [
@@ -157,7 +86,6 @@
     ]
   },
   "devDependencies": {
-    "@craco/craco": "^7.1.0",
     "@graphql-codegen/cli": "^5.0.7",
     "@graphql-codegen/typed-document-node": "^5.1.2",
     "@graphql-codegen/typescript-react-apollo": "^4.3.3",
@@ -165,25 +93,35 @@
     "@mui/material": "^7.3.1",
     "@storybook/addon-docs": "^9.1.3",
     "@storybook/addon-links": "^9.1.3",
-    "@storybook/preset-create-react-app": "^9.1.3",
-    "@storybook/react-webpack5": "^9.1.3",
-    "babel-plugin-import": "^1.13.8",
-    "circular-dependency-plugin": "^5.2.2",
-    "craco-alias": "^3.0.1",
+    "@storybook/react-vite": "^9.1.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^20.19.11",
+    "@vitejs/plugin-react": "^4.7.0",
+    "@vitejs/plugin-react-swc": "^3.11.0",
     "cross-env": "^10.0.0",
     "eslint": "^8.57.1",
+    "eslint-config-react-app": "^7.0.1",
     "eslint-plugin-storybook": "^9.1.3",
+    "identity-obj-proxy": "^3.0.0",
     "ignore-loader": "^0.1.2",
+    "jest": "^30.1.1",
+    "jest-environment-jsdom": "^30.1.1",
+    "jest-transform-stub": "^2.0.0",
+    "jest-watch-typeahead": "^3.0.1",
     "msw": "^2.10.5",
     "msw-storybook-addon": "^2.0.5",
     "prettier": "^3.6.2",
     "prop-types": "^15.8.1",
-    "raw-loader": "^4.0.2",
-    "react-scripts": "^5.0.1",
     "source-map-explorer": "^2.5.3",
     "storybook": "^9.1.3",
+    "ts-jest": "^29.4.1",
     "ts-node": "^10.9.2",
     "typescript": "^4.9.5",
+    "vite": "^6.3.5",
+    "vite-bundle-analyzer": "^1.2.2",
+    "vite-plugin-eslint": "^1.8.1",
+    "vite-plugin-svgr": "^4.5.0",
+    "vite-tsconfig-paths": "^5.1.4",
     "webpack": "^5.101.3",
     "webpack-bundle-analyzer": "^4.10.2"
   },

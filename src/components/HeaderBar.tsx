@@ -3,7 +3,7 @@ import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { ReactComponent as DiscordIcon } from '../assets/discord-icon.svg';
+import discordIconUrl from '../assets/discord-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 
@@ -189,7 +189,7 @@ export const HeaderBar: React.FC = () => {
     },
     {
       text: 'Discord',
-      icon: <DiscordIcon style={{ width: 18, height: 18 }} />,
+      icon: <img src={discordIconUrl} alt="Discord" style={{ width: 18, height: 18 }} />,
       href: 'https://discord.gg/mMjwcQYFdc',
     },
   ];
