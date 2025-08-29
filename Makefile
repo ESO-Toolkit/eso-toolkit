@@ -77,6 +77,14 @@ fetch-abilities:
 	@echo "Fetching abilities data..."
 	npm run fetch-abilities
 
+# Fetch abilities data
+typecheck:
+	npm run typecheck
+
+# Run full CI pipeline
+pre-commit: lint-fix test build typecheck
+	@echo "✅ All tasks completed successfully!"
+
 # Run full CI pipeline
 all: clean install lint test build
 	@echo "✅ All tasks completed successfully!"

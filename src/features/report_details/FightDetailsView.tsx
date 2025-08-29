@@ -10,6 +10,7 @@ import PeopleIcon from '@mui/icons-material/People';
 import Person from '@mui/icons-material/Person';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
+import ShieldIcon from '@mui/icons-material/Shield';
 import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import StarIcon from '@mui/icons-material/Star';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
@@ -31,6 +32,7 @@ import { FightFragment } from '../../graphql/generated';
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
+import { DamageReductionPanel } from './damage_reduction/DamageReductionPanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
 import { DiagnosticsPanel } from './debug/DiagnosticsPanel';
 import { EventsPanel } from './debug/EventsPanel';
@@ -125,6 +127,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <Tooltip title="Penetration">
             <Tab icon={<SecurityIcon />} />
           </Tooltip>
+          <Tooltip title="Damage Reduction">
+            <Tab icon={<ShieldIcon />} />
+          </Tooltip>
           {showExperimentalTabs && (
             <Tooltip title="Location Heatmap">
               <Tab icon={<MapIcon />} />
@@ -186,38 +191,41 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         <Box sx={{ display: validSelectedTab === 6 ? 'block' : 'none' }}>
           <PenetrationPanel fight={fight} />
         </Box>
+        <Box sx={{ display: validSelectedTab === 7 ? 'block' : 'none' }}>
+          <DamageReductionPanel fight={fight} />
+        </Box>
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 7 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 8 ? 'block' : 'none' }}>
             <LocationHeatmapPanel fight={fight} />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 8 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 9 ? 'block' : 'none' }}>
             <EventsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 9 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 10 ? 'block' : 'none' }}>
             <TargetEventsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 10 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 11 ? 'block' : 'none' }}>
             <DiagnosticsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 11 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 12 ? 'block' : 'none' }}>
             <ActorsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 12 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 13 ? 'block' : 'none' }}>
             <TalentsGridPanel fight={fight} />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 13 ? 'block' : 'none' }}>
+          <Box sx={{ display: validSelectedTab === 14 ? 'block' : 'none' }}>
             <RotationAnalysisPanel fight={fight} />
           </Box>
         )}

@@ -35,14 +35,14 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   );
 
   // Calculate total number of available tabs
-  const totalTabs = showExperimentalTabs ? 15 : 8;
+  const totalTabs = showExperimentalTabs ? 16 : 9;
 
   // Ensure selectedTab is valid for current tab count
   const validSelectedTab = Math.min(selectedTab, totalTabs - 1);
 
   // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
   React.useEffect(() => {
-    if (!showExperimentalTabs && selectedTab >= 8) {
+    if (!showExperimentalTabs && selectedTab >= 9) {
       navigateToTab(0);
     }
   }, [showExperimentalTabs, selectedTab, navigateToTab]);

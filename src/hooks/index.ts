@@ -13,6 +13,7 @@ export { useDebuffEvents } from './useDebuffEvents';
 export { useDeathEvents } from './useDeathEvents';
 export { useResourceEvents } from './useResourceEvents';
 export { useCombatantInfoEvents } from './useCombatantInfoEvents';
+export { useCombatantInfoRecord } from './useCombatantInfoRecord';
 export { useCastEvents } from './useCastEvents';
 
 // Utility hooks
