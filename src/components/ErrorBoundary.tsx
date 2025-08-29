@@ -59,30 +59,33 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       console.error('Component Stack:', errorInfo.componentStack);
     }
 
-    // Report error to Sentry with comprehensive context
-    Sentry.withScope((scope) => {
-      scope.setTag('errorBoundary', true);
-      scope.setLevel('error');
-      scope.setContext('errorBoundary', {
-        componentStack: errorInfo.componentStack,
-        errorBoundaryName: this.constructor.name,
+    // Only report error to Sentry in production builds
+    if (process.env.NODE_ENV === 'production') {
+      // Report error to Sentry with comprehensive context
+      Sentry.withScope((scope) => {
+        scope.setTag('errorBoundary', true);
+        scope.setLevel('error');
+        scope.setContext('errorBoundary', {
+          componentStack: errorInfo.componentStack,
+          errorBoundaryName: this.constructor.name,
+        });
+
+        // Set error details
+        scope.setExtra('errorMessage', error.message);
+        scope.setExtra('errorStack', error.stack);
+        scope.setExtra('componentStack', errorInfo.componentStack);
+
+        const eventId = Sentry.captureException(error);
+        this.setState({ eventId });
       });
 
-      // Set error details
-      scope.setExtra('errorMessage', error.message);
-      scope.setExtra('errorStack', error.stack);
-      scope.setExtra('componentStack', errorInfo.componentStack);
-
-      const eventId = Sentry.captureException(error);
-      this.setState({ eventId });
-    });
-
-    // Also use our custom reportError function
-    reportError(error, {
-      componentStack: errorInfo.componentStack,
-      errorBoundary: true,
-      errorBoundaryName: this.constructor.name,
-    });
+      // Also use our custom reportError function
+      reportError(error, {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: true,
+        errorBoundaryName: this.constructor.name,
+      });
+    }
   }
 
   handleRetry = (): void => {
@@ -125,8 +128,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       eventId: this.state.eventId,
     });
 
-    // Open Sentry user feedback dialog if eventId is available
-    if (this.state.eventId) {
+    // Only show Sentry report dialog in production builds
+    if (process.env.NODE_ENV === 'production' && this.state.eventId) {
       Sentry.showReportDialog({ eventId: this.state.eventId });
     }
   };
