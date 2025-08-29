@@ -3,8 +3,26 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
 
 import { PlayerPenetrationDetails } from './PlayerPenetrationDetails';
+
+interface PenetrationDataPoint {
+  timestamp: number;
+  penetration: number;
+  relativeTime: number; // Time since fight start in seconds
+}
+
+interface PlayerPenetrationData {
+  playerId: string;
+  playerName: string;
+  dataPoints: PenetrationDataPoint[];
+  max: number;
+  effective: number;
+  timeAtCapPercentage: number;
+  penetrationSources: PenetrationSourceWithActiveState[];
+  playerBasePenetration: number;
+}
 
 interface PenetrationPanelViewProps {
   players: PlayerDetailsWithRole[];
@@ -14,6 +32,8 @@ interface PenetrationPanelViewProps {
   onPlayerExpandChange: (
     playerId: string
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  penetrationData: Map<string, PlayerPenetrationData>;
+  isLoading: boolean;
 }
 
 /**
@@ -25,6 +45,8 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   fight,
   expandedPlayers,
   onPlayerExpandChange,
+  penetrationData,
+  isLoading,
 }) => {
   // Show info when no targets are available
   if (selectedTargetIds.size === 0) {
@@ -78,17 +100,23 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             . Click to expand details.
           </Typography>
 
-          {players.map((player) => (
-            <PlayerPenetrationDetails
-              key={player.id}
-              id={player.id.toString()}
-              player={player}
-              name={player.name}
-              fight={fight}
-              expanded={expandedPlayers[player.id] || false}
-              onExpandChange={onPlayerExpandChange(player.id.toString())}
-            />
-          ))}
+          {players.map((player) => {
+            const playerPenetrationData = penetrationData.get(player.id.toString());
+
+            return (
+              <PlayerPenetrationDetails
+                key={player.id}
+                id={player.id.toString()}
+                player={player}
+                name={player.name}
+                fight={fight}
+                expanded={expandedPlayers[player.id] || false}
+                onExpandChange={onPlayerExpandChange(player.id.toString())}
+                penetrationData={playerPenetrationData || null}
+                isLoading={isLoading}
+              />
+            );
+          })}
         </Box>
       )}
     </Box>
