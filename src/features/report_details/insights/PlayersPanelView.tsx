@@ -246,13 +246,13 @@ function abbreviateFood(name: string): string {
 }
 
 function formatTimestamp(timestamp: number): string {
-  const date = new Date(timestamp);
-  return date.toLocaleTimeString('en-US', {
-    hour12: false,
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  });
+  // ESO Logs timestamps are relative to the start of the log (in milliseconds)
+  // Convert to minutes:seconds format relative to log start
+  const totalSeconds = Math.floor(timestamp / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function formatDuration(startTime: number, endTime: number): string {

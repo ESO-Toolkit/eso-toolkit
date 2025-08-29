@@ -23,6 +23,8 @@ export const ReportFights: React.FC = () => {
         loading={isReportLoading}
         fightId={fightId}
         reportId={reportId}
+        reportStartTime={reportData?.startTime}
+        reportData={reportData}
       />
     );
   }
@@ -33,6 +35,8 @@ export const ReportFights: React.FC = () => {
       loading={isReportLoading}
       fightId={fightId}
       reportId={reportId}
+      reportStartTime={reportData?.startTime}
+      reportData={reportData}
     />
   );
 };
