@@ -4,8 +4,34 @@ on:
   pull_request:
     branches:
       - master
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - labeled
+      - unlabeled
 
 jobs:
+  check-do-not-merge-label:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for Do Not Merge label
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
+            const doNotMergeLabels = ['do not merge', 'do-not-merge', 'wip', 'work in progress'];
+
+            const hasDoNotMergeLabel = doNotMergeLabels.some(label => 
+              labels.some(prLabel => prLabel.includes(label.toLowerCase()))
+            );
+
+            if (hasDoNotMergeLabel) {
+              core.setFailed('❌ This PR has a "Do Not Merge" label and cannot be merged until the label is removed.');
+            } else {
+              console.log('✅ No "Do Not Merge" labels found. PR can proceed.');
+            }
+
   build:
     runs-on: ubuntu-latest
     steps:
