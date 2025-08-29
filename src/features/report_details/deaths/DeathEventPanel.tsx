@@ -2,7 +2,7 @@ import React from 'react';
 
 import { useDeathEvents, useDamageEvents, useReportMasterData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import { DamageEvent, DeathEvent } from '../../../types/combatlogEvents';
+import { DeathEvent } from '../../../types/combatlogEvents';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
 
@@ -42,94 +42,142 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   const deathInfos: DeathInfo[] = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
 
-    // OPTIMIZED: Use pre-filtered death events instead of filtering all events
-    const deathsByPlayer: Record<string, DeathEvent[]> = {};
-    deathEvents.forEach((event: DeathEvent) => {
+    // OPTIMIZED: Pre-build lookup maps to avoid repeated computations
+    const abilityNameCache = new Map<number, string>();
+    const getAbilityName = (abilityId: number): string | undefined => {
+      if (abilityNameCache.has(abilityId)) {
+        return abilityNameCache.get(abilityId);
+      }
+      const name = reportMasterData.abilitiesById?.[abilityId]?.name;
+      if (typeof name === 'string') {
+        abilityNameCache.set(abilityId, name);
+        return name;
+      }
+      abilityNameCache.set(abilityId, '');
+      return undefined;
+    };
+
+    // OPTIMIZED: Filter player deaths once
+    const playerDeaths = deathEvents.filter((event) => {
       const targetId = String(event.targetID ?? '');
-      if (!deathsByPlayer[targetId]) deathsByPlayer[targetId] = [];
-      deathsByPlayer[targetId].push(event);
+      const targetActor = reportMasterData.actorsById[targetId];
+      return targetActor?.type === 'Player';
     });
 
-    // Build a map of damage events per player
-    const damageByPlayer: Record<string, DamageEvent[]> = {};
-    damageEvents.forEach((event) => {
-      const dmgEvent = event;
-      const targetId = String(dmgEvent.targetID ?? '');
-      if (!damageByPlayer[targetId]) damageByPlayer[targetId] = [];
-      damageByPlayer[targetId].push(dmgEvent);
+    if (playerDeaths.length === 0) return [];
+
+    // OPTIMIZED: Sort damage events by timestamp for efficient range queries
+    const sortedDamageEvents = [...damageEvents].sort((a, b) => a.timestamp - b.timestamp);
+
+    // OPTIMIZED: Group deaths by player for batch processing
+    const deathsByPlayer = new Map<string, DeathEvent[]>();
+    playerDeaths.forEach((event) => {
+      const targetId = String(event.targetID ?? '');
+      if (!deathsByPlayer.has(targetId)) {
+        deathsByPlayer.set(targetId, []);
+      }
+      const playerDeathsList = deathsByPlayer.get(targetId);
+      if (playerDeathsList) {
+        playerDeathsList.push(event);
+      }
     });
 
-    // Process deaths to create DeathInfo objects
+    // Process deaths efficiently
     const deaths: DeathInfo[] = [];
 
-    Object.entries(deathsByPlayer).forEach(([playerId, playerDeaths]) => {
+    deathsByPlayer.forEach((playerDeaths, playerId) => {
+      // Sort deaths by timestamp
+      playerDeaths.sort((a, b) => a.timestamp - b.timestamp);
+
       let lastDeathTimestamp: number | undefined = undefined;
 
-      for (let deathIdx = 0; deathIdx < playerDeaths.length; deathIdx++) {
-        const event = playerDeaths[deathIdx];
-        const targetActor = reportMasterData.actorsById[playerId];
-        if (!targetActor || targetActor.type !== 'Player') continue;
-        // Only use damage events for prior attacks
-        const priorDamageEvents: AttackEvent[] = [];
-        if (damageByPlayer[playerId]) {
-          for (let i = 0; i < damageByPlayer[playerId].length; i++) {
-            const e = damageByPlayer[playerId][i];
-            if (
-              e.timestamp < event.timestamp &&
-              (lastDeathTimestamp === undefined || e.timestamp > lastDeathTimestamp)
-            ) {
-              let abilityName: string | null | undefined = undefined;
-              if (
-                typeof e.abilityGameID === 'number' &&
-                reportMasterData.abilitiesById &&
-                typeof reportMasterData.abilitiesById[e.abilityGameID]?.name === 'string'
-              ) {
-                abilityName = reportMasterData.abilitiesById[e.abilityGameID].name;
-              }
-              priorDamageEvents.push({
-                abilityName,
-                abilityId: e.abilityGameID,
-                sourceID: typeof e.sourceID === 'number' ? e.sourceID : undefined,
-                timestamp: e.timestamp,
-                type: e.type,
-                amount: typeof e.amount === 'number' ? e.amount : undefined,
-                wasBlocked: typeof e.blocked === 'number' ? e.blocked === 1 : null,
-              });
-            }
+      playerDeaths.forEach((deathEvent) => {
+        // OPTIMIZED: Binary search for damage events in the relevant time range
+        const relevantDamageEvents: AttackEvent[] = [];
+
+        // Find damage events for this player between last death and current death
+        const startTime = lastDeathTimestamp ?? (fight.startTime || 0);
+        const endTime = deathEvent.timestamp;
+
+        // OPTIMIZED: Use binary search to find the range of relevant events
+        let left = 0;
+        let right = sortedDamageEvents.length - 1;
+
+        // Find first event >= startTime
+        while (left <= right) {
+          const mid = Math.floor((left + right) / 2);
+          if (sortedDamageEvents[mid].timestamp >= startTime) {
+            right = mid - 1;
+          } else {
+            left = mid + 1;
           }
         }
-        const lastAttacks = priorDamageEvents
+        const startIndex = left;
+
+        // Find last event < endTime
+        left = startIndex;
+        right = sortedDamageEvents.length - 1;
+        while (left <= right) {
+          const mid = Math.floor((left + right) / 2);
+          if (sortedDamageEvents[mid].timestamp < endTime) {
+            left = mid + 1;
+          } else {
+            right = mid - 1;
+          }
+        }
+        const endIndex = right;
+
+        // Process only relevant damage events
+        for (let i = startIndex; i <= endIndex; i++) {
+          const dmgEvent = sortedDamageEvents[i];
+          if (String(dmgEvent.targetID ?? '') === playerId) {
+            const abilityName =
+              typeof dmgEvent.abilityGameID === 'number'
+                ? getAbilityName(dmgEvent.abilityGameID)
+                : undefined;
+
+            relevantDamageEvents.push({
+              abilityName,
+              abilityId: dmgEvent.abilityGameID,
+              sourceID: typeof dmgEvent.sourceID === 'number' ? dmgEvent.sourceID : undefined,
+              timestamp: dmgEvent.timestamp,
+              type: dmgEvent.type,
+              amount: typeof dmgEvent.amount === 'number' ? dmgEvent.amount : undefined,
+              wasBlocked: typeof dmgEvent.blocked === 'number' ? dmgEvent.blocked === 1 : null,
+            });
+          }
+        }
+
+        // Get last 3 attacks with damage > 0
+        const lastAttacks = relevantDamageEvents
           .filter((a) => typeof a.amount === 'number' && a.amount > 0)
           .slice(-3);
-        // Killing blow from death event's abilityGameID
+
+        // OPTIMIZED: Build killing blow once with cached ability lookup
         let killingBlow: AttackEvent | null = null;
-        if (typeof event.abilityGameID === 'number') {
-          const abilityName =
-            reportMasterData.abilitiesById &&
-            typeof reportMasterData.abilitiesById[event.abilityGameID]?.name === 'string'
-              ? reportMasterData.abilitiesById[event.abilityGameID].name
-              : undefined;
+        if (typeof deathEvent.abilityGameID === 'number') {
           killingBlow = {
-            abilityName,
-            abilityId: event.abilityGameID,
-            sourceID: typeof event.sourceID === 'number' ? event.sourceID : undefined,
-            timestamp: event.timestamp,
-            type: event.type,
-            amount: typeof event.amount === 'number' ? event.amount : undefined,
+            abilityName: getAbilityName(deathEvent.abilityGameID),
+            abilityId: deathEvent.abilityGameID,
+            sourceID: typeof deathEvent.sourceID === 'number' ? deathEvent.sourceID : undefined,
+            timestamp: deathEvent.timestamp,
+            type: deathEvent.type,
+            amount: typeof deathEvent.amount === 'number' ? deathEvent.amount : undefined,
           };
         }
 
         deaths.push({
           playerId,
-          timestamp: event.timestamp ?? 0,
+          timestamp: deathEvent.timestamp ?? 0,
           killingBlow,
           lastAttacks,
-          stamina: event.targetResources.stamina,
-          maxStamina: event.targetResources.maxStamina,
+          stamina: deathEvent.targetResources.stamina,
+          maxStamina: deathEvent.targetResources.maxStamina,
           wasBlocking: false,
         });
-        lastDeathTimestamp = event.timestamp;
-      }
+
+        lastDeathTimestamp = deathEvent.timestamp;
+      });
     });
 
     // Sort deaths by timestamp to display them in chronological order
