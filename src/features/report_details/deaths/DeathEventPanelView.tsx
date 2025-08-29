@@ -164,7 +164,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   </Typography>
                   <Box mt={1}>
                     {info.wasBlocking && (
-                      <Chip label={'Blocking'} color={'success'} sx={{ mr: 1 }} />
+                      <Chip label="Blocking" variant="outlined" color="success" sx={{ mr: 1 }} />
                     )}
                     <Chip
                       label={
@@ -223,6 +223,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                       <Chip
                                         label="Blocked"
                                         color="success"
+                                        variant="outlined"
                                         size="small"
                                         sx={{ ml: 1 }}
                                       />
