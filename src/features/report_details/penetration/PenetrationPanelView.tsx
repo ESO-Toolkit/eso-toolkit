@@ -3,17 +3,37 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
 
 import { PlayerPenetrationDetails } from './PlayerPenetrationDetails';
 
+interface PenetrationDataPoint {
+  timestamp: number;
+  penetration: number;
+  relativeTime: number; // Time since fight start in seconds
+}
+
+interface PlayerPenetrationData {
+  playerId: string;
+  playerName: string;
+  dataPoints: PenetrationDataPoint[];
+  max: number;
+  effective: number;
+  timeAtCapPercentage: number;
+  penetrationSources: PenetrationSourceWithActiveState[];
+  playerBasePenetration: number;
+}
+
 interface PenetrationPanelViewProps {
   players: PlayerDetailsWithRole[];
-  selectedTargetId: number | null;
+  selectedTargetIds: Set<number>;
   fight: FightFragment;
   expandedPlayers: Record<string, boolean>;
   onPlayerExpandChange: (
     playerId: string
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
+  penetrationData: Map<string, PlayerPenetrationData>;
+  isLoading: boolean;
 }
 
 /**
@@ -21,13 +41,15 @@ interface PenetrationPanelViewProps {
  */
 export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   players,
-  selectedTargetId,
+  selectedTargetIds,
   fight,
   expandedPlayers,
   onPlayerExpandChange,
+  penetrationData,
+  isLoading,
 }) => {
-  // Show target selection message if no target is selected
-  if (!selectedTargetId) {
+  // Show info when no targets are available
+  if (selectedTargetIds.size === 0) {
     return (
       <Box>
         <Typography variant="h4" gutterBottom>
@@ -35,8 +57,8 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         </Typography>
 
         <Alert severity="info" sx={{ mt: 2 }}>
-          Please select a target enemy using the dropdown above to view penetration analysis for
-          that target.
+          No targets are available for penetration analysis. This may occur if the fight has no boss
+          enemies or if the report data is still loading.
         </Alert>
       </Box>
     );
@@ -71,20 +93,30 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         /* Render all players in accordion format */
         <Box>
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-            Penetration analysis for all players. Click to expand details.
+            Penetration analysis for all players against{' '}
+            {selectedTargetIds.size === 1
+              ? 'the selected target'
+              : `${selectedTargetIds.size} available targets`}
+            . Click to expand details.
           </Typography>
 
-          {players.map((player) => (
-            <PlayerPenetrationDetails
-              key={player.id}
-              id={player.id.toString()}
-              player={player}
-              name={player.name}
-              fight={fight}
-              expanded={expandedPlayers[player.id] || false}
-              onExpandChange={onPlayerExpandChange(player.id.toString())}
-            />
-          ))}
+          {players.map((player) => {
+            const playerPenetrationData = penetrationData.get(player.id.toString());
+
+            return (
+              <PlayerPenetrationDetails
+                key={player.id}
+                id={player.id.toString()}
+                player={player}
+                name={player.name}
+                fight={fight}
+                expanded={expandedPlayers[player.id] || false}
+                onExpandChange={onPlayerExpandChange(player.id.toString())}
+                penetrationData={playerPenetrationData || null}
+                isLoading={isLoading}
+              />
+            );
+          })}
         </Box>
       )}
     </Box>

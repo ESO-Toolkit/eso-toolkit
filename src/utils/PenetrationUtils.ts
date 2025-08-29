@@ -8,7 +8,11 @@ import {
 import { CombatantInfoEvent, CombatantAura } from '../types/combatlogEvents';
 import { PlayerGear } from '../types/playerDetails';
 
-import { BuffLookupData, isBuffActive as isBuffActiveAtTimestamp } from './BuffLookupUtils';
+import {
+  BuffLookupData,
+  isBuffActive as isBuffActiveAtTimestamp,
+  isBuffActiveOnTarget,
+} from './BuffLookupUtils';
 import {
   getSetCount,
   countOneHandedSharpenedWeapons,
@@ -638,7 +642,8 @@ export function calculateDynamicPenetrationAtTimestamp(
   buffLookup: BuffLookupData | null,
   debuffLookup: BuffLookupData | null,
   timestamp: number,
-  targetId: number | null
+  playerId: number | null, // For checking buffs applied to the player
+  targetId: number | null // For checking debuffs applied to the target
 ): number {
   let buffPenetration = 0;
   let debuffPenetration = 0;
@@ -648,16 +653,22 @@ export function calculateDynamicPenetrationAtTimestamp(
 
     switch (source.source) {
       case 'buff':
+        // Buffs: Check if active on the selected player (who benefits from penetration)
         isActive = buffLookup
-          ? isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp)
+          ? playerId !== null
+            ? isBuffActiveOnTarget(buffLookup, source.ability, timestamp, playerId)
+            : isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp)
           : false;
         if (isActive) {
           buffPenetration += source.value;
         }
         break;
       case 'debuff':
+        // Debuffs: Check if active on the selected target (enemy who has reduced resistances)
         isActive = debuffLookup
-          ? isBuffActiveAtTimestamp(debuffLookup, source.ability, timestamp)
+          ? targetId !== null
+            ? isBuffActiveOnTarget(debuffLookup, source.ability, timestamp, targetId)
+            : isBuffActiveAtTimestamp(debuffLookup, source.ability, timestamp)
           : false;
         if (isActive) {
           debuffPenetration += source.value;
@@ -676,13 +687,15 @@ export function calculatePenetrationAtTimestamp(
   combatantInfo: CombatantInfoEvent | null,
   playerData: PlayerDetailsWithRole | undefined,
   timestamp: number,
-  targetId: number | null
+  playerId: number | null, // For checking buffs applied to the player
+  targetId: number | null // For checking debuffs applied to the target
 ): number {
   const staticPenetration = calculateStaticPenetration(combatantInfo, playerData);
   const dynamicPenetration = calculateDynamicPenetrationAtTimestamp(
     buffLookup,
     debuffLookup,
     timestamp,
+    playerId,
     targetId
   );
 

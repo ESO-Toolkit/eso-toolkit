@@ -1,14 +1,7 @@
 import { configureStore, type EnhancedStore } from '@reduxjs/toolkit';
 import { createMemoryHistory } from 'history';
 import { createReduxHistoryContext } from 'redux-first-history';
-import {
-  FLUSH,
-  PAUSE,
-  PERSIST,
-  PURGE,
-  REGISTER,
-  REHYDRATE,
-} from 'redux-persist';
+import { FLUSH, PAUSE, PERSIST, PURGE, REGISTER, REHYDRATE } from 'redux-persist';
 
 import { eventsReducer } from '../../store/events_data';
 import masterDataReducer from '../../store/master_data/masterDataSlice';
@@ -49,7 +42,7 @@ export interface MockStoreOptions {
  * - Skips persistence (no redux-persist) for clean test state
  * - Includes the same reducers and middleware structure as production
  * - Maintains the same state shape as the real store
- * 
+ *
  * This is used by both Storybook decorators and unit tests to ensure
  * consistent store configuration across all testing environments.
  */
