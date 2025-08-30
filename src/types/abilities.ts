@@ -681,3 +681,12 @@ export const BLUE_CHAMPION_POINTS = Object.freeze(
 export const GREEN_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS])
 );
+
+// Food Buffs
+export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596]));
+export const HEALTH_AND_REGEN_FOOD = Object.freeze(new Set([89971]));
+export const HEALTH_FOOD = Object.freeze(new Set([84732, 84733, 89973]));
+export const MAGICKA_FOOD = Object.freeze(new Set([89972, 84720]));
+export const STAMINA_FOOD = Object.freeze(new Set([61255, 86673]));
+export const INCREASE_MAX_HEALTH_AND_STAMINA = Object.freeze(new Set([89957, 107789]));
+export const INCREASE_MAX_HEALTH_AND_MAGICKA = Object.freeze(new Set([84731, 61257]));
