@@ -14,6 +14,7 @@ if "%1"=="dev" goto dev
 if "%1"=="clean" goto clean
 if "%1"=="codegen" goto codegen
 if "%1"=="fetch-abilities" goto fetch-abilities
+if "%1"=="pre-commit" goto pre-commit
 if "%1"=="all" goto all
 if "%1"=="check" goto check
 if "%1"=="setup" goto setup
@@ -36,6 +37,7 @@ echo   dev           - Start development server
 echo   clean         - Clean build artifacts
 echo   codegen       - Generate GraphQL types
 echo   fetch-abilities - Fetch abilities data
+echo   pre-commit    - Run full CI pipeline (lint-fix, test, build, typecheck)
 echo   all           - Run clean, install, lint, test, and build
 echo   check         - Run lint and test (quick pre-commit check)
 echo   setup         - Setup project for new developers
@@ -97,6 +99,35 @@ exit /b %errorlevel%
 echo Fetching abilities data...
 npm run fetch-abilities
 exit /b %errorlevel%
+
+:pre-commit
+echo Running pre-commit checks...
+echo 1/4 - Running ESLint with auto-fix...
+npm run lint:fix
+if %errorlevel% neq 0 (
+    echo ❌ ESLint failed!
+    exit /b %errorlevel%
+)
+echo 2/4 - Running tests...
+npm run test
+if %errorlevel% neq 0 (
+    echo ❌ Tests failed!
+    exit /b %errorlevel%
+)
+echo 3/4 - Building project...
+npm run build
+if %errorlevel% neq 0 (
+    echo ❌ Build failed!
+    exit /b %errorlevel%
+)
+echo 4/4 - Running type check...
+npm run typecheck
+if %errorlevel% neq 0 (
+    echo ❌ Type check failed!
+    exit /b %errorlevel%
+)
+echo ✅ All pre-commit tasks completed successfully!
+exit /b 0
 
 :all
 call :clean
