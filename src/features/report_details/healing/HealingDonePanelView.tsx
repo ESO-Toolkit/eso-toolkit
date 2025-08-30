@@ -20,6 +20,7 @@ interface HealingRow {
   raw: number;
   hps: number;
   overheal: number;
+  overhealHps: number;
   overhealPercentage: number;
   iconUrl?: string;
   ressurects: number;
@@ -87,7 +88,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       )}
                     </Box>
                   }
-                  secondary={`Raw Heals: ${row.raw.toLocaleString()} | HPS: ${row.hps.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} | Overheals: ${row.overheal.toLocaleString()} (${row.overhealPercentage.toFixed(1)}%)`}
+                  secondary={`Raw Heals: ${row.raw.toLocaleString()} | HPS: ${row.hps.toLocaleString(undefined, { maximumFractionDigits: 0 })} | Overheals: ${row.overheal.toLocaleString()} (${row.overhealPercentage.toFixed(1)}%) | Overheal HPS: ${row.overhealHps.toLocaleString(undefined, { maximumFractionDigits: 0 })}`}
                 />
               </ListItem>
             ))}
