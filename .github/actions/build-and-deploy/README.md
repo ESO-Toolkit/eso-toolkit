@@ -4,17 +4,17 @@ This composite action handles building and deploying the ESO Log Aggregator Reac
 
 ## Inputs
 
-| Input | Description | Required | Default |
-|-------|-------------|----------|---------|
-| `enable_sourcemaps` | Enable source map generation | No | `false` |
-| `fetch_depth` | Number of commits to fetch (0 for all history) | No | `1` |
-| `release_version` | Release version to set in environment | No | `''` |
-| `github_token` | GitHub token for deployment | Yes | - |
+| Input               | Description                                    | Required | Default |
+| ------------------- | ---------------------------------------------- | -------- | ------- |
+| `enable_sourcemaps` | Enable source map generation                   | No       | `false` |
+| `fetch_depth`       | Number of commits to fetch (0 for all history) | No       | `1`     |
+| `release_version`   | Release version to set in environment          | No       | `''`    |
+| `github_token`      | GitHub token for deployment                    | Yes      | -       |
 
 ## Outputs
 
-| Output | Description |
-|--------|-------------|
+| Output           | Description                     |
+| ---------------- | ------------------------------- |
 | `deployment-url` | URL where the site was deployed |
 
 ## Usage
@@ -45,6 +45,7 @@ This composite action handles building and deploying the ESO Log Aggregator Reac
 This composite action replaces the previous reusable workflow approach (`common/build-and-deploy.yml`) because GitHub Actions doesn't support reusable workflows in nested directories.
 
 ### Key differences:
+
 - All inputs are now strings (composite actions don't support boolean/number types)
 - `github_token` is now an explicit input instead of using `secrets: inherit`
 - Each step requires a `shell` specification for composite actions

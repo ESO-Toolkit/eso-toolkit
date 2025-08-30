@@ -7,9 +7,13 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
       - name: Build and Deploy
         uses: ./.github/actions/build-and-deploy
         with:
           enable_sourcemaps: 'false'
-          fetch_depth: '1'
           github_token: ${{ secrets.GITHUB_TOKEN }}
