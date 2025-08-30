@@ -539,7 +539,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
 
   if (isLoading) {
     return (
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
         <Typography variant="h6" gutterBottom>
           Players
         </Typography>
@@ -551,7 +551,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   }
 
   return (
-    <Box sx={{ p: 2 }}>
+    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6">Players</Typography>
         {fightStartTime && fightEndTime && (
