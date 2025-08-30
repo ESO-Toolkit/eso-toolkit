@@ -227,47 +227,51 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): JSX.Ele
         of {table.getFilteredRowModel().rows.length} entries
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Tooltip title="First page">
-          <IconButton
-            onClick={() => table.setPageIndex(0)}
-            disabled={!table.getCanPreviousPage()}
-            size="small"
-            sx={{
-              transition: theme.transitions.create(['all'], {
-                duration: theme.transitions.duration.short,
-              }),
-              '&:hover:not(:disabled)': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                opacity: 0.3,
-              },
-            }}
-          >
-            <FirstPage />
-          </IconButton>
+        <Tooltip title="First page" disableHoverListener={!table.getCanPreviousPage()}>
+          <span>
+            <IconButton
+              onClick={() => table.setPageIndex(0)}
+              disabled={!table.getCanPreviousPage()}
+              size="small"
+              sx={{
+                transition: theme.transitions.create(['all'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover:not(:disabled)': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.3,
+                },
+              }}
+            >
+              <FirstPage />
+            </IconButton>
+          </span>
         </Tooltip>
-        <Tooltip title="Previous page">
-          <IconButton
-            onClick={() => table.previousPage()}
-            disabled={!table.getCanPreviousPage()}
-            size="small"
-            sx={{
-              transition: theme.transitions.create(['all'], {
-                duration: theme.transitions.duration.short,
-              }),
-              '&:hover:not(:disabled)': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                opacity: 0.3,
-              },
-            }}
-          >
-            <KeyboardArrowLeft />
-          </IconButton>
+        <Tooltip title="Previous page" disableHoverListener={!table.getCanPreviousPage()}>
+          <span>
+            <IconButton
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              size="small"
+              sx={{
+                transition: theme.transitions.create(['all'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover:not(:disabled)': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.3,
+                },
+              }}
+            >
+              <KeyboardArrowLeft />
+            </IconButton>
+          </span>
         </Tooltip>
         <Typography
           variant="body2"
@@ -281,47 +285,51 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): JSX.Ele
         >
           Page {table.getState().pagination.pageIndex + 1} of {table.getPageCount()}
         </Typography>
-        <Tooltip title="Next page">
-          <IconButton
-            onClick={() => table.nextPage()}
-            disabled={!table.getCanNextPage()}
-            size="small"
-            sx={{
-              transition: theme.transitions.create(['all'], {
-                duration: theme.transitions.duration.short,
-              }),
-              '&:hover:not(:disabled)': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                opacity: 0.3,
-              },
-            }}
-          >
-            <KeyboardArrowRight />
-          </IconButton>
+        <Tooltip title="Next page" disableHoverListener={!table.getCanNextPage()}>
+          <span>
+            <IconButton
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              size="small"
+              sx={{
+                transition: theme.transitions.create(['all'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover:not(:disabled)': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.3,
+                },
+              }}
+            >
+              <KeyboardArrowRight />
+            </IconButton>
+          </span>
         </Tooltip>
-        <Tooltip title="Last page">
-          <IconButton
-            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
-            disabled={!table.getCanNextPage()}
-            size="small"
-            sx={{
-              transition: theme.transitions.create(['all'], {
-                duration: theme.transitions.duration.short,
-              }),
-              '&:hover:not(:disabled)': {
-                backgroundColor: alpha(theme.palette.primary.main, 0.08),
-                transform: 'translateY(-1px)',
-              },
-              '&:disabled': {
-                opacity: 0.3,
-              },
-            }}
-          >
-            <LastPage />
-          </IconButton>
+        <Tooltip title="Last page" disableHoverListener={!table.getCanNextPage()}>
+          <span>
+            <IconButton
+              onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+              disabled={!table.getCanNextPage()}
+              size="small"
+              sx={{
+                transition: theme.transitions.create(['all'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover:not(:disabled)': {
+                  backgroundColor: alpha(theme.palette.primary.main, 0.08),
+                  transform: 'translateY(-1px)',
+                },
+                '&:disabled': {
+                  opacity: 0.3,
+                },
+              }}
+            >
+              <LastPage />
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     </Box>
@@ -384,28 +392,33 @@ const DataGridToolbar = <T,>({
       </Box>
 
       {enableFiltering && (
-        <Tooltip title="Clear all filters">
-          <Button
-            startIcon={<Clear />}
-            onClick={() => table.resetColumnFilters()}
-            disabled={!table.getState().columnFilters.length}
-            size="small"
-            variant="outlined"
-            sx={{
-              transition: theme.transitions.create(['all'], {
-                duration: theme.transitions.duration.short,
-              }),
-              '&:hover': {
-                transform: 'translateY(-1px)',
-                boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
-              },
-              '&:disabled': {
-                opacity: 0.5,
-              },
-            }}
-          >
-            Clear Filters
-          </Button>
+        <Tooltip
+          title="Clear all filters"
+          disableHoverListener={!table.getState().columnFilters.length}
+        >
+          <span>
+            <Button
+              startIcon={<Clear />}
+              onClick={() => table.resetColumnFilters()}
+              disabled={!table.getState().columnFilters.length}
+              size="small"
+              variant="outlined"
+              sx={{
+                transition: theme.transitions.create(['all'], {
+                  duration: theme.transitions.duration.short,
+                }),
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: `0 4px 12px ${alpha(theme.palette.primary.main, 0.25)}`,
+                },
+                '&:disabled': {
+                  opacity: 0.5,
+                },
+              }}
+            >
+              Clear Filters
+            </Button>
+          </span>
         </Tooltip>
       )}
 

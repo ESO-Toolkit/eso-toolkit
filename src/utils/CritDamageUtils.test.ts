@@ -127,8 +127,9 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, null);
 
-      // Should find both Lucent Echoes (buff) and Minor Brittle (debuff) + computed sources
-      expect(sources).toHaveLength(4); // 2 computed sources (Dexterity + Fighting Finesse) + 2 active sources
+      // Should find both Lucent Echoes (buff) and Minor Brittle (debuff) + any always-active computed sources
+      // Since combatantInfo is null, no computed sources will be active
+      expect(sources).toHaveLength(2); // Only the 2 active buff/debuff sources
       expect(
         sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES)
       ).toBe(true);
@@ -143,8 +144,9 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(emptyBuffLookup, emptyDebuffLookup, null);
 
-      // Should only find computed sources since we don't have combatant info (2 total)
-      expect(sources).toHaveLength(2); // Only always-active computed sources (Dexterity + Fighting Finesse)
+      // Should find no sources since combatantInfo is null (so no auras/computed sources active)
+      // and buff/debuff lookups are empty
+      expect(sources).toHaveLength(0);
     });
   });
 
@@ -261,6 +263,35 @@ describe('CritDamageUtils with BuffLookup', () => {
   });
 
   describe('calculateDynamicCriticalDamageAtTimestamp', () => {
+    const mockCombatantInfo: CombatantInfoEvent = {
+      timestamp: 1000,
+      type: 'combatantinfo',
+      fight: 1,
+      sourceID: 1,
+      auras: [],
+      gear: [],
+    };
+
+    const mockPlayerData: PlayerDetailsWithRole = {
+      name: 'Test Player',
+      id: 1,
+      guid: 12345,
+      type: 'Player',
+      server: 'Test Server',
+      displayName: 'TestPlayer',
+      role: 'dps',
+      icon: 'test.png',
+      anonymous: false,
+      specs: [],
+      potionUse: 0,
+      healthstoneUse: 0,
+      combatantInfo: {
+        ...mockCombatantInfo,
+        stats: [],
+        talents: [],
+      },
+    };
+
     it('should return 0 when no buffs/debuffs active', () => {
       const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
       const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
@@ -268,6 +299,8 @@ describe('CritDamageUtils with BuffLookup', () => {
       const dynamicCritDamage = calculateDynamicCriticalDamageAtTimestamp(
         emptyBuffLookup,
         emptyDebuffLookup,
+        mockCombatantInfo,
+        mockPlayerData,
         1000
       );
 
@@ -308,6 +341,8 @@ describe('CritDamageUtils with BuffLookup', () => {
       const dynamicCritDamage = calculateDynamicCriticalDamageAtTimestamp(
         buffLookup,
         debuffLookup,
+        mockCombatantInfo,
+        mockPlayerData,
         2000 // timestamp when both should be active
       );
 
@@ -363,6 +398,8 @@ describe('CritDamageUtils with BuffLookup', () => {
       const dynamicCritDamage = calculateDynamicCriticalDamageAtTimestamp(
         buffLookup,
         debuffLookup,
+        {} as CombatantInfoEvent,
+        {} as PlayerDetailsWithRole,
         timestamp
       );
       const optimizedResult = staticCritDamage + dynamicCritDamage;
@@ -399,6 +436,8 @@ describe('CritDamageUtils with BuffLookup', () => {
         const dynamicCritDamage = calculateDynamicCriticalDamageAtTimestamp(
           buffLookup,
           emptyDebuffLookup,
+          {} as CombatantInfoEvent,
+          {} as PlayerDetailsWithRole,
           timestamp
         );
         return staticCritDamage + dynamicCritDamage;
@@ -556,16 +595,15 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
       const computedSourceNames = [
         'Fated Fortune',
         'Dexterity',
-        'Fighting Finesse',
         "Sul-Xan's Torment",
         "Mora Scribe's Thesis",
         "Harpooner's Wading Kilt",
         'Animal Companions',
         'Twin Blade and Blunt',
         'Heavy Weapons',
-        'Backstabber',
         'Elemental Catalyst',
       ];
+      const notImplementedSourceNames = ['Fighting Finesse', 'Backstabber'];
 
       auraSourceNames.forEach((name) => {
         const source = CRITICAL_DAMAGE_SOURCES.find((s) => s.name === name);
@@ -585,6 +623,11 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
       computedSourceNames.forEach((name) => {
         const source = CRITICAL_DAMAGE_SOURCES.find((s) => s.name === name);
         expect(source?.source).toBe('computed');
+      });
+
+      notImplementedSourceNames.forEach((name) => {
+        const source = CRITICAL_DAMAGE_SOURCES.find((s) => s.name === name);
+        expect(source?.source).toBe('not_implemented');
       });
     });
   });
@@ -742,7 +785,8 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
         const damage = getCritDamageFromComputedSource(
           source,
           mockPlayerData,
-          mockCombatantWithAura
+          mockCombatantWithAura,
+          emptyDebuffLookup
         );
         expect(damage).toBeGreaterThanOrEqual(0);
       }
@@ -762,6 +806,15 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
           setID: 0,
           type: 2, // Medium armor
         })),
+        auras: [
+          {
+            source: 1,
+            ability: KnownAbilities.DEXTERITY,
+            stacks: 1,
+            icon: '',
+            name: 'Dexterity',
+          },
+        ],
       });
 
       const mockPlayerData = {
@@ -797,7 +850,8 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
         const damage = getCritDamageFromComputedSource(
           source,
           mockPlayerData,
-          mockCombatantWith3Medium
+          mockCombatantWith3Medium,
+          emptyDebuffLookup
         );
         expect(damage).toBe(6); // 3 pieces * 2% each
       }
@@ -977,10 +1031,10 @@ describe('Critical Damage Sources - Comprehensive Testing', () => {
       // - Minor Force (10%)
       // - Minor Brittle (10%)
       // - Feline Ambush (12%)
-      // - Fighting Finesse (8%)
-      // - Dexterity (4% for 2 medium pieces)
+      // Note: Fighting Finesse is not_implemented so not included
+      // Note: Dexterity requires aura to be active, not just medium armor equipped
       // Note: Backstabber is not active with original logic
-      const expectedMinimum = 50 + 10 + 10 + 12 + 8 + 4;
+      const expectedMinimum = 50 + 10 + 10 + 12;
       expect(totalDamage).toBeGreaterThanOrEqual(expectedMinimum);
     });
 

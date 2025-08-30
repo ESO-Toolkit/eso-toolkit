@@ -128,19 +128,21 @@ export function isBuffActive(
 }
 
 /**
- * Checks if a buff is active at a specific timestamp for a specific target.
+ * Checks if a buff is active at a specific timestamp for a specific target,
+ * or if a buff was ever active on a target (when timestamp is not provided).
  * If no target is specified, checks if the buff is active on any target.
  *
  * @param buffLookup - The buff lookup data structure
  * @param abilityGameID - The ability ID to check
- * @param timestamp - The timestamp to check
+ * @param timestamp - Optional timestamp to check. If not provided, checks if buff was ever active on target
  * @param targetID - Optional target ID to check. If not provided, checks any target
- * @returns True if the buff is active on the target (or any target if targetID not specified) at the timestamp
+ * @returns True if the buff is active on the target (or any target if targetID not specified) at the timestamp,
+ *          or ever active if timestamp not provided
  */
 export function isBuffActiveOnTarget(
   buffLookup: BuffLookupData,
   abilityGameID: number,
-  timestamp: number,
+  timestamp?: number,
   targetID?: number
 ): boolean {
   const intervals = buffLookup.buffIntervals.get(abilityGameID);
@@ -148,7 +150,18 @@ export function isBuffActiveOnTarget(
     return false;
   }
 
-  // If no target specified, check if buff is active on any target
+  // If no timestamp provided, check if buff was ever active on target
+  if (timestamp === undefined) {
+    if (targetID === undefined) {
+      // Return true if any intervals exist (buff was active on any target)
+      return intervals.length > 0;
+    } else {
+      // Return true if any interval exists for this target
+      return intervals.some((interval) => interval.targetID === targetID);
+    }
+  }
+
+  // If no target specified, check if buff is active on any target at the timestamp
   if (targetID === undefined) {
     return intervals.some((interval) => timestamp >= interval.start && timestamp <= interval.end);
   }

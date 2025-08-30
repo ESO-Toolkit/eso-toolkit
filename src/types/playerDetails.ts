@@ -1,3 +1,5 @@
+import { ItemQuality } from '@/utils/gearUtilities';
+
 export interface PlayerSpec {
   spec: string;
   count: number;
@@ -54,12 +56,13 @@ export type GearType = WeaponType | ArmorType;
 
 export enum GearTrait {
   SHARPENED = 32,
+  REINFORCED = 8,
 }
 
 export interface PlayerGear {
   id: number;
   slot: number;
-  quality: number;
+  quality: ItemQuality;
   icon: string;
   name?: string;
   championPoints: number;

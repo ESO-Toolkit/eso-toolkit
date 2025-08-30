@@ -6,6 +6,8 @@ import {
   selectHostileBuffLookup,
   selectDebuffLookup,
   selectCombinedBuffLookup,
+  selectSelectedFightId,
+  selectCurrentFight,
 } from './eventsSelectors';
 
 // Mock state structure
@@ -131,6 +133,16 @@ const createMockState = (overrides: Partial<RootState> = {}): RootState =>
       actorsById: {},
       abilitiesById: {},
       gameZonesById: {},
+    },
+    router: {
+      location: {
+        pathname: '/report/test-report/fight/1',
+        search: '',
+        hash: '',
+        state: {},
+        key: 'test-key',
+      },
+      action: null,
     },
     ...overrides,
   }) as RootState;
@@ -340,6 +352,71 @@ describe('Buff Lookup Selectors', () => {
       // Should contain both abilities
       expect(result.buffIntervals.has(123)).toBe(true);
       expect(result.buffIntervals.has(456)).toBe(true);
+    });
+  });
+
+  describe('Router-based selectors', () => {
+    it('should extract fight ID from router state', () => {
+      const state = createMockState({
+        router: {
+          location: {
+            pathname: '/report/test-report/fight/123',
+            search: '',
+            hash: '',
+            state: {},
+            key: 'test-key',
+          },
+          action: null,
+        },
+      });
+
+      const fightId = selectSelectedFightId(state);
+      expect(fightId).toBe('123');
+    });
+
+    it('should return null for invalid paths', () => {
+      const state = createMockState({
+        router: {
+          location: {
+            pathname: '/report/test-report',
+            search: '',
+            hash: '',
+            state: {},
+            key: 'test-key',
+          },
+          action: null,
+        },
+      });
+
+      const fightId = selectSelectedFightId(state);
+      expect(fightId).toBeNull();
+    });
+
+    it('should select current fight using router state', () => {
+      const state = createMockState({
+        router: {
+          location: {
+            pathname: '/report/test-report/fight/1',
+            search: '',
+            hash: '',
+            state: {},
+            key: 'test-key',
+          },
+          action: null,
+        },
+      });
+
+      const currentFight = selectCurrentFight(state);
+      expect(currentFight).toEqual({
+        id: '1',
+        startTime: 1000,
+        endTime: 2000,
+        name: 'Test Fight',
+        friendlyPlayers: [1, 2],
+        enemyNPCs: [3, 4],
+        enemyPlayers: [],
+        maps: [{ id: 1 }],
+      });
     });
   });
 });

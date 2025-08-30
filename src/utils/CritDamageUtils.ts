@@ -1,11 +1,14 @@
-import { arcanistData } from '../data/skillsets/arcanist';
 import { wardenData } from '../data/skillsets/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { CriticalDamageValues, KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { ArmorType } from '../types/playerDetails';
 
-import { BuffLookupData, isBuffActive as checkBuffActiveAtTimestamp } from './BuffLookupUtils';
+import {
+  BuffLookupData,
+  isBuffActive as checkBuffActiveAtTimestamp,
+  isBuffActiveOnTarget,
+} from './BuffLookupUtils';
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
 interface BaseCriticalDamageSource {
@@ -38,6 +41,10 @@ export interface CriticalDamageDebuffSource extends BaseCriticalDamageSource {
   source: 'debuff';
 }
 
+export interface CriticalDamageNotImplementedSource extends BaseCriticalDamageSource {
+  source: 'not_implemented';
+}
+
 export enum ComputedCriticalDamageSources {
   FATED_FORTUNE,
   DEXTERITY,
@@ -62,7 +69,8 @@ export type CriticalDamageSource =
   | CriticalDamageGearSource
   | CriticalDamageBuffSource
   | CriticalDamageDebuffSource
-  | CriticalDamageComputedSource;
+  | CriticalDamageComputedSource
+  | CriticalDamageNotImplementedSource;
 
 export type CriticalDamageSourceWithActiveState = CriticalDamageSource & { wasActive: boolean };
 
@@ -71,7 +79,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     key: ComputedCriticalDamageSources.FATED_FORTUNE,
     name: 'Fated Fortune',
     description:
-      'Critical damage from Fated Fortune passive (12% per Herald of the Tome ability slotted) - [NOT FULLY IMPLEMENTED]',
+      'Critical damage from Fated Fortune passive (12% when generated or consuming crux)',
     source: 'computed',
   },
   {
@@ -82,11 +90,9 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
-    key: ComputedCriticalDamageSources.FIGHTING_FINESSE,
     name: 'Fighting Finesse',
-    description:
-      'Critical damage from Fighting Finesse champion point (8%) - [NOT FULLY IMPLEMENTED]',
-    source: 'computed',
+    description: 'Critical damage from Fighting Finesse champion point (8%)',
+    source: 'not_implemented',
   },
   {
     key: ComputedCriticalDamageSources.SUL_XAN_TORMENT,
@@ -125,10 +131,9 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
-    key: ComputedCriticalDamageSources.BACKSTABBER,
     name: 'Backstabber',
-    description: 'Critical damage from Backstabber champion point (10%) - [NOT FULLY IMPLEMENTED]',
-    source: 'computed',
+    description: 'Critical damage from Backstabber champion point (10%)',
+    source: 'not_implemented',
   },
   {
     key: ComputedCriticalDamageSources.ELEMENTAL_CATALYST,
@@ -249,8 +254,7 @@ export function isComputedSourceActive(
     case ComputedCriticalDamageSources.FATED_FORTUNE:
       return isAuraActive(combatantInfo, KnownAbilities.FATED_FORTUNE_STAGE_ONE);
     case ComputedCriticalDamageSources.DEXTERITY:
-      // TODO: determine how to see if this passive is active.
-      return true;
+      return isAuraActive(combatantInfo, KnownAbilities.DEXTERITY);
     case ComputedCriticalDamageSources.FIGHTING_FINESSE:
       // TODO: determine how to tell if this CP is active
       return true;
@@ -403,6 +407,7 @@ export function calculateCriticalDamageAtTimestamp(
             source,
             playerData,
             combatantInfo,
+            buffLookup,
             debuffLookup,
             timestamp
           );
@@ -430,7 +435,6 @@ export function calculateStaticCriticalDamage(
 
   let gearCriticalDamage = 0;
   let auraCriticalDamage = 0;
-  let computedCriticalDamage = 0;
 
   for (const source of CRITICAL_DAMAGE_SOURCES) {
     let isActive = false;
@@ -448,30 +452,22 @@ export function calculateStaticCriticalDamage(
           gearCriticalDamage += source.value;
         }
         break;
-      case 'computed':
-        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup);
-        if (isActive) {
-          computedCriticalDamage += getCritDamageFromComputedSource(
-            source,
-            playerData,
-            combatantInfo
-          );
-        }
-        break;
-      // Skip buff and debuff sources - these are dynamic
     }
   }
 
-  return baseCriticalDamage + gearCriticalDamage + auraCriticalDamage + computedCriticalDamage;
+  return baseCriticalDamage + gearCriticalDamage + auraCriticalDamage;
 }
 
 export function calculateDynamicCriticalDamageAtTimestamp(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
+  combatantInfo: CombatantInfoEvent,
+  playerData: PlayerDetailsWithRole,
   timestamp: number
 ): number {
   let buffCriticalDamage = 0;
   let debuffCriticalDamage = 0;
+  let computedCriticalDamage = 0;
 
   for (const source of CRITICAL_DAMAGE_SOURCES) {
     let isActive = false;
@@ -489,17 +485,31 @@ export function calculateDynamicCriticalDamageAtTimestamp(
           debuffCriticalDamage += source.value;
         }
         break;
+
+      case 'computed':
+        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup, timestamp);
+        if (isActive) {
+          computedCriticalDamage += getCritDamageFromComputedSource(
+            source,
+            playerData,
+            combatantInfo,
+            buffLookup,
+            debuffLookup,
+            timestamp
+          );
+        }
       // Skip static sources - these are calculated once
     }
   }
 
-  return buffCriticalDamage + debuffCriticalDamage;
+  return buffCriticalDamage + debuffCriticalDamage + computedCriticalDamage;
 }
 
 export function getCritDamageFromComputedSource(
   source: CriticalDamageComputedSource,
   playerData: PlayerDetailsWithRole | undefined,
   combatantInfo: CombatantInfoEvent | null,
+  buffLookup: BuffLookupData,
   debuffLookup?: BuffLookupData,
   timestamp?: number
 ): number {
@@ -509,15 +519,18 @@ export function getCritDamageFromComputedSource(
 
   switch (source.key) {
     case ComputedCriticalDamageSources.FATED_FORTUNE:
-      // Only look at the front bar
-      const arcAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
-        Object.values(arcanistData.skillLines.heraldOfTheTome.activeAbilities)
-          .flatMap((ability) => {
-            return [ability, ...Object.values(ability.morphs)];
-          })
-          .some((a) => a.name === t.name)
-      );
-      return arcAbilities.length * CriticalDamageValues.FATED_FORTUNE;
+      if (
+        isBuffActiveOnTarget(
+          buffLookup,
+          KnownAbilities.FATED_FORTUNE_BUFF,
+          timestamp,
+          playerData.id
+        )
+      ) {
+        // Apply Fated Fortune bonus
+        return CriticalDamageValues.FATED_FORTUNE;
+      }
+      return 0;
     case ComputedCriticalDamageSources.DEXTERITY:
       const mediumGear = combatantInfo.gear?.filter((item) => item.type === ArmorType.MEDIUM);
       return mediumGear.length * CriticalDamageValues.DEXTERITY_PER_PIECE;
