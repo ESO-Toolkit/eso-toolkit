@@ -1,7 +1,6 @@
 // Import MUI icons
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
-import DangerousIcon from '@mui/icons-material/Dangerous';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HealingIcon from '@mui/icons-material/Healing';
@@ -13,7 +12,6 @@ import Person from '@mui/icons-material/Person';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
 import ShieldIcon from '@mui/icons-material/Shield';
-import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import StarIcon from '@mui/icons-material/Star';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
@@ -26,6 +24,7 @@ import {
   Switch,
   Stack,
   Skeleton,
+  Icon,
 } from '@mui/material';
 import React from 'react';
 
@@ -69,6 +68,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   onNavigateToTab,
   onToggleExperimentalTabs,
 }) => {
+  // Material Symbols ligature icons for consistent style
   // Only render content when events for the current fight are loaded
   if (loading) {
     return (
@@ -117,10 +117,28 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             <Tab icon={<PeopleIcon />} />
           </Tooltip>
           <Tooltip title="Deaths">
-            <Tab icon={<DangerousIcon />} />
+            <Tab
+              icon={
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  skull
+                </Icon>
+              }
+            />
           </Tooltip>
           <Tooltip title="Damage Done">
-            <Tab icon={<SwordsIcon />} />
+            <Tab
+              icon={
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  swords
+                </Icon>
+              }
+            />
           </Tooltip>
           <Tooltip title="Healing Done">
             <Tab icon={<HealingIcon />} />
