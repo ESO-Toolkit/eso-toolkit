@@ -471,17 +471,10 @@ function calculateTrialDifficulty(
   } else if (hmType === 'special') {
     // For Cloudrest and Asylum Sanctorium, use difficulty codes for HM detection
     // Difficulty codes: 121=Veteran, 122=Standard HM, 123=+1, 124=+2, 125=+3
-<<<<<<< HEAD
-    const hasHM = fights.some((fight) => (fight.difficulty ?? 0) >= 123);
-    const hasVet = fights.some((fight) => fight.difficulty === 121);
+    const difficulties = fights.map((fight) => fight.difficulty ?? 0).filter((d) => d > 0);
+    const maxDifficulty = Math.max(...difficulties, 0);
     const hasNormal = fights.some((fight) => (fight.difficulty ?? 0) < 10);
 
-    if (hasHM) {
-=======
-    const difficulties = fights.map(fight => fight.difficulty ?? 0).filter(d => d > 0);
-    const maxDifficulty = Math.max(...difficulties, 0);
-    const hasNormal = fights.some(fight => (fight.difficulty ?? 0) < 10);
-    
     if (maxDifficulty >= 125) {
       return { difficulty: 125, label: 'Veteran HM +3' };
     } else if (maxDifficulty >= 124) {
@@ -489,7 +482,6 @@ function calculateTrialDifficulty(
     } else if (maxDifficulty >= 123) {
       return { difficulty: 123, label: 'Veteran HM +1' };
     } else if (maxDifficulty >= 122) {
->>>>>>> 1834d8b (upgraded the fight report header, upgrade damage done tab)
       return { difficulty: 122, label: 'Veteran HM' };
     } else if (maxDifficulty >= 121) {
       return { difficulty: 121, label: 'Veteran' };
@@ -852,9 +844,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     // Calculate trial difficulty for each individual run based on its own fights
     const finalizedTrialRuns = updatedTrialRuns.map((run, index) => {
       const baseName = run.name.replace(/#\d+/, '').trim(); // Remove run number for calculation
-      const trialDifficulty = calculateTrialDifficulty(run.fights, run.trialName);
-<<<<<<< HEAD
-      const finalName = `${baseName} (${trialDifficulty.label})`;
+      const trialDifficulty = calculateTrialDifficulty(run.fights, baseName);
 
       console.log(
         '🏃 RUN:',
@@ -867,11 +857,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trialDifficulty.label
       );
 
-=======
-      
-      console.log('🏃 RUN:', run.name, 'BOSS:', run.fights[0]?.name, 'DIFF:', run.fights[0]?.difficulty, 'CALCULATED:', trialDifficulty.label);
-      
->>>>>>> 1834d8b (upgraded the fight report header, upgrade damage done tab)
       return {
         ...run,
         difficulty: trialDifficulty.difficulty,
@@ -1291,37 +1276,21 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     }}
                   >
                     {(() => {
-<<<<<<< HEAD
-                      // Split trial name and difficulty for styling
-                      const fullName = trialRun.name.replace(/#\d+/, '');
-                      const difficultyMatch = fullName.match(/^(.+?)\s*\((.+)\)$/);
-
-                      if (difficultyMatch) {
-                        const [, baseName, difficulty] = difficultyMatch;
-                        return (
-                          <>
-                            <Box
-                              component="span"
-                              sx={{
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: { xs: 'nowrap', sm: 'normal' },
-=======
                       // Extract base trial name without parenthesis and run number
                       const cleanTrialName = trialRun.name
                         .replace(/\([^)]*\)/g, '') // Remove parenthesis content
                         .replace(/#\d+/, '') // Remove run number
                         .trim();
-                      
+
                       // Extract run number
                       const runMatch = trialRun.name.match(/#(\d+)/);
                       const runNumber = runMatch ? runMatch[1] : null;
-                      
+
                       // Get difficulty label from the calculated trial difficulty
                       const difficultyLabel = trialRun.difficultyLabel;
-                      
+
                       // Define colors for different difficulty levels
-                      const getDifficultyColor = (difficulty: string) => {
+                      const getDifficultyColor = (difficulty: string): string => {
                         switch (difficulty) {
                           case 'Normal':
                             return '#4caf50'; // Green
@@ -1338,98 +1307,56 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             return 'inherit';
                         }
                       };
-                      
+
                       return (
                         <>
-                          <Box 
-                            component="span" 
-                            sx={{ 
+                          <Box
+                            component="span"
+                            sx={{
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              whiteSpace: { xs: 'nowrap', sm: 'normal' }
+                              whiteSpace: { xs: 'nowrap', sm: 'normal' },
                             }}
                           >
                             {cleanTrialName}
                           </Box>
                           {difficultyLabel && (
-                            <Box 
-                              component="span" 
-                              sx={{ 
-                                fontWeight: 700, 
+                            <Box
+                              component="span"
+                              sx={{
+                                fontWeight: 700,
                                 color: getDifficultyColor(difficultyLabel),
                                 backgroundColor: `${getDifficultyColor(difficultyLabel)}20`,
                                 px: 0.75,
                                 py: 0.25,
                                 borderRadius: 1,
                                 fontSize: '0.85em',
-                                flexShrink: 0 
->>>>>>> 1834d8b (upgraded the fight report header, upgrade damage done tab)
+                                flexShrink: 0,
                               }}
                             >
                               {difficultyLabel}
                             </Box>
                           )}
                           {runNumber && (
-                            <Box 
-                              component="span" 
-                              sx={{ 
+                            <Box
+                              component="span"
+                              sx={{
                                 fontWeight: 700,
-                                color: '#00bcd4', 
+                                color: '#00bcd4',
                                 backgroundColor: 'rgba(0, 188, 212, 0.1)',
                                 px: 0.75,
                                 py: 0.25,
                                 borderRadius: 1,
                                 fontSize: '0.85em',
-                                flexShrink: 0 
+                                flexShrink: 0,
                               }}
                             >
                               #{runNumber}
                             </Box>
-<<<<<<< HEAD
-                          </>
-                        );
-                      }
-
-                      return (
-                        <Box
-                          component="span"
-                          sx={{
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: { xs: 'nowrap', sm: 'normal' },
-                          }}
-                        >
-                          {fullName}
-                        </Box>
-                      );
-                    })()}
-                    {(() => {
-                      const runMatch = trialRun.name.match(/#(\d+)/);
-                      return runMatch ? (
-                        <Box
-                          component="span"
-                          sx={{
-                            fontWeight: 700,
-                            color: '#00bcd4',
-                            backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                            px: 0.75,
-                            py: 0.25,
-                            borderRadius: 1,
-                            ml: { xs: 0, sm: 1 },
-                            fontSize: '0.9em',
-                            flexShrink: 0,
-                          }}
-                        >
-                          #{runMatch[1]}
-                        </Box>
-                      ) : null;
-                    })()}
-=======
                           )}
                         </>
                       );
                     })()}
->>>>>>> 1834d8b (upgraded the fight report header, upgrade damage done tab)
                   </Typography>
                 </Box>
                 <Box
