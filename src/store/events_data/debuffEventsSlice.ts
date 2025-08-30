@@ -51,6 +51,7 @@ export const fetchDebuffEvents = createAsyncThunk<
       do {
         const response: GetDebuffEventsQuery = await client.query({
           query: GetDebuffEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

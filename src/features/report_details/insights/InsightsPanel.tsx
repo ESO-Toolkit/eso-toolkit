@@ -1,4 +1,4 @@
-import React, { Profiler } from 'react';
+import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import {
@@ -133,25 +133,18 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   }, [damageEvents, playerData?.playersById, fight.friendlyPlayers]);
 
   return (
-    <Profiler
-      id="InsightsPanel"
-      onRender={(id, phase, actualDuration) => {
-        console.log({ id, phase, actualDuration });
-      }}
-    >
-      <InsightsPanelView
-        fight={fight}
-        durationSeconds={durationSeconds}
-        abilityEquipped={abilityEquipped}
-        buffActors={buffActors}
-        firstDamageDealer={firstDamageDealer}
-        isLoading={
-          isFriendlyBuffEventsLoading ||
-          isDamageEventsLoading ||
-          isPlayerDataLoading ||
-          isMasterDataLoading
-        }
-      />
-    </Profiler>
+    <InsightsPanelView
+      fight={fight}
+      durationSeconds={durationSeconds}
+      abilityEquipped={abilityEquipped}
+      buffActors={buffActors}
+      firstDamageDealer={firstDamageDealer}
+      isLoading={
+        isFriendlyBuffEventsLoading ||
+        isDamageEventsLoading ||
+        isPlayerDataLoading ||
+        isMasterDataLoading
+      }
+    />
   );
 };

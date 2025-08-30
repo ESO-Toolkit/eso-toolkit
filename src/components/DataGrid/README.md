@@ -55,19 +55,50 @@ const MyComponent: React.FC = () => {
 
 ## Props
 
-| Prop               | Type             | Default             | Description                       |
-| ------------------ | ---------------- | ------------------- | --------------------------------- |
-| `data`             | `T[]`            | required            | Array of data objects             |
-| `columns`          | `ColumnDef<T>[]` | required            | TanStack table column definitions |
-| `title`            | `string`         | undefined           | Optional grid title               |
-| `height`           | `number`         | 600                 | Grid height in pixels             |
-| `initialPageSize`  | `number`         | 25                  | Initial rows per page             |
-| `pageSizeOptions`  | `number[]`       | [10,25,50,100]      | Available page size options       |
-| `enableSorting`    | `boolean`        | true                | Enable column sorting             |
-| `enableFiltering`  | `boolean`        | true                | Enable column filtering           |
-| `enablePagination` | `boolean`        | true                | Enable pagination                 |
-| `loading`          | `boolean`        | false               | Show loading state                |
-| `emptyMessage`     | `string`         | "No data available" | Empty state message               |
+| Prop                   | Type             | Default             | Description                               |
+| ---------------------- | ---------------- | ------------------- | ----------------------------------------- |
+| `data`                 | `T[]`            | required            | Array of data objects                     |
+| `columns`              | `ColumnDef<T>[]` | required            | TanStack table column definitions         |
+| `title`                | `string`         | undefined           | Optional grid title                       |
+| `height`               | `number`         | 600                 | Grid height in pixels                     |
+| `initialPageSize`      | `number`         | 25                  | Initial rows per page                     |
+| `pageSizeOptions`      | `number[]`       | [10,25,50,100]      | Available page size options               |
+| `enableSorting`        | `boolean`        | true                | Enable column sorting                     |
+| `enableFiltering`      | `boolean`        | true                | Enable column filtering                   |
+| `enablePagination`     | `boolean`        | true                | Enable pagination                         |
+| `enableVirtualization` | `boolean`        | false               | Enable row virtualization for performance |
+| `estimateSize`         | `number`         | 40                  | Estimated row height for virtualization   |
+| `loading`              | `boolean`        | false               | Show loading state                        |
+| `emptyMessage`         | `string`         | "No data available" | Empty state message                       |
+
+## Row Virtualization
+
+For large datasets (>1000 rows), enable virtualization to prevent performance issues:
+
+```tsx
+<DataGrid
+  data={largeDataset} // e.g., 10,000+ rows
+  columns={columns}
+  enableVirtualization={true}
+  enablePagination={false} // Disable pagination when using virtualization
+  estimateSize={48} // Adjust based on your row height
+  height={600}
+/>
+```
+
+### Virtualization Benefits
+
+- **Memory Efficiency**: Only renders visible rows
+- **Smooth Scrolling**: Maintains 60fps even with thousands of rows
+- **Instant Loading**: No pagination delays
+- **Reduced DOM Size**: Better browser performance
+
+### When to Use Virtualization
+
+- **Large Datasets**: >1000 rows
+- **Performance Critical**: Real-time data updates
+- **Memory Constraints**: Prevent out-of-memory errors
+- **Smooth UX**: Eliminate pagination for seamless scrolling
 
 ## Column Filtering
 

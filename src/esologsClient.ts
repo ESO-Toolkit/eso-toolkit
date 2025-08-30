@@ -15,6 +15,7 @@ import {
   from,
 } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
+import { getOperationName } from '@apollo/client/utilities';
 
 export class EsoLogsClient {
   private static readonly CACHE = new InMemoryCache({
@@ -98,6 +99,7 @@ export class EsoLogsClient {
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {
+      console.error({ error: result.error, query: getOperationName(options.query) });
       throw new Error(`GraphQL error: ${result.error.message}`);
     }
 

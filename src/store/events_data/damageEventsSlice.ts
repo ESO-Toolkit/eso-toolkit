@@ -60,6 +60,7 @@ export const fetchDamageEvents = createAsyncThunk(
       do {
         const response: GetDamageEventsQuery = await client.query({
           query: GetDamageEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

@@ -75,6 +75,7 @@ const fetchEventsForInterval = async (
   do {
     const response: GetBuffEventsQuery = await client.query({
       query: GetBuffEventsDocument,
+      fetchPolicy: 'no-cache',
       variables: {
         code: reportCode,
         fightIds: [Number(fight.id)],

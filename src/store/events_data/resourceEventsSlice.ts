@@ -51,6 +51,7 @@ export const fetchResourceEvents = createAsyncThunk<
       do {
         const response: GetResourceEventsQuery = await client.query({
           query: GetResourceEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

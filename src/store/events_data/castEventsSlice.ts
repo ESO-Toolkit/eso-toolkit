@@ -51,6 +51,7 @@ export const fetchCastEvents = createAsyncThunk<
       do {
         const response: GetCastEventsQuery = await client.query({
           query: GetCastEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

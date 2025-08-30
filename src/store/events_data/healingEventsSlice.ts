@@ -51,6 +51,7 @@ export const fetchHealingEvents = createAsyncThunk<
       do {
         const response: GetHealingEventsQuery = await client.query({
           query: GetHealingEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

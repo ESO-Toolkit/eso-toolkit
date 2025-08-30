@@ -53,6 +53,7 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
       do {
         const response: GetCombatantInfoEventsQuery = await client.query({
           query: GetCombatantInfoEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],

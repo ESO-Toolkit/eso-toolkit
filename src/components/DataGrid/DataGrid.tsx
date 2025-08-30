@@ -457,6 +457,9 @@ const DataGridToolbar = <T,>({
   );
 };
 
+const DEFAULT_PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
+Object.freeze(DEFAULT_PAGE_SIZE_OPTIONS);
+
 // Main DataGrid component
 export const DataGrid = <T extends Record<string, unknown>>({
   data,
@@ -464,7 +467,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
   title,
   height = 600,
   initialPageSize = 25,
-  pageSizeOptions = [10, 25, 50, 100],
+  pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   enableSorting = true,
   enableFiltering = true,
   enablePagination = true,
@@ -472,6 +475,32 @@ export const DataGrid = <T extends Record<string, unknown>>({
   emptyMessage = 'No data available',
 }: DataGridProps<T>): JSX.Element => {
   const theme = useTheme();
+
+  // Memoize theme-based styles to prevent recreation on every render
+  const styles = React.useMemo(
+    () => ({
+      tableRow: {
+        transition: theme.transitions.create(['background-color'], {
+          duration: theme.transitions.duration.shortest,
+        }),
+        '&:hover': {
+          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+        },
+        '&:nth-of-type(even)': {
+          backgroundColor: alpha(theme.palette.action.selected, 0.02),
+        },
+        '&:not(:last-child)': {
+          borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+        },
+      },
+      tableCell: {
+        fontSize: '0.875rem',
+        color: theme.palette.text.primary,
+        padding: theme.spacing(1, 2),
+      },
+    }),
+    [theme]
+  );
 
   // Table state
   const [sorting, setSorting] = React.useState<SortingState>([]);
@@ -481,31 +510,44 @@ export const DataGrid = <T extends Record<string, unknown>>({
     pageSize: initialPageSize,
   });
 
+  // Memoize column configuration to prevent recreation on every render
+  const memoizedColumns = React.useMemo(
+    () =>
+      columns.map((col) => ({
+        ...col,
+        filterFn: (col as ColumnDef<T>).filterFn || smartFilter,
+      })) as ColumnDef<T>[],
+    [columns]
+  );
+
+  // Memoize table configuration
+  const tableConfig = React.useMemo(
+    () => ({
+      data,
+      columns: memoizedColumns,
+      state: {
+        sorting,
+        columnFilters,
+        pagination,
+      },
+      onSortingChange: setSorting,
+      onColumnFiltersChange: setColumnFilters,
+      onPaginationChange: setPagination,
+      getCoreRowModel: getCoreRowModel(),
+      getFilteredRowModel: getFilteredRowModel(),
+      getSortedRowModel: getSortedRowModel(),
+      getPaginationRowModel: getPaginationRowModel(),
+      enableSorting,
+      enableColumnFilters: enableFiltering,
+      filterFns: {
+        smartFilter,
+      },
+    }),
+    [data, memoizedColumns, sorting, columnFilters, pagination, enableSorting, enableFiltering]
+  );
+
   // Create table instance
-  const table = useReactTable({
-    data,
-    columns: columns.map((col) => ({
-      ...col,
-      filterFn: (col as ColumnDef<T>).filterFn || smartFilter, // Use custom filter if not specified
-    })) as ColumnDef<T>[],
-    state: {
-      sorting,
-      columnFilters,
-      pagination,
-    },
-    onSortingChange: setSorting,
-    onColumnFiltersChange: setColumnFilters,
-    onPaginationChange: setPagination,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    enableSorting,
-    enableColumnFilters: enableFiltering,
-    filterFns: {
-      smartFilter,
-    },
-  });
+  const table = useReactTable(tableConfig);
 
   // Loading state
   if (loading) {
@@ -653,33 +695,9 @@ export const DataGrid = <T extends Record<string, unknown>>({
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
               table.getRowModel().rows.map((row, index) => (
-                <TableRow
-                  key={row.id}
-                  sx={{
-                    transition: theme.transitions.create(['background-color'], {
-                      duration: theme.transitions.duration.shortest,
-                    }),
-                    '&:hover': {
-                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
-                    },
-                    '&:nth-of-type(even)': {
-                      backgroundColor: alpha(theme.palette.action.selected, 0.02),
-                    },
-                    // Add subtle border between rows
-                    '&:not(:last-child)': {
-                      borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
-                    },
-                  }}
-                >
+                <TableRow key={row.id} sx={styles.tableRow}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell
-                      key={cell.id}
-                      sx={{
-                        fontSize: '0.875rem',
-                        color: theme.palette.text.primary,
-                        padding: theme.spacing(1, 2),
-                      }}
-                    >
+                    <TableCell key={cell.id} sx={styles.tableCell}>
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
