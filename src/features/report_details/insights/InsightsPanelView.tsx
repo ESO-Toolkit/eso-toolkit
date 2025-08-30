@@ -131,7 +131,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Typography>
               <List dense>
                 {ABILITY_NAMES.map((name) => (
-                  <ListItem key={name} sx={{ mb: 1 }}>
+                  <ListItem key={name} sx={{ mb: 1, pl: .5 }}>
                     <ListItemText
                       primary={name}
                       secondary={
@@ -149,7 +149,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               </Typography>
               <List dense>
                 {CHAMPION_POINT_NAMES.map((name) => (
-                  <ListItem key={name} sx={{ mb: 1 }}>
+                  <ListItem key={name} sx={{ mb: 1, pl: 0 }}>
                     <ListItemText
                       primary={name}
                       secondary={

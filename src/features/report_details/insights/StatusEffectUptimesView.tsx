@@ -52,6 +52,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
                   key={statusEffect.abilityGameID}
                   sx={{
                     py: 1,
+                    pl: 0,
                     '&:hover': {
                       backgroundColor:
                         reportId && fightId && selectedTargetId ? 'action.hover' : 'transparent',
