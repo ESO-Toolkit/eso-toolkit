@@ -1286,7 +1286,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     expectedTotalBosses = encounteredBosses;
                   }
                   else if (zoneName.includes("Sunspire")) expectedTotalBosses = 3;
-                  else if (zoneName.includes("Rockgrove")) expectedTotalBosses = 4;
+                  else if (zoneName.includes("Rockgrove")) {
+                    // Rockgrove has 4 main bosses + 1 optional mini (Basks-In-Snakes)
+                    // Use actual encountered count since mini is optional
+                    expectedTotalBosses = encounteredBosses;
+                  }
                   else if (zoneName.includes("Dreadsail Reef")) expectedTotalBosses = 5;
                   else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
                   else if (zoneName.includes("Lucent Citadel")) expectedTotalBosses = 4;
