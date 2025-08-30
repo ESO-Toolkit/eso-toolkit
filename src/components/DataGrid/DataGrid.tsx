@@ -178,13 +178,13 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): JSX.Eleme
           },
           // Hide number input spinners/arrows
           '& input[type=number]': {
-            '-moz-appearance': 'textfield', // Firefox
+            MozAppearance: 'textfield', // Firefox
             '&::-webkit-outer-spin-button': {
-              '-webkit-appearance': 'none', // Chrome, Safari, Edge
+              WebkitAppearance: 'none', // Chrome, Safari, Edge
               margin: 0,
             },
             '&::-webkit-inner-spin-button': {
-              '-webkit-appearance': 'none', // Chrome, Safari, Edge
+              WebkitAppearance: 'none', // Chrome, Safari, Edge
               margin: 0,
             },
           },

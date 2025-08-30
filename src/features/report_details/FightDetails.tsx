@@ -35,14 +35,14 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
   );
 
   // Calculate total number of available tabs
-  const totalTabs = showExperimentalTabs ? 17 : 9;
+  const totalTabs = showExperimentalTabs ? 17 : 8;
 
   // Ensure selectedTab is valid for current tab count
   const validSelectedTab = Math.min(selectedTab, totalTabs - 1);
 
   // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
   React.useEffect(() => {
-    if (!showExperimentalTabs && selectedTab >= 9) {
+    if (!showExperimentalTabs && selectedTab >= 8) {
       navigateToTab(0);
     }
   }, [showExperimentalTabs, selectedTab, navigateToTab]);
@@ -79,6 +79,14 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
     });
   }, [showExperimentalTabs, setSearchParams]);
 
+  const targetOptions = React.useMemo(
+    () =>
+      targets
+        .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
+        .filter((t) => t.id && t.name),
+    [targets]
+  );
+
   // Only render content when master data is loaded
   if (isLoading) {
     return (
@@ -87,9 +95,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
         selectedTabId={selectedTabId}
         validSelectedTab={validSelectedTab}
         showExperimentalTabs={showExperimentalTabs}
-        targets={targets
-          .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
-          .filter((t) => t.id && t.name)}
+        targets={targetOptions}
         loading={isLoading}
         onNavigateToTab={navigateToTab}
         onToggleExperimentalTabs={toggleExperimentalTabs}
@@ -105,9 +111,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       selectedTabId={selectedTabId}
       validSelectedTab={validSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
-      targets={targets
-        .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
-        .filter((t) => t.id && t.name)}
+      targets={targetOptions}
       loading={false}
       onNavigateToTab={navigateToTab}
       onToggleExperimentalTabs={toggleExperimentalTabs}

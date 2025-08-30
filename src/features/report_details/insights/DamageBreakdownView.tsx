@@ -3,7 +3,6 @@ import {
   Typography,
   List,
   ListItem,
-  ListItemText,
   LinearProgress,
   Avatar,
   Skeleton,
@@ -12,7 +11,6 @@ import {
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
-
 
 interface DamageBreakdown {
   abilityGameID: string;
@@ -82,7 +80,14 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                     </Avatar>
                   )}
                   <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        mb: 0.5,
+                      }}
+                    >
                       <Box sx={{ flex: 1 }}>
                         {damage.criticalRate > 0 && (
                           <Box sx={{ mb: 0.5 }}>
@@ -150,51 +155,73 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                         />
                       </Box>
                     </Box>
-                    <ListItemText
-                      primary=""
-                      secondary={
-                        <Box sx={{ mt: 0.5 }}>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              flexWrap: 'nowrap',
-                            }}
-                          >
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                              {formatNumber(damage.totalDamage)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
-                              damage
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
-                              •
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                              {damage.hitCount}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
-                              hits
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
-                              •
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
-                              {formatNumber(Math.round(damage.averageDamage))}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
-                              avg
-                            </Typography>
-                          </Box>
-                        </Box>
-                      }
-                      primaryTypographyProps={{
-                        variant: 'body2',
-                        noWrap: true,
-                        sx: { fontWeight: 600 },
-                      }}
-                    />
+                    <Box sx={{ mt: 0.5 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 1,
+                          flexWrap: 'nowrap',
+                        }}
+                      >
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {formatNumber(damage.totalDamage)}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 200 }}
+                        >
+                          damage
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 200 }}
+                        >
+                          •
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {damage.hitCount}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 200 }}
+                        >
+                          hits
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 200 }}
+                        >
+                          •
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 500 }}
+                        >
+                          {formatNumber(Math.round(damage.averageDamage))}
+                        </Typography>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ fontWeight: 200 }}
+                        >
+                          avg
+                        </Typography>
+                      </Box>
+                    </Box>
                     <LinearProgress
                       variant="determinate"
                       value={Math.max(0, Math.min(100, percentage))}
@@ -208,7 +235,8 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                             : 'rgba(0,0,0,0.06)',
                         '& .MuiLinearProgress-bar': {
                           borderRadius: 999,
-                          background: 'linear-gradient(90deg,rgb(130, 101, 50) 0%,rgb(223, 139, 44) 100%)',
+                          background:
+                            'linear-gradient(90deg,rgb(130, 101, 50) 0%,rgb(223, 139, 44) 100%)',
                         },
                       }}
                     />
