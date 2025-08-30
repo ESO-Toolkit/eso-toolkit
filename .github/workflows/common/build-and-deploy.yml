@@ -1,0 +1,75 @@
+name: Build and Deploy
+
+on:
+  workflow_call:
+    inputs:
+      enable_sourcemaps:
+        description: 'Enable source map generation'
+        required: false
+        default: false
+        type: boolean
+      fetch_depth:
+        description: 'Number of commits to fetch. 0 indicates all history for all branches and tags'
+        required: false
+        default: 1
+        type: number
+      release_version:
+        description: 'Release version to set in environment'
+        required: false
+        default: ''
+        type: string
+    outputs:
+      deployment-url:
+        description: 'URL where the site was deployed'
+        value: ${{ jobs.build-and-deploy.outputs.page_url }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    outputs:
+      page_url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: ${{ inputs.fetch_depth }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Set release version
+        if: inputs.release_version != ''
+        run: |
+          echo "REACT_APP_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
+
+      - name: Build project
+        run: |
+          REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
+          export GENERATE_SOURCEMAP=${{ inputs.enable_sourcemaps }}
+          npm run build -- -- --base="/$REPO_NAME/"
+        env:
+          GITHUB_REPOSITORY: ${{ github.repository }}
+
+      - name: Build Storybook
+        run: |
+          REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
+          export STORYBOOK_BASE_PATH="/$REPO_NAME/storybook/"
+          npm run build-storybook
+
+      - name: Move Storybook to build directory
+        run: |
+          mkdir -p build/storybook
+          cp -r storybook-static/* build/storybook/
+
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build

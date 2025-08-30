@@ -11,11 +11,32 @@ const config: StorybookConfig = {
     'msw-storybook-addon',
   ],
 
-  staticDirs: ['../public'],
-
   framework: {
     name: '@storybook/react-vite',
     options: {},
+  },
+
+  // Configure base path for subdirectory deployment
+  managerHead: (head) => {
+    const basePath = process.env.STORYBOOK_BASE_PATH;
+    if (basePath) {
+      return `
+        ${head}
+        <base href="${basePath}" />
+      `;
+    }
+    return head;
+  },
+
+  previewHead: (head) => {
+    const basePath = process.env.STORYBOOK_BASE_PATH;
+    if (basePath) {
+      return `
+        ${head}
+        <base href="${basePath}" />
+      `;
+    }
+    return head;
   },
 
   viteFinal: async (config) => {
@@ -31,6 +52,13 @@ const config: StorybookConfig = {
         '@utils': path.resolve(__dirname, '../src/utils'),
         '@graphql': path.resolve(__dirname, '../src/graphql'),
       };
+    }
+
+    // Configure Vite base path for subdirectory deployment
+    const basePath = process.env.STORYBOOK_BASE_PATH;
+    if (basePath) {
+      config.base = basePath;
+      console.log('🔧 Setting Storybook base path to:', basePath);
     }
 
     return config;
