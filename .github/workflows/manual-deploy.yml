@@ -5,5 +5,11 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/common/build-and-deploy.yml
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build and Deploy
+        uses: ./.github/actions/build-and-deploy
+        with:
+          enable_sourcemaps: 'false'
+          fetch_depth: '1'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
