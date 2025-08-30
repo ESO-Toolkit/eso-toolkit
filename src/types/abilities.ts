@@ -101,6 +101,8 @@ export enum KnownAbilities {
   GILDED_FINGERS = 142210,
   EXPLOITER = 63880,
   BULKWARK = 64079,
+  FROM_THE_BRINK = 156017,
+  ENLIVENING_OVERFLOW = 156008,
 
   // Shared Passives
   UNDAUNTED_METTLE = 55386,
@@ -312,7 +314,7 @@ export enum KnownAbilities {
 
   // Specific Named Buffs and Debuffs
   EMPOWER = 61737,
-  ENLIVENING_OVERFLOW = 156011,
+  ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
   ENGULFING_FLAMES_BUFF = 31104,
   PEARLESCENT_WARD = 172621,
@@ -672,6 +674,8 @@ export const BLUE_CHAMPION_POINTS = Object.freeze(
     KnownAbilities.EXPLOITER,
     KnownAbilities.BULKWARK,
     KnownAbilities.REAVING_BLOWS,
+    KnownAbilities.ENLIVENING_OVERFLOW,
+    KnownAbilities.FROM_THE_BRINK,
   ])
 );
 export const GREEN_CHAMPION_POINTS = Object.freeze(
