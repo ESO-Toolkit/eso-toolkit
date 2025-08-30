@@ -589,9 +589,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       const trialRunId = `${trialName}-run-${currentRunNumber}`;
       const isTrialWithMinis = trialName.includes("Cloudrest") || trialName.includes("Asylum Sanctorium");
-      const trialRunName = currentRunNumber > 1 
-        ? (isTrialWithMinis ? `${trialName} #${currentRunNumber}` : `${trialName} Run ${currentRunNumber}`)
-        : trialName;
+      const trialRunName = `${trialName} #${currentRunNumber}`;
 
       // Find or create the trial run
       let currentTrialRun = trialRuns.find((run) => run.id === trialRunId);
@@ -708,15 +706,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
     // Post-process to only show run numbers when there are multiple runs of the same zone
     const zoneRunCounts = trialRuns?.reduce((acc, run) => {
-      const baseName = run.name.replace(/ Run \d+$/, ''); // Remove existing run numbers
+      const baseName = run.name.replace(/ #\d+$/, ''); // Remove existing run numbers
       acc[baseName] = (acc[baseName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Update trial run names to only show numbers when there are duplicates
     const updatedTrialRuns = trialRuns?.map((run) => {
-      const baseName = run.name.replace(/ Run \d+$/, '');
-      const runMatch = run.name.match(/ Run (\d+)$/);
+      const baseName = run.name.replace(/ #\d+$/, '');
+      const runMatch = run.name.match(/ #(\d+)$/);
       const runNumber = runMatch ? parseInt(runMatch[1]) : 1;
       
       if (zoneRunCounts[baseName] > 1) {
@@ -1219,10 +1217,22 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     return fullName;
                   })()}
                   {(() => {
-                    const runMatch = trialRun.name.match(/#\d+/);
+                    const runMatch = trialRun.name.match(/#(\d+)/);
                     return runMatch ? (
-                      <Box component="span" sx={{ fontWeight: 700 }}>
-                        {runMatch[0]}
+                      <Box 
+                        component="span" 
+                        sx={{ 
+                          fontWeight: 700,
+                          color: '#00bcd4', // Modern cyan color
+                          backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                          px: 0.75,
+                          py: 0.25,
+                          borderRadius: 1,
+                          ml: 1,
+                          fontSize: '0.9em'
+                        }}
+                      >
+                        #{runMatch[1]}
                       </Box>
                     ) : null;
                   })()}
