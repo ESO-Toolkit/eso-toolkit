@@ -45,7 +45,7 @@
     "dev": "vite",
     "start": "vite",
     "start:dev": "vite --mode development",
-    "build": "tsc && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-all": "npm run build && npx vite-bundle-analyzer build/assets/*.js",

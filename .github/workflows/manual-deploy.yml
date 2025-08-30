@@ -4,32 +4,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  build-and-deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build UI
-        run: |
-          REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
-          PUBLIC_URL="/$REPO_NAME/" npm run build
-        env:
-          GITHUB_REPOSITORY: ${{ github.repository }}
-
-      - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./build
-          # Optionally, set custom domain
-          # cname: www.yourcustomdomain.com
+  deploy:
+    uses: ./.github/workflows/common/build-and-deploy.yml
+    secrets: inherit
