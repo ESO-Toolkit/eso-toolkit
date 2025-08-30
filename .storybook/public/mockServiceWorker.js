@@ -8,7 +8,11 @@
  */
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 const PACKAGE_VERSION = '2.10.5'
+=======
+const PACKAGE_VERSION = '2.11.0'
+>>>>>>> a43edd8 (mobile padding changes)
 =======
 const PACKAGE_VERSION = '2.11.0'
 >>>>>>> a43edd8 (mobile padding changes)
