@@ -100,7 +100,7 @@ export enum KnownAbilities {
   SPRINTER = 142079,
   GILDED_FINGERS = 142210,
   EXPLOITER = 63880,
-  BULKWARK = 64079,
+  BULWARK = 64079,
   FROM_THE_BRINK = 156017,
   ENLIVENING_OVERFLOW = 156008,
 
@@ -672,7 +672,7 @@ export const RED_CHAMPION_POINTS = Object.freeze(
 export const BLUE_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
     KnownAbilities.EXPLOITER,
-    KnownAbilities.BULKWARK,
+    KnownAbilities.BULWARK,
     KnownAbilities.REAVING_BLOWS,
     KnownAbilities.ENLIVENING_OVERFLOW,
     KnownAbilities.FROM_THE_BRINK,

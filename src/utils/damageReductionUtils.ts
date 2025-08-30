@@ -2,7 +2,7 @@ import { wardenData } from '../data/skillsets/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
-import { ArmorType, GearSlot, GearTrait, PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, GearTrait, PlayerGear, WeaponType } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
 import { ItemQuality } from './gearUtilities';
@@ -67,7 +67,7 @@ const REINFORCED_MULTIPLIER = Object.freeze<Record<ItemQuality, number>>({
 // Common resistance values in ESO
 export const ResistanceValues = Object.freeze<Record<string, number>>({
   AEGIS_OF_THE_UNSEEN: 3271,
-  BULKWARK: 1900, // Bulwark (Champion Point)
+  BULWARK: 1900, // Bulwark (Champion Point)
   FORTIFIED: 1731, // Fortified (Champion Point)
   FROZEN_ARMOR_PER_ABILITY: 1240, // Frozen Armor: +1240 resistance per Winter's Embrace ability slotted
   MAJOR_RESOLVE: 5948, // Major Resolve/Ward buff
@@ -136,6 +136,7 @@ export enum ComputedDamageReductionSources {
   FORTIFIED,
   FROZEN_ARMOR,
   AEGIS_OF_THE_UNSEEN,
+  BULWARK,
   // Add more computed sources as needed
 }
 
@@ -186,9 +187,11 @@ export const DAMAGE_REDUCTION_SOURCES = Object.freeze<DamageReductionSource[]>([
     source: 'buff',
   },
   {
-    source: 'not_implemented',
-    name: 'Bulkwark',
-    description: 'Bulkwark Champion Point: +1900 Physical and Spell Resistance',
+    key: ComputedDamageReductionSources.BULWARK,
+    source: 'computed',
+    name: 'Bulwark',
+    description:
+      'Bulwark Champion Point: While you have a Shield or Frost Staff equipped, your Spell and Physical Resistance is increased by 1900.',
   },
   {
     key: ComputedDamageReductionSources.FORTIFIED,
@@ -221,7 +224,7 @@ export const DAMAGE_REDUCTION_SOURCES = Object.freeze<DamageReductionSource[]>([
   // - Gear set bonuses (Ebon Armory, Fortified Brass, etc.)
   // - Block damage reduction while actively blocking
   // - Class-specific damage shields and mitigation abilities
-  // - Champion Point investments beyond Bulkwark
+  // - Champion Point investments beyond Bulwark
   // - Debuff immunities and resistances
 ] as DamageReductionSource[]);
 
@@ -477,6 +480,8 @@ export function isComputedSourceActive(
       return isAuraActive(combatantInfo, KnownAbilities.FROZEN_ARMOR);
     case ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN:
       return isAuraActive(combatantInfo, KnownAbilities.AEGIS_OF_THE_UNSEEN);
+    case ComputedDamageReductionSources.BULWARK:
+      return hasShieldOrFrostStaff(combatantInfo);
     default:
       return false;
   }
@@ -508,6 +513,8 @@ export function getResistanceFromComputedSource(
     case ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN:
       // Returns 3271 armor if any arcanist ability is active, otherwise 0
       return ResistanceValues.AEGIS_OF_THE_UNSEEN; // Using literal value due to enum corruption issue
+    case ComputedDamageReductionSources.BULWARK:
+      return ResistanceValues.BULWARK;
     default:
       return 0;
   }
@@ -564,4 +571,30 @@ function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number
  */
 export function isSourceNotImplemented(source: DamageReductionSource): boolean {
   return source.source === 'not_implemented';
+}
+
+/**
+ * Helper function to check if player has a shield or frost staff equipped
+ * Bulwark Champion Point provides 1900 resistance while either is equipped
+ */
+function hasShieldOrFrostStaff(combatantInfo: CombatantInfoEvent | null): boolean {
+  if (!combatantInfo || !combatantInfo.gear) return false;
+
+  const weaponSlots = [
+    GearSlot.MAIN_HAND,
+    GearSlot.OFF_HAND,
+    GearSlot.BACKUP_MAIN_HAND,
+    GearSlot.BACKUP_OFF_HAND,
+  ];
+
+  for (const slotIndex of weaponSlots) {
+    if (slotIndex < combatantInfo.gear.length) {
+      const weapon = combatantInfo.gear[slotIndex];
+      if (weapon && (weapon.type === WeaponType.SHIELD || weapon.type === WeaponType.FROST_STAFF)) {
+        return true;
+      }
+    }
+  }
+
+  return false;
 }
