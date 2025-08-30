@@ -28,6 +28,9 @@ type EventRowData = {
   [key: string]: unknown; // Add index signature for DataGrid compatibility
 };
 
+const PAGE_SIZE_OPTIONS = [25, 50, 100];
+Object.freeze(PAGE_SIZE_OPTIONS);
+
 export const EventsGrid: React.FC<EventsGridProps> = ({
   events,
   title = 'Events',
@@ -160,7 +163,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
       title={`${title} (${events.length.toLocaleString()} total)`}
       height={height}
       initialPageSize={25}
-      pageSizeOptions={[25, 50, 100]}
+      pageSizeOptions={PAGE_SIZE_OPTIONS}
       enableSorting={true}
       enableFiltering={true}
       enablePagination={true}

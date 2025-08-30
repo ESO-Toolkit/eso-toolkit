@@ -51,6 +51,7 @@ export const fetchDeathEvents = createAsyncThunk<
       do {
         const response: GetDeathEventsQuery = await client.query({
           query: GetDeathEventsDocument,
+          fetchPolicy: 'no-cache',
           variables: {
             code: reportCode,
             fightIds: [Number(fight.id)],
