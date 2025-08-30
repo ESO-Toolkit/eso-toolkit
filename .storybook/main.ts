@@ -40,11 +40,25 @@ const config: StorybookConfig = {
   },
 
   viteFinal: async (config) => {
+    // Disable ESLint completely for Storybook builds
+    process.env.DISABLE_ESLINT_PLUGIN = 'true';
+    
     // Remove ESLint plugin from Storybook to avoid conflicts with mocker runtime template
     if (config.plugins) {
       config.plugins = config.plugins.filter((plugin) => {
-        if (plugin && typeof plugin === 'object' && 'name' in plugin) {
-          return plugin.name !== 'vite:eslint';
+        if (plugin && typeof plugin === 'object') {
+          // Check for various ESLint plugin identifiers
+          const pluginName = 'name' in plugin ? plugin.name : '';
+          const isEslintPlugin = 
+            pluginName === 'vite:eslint' ||
+            pluginName === 'eslint' ||
+            pluginName?.includes('eslint') ||
+            ('__vitePlugin' in plugin && plugin.__vitePlugin === true && pluginName?.includes('eslint'));
+          
+          if (isEslintPlugin) {
+            console.log('🚫 Removing ESLint plugin from Storybook:', pluginName);
+            return false;
+          }
         }
         return true;
       });
