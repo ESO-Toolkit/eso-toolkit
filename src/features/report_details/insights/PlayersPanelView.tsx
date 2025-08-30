@@ -615,7 +615,14 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                 <Card
                   variant="outlined"
                   className="u-hover-lift u-fade-in-up"
-                  sx={{ width: '100%', display: 'flex', flexDirection: 'column', height: '100%' }}
+                  sx={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    height: '100%',
+                    background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                  }}
                 >
                   <CardContent
                     sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
