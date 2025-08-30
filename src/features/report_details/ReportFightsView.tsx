@@ -19,18 +19,121 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-// Asset imports
-import falgravenpng from '../../assets/vka/falgraven.png';
-import vrolpng from '../../assets/vka/vrol.png';
-import yandirpng from '../../assets/vka/yandir.png';
-import ansuulpng from '../../assets/vse/ansuul.png';
-import spiraldescenderpng from '../../assets/vse/spiral-descender.png';
-import twelvanepng from '../../assets/vse/twelvane.png';
-import yaselapng from '../../assets/vse/yasela.png';
-import lokkepng from '../../assets/vss/lokke.png';
-import nahvipng from '../../assets/vss/nahvi.png';
-import yolnpng from '../../assets/vss/yoln.png';
 import { FightFragment, ReportFragment } from '../../graphql/generated';
+
+// Boss avatar URL mappings using public folder paths
+const bossAvatars: Record<string, string> = {
+  // Kyne's Aegis
+  'Lord Falgravn': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Lord%20Falgravn.png",
+  Falgraven: "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Lord%20Falgravn.png",
+  'Captain Vrol': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Captain%20Vrol.png",
+  Vrol: "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Captain%20Vrol.png",
+  'Yandir the Butcher': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Yandir%20the%20Butcher.png",
+
+  // Ossein Cage
+  'Blood Drinker Thisa': '/src/assets/Ossein%20Cage/Boss%20Avatars/blood%20drinker%20thisa.png',
+  'Hall of Fleshcraft': '/src/assets/Ossein%20Cage/Boss%20Avatars/hall%20of%20fleshcraft.png',
+  'Jynorah and Skorkhif': '/src/assets/Ossein%20Cage/Boss%20Avatars/jynorah%20and%20skorkhif.png',
+  'Overfiend Kazpian': '/src/assets/Ossein%20Cage/Boss%20Avatars/overfiend%20kazpian.png',
+  'Red Witch Gedna Relvel':
+    '/src/assets/Ossein%20Cage/Boss%20Avatars/red%20witch%20gedna%20relvel.png',
+  'Tortured Ranyu': '/src/assets/Ossein%20Cage/Boss%20Avatars/tortued%20ranyu.png',
+
+  // Dreadsail Reef
+  'Bow Breaker': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Bow%20Breaker.png',
+  'Lylanar and Turlassil':
+    '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Lylanar%20and%20Turlassil.png',
+  'Reef Guardian': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Reef%20Guardian.png',
+  'Sail Ripper': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Sail%20Ripper.png',
+  'Tideborn Taleria': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Tideborn%20Taleria.png',
+
+  // Hel Ra Citadel
+  'Ra Kotu': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/ra%20kotu.png',
+  'The Warrior': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20warrior.png',
+  'The Yokedas': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
+  "Yokeda Rok'dun": '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
+  Yokedas: '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
+
+  // Asylum Sanctorium
+  'Saint Felms the Bold':
+    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
+  'Lord Felms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
+  'Saint Felms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
+  'Saint Llothis the Pious':
+    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20llothis%20the%20pious.png',
+  'Saint Llothis':
+    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20llothis%20the%20pious.png',
+  'Saint Olms the Just':
+    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20olms%20the%20just.png',
+  'Saint Olms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20olms%20the%20just.png',
+
+  // Rockgrove
+  'Ash Titan': '/src/assets/Rockgrove/Boss%20Avatars/ash%20titan.png',
+  'Basks-in-Snakes': '/src/assets/Rockgrove/Boss%20Avatars/basks-in-snakes.png',
+  'Basks-In-Snakes': '/src/assets/Rockgrove/Boss%20Avatars/basks-in-snakes.png',
+  'Flame-Herald Bahsei': '/src/assets/Rockgrove/Boss%20Avatars/flame-herald%20bahsei.png',
+  Oaxiltso: '/src/assets/Rockgrove/Boss%20Avatars/oaxiltso.png',
+  Xalvakka: '/src/assets/Rockgrove/Boss%20Avatars/xalvakka.png',
+
+  // Aetherian Archive
+  'Foundation Stone Atronach':
+    '/src/assets/Aetherian%20Archive/Boss%20Avatars/foundation%20stone%20atronach.png',
+  'Storm Atronach':
+    '/src/assets/Aetherian%20Archive/Boss%20Avatars/foundation%20stone%20atronach.png',
+  'Lightning Storm Atronach':
+    '/src/assets/Aetherian%20Archive/Boss%20Avatars/lightning%20storm%20atronach.png',
+  'Stone Atronach':
+    '/src/assets/Aetherian%20Archive/Boss%20Avatars/lightning%20storm%20atronach.png',
+  'The Mage': '/src/assets/Aetherian%20Archive/Boss%20Avatars/the%20mage.png',
+  Varlariel: '/src/assets/Aetherian%20Archive/Boss%20Avatars/varariel.png',
+
+  // Cloudrest
+  'Shade of Galenwe': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20galenwe.png',
+  Galenwe: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20galenwe.png',
+  'Shade of Relequen': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20relequen.png',
+  Relequen: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20relequen.png',
+  'Shade of Siroria': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20siroria.png',
+  Siroria: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20siroria.png',
+  "Z'maja": "/src/assets/Cloudrest/Boss%20Avatars/z'maja.png",
+
+  // Sanctum Ophidia
+  Ozara: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/ozara.png',
+  'Possessed Manticora': '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/possessed%20mantikora.png',
+  Stonebreaker: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/stonebreaker.png',
+  'The Serpent': '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/the%20serpent.png',
+  Serpent: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/the%20serpent.png',
+
+  // Halls of Fabrication
+  Archcustodian: '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/archcustodian.png',
+  'Assembly General':
+    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/assembly%20general.png',
+  'Hunter-Killer Fabricant':
+    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/the%20hunter%20killers.png',
+  'Pinnacle Factotum':
+    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/pinnacle%20factotum.png',
+  'The Refabrication Committee':
+    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/the%20refabrication%20committee.png',
+
+  // Lucent Citadel
+  'Cavot Agnan': '/src/assets/Lucent%20Citadel/Boss%20Avatars/cavot%20agnan.png',
+  'Dariel Lemonds': '/src/assets/Lucent%20Citadel/Boss%20Avatars/dariel%20lemonds.png',
+  'Count Ryelaz': '/src/assets/Lucent%20Citadel/Boss%20Avatars/dariel%20lemonds.png',
+  'Orphic Shattered Shard':
+    '/src/assets/Lucent%20Citadel/Boss%20Avatars/orphic%20shattered%20shard.png',
+  Xoryn: '/src/assets/Lucent%20Citadel/Boss%20Avatars/xoryn.png',
+  Zilyseet: '/src/assets/Lucent%20Citadel/Boss%20Avatars/zilyseet.png',
+  Zilyesset: '/src/assets/Lucent%20Citadel/Boss%20Avatars/zilyseet.png',
+  'Baron Rize': '/src/assets/Lucent%20Citadel/Boss%20Avatars/xoryn.png',
+  Jresazzel: '/src/assets/Lucent%20Citadel/Boss%20Avatars/orphic%20shattered%20shard.png',
+  Xynizata: '/src/assets/Lucent%20Citadel/Boss%20Avatars/cavot%20agnan.png',
+
+  // Maw of Lorkhaj
+  "Zhaj'hassa the Forgotten":
+    "/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/Zhaj'hassa%20the%20forgotten.png",
+  Rakkhat: '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/rakkhat.png',
+  'The Twins': '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
+  Vashai: '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
+};
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -102,25 +205,6 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   return false;
 }
 
-// Boss avatar mapping
-const bossAvatars: Record<string, string> = {
-  // VKA - Veteran Kyne's Aegis
-  Falgraven: falgravenpng,
-  'Captain Vrol': vrolpng,
-  Vrol: vrolpng,
-  'Yandir the Butcher': yandirpng,
-  // VSE - Veteran Sanity's Edge
-  'Ansuul the Tormentor': ansuulpng,
-  'Spiral Descender': spiraldescenderpng,
-  'Spiral Skein Descender': spiraldescenderpng,
-  Twelvane: twelvanepng,
-  'Yasela the Bonecaller': yaselapng,
-  // VSS - Veteran Sunspire
-  'Lokke Coast-Ripper': lokkepng,
-  Nahviintaas: nahvipng,
-  Yolnahkriin: yolnpng,
-};
-
 function getBossAvatar(bossName: string): string | null {
   // Remove instance numbers and extra text to match avatar keys
   const cleanName = bossName.replace(/#\d+$/, '').trim();
@@ -146,7 +230,7 @@ function getTrialNameFromBoss(
 
   // Sanity's Edge bosses
   if (
-    ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela', 'cavot', 'orphic'].some((name) =>
+    ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
       cleanBossName.includes(name)
     )
   ) {
@@ -176,15 +260,23 @@ function getTrialNameFromBoss(
   }
 
   if (
-    ['xoryn', 'count ryelaz', 'zilyesset', 'baron rize', 'jresazzel', 'xynizata'].some((name) =>
-      cleanBossName.includes(name)
-    )
+    [
+      'xoryn',
+      'count ryelaz',
+      'zilyesset',
+      'cavot agnan',
+      'orphic shattered shard',
+      'cavot',
+      'orphic',
+    ].some((name) => cleanBossName.includes(name))
   ) {
     return 'Lucent Citadel';
   }
 
   if (
-    ['oaxiltso', 'flame-herald bahsei', 'xalvakka'].some((name) => cleanBossName.includes(name))
+    ['oaxiltso', 'flame-herald bahsei', 'xalvakka', 'ash titan', 'basks-in-snakes', 'basks'].some(
+      (name) => cleanBossName.includes(name)
+    )
   ) {
     return 'Rockgrove';
   }
@@ -202,21 +294,27 @@ function getTrialNameFromBoss(
   }
 
   if (
-    ['hunter-killer fabricant', 'pinnacle factotum', 'archcustodian'].some((name) =>
-      cleanBossName.includes(name)
-    )
+    [
+      'hunter-killer fabricant',
+      'pinnacle factotum',
+      'archcustodian',
+      'assembly general',
+      'refabrication committee',
+    ].some((name) => cleanBossName.includes(name))
   ) {
     return 'Halls of Fabrication';
   }
 
   if (
-    ["zhaj'hassa the forgotten", 'vashai', 'rakkhat'].some((name) => cleanBossName.includes(name))
+    ["zhaj'hassa the forgotten", 'vashai', 'rakkhat', 'twins', "zhaj'hassa"].some((name) =>
+      cleanBossName.includes(name)
+    )
   ) {
     return 'Maw of Lorkhaj';
   }
 
   if (
-    ['possessed manticora', 'stonebreaker', 'ozara', 'serpent'].some((name) =>
+    ['possessed manticora', 'stonebreaker', 'ozara', 'serpent', 'manticora'].some((name) =>
       cleanBossName.includes(name)
     )
   ) {
@@ -233,9 +331,14 @@ function getTrialNameFromBoss(
   }
 
   if (
-    ['storm atronach', 'stone atronach', 'varlariel', 'the mage'].some((name) =>
-      cleanBossName.includes(name)
-    )
+    [
+      'storm atronach',
+      'stone atronach',
+      'varlariel',
+      'the mage',
+      'foundation stone atronach',
+      'lightning storm atronach',
+    ].some((name) => cleanBossName.includes(name))
   ) {
     return 'Aetherian Archive';
   }
@@ -292,21 +395,12 @@ function getTrialHMType(trialName: string): 'per-boss' | 'final-boss-only' | 'sp
   return 'final-boss-only';
 }
 
-function getDifficultyLabel(
-  difficulty: number | null,
-  trialName: string,
-  bossName?: string
-): string | null {
-  if (difficulty === null || difficulty === undefined) {
-    return null;
-  }
-
-  // First handle normal/veteran distinction
-  if (difficulty < 10) {
+function getDifficultyLabel(difficulty: number | null, trialName: string): string | null {
+  if (!difficulty || difficulty < 10) {
     return 'Normal';
   }
 
-  // Special handling for trials with +X system (Cloudrest/Asylum)
+  // Special handling for Cloudrest and Asylum Sanctorium
   const isCloudrest = trialName.includes('Cloudrest') || trialName.includes('CR');
   const isAsylum = trialName.includes('Asylum') || trialName.includes('AS');
 
@@ -320,13 +414,8 @@ function getDifficultyLabel(
   }
 
   // General difficulty mapping for all other trials
-  if (difficulty === 121) return 'Veteran';
   if (difficulty === 122) return 'Veteran HM';
-
-  // Fallback for other difficulty values
-  if (difficulty >= 120) {
-    return 'Veteran HM';
-  }
+  if (difficulty === 121) return 'Veteran';
 
   return 'Veteran';
 }
@@ -347,16 +436,39 @@ function getTrialRunDifficulty(
       label: getDifficultyLabel(difficulty, trialName),
     };
   } else if (hmType === 'per-boss') {
-    // For per-boss HM trials, if ANY boss was HM, consider it HM
-    const hasHM = fights.some((fight) => fight.difficulty === 122);
-    const hasVet = fights.some((fight) => fight.difficulty === 121);
+    // For per-boss HM trials, check if any boss was HM
+    // Special handling for mini-bosses that can't be HM in Rockgrove
+    const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
+
+    // If this is a single boss encounter, handle it directly
+    if (fights.length === 1) {
+      const fight = fights[0];
+      const isMiniBoss = nonHMBosses.includes(fight.name);
+
+      // For mini-bosses, return their actual difficulty without HM logic
+      if (isMiniBoss) {
+        const difficulty = fight.difficulty ?? 121;
+        const label = getDifficultyLabel(difficulty, trialName);
+        return { difficulty, label };
+      }
+
+      // For regular bosses, apply HM logic
+      const difficulty = fight.difficulty ?? 121;
+      const label = getDifficultyLabel(difficulty, trialName);
+      return { difficulty, label };
+    }
+
+    // For multiple fights (full trial run), filter out mini-bosses from HM calculation
+    const hmCapableFights = fights.filter((fight) => !nonHMBosses.includes(fight.name));
+    const hasHM = hmCapableFights.some((fight) => fight.difficulty === 122);
+    const hasVet = hmCapableFights.some((fight) => fight.difficulty === 121);
 
     if (hasHM) {
       return { difficulty: 122, label: 'Veteran HM' };
     } else if (hasVet) {
       return { difficulty: 121, label: 'Veteran' };
     } else {
-      // Check for normal
+      // Check for normal in all fights
       const hasNormal = fights.some((fight) => (fight.difficulty ?? 0) < 10);
       return { difficulty: hasNormal ? 0 : 121, label: hasNormal ? 'Normal' : 'Veteran' };
     }
@@ -540,19 +652,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       }
 
       if (shouldStartNewRun) {
-        // Debug logging for run splits
-        console.log('🚀 STARTING NEW TRIAL RUN:', {
-          bossName,
-          trialName,
-          currentRunNumber: currentRunNumber + 1,
-          reason: 'shouldStartNewRun = true',
-          bossProgressionKey,
-          bossInstancesSeen: Array.from(bossInstancesSeen),
-          bossProgressionOrder: [...bossProgressionOrder],
-          difficulty: currentBoss.difficulty,
-          instanceCount,
-        });
-
         // Reset progression tracking
         currentRunNumber++;
         bossInstancesSeen.clear();
@@ -640,18 +739,17 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         continue; // Skip to next boss if no trial run is available
       }
 
-      // Use instanceCount to distinguish separate boss instances
-      // Each unique combination of boss name + instanceCount represents a separate encounter
-      let bossEncounter = currentTrialRun.encounters.find(
-        (enc) => enc.id === `${trialRunId}-${bossInstanceKey}`
-      );
+      // Group all attempts of the same boss into one encounter
+      // Use only boss name (without instance count) for encounter grouping
+      const encounterKey = `${trialRunId}-${bossName.replace(/\s+/g, '-').toLowerCase()}`;
+      let bossEncounter = currentTrialRun.encounters.find((enc) => enc.id === encounterKey);
 
       if (!bossEncounter) {
         // Create display name without instance numbers
         const displayName = bossName;
 
         const newEncounter: Encounter = {
-          id: `${trialRunId}-${bossInstanceKey}`,
+          id: encounterKey,
           name: displayName,
           bossFights: [],
           preTrash: [],
@@ -664,6 +762,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Add boss and pre-trash to the encounter
       bossEncounter.bossFights.push(currentBoss);
       bossEncounter.preTrash.push(...preTrash);
+
+      // Update the trial run's fights array to include all bosses
+      if (!currentTrialRun.fights.some((f) => f.id === currentBoss.id)) {
+        currentTrialRun.fights.push(currentBoss);
+      }
 
       // Only add post-trash if there's a next boss (not the final boss)
       if (nextBoss) {
@@ -731,18 +834,103 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       }
     });
 
-    // Finalize trial run difficulties based on all bosses in each run
-    const finalizedTrialRuns = updatedTrialRuns.map((run) => {
-      const runDifficulty = getTrialRunDifficulty(run.fights, run.trialName);
-      const baseName = run.name.split(' (')[0]; // Remove existing difficulty label
+    // Calculate trial difficulty for each individual run based on its own fights
+    const calculateTrialDifficulty = (
+      runFights: FightFragment[],
+      trialName: string
+    ): { difficulty: number; label: string } => {
+      // Get HM type for this trial
+      const hmType = getTrialHMType(trialName);
+      const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
 
-      const finalName = runDifficulty.label ? `${baseName} (${runDifficulty.label})` : baseName;
+      if (hmType === 'per-boss') {
+        // For per-boss HM trials, analyze all HM-capable bosses in this run
+        const hmCapableFights = runFights.filter((fight) => !nonHMBosses.includes(fight.name));
+
+        if (hmCapableFights.length === 0) {
+          return { difficulty: 121, label: 'Veteran' };
+        }
+
+        const hmBosses = hmCapableFights.filter((fight) => fight.difficulty === 122);
+        const vetBosses = hmCapableFights.filter((fight) => fight.difficulty === 121);
+        const normalBosses = hmCapableFights.filter((fight) => (fight.difficulty ?? 0) < 10);
+
+        // Determine difficulty pattern for this run
+        if (normalBosses.length > 0 && hmBosses.length === 0 && vetBosses.length === 0) {
+          return { difficulty: 0, label: 'Normal' };
+        } else if (hmBosses.length > 0 && vetBosses.length === 0) {
+          return { difficulty: 122, label: 'Veteran HM' };
+        } else if (hmBosses.length === 0 && vetBosses.length > 0) {
+          return { difficulty: 121, label: 'Veteran' };
+        } else if (hmBosses.length > 0 && vetBosses.length > 0) {
+          return { difficulty: 122, label: 'Partial Veteran HM' };
+        } else {
+          // Mixed with normal - default to veteran
+          return { difficulty: 121, label: 'Veteran' };
+        }
+      } else if (hmType === 'final-boss-only') {
+        // For final-boss-only HM trials, check if ANY boss in this run was HM
+        // This handles cases where the final boss was done in HM
+        const hasHM = runFights.some((fight) => fight.difficulty === 122);
+        const hasVet = runFights.some((fight) => fight.difficulty === 121);
+        const hasNormal = runFights.some((fight) => (fight.difficulty ?? 0) < 10);
+
+        if (hasHM) {
+          return { difficulty: 122, label: 'Veteran HM' };
+        } else if (hasVet) {
+          return { difficulty: 121, label: 'Veteran' };
+        } else if (hasNormal) {
+          return { difficulty: 0, label: 'Normal' };
+        } else {
+          return { difficulty: 121, label: 'Veteran' };
+        }
+      } else if (hmType === 'special') {
+        // For Cloudrest and Asylum Sanctorium, use difficulty codes for HM detection
+        // Difficulty codes: 121=Veteran, 122=Standard HM, 123=+1, 124=+2, 125=+3
+        const hasHM = runFights.some((fight) => (fight.difficulty ?? 0) >= 123);
+        const hasVet = runFights.some((fight) => fight.difficulty === 121);
+        const hasNormal = runFights.some((fight) => (fight.difficulty ?? 0) < 10);
+
+        if (hasHM) {
+          return { difficulty: 122, label: 'Veteran HM' };
+        } else if (hasVet) {
+          return { difficulty: 121, label: 'Veteran' };
+        } else if (hasNormal) {
+          return { difficulty: 0, label: 'Normal' };
+        } else {
+          return { difficulty: 121, label: 'Veteran' };
+        }
+      } else {
+        // Fallback for any unhandled trial types
+        return { difficulty: 121, label: 'Veteran' };
+      }
+    };
+
+    // Apply difficulty labels to each individual trial run
+    const finalizedTrialRuns = updatedTrialRuns.map((run, index) => {
+      const baseName = run.name.split(' (')[0]; // Remove existing difficulty label
+      const trialDifficulty = calculateTrialDifficulty(run.fights, run.trialName);
+      const finalName = `${baseName} (${trialDifficulty.label})`;
+
+      const hmCapableFights = run.fights.filter(
+        (f) => !['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'].includes(f.name)
+      );
+      console.log(
+        '🏃 RUN:',
+        run.name,
+        'BOSS:',
+        run.fights[0]?.name,
+        'DIFF:',
+        run.fights[0]?.difficulty,
+        'CALCULATED:',
+        trialDifficulty.label
+      );
 
       return {
         ...run,
         name: finalName,
-        difficulty: runDifficulty.difficulty,
-        difficultyLabel: runDifficulty.label,
+        difficulty: trialDifficulty.difficulty,
+        difficultyLabel: trialDifficulty.label,
       };
     });
 
@@ -1114,175 +1302,69 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     <>
       <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
         <Typography variant="h5" gutterBottom>
-          Select a Fight
+          {reportData?.title || 'Report Details'}
         </Typography>
-        {encounters.map((trialRun) => {
-          return (
-            <Accordion
-              key={trialRun.id}
-              expanded={expandedEncounters.has(trialRun.id)}
-              onChange={() => toggleEncounter(trialRun.id)}
-              sx={{ mb: 2, '&:before': { display: 'none' } }}
-            >
-              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                <Box
+        {encounters.map((trialRun) => (
+          <Accordion
+            key={trialRun.id}
+            expanded={expandedEncounters.has(trialRun.id)}
+            onChange={() => toggleEncounter(trialRun.id)}
+            sx={{ mb: 2, '&:before': { display: 'none' } }}
+          >
+            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  pr: 2,
+                }}
+              >
+                <Typography
+                  variant="h6"
                   sx={{
+                    fontWeight: 200,
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    width: '100%',
-                    pr: 2,
+                    gap: 1,
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 200,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
-                    {(() => {
-                      // Split trial name and difficulty for styling
-                      const fullName = trialRun.name.replace(/#\d+/, '');
-                      const difficultyMatch = fullName.match(/^(.+?)\s*\((.+)\)$/);
-
-                      if (difficultyMatch) {
-                        const [, baseName, difficulty] = difficultyMatch;
-                        return (
-                          <>
-                            {baseName.trim()}{' '}
-                            <Box component="span" sx={{ fontWeight: 700 }}>
-                              ({difficulty})
-                            </Box>
-                          </>
-                        );
-                      }
-
-                      return fullName;
-                    })()}
-                    {(() => {
-                      const runMatch = trialRun.name.match(/#\d+/);
-                      return runMatch ? (
-                        <Box component="span" sx={{ fontWeight: 700 }}>
-                          {runMatch[0]}
-                        </Box>
-                      ) : null;
-                    })()}
-                  </Typography>
                   {(() => {
-                    // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
-                    const killedBosses = trialRun.encounters.reduce((count, encounter) => {
-                      const hasKill = encounter.bossFights.some((fight) => {
-                        const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                        const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                        return !rawIsWipe || isFalsePositive; // Kill if not a wipe or false positive
-                      });
-                      return count + (hasKill ? 1 : 0);
-                    }, 0);
+                    // Split trial name and difficulty for styling
+                    const fullName = trialRun.name.replace(/#\d+/, '');
+                    const difficultyMatch = fullName.match(/^(.+?)\s*\((.+)\)$/);
 
-                    const encounteredBosses = trialRun.encounters.length;
-
-                    // Determine expected total bosses based on zone name
-                    const zoneName = trialRun.name.replace(/#\d+/, '').trim();
-                    let expectedTotalBosses = encounteredBosses; // default fallback
-
-                    // Known trial boss counts
-                    if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Cloudrest')) {
-                      // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
-                      // Use actual encountered count since minis can be skipped
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Rockgrove')) expectedTotalBosses = 4;
-                    else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
-                    else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
-                    else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 5;
-                    else if (zoneName.includes('Asylum Sanctorium')) {
-                      // Asylum has variable bosses: 1 main + 0-2 minis
-                      // Use actual encountered count since minis can be skipped
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
-                    else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
-                    else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 4;
-                    else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
-
-                    // Determine color based on completion against expected total
-                    let color = '#ff9800'; // orange - default for low completion
-                    if (killedBosses === expectedTotalBosses) {
-                      color = '#4caf50'; // green - ALL expected bosses killed
-                    } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
-                      color = '#ffeb3b'; // yellow - 3-4 kills in 5-boss trial
-                    } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
-                      color = '#ffeb3b'; // yellow - 2-3 kills in 4-boss trial
-                    } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
-                      color = '#ffeb3b'; // yellow - 2 kills in 3-boss trial
+                    if (difficultyMatch) {
+                      const [, baseName, difficulty] = difficultyMatch;
+                      return (
+                        <>
+                          {baseName.trim()}{' '}
+                          <Box component="span" sx={{ fontWeight: 700 }}>
+                            ({difficulty})
+                          </Box>
+                        </>
+                      );
                     }
 
-                    return (
-                      <Box
-                        sx={{
-                          position: 'relative',
-                          overflow: 'hidden',
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          backdropFilter: 'blur(10px)',
-                          WebkitBackdropFilter: 'blur(10px)',
-                          border: `1px solid ${color}`,
-                          boxShadow:
-                            '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          color: color,
-                          textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                          background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
-                          transition: 'all 0.3s ease',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: '50%',
-                            background:
-                              'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
-                            borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
-                            pointerEvents: 'none',
-                          },
-                        }}
-                      >
-                        {killedBosses}
-                      </Box>
-                    );
+                    return fullName;
                   })()}
-                </Box>
+                  {(() => {
+                    const runMatch = trialRun.name.match(/#\d+/);
+                    return runMatch ? (
+                      <Box component="span" sx={{ fontWeight: 700 }}>
+                        {runMatch[0]}
+                      </Box>
+                    ) : null;
+                  })()}
+                </Typography>
                 {(() => {
                   // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
                   const killedBosses = trialRun.encounters.reduce((count, encounter) => {
                     const hasKill = encounter.bossFights.some((fight) => {
-                      // Use the same kill logic as individual fight cards
-                      const isBossFight = fight.difficulty != null;
-                      if (isBossFight) {
-                        const bossWasKilled =
-                          fight.bossPercentage !== null &&
-                          fight.bossPercentage !== undefined &&
-                          fight.bossPercentage <= 1.0;
-                        const rawIsWipe =
-                          fight.bossPercentage !== null &&
-                          fight.bossPercentage !== undefined &&
-                          fight.bossPercentage > 1.0;
-                        const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                        return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
-                      } else {
-                        // For trash fights, assume successful completion
-                        return true;
-                      }
+                      const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
+                      const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                      return !rawIsWipe || isFalsePositive; // Kill if not a wipe or false positive
                     });
                     return count + (hasKill ? 1 : 0);
                   }, 0);
@@ -1291,20 +1373,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                   // Determine expected total bosses based on zone name
                   const zoneName = trialRun.name.replace(/#\d+/, '').trim();
-
-                  // Debug logging for Ossein Cage
-                  if (zoneName.includes('Ossein Cage')) {
-                    console.log('Ossein Cage trial data:', {
-                      zoneName,
-                      encounteredBosses,
-                      killedBosses,
-                      encounters: trialRun.encounters.map((e) => ({
-                        name: e.name,
-                        bossFights: e.bossFights.length,
-                      })),
-                    });
-                  }
-
                   let expectedTotalBosses = encounteredBosses; // default fallback
 
                   // Known trial boss counts
@@ -1312,10 +1380,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   else if (zoneName.includes('Cloudrest')) {
                     // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
                     // Use actual encountered count since minis can be skipped
-                    expectedTotalBosses = encounteredBosses;
-                  } else if (zoneName.includes('Ossein Cage')) {
-                    // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
-                    // Minis don't affect boss naming, use actual encountered count
                     expectedTotalBosses = encounteredBosses;
                   } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
                   else if (zoneName.includes('Rockgrove')) expectedTotalBosses = 4;
@@ -1329,7 +1393,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
                   else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
                   else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
-                  else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
+                  else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 4;
                   else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
 
                   // Determine color based on completion against expected total
@@ -1346,7 +1410,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                   return (
                     <Box
-                      key={trialRun.id}
                       sx={{
                         position: 'relative',
                         overflow: 'hidden',
@@ -1385,143 +1448,293 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                     </Box>
                   );
                 })()}
-              </AccordionSummary>
-              <AccordionDetails>
-                {trialRun.encounters.map((encounter) => {
-                  return (
+              </Box>
+              {(() => {
+                // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
+                const killedBosses = trialRun.encounters.reduce((count, encounter) => {
+                  const hasKill = encounter.bossFights.some((fight) => {
+                    // Use the same kill logic as individual fight cards
+                    const isBossFight = fight.difficulty != null;
+                    if (isBossFight) {
+                      const bossWasKilled =
+                        fight.bossPercentage !== null &&
+                        fight.bossPercentage !== undefined &&
+                        fight.bossPercentage <= 1.0;
+                      const rawIsWipe =
+                        fight.bossPercentage !== null &&
+                        fight.bossPercentage !== undefined &&
+                        fight.bossPercentage > 1.0;
+                      const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                      return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
+                    } else {
+                      // For trash fights, assume successful completion
+                      return true;
+                    }
+                  });
+                  return count + (hasKill ? 1 : 0);
+                }, 0);
+
+                const encounteredBosses = trialRun.encounters.length;
+
+                // Determine expected total bosses based on zone name
+                const zoneName = trialRun.name.replace(/#\d+/, '').trim();
+
+                // Debug logging for Ossein Cage
+                if (zoneName.includes('Ossein Cage')) {
+                  console.log('Ossein Cage trial data:', {
+                    zoneName,
+                    encounteredBosses,
+                    killedBosses,
+                    encounters: trialRun.encounters.map((e) => ({
+                      name: e.name,
+                      bossFights: e.bossFights.length,
+                    })),
+                  });
+                }
+
+                let expectedTotalBosses = encounteredBosses; // default fallback
+
+                // Known trial boss counts
+                if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
+                else if (zoneName.includes('Cloudrest')) {
+                  // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
+                  // Use actual encountered count since minis can be skipped
+                  expectedTotalBosses = encounteredBosses;
+                } else if (zoneName.includes('Ossein Cage')) {
+                  // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
+                  // Minis don't affect boss naming, use actual encountered count
+                  expectedTotalBosses = encounteredBosses;
+                } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
+                else if (zoneName.includes('Rockgrove')) expectedTotalBosses = 4;
+                else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
+                else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
+                else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 4;
+                else if (zoneName.includes('Asylum Sanctorium')) {
+                  // Asylum has variable bosses: 1 main + 0-2 minis
+                  // Use actual encountered count since minis can be skipped
+                  expectedTotalBosses = encounteredBosses;
+                } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
+                else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
+                else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
+                else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
+                else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
+
+                // Determine color based on completion against expected total
+                let color = '#ff9800'; // orange - default for low completion
+                if (killedBosses === expectedTotalBosses) {
+                  color = '#4caf50'; // green - ALL expected bosses killed
+                } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
+                  color = '#ffeb3b'; // yellow - 3-4 kills in 5-boss trial
+                } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
+                  color = '#ffeb3b'; // yellow - 2-3 kills in 4-boss trial
+                } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
+                  color = '#ffeb3b'; // yellow - 2 kills in 3-boss trial
+                }
+
+                return (
+                  <Box
+                    key={trialRun.id}
+                    sx={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      width: 20,
+                      height: 20,
+                      borderRadius: '50%',
+                      backdropFilter: 'blur(10px)',
+                      WebkitBackdropFilter: 'blur(10px)',
+                      border: `1px solid ${color}`,
+                      boxShadow:
+                        '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      color: color,
+                      textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                      background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
+                      transition: 'all 0.3s ease',
+                      '&::after': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '50%',
+                        background:
+                          'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                        borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
+                        pointerEvents: 'none',
+                      },
+                    }}
+                  >
+                    {killedBosses}
+                  </Box>
+                );
+              })()}
+            </AccordionSummary>
+            <AccordionDetails>
+              {trialRun.encounters.map((encounter) => {
+                return (
+                  <Box
+                    key={encounter.id}
+                    sx={{
+                      mb: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid rgba(255, 255, 255, 0.0)',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        background: 'rgba(255, 255, 255, 0.04)',
+                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1)',
+                        transform: 'translateY(-1px)',
+                      },
+                    }}
+                  >
                     <Box
-                      key={encounter.id}
                       sx={{
-                        mb: 2,
-                        p: 2,
-                        borderRadius: 2,
-                        border: '1px solid rgba(255, 255, 255, 0.0)',
-                        transition: 'all 0.2s ease-in-out',
-                        '&:hover': {
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          background: 'rgba(255, 255, 255, 0.04)',
-                          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1)',
-                          transform: 'translateY(-1px)',
-                        },
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1,
                       }}
                     >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          mb: 1,
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          {(() => {
-                            const avatarSrc = getBossAvatar(encounter.name);
-                            return (
-                              avatarSrc && (
-                                <Avatar
-                                  src={avatarSrc}
-                                  alt={encounter.name}
-                                  sx={{ width: 32, height: 32 }}
-                                />
-                              )
-                            );
-                          })()}
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ color: 'text.primary', fontWeight: 'medium' }}
-                          >
-                            {encounter.name}{' '}
-                            <Box component="span" sx={{ fontWeight: 200 }}>
-                              ({encounter.bossFights.length})
-                            </Box>
-                          </Typography>
-                        </Box>
-                        {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
-                          <FormControlLabel
-                            control={
-                              <Switch
-                                checked={showTrashForEncounter.has(encounter.id)}
-                                onChange={(e) => {
-                                  e.stopPropagation();
-                                  toggleTrashForEncounter(encounter.id);
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        {(() => {
+                          const avatarSrc = getBossAvatar(encounter.name);
+                          return (
+                            avatarSrc && (
+                              <Avatar
+                                src={avatarSrc}
+                                alt={encounter.name}
+                                sx={{
+                                  width: 32,
+                                  height: 32,
+                                  border: '1.5px solid #b3b3b3f2',
+                                  boxShadow:
+                                    'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)',
                                 }}
-                                size="small"
                               />
+                            )
+                          );
+                        })()}
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ color: 'text.primary', fontWeight: 'medium' }}
+                        >
+                          {encounter.name}{' '}
+                          {(() => {
+                            // Get difficulty from the first boss fight
+                            const bossFight = encounter.bossFights.find(
+                              (f) => f.difficulty != null
+                            );
+                            if (bossFight && bossFight.difficulty != null) {
+                              const trialName = trialRun.trialName || '';
+                              const difficultyLabel = getDifficultyLabel(
+                                bossFight.difficulty,
+                                trialName
+                              );
+                              return (
+                                <Box
+                                  component="span"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: difficultyLabel === 'Veteran HM' ? '#fbbf24' : '#94a3b8',
+                                  }}
+                                >
+                                  ({difficultyLabel})
+                                </Box>
+                              );
                             }
-                            label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
-                            sx={{ ml: 2, mr: 0 }}
-                            onClick={(e) => e.stopPropagation()}
-                          />
-                        )}
+                            return null;
+                          })()}{' '}
+                          <Box component="span" sx={{ fontWeight: 200 }}>
+                            ({encounter.bossFights.length})
+                          </Box>
+                        </Typography>
                       </Box>
-
-                      {/* Pre-encounter trash */}
-                      <Collapse
-                        in={
-                          showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0
-                        }
-                      >
-                        <Box sx={{ mb: 2 }}>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
-                          >
-                            Pre-encounter trash
-                          </Typography>
-                          <List
-                            sx={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
-                            }}
-                          >
-                            {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
-                          </List>
-                        </Box>
-                      </Collapse>
-
-                      {/* Boss fights */}
-                      <List
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                          gap: 1,
-                        }}
-                      >
-                        {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
-                      </List>
-
-                      {/* Post-encounter trash */}
-                      <Collapse
-                        in={
-                          showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0
-                        }
-                      >
-                        <Box>
-                          <Typography
-                            variant="subtitle2"
-                            sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
-                          >
-                            Post-encounter trash
-                          </Typography>
-                          <List
-                            sx={{
-                              display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
-                            }}
-                          >
-                            {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
-                          </List>
-                        </Box>
-                      </Collapse>
+                      {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={showTrashForEncounter.has(encounter.id)}
+                              onChange={(e) => {
+                                e.stopPropagation();
+                                toggleTrashForEncounter(encounter.id);
+                              }}
+                              size="small"
+                            />
+                          }
+                          label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
+                          sx={{ ml: 2, mr: 0 }}
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      )}
                     </Box>
-                  );
-                })}
-              </AccordionDetails>
-            </Accordion>
-          );
-        })}
+
+                    {/* Pre-encounter trash */}
+                    <Collapse
+                      in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
+                    >
+                      <Box sx={{ mb: 2 }}>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                        >
+                          Pre-encounter trash
+                        </Typography>
+                        <List
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            gap: 1,
+                          }}
+                        >
+                          {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                        </List>
+                      </Box>
+                    </Collapse>
+
+                    {/* Boss fights */}
+                    <List
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                        gap: 1,
+                      }}
+                    >
+                      {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
+                    </List>
+
+                    {/* Post-encounter trash */}
+                    <Collapse
+                      in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
+                    >
+                      <Box>
+                        <Typography
+                          variant="subtitle2"
+                          sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                        >
+                          Post-encounter trash
+                        </Typography>
+                        <List
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            gap: 1,
+                          }}
+                        >
+                          {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                        </List>
+                      </Box>
+                    </Collapse>
+                  </Box>
+                );
+              })}
+            </AccordionDetails>
+          </Accordion>
+        ))}
       </Paper>
     </>
   );
