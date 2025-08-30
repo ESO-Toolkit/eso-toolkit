@@ -10,8 +10,8 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
 import { AbilityIcon } from '../../../components/AbilityIcon';
+import { FightFragment } from '../../../graphql/generated';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';

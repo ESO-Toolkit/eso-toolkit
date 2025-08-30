@@ -13,20 +13,6 @@ import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
 
-// Color mapping for different damage types
-const DAMAGE_TYPE_COLORS: Record<string, string> = {
-  Physical: '#8B5A2B',
-  Magic: '#6366F1',
-  Fire: '#EF4444',
-  Frost: '#3B82F6',
-  Shock: '#FBBF24',
-  Poison: '#10B981',
-  Disease: '#8B5CF6',
-  Generic: '#6B7280',
-  Drown: '#0EA5E9',
-  Bleed: '#DC2626',
-  None: '#9CA3AF',
-};
 
 interface DamageBreakdown {
   abilityGameID: string;
