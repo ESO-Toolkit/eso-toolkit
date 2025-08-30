@@ -35,14 +35,17 @@ runs:
       run: |
         echo "REACT_APP_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
 
+    - name: Setup Pages
+      uses: actions/configure-pages@v5
+      id: setup
+
     - name: Build project
       shell: bash
       run: |
-        REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
         export GENERATE_SOURCEMAP=${{ inputs.enable_sourcemaps }}
-        npm run build -- -- --base="/$REPO_NAME/"
+        npm run build
       env:
-        GITHUB_REPOSITORY: ${{ github.repository }}
+        VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
 
     - name: Build Storybook
       shell: bash
