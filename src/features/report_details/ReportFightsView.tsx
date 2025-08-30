@@ -19,6 +19,8 @@ import {
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { FightFragment, ReportFragment } from '../../graphql/generated';
+
 // Boss avatar URL mappings using public folder paths
 const bossAvatars: Record<string, string> = {
   // Kyne's Aegis
@@ -116,7 +118,6 @@ const bossAvatars: Record<string, string> = {
   'The Twins': '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
   'Vashai': '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
 };
-import { FightFragment, ReportFragment } from '../../graphql/generated';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -174,7 +175,7 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
 
   // 4. Normal/veteran difficulty with very high boss health in reasonable time
   if (
-    (fight.difficulty >= 1 && fight.difficulty < 10) &&
+    (fight.difficulty != null && fight.difficulty >= 1 && fight.difficulty < 10) &&
     fight.bossPercentage >= 98 &&
     durationSeconds > 15 &&
     durationSeconds < 600
@@ -334,64 +335,71 @@ function getDifficultyLabel(difficulty: number | null, trialName: string): strin
   return 'Veteran';
 }
 
-// Helper function to determine trial run difficulty based on all bosses in the run
-function getTrialRunDifficulty(fights: FightFragment[], trialName: string): { difficulty: number | null, label: string | null } {
+function calculateTrialDifficulty(fights: FightFragment[], trialName: string): { difficulty: number; label: string } {
+  // Get HM type for this trial
   const hmType = getTrialHMType(trialName);
+  const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
   
-  if (hmType === 'final-boss-only') {
-    // For final-boss-only HM trials, check if the final boss was attempted in HM
-    const finalBoss = fights[fights.length - 1];
-    const difficulty = finalBoss?.difficulty ?? null;
-    return {
-      difficulty,
-      label: getDifficultyLabel(difficulty, trialName)
-    };
-  } else if (hmType === 'per-boss') {
-    // For per-boss HM trials, check if any boss was HM
-    // Special handling for mini-bosses that can't be HM in Rockgrove
-    const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
+  if (hmType === 'per-boss') {
+    // For per-boss HM trials, analyze all HM-capable bosses in this run
+    const hmCapableFights = fights.filter(fight => !nonHMBosses.includes(fight.name));
     
-    // If this is a single boss encounter, handle it directly
-    if (fights.length === 1) {
-      const fight = fights[0];
-      const isMiniBoss = nonHMBosses.includes(fight.name);
-      
-      
-      // For mini-bosses, return their actual difficulty without HM logic
-      if (isMiniBoss) {
-        const difficulty = fight.difficulty ?? 121;
-        const label = getDifficultyLabel(difficulty, trialName);
-        return { difficulty, label };
-      }
-      
-      // For regular bosses, apply HM logic
-      const difficulty = fight.difficulty ?? 121;
-      const label = getDifficultyLabel(difficulty, trialName);
-      return { difficulty, label };
+    if (hmCapableFights.length === 0) {
+      return { difficulty: 121, label: 'Veteran' };
     }
     
-    // For multiple fights (full trial run), filter out mini-bosses from HM calculation
-    const hmCapableFights = fights.filter(fight => !nonHMBosses.includes(fight.name));
-    const hasHM = hmCapableFights.some(fight => fight.difficulty === 122);
-    const hasVet = hmCapableFights.some(fight => fight.difficulty === 121);
+    const hmBosses = hmCapableFights.filter(fight => fight.difficulty === 122);
+    const vetBosses = hmCapableFights.filter(fight => fight.difficulty === 121);
+    const normalBosses = hmCapableFights.filter(fight => (fight.difficulty ?? 0) < 10);
     
+    // Determine difficulty pattern for this run
+    if (normalBosses.length > 0 && hmBosses.length === 0 && vetBosses.length === 0) {
+      return { difficulty: 0, label: 'Normal' };
+    } else if (hmBosses.length > 0 && vetBosses.length === 0) {
+      return { difficulty: 122, label: 'Veteran HM' };
+    } else if (hmBosses.length === 0 && vetBosses.length > 0) {
+      return { difficulty: 121, label: 'Veteran' };
+    } else if (hmBosses.length > 0 && vetBosses.length > 0) {
+      return { difficulty: 122, label: 'Partial Veteran HM' };
+    } else {
+      // Mixed with normal - default to veteran
+      return { difficulty: 121, label: 'Veteran' };
+    }
+  } else if (hmType === 'final-boss-only') {
+    // For final-boss-only HM trials, check if ANY boss in this run was HM
+    // This handles cases where the final boss was done in HM
+    const hasHM = fights.some(fight => fight.difficulty === 122);
+    const hasVet = fights.some(fight => fight.difficulty === 121);
+    const hasNormal = fights.some(fight => (fight.difficulty ?? 0) < 10);
     
     if (hasHM) {
       return { difficulty: 122, label: 'Veteran HM' };
     } else if (hasVet) {
       return { difficulty: 121, label: 'Veteran' };
+    } else if (hasNormal) {
+      return { difficulty: 0, label: 'Normal' };
     } else {
-      // Check for normal in all fights
-      const hasNormal = fights.some(fight => (fight.difficulty ?? 0) < 10);
-      return { difficulty: hasNormal ? 0 : 121, label: hasNormal ? 'Normal' : 'Veteran' };
+      return { difficulty: 121, label: 'Veteran' };
+    }
+  } else if (hmType === 'special') {
+    // For Cloudrest and Asylum Sanctorium, use difficulty codes for HM detection
+    // Difficulty codes: 121=Veteran, 122=Standard HM, 123=+1, 124=+2, 125=+3
+    const hasHM = fights.some(fight => (fight.difficulty ?? 0) >= 123);
+    const hasVet = fights.some(fight => fight.difficulty === 121);
+    const hasNormal = fights.some(fight => (fight.difficulty ?? 0) < 10);
+    
+    if (hasHM) {
+      return { difficulty: 122, label: 'Veteran HM' };
+    } else if (hasVet) {
+      return { difficulty: 121, label: 'Veteran' };
+    } else if (hasNormal) {
+      return { difficulty: 0, label: 'Normal' };
+    } else {
+      return { difficulty: 121, label: 'Veteran' };
     }
   } else {
-    // Special trials (Cloudrest/Asylum) - use existing logic
-    const maxDifficulty = Math.max(...fights.map(f => f.difficulty ?? 0));
-    return {
-      difficulty: maxDifficulty,
-      label: getDifficultyLabel(maxDifficulty, trialName)
-    };
+    // Fallback for any unhandled trial types
+    return { difficulty: 121, label: 'Veteran' };
   }
 }
 
@@ -588,7 +596,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       trialNamesByRun[currentRunNumber] = trialName;
 
       const trialRunId = `${trialName}-run-${currentRunNumber}`;
-      const isTrialWithMinis = trialName.includes("Cloudrest") || trialName.includes("Asylum Sanctorium");
       const trialRunName = `${trialName} #${currentRunNumber}`;
 
       // Find or create the trial run
@@ -706,15 +713,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
     // Post-process to only show run numbers when there are multiple runs of the same zone
     const zoneRunCounts = trialRuns?.reduce((acc, run) => {
-      const baseName = run.name.replace(/ #\d+$/, ''); // Remove existing run numbers
+      const baseName = run.name.replace(/#\d+/, ''); // Remove existing run numbers
       acc[baseName] = (acc[baseName] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
 
     // Update trial run names to only show numbers when there are duplicates
     const updatedTrialRuns = trialRuns?.map((run) => {
-      const baseName = run.name.replace(/ #\d+$/, '');
-      const runMatch = run.name.match(/ #(\d+)$/);
+      const baseName = run.name.replace(/#\d+$/, '');
+      const runMatch = run.name.match(/#(\d+)$/);
       const runNumber = runMatch ? parseInt(runMatch[1]) : 1;
       
       if (zoneRunCounts[baseName] > 1) {
@@ -731,81 +738,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     });
 
     // Calculate trial difficulty for each individual run based on its own fights
-    const calculateTrialDifficulty = (runFights: FightFragment[], trialName: string): { difficulty: number; label: string } => {
-      // Get HM type for this trial
-      const hmType = getTrialHMType(trialName);
-      const nonHMBosses = ['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'];
-      
-      if (hmType === 'per-boss') {
-        // For per-boss HM trials, analyze all HM-capable bosses in this run
-        const hmCapableFights = runFights.filter(fight => !nonHMBosses.includes(fight.name));
-        
-        if (hmCapableFights.length === 0) {
-          return { difficulty: 121, label: 'Veteran' };
-        }
-        
-        const hmBosses = hmCapableFights.filter(fight => fight.difficulty === 122);
-        const vetBosses = hmCapableFights.filter(fight => fight.difficulty === 121);
-        const normalBosses = hmCapableFights.filter(fight => (fight.difficulty ?? 0) < 10);
-        
-        // Determine difficulty pattern for this run
-        if (normalBosses.length > 0 && hmBosses.length === 0 && vetBosses.length === 0) {
-          return { difficulty: 0, label: 'Normal' };
-        } else if (hmBosses.length > 0 && vetBosses.length === 0) {
-          return { difficulty: 122, label: 'Veteran HM' };
-        } else if (hmBosses.length === 0 && vetBosses.length > 0) {
-          return { difficulty: 121, label: 'Veteran' };
-        } else if (hmBosses.length > 0 && vetBosses.length > 0) {
-          return { difficulty: 122, label: 'Partial Veteran HM' };
-        } else {
-          // Mixed with normal - default to veteran
-          return { difficulty: 121, label: 'Veteran' };
-        }
-      } else if (hmType === 'final-boss-only') {
-        // For final-boss-only HM trials, check if ANY boss in this run was HM
-        // This handles cases where the final boss was done in HM
-        const hasHM = runFights.some(fight => fight.difficulty === 122);
-        const hasVet = runFights.some(fight => fight.difficulty === 121);
-        const hasNormal = runFights.some(fight => (fight.difficulty ?? 0) < 10);
-        
-        if (hasHM) {
-          return { difficulty: 122, label: 'Veteran HM' };
-        } else if (hasVet) {
-          return { difficulty: 121, label: 'Veteran' };
-        } else if (hasNormal) {
-          return { difficulty: 0, label: 'Normal' };
-        } else {
-          return { difficulty: 121, label: 'Veteran' };
-        }
-      } else if (hmType === 'special') {
-        // For Cloudrest and Asylum Sanctorium, use difficulty codes for HM detection
-        // Difficulty codes: 121=Veteran, 122=Standard HM, 123=+1, 124=+2, 125=+3
-        const hasHM = runFights.some(fight => (fight.difficulty ?? 0) >= 123);
-        const hasVet = runFights.some(fight => fight.difficulty === 121);
-        const hasNormal = runFights.some(fight => (fight.difficulty ?? 0) < 10);
-        
-        if (hasHM) {
-          return { difficulty: 122, label: 'Veteran HM' };
-        } else if (hasVet) {
-          return { difficulty: 121, label: 'Veteran' };
-        } else if (hasNormal) {
-          return { difficulty: 0, label: 'Normal' };
-        } else {
-          return { difficulty: 121, label: 'Veteran' };
-        }
-      } else {
-        // Fallback for any unhandled trial types
-        return { difficulty: 121, label: 'Veteran' };
-      }
-    };
-
-    // Apply difficulty labels to each individual trial run
     const finalizedTrialRuns = updatedTrialRuns.map((run, index) => {
       const baseName = run.name.split(' (')[0]; // Remove existing difficulty label
       const trialDifficulty = calculateTrialDifficulty(run.fights, run.trialName);
       const finalName = `${baseName} (${trialDifficulty.label})`;
       
-      const hmCapableFights = run.fights.filter(f => !['Basks-In-Snakes', 'Basks-in-Snakes', 'Ash Titan'].includes(f.name));
       console.log('🏃 RUN:', run.name, 'BOSS:', run.fights[0]?.name, 'DIFF:', run.fights[0]?.difficulty, 'CALCULATED:', trialDifficulty.label);
       
       return {
