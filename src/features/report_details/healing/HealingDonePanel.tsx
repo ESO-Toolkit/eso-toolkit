@@ -100,6 +100,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           name,
           raw,
           hps: fightDuration > 0 ? raw / fightDuration : 0,
+          overhealHps: fightDuration > 0 ? overheal / fightDuration : 0,
           overheal,
           overhealPercentage,
           iconUrl,
