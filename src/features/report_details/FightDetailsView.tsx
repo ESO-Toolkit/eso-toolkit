@@ -89,26 +89,37 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
   return (
     <React.Fragment>
-      {/* Target Selection and Experimental Toggle */}
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Target Selection */}
+      <Box sx={{ mb: 2 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <TargetSelector />
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, Rotation Analysis, and Auras Overview">
-          <FormControlLabel
-            control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
-            label="Show Experimental Tabs"
-          />
-        </Tooltip>
-      </Stack>
-      <Box mt={2}>
+      </Box>
+
+      {/* Tabs with integrated experimental toggle */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, pl: 1 }}>
         <Tabs
           key={showExperimentalTabs ? 'experimental' : 'normal'}
           value={validSelectedTab}
           onChange={(_, v) => onNavigateToTab(v)}
-          sx={{ mb: 2, overflowX: 'auto', minWidth: 0 }}
-          variant="scrollable"
-          scrollButtons="auto"
+          sx={{
+            minWidth: 'auto',
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#406374',
+              transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
+            },
+            '& .MuiTabs-flexContainer': {
+              gap: 0,
+              justifyContent: 'flex-start',
+            },
+            '& .MuiTabs-scroller': {
+              overflow: 'visible',
+            },
+            '& .MuiTabs-root': {
+              minWidth: 'auto',
+            },
+          }}
+          variant="standard"
         >
           <Tooltip title="Insights">
             <Tab icon={<InsightsIcon />} />
@@ -204,6 +215,25 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Tooltip>
           )}
         </Tabs>
+
+        {/* Experimental Toggle */}
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showExperimentalTabs}
+                onChange={onToggleExperimentalTabs}
+                size="small"
+              />
+            }
+            label="Experimental"
+            sx={{ ml: 2, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+          />
+        </Tooltip>
+      </Box>
+
+      {/* Tab Content */}
+      <Box sx={{ mt: 2 }}>
         <Box sx={{ display: validSelectedTab === 0 ? 'block' : 'none' }}>
           <InsightsPanel fight={fight} />
         </Box>
