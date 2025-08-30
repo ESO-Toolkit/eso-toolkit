@@ -91,12 +91,16 @@ export type AbilitiesLookup = Record<string, Ability>;
  * Known ESO ability IDs for penetration calculations
  */
 export enum KnownAbilities {
+  // Whether hard mode was activated on the boss
+  HARD_MODE = 137215,
+
   // Champion Points
   REAVING_BLOWS = 142007,
   SLIPPERY = 142094,
   SPRINTER = 142079,
   GILDED_FINGERS = 142210,
   EXPLOITER = 63880,
+  BULKWARK = 64079,
 
   // Shared Passives
   UNDAUNTED_METTLE = 55386,
@@ -659,3 +663,17 @@ export enum MundusStones {
   // The Tower - Increases Max Stamina
   THE_TOWER = 13985,
 }
+
+export const RED_CHAMPION_POINTS = Object.freeze(
+  new Set<KnownAbilities>([KnownAbilities.SLIPPERY, KnownAbilities.SPRINTER])
+);
+export const BLUE_CHAMPION_POINTS = Object.freeze(
+  new Set<KnownAbilities>([
+    KnownAbilities.EXPLOITER,
+    KnownAbilities.BULKWARK,
+    KnownAbilities.REAVING_BLOWS,
+  ])
+);
+export const GREEN_CHAMPION_POINTS = Object.freeze(
+  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS])
+);

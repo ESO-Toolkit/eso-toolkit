@@ -147,6 +147,24 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
       borderColor: 'rgba(236, 240, 241, 0.35)',
       color: '#ecf0f1',
     },
+    championRed: {
+      background:
+        'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+      borderColor: 'rgba(255, 68, 68, 0.3)',
+      color: '#ff6666',
+    },
+    championBlue: {
+      background:
+        'linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%)',
+      borderColor: 'rgba(68, 136, 255, 0.3)',
+      color: '#66aaff',
+    },
+    championGreen: {
+      background:
+        'linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%)',
+      borderColor: 'rgba(68, 255, 136, 0.3)',
+      color: '#66ffaa',
+    },
     legendary: {
       background:
         'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
@@ -267,6 +285,7 @@ function formatDuration(startTime: number, endTime: number): string {
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
+  championPointsByPlayer: Record<string, Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>>;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
@@ -409,6 +428,7 @@ const OneLineAutoFit: React.FC<{ minScale?: number; children: React.ReactNode }>
 export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   playerActors,
   mundusBuffsByPlayer,
+  championPointsByPlayer,
   aurasByPlayer,
   deathsByPlayer,
   resurrectsByPlayer,
@@ -875,6 +895,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                           const hasMundus = !!(
                             player.id && mundusBuffsByPlayer[String(player.id)]?.length
                           );
+                          const hasChampionPoints = !!(
+                            player.id && championPointsByPlayer[String(player.id)]?.length
+                          );
                           const deathsVal = player.id
                             ? (deathsByPlayer[String(player.id)] ?? 0)
                             : 0;
@@ -1086,6 +1109,42 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           }}
                                         />
                                       ))}
+                                  </Box>
+                                </Box>
+                              )}
+                              {hasChampionPoints && (
+                                <Box sx={{ mt: 1 }}>
+                                  <Typography
+                                    variant="body2"
+                                    fontWeight="bold"
+                                    sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
+                                  >
+                                    Champion Points
+                                  </Typography>
+                                  <Box
+                                    display="flex"
+                                    flexWrap="wrap"
+                                    gap={1}
+                                    sx={{ minHeight: 40 }}
+                                  >
+                                    {(championPointsByPlayer[String(player.id)] ?? []).map(
+                                      (cp, idx) => (
+                                        <Chip
+                                          key={`cp-${idx}`}
+                                          label={cp.name}
+                                          size="small"
+                                          title={`Champion Point: ${cp.name} (ID: ${cp.id})`}
+                                          sx={{
+                                            ...buildVariantSx(
+                                              cp.color === 'red' ? 'championRed' :
+                                              cp.color === 'blue' ? 'championBlue' :
+                                              'championGreen'
+                                            ),
+                                            '& .MuiChip-label': { fontSize: '0.58rem' },
+                                          }}
+                                        />
+                                      )
+                                    )}
                                   </Box>
                                 </Box>
                               )}

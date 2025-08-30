@@ -10,7 +10,7 @@ import {
   useReportMasterData,
 } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import { KnownAbilities, MundusStones } from '../../../types/abilities';
+import { KnownAbilities, MundusStones, RED_CHAMPION_POINTS, BLUE_CHAMPION_POINTS, GREEN_CHAMPION_POINTS } from '../../../types/abilities';
 import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { PlayerGear } from '../../../types/playerDetails';
 import {
@@ -138,6 +138,76 @@ export const PlayersPanel: React.FC = () => {
 
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData, friendlyBuffEvents]);
+
+  // Calculate champion points per player using champion point constants from combatantinfo auras
+  const championPointsByPlayer = React.useMemo(() => {
+    const result: Record<string, Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>> = {};
+
+    if (!combatantInfoEvents || !abilitiesById) return result;
+
+    // Get all champion point ability IDs from the constants
+    const allChampionPoints = new Set<number>([
+      ...Array.from(RED_CHAMPION_POINTS),
+      ...Array.from(BLUE_CHAMPION_POINTS),
+      ...Array.from(GREEN_CHAMPION_POINTS),
+    ]);
+
+    // Initialize arrays for each player
+    if (playerData) {
+      Object.values(playerData?.playersById).forEach((actor) => {
+        if (actor?.id) {
+          const playerId = String(actor.id);
+          result[playerId] = [];
+
+          // Gather ALL combatantinfo events for this player and union champion points across them
+          const combatantInfoEventsForPlayer = combatantInfoEvents.filter(
+            (event: CombatantInfoEvent): event is CombatantInfoEvent =>
+              event.type === 'combatantinfo' &&
+              'sourceID' in event &&
+              String(event.sourceID) === playerId
+          );
+
+          if (combatantInfoEventsForPlayer.length > 0) {
+            const seen = new Set<number>();
+            for (const cie of combatantInfoEventsForPlayer) {
+              const auras = cie.auras || [];
+              for (const aura of auras as CombatantAura[]) {
+                const abilityId = aura.ability;
+                if (!allChampionPoints.has(abilityId) || seen.has(abilityId)) continue;
+                
+                seen.add(abilityId);
+                const ability = abilitiesById[abilityId];
+                const name = ability?.name || `Unknown CP (${abilityId})`;
+                
+                // Determine color based on which set it belongs to
+                let color: 'red' | 'blue' | 'green';
+                if (RED_CHAMPION_POINTS.has(abilityId)) {
+                  color = 'red';
+                } else if (BLUE_CHAMPION_POINTS.has(abilityId)) {
+                  color = 'blue';
+                } else {
+                  color = 'green';
+                }
+                
+                result[playerId].push({ name, id: abilityId, color });
+              }
+            }
+          }
+
+          // Sort by color (red, blue, green) then by name
+          result[playerId].sort((a, b) => {
+            const colorOrder = { red: 0, blue: 1, green: 2 };
+            if (colorOrder[a.color] !== colorOrder[b.color]) {
+              return colorOrder[a.color] - colorOrder[b.color];
+            }
+            return a.name.localeCompare(b.name);
+          });
+        }
+      });
+    }
+
+    return result;
+  }, [combatantInfoEvents, abilitiesById, playerData]);
 
   // Compute CPM (casts per minute) per player for the current fight, excluding specific abilities per provided filter
   const cpmByPlayer = React.useMemo(() => {
@@ -361,6 +431,7 @@ export const PlayersPanel: React.FC = () => {
         resurrectsByPlayer={{}}
         cpmByPlayer={{}}
         mundusBuffsByPlayer={{}}
+        championPointsByPlayer={{}}
         aurasByPlayer={{}}
         isLoading={true}
         reportId={reportId}
@@ -376,6 +447,7 @@ export const PlayersPanel: React.FC = () => {
     <PlayersPanelView
       playerActors={playerData?.playersById}
       mundusBuffsByPlayer={mundusBuffsByPlayer}
+      championPointsByPlayer={championPointsByPlayer}
       aurasByPlayer={aurasByPlayer}
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
