@@ -23,7 +23,7 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MAJOR_COURAGE,
 
   KnownAbilities.MAJOR_RESOLVE,
-  KnownAbilities.ENLIVENING_OVERFLOW,
+  KnownAbilities.ENLIVENING_OVERFLOW_BUFF,
   KnownAbilities.MINOR_BERSERK,
   KnownAbilities.MINOR_COURAGE,
   KnownAbilities.EMPOWER,

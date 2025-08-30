@@ -3,6 +3,7 @@ import path from 'path';
 
 const config: StorybookConfig = {
   stories: ['../src/**/*.stories.@(js|jsx|mjs|ts|tsx)'],
+  staticDirs: ['./public'],
 
   addons: [
     'storybook-addon-remix-react-router',
@@ -14,29 +15,6 @@ const config: StorybookConfig = {
   framework: {
     name: '@storybook/react-vite',
     options: {},
-  },
-
-  // Configure base path for subdirectory deployment
-  managerHead: (head) => {
-    const basePath = process.env.STORYBOOK_BASE_PATH;
-    if (basePath) {
-      return `
-        ${head}
-        <base href="${basePath}" />
-      `;
-    }
-    return head;
-  },
-
-  previewHead: (head) => {
-    const basePath = process.env.STORYBOOK_BASE_PATH;
-    if (basePath) {
-      return `
-        ${head}
-        <base href="${basePath}" />
-      `;
-    }
-    return head;
   },
 
   viteFinal: async (config) => {
