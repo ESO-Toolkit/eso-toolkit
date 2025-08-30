@@ -231,6 +231,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 <Typography variant="h6" gutterBottom>
                   Damage Reduction Sources
                 </Typography>
+
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {damageReductionSources.length > 0 ? (
                     damageReductionSources.map((source, index) => {
@@ -284,6 +285,19 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                                   fontSize: '0.6rem',
                                   height: '20px',
                                   opacity: 0.6,
+                                }}
+                              />
+                            )}
+                            {source.source === 'not_implemented' && (
+                              <Chip
+                                label="not implemented"
+                                size="small"
+                                variant="outlined"
+                                color="warning"
+                                sx={{
+                                  fontSize: '0.6rem',
+                                  height: '20px',
+                                  opacity: 0.8,
                                 }}
                               />
                             )}

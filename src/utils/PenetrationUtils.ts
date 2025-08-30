@@ -130,12 +130,17 @@ export interface PenetrationComputedSource extends BasePenetrationSource {
   source: 'computed';
 }
 
+export interface PenetrationNotImplementedSource extends BasePenetrationSource {
+  source: 'not_implemented';
+}
+
 export type PenetrationSource =
   | PenetrationAuraSource
   | PenetrationGearSource
   | PenetrationBuffSource
   | PenetrationDebuffSource
-  | PenetrationComputedSource;
+  | PenetrationComputedSource
+  | PenetrationNotImplementedSource;
 
 export interface PenetrationSourceWithActiveState {
   name: string;
@@ -230,17 +235,14 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'computed',
   },
   {
-    key: PenetrationComputedSourceKey.FORCE_OF_NATURE,
     name: 'Force of Nature',
-    description:
-      '660 penetration per status effect - [NOT FULLY IMPLEMENTED: status effect counting not implemented]',
-    source: 'computed',
+    description: '660 penetration per status effect',
+    source: 'not_implemented',
   },
   {
-    key: PenetrationComputedSourceKey.PIERCING,
     name: 'Piercing',
-    description: '700 penetration - [NOT FULLY IMPLEMENTED: proper conditions not implemented]',
-    source: 'computed',
+    description: '700 penetration',
+    source: 'not_implemented',
   },
   {
     key: PenetrationComputedSourceKey.HEAVY_WEAPONS,
@@ -279,11 +281,10 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
     source: 'computed',
   },
   {
-    key: PenetrationComputedSourceKey.HEW_AND_SUNDER,
     name: 'Hew and Sunder',
     description:
-      '1236 penetration per enemy within 8 meters when you deal damage with a Heavy Attack (5-piece set) - [NOT FULLY IMPLEMENTED: enemy counting within 8 meters not implemented]',
-    source: 'computed',
+      '1236 penetration per enemy within 8 meters when you deal damage with a Heavy Attack (5-piece set)',
+    source: 'not_implemented',
   },
   // Debuff-based sources
   {
@@ -309,7 +310,7 @@ export const PENETRATION_SOURCES = Object.freeze<PenetrationSource[]>([
   },
   {
     value: PenetrationValues.RUNIC_SUNDER,
-    ability: KnownAbilities.RUNIC_SUNDER,
+    ability: KnownAbilities.RUNIC_SUNDER_DEBUFF,
     name: 'Runic Sunder',
     description: 'Debuff reducing target resistance by 2200 penetration',
     source: 'debuff',

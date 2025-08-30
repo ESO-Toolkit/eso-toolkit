@@ -19,7 +19,7 @@ interface DebuffUptimesPanelProps {
 // Define the specific status effect debuff abilities to track
 const IMPORTANT_DEBUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_BREACH,
-  KnownAbilities.RUNIC_SUNDER,
+  KnownAbilities.RUNIC_SUNDER_DEBUFF,
   KnownAbilities.MAJOR_BREACH,
   KnownAbilities.ENGULFING_FLAMES_BUFF,
   KnownAbilities.MINOR_VULNERABILITY,

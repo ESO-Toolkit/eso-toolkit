@@ -1,46 +1,104 @@
+import { wardenData } from '../data/skillsets/warden';
 import { PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { KnownAbilities, KnownSetIDs } from '../types/abilities';
 import { CombatantInfoEvent } from '../types/combatlogEvents';
-import { ArmorType, GearSlot, PlayerGear } from '../types/playerDetails';
+import { ArmorType, GearSlot, GearTrait, PlayerGear } from '../types/playerDetails';
 
-import { BuffLookupData, isBuffActive } from './BuffLookupUtils';
+import { BuffLookupData, isBuffActiveOnTarget } from './BuffLookupUtils';
+import { ItemQuality } from './gearUtilities';
+
+/**
+ * Calculate dynamic damage reduction from buffs and debuffs at a specific timestamp for a specific player
+ * These are sources that change during combat
+ */
+export function calculateDynamicDamageReductionAtTimestamp(
+  buffLookup: BuffLookupData,
+  debuffLookup: BuffLookupData,
+  timestamp: number,
+  playerId: number
+): number {
+  let buffResistance = 0;
+  let debuffResistance = 0;
+
+  for (const source of DAMAGE_REDUCTION_SOURCES) {
+    let isActive = false;
+
+    switch (source.source) {
+      case 'buff':
+        isActive = isBuffActiveOnTarget(buffLookup, source.ability, timestamp, playerId);
+        if (isActive) {
+          buffResistance += getSourceResistanceValue({ ...source, isActive: true });
+        }
+        break;
+      case 'debuff':
+        isActive = isBuffActiveOnTarget(debuffLookup, source.ability, timestamp, playerId);
+        if (isActive) {
+          debuffResistance += getSourceResistanceValue({ ...source, isActive: true });
+        }
+        break;
+      // Skip static sources - these are calculated once
+    }
+  }
+
+  return buffResistance + debuffResistance;
+}
 
 export const MAX_RESISTANCE = 33000; // 33,000 resistance = 50% damage reduction (soft cap)
 
 // ESO damage reduction constants
 export const RESISTANCE_TO_DAMAGE_REDUCTION_RATIO = 660; // 660 resistance = 1% damage reduction
 
+const ARMOR_GOLD_QUALITY_BONUS_MULTIPLIER = Object.freeze<Record<ItemQuality, number>>({
+  [ItemQuality.LEGENDARY]: 1,
+  [ItemQuality.EPIC]: 1.0357,
+  [ItemQuality.RARE]: 1.0611,
+  [ItemQuality.UNCOMMON]: 1.1017,
+  [ItemQuality.COMMON]: 1.1454,
+});
+
+const REINFORCED_MULTIPLIER = Object.freeze<Record<ItemQuality, number>>({
+  [ItemQuality.LEGENDARY]: 1.16,
+  [ItemQuality.EPIC]: 1.15,
+  [ItemQuality.RARE]: 1.14,
+  [ItemQuality.UNCOMMON]: 1.13,
+  [ItemQuality.COMMON]: 1.12,
+});
+
 // Common resistance values in ESO
-export enum ResistanceValues {
-  MAJOR_RESOLVE = 5948, // Major Resolve/Ward buff
-  MINOR_RESOLVE = 2974, // Minor Resolve/Ward buff
-  ARMOR_FOCUS = 3960, // Armor Focus (Heavy Armor passive)
-  CONSTITUTION = 1320, // Constitution (Heavy Armor passive per piece)
+export const ResistanceValues = Object.freeze<Record<string, number>>({
+  AEGIS_OF_THE_UNSEEN: 3271,
+  BULKWARK: 1900, // Bulwark (Champion Point)
+  FORTIFIED: 1731, // Fortified (Champion Point)
+  FROZEN_ARMOR_PER_ABILITY: 1240, // Frozen Armor: +1240 resistance per Winter's Embrace ability slotted
+  MAJOR_RESOLVE: 5948, // Major Resolve/Ward buff
+  MINOR_RESOLVE: 2974, // Minor Resolve/Ward buff
+  RESOLVE: 343.2, // Resolve (Heavy Armor passive per piece)
+  RUNIC_SUNDER: 2200,
 
   // Armor piece resistance values
-  HEAVY_CHEST = 2772, // Heavy armor chest piece
-  HEAVY_FEET = 2425, // Heavy armor foot piece
-  HEAVY_HANDS = 1386, // Heavy armor hand piece
-  HEAVY_HEAD = 2425,
-  HEAVY_LEGS = 2425, // Heavy armor leg piece
-  HEAVY_SHOULDERS = 2425,
-  HEAVY_WAIST = 1039, // Heavy armor waist piece
-  LIGHT_CHEST = 1396,
-  LIGHT_FEET = 1221, // Light armor foot piece
-  LIGHT_HANDS = 698,
-  LIGHT_HEAD = 1221, // Light armor head piece
-  LIGHT_LEGS = 1221, // Light armor leg piece
-  LIGHT_SHOULDERS = 1221, // Light armor shoulder piece
-  LIGHT_WAIST = 523,
-  MEDIUM_CHEST = 2084,
-  MEDIUM_FEET = 1823,
-  MEDIUM_HANDS = 1042,
-  MEDIUM_HEAD = 1823, // Medium armor head piece
-  MEDIUM_LEGS = 1823, // Medium armor leg piece
-  MEDIUM_SHOULDERS = 1823,
-  MEDIUM_WAIST = 781,
+  HEAVY_CHEST: 2772, // Heavy armor chest piece
+  HEAVY_FEET: 2425, // Heavy armor foot piece
+  HEAVY_HANDS: 1386, // Heavy armor hand piece
+  HEAVY_HEAD: 2425,
+  HEAVY_LEGS: 2425, // Heavy armor leg piece
+  HEAVY_SHOULDERS: 2425,
+  HEAVY_WAIST: 1039, // Heavy armor waist piece
+  LIGHT_CHEST: 1396,
+  LIGHT_FEET: 1221, // Light armor foot piece
+  LIGHT_HANDS: 698,
+  LIGHT_HEAD: 1221, // Light armor head piece
+  LIGHT_LEGS: 1221, // Light armor leg piece
+  LIGHT_SHOULDERS: 1221, // Light armor shoulder piece
+  LIGHT_WAIST: 523,
+  MEDIUM_CHEST: 2084,
+  MEDIUM_FEET: 1823,
+  MEDIUM_HANDS: 1042,
+  MEDIUM_HEAD: 1823, // Medium armor head piece
+  MEDIUM_LEGS: 1823, // Medium armor leg piece
+  MEDIUM_SHOULDERS: 1823,
+  MEDIUM_WAIST: 781,
   // Add more as needed
-}
+});
 
 interface BaseDamageReductionSource {
   name: string;
@@ -48,37 +106,36 @@ interface BaseDamageReductionSource {
 }
 
 export interface DamageReductionAuraSource extends BaseDamageReductionSource {
-  resistanceValue: ResistanceValues;
+  resistanceValue: number;
   ability: KnownAbilities;
   source: 'aura';
 }
 
 export interface DamageReductionGearSource extends BaseDamageReductionSource {
-  resistanceValue: ResistanceValues | number;
+  resistanceValue: number;
   set: KnownSetIDs;
   numberOfPieces: number;
   source: 'gear';
 }
 
 export interface DamageReductionBuffSource extends BaseDamageReductionSource {
-  resistanceValue: ResistanceValues;
+  resistanceValue: number;
   ability: KnownAbilities;
   source: 'buff';
 }
 
 export interface DamageReductionDebuffSource extends BaseDamageReductionSource {
-  resistanceValue: ResistanceValues;
+  resistanceValue: number;
   ability: KnownAbilities;
   source: 'debuff';
 }
 
 export enum ComputedDamageReductionSources {
   ARMOR_RESISTANCE,
-  HEAVY_ARMOR_CONSTITUTION,
-  ARMOR_FOCUS,
-  CHAMPION_POINTS_RESISTANCE,
-  RACIAL_RESISTANCE,
-  BLOCK_MITIGATION,
+  HEAVY_ARMOR_RESOLVE,
+  FORTIFIED,
+  FROZEN_ARMOR,
+  AEGIS_OF_THE_UNSEEN,
   // Add more computed sources as needed
 }
 
@@ -87,12 +144,17 @@ export interface DamageReductionComputedSource extends BaseDamageReductionSource
   source: 'computed';
 }
 
+export interface DamageReductionNotImplementedSource extends BaseDamageReductionSource {
+  source: 'not_implemented';
+}
+
 export type DamageReductionSource =
   | DamageReductionAuraSource
   | DamageReductionGearSource
   | DamageReductionBuffSource
   | DamageReductionDebuffSource
-  | DamageReductionComputedSource;
+  | DamageReductionComputedSource
+  | DamageReductionNotImplementedSource;
 
 export type DamageReductionSourceWithActiveState = DamageReductionSource & { isActive: boolean };
 
@@ -104,33 +166,9 @@ export const DAMAGE_REDUCTION_SOURCES = Object.freeze<DamageReductionSource[]>([
     source: 'computed',
   },
   {
-    key: ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION,
-    name: 'Constitution',
-    description: 'Heavy Armor passive: +1320 Physical and Spell Resistance per piece',
-    source: 'computed',
-  },
-  {
-    key: ComputedDamageReductionSources.ARMOR_FOCUS,
-    name: 'Armor Focus',
-    description: 'Heavy Armor passive: +3960 Physical and Spell Resistance when 5+ pieces equipped',
-    source: 'computed',
-  },
-  {
-    key: ComputedDamageReductionSources.CHAMPION_POINTS_RESISTANCE,
-    name: 'Champion Point Resistance',
-    description: 'Resistance bonuses from Champion Points - [NOT FULLY IMPLEMENTED]',
-    source: 'computed',
-  },
-  {
-    key: ComputedDamageReductionSources.RACIAL_RESISTANCE,
-    name: 'Racial Resistance',
-    description: 'Resistance bonuses from racial passives - [NOT FULLY IMPLEMENTED]',
-    source: 'computed',
-  },
-  {
-    key: ComputedDamageReductionSources.BLOCK_MITIGATION,
-    name: 'Block Mitigation',
-    description: 'Damage reduction from actively blocking - [NOT FULLY IMPLEMENTED]',
+    key: ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE,
+    name: 'Resolve',
+    description: 'Heavy Armor passive: +343 Physical and Spell Resistance per piece',
     source: 'computed',
   },
   {
@@ -147,7 +185,45 @@ export const DAMAGE_REDUCTION_SOURCES = Object.freeze<DamageReductionSource[]>([
     description: 'Minor Resolve buff: +2974 Physical and Spell Resistance',
     source: 'buff',
   },
-]);
+  {
+    source: 'not_implemented',
+    name: 'Bulkwark',
+    description: 'Bulkwark Champion Point: +1900 Physical and Spell Resistance',
+  },
+  {
+    key: ComputedDamageReductionSources.FORTIFIED,
+    source: 'computed',
+    name: 'Fortified',
+    description: 'Fortified Champion Point: +1731 Armor, assumed always active',
+  },
+  {
+    key: ComputedDamageReductionSources.FROZEN_ARMOR,
+    source: 'computed',
+    name: 'Frozen Armor',
+    description: "Increases resistance by 1240 for every Winter's Embrace ability slotted",
+  },
+  {
+    key: ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN,
+    source: 'computed',
+    name: 'Aegis of the Unseen',
+    description: 'Grants 3271 armor while any arcanist ability is active',
+  },
+
+  {
+    ability: KnownAbilities.RUNIC_SUNDER_BUFF,
+    resistanceValue: ResistanceValues.RUNIC_SUNDER,
+    name: 'Runic Sunder',
+    description: 'Runic Sunder: +2200 armor while active',
+    source: 'buff',
+  },
+  // Note: Additional damage reduction sources are not yet fully implemented, including:
+  // - Major/Minor Protection buffs (-10%/-5% damage taken)
+  // - Gear set bonuses (Ebon Armory, Fortified Brass, etc.)
+  // - Block damage reduction while actively blocking
+  // - Class-specific damage shields and mitigation abilities
+  // - Champion Point investments beyond Bulkwark
+  // - Debuff immunities and resistances
+] as DamageReductionSource[]);
 
 /**
  * Contains all damage reduction data for a specific player at a point in time
@@ -213,7 +289,17 @@ export function calculateArmorResistance(combatantInfo: CombatantInfoEvent | nul
       const armorPiece = combatantInfo.gear[slotIndex];
       if (armorPiece && armorPiece.id !== 0) {
         // Add base resistance based on armor type and slot
-        totalResistance += getBaseArmorResistance(armorPiece, slotIndex);
+        let itemResist = getBaseArmorResistance(armorPiece, slotIndex);
+
+        itemResist = Math.floor(
+          itemResist / ARMOR_GOLD_QUALITY_BONUS_MULTIPLIER[armorPiece.quality]
+        );
+
+        if (armorPiece.trait === GearTrait.REINFORCED) {
+          itemResist = Math.floor(itemResist * REINFORCED_MULTIPLIER[armorPiece.quality]);
+        }
+
+        totalResistance += itemResist;
       }
     }
   });
@@ -298,7 +384,7 @@ function getBaseArmorResistance(armorPiece: PlayerGear, slot: GearSlot): number 
  */
 export function calculateStaticResistanceValue(
   combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole | undefined
+  playerData: PlayerDetailsWithRole
 ): number {
   const baseResistance = 0; // Base resistance value
 
@@ -336,41 +422,6 @@ export function calculateStaticResistanceValue(
 }
 
 /**
- * Calculate dynamic damage reduction resistance at a specific timestamp (buffs, debuffs)
- * These are sources that change during combat
- */
-export function calculateDynamicDamageReductionAtTimestamp(
-  buffLookup: BuffLookupData,
-  debuffLookup: BuffLookupData,
-  timestamp: number
-): number {
-  let buffResistance = 0;
-  let debuffResistance = 0;
-
-  for (const source of DAMAGE_REDUCTION_SOURCES) {
-    let isActive = false;
-
-    switch (source.source) {
-      case 'buff':
-        isActive = isBuffActive(buffLookup, source.ability, timestamp);
-        if (isActive) {
-          buffResistance += getSourceResistanceValue({ ...source, isActive: true });
-        }
-        break;
-      case 'debuff':
-        isActive = isBuffActive(debuffLookup, source.ability, timestamp);
-        if (isActive) {
-          debuffResistance += getSourceResistanceValue({ ...source, isActive: true });
-        }
-        break;
-      // Skip static sources - these are calculated once
-    }
-  }
-
-  return buffResistance + debuffResistance;
-}
-
-/**
  * Helper function to check if an aura is active for damage reduction
  */
 export function isAuraActive(
@@ -405,28 +456,27 @@ export function isGearSourceActive(
  */
 export function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
-  source: DamageReductionComputedSource,
-  playerData: PlayerDetailsWithRole | undefined
+  source: DamageReductionComputedSource | DamageReductionNotImplementedSource,
+  playerData: PlayerDetailsWithRole
 ): boolean {
+  if (source.source === 'not_implemented') {
+    return false;
+  }
+
   switch (source.key) {
     case ComputedDamageReductionSources.ARMOR_RESISTANCE:
       // Armor resistance is always active if player has armor equipped
       return combatantInfo !== null && combatantInfo.gear !== null;
-    case ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION:
+    case ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE:
       // Active if player has heavy armor pieces
       return countHeavyArmorPieces(combatantInfo) > 0;
-    case ComputedDamageReductionSources.ARMOR_FOCUS:
-      // Active if player has 5+ pieces of heavy armor
-      return countHeavyArmorPieces(combatantInfo) >= 5;
-    case ComputedDamageReductionSources.CHAMPION_POINTS_RESISTANCE:
-      // Champion points resistance - would need implementation
-      return false; // Placeholder
-    case ComputedDamageReductionSources.RACIAL_RESISTANCE:
-      // Racial resistance - would need racial data
-      return false; // Placeholder
-    case ComputedDamageReductionSources.BLOCK_MITIGATION:
-      // Block mitigation - complex to implement
-      return false; // Placeholder
+    case ComputedDamageReductionSources.FORTIFIED:
+      // Fortified champion point - assume always active
+      return true;
+    case ComputedDamageReductionSources.FROZEN_ARMOR:
+      return isAuraActive(combatantInfo, KnownAbilities.FROZEN_ARMOR);
+    case ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN:
+      return isAuraActive(combatantInfo, KnownAbilities.AEGIS_OF_THE_UNSEEN);
     default:
       return false;
   }
@@ -436,28 +486,28 @@ export function isComputedSourceActive(
  * Get resistance value from a computed damage reduction source
  */
 export function getResistanceFromComputedSource(
-  source: DamageReductionComputedSource,
+  source: DamageReductionComputedSource | DamageReductionNotImplementedSource,
   combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole | undefined
+  playerData: PlayerDetailsWithRole
 ): number {
+  if (source.source === 'not_implemented') {
+    return 0;
+  }
+
   switch (source.key) {
     case ComputedDamageReductionSources.ARMOR_RESISTANCE:
       return calculateArmorResistance(combatantInfo);
-    case ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION:
-      // Constitution provides 1320 resistance per piece of heavy armor
-      return countHeavyArmorPieces(combatantInfo) * ResistanceValues.CONSTITUTION;
-    case ComputedDamageReductionSources.ARMOR_FOCUS:
-      // Armor Focus provides 3960 resistance with 5+ pieces of heavy armor
-      return countHeavyArmorPieces(combatantInfo) >= 5 ? ResistanceValues.ARMOR_FOCUS : 0;
-    case ComputedDamageReductionSources.CHAMPION_POINTS_RESISTANCE:
-      // Would need champion points data
-      return 0; // Placeholder
-    case ComputedDamageReductionSources.RACIAL_RESISTANCE:
-      // Would need racial data
-      return 0; // Placeholder
-    case ComputedDamageReductionSources.BLOCK_MITIGATION:
-      // Would need block state data
-      return 0; // Placeholder
+    case ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE:
+      // Resolve provides 343 resistance per piece of heavy armor
+      return countHeavyArmorPieces(combatantInfo) * ResistanceValues.RESOLVE;
+    case ComputedDamageReductionSources.FORTIFIED:
+      return ResistanceValues.FORTIFIED;
+    case ComputedDamageReductionSources.FROZEN_ARMOR:
+      // Calculate resistance based on Winter's Embrace abilities slotted
+      return countWintersEmbraceAbilities(playerData) * ResistanceValues.FROZEN_ARMOR_PER_ABILITY;
+    case ComputedDamageReductionSources.AEGIS_OF_THE_UNSEEN:
+      // Returns 3271 armor if any arcanist ability is active, otherwise 0
+      return ResistanceValues.AEGIS_OF_THE_UNSEEN; // Using literal value due to enum corruption issue
     default:
       return 0;
   }
@@ -490,4 +540,28 @@ function countHeavyArmorPieces(combatantInfo: CombatantInfoEvent | null): number
   });
 
   return count;
+}
+
+/**
+ * Helper function to count Winter's Embrace abilities slotted
+ * TODO: Implement proper detection of Winter's Embrace abilities from player data
+ */
+function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number {
+  if (!playerData) return 0;
+
+  const wardenAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
+    Object.values(wardenData.skillLines.wintersEmbrace.activeAbilities)
+      .flatMap((ability) => {
+        return [ability, ...Object.values(ability.morphs)];
+      })
+      .some((a) => a.name === t.name)
+  );
+  return wardenAbilities.length;
+}
+
+/**
+ * Check if a specific damage reduction source is not fully implemented
+ */
+export function isSourceNotImplemented(source: DamageReductionSource): boolean {
+  return source.source === 'not_implemented';
 }

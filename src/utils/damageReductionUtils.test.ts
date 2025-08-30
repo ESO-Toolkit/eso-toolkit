@@ -19,6 +19,7 @@ import {
   RESISTANCE_TO_DAMAGE_REDUCTION_RATIO,
   ResistanceValues,
   resistanceToDamageReduction,
+  DamageReductionNotImplementedSource,
 } from './damageReductionUtils';
 
 describe('damageReductionUtils', () => {
@@ -87,7 +88,7 @@ describe('damageReductionUtils', () => {
     buffIntervals: new Map(
       abilities.map(({ ability, intervals }) => [
         ability,
-        intervals.map(([start, end]) => ({ start, end, targetID: 1 })),
+        intervals.map(([start, end]) => ({ start, end, targetID: 123 })), // Use same player ID as tests
       ])
     ),
   });
@@ -232,22 +233,25 @@ describe('damageReductionUtils', () => {
 
   describe('calculateStaticResistanceValue', () => {
     it('should return 0 for null combatant info and player data', () => {
-      expect(calculateStaticResistanceValue(null, undefined)).toBe(0);
+      const mockPlayerData = createMockPlayerData();
+      expect(calculateStaticResistanceValue(null, mockPlayerData)).toBe(ResistanceValues.FORTIFIED); // Fortified is always active
     });
 
     it('should calculate static resistance from armor', () => {
       const gear = new Array(14).fill(null);
       gear[GearSlot.CHEST] = createMockGearPiece(ArmorType.HEAVY);
-      
+
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      
+
       const result = calculateStaticResistanceValue(combatantInfo, playerData);
-      // Should include both armor resistance AND heavy armor constitution passive
+      // Should include armor resistance + heavy armor resolve + fortified (always active)
       const expectedArmor = ResistanceValues.HEAVY_CHEST;
-      const expectedConstitution = ResistanceValues.CONSTITUTION; // 1 heavy piece
-      expect(result).toBe(expectedArmor + expectedConstitution);
-    });    it('should calculate heavy armor Constitution passive', () => {
+      const expectedConstitution = ResistanceValues.RESOLVE; // 1 heavy piece
+      const expectedFortified = ResistanceValues.FORTIFIED; // Always active
+      expect(result).toBe(expectedArmor + expectedConstitution + expectedFortified);
+    });
+    it('should calculate heavy armor Constitution passive', () => {
       const gear = new Array(14).fill(null);
       gear[GearSlot.CHEST] = createMockGearPiece(ArmorType.HEAVY);
       gear[GearSlot.LEGS] = createMockGearPiece(ArmorType.HEAVY);
@@ -258,38 +262,12 @@ describe('damageReductionUtils', () => {
 
       const result = calculateStaticResistanceValue(combatantInfo, playerData);
 
-      // Should include base armor resistance + Constitution passive (3 pieces * 1320)
+      // Should include base armor resistance + Constitution passive (3 pieces * RESOLVE) + Fortified
       const expectedArmor =
         ResistanceValues.HEAVY_CHEST + ResistanceValues.HEAVY_LEGS + ResistanceValues.HEAVY_HEAD;
-      const expectedConstitution = 3 * ResistanceValues.CONSTITUTION;
-      expect(result).toBe(expectedArmor + expectedConstitution);
-    });
-
-    it('should calculate Armor Focus passive for 5+ heavy pieces', () => {
-      const gear = new Array(14).fill(null);
-      // Add 5 heavy armor pieces
-      gear[GearSlot.CHEST] = createMockGearPiece(ArmorType.HEAVY);
-      gear[GearSlot.LEGS] = createMockGearPiece(ArmorType.HEAVY);
-      gear[GearSlot.HEAD] = createMockGearPiece(ArmorType.HEAVY);
-      gear[GearSlot.SHOULDERS] = createMockGearPiece(ArmorType.HEAVY);
-      gear[GearSlot.HANDS] = createMockGearPiece(ArmorType.HEAVY);
-
-      const combatantInfo = createMockCombatantInfo(gear);
-      const playerData = createMockPlayerData();
-
-      const result = calculateStaticResistanceValue(combatantInfo, playerData);
-
-      // Should include base armor + Constitution (5 pieces * 1320) + Armor Focus (3960)
-      const expectedArmor =
-        ResistanceValues.HEAVY_CHEST +
-        ResistanceValues.HEAVY_LEGS +
-        ResistanceValues.HEAVY_HEAD +
-        ResistanceValues.HEAVY_SHOULDERS +
-        ResistanceValues.HEAVY_HANDS;
-      const expectedConstitution = 5 * ResistanceValues.CONSTITUTION;
-      const expectedArmorFocus = ResistanceValues.ARMOR_FOCUS;
-
-      expect(result).toBe(expectedArmor + expectedConstitution + expectedArmorFocus);
+      const expectedConstitution = 3 * ResistanceValues.RESOLVE;
+      const expectedFortified = ResistanceValues.FORTIFIED; // Always active
+      expect(result).toBe(expectedArmor + expectedConstitution + expectedFortified);
     });
 
     it('should handle aura sources', () => {
@@ -310,7 +288,12 @@ describe('damageReductionUtils', () => {
       const buffLookup = createMockBuffLookup([]);
       const debuffLookup = createMockBuffLookup([]);
 
-      const result = calculateDynamicDamageReductionAtTimestamp(buffLookup, debuffLookup, 1000);
+      const result = calculateDynamicDamageReductionAtTimestamp(
+        buffLookup,
+        debuffLookup,
+        1000,
+        123
+      );
       expect(result).toBe(0);
     });
 
@@ -320,7 +303,12 @@ describe('damageReductionUtils', () => {
       ]);
       const debuffLookup = createMockBuffLookup([]);
 
-      const result = calculateDynamicDamageReductionAtTimestamp(buffLookup, debuffLookup, 1000);
+      const result = calculateDynamicDamageReductionAtTimestamp(
+        buffLookup,
+        debuffLookup,
+        1000,
+        123
+      );
       expect(result).toBe(ResistanceValues.MAJOR_RESOLVE);
     });
 
@@ -331,7 +319,12 @@ describe('damageReductionUtils', () => {
       ]);
       const debuffLookup = createMockBuffLookup([]);
 
-      const result = calculateDynamicDamageReductionAtTimestamp(buffLookup, debuffLookup, 1000);
+      const result = calculateDynamicDamageReductionAtTimestamp(
+        buffLookup,
+        debuffLookup,
+        1000,
+        123
+      );
       expect(result).toBe(ResistanceValues.MAJOR_RESOLVE + ResistanceValues.MINOR_RESOLVE);
     });
 
@@ -342,7 +335,12 @@ describe('damageReductionUtils', () => {
       ]);
       const debuffLookup = createMockBuffLookup([]);
 
-      const result = calculateDynamicDamageReductionAtTimestamp(buffLookup, debuffLookup, 1000);
+      const result = calculateDynamicDamageReductionAtTimestamp(
+        buffLookup,
+        debuffLookup,
+        1000,
+        123
+      );
       expect(result).toBe(ResistanceValues.MINOR_RESOLVE);
     });
   });
@@ -440,6 +438,12 @@ describe('damageReductionUtils', () => {
       source: 'computed',
     });
 
+    const createNotImplementedSource = (): DamageReductionNotImplementedSource => ({
+      name: `Test`,
+      description: 'Test description',
+      source: 'not_implemented',
+    });
+
     it('should return true for armor resistance when gear is present', () => {
       const gear = [createMockGearPiece(ArmorType.HEAVY)];
       const combatantInfo = createMockCombatantInfo(gear);
@@ -454,7 +458,7 @@ describe('damageReductionUtils', () => {
       combatantInfo.gear = []; // Empty array is still truthy, need to check length
       const playerData = createMockPlayerData();
       const source = createComputedSource(ComputedDamageReductionSources.ARMOR_RESISTANCE);
-      
+
       // The function checks if combatantInfo.gear !== null, not if it's empty
       // So this will actually return true because an empty array is not null
       expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(true);
@@ -466,15 +470,16 @@ describe('damageReductionUtils', () => {
       Object.assign(combatantInfo, { gear: null });
       const playerData = createMockPlayerData();
       const source = createComputedSource(ComputedDamageReductionSources.ARMOR_RESISTANCE);
-      
+
       expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(false);
-    });    it('should return true for heavy armor constitution when heavy pieces are equipped', () => {
+    });
+    it('should return true for heavy armor constitution when heavy pieces are equipped', () => {
       const gear = new Array(14).fill(null);
       gear[GearSlot.CHEST] = createMockGearPiece(ArmorType.HEAVY);
 
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION);
+      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE);
 
       expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(true);
     });
@@ -485,7 +490,7 @@ describe('damageReductionUtils', () => {
 
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION);
+      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE);
 
       expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(false);
     });
@@ -499,34 +504,18 @@ describe('damageReductionUtils', () => {
 
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.ARMOR_FOCUS);
+      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE);
 
       expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(true);
-    });
-
-    it('should return false for armor focus with less than 5 heavy pieces', () => {
-      const gear = new Array(14).fill(null);
-      // Add only 4 heavy pieces
-      for (let i = 0; i < 4; i++) {
-        gear[i] = createMockGearPiece(ArmorType.HEAVY);
-      }
-
-      const combatantInfo = createMockCombatantInfo(gear);
-      const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.ARMOR_FOCUS);
-
-      expect(isComputedSourceActive(combatantInfo, source, playerData)).toBe(false);
     });
 
     it('should return false for unimplemented sources', () => {
       const combatantInfo = createMockCombatantInfo();
       const playerData = createMockPlayerData();
 
-      const championPointsSource = createComputedSource(
-        ComputedDamageReductionSources.CHAMPION_POINTS_RESISTANCE
-      );
-      const racialSource = createComputedSource(ComputedDamageReductionSources.RACIAL_RESISTANCE);
-      const blockSource = createComputedSource(ComputedDamageReductionSources.BLOCK_MITIGATION);
+      const championPointsSource = createNotImplementedSource();
+      const racialSource = createNotImplementedSource();
+      const blockSource = createNotImplementedSource();
 
       expect(isComputedSourceActive(combatantInfo, championPointsSource, playerData)).toBe(false);
       expect(isComputedSourceActive(combatantInfo, racialSource, playerData)).toBe(false);
@@ -542,6 +531,12 @@ describe('damageReductionUtils', () => {
       description: 'Test description',
       key,
       source: 'computed',
+    });
+
+    const createNotImplementedSource = (): DamageReductionNotImplementedSource => ({
+      name: `Test`,
+      description: 'Test description',
+      source: 'not_implemented',
     });
 
     it('should return armor resistance for armor resistance source', () => {
@@ -564,10 +559,10 @@ describe('damageReductionUtils', () => {
 
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_CONSTITUTION);
+      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE);
 
       const result = getResistanceFromComputedSource(source, combatantInfo, playerData);
-      expect(result).toBe(3 * ResistanceValues.CONSTITUTION);
+      expect(result).toBe(3 * ResistanceValues.RESOLVE);
     });
 
     it('should return armor focus resistance for 5+ heavy pieces', () => {
@@ -578,35 +573,19 @@ describe('damageReductionUtils', () => {
 
       const combatantInfo = createMockCombatantInfo(gear);
       const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.ARMOR_FOCUS);
+      const source = createComputedSource(ComputedDamageReductionSources.HEAVY_ARMOR_RESOLVE);
 
       const result = getResistanceFromComputedSource(source, combatantInfo, playerData);
-      expect(result).toBe(ResistanceValues.ARMOR_FOCUS);
-    });
-
-    it('should return 0 for armor focus with less than 5 heavy pieces', () => {
-      const gear = new Array(14).fill(null);
-      for (let i = 0; i < 4; i++) {
-        gear[i] = createMockGearPiece(ArmorType.HEAVY);
-      }
-
-      const combatantInfo = createMockCombatantInfo(gear);
-      const playerData = createMockPlayerData();
-      const source = createComputedSource(ComputedDamageReductionSources.ARMOR_FOCUS);
-
-      const result = getResistanceFromComputedSource(source, combatantInfo, playerData);
-      expect(result).toBe(0);
+      expect(result).toBe(5 * ResistanceValues.RESOLVE); // 5 heavy pieces
     });
 
     it('should return 0 for unimplemented sources', () => {
       const combatantInfo = createMockCombatantInfo();
       const playerData = createMockPlayerData();
 
-      const championPointsSource = createComputedSource(
-        ComputedDamageReductionSources.CHAMPION_POINTS_RESISTANCE
-      );
-      const racialSource = createComputedSource(ComputedDamageReductionSources.RACIAL_RESISTANCE);
-      const blockSource = createComputedSource(ComputedDamageReductionSources.BLOCK_MITIGATION);
+      const championPointsSource = createNotImplementedSource();
+      const racialSource = createNotImplementedSource();
+      const blockSource = createNotImplementedSource();
 
       expect(getResistanceFromComputedSource(championPointsSource, combatantInfo, playerData)).toBe(
         0
@@ -628,8 +607,8 @@ describe('damageReductionUtils', () => {
     it('should have correct resistance values', () => {
       expect(ResistanceValues.MAJOR_RESOLVE).toBe(5948);
       expect(ResistanceValues.MINOR_RESOLVE).toBe(2974);
-      expect(ResistanceValues.ARMOR_FOCUS).toBe(3960);
-      expect(ResistanceValues.CONSTITUTION).toBe(1320);
+      expect(ResistanceValues.RESOLVE).toBe(343.2);
+      expect(ResistanceValues.FORTIFIED).toBe(1731);
     });
   });
 

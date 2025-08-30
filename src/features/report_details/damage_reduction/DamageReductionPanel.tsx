@@ -5,6 +5,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useCombatantInfoRecord, usePlayerData } from '../../../hooks';
 import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
 import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
+import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import {
   calculateDynamicDamageReductionAtTimestamp,
   calculateStaticResistanceValue,
@@ -119,7 +120,8 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
         const dynamicResistance = calculateDynamicDamageReductionAtTimestamp(
           friendlyBuffsLookup,
           debuffsLookup,
-          timestamp
+          timestamp,
+          player.id
         );
 
         const totalResistance = staticResistances + dynamicResistance;
@@ -179,12 +181,10 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
               break;
             case 'buff':
             case 'debuff':
-              // Dynamic sources - check if they were active during any part of the fight
-              if ('ability' in source) {
-                const lookup = source.source === 'buff' ? friendlyBuffsLookup : debuffsLookup;
-                const intervals = lookup.buffIntervals.get(source.ability);
-                isActive = intervals !== undefined && intervals.length > 0;
-              }
+              // Dynamic sources - check if they were active for this specific player during any part of the fight
+              const lookup = source.source === 'buff' ? friendlyBuffsLookup : debuffsLookup;
+              // Check if this buff/debuff was ever active for this player during the fight
+              isActive = isBuffActiveOnTarget(lookup, source.ability, undefined, player.id);
               break;
           }
 

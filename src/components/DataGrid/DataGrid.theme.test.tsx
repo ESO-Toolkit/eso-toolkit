@@ -11,6 +11,15 @@ import { render, screen } from '@testing-library/react';
 
 import { DataGrid } from './DataGrid';
 
+// Mock alpha function to avoid complex color calculations in tests
+jest.mock('@mui/material/styles', () => {
+  const actual = jest.requireActual('@mui/material/styles');
+  return {
+    ...actual,
+    alpha: jest.fn((color: string, opacity: number) => color),
+  };
+});
+
 // Test data type
 interface TestDataRow {
   id: number;
@@ -18,7 +27,7 @@ interface TestDataRow {
   value: number;
 }
 
-// Test data
+// Test data - use minimal data for faster rendering
 const testData: TestDataRow[] = [
   { id: 1, name: 'Test Item 1', value: 100 },
   { id: 2, name: 'Test Item 2', value: 200 },
@@ -32,12 +41,21 @@ const testColumns = [
   columnHelper.accessor('value', { header: 'Value' }),
 ];
 
+// Helper function to create optimized theme for tests
+const createTestTheme = (
+  mode: 'light' | 'dark',
+  customOptions = {}
+): ReturnType<typeof createTheme> => {
+  return createTheme({
+    palette: { mode },
+    shape: { borderRadius: 8 },
+    ...customOptions,
+  });
+};
+
 describe('DataGrid Theme Integration', () => {
   it('should render with dark theme', () => {
-    const darkTheme = createTheme({
-      palette: { mode: 'dark' },
-      shape: { borderRadius: 12 },
-    });
+    const darkTheme = createTestTheme('dark');
 
     render(
       <ThemeProvider theme={darkTheme}>
@@ -45,6 +63,9 @@ describe('DataGrid Theme Integration', () => {
           data={testData as unknown as Record<string, unknown>[]}
           columns={testColumns}
           title="Theme Test Grid"
+          height={400} // Smaller height for faster rendering
+          initialPageSize={10} // Smaller page size
+          enableFiltering={false} // Disable filtering to reduce complexity
         />
       </ThemeProvider>
     );
@@ -58,10 +79,7 @@ describe('DataGrid Theme Integration', () => {
   });
 
   it('should render with light theme', () => {
-    const lightTheme = createTheme({
-      palette: { mode: 'light' },
-      shape: { borderRadius: 8 },
-    });
+    const lightTheme = createTestTheme('light');
 
     render(
       <ThemeProvider theme={lightTheme}>
@@ -69,6 +87,9 @@ describe('DataGrid Theme Integration', () => {
           data={testData as unknown as Record<string, unknown>[]}
           columns={testColumns}
           title="Light Theme Test"
+          height={400} // Smaller height for faster rendering
+          initialPageSize={10} // Smaller page size
+          enableFiltering={false} // Disable filtering to reduce complexity
         />
       </ThemeProvider>
     );
@@ -78,13 +99,12 @@ describe('DataGrid Theme Integration', () => {
   });
 
   it('should render with custom theme properties', () => {
-    const customTheme = createTheme({
+    const customTheme = createTestTheme('dark', {
       palette: {
         mode: 'dark',
         primary: { main: '#38bdf8' },
         secondary: { main: '#00e1ff' },
       },
-      shape: { borderRadius: 14 },
       typography: {
         fontFamily: 'Inter, system-ui',
       },
@@ -96,7 +116,9 @@ describe('DataGrid Theme Integration', () => {
           data={testData as unknown as Record<string, unknown>[]}
           columns={testColumns}
           title="Custom Theme Test"
-          enableFiltering={true}
+          height={400} // Smaller height for faster rendering
+          initialPageSize={10} // Smaller page size
+          enableFiltering={true} // Test with filtering but smaller dataset
         />
       </ThemeProvider>
     );
@@ -109,11 +131,16 @@ describe('DataGrid Theme Integration', () => {
   });
 
   it('should handle empty data gracefully', () => {
-    const theme = createTheme({ palette: { mode: 'dark' } });
+    const theme = createTestTheme('dark');
 
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid data={[]} columns={testColumns} emptyMessage="No theme test data available" />
+        <DataGrid
+          data={[]}
+          columns={testColumns}
+          emptyMessage="No theme test data available"
+          height={300} // Even smaller for empty state
+        />
       </ThemeProvider>
     );
 
@@ -121,11 +148,16 @@ describe('DataGrid Theme Integration', () => {
   });
 
   it('should render loading state with theme', () => {
-    const theme = createTheme({ palette: { mode: 'dark' } });
+    const theme = createTestTheme('dark');
 
     render(
       <ThemeProvider theme={theme}>
-        <DataGrid data={[]} columns={testColumns} loading={true} />
+        <DataGrid
+          data={[]}
+          columns={testColumns}
+          loading={true}
+          height={300} // Smaller for loading state
+        />
       </ThemeProvider>
     );
 

@@ -138,16 +138,25 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
     for (let i = 0; i <= fightDurationSeconds; i++) {
       const timestamp = fightStart + i * 1000;
 
-      // Calculate dynamic critical damage once per timestamp
-      // This is shared across all players for buff/debuff sources
-      const dynamicCriticalDamage = calculateDynamicCriticalDamageAtTimestamp(
-        friendlyBuffsLookup,
-        debuffsLookup,
-        timestamp
-      );
-
       // Apply the timestamp calculations to each player
       playersData.forEach((playerData) => {
+        const combatantInfo =
+          combatantInfoEvents.find((info) => info.sourceID === playerData.player.id) || null;
+
+        if (combatantInfo === null) {
+          return;
+        }
+
+        // Calculate dynamic critical damage once per timestamp
+        // This is shared across all players for buff/debuff sources
+        const dynamicCriticalDamage = calculateDynamicCriticalDamageAtTimestamp(
+          friendlyBuffsLookup,
+          debuffsLookup,
+          combatantInfo,
+          playerData.player,
+          timestamp
+        );
+
         const totalCriticalDamage = playerData.staticCriticalDamage + dynamicCriticalDamage;
 
         playerData.dataPoints.push({

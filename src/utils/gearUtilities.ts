@@ -11,6 +11,14 @@ const DOUBLE_SET_TYPES = Object.freeze(
   ])
 );
 
+export enum ItemQuality {
+  LEGENDARY = 5,
+  EPIC = 4,
+  RARE = 3,
+  UNCOMMON = 2,
+  COMMON = 1,
+}
+
 export interface PlayerGearItemData {
   total: number;
   perfected: number;

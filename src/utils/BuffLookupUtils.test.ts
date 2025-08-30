@@ -827,4 +827,53 @@ describe('BuffLookupUtils', () => {
       expect(isBuffActive(lookup, 61694, laterTime)).toBe(true);
     });
   });
+
+  describe('isBuffActiveOnTarget - "ever active" functionality', () => {
+    it('should return true if buff was ever active on target (no timestamp)', () => {
+      const buffEvents: BuffEvent[] = [
+        createApplyBuffEvent(1000, 12345, 1), // Player 1 gets buff
+        createRemoveBuffEvent(2000, 12345, 1), // Player 1 loses buff
+        createApplyBuffEvent(1500, 67890, 2), // Player 2 gets different buff
+        createRemoveBuffEvent(2500, 67890, 2), // Player 2 loses buff
+      ];
+      const lookup = createBuffLookup(buffEvents);
+
+      // Check if buffs were ever active on specific targets
+      expect(isBuffActiveOnTarget(lookup, 12345, undefined, 1)).toBe(true); // Player 1 had buff 12345
+      expect(isBuffActiveOnTarget(lookup, 12345, undefined, 2)).toBe(false); // Player 2 never had buff 12345
+      expect(isBuffActiveOnTarget(lookup, 67890, undefined, 1)).toBe(false); // Player 1 never had buff 67890
+      expect(isBuffActiveOnTarget(lookup, 67890, undefined, 2)).toBe(true); // Player 2 had buff 67890
+    });
+
+    it('should return true if buff was ever active on any target (no timestamp, no targetID)', () => {
+      const buffEvents: BuffEvent[] = [
+        createApplyBuffEvent(1000, 12345, 1),
+        createRemoveBuffEvent(2000, 12345, 1),
+      ];
+      const lookup = createBuffLookup(buffEvents);
+
+      // Check if buff was ever active anywhere
+      expect(isBuffActiveOnTarget(lookup, 12345)).toBe(true); // Buff 12345 existed
+      expect(isBuffActiveOnTarget(lookup, 99999)).toBe(false); // Buff 99999 never existed
+    });
+
+    it('should return false for non-existent buff (no timestamp)', () => {
+      const buffEvents: BuffEvent[] = [
+        createApplyBuffEvent(1000, 12345, 1),
+        createRemoveBuffEvent(2000, 12345, 1),
+      ];
+      const lookup = createBuffLookup(buffEvents);
+
+      // Check non-existent buff
+      expect(isBuffActiveOnTarget(lookup, 99999, undefined, 1)).toBe(false);
+      expect(isBuffActiveOnTarget(lookup, 99999, undefined, 2)).toBe(false);
+    });
+
+    it('should return false for empty lookup (no timestamp)', () => {
+      const lookup = createBuffLookup([]);
+
+      expect(isBuffActiveOnTarget(lookup, 12345, undefined, 1)).toBe(false);
+      expect(isBuffActiveOnTarget(lookup, 12345)).toBe(false);
+    });
+  });
 });
