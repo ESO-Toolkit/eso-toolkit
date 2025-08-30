@@ -20,6 +20,7 @@ function Show-Help {
     Write-Host "  clean         - Clean build artifacts"
     Write-Host "  codegen       - Generate GraphQL types"
     Write-Host "  fetch-abilities - Fetch abilities data"
+    Write-Host "  pre-commit    - Run full CI pipeline (lint-fix, test, build, typecheck)"
     Write-Host "  all           - Run clean, install, lint, test, and build"
     Write-Host "  check         - Run lint and test (quick pre-commit check)"
     Write-Host "  setup         - Setup project for new developers"
@@ -91,6 +92,40 @@ function Run-All {
     Write-Host "✅ All tasks completed successfully!" -ForegroundColor Green
 }
 
+function Run-PreCommit {
+    Write-Host "Running pre-commit checks..." -ForegroundColor Yellow
+    
+    Write-Host "1/4 - Running ESLint with auto-fix..." -ForegroundColor Cyan
+    npm run lint:fix
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ ESLint failed!" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+    
+    Write-Host "2/4 - Running tests..." -ForegroundColor Cyan
+    npm run test
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Tests failed!" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+    
+    Write-Host "3/4 - Building project..." -ForegroundColor Cyan
+    npm run build
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Build failed!" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+    
+    Write-Host "4/4 - Running type check..." -ForegroundColor Cyan
+    npm run typecheck
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Type check failed!" -ForegroundColor Red
+        exit $LASTEXITCODE
+    }
+    
+    Write-Host "✅ All pre-commit tasks completed successfully!" -ForegroundColor Green
+}
+
 function Run-Check {
     Run-Lint
     Run-Tests
@@ -118,6 +153,7 @@ switch ($Command.ToLower()) {
     "clean" { Clean-Build }
     "codegen" { Run-Codegen }
     "fetch-abilities" { Fetch-Abilities }
+    "pre-commit" { Run-PreCommit }
     "all" { Run-All }
     "check" { Run-Check }
     "setup" { Setup-Project }
