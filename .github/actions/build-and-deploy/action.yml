@@ -52,6 +52,7 @@ runs:
       run: |
         REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
         export STORYBOOK_BASE_PATH="/$REPO_NAME/storybook/"
+        export DISABLE_ESLINT_PLUGIN=true
         npm run build-storybook
 
     - name: Move Storybook to build directory
