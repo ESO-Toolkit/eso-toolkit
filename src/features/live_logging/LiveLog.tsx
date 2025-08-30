@@ -1,15 +1,19 @@
 import React from 'react';
+import { useDispatch } from 'react-redux';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/generated';
 import { useReportFightParams } from '../../hooks';
 import { ReportFightContext } from '../../ReportFightContext';
 
+import { setReportData } from '@/store/report/reportSlice';
+
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 
 export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const { reportId, fightId } = useReportFightParams();
   const client = useEsoLogsClientInstance();
+  const dispatch = useDispatch();
 
   // Initialize to the fight id from the url
   const [latestFightId, setFightId] = React.useState<string | null | undefined>(fightId);
@@ -30,10 +34,11 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
       response.reportData?.report?.fights &&
       response.reportData?.report?.fights[response.reportData.report.fights.length - 1];
 
-    if (lastFight) {
+    if (lastFight && lastFight.id.toString() !== latestFightId) {
       setFightId(lastFight.id.toString());
+      dispatch(setReportData(response.reportData?.report || null));
     }
-  }, [reportId, client]);
+  }, [reportId, client, latestFightId, dispatch]);
 
   React.useEffect(() => {
     fetchLatestFightId();
