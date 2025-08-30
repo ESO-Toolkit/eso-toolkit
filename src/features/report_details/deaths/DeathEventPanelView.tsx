@@ -70,16 +70,16 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
           display: 'grid',
           gridTemplateColumns: {
             xs: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-            lg: 'repeat(4, 1fr)'
+            sm: 'repeat(1, 1fr)',
+            md: 'repeat(2, 1fr)',
+            lg: 'repeat(3, 1fr)'
           },
           gap: 2
         }}>
           {Array.from({ length: 4 }).map((_, i) => (
             <Card key={i} sx={{
               borderRadius: '16px',
-              background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
               border: '1px solid rgba(255, 255, 255, 0.15)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)'
@@ -207,9 +207,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
         display: 'grid',
         gridTemplateColumns: {
           xs: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-          lg: 'repeat(4, 1fr)'
+          sm: 'repeat(1, 1fr)',
+          md: 'repeat(2, 1fr)',
+          lg: 'repeat(3, 1fr)'
         },
         gap: 2
       }}>
@@ -232,7 +232,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
               key={idx} 
               sx={{
                 borderRadius: '16px',
-                background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+                background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
