@@ -40,6 +40,16 @@ const config: StorybookConfig = {
   },
 
   viteFinal: async (config) => {
+    // Remove ESLint plugin from Storybook to avoid conflicts with mocker runtime template
+    if (config.plugins) {
+      config.plugins = config.plugins.filter((plugin) => {
+        if (plugin && typeof plugin === 'object' && 'name' in plugin) {
+          return plugin.name !== 'vite:eslint';
+        }
+        return true;
+      });
+    }
+
     // Add alias support similar to main vite config
     if (config.resolve) {
       config.resolve.alias = {
