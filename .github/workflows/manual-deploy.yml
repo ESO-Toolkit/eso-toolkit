@@ -5,5 +5,15 @@ on:
 
 jobs:
   deploy:
-    uses: ./.github/workflows/common/build-and-deploy.yml
-    secrets: inherit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+      
+      - name: Build and Deploy
+        uses: ./.github/actions/build-and-deploy
+        with:
+          enable_sourcemaps: 'false'
+          github_token: ${{ secrets.GITHUB_TOKEN }}
