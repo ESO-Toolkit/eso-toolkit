@@ -29,6 +29,15 @@ import arcanistIcon from '../../../assets/white-arcanist.png';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import {
+  TRI_STAT_FOOD,
+  HEALTH_AND_REGEN_FOOD,
+  HEALTH_FOOD,
+  MAGICKA_FOOD,
+  STAMINA_FOOD,
+  INCREASE_MAX_HEALTH_AND_STAMINA,
+  INCREASE_MAX_HEALTH_AND_MAGICKA,
+} from '../../../types/abilities';
 import { ArmorType, PlayerGear } from '../../../types/playerDetails';
 import { detectBuildIssues } from '../../../utils/detectBuildIssues';
 import {
@@ -243,12 +252,32 @@ function detectFoodFromAuras(
   auras?: Array<{ name: string; id: number; stacks?: number }>
 ): { name: string; id: number } | undefined {
   if (!auras || auras.length === 0) return undefined;
+
+  for (const a of auras) {
+    const id = a.id;
+
+    // First check against the known food ID sets
+    if (
+      TRI_STAT_FOOD.has(id) ||
+      HEALTH_AND_REGEN_FOOD.has(id) ||
+      HEALTH_FOOD.has(id) ||
+      MAGICKA_FOOD.has(id) ||
+      STAMINA_FOOD.has(id) ||
+      INCREASE_MAX_HEALTH_AND_STAMINA.has(id) ||
+      INCREASE_MAX_HEALTH_AND_MAGICKA.has(id)
+    ) {
+      return { name: a.name || '', id: a.id };
+    }
+  }
+
+  // Fallback to regex matching for foods not in the known sets
   for (const a of auras) {
     const n = a?.name || '';
     if (FOOD_REGEXPS.some((rx) => rx.test(n))) {
       return { name: n, id: a.id };
     }
   }
+
   return undefined;
 }
 
@@ -260,7 +289,54 @@ function abbreviateFood(name: string): string {
     .filter(Boolean);
   if (words.length === 0) return name;
   const acronym = words.map((w) => (w.length > 0 ? w[0].toUpperCase() : '')).join('');
-  return acronym.length >= 2 && acronym.length <= 4 ? acronym : words.slice(0, 3).map((w) => (w.length > 0 ? w[0].toUpperCase() : '')).join('');
+  return acronym.length >= 2 && acronym.length <= 4
+    ? acronym
+    : words
+        .slice(0, 3)
+        .map((w) => (w.length > 0 ? w[0].toUpperCase() : ''))
+        .join('');
+}
+
+function getFoodColor(foodId?: number): string {
+  if (!foodId) return 'text.secondary';
+
+  // Tri-stat food -> purple
+  if (TRI_STAT_FOOD.has(foodId)) {
+    return '#c57fff'; // Purple color from the existing purple variant
+  }
+
+  // Health and regen -> pink
+  if (HEALTH_AND_REGEN_FOOD.has(foodId)) {
+    return '#ff69b4'; // Pink color
+  }
+
+  // Health -> red
+  if (HEALTH_FOOD.has(foodId)) {
+    return '#ff6666'; // Red color from the existing championRed variant
+  }
+
+  // Magicka -> light blue
+  if (MAGICKA_FOOD.has(foodId)) {
+    return '#7ee8ff'; // Light blue color from the existing lightBlue variant
+  }
+
+  // Stamina -> light green
+  if (STAMINA_FOOD.has(foodId)) {
+    return '#66ffaa'; // Light green color from the existing championGreen variant
+  }
+
+  // Health and stamina -> dark green
+  if (INCREASE_MAX_HEALTH_AND_STAMINA.has(foodId)) {
+    return '#4d9f4d'; // Dark green color
+  }
+
+  // Health and magicka -> dark blue
+  if (INCREASE_MAX_HEALTH_AND_MAGICKA.has(foodId)) {
+    return '#4488cc'; // Dark blue color
+  }
+
+  // Default fallback
+  return 'text.secondary';
 }
 
 function formatTimestamp(timestamp: number): string {
@@ -269,7 +345,7 @@ function formatTimestamp(timestamp: number): string {
   const totalSeconds = Math.floor(timestamp / 1000);
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
-  
+
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
@@ -281,11 +357,13 @@ function formatDuration(startTime: number, endTime: number): string {
   return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 }
 
-
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
-  championPointsByPlayer: Record<string, Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>>;
+  championPointsByPlayer: Record<
+    string,
+    Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
+  >;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
@@ -1027,6 +1105,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           fontWeight: 700,
                                           fontSize: 11,
                                           letterSpacing: '.02em',
+                                          color: getFoodColor(foodAura?.id),
                                         }}
                                       >
                                         {foodAura ? abbreviateFood(foodAura.name) : 'NONE'}
@@ -1136,9 +1215,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           title={`Champion Point: ${cp.name} (ID: ${cp.id})`}
                                           sx={{
                                             ...buildVariantSx(
-                                              cp.color === 'red' ? 'championRed' :
-                                              cp.color === 'blue' ? 'championBlue' :
-                                              'championGreen'
+                                              cp.color === 'red'
+                                                ? 'championRed'
+                                                : cp.color === 'blue'
+                                                  ? 'championBlue'
+                                                  : 'championGreen'
                                             ),
                                             '& .MuiChip-label': { fontSize: '0.58rem' },
                                           }}
