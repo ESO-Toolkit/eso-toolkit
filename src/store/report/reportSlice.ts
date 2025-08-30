@@ -64,9 +64,8 @@ export const fetchReportData = createAsyncThunk<
       const requestedReportId = reportId;
 
       // Check if report data is already cached for this report
-      const isCached = 
-        state.cacheMetadata.lastFetchedReportId === requestedReportId &&
-        state.data !== null;
+      const isCached =
+        state.cacheMetadata.lastFetchedReportId === requestedReportId && state.data !== null;
       const isFresh =
         state.cacheMetadata.lastFetchedTimestamp &&
         Date.now() - state.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
@@ -90,6 +89,13 @@ const reportSlice = createSlice({
   reducers: {
     setReportId(state, action: PayloadAction<string>) {
       state.reportId = action.payload;
+    },
+    setReportData(state, action: PayloadAction<ReportFragment | null>) {
+      state.data = action.payload;
+      state.cacheMetadata = {
+        lastFetchedReportId: state.reportId,
+        lastFetchedTimestamp: Date.now(),
+      };
     },
     clearReport(state) {
       state.reportId = '';
@@ -133,5 +139,5 @@ const reportSlice = createSlice({
   },
 });
 
-export const { setReportId, clearReport } = reportSlice.actions;
+export const { setReportId, clearReport, setReportData } = reportSlice.actions;
 export default reportSlice.reducer;
