@@ -88,7 +88,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
         return '#b970ff'; // Updated purple for healers
       case 'dps':
       default:
-        return '#ff6b35'; // Orange for DPS (default)
+        return '#ff8b61'; // Orange for DPS (default)
     }
   };
 
@@ -119,7 +119,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             boxShadow:
               '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
             background:
-              'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+              'linear-gradient(135deg, rgba(32, 89, 105, 0.35) 0%, rgba(67, 107, 119, 0.25) 50%, rgba(236, 240, 241, 0.18) 100%)',
             transition: 'all 0.3s ease',
             '&::before': {
               content: '""',
@@ -306,7 +306,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                   >
                     {percentage}%
                   </Typography>
-                  <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                  <Box sx={{ width: '200px', minWidth: '200px' }}>
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}

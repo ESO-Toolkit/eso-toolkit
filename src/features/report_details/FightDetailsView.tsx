@@ -127,18 +127,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <Tooltip title="Players">
             <Tab icon={<PeopleIcon />} />
           </Tooltip>
-          <Tooltip title="Deaths">
-            <Tab
-              icon={
-                <Icon
-                  baseClassName="material-symbols-outlined"
-                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
-                >
-                  skull
-                </Icon>
-              }
-            />
-          </Tooltip>
           <Tooltip title="Damage Done">
             <Tab
               icon={
@@ -153,6 +141,18 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           </Tooltip>
           <Tooltip title="Healing Done">
             <Tab icon={<HealingIcon />} />
+          </Tooltip>
+          <Tooltip title="Deaths">
+            <Tab
+              icon={
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  skull
+                </Icon>
+              }
+            />
           </Tooltip>
           <Tooltip title="Critical Damage">
             <Tab icon={<WhatshotIcon />} />
@@ -241,13 +241,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <PlayersPanel />
         </Box>
         <Box sx={{ display: validSelectedTab === 2 ? 'block' : 'none' }}>
-          <DeathEventPanel fight={fight} />
-        </Box>
-        <Box sx={{ display: validSelectedTab === 3 ? 'block' : 'none' }}>
           <DamageDonePanel fight={fight} />
         </Box>
-        <Box sx={{ display: validSelectedTab === 4 ? 'block' : 'none' }}>
+        <Box sx={{ display: validSelectedTab === 3 ? 'block' : 'none' }}>
           <HealingDonePanel fight={fight} />
+        </Box>
+        <Box sx={{ display: validSelectedTab === 4 ? 'block' : 'none' }}>
+          <DeathEventPanel fight={fight} />
         </Box>
         <Box sx={{ display: validSelectedTab === 5 ? 'block' : 'none' }}>
           <CriticalDamagePanel fight={fight} />
