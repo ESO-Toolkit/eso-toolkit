@@ -1,6 +1,8 @@
 // Import MUI icons
+import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import DangerousIcon from '@mui/icons-material/Dangerous';
+import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HealingIcon from '@mui/icons-material/Healing';
 import InsightsIcon from '@mui/icons-material/Insights';
@@ -39,6 +41,8 @@ import { EventsPanel } from './debug/EventsPanel';
 import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
 import { TargetEventsPanel } from './debug/TargetEventsPanel';
 import { HealingDonePanel } from './healing/HealingDonePanel';
+import { AurasPanel } from './insights/AurasPanel';
+import { BuffsOverviewPanel } from './insights/BuffsOverviewPanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
@@ -90,7 +94,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         <FormControl sx={{ minWidth: 200 }}>
           <TargetSelector />
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, Rotation Analysis, and Auras Overview">
           <FormControlLabel
             control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
             label="Show Experimental Tabs"
@@ -169,6 +173,18 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<RepeatIcon />} />
             </Tooltip>
           )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Auras Overview">
+              <Tab icon={<AutoAwesomeIcon />} />
+            </Tooltip>
+          )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Buffs Overview">
+              <Tab icon={<FlareIcon />} />
+            </Tooltip>
+          )}
         </Tabs>
         <Box sx={{ display: validSelectedTab === 0 ? 'block' : 'none' }}>
           <InsightsPanel fight={fight} />
@@ -227,6 +243,16 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {showExperimentalTabs && (
           <Box sx={{ display: validSelectedTab === 14 ? 'block' : 'none' }}>
             <RotationAnalysisPanel fight={fight} />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 15 ? 'block' : 'none' }}>
+            <AurasPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 16 ? 'block' : 'none' }}>
+            <BuffsOverviewPanel />
           </Box>
         )}
       </Box>
