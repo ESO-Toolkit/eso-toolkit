@@ -97,11 +97,6 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         </Typography>
       </Stack>
 
-      {fight && (
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Total Fight Time: {((fight.endTime - fight.startTime) / 1000).toFixed(1)} seconds
-        </Typography>
-      )}
 
       <FightDetails fight={fight} selectedTabId={selectedTabId} />
     </Paper>

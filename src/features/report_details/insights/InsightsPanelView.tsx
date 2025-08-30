@@ -10,6 +10,7 @@ import {
 } from '@mui/material';
 import React from 'react';
 
+import { AbilityIcon } from '../../../components/AbilityIcon';
 import { FightFragment } from '../../../graphql/generated';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
@@ -27,8 +28,18 @@ interface InsightsPanelViewProps {
   isLoading: boolean;
 }
 
-const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
-const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
+const ABILITY_DATA = [
+  // Glacial Colossus icon is missing in some master data sets; provide explicit fallback icon filename
+  { name: 'Glacial Colossus', id: '122388', icon: 'ability_necromancer_006_a' },
+  { name: 'Summon Charged Atronach', id: '23495', icon: 'ability_sorcerer_storm_atronach' },
+  { name: 'Aggressive Horn', id: '40223' },
+  { name: 'Reviving Barrier', id: '61732', icon: 'ability_healer_022' }
+];
+
+const CHAMPION_POINT_DATA = [
+  { name: 'Enlivening Overflow', emoji: '⚡' },
+  { name: 'From the Brink', emoji: '🛡️' }
+];
 
 export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   fight,
@@ -111,50 +122,113 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               Fight Insights
             </Typography>
 
-            <Box>
-              <Typography>
-                <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ 
+                width: 32, 
+                height: 32, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center',
+                fontSize: '20px',
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                borderRadius: 1,
+                boxShadow: 1
+              }}>
+                ⏱️
+              </Box>
+              <Typography sx={{ fontWeight: 300 }}>
+                <strong style={{ fontWeight: 100 }}>Duration:</strong> {durationSeconds.toFixed(1)} seconds
               </Typography>
             </Box>
 
             {firstDamageDealer && (
-              <Box>
-                <Typography>
-                  <strong>First Damage Dealer:</strong> {firstDamageDealer}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 1 }}>
+                <Box sx={{ 
+                  width: 32, 
+                  height: 32, 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  justifyContent: 'center',
+                  fontSize: '20px',
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  borderRadius: 1,
+                  boxShadow: 1
+                }}>
+                  🎯
+                </Box>
+                <Typography sx={{ fontWeight: 300 }}>
+                  <strong style={{ fontWeight: 100 }}>First Damage Dealer:</strong> {firstDamageDealer}
                 </Typography>
               </Box>
             )}
 
-            <Box>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            <Box sx={{ mt: 2.5 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 200 }}>
                 Abilities Equipped:
               </Typography>
-              <List dense>
-                {ABILITY_NAMES.map((name) => (
-                  <ListItem key={name} sx={{ mb: 1 }}>
-                    <ListItemText
-                      primary={name}
-                      secondary={
-                        abilityEquipped[name]?.length ? abilityEquipped[name].join(', ') : 'None'
-                      }
-                    />
-                  </ListItem>
+              <Box sx={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: 1.5
+              }}>
+                {ABILITY_DATA.map((ability) => (
+                  <Box 
+                    key={ability.name} 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1.5,
+                      p: 1,
+                      borderRadius: 1,
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)'
+                    }}
+                  >
+                    <AbilityIcon abilityId={ability.id} fallbackIcon={'icon' in ability ? ability.icon : undefined} />
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ability.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 200, fontSize: '.75rem' }}>
+                        {abilityEquipped[ability.name]?.length ? abilityEquipped[ability.name].join(', ') : 'None'}
+                      </Typography>
+                    </Box>
+                  </Box>
                 ))}
-              </List>
+              </Box>
             </Box>
 
-            <Box>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 0, fontWeight: 200 }}>
                 Champion Points Equipped:
               </Typography>
               <List dense>
-                {CHAMPION_POINT_NAMES.map((name) => (
-                  <ListItem key={name} sx={{ mb: 1 }}>
+                {CHAMPION_POINT_DATA.map((cp) => (
+                  <ListItem key={cp.name} sx={{ mb: 1, pl: 0, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                    <Box sx={{ 
+                      width: 32, 
+                      height: 32, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center',
+                      fontSize: '20px',
+                      backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                      borderRadius: 1,
+                      boxShadow: 1
+                    }}>
+                      {cp.emoji}
+                    </Box>
                     <ListItemText
-                      primary={name}
-                      secondary={
-                        buffActors[name]?.size ? Array.from(buffActors[name]).join(', ') : 'None'
+                      primary={
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {cp.name}
+                        </Typography>
                       }
+                      secondary={
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 200, fontSize: '.75rem' }}>
+                          {buffActors[cp.name]?.size ? Array.from(buffActors[cp.name]).join(', ') : 'None'}
+                        </Typography>
+                      }
+                      sx={{ flex: 1 }}
                     />
                   </ListItem>
                 ))}

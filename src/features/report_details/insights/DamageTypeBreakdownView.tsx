@@ -119,7 +119,7 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
               '💥'; // Default explosion
 
             return (
-              <ListItem key={idx} sx={{ py: 1.5 }} divider>
+              <ListItem key={idx} sx={{ py: 1.5, pl: .5, pr: 1.5 }} divider>
                 <Box sx={{ width: '100%' }}>
                   {/* Progress bar container with content inside */}
                   <Box

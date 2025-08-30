@@ -19,7 +19,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
   // Use hooks to get data
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { isPlayerDataLoading } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
 
   // Extract data from hooks with memoization
   const events = useMemo(() => damageEvents || [], [damageEvents]);
@@ -76,6 +76,23 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
     };
   }, [masterData.actorsById]);
 
+  // Helper function to determine player role
+  const getPlayerRole = useMemo(() => {
+    return (playerId: string): 'dps' | 'tank' | 'healer' => {
+      if (!playerData?.playersById) return 'dps';
+      
+      const player = playerData.playersById[playerId];
+      const role = player?.role as string;
+      
+      // Map plural forms to singular forms
+      if (role === 'tanks') return 'tank';
+      if (role === 'healers') return 'healer';
+      if (role === 'dps') return 'dps';
+      
+      return 'dps'; // default fallback
+    };
+  }, [playerData]);
+
   const damageRows = useMemo(() => {
     return Object.entries(damageStatistics.damageByPlayer)
       .filter(([id]) => isPlayerActor(id))
@@ -90,16 +107,19 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
           ? `https://assets.rpglogs.com/img/eso/icons/${actor.icon}.png`
           : undefined;
 
+        const role = getPlayerRole(id);
+
         return {
           id,
           name,
           total: totalDamage,
           dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
           iconUrl,
+          role,
         };
       })
       .sort((a, b) => b.dps - a.dps);
-  }, [damageStatistics.damageByPlayer, isPlayerActor, masterData.actorsById, fightDuration]);
+  }, [damageStatistics.damageByPlayer, isPlayerActor, masterData.actorsById, fightDuration, getPlayerRole]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {

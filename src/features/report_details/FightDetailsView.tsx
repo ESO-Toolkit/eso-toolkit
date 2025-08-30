@@ -1,7 +1,6 @@
 // Import MUI icons
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
-import DangerousIcon from '@mui/icons-material/Dangerous';
 import FlareIcon from '@mui/icons-material/Flare';
 import GpsFixedIcon from '@mui/icons-material/GpsFixed';
 import HealingIcon from '@mui/icons-material/Healing';
@@ -13,7 +12,6 @@ import Person from '@mui/icons-material/Person';
 import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
 import ShieldIcon from '@mui/icons-material/Shield';
-import SwordsIcon from '@mui/icons-material/SportsMartialArts';
 import StarIcon from '@mui/icons-material/Star';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
@@ -26,6 +24,7 @@ import {
   Switch,
   Stack,
   Skeleton,
+  Icon,
 } from '@mui/material';
 import React from 'react';
 
@@ -69,6 +68,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   onNavigateToTab,
   onToggleExperimentalTabs,
 }) => {
+  // Material Symbols ligature icons for consistent style
   // Only render content when events for the current fight are loaded
   if (loading) {
     return (
@@ -89,26 +89,37 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
   return (
     <React.Fragment>
-      {/* Target Selection and Experimental Toggle */}
-      <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
+      {/* Target Selection */}
+      <Box sx={{ mb: 2 }}>
         <FormControl sx={{ minWidth: 200 }}>
           <TargetSelector />
         </FormControl>
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, Rotation Analysis, and Auras Overview">
-          <FormControlLabel
-            control={<Switch checked={showExperimentalTabs} onChange={onToggleExperimentalTabs} />}
-            label="Show Experimental Tabs"
-          />
-        </Tooltip>
-      </Stack>
-      <Box mt={2}>
+      </Box>
+
+      {/* Tabs with integrated experimental toggle */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, pl: 1 }}>
         <Tabs
           key={showExperimentalTabs ? 'experimental' : 'normal'}
           value={validSelectedTab}
           onChange={(_, v) => onNavigateToTab(v)}
-          sx={{ mb: 2, overflowX: 'auto', minWidth: 0 }}
-          variant="scrollable"
-          scrollButtons="auto"
+          sx={{
+            minWidth: 'auto',
+            '& .MuiTabs-indicator': {
+              backgroundColor: '#406374',
+              transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
+            },
+            '& .MuiTabs-flexContainer': {
+              gap: 0,
+              justifyContent: 'flex-start',
+            },
+            '& .MuiTabs-scroller': {
+              overflow: 'visible',
+            },
+            '& .MuiTabs-root': {
+              minWidth: 'auto',
+            },
+          }}
+          variant="standard"
         >
           <Tooltip title="Insights">
             <Tab icon={<InsightsIcon />} />
@@ -117,10 +128,28 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             <Tab icon={<PeopleIcon />} />
           </Tooltip>
           <Tooltip title="Deaths">
-            <Tab icon={<DangerousIcon />} />
+            <Tab
+              icon={
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  skull
+                </Icon>
+              }
+            />
           </Tooltip>
           <Tooltip title="Damage Done">
-            <Tab icon={<SwordsIcon />} />
+            <Tab
+              icon={
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  swords
+                </Icon>
+              }
+            />
           </Tooltip>
           <Tooltip title="Healing Done">
             <Tab icon={<HealingIcon />} />
@@ -186,6 +215,25 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             </Tooltip>
           )}
         </Tabs>
+
+        {/* Experimental Toggle */}
+        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={showExperimentalTabs}
+                onChange={onToggleExperimentalTabs}
+                size="small"
+              />
+            }
+            label="Experimental"
+            sx={{ ml: 2, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+          />
+        </Tooltip>
+      </Box>
+
+      {/* Tab Content */}
+      <Box sx={{ mt: 2 }}>
         <Box sx={{ display: validSelectedTab === 0 ? 'block' : 'none' }}>
           <InsightsPanel fight={fight} />
         </Box>
