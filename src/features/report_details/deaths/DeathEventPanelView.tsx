@@ -181,9 +181,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 label={`${playerName}: ${count}`}
                 size="small"
                 sx={{
-                  backgroundColor: 'rgba(244, 67, 54, 0.15)',
-                  color: '#f44336',
-                  border: '1px solid rgba(244, 67, 54, 0.3)',
+                  backgroundColor: 'rgb(0 0 0 / 15%)',
+                  color: '#d2c7c6',
+                  border: '1px solid rgb(255 7 7 / 29%)',
                   '&:hover': link
                     ? {
                         backgroundColor: 'rgba(244, 67, 54, 0.25)',
