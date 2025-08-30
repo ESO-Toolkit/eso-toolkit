@@ -968,59 +968,101 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   if (loading) {
     return (
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Skeleton variant="rounded" width={200} height={40} sx={{ mb: 3 }} />
-        <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-          <Skeleton variant="rounded" width={120} height={40} />
-          <Skeleton variant="rounded" width={160} height={40} />
-        </Box>
-        <Box sx={{ mb: 3 }}>
-          <Skeleton variant="text" width={300} height={32} sx={{ mb: 2 }} />
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-              gap: 2,
-            }}
-          >
-            {[...Array(4)].map((_, i) => (
-              <Paper key={i} sx={{ p: 2, height: '100%' }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                  <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
-                  <Skeleton variant="text" width={120} height={24} />
-                </Box>
-                <Skeleton variant="rounded" width="100%" height={120} sx={{ mb: 1.5 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Skeleton variant="text" width={80} height={20} />
-                  <Skeleton variant="text" width={60} height={20} />
-                </Box>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Skeleton variant="text" width={100} height={20} />
-                  <Skeleton variant="text" width={40} height={20} />
-                </Box>
-              </Paper>
-            ))}
+      <Paper
+        elevation={0}
+        square
+        sx={{
+          p: 0,
+          m: 0,
+          width: '100%',
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+          background: 'transparent',
+        }}
+      >
+        <Box
+          sx={{
+            p: { xs: 2, sm: 3 },
+            mb: 3,
+            backgroundColor: 'background.paper',
+            borderRadius: { xs: 0, sm: 1 },
+            boxShadow: 2,
+          }}
+        >
+          <Skeleton variant="rounded" width={200} height={40} sx={{ mb: 3 }} />
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Skeleton variant="rounded" width={120} height={40} />
+            <Skeleton variant="rounded" width={160} height={40} />
           </Box>
-        </Box>
-        <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
-        {[...Array(3)].map((_, idx) => (
-          <Box key={idx} sx={{ mb: 2 }}>
-            <Skeleton variant="text" width={140} height={28} sx={{ mb: 1 }} />
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-              {[...Array(6)].map((__, j) => (
-                <Skeleton key={j} variant="rounded" width={88} height={36} />
+          <Box sx={{ mb: 3 }}>
+            <Skeleton variant="text" width={300} height={32} sx={{ mb: 2 }} />
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                gap: 2,
+              }}
+            >
+              {[...Array(4)].map((_, i) => (
+                <Paper key={i} sx={{ p: 2, height: '100%' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                    <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
+                    <Skeleton variant="text" width={120} height={24} />
+                  </Box>
+                  <Skeleton variant="rounded" width="100%" height={120} sx={{ mb: 1.5 }} />
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Skeleton variant="text" width={80} height={20} />
+                    <Skeleton variant="text" width={60} height={20} />
+                  </Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Skeleton variant="text" width={100} height={20} />
+                    <Skeleton variant="text" width={40} height={20} />
+                  </Box>
+                </Paper>
               ))}
             </Box>
           </Box>
-        ))}
+          <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
+          {[...Array(3)].map((_, idx) => (
+            <Box key={idx} sx={{ mb: 2 }}>
+              <Skeleton variant="text" width={140} height={28} sx={{ mb: 1 }} />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {[...Array(6)].map((__, j) => (
+                  <Skeleton key={j} variant="rounded" width={88} height={36} />
+                ))}
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Paper>
     );
   }
 
   if (!fights?.length) {
     return (
-      <Paper elevation={2} sx={{ p: 3 }}>
-        <Typography variant="body1">No fights available</Typography>
+      <Paper
+        elevation={0}
+        square
+        sx={{
+          p: 0,
+          m: 0,
+          width: '100%',
+          maxWidth: '100vw',
+          boxSizing: 'border-box',
+          background: 'transparent',
+        }}
+      >
+        <Box
+          sx={{
+            p: { xs: 2, sm: 3 },
+            mb: 3,
+            backgroundColor: 'background.paper',
+            borderRadius: { xs: 0, sm: 1 },
+            boxShadow: 2,
+          }}
+        >
+          <Typography variant="body1">No fights available</Typography>
+        </Box>
       </Paper>
     );
   }
@@ -1183,89 +1225,26 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               borderRadius: 10,
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
-              background: isWipe
-                ? (() => {
-                    const healthPercent = bossHealthPercent;
-                    if (healthPercent >= 80) {
-                      return 'linear-gradient(135deg, rgba(220, 38, 38, 0.28) 0%, rgba(239, 68, 68, 0.18) 100%)';
-                    } else if (healthPercent >= 50) {
-                      return 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(251, 146, 60, 0.16) 100%)';
-                    } else if (healthPercent >= 20) {
-                      return 'linear-gradient(135deg, rgba(251, 146, 60, 0.22) 0%, rgba(252, 211, 77, 0.14) 100%)';
-                    } else if (healthPercent >= 8) {
-                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(253, 230, 138, 0.12) 100%)';
-                    } else {
-                      return 'linear-gradient(135deg, rgba(252, 211, 77, 0.20) 0%, rgba(163, 230, 53, 0.12) 100%)';
-                    }
-                  })()
-                : 'transparent',
-              border: '1px solid rgba(255,255,255,0.18)',
+              border: isWipe
+                ? '1px solid rgba(255,255,255,0.18)'
+                : '1px solid rgba(76, 217, 100, 0.3)',
               boxShadow: isWipe
-                ? '0 8px 24px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.25), inset 0 -1px 0 rgba(0,0,0,0.25)'
-                : 'none',
-              color: isWipe
-                ? (() => {
-                    const healthPercent = bossHealthPercent;
-                    if (healthPercent >= 80) {
-                      return '#ffb3b3';
-                    } else if (healthPercent >= 50) {
-                      return '#ffcc99';
-                    } else if (healthPercent >= 20) {
-                      return '#ffe066';
-                    } else if (healthPercent >= 8) {
-                      return '#ffed99';
-                    } else {
-                      return '#ccff99';
-                    }
-                  })()
-                : 'transparent',
-              textShadow: isWipe ? '0 1px 2px rgba(0,0,0,0.45)' : 'none',
-              pointerEvents: 'none',
-              transition: 'opacity 120ms ease',
-              opacity: isWipe || bossWasKilled ? 1 : 0,
+                ? '0 4px 12px rgba(255, 99, 71, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
+                : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
+              zIndex: 2,
             }}
           >
-            {bossHealthPercent}%
-          </Box>
-          {!isWipe && (
-            <Box
+            <Typography
               sx={{
-                position: 'absolute',
-                top: '50%',
-                left: '50%',
-                transform: 'translate(-50%, -120%)',
-                width: 24,
-                height: 16,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                borderRadius: 8,
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                background: isFalsePositive
-                  ? 'linear-gradient(135deg, rgba(255, 152, 0, 0.25) 0%, rgba(255, 87, 34, 0.15) 100%)'
-                  : 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(34, 197, 94, 0.15) 100%)',
-                border: isFalsePositive
-                  ? '1px solid rgba(255, 152, 0, 0.4)'
-                  : '1px solid rgba(76, 217, 100, 0.3)',
-                boxShadow: isFalsePositive
-                  ? '0 4px 12px rgba(255, 152, 0, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)'
-                  : '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
-                zIndex: 2,
+                color: isWipe ? '#ff9800' : '#4ade80',
+                fontSize: '0.75rem',
+                lineHeight: 1,
+                fontWeight: 600,
               }}
             >
-              <Typography
-                sx={{
-                  color: isFalsePositive ? '#ff9800' : '#4ade80',
-                  fontSize: '0.75rem',
-                  lineHeight: 1,
-                  fontWeight: 600,
-                }}
-              >
-                {isFalsePositive ? '⚠' : '✓'}
-              </Typography>
-            </Box>
-          )}
+              {isWipe ? bossHealthPercent + '%' : isFalsePositive ? '⚠' : '✓'}
+            </Typography>
+          </Box>
           <Typography
             variant="caption"
             sx={{
@@ -1294,9 +1273,41 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   };
 
   return (
-    <>
-      <Paper elevation={2} sx={{ p: 3, mb: 3 }}>
-        <Typography variant="h5" gutterBottom>
+    <Paper
+      elevation={0}
+      square
+      sx={{
+        p: 0,
+        m: 0,
+        width: '100%',
+        maxWidth: '100vw',
+        boxSizing: 'border-box',
+        background: 'transparent',
+      }}
+    >
+      <Box
+        sx={{
+          p: { xs: 2, sm: 3 },
+          mb: 3,
+          backgroundColor: 'background.paper',
+          borderRadius: { xs: 0, sm: 1 },
+          boxShadow: 2,
+        }}
+      >
+        <Typography
+          variant="h5"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem' },
+            lineHeight: 1.334,
+            mb: { xs: '1.5rem', sm: '2rem' },
+            mt: { xs: 0, sm: '-2.7rem' },
+            textAlign: { xs: 'center', sm: 'left' },
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+            px: 0,
+          }}
+        >
           {reportData?.title || 'Report Details'}
         </Typography>
         {encounters.map((trialRun) => (
@@ -1309,159 +1320,217 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
                 sx={{
-                  display: 'flex',
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr auto', sm: '1fr auto' },
                   alignItems: 'center',
-                  justifyContent: 'space-between',
                   width: '100%',
+                  gap: { xs: 1, sm: 2 },
                   pr: 2,
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 200,
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1,
-                  }}
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 200,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                      fontSize: { xs: '1rem', sm: '1.25rem' },
+                    }}
+                  >
+                    {(() => {
+                      // Split trial name and difficulty for styling
+                      const fullName = trialRun.name.replace(/#\d+/, '');
+                      const difficultyMatch = fullName.match(/^(.+?)\s*\((.+)\)$/);
+
+                      if (difficultyMatch) {
+                        const [, baseName, difficulty] = difficultyMatch;
+                        return (
+                          <>
+                            <Box
+                              component="span"
+                              sx={{
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: { xs: 'nowrap', sm: 'normal' },
+                              }}
+                            >
+                              {baseName.trim()}
+                            </Box>
+                            <Box component="span" sx={{ fontWeight: 700, flexShrink: 0 }}>
+                              ({difficulty})
+                            </Box>
+                          </>
+                        );
+                      }
+
+                      return (
+                        <Box
+                          component="span"
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: { xs: 'nowrap', sm: 'normal' },
+                          }}
+                        >
+                          {fullName}
+                        </Box>
+                      );
+                    })()}
+                    {(() => {
+                      const runMatch = trialRun.name.match(/#(\d+)/);
+                      return runMatch ? (
+                        <Box
+                          component="span"
+                          sx={{
+                            fontWeight: 700,
+                            color: '#00bcd4',
+                            backgroundColor: 'rgba(0, 188, 212, 0.1)',
+                            px: 0.75,
+                            py: 0.25,
+                            borderRadius: 1,
+                            ml: { xs: 0, sm: 1 },
+                            fontSize: '0.9em',
+                            flexShrink: 0,
+                          }}
+                        >
+                          #{runMatch[1]}
+                        </Box>
+                      ) : null;
+                    })()}
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end' }}
                 >
                   {(() => {
-                    // Split trial name and difficulty for styling
-                    const fullName = trialRun.name.replace(/#\d+/, '');
-                    const difficultyMatch = fullName.match(/^(.+?)\s*\((.+)\)$/);
+                    // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
+                    const killedBosses = trialRun.encounters.reduce((count, encounter) => {
+                      const hasKill = encounter.bossFights.some((fight) => {
+                        // Use the same kill logic as individual fight cards
+                        const isBossFight = fight.difficulty != null;
+                        if (isBossFight) {
+                          const bossWasKilled =
+                            fight.bossPercentage !== null &&
+                            fight.bossPercentage !== undefined &&
+                            fight.bossPercentage <= 1.0;
+                          const rawIsWipe =
+                            fight.bossPercentage !== null &&
+                            fight.bossPercentage !== undefined &&
+                            fight.bossPercentage > 1.0;
+                          const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                          return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
+                        } else {
+                          // For trash fights, assume successful completion
+                          return true;
+                        }
+                      });
+                      return count + (hasKill ? 1 : 0);
+                    }, 0);
 
-                    if (difficultyMatch) {
-                      const [, baseName, difficulty] = difficultyMatch;
-                      return (
-                        <>
-                          {baseName.trim()}{' '}
-                          <Box component="span" sx={{ fontWeight: 700 }}>
-                            ({difficulty})
-                          </Box>
-                        </>
-                      );
+                    const encounteredBosses = trialRun.encounters.length;
+
+                    // Determine expected total bosses based on zone name
+                    const zoneName = trialRun.name.replace(/#\d+/, '').trim();
+
+                    // Debug logging for Ossein Cage
+                    if (zoneName.includes('Ossein Cage')) {
+                      console.log('Ossein Cage trial data:', {
+                        zoneName,
+                        encounteredBosses,
+                        killedBosses,
+                        encounters: trialRun.encounters.map((e) => ({
+                          name: e.name,
+                          bossFights: e.bossFights.length,
+                        })),
+                      });
                     }
 
-                    return fullName;
-                  })()}
-                  {(() => {
-                    const runMatch = trialRun.name.match(/#(\d+)/);
-                    return runMatch ? (
+                    let expectedTotalBosses = encounteredBosses; // default fallback
+
+                    // Known trial boss counts
+                    if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
+                    else if (zoneName.includes('Cloudrest')) {
+                      // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
+                      // Use actual encountered count since minis can be skipped
+                      expectedTotalBosses = encounteredBosses;
+                    } else if (zoneName.includes('Ossein Cage')) {
+                      // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
+                      // Minis don't affect boss naming, use actual encountered count
+                      expectedTotalBosses = encounteredBosses;
+                    } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
+                    else if (zoneName.includes('Rockgrove')) {
+                      // Rockgrove has 4 main bosses + 1 optional mini (Basks-In-Snakes)
+                      // Use actual encountered count since mini is optional
+                      expectedTotalBosses = encounteredBosses;
+                    } else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
+                    else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
+                    else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 4;
+                    else if (zoneName.includes('Asylum Sanctorium')) {
+                      // Asylum has variable bosses: 1 main + 0-2 minis
+                      // Use actual encountered count since minis can be skipped
+                      expectedTotalBosses = encounteredBosses;
+                    } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
+                    else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
+                    else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
+                    else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
+                    else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
+
+                    // Determine color based on completion against expected total
+                    let color = '#ff9800'; // orange - default for low completion
+                    if (killedBosses === expectedTotalBosses) {
+                      color = '#4caf50'; // green - ALL expected bosses killed
+                    } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
+                      color = '#ffeb3b'; // yellow - 3-4 kills in 5-boss trial
+                    } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
+                      color = '#ffeb3b'; // yellow - 2-3 kills in 4-boss trial
+                    } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
+                      color = '#ffeb3b'; // yellow - 2 kills in 3-boss trial
+                    }
+
+                    return (
                       <Box
-                        component="span"
                         sx={{
-                          fontWeight: 700,
-                          color: '#00bcd4', // Modern cyan color
-                          backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                          px: 0.75,
-                          py: 0.25,
-                          borderRadius: 1,
-                          ml: 1,
-                          fontSize: '0.9em',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          width: 20,
+                          height: 20,
+                          borderRadius: '50%',
+                          backdropFilter: 'blur(10px)',
+                          WebkitBackdropFilter: 'blur(10px)',
+                          border: `1px solid ${color}`,
+                          boxShadow:
+                            '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '10px',
+                          fontWeight: 600,
+                          color: color,
+                          textShadow: '0 1px 2px rgba(0,0,0,0.5)',
+                          background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
+                          transition: 'all 0.3s ease',
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: '50%',
+                            background:
+                              'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                            borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
+                            pointerEvents: 'none',
+                          },
                         }}
                       >
-                        #{runMatch[1]}
+                        {killedBosses}
                       </Box>
-                    ) : null;
+                    );
                   })()}
-                </Typography>
-                {(() => {
-                  // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
-                  const killedBosses = trialRun.encounters.reduce((count, encounter) => {
-                    const hasKill = encounter.bossFights.some((fight) => {
-                      const rawIsWipe = fight.bossPercentage && fight.bossPercentage > 0.01;
-                      const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                      return !rawIsWipe || isFalsePositive; // Kill if not a wipe or false positive
-                    });
-                    return count + (hasKill ? 1 : 0);
-                  }, 0);
-
-                  const encounteredBosses = trialRun.encounters.length;
-
-                  // Determine expected total bosses based on zone name
-                  const zoneName = trialRun.name.replace(/#\d+/, '').trim();
-                  let expectedTotalBosses = encounteredBosses; // default fallback
-
-                  // Known trial boss counts
-                  if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
-                  else if (zoneName.includes('Cloudrest')) {
-                    // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
-                    // Use actual encountered count since minis can be skipped
-                    expectedTotalBosses = encounteredBosses;
-                  } else if (zoneName.includes('Ossein Cage')) {
-                    // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
-                    // Minis don't affect boss naming, use actual encountered count
-                    expectedTotalBosses = encounteredBosses;
-                  } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
-                  else if (zoneName.includes('Rockgrove')) {
-                    // Rockgrove has 4 main bosses + 1 optional mini (Basks-In-Snakes)
-                    // Use actual encountered count since mini is optional
-                    expectedTotalBosses = encounteredBosses;
-                  } else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
-                  else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
-                  else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 5;
-                  else if (zoneName.includes('Asylum Sanctorium')) {
-                    // Asylum has variable bosses: 1 main + 0-2 minis
-                    // Use actual encountered count since minis can be skipped
-                    expectedTotalBosses = encounteredBosses;
-                  } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
-                  else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
-                  else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
-                  else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 4;
-                  else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
-
-                  // Determine color based on completion against expected total
-                  let color = '#ff9800'; // orange - default for low completion
-                  if (killedBosses === expectedTotalBosses) {
-                    color = '#4caf50'; // green - ALL expected bosses killed
-                  } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
-                    color = '#ffeb3b'; // yellow - 3-4 kills in 5-boss trial
-                  } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
-                    color = '#ffeb3b'; // yellow - 2-3 kills in 4-boss trial
-                  } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
-                    color = '#ffeb3b'; // yellow - 2 kills in 3-boss trial
-                  }
-
-                  return (
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        overflow: 'hidden',
-                        width: 20,
-                        height: 20,
-                        borderRadius: '50%',
-                        backdropFilter: 'blur(10px)',
-                        WebkitBackdropFilter: 'blur(10px)',
-                        border: `1px solid ${color}`,
-                        boxShadow:
-                          '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        fontSize: '10px',
-                        fontWeight: 600,
-                        color: color,
-                        textShadow: '0 1px 2px rgba(0,0,0,0.5)',
-                        background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
-                        transition: 'all 0.3s ease',
-                        '&::after': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          height: '50%',
-                          background:
-                            'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
-                          borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
-                          pointerEvents: 'none',
-                        },
-                      }}
-                    >
-                      {killedBosses}
-                    </Box>
-                  );
-                })()}
+                </Box>
               </Box>
               {(() => {
                 // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
@@ -1749,7 +1818,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             </AccordionDetails>
           </Accordion>
         ))}
-      </Paper>
-    </>
+      </Box>
+    </Paper>
   );
 };
