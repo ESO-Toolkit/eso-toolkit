@@ -14,126 +14,13 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  Avatar,
 } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FightFragment, ReportFragment } from '../../graphql/generated';
 
-// Boss avatar URL mappings using public folder paths
-const bossAvatars: Record<string, string> = {
-  // Kyne's Aegis
-  'Lord Falgravn': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Lord%20Falgravn.png",
-  Falgraven: "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Lord%20Falgravn.png",
-  'Captain Vrol': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Captain%20Vrol.png",
-  Vrol: "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Captain%20Vrol.png",
-  'Yandir the Butcher': "/src/assets/Kyne's%20Aegis/Boss%20Avatars/Yandir%20the%20Butcher.png",
-
-  // Ossein Cage
-  'Blood Drinker Thisa': '/src/assets/Ossein%20Cage/Boss%20Avatars/blood%20drinker%20thisa.png',
-  'Hall of Fleshcraft': '/src/assets/Ossein%20Cage/Boss%20Avatars/hall%20of%20fleshcraft.png',
-  'Jynorah and Skorkhif': '/src/assets/Ossein%20Cage/Boss%20Avatars/jynorah%20and%20skorkhif.png',
-  'Overfiend Kazpian': '/src/assets/Ossein%20Cage/Boss%20Avatars/overfiend%20kazpian.png',
-  'Red Witch Gedna Relvel':
-    '/src/assets/Ossein%20Cage/Boss%20Avatars/red%20witch%20gedna%20relvel.png',
-  'Tortured Ranyu': '/src/assets/Ossein%20Cage/Boss%20Avatars/tortued%20ranyu.png',
-
-  // Dreadsail Reef
-  'Bow Breaker': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Bow%20Breaker.png',
-  'Lylanar and Turlassil':
-    '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Lylanar%20and%20Turlassil.png',
-  'Reef Guardian': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Reef%20Guardian.png',
-  'Sail Ripper': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Sail%20Ripper.png',
-  'Tideborn Taleria': '/src/assets/Dreadsail%20Reef/Boss%20Avatars/Tideborn%20Taleria.png',
-
-  // Hel Ra Citadel
-  'Ra Kotu': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/ra%20kotu.png',
-  'The Warrior': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20warrior.png',
-  'The Yokedas': '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
-  "Yokeda Rok'dun": '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
-  Yokedas: '/src/assets/Hel%20Ra%20Citadel/Boss%20Avatars/the%20yokedas.png',
-
-  // Asylum Sanctorium
-  'Saint Felms the Bold':
-    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
-  'Lord Felms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
-  'Saint Felms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20felms%20the%20bold.png',
-  'Saint Llothis the Pious':
-    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20llothis%20the%20pious.png',
-  'Saint Llothis':
-    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20llothis%20the%20pious.png',
-  'Saint Olms the Just':
-    '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20olms%20the%20just.png',
-  'Saint Olms': '/src/assets/Asylum%20Sanctorium/Boss%20Avatars/saint%20olms%20the%20just.png',
-
-  // Rockgrove
-  'Ash Titan': '/src/assets/Rockgrove/Boss%20Avatars/ash%20titan.png',
-  'Basks-in-Snakes': '/src/assets/Rockgrove/Boss%20Avatars/basks-in-snakes.png',
-  'Basks-In-Snakes': '/src/assets/Rockgrove/Boss%20Avatars/basks-in-snakes.png',
-  'Flame-Herald Bahsei': '/src/assets/Rockgrove/Boss%20Avatars/flame-herald%20bahsei.png',
-  Oaxiltso: '/src/assets/Rockgrove/Boss%20Avatars/oaxiltso.png',
-  Xalvakka: '/src/assets/Rockgrove/Boss%20Avatars/xalvakka.png',
-
-  // Aetherian Archive
-  'Foundation Stone Atronach':
-    '/src/assets/Aetherian%20Archive/Boss%20Avatars/foundation%20stone%20atronach.png',
-  'Storm Atronach':
-    '/src/assets/Aetherian%20Archive/Boss%20Avatars/foundation%20stone%20atronach.png',
-  'Lightning Storm Atronach':
-    '/src/assets/Aetherian%20Archive/Boss%20Avatars/lightning%20storm%20atronach.png',
-  'Stone Atronach':
-    '/src/assets/Aetherian%20Archive/Boss%20Avatars/lightning%20storm%20atronach.png',
-  'The Mage': '/src/assets/Aetherian%20Archive/Boss%20Avatars/the%20mage.png',
-  Varlariel: '/src/assets/Aetherian%20Archive/Boss%20Avatars/varariel.png',
-
-  // Cloudrest
-  'Shade of Galenwe': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20galenwe.png',
-  Galenwe: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20galenwe.png',
-  'Shade of Relequen': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20relequen.png',
-  Relequen: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20relequen.png',
-  'Shade of Siroria': '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20siroria.png',
-  Siroria: '/src/assets/Cloudrest/Boss%20Avatars/shade%20of%20siroria.png',
-  "Z'maja": "/src/assets/Cloudrest/Boss%20Avatars/z'maja.png",
-
-  // Sanctum Ophidia
-  Ozara: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/ozara.png',
-  'Possessed Manticora': '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/possessed%20mantikora.png',
-  Stonebreaker: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/stonebreaker.png',
-  'The Serpent': '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/the%20serpent.png',
-  Serpent: '/src/assets/Sanctum%20Ophidia/Boss%20Avatars/the%20serpent.png',
-
-  // Halls of Fabrication
-  Archcustodian: '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/archcustodian.png',
-  'Assembly General':
-    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/assembly%20general.png',
-  'Hunter-Killer Fabricant':
-    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/the%20hunter%20killers.png',
-  'Pinnacle Factotum':
-    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/pinnacle%20factotum.png',
-  'The Refabrication Committee':
-    '/src/assets/The%20Halls%20of%20Fabrication/Boss%20Avatars/the%20refabrication%20committee.png',
-
-  // Lucent Citadel
-  'Cavot Agnan': '/src/assets/Lucent%20Citadel/Boss%20Avatars/cavot%20agnan.png',
-  'Dariel Lemonds': '/src/assets/Lucent%20Citadel/Boss%20Avatars/dariel%20lemonds.png',
-  'Count Ryelaz': '/src/assets/Lucent%20Citadel/Boss%20Avatars/dariel%20lemonds.png',
-  'Orphic Shattered Shard':
-    '/src/assets/Lucent%20Citadel/Boss%20Avatars/orphic%20shattered%20shard.png',
-  Xoryn: '/src/assets/Lucent%20Citadel/Boss%20Avatars/xoryn.png',
-  Zilyseet: '/src/assets/Lucent%20Citadel/Boss%20Avatars/zilyseet.png',
-  Zilyesset: '/src/assets/Lucent%20Citadel/Boss%20Avatars/zilyseet.png',
-  'Baron Rize': '/src/assets/Lucent%20Citadel/Boss%20Avatars/xoryn.png',
-  Jresazzel: '/src/assets/Lucent%20Citadel/Boss%20Avatars/orphic%20shattered%20shard.png',
-  Xynizata: '/src/assets/Lucent%20Citadel/Boss%20Avatars/cavot%20agnan.png',
-
-  // Maw of Lorkhaj
-  "Zhaj'hassa the Forgotten":
-    "/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/Zhaj'hassa%20the%20forgotten.png",
-  Rakkhat: '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/rakkhat.png',
-  'The Twins': '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
-  Vashai: '/src/assets/Maw%20of%20Lorkhaj/Boss%20Avatars/the%20twins.png',
-};
+import { BossAvatar } from './BossAvatar';
 
 function formatTimestamp(fightStartTime: number, reportStartTime: number): string {
   // Convert fight timestamp (relative ms) + report startTime (Unix timestamp) to actual clock time
@@ -202,12 +89,6 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
   }
 
   return false;
-}
-
-function getBossAvatar(bossName: string): string | null {
-  // Remove instance numbers and extra text to match avatar keys
-  const cleanName = bossName.replace(/#\d+$/, '').trim();
-  return bossAvatars[cleanName] || null;
 }
 
 function getTrialNameFromBoss(
@@ -1641,24 +1522,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        {(() => {
-                          const avatarSrc = getBossAvatar(encounter.name);
-                          return (
-                            avatarSrc && (
-                              <Avatar
-                                src={avatarSrc}
-                                alt={encounter.name}
-                                sx={{
-                                  width: 32,
-                                  height: 32,
-                                  border: '1.5px solid #b3b3b3f2',
-                                  boxShadow:
-                                    'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)',
-                                }}
-                              />
-                            )
-                          );
-                        })()}
+                        <BossAvatar bossName={encounter.name} size={32} />
                         <Typography
                           variant="subtitle2"
                           sx={{ color: 'text.primary', fontWeight: 'medium' }}

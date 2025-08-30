@@ -68,7 +68,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   onNavigateToTab,
   onToggleExperimentalTabs,
 }) => {
-  // Material Symbols ligature icons for consistent style
   // Only render content when events for the current fight are loaded
   if (loading) {
     return (
@@ -97,13 +96,24 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       </Box>
 
       {/* Tabs with integrated experimental toggle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1, pl: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          mb: 1,
+          pl: 1,
+          width: '100%',
+          minWidth: 0,
+        }}
+      >
         <Tabs
           key={showExperimentalTabs ? 'experimental' : 'normal'}
           value={validSelectedTab}
           onChange={(_, v) => onNavigateToTab(v)}
           sx={{
             minWidth: 'auto',
+            flexGrow: 1,
             '& .MuiTabs-indicator': {
               backgroundColor: '#406374',
               transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
@@ -113,13 +123,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               justifyContent: 'flex-start',
             },
             '& .MuiTabs-scroller': {
-              overflow: 'visible',
+              // Remove overflow: 'visible' to allow scrolling
             },
-            '& .MuiTabs-root': {
-              minWidth: 'auto',
+            '& .MuiTab-root': {
+              minWidth: 48,
+              padding: '6px 12px',
+              opacity: 1,
             },
           }}
-          variant="standard"
+          variant="scrollable"
+          scrollButtons={true}
+          allowScrollButtonsMobile
         >
           <Tooltip title="Insights">
             <Tab icon={<InsightsIcon />} />
@@ -163,6 +177,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <Tooltip title="Damage Reduction">
             <Tab icon={<ShieldIcon />} />
           </Tooltip>
+
           {showExperimentalTabs && (
             <Tooltip title="Location Heatmap">
               <Tab icon={<MapIcon />} />
@@ -178,37 +193,31 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<GpsFixedIcon />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Diagnostics">
               <Tab icon={<BugReportIcon />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Actors">
               <Tab icon={<Person />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Talents">
               <Tab icon={<StarIcon />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Rotation Analysis">
               <Tab icon={<RepeatIcon />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Auras Overview">
               <Tab icon={<AutoAwesomeIcon />} />
             </Tooltip>
           )}
-
           {showExperimentalTabs && (
             <Tooltip title="Buffs Overview">
               <Tab icon={<FlareIcon />} />
@@ -227,7 +236,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               />
             }
             label="Experimental"
-            sx={{ ml: 2, '& .MuiFormControlLabel-label': { fontSize: '0.875rem' } }}
+            sx={{
+              flexShrink: 0,
+              '& .MuiFormControlLabel-label': { fontSize: '0.875rem' },
+            }}
           />
         </Tooltip>
       </Box>

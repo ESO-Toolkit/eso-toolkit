@@ -93,10 +93,9 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
         <Typography variant="h6" gutterBottom={false}>
-          {fight.name}
+          {fight.name} ({fight.id})
         </Typography>
       </Stack>
-
 
       <FightDetails fight={fight} selectedTabId={selectedTabId} />
     </Paper>

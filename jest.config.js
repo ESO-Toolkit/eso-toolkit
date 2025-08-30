@@ -7,7 +7,11 @@ module.exports = {
 
   // Module resolution
   moduleNameMapper: {
-    // Path mappings
+    // Asset mocks - Must come before path mappings to catch resolved paths
+    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
+    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
+      '<rootDir>/src/test/__mocks__/fileMock.js',
+    // Path mappings - After asset mocks
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@features/(.*)$': '<rootDir>/src/features/$1',
@@ -15,10 +19,6 @@ module.exports = {
     '^@types/(.*)$': '<rootDir>/src/types/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@graphql/(.*)$': '<rootDir>/src/graphql/$1',
-    // Asset mocks
-    '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
-    '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
-      'jest-transform-stub',
   },
 
   // Transform configuration

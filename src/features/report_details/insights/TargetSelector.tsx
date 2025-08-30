@@ -81,7 +81,7 @@ export const TargetSelector: React.FC = () => {
           onChange={handleTargetChange}
         >
           <MenuItem value="">
-            <em>No target selected</em>
+            <em>All Boss Targets</em>
           </MenuItem>
           {targetsList.map((target) => (
             <MenuItem key={target.id} value={target.id || ''}>

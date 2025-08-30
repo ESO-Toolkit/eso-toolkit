@@ -18,14 +18,8 @@ import type { Theme } from '@mui/material/styles';
 import { keyframes, SxProps } from '@mui/system';
 import React from 'react';
 
-import dkIcon from '../../../assets/dk-white.png';
 import mundusIcon from '../../../assets/MundusStone.png';
-import necromancerIcon from '../../../assets/necromancer-white.png';
-import nightbladeIcon from '../../../assets/nightblade-white.png';
-import sorcererIcon from '../../../assets/sorcerer.png';
-import templarIcon from '../../../assets/templar-white.png';
-import wardenIcon from '../../../assets/warden-white.png';
-import arcanistIcon from '../../../assets/white-arcanist.png';
+import { ClassIcon } from '../../../components/ClassIcon';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -376,16 +370,6 @@ interface PlayersPanelViewProps {
   fightEndTime?: number;
 }
 
-const CLASS_ICON_MAP: Record<string, string | undefined> = {
-  dragonknight: dkIcon,
-  templar: templarIcon,
-  warden: wardenIcon,
-  nightblade: nightbladeIcon,
-  sorcerer: sorcererIcon,
-  necromancer: necromancerIcon,
-  arcanist: arcanistIcon,
-};
-
 const CLASS_SUBLINES: Record<string, [string, string, string]> = {
   arcanist: ['Herald of the Tome', 'Soldier of Apocrypha', 'Curative Runeforms'],
   necromancer: ['Grave Lord', 'Bone Tyrant', 'Living Death'],
@@ -620,8 +604,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                     display: 'flex',
                     flexDirection: 'column',
                     height: '100%',
-                    background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)'
+                    background:
+                      'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
                   }}
                 >
                   <CardContent
@@ -688,7 +673,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 : ([player.type].filter(Boolean) as string[]);
                               const list = sublines ? sublines : fallbackList.slice(0, 3);
                               const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
-                              const icon = CLASS_ICON_MAP[baseKey];
                               return (
                                 <Box
                                   sx={{
@@ -727,15 +711,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                 •
                                               </Typography>
                                             )}
-                                            {icon && (
-                                              <img
-                                                src={icon}
-                                                alt={String(baseKey)}
-                                                width={12}
-                                                height={12}
-                                                style={{ opacity: 0.8, flexShrink: 0 }}
-                                              />
-                                            )}
+                                            <ClassIcon
+                                              className={baseKey}
+                                              size={12}
+                                              style={{ opacity: 0.8, flexShrink: 0 }}
+                                            />
                                             <Typography
                                               variant="caption"
                                               color="text.secondary"
