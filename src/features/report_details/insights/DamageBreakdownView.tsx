@@ -86,7 +86,7 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
           {damageBreakdown.slice(0, 15).map((damage) => {
             const percentage = totalDamage > 0 ? (damage.totalDamage / totalDamage) * 100 : 0;
             return (
-              <ListItem key={damage.abilityGameID} sx={{ py: 1 }} divider>
+              <ListItem key={damage.abilityGameID} sx={{ py: 1, pl: 0 }} divider>
                 <Box sx={{ display: 'flex', alignItems: 'center', width: '100%', gap: 1.25 }}>
                   {damage.icon ? (
                     <AbilityIcon abilityId={damage.abilityGameID} />
@@ -95,73 +95,81 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                       {damage.abilityName.charAt(0)}
                     </Avatar>
                   )}
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 0.5 }}>
+                      <Box sx={{ flex: 1 }}>
+                        {damage.criticalRate > 0 && (
+                          <Box sx={{ mb: 0.5 }}>
+                            <Chip
+                              label={`${damage.criticalRate.toFixed(1)}% crit`}
+                              size="small"
+                              sx={{
+                                height: 16,
+                                fontSize: '0.625rem',
+                                backgroundColor: '#4e579857',
+                                color: 'rgba(255, 255, 255, 0.87)',
+                                border: '1px solid #45566f',
+                              }}
+                            />
+                          </Box>
+                        )}
+                        <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          {damage.abilityName}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ 
+                        backgroundColor: '#1d3552f7', 
+                        padding: '4px 8px', 
+                        borderRadius: '4px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        position: 'absolute',
+                        top: 0,
+                        right: 0,
+                        height: damage.criticalRate > 0 ? '45px' : '24px'
+                      }}>
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'white', fontSize: '1rem', lineHeight: 1 }}>
+                          {percentage.toFixed(1)}%
+                        </Typography>
+                      </Box>
+                    </Box>
                     <ListItemText
-                      primary={damage.abilityName}
+                      primary=""
                       secondary={
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 1,
-                            mt: 0.5,
-                            flexWrap: 'wrap',
-                          }}
-                        >
-                          <Typography variant="caption" color="text.secondary">
-                            {formatNumber(damage.totalDamage)} damage
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            •
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {damage.hitCount} hits
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            •
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {formatNumber(Math.round(damage.averageDamage))} avg
-                          </Typography>
-                          {damage.criticalRate > 0 && (
-                            <>
-                              <Typography variant="caption" color="text.secondary">
-                                •
-                              </Typography>
-                              <Chip
-                                label={`${damage.criticalRate.toFixed(1)}% crit`}
-                                size="small"
-                                sx={{
-                                  height: 16,
-                                  fontSize: '0.625rem',
-                                  bgcolor: 'warning.main',
-                                  color: 'warning.contrastText',
-                                }}
-                              />
-                            </>
-                          )}
-                          {damage.damageTypes && damage.damageTypes.length > 0 && (
-                            <Box sx={{ display: 'flex', gap: 0.5, ml: 0.5 }}>
-                              {damage.damageTypes.map((damageType) => (
-                                <Chip
-                                  key={damageType}
-                                  label={damageType}
-                                  size="small"
-                                  sx={{
-                                    height: 16,
-                                    fontSize: '0.625rem',
-                                    bgcolor:
-                                      DAMAGE_TYPE_COLORS[damageType] || DAMAGE_TYPE_COLORS.Generic,
-                                    color: 'white',
-                                    '& .MuiChip-label': {
-                                      px: 0.5,
-                                      fontWeight: 500,
-                                    },
-                                  }}
-                                />
-                              ))}
-                            </Box>
-                          )}
+                        <Box sx={{ mt: 0.5 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              flexWrap: 'nowrap',
+                            }}
+                          >
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              {formatNumber(damage.totalDamage)}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
+                              damage
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
+                              •
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              {damage.hitCount}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
+                              hits
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
+                              •
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 500 }}>
+                              {formatNumber(Math.round(damage.averageDamage))}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 200 }}>
+                              avg
+                            </Typography>
+                          </Box>
                         </Box>
                       }
                       primaryTypographyProps={{
@@ -183,15 +191,10 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                             : 'rgba(0,0,0,0.06)',
                         '& .MuiLinearProgress-bar': {
                           borderRadius: 999,
-                          background: 'linear-gradient(90deg, #f59e0b 0%, #d97706 100%)',
+                          background: 'linear-gradient(90deg,rgb(130, 101, 50) 0%,rgb(223, 139, 44) 100%)',
                         },
                       }}
                     />
-                  </Box>
-                  <Box sx={{ width: 60, textAlign: 'right' }}>
-                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                      {percentage.toFixed(1)}%
-                    </Typography>
                   </Box>
                 </Box>
               </ListItem>
