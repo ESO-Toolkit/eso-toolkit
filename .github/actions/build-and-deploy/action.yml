@@ -5,10 +5,6 @@ inputs:
     description: 'Enable source map generation'
     required: false
     default: 'false'
-  fetch_depth:
-    description: 'Number of commits to fetch. 0 indicates all history for all branches and tags'
-    required: false
-    default: '1'
   release_version:
     description: 'Release version to set in environment'
     required: false
@@ -23,11 +19,6 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
-      with:
-        fetch-depth: ${{ inputs.fetch_depth }}
-
     - name: Set up Node.js
       uses: actions/setup-node@v4
       with:

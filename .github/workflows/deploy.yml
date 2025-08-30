@@ -9,10 +9,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
       - name: Build and Deploy
         uses: ./.github/actions/build-and-deploy
         with:
           enable_sourcemaps: 'true'
-          fetch_depth: '0'
           release_version: ${{ github.sha }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
