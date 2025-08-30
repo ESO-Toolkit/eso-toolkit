@@ -117,20 +117,51 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                           {damage.abilityName}
                         </Typography>
                       </Box>
-                      <Box sx={{ 
-                        backgroundColor: '#1d3552f7', 
-                        padding: '4px 8px', 
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        height: damage.criticalRate > 0 ? '45px' : '24px'
-                      }}>
-                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'white', fontSize: '1rem', lineHeight: 1 }}>
-                          {percentage.toFixed(1)}%
-                        </Typography>
+                      <Box
+                        sx={{
+                          position: 'absolute',
+                          top: damage.criticalRate > 0 ? 0 : 2,
+                          right: 0,
+                        }}
+                      >
+                        <Chip
+                          label={`${percentage.toFixed(1)}%`}
+                          size="medium"
+                          sx={{
+                            position: 'relative',
+                            overflow: 'hidden',
+                            borderRadius: 28,
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: '1px solid rgba(94, 234, 255, 0.35)',
+                            boxShadow:
+                              '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+                            background:
+                              'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
+                            color: '#7ee8ff',
+                            height: 28,
+                            '& .MuiChip-label': {
+                              px: 1.25,
+                              fontWeight: 700,
+                              fontSize: '0.9rem',
+                              lineHeight: 1,
+                              color: '#ffffff',
+                              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                            },
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: '50%',
+                              background:
+                                'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                              borderRadius: '28px 28px 100px 100px / 28px 28px 50px 50px',
+                              pointerEvents: 'none',
+                            },
+                          }}
+                        />
                       </Box>
                     </Box>
                     <ListItemText
