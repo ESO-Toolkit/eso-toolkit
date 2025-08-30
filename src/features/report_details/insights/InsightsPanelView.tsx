@@ -31,8 +31,9 @@ interface InsightsPanelViewProps {
 const ABILITY_DATA = [
   // Glacial Colossus icon is missing in some master data sets; provide explicit fallback icon filename
   { name: 'Glacial Colossus', id: '122388', icon: 'ability_necromancer_006_a' },
-  { name: 'Summon Charged Atronach', id: '23495' },
-  { name: 'Aggressive Horn', id: '40223' }
+  { name: 'Summon Charged Atronach', id: '23495', icon: 'ability_sorcerer_storm_atronach' },
+  { name: 'Aggressive Horn', id: '40223' },
+  { name: 'Reviving Barrier', id: '61732', icon: 'ability_healer_022' }
 ];
 
 const CHAMPION_POINT_DATA = [
@@ -135,8 +136,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               }}>
                 ⏱️
               </Box>
-              <Typography>
-                <strong>Duration:</strong> {durationSeconds.toFixed(1)} seconds
+              <Typography sx={{ fontWeight: 300 }}>
+                <strong style={{ fontWeight: 100 }}>Duration:</strong> {durationSeconds.toFixed(1)} seconds
               </Typography>
             </Box>
 
@@ -155,34 +156,49 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 }}>
                   🎯
                 </Box>
-                <Typography>
-                  <strong>First Damage Dealer:</strong> {firstDamageDealer}
+                <Typography sx={{ fontWeight: 300 }}>
+                  <strong style={{ fontWeight: 100 }}>First Damage Dealer:</strong> {firstDamageDealer}
                 </Typography>
               </Box>
             )}
 
             <Box sx={{ mt: 2.5 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1.5, fontWeight: 200 }}>
                 Abilities Equipped:
               </Typography>
-              <List dense>
+              <Box sx={{ 
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
+                gap: 1.5
+              }}>
                 {ABILITY_DATA.map((ability) => (
-                  <ListItem key={ability.name} sx={{ mb: 1, pl: 0, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Box 
+                    key={ability.name} 
+                    sx={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: 1.5,
+                      p: 1,
+                      borderRadius: 1,
+                      backgroundColor: 'rgba(255, 255, 255, 0.03)'
+                    }}
+                  >
                     <AbilityIcon abilityId={ability.id} fallbackIcon={'icon' in ability ? ability.icon : undefined} />
-                    <ListItemText
-                      primary={ability.name}
-                      secondary={
-                        abilityEquipped[ability.name]?.length ? abilityEquipped[ability.name].join(', ') : 'None'
-                      }
-                      sx={{ flex: 1 }}
-                    />
-                  </ListItem>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ability.name}
+                      </Typography>
+                      <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 200, fontSize: '.75rem' }}>
+                        {abilityEquipped[ability.name]?.length ? abilityEquipped[ability.name].join(', ') : 'None'}
+                      </Typography>
+                    </Box>
+                  </Box>
                 ))}
-              </List>
+              </Box>
             </Box>
 
-            <Box>
-              <Typography variant="subtitle1" sx={{ mb: 1 }}>
+            <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle1" sx={{ mb: 0, fontWeight: 200 }}>
                 Champion Points Equipped:
               </Typography>
               <List dense>
@@ -202,9 +218,15 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                       {cp.emoji}
                     </Box>
                     <ListItemText
-                      primary={cp.name}
+                      primary={
+                        <Typography variant="body2" sx={{ fontWeight: 500 }}>
+                          {cp.name}
+                        </Typography>
+                      }
                       secondary={
-                        buffActors[cp.name]?.size ? Array.from(buffActors[cp.name]).join(', ') : 'None'
+                        <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 200, fontSize: '.75rem' }}>
+                          {buffActors[cp.name]?.size ? Array.from(buffActors[cp.name]).join(', ') : 'None'}
+                        </Typography>
                       }
                       sx={{ flex: 1 }}
                     />
