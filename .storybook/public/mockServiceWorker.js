@@ -7,7 +7,11 @@
  * - Please do NOT modify this file.
  */
 
+<<<<<<< HEAD
 const PACKAGE_VERSION = '2.10.5'
+=======
+const PACKAGE_VERSION = '2.11.0'
+>>>>>>> a43edd8 (mobile padding changes)
 const INTEGRITY_CHECKSUM = 'f5825c521429caf22a4dd13b66e243af'
 const IS_MOCKED_RESPONSE = Symbol('isMockedResponse')
 const activeClientIds = new Set()
