@@ -119,7 +119,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             boxShadow:
               '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
             background:
-              'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+              'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
             transition: 'all 0.3s ease',
             '&::before': {
               content: '""',
@@ -168,7 +168,47 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               color: '#ecf0f1',
               textShadow: '0 1px 3px rgba(0,0,0,0.5)',
               position: 'relative',
-              zIndex: 1,
+              overflow: 'hidden',
+              borderRadius: '25px',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow:
+                '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+              background:
+                'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+              transition: 'all 0.3s ease',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: '-100%',
+                width: '100%',
+                height: '50%',
+                background:
+                  'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                transform: 'skewX(-25deg)',
+                transition: 'left 0.5s ease',
+              },
+              '&::after': {
+                content: '""',
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                height: '50%',
+                background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                borderRadius: '25px 25px 25px 25px',
+                pointerEvents: 'none',
+              },
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow:
+                  '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
+              },
+              '&:hover::before': {
+                left: '100%',
+              },
             }}
           >
             <Box
