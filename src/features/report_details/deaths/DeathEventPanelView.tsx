@@ -3,11 +3,9 @@ import {
   Typography,
   Card,
   CardContent,
-  List,
-  ListItem,
-  ListItemText,
   Chip,
-  CircularProgress,
+  Skeleton,
+  Avatar,
 } from '@mui/material';
 import React from 'react';
 
@@ -63,25 +61,36 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return `${minutes}:${seconds.padStart(4, '0')}`;
   };
 
-  // Show loading spinner while data is being fetched
+  // Show skeleton loading while data is being fetched
   if (isLoading) {
     return (
       <Box mt={2}>
-        <Typography variant="h6">Death Events</Typography>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minHeight: 200,
-            py: 4,
-          }}
-        >
-          <CircularProgress sx={{ mb: 2 }} />
-          <Typography variant="body1" color="text.secondary">
-            Loading death event data...
-          </Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>Death Events 💀</Typography>
+        <Box sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: 'repeat(4, 1fr)'
+          },
+          gap: 2
+        }}>
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} sx={{
+              borderRadius: '16px',
+              background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
+            }}>
+              <CardContent sx={{ p: 2 }}>
+                <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
+                <Skeleton variant="text" width="40%" height={20} sx={{ mb: 2 }} />
+                <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+              </CardContent>
+            </Card>
+          ))}
         </Box>
       </Box>
     );
@@ -90,59 +99,124 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   if (deathInfos.length === 0) {
     return (
       <Box mt={2}>
-        <Typography variant="h6">Death Events</Typography>
-        <Typography>No deaths detected in this fight.</Typography>
+        <Typography variant="h6" sx={{ mb: 2 }}>Death Events 💀</Typography>
+        <Box sx={{
+          p: 4,
+          textAlign: 'center',
+          borderRadius: '16px',
+          background: 'linear-gradient(135deg, rgba(76, 175, 80, 0.25) 0%, rgba(76, 175, 80, 0.15) 50%, rgba(76, 175, 80, 0.08) 100%)',
+          border: '1px solid rgba(76, 175, 80, 0.3)',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)'
+        }}>
+          <Typography variant="h6" sx={{ color: '#4caf50', mb: 1 }}>🎉 Flawless Victory!</Typography>
+          <Typography sx={{ color: '#ecf0f1' }}>No deaths detected in this fight.</Typography>
+        </Box>
       </Box>
     );
   }
 
+  // Calculate death summary for header
+  const deathSummary = deathInfos.reduce(
+    (acc, info) => {
+      acc[info.playerId] = (acc[info.playerId] || 0) + 1;
+      return acc;
+    },
+    {} as Record<string, number>
+  );
+
+  const totalDeaths = deathInfos.length;
+  const uniquePlayers = Object.keys(deathSummary).length;
+
   return (
     <Box mt={2}>
-      <Typography variant="h6">Death Events</Typography>
-      {/* Death summary */}
-      <Box mb={2}>
-        <Typography variant="subtitle1" fontWeight="bold">
+      {/* Header with summary */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+        <Typography variant="h6">Death Events 💀</Typography>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Chip 
+            label={`${totalDeaths} Total Deaths`} 
+            size="small" 
+            sx={{ 
+              backgroundColor: 'rgba(244, 67, 54, 0.2)', 
+              color: '#f44336',
+              border: '1px solid rgba(244, 67, 54, 0.3)'
+            }} 
+          />
+          <Chip 
+            label={`${uniquePlayers} Players`} 
+            size="small" 
+            sx={{ 
+              backgroundColor: 'rgba(255, 152, 0, 0.2)', 
+              color: '#ff9800',
+              border: '1px solid rgba(255, 152, 0, 0.3)'
+            }} 
+          />
+        </Box>
+      </Box>
+
+      {/* Death summary chips */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, color: '#ecf0f1', fontWeight: 600 }}>
           Death Summary
         </Typography>
-        <List sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-          {Object.entries(
-            deathInfos.reduce(
-              (acc, info) => {
-                acc[info.playerId] = (acc[info.playerId] || 0) + 1;
-                return acc;
-              },
-              {} as Record<string, number>
-            )
-          ).map(([playerId, count]) => {
+        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+          {Object.entries(deathSummary).map(([playerId, count]) => {
             const actor = actorsById[playerId];
             const playerName = resolveActorName(actor, playerId);
             const link =
               reportId && fightId
                 ? `https://www.esologs.com/reports/${reportId}?fight=${fightId}&source=${playerId}&type=deaths`
                 : undefined;
-            return (
-              <ListItem key={playerId} sx={{ width: 'auto', p: 0 }}>
-                {link ? (
-                  <a
-                    href={link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{ textDecoration: 'none' }}
-                  >
-                    <Chip label={`${playerName}: ${count}`} color="error" clickable />
-                  </a>
-                ) : (
-                  <Chip label={`${playerName}: ${count}`} color="error" />
-                )}
-              </ListItem>
+            
+            const chipContent = (
+              <Chip 
+                label={`${playerName}: ${count}`} 
+                size="small"
+                sx={{
+                  backgroundColor: 'rgba(244, 67, 54, 0.15)',
+                  color: '#f44336',
+                  border: '1px solid rgba(244, 67, 54, 0.3)',
+                  '&:hover': link ? {
+                    backgroundColor: 'rgba(244, 67, 54, 0.25)',
+                    transform: 'translateY(-1px)'
+                  } : {}
+                }}
+              />
+            );
+            
+            return link ? (
+              <a
+                key={playerId}
+                href={link}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ textDecoration: 'none' }}
+              >
+                {chipContent}
+              </a>
+            ) : (
+              <Box key={playerId}>{chipContent}</Box>
             );
           })}
-        </List>
+        </Box>
       </Box>
-      <List>
+
+      {/* Death events grid */}
+      <Box sx={{
+        display: 'grid',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: 'repeat(4, 1fr)'
+        },
+        gap: 2
+      }}>
         {deathInfos.map((info, idx) => {
           const actor = actorsById[info.playerId];
           const playerName = resolveActorName(actor, info.playerId);
+          
           // Get source name for killing blow
           const killingBlowSourceActor = info.killingBlow?.sourceID
             ? actorsById[info.killingBlow.sourceID]
@@ -152,101 +226,247 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             info.killingBlow?.sourceID,
             info.killingBlow?.sourceName
           );
+
           return (
-            <ListItem key={idx} alignItems="flex-start" divider>
-              <Card sx={{ width: '100%' }}>
-                <CardContent>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    Player: {playerName}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Time: {formatTimeFromFightStart(info.timestamp)}
-                  </Typography>
-                  <Box mt={1}>
-                    {info.wasBlocking && (
-                      <Chip label="Blocking" variant="outlined" color="success" sx={{ mr: 1 }} />
-                    )}
-                    <Chip
-                      label={
-                        info.stamina !== null && info.maxStamina !== null
-                          ? `Stamina: ${info.stamina}/${info.maxStamina}`
-                          : `Stamina: ${info.stamina ?? 'Unknown'}`
-                      }
-                      sx={{ mr: 1 }}
+            <Card 
+              key={idx} 
+              sx={{
+                borderRadius: '16px',
+                background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                transition: 'all 0.3s ease',
+                position: 'relative',
+                overflow: 'hidden',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: '-100%',
+                  width: '100%',
+                  height: '50%',
+                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                  transform: 'skewX(-25deg)',
+                  transition: 'left 0.5s ease',
+                },
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3)',
+                },
+                '&:hover::before': {
+                  left: '100%',
+                }
+              }}
+            >
+              <CardContent sx={{ p: 2, position: 'relative', zIndex: 1 }}>
+                {/* Player header */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Avatar sx={{ 
+                    width: 32, 
+                    height: 32, 
+                    backgroundColor: '#f44336',
+                    fontSize: '1rem'
+                  }}>
+                    💀
+                  </Avatar>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography 
+                      variant="subtitle2" 
+                      sx={{ 
+                        color: '#f44336', 
+                        fontWeight: 600,
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {playerName}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#ecf0f1', 
+                        opacity: 0.8,
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      {formatTimeFromFightStart(info.timestamp)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Status chips */}
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5, mb: 2 }}>
+                  {info.wasBlocking && (
+                    <Chip 
+                      label="🛡️ Blocking" 
+                      size="small" 
+                      sx={{
+                        backgroundColor: 'rgba(76, 175, 80, 0.2)',
+                        color: '#4caf50',
+                        border: '1px solid rgba(76, 175, 80, 0.3)',
+                        fontSize: '0.7rem',
+                        height: 20
+                      }}
                     />
-                  </Box>
-                  <Box mt={2}>
-                    <Typography variant="body2" fontWeight="bold">
-                      Killing Blow:
-                    </Typography>
-                    {info.killingBlow ? (
-                      <Typography variant="body2">
+                  )}
+                  <Chip
+                    label={
+                      info.stamina !== null && info.maxStamina !== null
+                        ? `⚡ ${info.stamina}/${info.maxStamina} (${Math.round((info.stamina / info.maxStamina) * 100)}%)`
+                        : `⚡ ${info.stamina ?? 'Unknown'}`
+                    }
+                    size="small"
+                    sx={{
+                      backgroundColor: 'rgba(255, 193, 7, 0.2)',
+                      color: '#ffc107',
+                      border: '1px solid rgba(255, 193, 7, 0.3)',
+                      fontSize: '0.7rem',
+                      height: 20
+                    }}
+                  />
+                </Box>
+
+                {/* Killing blow */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography 
+                    variant="caption" 
+                    sx={{ 
+                      color: '#ecf0f1', 
+                      fontWeight: 600, 
+                      display: 'block',
+                      mb: 0.5,
+                      fontSize: '0.75rem'
+                    }}
+                  >
+                    ⚔️ Killing Blow
+                  </Typography>
+                  {info.killingBlow ? (
+                    <Box>
+                      <Typography 
+                        variant="body2" 
+                        sx={{ 
+                          color: '#ecf0f1', 
+                          fontSize: '0.8rem',
+                          lineHeight: 1.3,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
                         {info.killingBlow.abilityName || 'Unknown'}
-                        {typeof info.killingBlow.abilityId !== 'undefined'
-                          ? ` (ID: ${info.killingBlow.abilityId})`
-                          : ''}{' '}
-                        by {killingBlowSourceName}
-                        {typeof info.killingBlow.amount === 'number'
-                          ? ` — ${info.killingBlow.amount} damage`
-                          : ''}
                       </Typography>
-                    ) : (
-                      <Typography variant="body2">Unknown</Typography>
-                    )}
-                  </Box>
-                  <Box mt={2}>
-                    <Typography variant="body2" fontWeight="bold">
-                      Last 3 Attacks:
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: '#ecf0f1', 
+                          opacity: 0.7,
+                          fontSize: '0.7rem'
+                        }}
+                      >
+                        by {killingBlowSourceName}
+                        {typeof info.killingBlow.amount === 'number' && (
+                          <> • {info.killingBlow.amount.toLocaleString()} dmg</>
+                        )}
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        color: '#ecf0f1', 
+                        opacity: 0.7,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      Unknown
                     </Typography>
-                    {info.lastAttacks.length > 0 ? (
-                      <List>
-                        {info.lastAttacks.map((attack, i) => {
-                          const attackSourceActor = attack.sourceID
-                            ? actorsById[attack.sourceID]
-                            : undefined;
-                          const attackSourceName = resolveActorName(
-                            attackSourceActor,
-                            attack.sourceID,
-                            attack.sourceName
-                          );
-                          return (
-                            <ListItem key={i}>
-                              <ListItemText
-                                primary={
-                                  <>
-                                    {attack.abilityName || attack.abilityId || 'Unknown'} by{' '}
-                                    {attackSourceName}
-                                    {typeof attack.amount === 'number'
-                                      ? ` — ${attack.amount} damage`
-                                      : ''}
-                                    {attack.wasBlocked === true && (
-                                      <Chip
-                                        label="Blocked"
-                                        color="success"
-                                        variant="outlined"
-                                        size="small"
-                                        sx={{ ml: 1 }}
-                                      />
-                                    )}
-                                  </>
-                                }
-                                secondary={`Time: ${formatTimeFromFightStart(attack.timestamp ?? 0)}`}
-                              />
-                            </ListItem>
-                          );
-                        })}
-                        {/* Close ListItem map */}
-                      </List>
-                    ) : (
-                      <Typography variant="body2">None</Typography>
-                    )}
+                  )}
+                </Box>
+
+                {/* Last attacks summary */}
+                {info.lastAttacks.length > 0 && (
+                  <Box>
+                    <Typography 
+                      variant="caption" 
+                      sx={{ 
+                        color: '#ecf0f1', 
+                        fontWeight: 600, 
+                        display: 'block',
+                        mb: 0.5,
+                        fontSize: '0.75rem'
+                      }}
+                    >
+                      🎯 Recent Attacks ({info.lastAttacks.length})
+                    </Typography>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+                      {info.lastAttacks.slice(0, 3).map((attack, i) => {
+                        const attackSourceActor = attack.sourceID
+                          ? actorsById[attack.sourceID]
+                          : undefined;
+                        const attackSourceName = resolveActorName(
+                          attackSourceActor,
+                          attack.sourceID,
+                          attack.sourceName
+                        );
+                        return (
+                          <Box 
+                            key={i}
+                            sx={{ 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'space-between',
+                              gap: 1,
+                              minHeight: '16px'
+                            }}
+                          >
+                            <Typography 
+                              variant="caption" 
+                              sx={{ 
+                                color: '#ecf0f1', 
+                                opacity: 0.8,
+                                fontSize: '0.7rem',
+                                lineHeight: 1.2,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1,
+                                minWidth: 0
+                              }}
+                            >
+                              • {attack.abilityName || 'Unknown'} by {attackSourceName}
+                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                              {typeof attack.amount === 'number' && (
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    color: '#ff6b35', 
+                                    fontSize: '0.7rem',
+                                    fontWeight: 600
+                                  }}
+                                >
+                                  {attack.amount.toLocaleString()}
+                                </Typography>
+                              )}
+                              {attack.wasBlocked && (
+                                <Typography sx={{ fontSize: '0.7rem' }}>🛡️</Typography>
+                              )}
+                            </Box>
+                          </Box>
+                        );
+                      })}
+                    </Box>
                   </Box>
-                </CardContent>
-              </Card>
-            </ListItem>
+                )}
+              </CardContent>
+            </Card>
           );
         })}
-      </List>
+      </Box>
     </Box>
   );
 };
