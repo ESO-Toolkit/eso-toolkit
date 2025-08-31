@@ -34,12 +34,19 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   isLoading,
 }) => {
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+      <Typography variant="h6" sx={{ mb: 2, fontFamily: 'Space Grotesk, sans-serif' }}>
         Critical Damage Analysis
       </Typography>
 
-      {players.map((player) => {
+      <Box
+        sx={{
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 2,
+        }}
+      >
+        {players.map((player) => {
         const playerCriticalDamageData = criticalDamageData.get(player.id);
 
         return (
@@ -54,7 +61,8 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
             isLoading={isLoading}
           />
         );
-      })}
+        })}
+      </Box>
     </Box>
   );
 };
