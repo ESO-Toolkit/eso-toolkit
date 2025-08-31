@@ -2,7 +2,7 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCastEvents, useHealingEvents, useReportMasterData } from '../../../hooks';
+import { useCastEvents, useHealingEvents, useReportMasterData, usePlayerData } from '../../../hooks';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -21,6 +21,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { castEvents, isCastEventsLoading } = useCastEvents();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
@@ -28,7 +29,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   );
 
   // Compute loading state
-  const isLoading = isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading;
+  const isLoading = isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading || isPlayerDataLoading;
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
@@ -78,6 +79,23 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     };
   }, [masterData.actorsById]);
 
+  // Helper function to determine player role
+  const getPlayerRole = useMemo(() => {
+    return (playerId: string): 'dps' | 'tank' | 'healer' => {
+      if (!playerData?.playersById) return 'dps';
+      
+      const player = playerData.playersById[playerId];
+      const role = player?.role as string;
+      
+      // Map plural forms to singular forms
+      if (role === 'tanks') return 'tank';
+      if (role === 'healers') return 'healer';
+      if (role === 'dps') return 'dps';
+      
+      return 'dps'; // default fallback
+    };
+  }, [playerData]);
+
   const healingRows = useMemo(() => {
     return Object.entries(healingStatistics)
       .filter(([id]) => isPlayerActor(id))
@@ -90,6 +108,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           : undefined;
 
         const ressurects = resByPlayer[id] || 0;
+        const role = getPlayerRole(id);
 
         // Calculate overheal percentage: (overheal / (raw + overheal)) * 100
         const totalHealing = raw + overheal;
@@ -105,10 +124,11 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           overhealPercentage,
           iconUrl,
           ressurects,
+          role,
         };
       })
       .sort((a, b) => b.hps - a.hps);
-  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration, resByPlayer]);
+  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration, resByPlayer, getPlayerRole]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {
