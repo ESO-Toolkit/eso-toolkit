@@ -127,12 +127,15 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
             },
           }}
         >
-          <Typography variant="h6" sx={{ 
-            flexGrow: 1,
-            textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-          }}>
-            {name}
-          </Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexGrow: 1 }}>
+            <PlayerIcon player={player} />
+            <Typography variant="h6" sx={{ 
+              fontSize: '1.75rem',
+              textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+            }}>
+              {name}
+            </Typography>
+          </Box>
         </AccordionSummary>
         <AccordionDetails>
           <Typography>No penetration data available for this player.</Typography>
@@ -178,9 +181,10 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         id={`panel-${id}-header`}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <PlayerIcon player={player} />
             <Typography variant="subtitle1" fontWeight="bold" sx={{
+              fontSize: '1.75rem',
               textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
             }}>
               {resolveActorName(player)}
