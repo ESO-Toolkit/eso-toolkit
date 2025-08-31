@@ -21,6 +21,9 @@ interface RotationAnalysis {
   averageAPM: number;
   resourceEfficiency: ResourceEfficiencyData;
   rotationPattern: string[];
+  skillPriorities: SkillPriority[];
+  spammableSkills: SpammableSkill[];
+  generalRotation: GeneralRotation;
 }
 
 interface AbilityUsage {
@@ -30,6 +33,33 @@ interface AbilityUsage {
   averageCastTime: number;
   resourceCost: number;
   averageTimeBetweenCasts: number;
+  timestamps: number[];
+}
+
+interface SkillPriority {
+  higherPrioritySkill: string;
+  lowerPrioritySkill: string;
+  interruptionCount: number;
+  confidence: number;
+}
+
+interface SpammableSkill {
+  abilityName: string;
+  averageInterval: number;
+  burstCount: number;
+  spammableScore: number;
+}
+
+interface GeneralRotation {
+  commonSequences: RotationSequence[];
+  openerSequence: string[];
+  fillerAbilities: string[];
+}
+
+interface RotationSequence {
+  sequence: string[];
+  frequency: number;
+  averageInterval: number;
 }
 
 interface ResourceEfficiencyData {
@@ -47,7 +77,7 @@ interface ResourceEfficiencyData {
 
 interface RotationAnalysisPanelViewProps {
   rotationAnalyses: RotationAnalysis[];
-  fight: { startTime?: number; endTime?: number };
+  fight: { startTime?: number; endTime?: number; friendlyPlayers?: (number | null)[] | null };
 }
 
 export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
@@ -80,7 +110,12 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {analysis.playerName}
               </Typography>
-              <Chip label={`${analysis.averageAPM.toFixed(1)} APM`} size="small" color="primary" />
+              <Chip
+                label={`${analysis.averageAPM.toFixed(1)} APM`}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
             </Box>
           </AccordionSummary>
 
@@ -102,7 +137,7 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                           <ListItem key={ability.abilityId}>
                             <ListItemText
                               primary={ability.abilityName}
-                              secondary={`${ability.useCount} casts`}
+                              secondary={`${ability.useCount} casts • Avg ${ability.averageTimeBetweenCasts.toFixed(1)}s interval`}
                             />
                           </ListItem>
                         ))}
@@ -150,6 +185,185 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                         Waste: {analysis.resourceEfficiency.stamina.wastePercentage.toFixed(1)}%
                       </Typography>
                     </Box>
+                  </Paper>
+                </Box>
+              </Box>
+
+              {/* Second Row - Skill Priorities and Spammable Skills */}
+              <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', md: 'row' } }}>
+                {/* Skill Priorities */}
+                <Box sx={{ flex: 1 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Skill Priorities
+                    </Typography>
+                    {analysis.skillPriorities.length > 0 ? (
+                      <List dense>
+                        {analysis.skillPriorities.map((priority, index) => (
+                          <ListItem key={index} sx={{ px: 0 }}>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography
+                                    variant="body2"
+                                    color="primary"
+                                    sx={{ fontWeight: 'bold' }}
+                                  >
+                                    {priority.higherPrioritySkill}
+                                  </Typography>
+                                  <Typography variant="body2" color="textSecondary">
+                                    →
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {priority.lowerPrioritySkill}
+                                  </Typography>
+                                  <Chip
+                                    label={`${(priority.confidence * 100).toFixed(0)}%`}
+                                    size="small"
+                                    variant="outlined"
+                                    color={
+                                      priority.confidence > 0.7
+                                        ? 'success'
+                                        : priority.confidence > 0.4
+                                          ? 'warning'
+                                          : 'default'
+                                    }
+                                  />
+                                </Box>
+                              }
+                              secondary={`Interrupted ${priority.interruptionCount} times`}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No clear skill priorities detected
+                      </Typography>
+                    )}
+                  </Paper>
+                </Box>
+
+                {/* Spammable Skills */}
+                <Box sx={{ flex: 1 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Spammable Skills
+                    </Typography>
+                    {analysis.spammableSkills.length > 0 ? (
+                      <List dense>
+                        {analysis.spammableSkills.map((skill, index) => (
+                          <ListItem key={index} sx={{ px: 0 }}>
+                            <ListItemText
+                              primary={
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                                  <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
+                                    {skill.abilityName}
+                                  </Typography>
+                                  <Chip
+                                    label={`${(skill.spammableScore * 100).toFixed(0)}%`}
+                                    size="small"
+                                    color="primary"
+                                    variant="outlined"
+                                  />
+                                </Box>
+                              }
+                              secondary={`${skill.averageInterval.toFixed(1)}s avg • ${skill.burstCount} bursts`}
+                            />
+                          </ListItem>
+                        ))}
+                      </List>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No spammable skills identified
+                      </Typography>
+                    )}
+                  </Paper>
+                </Box>
+              </Box>
+
+              {/* Third Row - General Rotation Analysis */}
+              <Box sx={{ display: 'flex', gap: 3, flexDirection: { xs: 'column', lg: 'row' } }}>
+                {/* Fight Opener */}
+                <Box sx={{ flex: 1 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Fight Opener
+                    </Typography>
+                    {analysis.generalRotation.openerSequence.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {analysis.generalRotation.openerSequence.map((ability, index) => (
+                          <Chip
+                            key={index}
+                            label={`${index + 1}. ${ability}`}
+                            size="small"
+                            variant="outlined"
+                            color="secondary"
+                          />
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No opener sequence detected
+                      </Typography>
+                    )}
+                  </Paper>
+                </Box>
+
+                {/* Common Sequences */}
+                <Box sx={{ flex: 1 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Common Rotation Sequences
+                    </Typography>
+                    {analysis.generalRotation.commonSequences.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {analysis.generalRotation.commonSequences
+                          .slice(0, 3)
+                          .map((sequence, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                p: 1,
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                {sequence.sequence.join(' → ')}
+                              </Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                {sequence.frequency}x used • {sequence.averageInterval.toFixed(1)}s
+                                avg
+                              </Typography>
+                            </Box>
+                          ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No common sequences detected
+                      </Typography>
+                    )}
+                  </Paper>
+                </Box>
+
+                {/* Filler Abilities */}
+                <Box sx={{ flex: 1 }}>
+                  <Paper sx={{ p: 2 }}>
+                    <Typography variant="h6" gutterBottom>
+                      Filler Abilities
+                    </Typography>
+                    {analysis.generalRotation.fillerAbilities.length > 0 ? (
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {analysis.generalRotation.fillerAbilities.map((ability, index) => (
+                          <Chip key={index} label={ability} size="small" variant="outlined" />
+                        ))}
+                      </Box>
+                    ) : (
+                      <Typography variant="body2" color="textSecondary">
+                        No filler abilities detected
+                      </Typography>
+                    )}
                   </Paper>
                 </Box>
               </Box>

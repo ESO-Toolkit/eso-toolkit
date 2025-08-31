@@ -85,14 +85,16 @@ typecheck:
 # Run full CI pipeline
 pre-commit: 
 	@echo "Running pre-commit checks..."
-	@echo "1/4 - Running ESLint with auto-fix..."
+	@echo "1/5 - Running ESLint with auto-fix..."
 	npm run lint:fix
-	@echo "2/4 - Running tests..."
+	@echo "2/5 - Running tests..."
 	npm run test
-	@echo "3/4 - Building project..."
+	@echo "3/5 - Building project..."
 	npm run build
-	@echo "4/4 - Running type check..."
+	@echo "4/5 - Running type check..."
 	npm run typecheck
+	@echo "4/5 - Running formatter ..."
+	npm run format
 	@echo "✅ All pre-commit tasks completed successfully!"
 
 # Run full CI pipeline
