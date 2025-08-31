@@ -1,4 +1,7 @@
-﻿import { createMockCombatantInfoEvent, createMockCombatantAura } from '../test/utils/combatLogMockFactories';
+﻿import {
+  createMockCombatantInfoEvent,
+  createMockCombatantAura,
+} from '../test/utils/combatLogMockFactories';
 import { createMockPlayerData, createGearItem } from '../test/utils/playerMockFactories';
 import { KnownAbilities, CriticalDamageValues } from '../types/abilities';
 import { BuffEvent, DebuffEvent } from '../types/combatlogEvents';
@@ -166,7 +169,9 @@ describe('CritDamageUtils with BuffLookup', () => {
 
     it('should return true when aura is present', () => {
       const combatantWithAura = createMockCombatantInfoEvent({
-        auras: [createMockCombatantAura({ ability: KnownAbilities.FELINE_AMBUSH, name: 'Feline Ambush' })],
+        auras: [
+          createMockCombatantAura({ ability: KnownAbilities.FELINE_AMBUSH, name: 'Feline Ambush' }),
+        ],
       });
 
       expect(isAuraActive(combatantWithAura, KnownAbilities.FELINE_AMBUSH)).toBe(true);
