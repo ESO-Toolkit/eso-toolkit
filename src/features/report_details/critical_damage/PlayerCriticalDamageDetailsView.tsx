@@ -149,6 +149,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           '&.Mui-expanded': {
             margin: 0,
           },
+          margin: 0,
+          mb: 2,
         }}
       >
         <AccordionSummary 
@@ -202,6 +204,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         '&.Mui-expanded': {
           margin: 0,
         },
+        margin: 0,
+        mb: 2,
       }}
     >
       <AccordionSummary
