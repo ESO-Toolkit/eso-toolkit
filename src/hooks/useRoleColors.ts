@@ -29,6 +29,30 @@ export const useRoleColors = () => {
           ? 'linear-gradient(135deg, rgba(32, 89, 105, 0.35) 0%, rgba(67, 107, 119, 0.25) 50%, rgba(236, 240, 241, 0.18) 100%)'
           : 'linear-gradient(135deg, rgb(231 250 255 / 35%) 0%, rgb(184 196 235 / 25%) 50%, rgb(163 163 230 / 18%) 100%)';
       },
+      // Get accordion background gradient (reusable for all accordion components)
+      getAccordionBackground: (): string => {
+        return isDarkMode
+          ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)';
+      },
+      // Get accordion styling (reusable for all accordion components)
+      getAccordionStyles: () => ({
+        background: isDarkMode
+          ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
+        border: isDarkMode 
+          ? '1px solid rgba(255, 255, 255, 0.1)' 
+          : '1px solid rgba(15, 23, 42, 0.12)',
+        boxShadow: isDarkMode 
+          ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)' 
+          : '0 4px 12px 0 rgba(15, 23, 42, 0.08)',
+      }),
+      // Get accordion text shadow (theme-aware)
+      getAccordionTextShadow: (): string => {
+        return isDarkMode
+          ? '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+          : '0 1px 2px rgba(15, 23, 42, 0.15), 0 2px 4px rgba(15, 23, 42, 0.08)';
+      },
       // Check if we're in dark mode
       isDarkMode,
     };

@@ -26,6 +26,7 @@ import { Line } from 'react-chartjs-2';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
 import { StatChecklist } from '../../../components/StatChecklist';
+import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
   CriticalDamageSource,
@@ -130,6 +131,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   player,
   onExpandChange,
 }) => {
+<<<<<<< HEAD
   // Transform critical damage sources to StatChecklistSource format
   const statChecklistSources = React.useMemo(() => {
     return criticalDamageSources.map((source) => ({
@@ -144,6 +146,9 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           : undefined,
     }));
   }, [criticalDamageSources]);
+=======
+  const roleColors = useRoleColors();
+>>>>>>> 5b51d26 (fixed accordion lightmode colors)
   if (!criticalDamageData) {
     return (
       <Accordion
@@ -152,13 +157,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         variant="outlined"
         className="u-hover-lift u-fade-in-up"
         sx={{
-          background:
-            'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          ...roleColors.getAccordionStyles(),
           borderRadius: 2,
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
           '&:before': {
             display: 'none',
           },
@@ -188,8 +190,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 fontWeight="bold"
                 sx={{
                   fontSize: '1.75rem',
-                  textShadow:
-                    '0 2px 4px rgba(0, 0, 0, 0), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                  textShadow: roleColors.getAccordionTextShadow(),
                 }}
               >
                 {resolveActorName(player)}
@@ -216,13 +217,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background:
-          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        ...roleColors.getAccordionStyles(),
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         '&:before': {
           display: 'none',
         },
@@ -254,8 +252,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               fontWeight="bold"
               sx={{
                 fontSize: '1.75rem',
-                textShadow:
-                  '0 2px 4px rgba(0, 0, 0, 0), 0 4px 8px rgba(0, 0, 0, 0.22), 0 8px 16px rgba(0,0,0,0.2)',
+                textShadow: roleColors.getAccordionTextShadow(),
               }}
             >
               {resolveActorName(player)}
@@ -378,7 +375,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   sx={{
                     mb: 2,
                     textShadow:
-                      '0 2px 4px rgba(0, 0, 0, 0), 0 4px 8px rgba(0, 0, 0, 0.22), 0 8px 16px rgba(0,0,0,0.2)',
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   Critical Multiplier Analysis
@@ -457,7 +454,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 sx={{
                   mb: 2,
                   textShadow:
-                    '0 2px 4px rgba(164, 111, 111, 0), 0 4px 8px rgba(0, 0, 0, 0.24), 0 8px 16px rgba(0,0,0,0.2)',
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Critical Damage vs Time

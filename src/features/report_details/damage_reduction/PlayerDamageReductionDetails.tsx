@@ -28,6 +28,7 @@ import { Line } from 'react-chartjs-2';
 
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
+import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -92,6 +93,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   isLoading,
 }) => {
   const theme = useTheme();
+  const roleColors = useRoleColors();
 
   if (isLoading || !damageReductionData) {
     return (
@@ -100,13 +102,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         variant="outlined"
         className="u-hover-lift u-fade-in-up"
         sx={{
-          background:
-            'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          ...roleColors.getAccordionStyles(),
           borderRadius: 2,
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
           '&:before': {
             display: 'none',
           },
@@ -122,10 +121,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
             variant="h6"
             sx={{
               fontSize: '1.75rem',
-              textShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 1px 3px rgba(0,0,0,0.5)'
-                  : '0 1px 1px rgba(0,0,0,0.2)',
+              textShadow: roleColors.getAccordionTextShadow(),
             }}
           >
             {name}
@@ -152,13 +148,10 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background:
-          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        ...roleColors.getAccordionStyles(),
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         '&:before': {
           display: 'none',
         },
@@ -190,8 +183,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               fontWeight="bold"
               sx={{
                 fontSize: '1.75rem',
-                textShadow:
-                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                textShadow: roleColors.getAccordionTextShadow(),
               }}
             >
               {player ? resolveActorName(player) : name}
@@ -291,9 +283,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 gutterBottom
                 sx={{
                   textShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 1px 3px rgba(0,0,0,0.5)'
-                      : '0 1px 1px rgba(0,0,0,0.2)',
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Damage Reduction Summary
@@ -372,9 +362,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   gutterBottom
                   sx={{
                     textShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.2)',
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   Damage Reduction Sources
@@ -506,9 +494,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 gutterBottom
                 sx={{
                   textShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 1px 3px rgba(0,0,0,0.5)'
-                      : '0 1px 1px rgba(0,0,0,0.2)',
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Damage Reduction Over Time

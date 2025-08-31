@@ -93,7 +93,7 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
           sx={[
             {
               textShadow:
-                '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
             },
             ...(Array.isArray(titleSx) ? titleSx : titleSx ? [titleSx] : []),
           ]}

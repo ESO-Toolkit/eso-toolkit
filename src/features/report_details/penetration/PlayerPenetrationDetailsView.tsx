@@ -25,6 +25,7 @@ import { Line } from 'react-chartjs-2';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
 import { StatChecklist } from '../../../components/StatChecklist';
+import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
@@ -93,6 +94,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   fightDurationSeconds,
   onExpandChange,
 }) => {
+<<<<<<< HEAD
   // Transform penetration sources to StatChecklistSource format for consistency
   const statChecklistSources = React.useMemo(() => {
     return penetrationSources.map((source) => ({
@@ -104,6 +106,9 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       // They rely on description text detection for unimplemented sources
     }));
   }, [penetrationSources]);
+=======
+  const roleColors = useRoleColors();
+>>>>>>> 5b51d26 (fixed accordion lightmode colors)
   if (!penetrationData) {
     return (
       <Accordion
@@ -146,8 +151,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               variant="h6"
               sx={{
                 fontSize: '1.75rem',
-                textShadow:
-                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                textShadow: roleColors.getAccordionTextShadow(),
               }}
             >
               {name}
@@ -168,13 +172,10 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background:
-          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        ...roleColors.getAccordionStyles(),
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         '&:before': {
           display: 'none',
         },
@@ -206,8 +207,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               fontWeight="bold"
               sx={{
                 fontSize: '1.75rem',
-                textShadow:
-                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                textShadow: roleColors.getAccordionTextShadow(),
               }}
             >
               {resolveActorName(player)}
@@ -313,7 +313,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 sx={{
                   mb: 2,
                   textShadow:
-                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Penetration vs Time
