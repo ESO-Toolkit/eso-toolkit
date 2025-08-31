@@ -7,6 +7,7 @@ import {
   ListItemText,
   CircularProgress,
   Skeleton,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 
@@ -81,6 +82,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   firstDamageDealer,
   isLoading,
 }) => {
+  const theme = useTheme();
   if (isLoading) {
     return (
       <>
@@ -163,7 +165,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   alignItems: 'center',
                   justifyContent: 'center',
                   fontSize: '20px',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backgroundColor: theme.palette.mode === 'dark' 
+                    ? 'rgba(255, 255, 255, 0.1)' 
+                    : 'rgba(15, 23, 42, 0.08)',
                   borderRadius: 1,
                   boxShadow: 1,
                 }}
@@ -186,7 +190,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontSize: '20px',
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backgroundColor: theme.palette.mode === 'dark' 
+                      ? 'rgba(255, 255, 255, 0.1)' 
+                      : 'rgba(15, 23, 42, 0.08)',
                     borderRadius: 1,
                     boxShadow: 1,
                   }}
@@ -242,9 +248,13 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                         alignItems: 'center',
                         gap: 1,
                         p: 0.75,
-                        bgcolor: 'rgba(255, 255, 255, 0.05)',
+                        bgcolor: theme.palette.mode === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.05)' 
+                          : 'rgba(15, 23, 42, 0.04)',
                         borderRadius: 1,
-                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        border: theme.palette.mode === 'dark' 
+                          ? '1px solid rgba(255, 255, 255, 0.1)' 
+                          : '1px solid rgba(15, 23, 42, 0.1)',
                         height: '100%',
                       }}
                     >
@@ -256,7 +266,9 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
-                          bgcolor: 'rgba(0, 0, 0, 0.3)',
+                          bgcolor: theme.palette.mode === 'dark' 
+                            ? 'rgba(0, 0, 0, 0.3)' 
+                            : 'rgba(15, 23, 42, 0.08)',
                           borderRadius: 1,
                           overflow: 'hidden',
                         }}
@@ -271,7 +283,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           variant="body2"
                           sx={{
                             fontWeight: 400,
-                            color: '#fff',
+                            color: theme.palette.text.primary,
                             lineHeight: 1.1,
                             mb: 0.25,
                             fontSize: '0.75rem',
@@ -283,7 +295,11 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           variant="caption"
                           sx={{
                             display: 'block',
-                            color: hasPlayers ? '#a0a0a0' : 'rgba(255, 255, 255, 0.5)',
+                            color: hasPlayers 
+                              ? theme.palette.text.secondary 
+                              : (theme.palette.mode === 'dark' 
+                                  ? 'rgba(255, 255, 255, 0.5)' 
+                                  : 'rgba(15, 23, 42, 0.4)'),
                             fontSize: '0.65rem',
                             lineHeight: 1,
                             whiteSpace: 'nowrap',
@@ -331,7 +347,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           : 'None'
                       }
                       sx={{
-                        '& .MuiListItemText-secondary': { fontSize: '0.75rem', color: '#a0a0a0' },
+                        '& .MuiListItemText-secondary': { 
+                          fontSize: '0.75rem', 
+                          color: theme.palette.text.secondary,
+                        },
                       }}
                     />
                   </ListItem>
