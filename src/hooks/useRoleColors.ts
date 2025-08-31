@@ -53,6 +53,30 @@ export const useRoleColors = () => {
           ? '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
           : '0 1px 2px rgba(15, 23, 42, 0.15), 0 2px 4px rgba(15, 23, 42, 0.08)';
       },
+      // Get progress bar background styling (theme-aware and accessible)
+      getProgressBarBackground: (): string => {
+        return isDarkMode
+          ? 'rgba(117, 117, 117, 0.3)' // Darker gray with transparency for dark mode
+          : 'rgba(203, 213, 225, 0.4)'; // Light slate with transparency for light mode
+      },
+      // Get progress bar styling (modern, accessible, theme-aware)
+      getProgressBarStyles: () => ({
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: isDarkMode
+          ? 'rgba(117, 117, 117, 0.3)'
+          : 'rgba(203, 213, 225, 0.4)',
+        border: isDarkMode ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
+        boxShadow: isDarkMode 
+          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.4)' 
+          : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
+        '& .MuiLinearProgress-bar': {
+          borderRadius: 4,
+          boxShadow: isDarkMode 
+            ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
+            : '0 1px 2px rgba(0, 0, 0, 0.15)',
+        },
+      }),
       // Check if we're in dark mode
       isDarkMode,
     };

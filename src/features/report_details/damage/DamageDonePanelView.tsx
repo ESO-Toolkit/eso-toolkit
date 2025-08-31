@@ -452,12 +452,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       variant="determinate"
                       value={parseFloat(percentage)}
                       sx={{
-                        height: 8,
-                        borderRadius: 1,
-                        backgroundColor: '#757575',
+                        ...roleColors.getProgressBarStyles(),
                         '& .MuiLinearProgress-bar': {
+                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
                           backgroundColor: playerColor,
-                          borderRadius: 1,
                         },
                       }}
                     />
@@ -618,12 +616,11 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       variant="determinate"
                       value={parseFloat(percentage)}
                       sx={{
-                        height: 6,
-                        borderRadius: 1,
-                        backgroundColor: '#757575',
+                        ...roleColors.getProgressBarStyles(),
+                        height: 6, // Slightly smaller for mobile
                         '& .MuiLinearProgress-bar': {
+                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
                           backgroundColor: playerColor,
-                          borderRadius: 1,
                         },
                       }}
                     />
