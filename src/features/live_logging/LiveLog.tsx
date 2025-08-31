@@ -1,3 +1,4 @@
+import { Typography } from '@mui/material';
 import React from 'react';
 import { useDispatch } from 'react-redux';
 
@@ -57,6 +58,10 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     }),
     [reportId, latestFightId]
   );
+
+  if (!latestFightId) {
+    return <Typography>Waiting for fights to be uploaded...</Typography>;
+  }
 
   return (
     <ReportFightContext.Provider value={reportFightCtxValue}>

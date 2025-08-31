@@ -5,17 +5,6 @@ fragment ReportAbility on ReportAbility {
   type
 }
 
-fragment ReportActor on ReportActor {
-  displayName
-  gameID
-  icon
-  id
-  name
-  server
-  subType
-  type
-}
-
 fragment MasterData on ReportMasterData {
   abilities {
     ...ReportAbility

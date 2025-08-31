@@ -23,6 +23,8 @@ interface DeathInfo {
   stamina: number | null;
   maxStamina: number | null;
   wasBlocking: boolean | null;
+  deathDurationMs: number | null;
+  resurrectionTime: number | null;
 }
 
 interface PlayerData {

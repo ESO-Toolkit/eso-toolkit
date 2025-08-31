@@ -6,6 +6,7 @@ interface DamageRow {
   name: string;
   total: number;
   dps: number;
+  activePercentage: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
 }
@@ -124,7 +125,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -145,7 +147,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'total' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'total' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -166,7 +169,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'dps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'dps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -233,7 +237,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1fr 2fr 1fr',
+              gridTemplateColumns: '1fr 2fr 1fr 1fr',
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -330,7 +334,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1fr 2fr 1fr',
+                  gridTemplateColumns: '1fr 2fr 1fr 1fr',
                   gap: 2,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -449,7 +453,14 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 }}
               >
                 {/* Mobile Header: Name and DPS */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 1.5,
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
                     {row.iconUrl && (
                       <Avatar

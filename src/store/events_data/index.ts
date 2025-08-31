@@ -38,3 +38,6 @@ const eventsReducer = (
 };
 
 export { eventsReducer };
+
+// Export damage events selectors
+export * from './damageEventsSelectors';

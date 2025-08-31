@@ -10,6 +10,10 @@ import { selectDamageEvents, selectDamageEventsLoading } from '../store/selector
 import { useAppDispatch } from '../store/useAppDispatch';
 import { DamageEvent } from '../types/combatlogEvents';
 
+import { useReportMasterData } from './useReportMasterData';
+
+import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
+
 export function useDamageEvents(): {
   damageEvents: DamageEvent[];
   isDamageEventsLoading: boolean;
@@ -45,5 +49,22 @@ export function useDamageEvents(): {
   return React.useMemo(
     () => ({ damageEvents, isDamageEventsLoading, selectedFight }),
     [damageEvents, isDamageEventsLoading, selectedFight]
+  );
+}
+
+export function useDamageEventsLookup(): {
+  damageEventsByPlayer: Record<string, DamageEvent[]>;
+  isDamageEventsLookupLoading: boolean;
+} {
+  const { isDamageEventsLoading } = useDamageEvents();
+  const { isMasterDataLoading } = useReportMasterData();
+  const damageEventsByPlayer = useSelector(selectDamageEventsByPlayer);
+
+  return React.useMemo(
+    () => ({
+      damageEventsByPlayer,
+      isDamageEventsLookupLoading: isDamageEventsLoading || isMasterDataLoading,
+    }),
+    [damageEventsByPlayer, isDamageEventsLoading, isMasterDataLoading]
   );
 }

@@ -68,7 +68,7 @@
     "lint": "eslint ./src --ext .ts,.tsx",
     "lint:fix": "eslint ./src --ext .ts,.tsx --fix",
     "format": "prettier --write ./src/**/*.{ts,tsx,js,jsx,json,css,md}",
-    "codegen": "ts-node run-codegen.ts",
+    "codegen": "node --loader ts-node/esm run-codegen.mts",
     "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build"
