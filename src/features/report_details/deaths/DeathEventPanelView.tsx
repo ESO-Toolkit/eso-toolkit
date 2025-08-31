@@ -46,9 +46,9 @@ interface DeathEventPanelViewProps {
 // Get color based on player role
 const getPlayerColor = (role?: string): string => {
   if (!role) return '#ff8b61'; // Default to DPS color if role is not provided
-  
+
   const normalizedRole = role.toLowerCase();
-  
+
   switch (normalizedRole) {
     case 'tank':
     case 'tanks':
@@ -74,7 +74,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   // Create a map of player IDs to their data for quick lookup
   const playerMap = React.useMemo(() => {
     const map = new Map<string, PlayerData>();
-    players.forEach(player => {
+    players.forEach((player) => {
       map.set(player.id, player);
     });
     return map;
@@ -95,7 +95,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return (
       <Box mt={2}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-        💀 Death Events
+          💀 Death Events
         </Typography>
         <Box
           sx={{
@@ -137,7 +137,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return (
       <Box mt={2}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-        💀 Death Events
+          💀 Death Events
         </Typography>
         <Box
           sx={{
@@ -398,20 +398,27 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     ⚔️ Killing Blow
                   </Typography>
                   {info.killingBlow ? (
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
-                        color: '#ecf0f1', 
-                        opacity: 0.9, 
-                        fontSize: '0.8rem', 
-                        lineHeight: 1.4 
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: '#ecf0f1',
+                        opacity: 0.9,
+                        fontSize: '0.8rem',
+                        lineHeight: 1.4,
                       }}
                     >
                       Killed by <strong>{info.killingBlow.abilityName || 'Unknown'}</strong>
                       {killingBlowSourceName && info.killingBlow.sourceID && (
                         <>
                           {' '}
-                          by <strong style={{ color: getPlayerColor(playerMap.get(info.killingBlow.sourceID.toString())?.role) }}>
+                          by{' '}
+                          <strong
+                            style={{
+                              color: getPlayerColor(
+                                playerMap.get(info.killingBlow.sourceID.toString())?.role
+                              ),
+                            }}
+                          >
                             {killingBlowSourceName}
                           </strong>
                         </>
@@ -424,7 +431,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       )}
                     </Typography>
                   ) : (
-                    <Typography variant="body2" sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}
+                    >
                       No killing blow information
                     </Typography>
                   )}
@@ -447,44 +457,66 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   {info.lastAttacks.length > 0 ? (
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                       {info.lastAttacks.slice(0, 3).map((attack, i) => {
-                        const attackSourceActor = attack.sourceID ? actorsById[attack.sourceID] : undefined;
-                        const attackSourceName = resolveActorName(attackSourceActor, attack.sourceID, attack.sourceName);
+                        const attackSourceActor = attack.sourceID
+                          ? actorsById[attack.sourceID]
+                          : undefined;
+                        const attackSourceName = resolveActorName(
+                          attackSourceActor,
+                          attack.sourceID,
+                          attack.sourceName
+                        );
                         const sourceId = attack.sourceID?.toString();
                         const sourceRole = sourceId ? playerMap.get(sourceId)?.role : undefined;
                         const sourceColor = getPlayerColor(sourceRole);
-                        
+
                         return (
-                          <Box key={i} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1, minHeight: '16px' }}>
-                            <Typography 
-                              variant="caption" 
-                              sx={{ 
-                                color: '#ecf0f1', 
-                                opacity: 0.8, 
-                                fontSize: '0.7rem', 
-                                lineHeight: 1.2, 
-                                overflow: 'hidden', 
-                                textOverflow: 'ellipsis', 
-                                whiteSpace: 'nowrap', 
-                                flex: 1, 
-                                minWidth: 0, 
-                                '&::before': { 
-                                  content: `'${attack.wasBlocked ? '🛡️' : '✕'}'`, 
-                                  display: 'inline-block', 
-                                  width: '16px', 
-                                  textAlign: 'center', 
-                                  marginRight: '4px' 
-                                } 
+                          <Box
+                            key={i}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              gap: 1,
+                              minHeight: '16px',
+                            }}
+                          >
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: '#ecf0f1',
+                                opacity: 0.8,
+                                fontSize: '0.7rem',
+                                lineHeight: 1.2,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                flex: 1,
+                                minWidth: 0,
+                                '&::before': {
+                                  content: `'${attack.wasBlocked ? '🛡️' : '✕'}'`,
+                                  display: 'inline-block',
+                                  width: '16px',
+                                  textAlign: 'center',
+                                  marginRight: '4px',
+                                },
                               }}
                             >
-                              {attack.abilityName || 'Unknown'}{' '}
-                              by{' '}
-                              <span style={{ color: sourceColor }}>
-                                {attackSourceName}
-                              </span>
+                              {attack.abilityName || 'Unknown'} by{' '}
+                              <span style={{ color: sourceColor }}>{attackSourceName}</span>
                             </Typography>
-                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                                flexShrink: 0,
+                              }}
+                            >
                               {typeof attack.amount === 'number' && (
-                                <Typography variant="caption" sx={{ color: '#ff6b35', fontSize: '0.7rem', fontWeight: 600 }}>
+                                <Typography
+                                  variant="caption"
+                                  sx={{ color: '#ff6b35', fontSize: '0.7rem', fontWeight: 600 }}
+                                >
                                   {attack.amount.toLocaleString()}
                                 </Typography>
                               )}
@@ -494,7 +526,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       })}
                     </Box>
                   ) : (
-                    <Typography variant="body2" sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}>
+                    <Typography
+                      variant="body2"
+                      sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}
+                    >
                       No recent attacks recorded
                     </Typography>
                   )}

@@ -246,14 +246,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         </Tabs>
 
         {/* Experimental Toggle */}
-        <Tooltip title={
-          <Box>
-            <Box>Toggle experimental features</Box>
-            <Box sx={{ fontSize: '0.8em', opacity: 0.8, mt: 0.5 }}>
-              Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis
+        <Tooltip
+          title={
+            <Box>
+              <Box>Toggle experimental features</Box>
+              <Box sx={{ fontSize: '0.8em', opacity: 0.8, mt: 0.5 }}>
+                Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents,
+                and Rotation Analysis
+              </Box>
             </Box>
-          </Box>
-        }>
+          }
+        >
           <FormControlLabel
             control={
               <Switch

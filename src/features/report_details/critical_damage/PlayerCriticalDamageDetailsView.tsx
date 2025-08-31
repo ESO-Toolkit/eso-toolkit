@@ -132,13 +132,14 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 }) => {
   if (!criticalDamageData) {
     return (
-      <Accordion 
-        expanded={expanded} 
+      <Accordion
+        expanded={expanded}
         onChange={onExpandChange}
         variant="outlined"
         className="u-hover-lift u-fade-in-up"
         sx={{
-          background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+          background:
+            'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: 2,
           backdropFilter: 'blur(10px)',
@@ -154,7 +155,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           mb: 2,
         }}
       >
-        <AccordionSummary 
+        <AccordionSummary
           expandIcon={<ExpandMoreIcon />}
           sx={{
             '& .MuiAccordionSummary-content': {
@@ -168,10 +169,15 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexGrow: 1 }}>
               <PlayerIcon player={player} />
-              <Typography variant="subtitle1" fontWeight="bold" sx={{
-                fontSize: '1.75rem',
-                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-              }}>
+              <Typography
+                variant="subtitle1"
+                fontWeight="bold"
+                sx={{
+                  fontSize: '1.75rem',
+                  textShadow:
+                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                }}
+              >
                 {resolveActorName(player)}
               </Typography>
             </Box>
@@ -190,13 +196,14 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   );
 
   return (
-    <Accordion 
-      expanded={expanded} 
+    <Accordion
+      expanded={expanded}
       onChange={onExpandChange}
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+        background:
+          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
@@ -228,26 +235,38 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <PlayerIcon player={player} />
-            <Typography variant="subtitle1" fontWeight="bold" sx={{
-              fontSize: '1.75rem',
-              textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-            }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              sx={{
+                fontSize: '1.75rem',
+                textShadow:
+                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+              }}
+            >
               {resolveActorName(player)}
             </Typography>
           </Box>
           {!isLoading && (
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, alignItems: 'center' }}>
               {/* Max Critical Damage */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: { xs: 50, sm: 60 },
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Max
@@ -257,19 +276,20 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: maxCriticalDamage >= 125 
-                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    background:
+                      maxCriticalDamage >= 125
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                     border: `1px solid ${maxCriticalDamage >= 125 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
+                    sx={{
                       color: maxCriticalDamage >= 125 ? '#5ce572' : '#ff6666',
                       fontWeight: 600,
-                      fontSize: { xs: '0.7rem', sm: '0.8rem' }
+                      fontSize: { xs: '0.7rem', sm: '0.8rem' },
                     }}
                   >
                     {maxCriticalDamage}%
@@ -278,16 +298,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               </Box>
 
               {/* Effective Critical Damage */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: 60,
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: '0.65rem',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Effective
@@ -297,19 +324,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: criticalDamageData.effectiveCriticalDamage >= 125 
-                      ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                    background:
+                      criticalDamageData.effectiveCriticalDamage >= 125
+                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
                     border: `1px solid ${criticalDamageData.effectiveCriticalDamage >= 125 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
+                    sx={{
+                      color:
+                        criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
                       fontWeight: 600,
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
                     }}
                   >
                     {criticalDamageData.effectiveCriticalDamage.toFixed(1)}%
@@ -318,16 +347,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               </Box>
 
               {/* Time at Cap */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: 60,
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: '0.65rem',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   At Cap
@@ -337,31 +373,33 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: criticalDamageData.timeAtCapPercentage >= 80
-                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                      : criticalDamageData.timeAtCapPercentage >= 50
-                      ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    background:
+                      criticalDamageData.timeAtCapPercentage >= 80
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : criticalDamageData.timeAtCapPercentage >= 50
+                          ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                     border: `1px solid ${
-                      criticalDamageData.timeAtCapPercentage >= 80 
+                      criticalDamageData.timeAtCapPercentage >= 80
                         ? 'rgba(76, 217, 100, 0.3)'
                         : criticalDamageData.timeAtCapPercentage >= 50
-                        ? 'rgba(255, 193, 7, 0.35)'
-                        : 'rgba(255, 68, 68, 0.3)'
+                          ? 'rgba(255, 193, 7, 0.35)'
+                          : 'rgba(255, 68, 68, 0.3)'
                     }`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: criticalDamageData.timeAtCapPercentage >= 80 
-                        ? '#5ce572'
-                        : criticalDamageData.timeAtCapPercentage >= 50
-                        ? '#ffd54f'
-                        : '#ff6666',
+                    sx={{
+                      color:
+                        criticalDamageData.timeAtCapPercentage >= 80
+                          ? '#5ce572'
+                          : criticalDamageData.timeAtCapPercentage >= 50
+                            ? '#ffd54f'
+                            : '#ff6666',
                       fontWeight: 600,
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
                     }}
                   >
                     {criticalDamageData.timeAtCapPercentage.toFixed(0)}%
@@ -378,18 +416,33 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           <Box>
             {/* Mobile Metrics - Only visible on mobile */}
             {!isLoading && (
-              <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 2, mb: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+              <Box
+                sx={{
+                  display: { xs: 'flex', md: 'none' },
+                  gap: 2,
+                  mb: 3,
+                  justifyContent: 'center',
+                  flexWrap: 'wrap',
+                }}
+              >
                 {/* Max Critical Damage */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    minWidth: 70,
+                  }}
+                >
                   <Typography
                     variant="caption"
-                    sx={{ 
-                      color: 'text.secondary', 
+                    sx={{
+                      color: 'text.secondary',
                       fontSize: '0.65rem',
                       fontWeight: 500,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      mb: 0.25
+                      mb: 0.25,
                     }}
                   >
                     Max
@@ -399,19 +452,20 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                       px: 1.5,
                       py: 0.5,
                       borderRadius: 1,
-                      background: maxCriticalDamage >= 125 
-                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                      background:
+                        maxCriticalDamage >= 125
+                          ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                       border: `1px solid ${maxCriticalDamage >= 125 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
                       backdropFilter: 'blur(10px)',
                     }}
                   >
                     <Typography
                       variant="body2"
-                      sx={{ 
+                      sx={{
                         color: maxCriticalDamage >= 125 ? '#5ce572' : '#ff6666',
                         fontWeight: 600,
-                        fontSize: '0.8rem'
+                        fontSize: '0.8rem',
                       }}
                     >
                       {maxCriticalDamage}%
@@ -420,16 +474,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 </Box>
 
                 {/* Effective Critical Damage */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    minWidth: 70,
+                  }}
+                >
                   <Typography
                     variant="caption"
-                    sx={{ 
-                      color: 'text.secondary', 
+                    sx={{
+                      color: 'text.secondary',
                       fontSize: '0.65rem',
                       fontWeight: 500,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      mb: 0.25
+                      mb: 0.25,
                     }}
                   >
                     Effective
@@ -439,19 +500,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                       px: 1.5,
                       py: 0.5,
                       borderRadius: 1,
-                      background: criticalDamageData.effectiveCriticalDamage >= 125 
-                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                      background:
+                        criticalDamageData.effectiveCriticalDamage >= 125
+                          ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                          : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
                       border: `1px solid ${criticalDamageData.effectiveCriticalDamage >= 125 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
                       backdropFilter: 'blur(10px)',
                     }}
                   >
                     <Typography
                       variant="body2"
-                      sx={{ 
-                        color: criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
+                      sx={{
+                        color:
+                          criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
                         fontWeight: 600,
-                        fontSize: '0.8rem'
+                        fontSize: '0.8rem',
                       }}
                     >
                       {criticalDamageData.effectiveCriticalDamage.toFixed(1)}%
@@ -460,16 +523,23 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 </Box>
 
                 {/* Time at Cap */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    minWidth: 70,
+                  }}
+                >
                   <Typography
                     variant="caption"
-                    sx={{ 
-                      color: 'text.secondary', 
+                    sx={{
+                      color: 'text.secondary',
                       fontSize: '0.65rem',
                       fontWeight: 500,
                       textTransform: 'uppercase',
                       letterSpacing: '0.05em',
-                      mb: 0.25
+                      mb: 0.25,
                     }}
                   >
                     At Cap
@@ -479,31 +549,33 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                       px: 1.5,
                       py: 0.5,
                       borderRadius: 1,
-                      background: criticalDamageData.timeAtCapPercentage >= 80
-                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                        : criticalDamageData.timeAtCapPercentage >= 50
-                        ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                      background:
+                        criticalDamageData.timeAtCapPercentage >= 80
+                          ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                          : criticalDamageData.timeAtCapPercentage >= 50
+                            ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
+                            : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                       border: `1px solid ${
-                        criticalDamageData.timeAtCapPercentage >= 80 
+                        criticalDamageData.timeAtCapPercentage >= 80
                           ? 'rgba(76, 217, 100, 0.3)'
                           : criticalDamageData.timeAtCapPercentage >= 50
-                          ? 'rgba(255, 193, 7, 0.35)'
-                          : 'rgba(255, 68, 68, 0.3)'
+                            ? 'rgba(255, 193, 7, 0.35)'
+                            : 'rgba(255, 68, 68, 0.3)'
                       }`,
                       backdropFilter: 'blur(10px)',
                     }}
                   >
                     <Typography
                       variant="body2"
-                      sx={{ 
-                        color: criticalDamageData.timeAtCapPercentage >= 80 
-                          ? '#5ce572'
-                          : criticalDamageData.timeAtCapPercentage >= 50
-                          ? '#ffd54f'
-                          : '#ff6666',
+                      sx={{
+                        color:
+                          criticalDamageData.timeAtCapPercentage >= 80
+                            ? '#5ce572'
+                            : criticalDamageData.timeAtCapPercentage >= 50
+                              ? '#ffd54f'
+                              : '#ff6666',
                         fontWeight: 600,
-                        fontSize: '0.8rem'
+                        fontSize: '0.8rem',
                       }}
                     >
                       {criticalDamageData.timeAtCapPercentage.toFixed(0)}%
@@ -522,22 +594,27 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
             {/* Critical Multiplier Information */}
             {criticalMultiplier && (
-              <Paper 
-                variant="outlined" 
-                sx={{ 
-                  p: 2, 
+              <Paper
+                variant="outlined"
+                sx={{
+                  p: 2,
                   mb: 2,
-                  background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
+                  background:
+                    'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
                   border: '1px solid rgba(175, 82, 222, 0.3)',
                   borderRadius: 2,
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
                 }}
               >
-                <Typography variant="h6" sx={{ 
-                  mb: 2,
-                  textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-                }}>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 2,
+                    textShadow:
+                      '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                  }}
+                >
                   Critical Multiplier Analysis
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
@@ -596,22 +673,27 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
             )}
 
             {/* Critical Damage vs Time Chart */}
-            <Paper 
-              variant="outlined" 
-              sx={{ 
-                p: 2, 
+            <Paper
+              variant="outlined"
+              sx={{
+                p: 2,
                 mb: 2,
-                background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                background:
+                  'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
                 border: '1px solid rgba(0, 122, 255, 0.3)',
                 borderRadius: 2,
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
               }}
             >
-              <Typography variant="h6" sx={{ 
-                mb: 2,
-                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-              }}>
+              <Typography
+                variant="h6"
+                sx={{
+                  mb: 2,
+                  textShadow:
+                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                }}
+              >
                 Critical Damage vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>

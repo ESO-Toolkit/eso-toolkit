@@ -12,6 +12,7 @@ import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
 import { FightFragment } from '../../../graphql/generated';
+import { KnownAbilities } from '../../../types/abilities';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
@@ -22,24 +23,54 @@ import { StatusEffectUptimesPanel } from './StatusEffectUptimesPanel';
 interface InsightsPanelViewProps {
   fight: FightFragment;
   durationSeconds: number;
-  abilityEquipped: Record<string, string[]>;
-  buffActors: Record<string, Set<string>>;
+  abilityEquipped: Partial<Record<KnownAbilities, string[]>>;
+  buffActors: Partial<Record<KnownAbilities, Set<string>>>;
   firstDamageDealer: string | null;
   isLoading: boolean;
 }
 
 const ABILITY_DATA = [
-  // Glacial Colossus icon is missing in some master data sets; provide explicit fallback icon filename
-  { name: 'Colossus', id: '122388', icon: 'ability_necromancer_006_a' },
-  { name: 'Atronach', id: '23495' },
-  { name: 'Barrier', id: '40237', icon: 'ability_ava_006_b' },
-  { name: 'Horn', id: '40223' },
+  {
+    name: 'Colossus',
+    ids: ['122388'],
+    icon: 'ability_necromancer_006_a',
+    knownAbilities: [KnownAbilities.GLACIAL_COLOSSUS],
+  },
+  {
+    name: 'Atronach',
+    ids: ['23495'],
+    knownAbilities: [KnownAbilities.SUMMON_CHARGED_ATRONACH],
+  },
+  {
+    name: 'Barrier',
+    ids: ['40237', '40239', '103964'],
+    icon: 'ability_ava_006_b',
+    knownAbilities: [KnownAbilities.REVIVING_BARRIER, KnownAbilities.REPLENISHING_BARRIER],
+  },
+  {
+    name: 'Horn',
+    ids: ['40223'],
+    knownAbilities: [KnownAbilities.AGGRESSIVE_HORN],
+  },
 ];
 
 const CHAMPION_POINT_DATA = [
-  { name: 'Enlivening Overflow', emoji: '⚡' },
-  { name: 'From the Brink', emoji: '🛡️' },
+  { name: 'Enlivening Overflow', emoji: '⚡', knownAbility: KnownAbilities.ENLIVENING_OVERFLOW },
+  { name: 'From the Brink', emoji: '🛡️', knownAbility: KnownAbilities.FROM_THE_BRINK },
 ];
+
+// Helper function to format duration into minutes and seconds
+const formatDuration = (totalSeconds: number): string => {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  const decimals = Math.round((totalSeconds % 1) * 10);
+
+  if (minutes > 0) {
+    return `${minutes}m ${seconds}.${decimals}s`;
+  } else {
+    return `${seconds}.${decimals}s`;
+  }
+};
 
 export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
   fight,
@@ -139,7 +170,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 ⏱️
               </Box>
               <Typography sx={{ '& strong': { fontWeight: 100 }, '& span': { fontWeight: 400 } }}>
-                <strong>Duration: </strong><span>{durationSeconds.toFixed(1)} seconds</span>
+                <strong>Duration: </strong>
+                <span>{formatDuration(durationSeconds)}</span>
               </Typography>
             </Box>
 
@@ -161,7 +193,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   🎯
                 </Box>
                 <Typography sx={{ '& strong': { fontWeight: 100 }, '& span': { fontWeight: 400 } }}>
-                  <strong>First Damage Dealer: </strong><span>{firstDamageDealer}</span>
+                  <strong>First Damage Dealer: </strong>
+                  <span>{firstDamageDealer}</span>
                 </Typography>
               </Box>
             )}
@@ -170,17 +203,29 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 300 }}>
                 Abilities Equipped:
               </Typography>
-              <Box sx={{ 
-                display: 'grid', 
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, 
-                gap: 1 
-              }}>
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gap: 1,
+                }}
+              >
                 {ABILITY_DATA.map((ability) => {
-                  const equippedBy = abilityEquipped[ability.name] || [];
+                  // Collect all equipped players from all known abilities for this entry
+                  const allEquippedBy = ability.knownAbilities.reduce(
+                    (acc: string[], knownAbility) => {
+                      const players = abilityEquipped[knownAbility] || [];
+                      return [...acc, ...players];
+                    },
+                    []
+                  );
+
+                  // Remove duplicates in case a player has multiple variants equipped
+                  const equippedBy = [...new Set(allEquippedBy)];
                   const hasPlayers = equippedBy.length > 0;
-                  
+
                   return (
-                    <Box 
+                    <Box
                       key={ability.name}
                       sx={{
                         display: 'flex',
@@ -193,7 +238,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                         height: '100%',
                       }}
                     >
-                      <Box 
+                      <Box
                         sx={{
                           width: 40,
                           height: 40,
@@ -203,37 +248,37 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                           justifyContent: 'center',
                           bgcolor: 'rgba(0, 0, 0, 0.3)',
                           borderRadius: 1,
-                          overflow: 'hidden'
+                          overflow: 'hidden',
                         }}
                       >
                         <AbilityIcon
-                          abilityId={ability.id}
+                          abilityId={ability.ids[0]}
                           fallbackIcon={'icon' in ability ? ability.icon : undefined}
                         />
                       </Box>
                       <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Typography 
-                          variant="body2" 
-                          sx={{ 
-                            fontWeight: 400, 
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontWeight: 400,
                             color: '#fff',
                             lineHeight: 1.1,
                             mb: 0.25,
-                            fontSize: '0.75rem'
+                            fontSize: '0.75rem',
                           }}
                         >
                           {ability.name}
                         </Typography>
-                        <Typography 
-                          variant="caption" 
-                          sx={{ 
+                        <Typography
+                          variant="caption"
+                          sx={{
                             display: 'block',
                             color: hasPlayers ? '#a0a0a0' : 'rgba(255, 255, 255, 0.5)',
                             fontSize: '0.65rem',
                             lineHeight: 1,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis'
+                            textOverflow: 'ellipsis',
                           }}
                         >
                           {hasPlayers ? equippedBy.join(', ') : 'Not equipped'}
@@ -267,15 +312,17 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                     >
                       {cp.emoji}
                     </Box>
-                    <ListItemText 
+                    <ListItemText
                       primary={cp.name}
                       primaryTypographyProps={{ fontWeight: 600 }}
                       secondary={
-                        buffActors[cp.name]?.size
-                          ? Array.from(buffActors[cp.name]).join(', ')
+                        buffActors[cp.knownAbility] && buffActors[cp.knownAbility]?.size
+                          ? Array.from(buffActors[cp.knownAbility] as Set<string>).join(', ')
                           : 'None'
                       }
-                      sx={{ '& .MuiListItemText-secondary': { fontSize: '0.75rem', color: '#a0a0a0' } }}
+                      sx={{
+                        '& .MuiListItemText-secondary': { fontSize: '0.75rem', color: '#a0a0a0' },
+                      }}
                     />
                   </ListItem>
                 ))}

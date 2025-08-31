@@ -2,7 +2,12 @@ import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useCastEvents, useHealingEvents, useReportMasterData, usePlayerData } from '../../../hooks';
+import {
+  useCastEvents,
+  useHealingEvents,
+  useReportMasterData,
+  usePlayerData,
+} from '../../../hooks';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
 import { resolveActorName } from '../../../utils/resolveActorName';
@@ -29,7 +34,8 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   );
 
   // Compute loading state
-  const isLoading = isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading || isPlayerDataLoading;
+  const isLoading =
+    isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading || isPlayerDataLoading;
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
@@ -83,15 +89,15 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   const getPlayerRole = useMemo(() => {
     return (playerId: string): 'dps' | 'tank' | 'healer' => {
       if (!playerData?.playersById) return 'dps';
-      
+
       const player = playerData.playersById[playerId];
       const role = player?.role as string;
-      
+
       // Map plural forms to singular forms
       if (role === 'tanks') return 'tank';
       if (role === 'healers') return 'healer';
       if (role === 'dps') return 'dps';
-      
+
       return 'dps'; // default fallback
     };
   }, [playerData]);
@@ -128,7 +134,14 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
         };
       })
       .sort((a, b) => b.hps - a.hps);
-  }, [healingStatistics, isPlayerActor, masterData.actorsById, fightDuration, resByPlayer, getPlayerRole]);
+  }, [
+    healingStatistics,
+    isPlayerActor,
+    masterData.actorsById,
+    fightDuration,
+    resByPlayer,
+    getPlayerRole,
+  ]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {

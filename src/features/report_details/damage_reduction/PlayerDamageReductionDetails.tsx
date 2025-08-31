@@ -94,12 +94,13 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
 
   if (isLoading || !damageReductionData) {
     return (
-      <Accordion 
+      <Accordion
         disabled
         variant="outlined"
         className="u-hover-lift u-fade-in-up"
         sx={{
-          background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+          background:
+            'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           borderRadius: 2,
           backdropFilter: 'blur(10px)',
@@ -116,10 +117,16 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         }}
       >
         <AccordionSummary>
-          <Typography variant="h6" sx={{ 
-            fontSize: '1.75rem',
-            textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-          }}>{name}</Typography>
+          <Typography
+            variant="h6"
+            sx={{
+              fontSize: '1.75rem',
+              textShadow:
+                '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+            }}
+          >
+            {name}
+          </Typography>
         </AccordionSummary>
       </Accordion>
     );
@@ -142,7 +149,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+        background:
+          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
         border: '1px solid rgba(255, 255, 255, 0.1)',
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
@@ -174,26 +182,38 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             {player && <PlayerIcon player={player} />}
-            <Typography variant="subtitle1" fontWeight="bold" sx={{
-              fontSize: '1.75rem',
-              textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-            }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight="bold"
+              sx={{
+                fontSize: '1.75rem',
+                textShadow:
+                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+              }}
+            >
               {player ? resolveActorName(player) : name}
             </Typography>
           </Box>
           {!isLoading && (
             <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, alignItems: 'center' }}>
               {/* Max Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: { xs: 50, sm: 60 },
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Max
@@ -203,37 +223,51 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 
-                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    background:
+                      resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                     border: `1px solid ${resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? '#5ce572' : '#ff6666',
+                    sx={{
+                      color:
+                        resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                          ? '#5ce572'
+                          : '#ff6666',
                       fontWeight: 600,
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
                     }}
                   >
-                    {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%
+                    {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(
+                      1
+                    )}
+                    %
                   </Typography>
                 </Box>
               </Box>
 
               {/* Average Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: { xs: 50, sm: 60 },
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Average
@@ -243,37 +277,52 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 
-                      ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                    background:
+                      resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40
+                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
                     border: `1px solid ${resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? '#7ee8ff' : '#ffd54f',
+                    sx={{
+                      color:
+                        resistanceToDamageReduction(averageDynamicResistance + staticResistance) >=
+                        40
+                          ? '#7ee8ff'
+                          : '#ffd54f',
                       fontWeight: 600,
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
                     }}
                   >
-                    {resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%
+                    {resistanceToDamageReduction(
+                      averageDynamicResistance + staticResistance
+                    ).toFixed(1)}
+                    %
                   </Typography>
                 </Box>
               </Box>
 
               {/* Static Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: { xs: 50, sm: 60 },
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Static
@@ -283,17 +332,18 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
+                    background:
+                      'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
                     border: '1px solid rgba(175, 82, 222, 0.3)',
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
+                    sx={{
                       color: '#c57fff',
                       fontWeight: 600,
-                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' },
                     }}
                   >
                     {staticDamageReduction.toFixed(1)}%
@@ -315,18 +365,33 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
         <Stack spacing={3}>
           {/* Mobile Metrics - Only visible on mobile */}
           {!isLoading && (
-            <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 2, mb: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Box
+              sx={{
+                display: { xs: 'flex', md: 'none' },
+                gap: 2,
+                mb: 3,
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+              }}
+            >
               {/* Max Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: 70,
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: '0.65rem',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Max
@@ -336,37 +401,51 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 
-                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    background:
+                      resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
                     border: `1px solid ${resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? '#5ce572' : '#ff6666',
+                    sx={{
+                      color:
+                        resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                          ? '#5ce572'
+                          : '#ff6666',
                       fontWeight: 600,
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
                     }}
                   >
-                    {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%
+                    {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(
+                      1
+                    )}
+                    %
                   </Typography>
                 </Box>
               </Box>
 
               {/* Average Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: 70,
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: '0.65rem',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Average
@@ -376,37 +455,52 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 
-                      ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                    background:
+                      resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40
+                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
                     border: `1px solid ${resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
-                      color: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? '#7ee8ff' : '#ffd54f',
+                    sx={{
+                      color:
+                        resistanceToDamageReduction(averageDynamicResistance + staticResistance) >=
+                        40
+                          ? '#7ee8ff'
+                          : '#ffd54f',
                       fontWeight: 600,
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
                     }}
                   >
-                    {resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%
+                    {resistanceToDamageReduction(
+                      averageDynamicResistance + staticResistance
+                    ).toFixed(1)}
+                    %
                   </Typography>
                 </Box>
               </Box>
 
               {/* Static Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  minWidth: 70,
+                }}
+              >
                 <Typography
                   variant="caption"
-                  sx={{ 
-                    color: 'text.secondary', 
+                  sx={{
+                    color: 'text.secondary',
                     fontSize: '0.65rem',
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
-                    mb: 0.25
+                    mb: 0.25,
                   }}
                 >
                   Static
@@ -416,17 +510,18 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     px: 1.5,
                     py: 0.5,
                     borderRadius: 1,
-                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
+                    background:
+                      'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
                     border: '1px solid rgba(175, 82, 222, 0.3)',
                     backdropFilter: 'blur(10px)',
                   }}
                 >
                   <Typography
                     variant="body2"
-                    sx={{ 
+                    sx={{
                       color: '#c57fff',
                       fontWeight: 600,
-                      fontSize: '0.8rem'
+                      fontSize: '0.8rem',
                     }}
                   >
                     {staticDamageReduction.toFixed(1)}%
@@ -437,17 +532,25 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
           )}
 
           {/* Summary Statistics */}
-          <Card sx={{
-            background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
-            border: '1px solid rgba(175, 82, 222, 0.3)',
-            borderRadius: 2,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-          }}>
+          <Card
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
+              border: '1px solid rgba(175, 82, 222, 0.3)',
+              borderRadius: 2,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{
-                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-              }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  textShadow:
+                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                }}
+              >
                 Damage Reduction Summary
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
@@ -507,18 +610,26 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
 
           <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
             {/* Damage Reduction Sources */}
-            <Card sx={{ 
-              flex: '1 1 300px',
-              background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
-              border: '1px solid rgba(0, 122, 255, 0.3)',
-              borderRadius: 2,
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}>
+            <Card
+              sx={{
+                flex: '1 1 300px',
+                background:
+                  'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                border: '1px solid rgba(0, 122, 255, 0.3)',
+                borderRadius: 2,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            >
               <CardContent>
-                <Typography variant="h6" gutterBottom sx={{
-                  textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-                }}>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    textShadow:
+                      '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                  }}
+                >
                   Damage Reduction Sources
                 </Typography>
 
@@ -632,17 +743,25 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
           </Box>
 
           {/* Damage Reduction vs Time Chart */}
-          <Card sx={{
-            background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.15) 0%, rgba(76, 217, 100, 0.08) 50%, rgba(76, 217, 100, 0.04) 100%)',
-            border: '1px solid rgba(76, 217, 100, 0.3)',
-            borderRadius: 2,
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-          }}>
+          <Card
+            sx={{
+              background:
+                'linear-gradient(135deg, rgba(76, 217, 100, 0.15) 0%, rgba(76, 217, 100, 0.08) 50%, rgba(76, 217, 100, 0.04) 100%)',
+              border: '1px solid rgba(76, 217, 100, 0.3)',
+              borderRadius: 2,
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
             <CardContent>
-              <Typography variant="h6" gutterBottom sx={{
-                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-              }}>
+              <Typography
+                variant="h6"
+                gutterBottom
+                sx={{
+                  textShadow:
+                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                }}
+              >
                 Damage Reduction Over Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>

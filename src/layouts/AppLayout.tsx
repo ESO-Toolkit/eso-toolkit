@@ -16,13 +16,20 @@ export const AppLayout: React.FC = () => {
     return (
       <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
         <HeaderBar />
-        <Container 
+        <Container
           maxWidth="md"
           sx={{
-            px: { xs: 0, sm: 2 }
+            px: { xs: 0, sm: 2 },
           }}
         >
-          <Box sx={{ pt: { xs: 0, sm: 2 }, pb: { xs: 0, sm: 4 }, minHeight: '100vh', overflowY: 'auto' }}>
+          <Box
+            sx={{
+              pt: { xs: 0, sm: 2 },
+              pb: { xs: 0, sm: 4 },
+              minHeight: '100vh',
+              overflowY: 'auto',
+            }}
+          >
             <Login />
           </Box>
         </Container>
@@ -35,13 +42,20 @@ export const AppLayout: React.FC = () => {
       <ReportFightProvider>
         <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
           <HeaderBar />
-          <Container 
+          <Container
             maxWidth="md"
             sx={{
-              px: { xs: 0, sm: 2 }
+              px: { xs: 0, sm: 2 },
             }}
           >
-            <Box sx={{ pt: { xs: 0, sm: 8}, pb: { xs: 0, sm: 4 }, minHeight: '100vh', overflowY: 'auto' }}>
+            <Box
+              sx={{
+                pt: { xs: 0, sm: 8 },
+                pb: { xs: 0, sm: 4 },
+                minHeight: '100vh',
+                overflowY: 'auto',
+              }}
+            >
               <Outlet />
             </Box>
           </Container>

@@ -74,17 +74,23 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
 
   return (
     <Box sx={{ mb: 3 }}>
-      <Box sx={{ 
-        mb: 2, 
-        display: 'flex', 
-        alignItems: { xs: 'flex-start', sm: 'center' },
-        justifyContent: 'space-between',
-        flexDirection: { xs: 'column', sm: 'row' },
-        gap: { xs: 1, sm: 0 }
-      }}>
-        <Typography variant="h6" sx={{
-          textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-        }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          justifyContent: 'space-between',
+          flexDirection: { xs: 'column', sm: 'row' },
+          gap: { xs: 1, sm: 0 },
+        }}
+      >
+        <Typography
+          variant="h6"
+          sx={{
+            textShadow:
+              '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+          }}
+        >
           {title}
         </Typography>
         <FormControlLabel
@@ -100,8 +106,8 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
           sx={{
             ml: { xs: 0, sm: 2 },
             '& .MuiFormControlLabel-label': {
-              fontSize: { xs: '0.875rem', sm: '0.875rem' }
-            }
+              fontSize: { xs: '0.875rem', sm: '0.875rem' },
+            },
           }}
         />
       </Box>
