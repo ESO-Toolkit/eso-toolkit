@@ -283,3 +283,35 @@ export const selectDebuffLookup = createSelector(
     return createDebuffLookup(debuffEvents, fightEndTime);
   }
 );
+
+/**
+ * Selector that combines friendly and hostile buff lookups into a single lookup.
+ * Returns an empty lookup if either friendly or hostile buffs are still loading.
+ */
+export const selectCombinedBuffLookup = createSelector(
+  [
+    selectFriendlyBuffEvents,
+    selectHostileBuffEvents,
+    selectFriendlyBuffEventsLoading,
+    selectHostileBuffEventsLoading,
+    selectCurrentFight,
+  ],
+  (friendlyBuffs, hostileBuffs, friendlyLoading, hostileLoading, fight): BuffLookupData => {
+    // Return empty if either is still loading
+    if (friendlyLoading || hostileLoading) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Combine both event arrays
+    const allBuffEvents = [...(friendlyBuffs || []), ...(hostileBuffs || [])];
+
+    if (allBuffEvents.length === 0) {
+      return { buffIntervals: new Map() };
+    }
+
+    // Get fight end time for proper buff duration handling
+    const fightEndTime = fight?.endTime;
+
+    return createBuffLookup(allBuffEvents, fightEndTime);
+  }
+);

@@ -607,12 +607,12 @@ export function getCritDamageFromComputedSource(
 
 export function getCritDamageFromAlwaysOnSource(
   source: CriticalDamageAlwaysOnSource,
-  combatantInfo: CombatantInfoEvent
+  combatantInfo: CombatantInfoEvent | null
 ): number {
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY:
-      const medPieces = combatantInfo.gear?.filter((item) => item.type === ArmorType.MEDIUM);
-      return (medPieces.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
+      const medPieces = combatantInfo?.gear?.filter((item) => item.type === ArmorType.MEDIUM);
+      return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
     case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE:
       return CriticalDamageValues.FIGHTING_FINESSE;
   }

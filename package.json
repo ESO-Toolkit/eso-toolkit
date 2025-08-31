@@ -64,6 +64,7 @@
     "coverage:badges": "node scripts/coverage-badge-generator.js",
     "coverage:full": "npm run test:coverage && npm run coverage:badges && npm run coverage:analyze",
     "typecheck": "tsc --noEmit",
+    "type-check": "npm run typecheck",
     "validate": "npm run typecheck && npm run lint && npm run format:check",
     "lint": "eslint ./src --ext .ts,.tsx",
     "lint:fix": "eslint ./src --ext .ts,.tsx --fix",
