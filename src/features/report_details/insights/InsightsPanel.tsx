@@ -15,7 +15,7 @@ interface InsightsPanelProps {
   fight: FightFragment;
 }
 
-const ABILITY_NAMES = ['Glacial Colossus', 'Summon Charged Atronach', 'Aggressive Horn'];
+const ABILITY_NAMES = ['Colossus', 'Atronach', 'Barrier', 'Horn'];
 const CHAMPION_POINT_NAMES = ['Enlivening Overflow', 'From the Brink'];
 
 export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
