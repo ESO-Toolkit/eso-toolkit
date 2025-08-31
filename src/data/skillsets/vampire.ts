@@ -5,8 +5,8 @@ export const vampireData: SkillsetData = {
   skillLines: {
     vampire: {
       name: 'Vampire',
-      icon: '🧛',
-      actives: {
+      icon: '',
+      activeAbilities: {
         eviscerate: {
           name: 'Eviscerate',
           type: 'active',
@@ -188,4 +188,5 @@ export const vampireData: SkillsetData = {
       },
     },
   },
+  mechanics: {}
 };

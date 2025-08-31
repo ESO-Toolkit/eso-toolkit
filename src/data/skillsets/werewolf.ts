@@ -6,7 +6,7 @@ export const werewolfData: SkillsetData = {
     werewolf: {
       name: 'Werewolf',
       icon: '🐺',
-      actives: {
+      activeAbilities: {
         pounce: {
           name: 'Pounce',
           type: 'active',
@@ -181,4 +181,5 @@ export const werewolfData: SkillsetData = {
       },
     },
   },
+  mechanics: {}
 };
