@@ -663,7 +663,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                     height: '100%',
                     background:
                       'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    border: theme.palette.mode === 'dark' 
+                      ? '1px solid rgba(255, 255, 255, 0.1)' 
+                      : '1px solid rgba(59, 130, 246, 0.3)',
                   }}
                 >
                   <CardContent
@@ -1045,8 +1047,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 p: 1,
                                 border: '1px solid var(--border)',
                                 borderRadius: 1,
-                                backgroundColor: 'rgb(0 0 0 / 26%)',
-                                boxShadow: 'rgb(0 0 0) 0px 2px 4px',
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgb(0 0 0 / 26%)' : 'rgb(223 239 255 / 25%)',
+                                boxShadow: theme.palette.mode === 'dark' ? 'rgb(0 0 0) 0px 2px 4px' : 'rgb(167 199 220) 0px 2px 4px',
                               }}
                             >
                               <Box
