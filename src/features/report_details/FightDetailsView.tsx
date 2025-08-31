@@ -1,4 +1,5 @@
 // Import MUI icons
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import FlareIcon from '@mui/icons-material/Flare';
@@ -32,6 +33,7 @@ import { FightFragment } from '../../graphql/generated';
 
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { CriticalDamageValidationPanel } from './critical_damage_validation/CriticalDamageValidationPanel';
 import { DamageDonePanel } from './damage/DamageDonePanel';
 import { DamageReductionPanel } from './damage_reduction/DamageReductionPanel';
 import { DeathEventPanel } from './deaths/DeathEventPanel';
@@ -243,6 +245,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<FlareIcon />} />
             </Tooltip>
           )}
+
+          {showExperimentalTabs && (
+            <Tooltip title="Critical Damage Validation">
+              <Tab icon={<AnalyticsIcon />} />
+            </Tooltip>
+          )}
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -348,6 +356,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {showExperimentalTabs && (
           <Box sx={{ display: validSelectedTab === 16 ? 'block' : 'none' }}>
             <BuffsOverviewPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 17 ? 'block' : 'none' }}>
+            <CriticalDamageValidationPanel fight={fight} />
           </Box>
         )}
       </Box>
