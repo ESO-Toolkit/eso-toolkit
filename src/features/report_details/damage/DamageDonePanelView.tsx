@@ -564,7 +564,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                               background: roleColors.getGradientColor(row.role),
                               backgroundClip: 'text',
                               WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7dd9' : 'transparent',
+                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
                               textShadow: '0 1px 1px rgba(0,0,0,0.2)',
                             }
                         ),
