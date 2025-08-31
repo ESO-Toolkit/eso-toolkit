@@ -111,12 +111,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
     }
   };
 
-  const handleHealingLinkClick = (playerId: string): void => {
-    if (reportId && fightId) {
-      const url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=healing&source=${playerId}`;
-      window.open(url, '_blank');
-    }
-  };
+
 
   return (
     <Box>
