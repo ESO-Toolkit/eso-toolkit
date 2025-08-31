@@ -8,6 +8,9 @@ import {
   CombatantAura,
   CombatantInfoEvent,
   DamageEvent,
+  DeathEvent,
+  BeginCastEvent,
+  CastEvent,
   HitType,
   Resources,
 } from '../../types/combatlogEvents';
@@ -158,5 +161,51 @@ export const createMockRemoveDebuffEvent = (
   targetID: 456,
   targetIsFriendly: false,
   abilityGameID: KnownAbilities.HEMORRHAGE,
+  ...overrides,
+});
+
+export const createMockDeathEvent = (overrides?: Partial<DeathEvent>): DeathEvent => ({
+  timestamp: 1000000,
+  type: 'death',
+  fight: 1,
+  sourceID: 123,
+  sourceIsFriendly: false,
+  targetID: 456,
+  targetInstance: 1,
+  targetIsFriendly: true,
+  abilityGameID: KnownAbilities.HURRICANE,
+  castTrackID: 1,
+  sourceResources: createMockResources(),
+  targetResources: createMockResources(),
+  amount: 5000,
+  ...overrides,
+});
+
+export const createMockBeginCastEvent = (overrides?: Partial<BeginCastEvent>): BeginCastEvent => ({
+  timestamp: 1000000,
+  type: 'begincast',
+  fight: 1,
+  sourceID: 123,
+  sourceIsFriendly: true,
+  targetID: 456,
+  targetIsFriendly: false,
+  abilityGameID: KnownAbilities.RESURRECT,
+  castTrackID: 1,
+  sourceResources: createMockResources(),
+  targetResources: createMockResources(),
+  fake: false,
+  ...overrides,
+});
+
+export const createMockCastEvent = (overrides?: Partial<CastEvent>): CastEvent => ({
+  timestamp: 1000000,
+  type: 'cast',
+  fight: 1,
+  sourceID: 123,
+  sourceIsFriendly: true,
+  targetID: 456,
+  targetIsFriendly: false,
+  abilityGameID: KnownAbilities.HURRICANE,
+  fake: false,
   ...overrides,
 });

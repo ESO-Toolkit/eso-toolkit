@@ -5,7 +5,7 @@ export { usePlayerData } from './usePlayerData';
 
 // Event data hooks
 export { useEventData } from './useEventData';
-export { useDamageEvents } from './useDamageEvents';
+export { useDamageEvents, useDamageEventsLookup } from './useDamageEvents';
 export { useHealingEvents } from './useHealingEvents';
 export { useFriendlyBuffEvents } from './useFriendlyBuffEvents';
 export { useHostileBuffEvents } from './useHostileBuffEvents';

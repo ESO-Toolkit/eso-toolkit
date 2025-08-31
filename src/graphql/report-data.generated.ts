@@ -2,52 +2,39 @@
 import * as Types from './generated';
 
 import { gql } from '@apollo/client';
+import { ReportActorFragmentDoc } from './shared-fragments.generated';
 import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 export const ReportAbilityFragmentDoc = gql`
-  fragment ReportAbility on ReportAbility {
-    gameID
-    icon
-    name
-    type
-  }
-`;
-export const ReportActorFragmentDoc = gql`
-  fragment ReportActor on ReportActor {
-    displayName
-    gameID
-    icon
-    id
-    name
-    server
-    subType
-    type
-  }
-`;
+    fragment ReportAbility on ReportAbility {
+  gameID
+  icon
+  name
+  type
+}
+    `;
 export const MasterDataFragmentDoc = gql`
-  fragment MasterData on ReportMasterData {
-    abilities {
-      ...ReportAbility
-    }
-    actors {
-      ...ReportActor
-    }
+    fragment MasterData on ReportMasterData {
+  abilities {
+    ...ReportAbility
   }
-  ${ReportAbilityFragmentDoc}
-  ${ReportActorFragmentDoc}
-`;
+  actors {
+    ...ReportActor
+  }
+}
+    ${ReportAbilityFragmentDoc}
+${ReportActorFragmentDoc}`;
 export const GetReportMasterDataDocument = gql`
-  query getReportMasterData($code: String!) {
-    reportData {
-      report(code: $code) {
-        masterData {
-          ...MasterData
-        }
+    query getReportMasterData($code: String!) {
+  reportData {
+    report(code: $code) {
+      masterData {
+        ...MasterData
       }
     }
   }
-  ${MasterDataFragmentDoc}
-`;
+}
+    ${MasterDataFragmentDoc}`;
 
 /**
  * __useGetReportMasterDataQuery__
@@ -65,54 +52,19 @@ export const GetReportMasterDataDocument = gql`
  *   },
  * });
  */
-export function useGetReportMasterDataQuery(
-  baseOptions: Apollo.QueryHookOptions<
-    Types.GetReportMasterDataQuery,
-    Types.GetReportMasterDataQueryVariables
-  > &
-    ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean } | { skip: boolean })
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(
-    GetReportMasterDataDocument,
-    options
-  );
-}
-export function useGetReportMasterDataLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<
-    Types.GetReportMasterDataQuery,
-    Types.GetReportMasterDataQueryVariables
-  >
-) {
-  const options = { ...defaultOptions, ...baseOptions };
-  return Apollo.useLazyQuery<
-    Types.GetReportMasterDataQuery,
-    Types.GetReportMasterDataQueryVariables
-  >(GetReportMasterDataDocument, options);
-}
-export function useGetReportMasterDataSuspenseQuery(
-  baseOptions?:
-    | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<
-        Types.GetReportMasterDataQuery,
-        Types.GetReportMasterDataQueryVariables
-      >
-) {
-  const options =
-    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
-  return Apollo.useSuspenseQuery<
-    Types.GetReportMasterDataQuery,
-    Types.GetReportMasterDataQueryVariables
-  >(GetReportMasterDataDocument, options);
-}
+export function useGetReportMasterDataQuery(baseOptions: Apollo.QueryHookOptions<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables> & ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
+        const options = {...defaultOptions, ...baseOptions}
+        return Apollo.useQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(GetReportMasterDataDocument, options);
+      }
+export function useGetReportMasterDataLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>) {
+          const options = {...defaultOptions, ...baseOptions}
+          return Apollo.useLazyQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(GetReportMasterDataDocument, options);
+        }
+export function useGetReportMasterDataSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>) {
+          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
+          return Apollo.useSuspenseQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(GetReportMasterDataDocument, options);
+        }
 export type GetReportMasterDataQueryHookResult = ReturnType<typeof useGetReportMasterDataQuery>;
-export type GetReportMasterDataLazyQueryHookResult = ReturnType<
-  typeof useGetReportMasterDataLazyQuery
->;
-export type GetReportMasterDataSuspenseQueryHookResult = ReturnType<
-  typeof useGetReportMasterDataSuspenseQuery
->;
-export type GetReportMasterDataQueryResult = Apollo.QueryResult<
-  Types.GetReportMasterDataQuery,
-  Types.GetReportMasterDataQueryVariables
->;
+export type GetReportMasterDataLazyQueryHookResult = ReturnType<typeof useGetReportMasterDataLazyQuery>;
+export type GetReportMasterDataSuspenseQueryHookResult = ReturnType<typeof useGetReportMasterDataSuspenseQuery>;
+export type GetReportMasterDataQueryResult = Apollo.QueryResult<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>;

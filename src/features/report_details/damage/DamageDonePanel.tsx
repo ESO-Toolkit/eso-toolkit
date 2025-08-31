@@ -1,28 +1,25 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
-import { useDamageEvents, useReportMasterData, usePlayerData } from '../../../hooks';
+import { useDamageEventsLookup, useReportMasterData, usePlayerData } from '../../../hooks';
+import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
 
-interface DamageDonePanelProps {
-  fight: FightFragment;
-  reportCode?: string;
-}
+import { useSelectedFight } from '@/hooks/useSelectedFight';
 
 /**
  * Smart component that handles data processing and state management for damage done panel
  */
-export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportCode }) => {
+export const DamageDonePanel: React.FC = () => {
   // Use hooks to get data
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData, isPlayerDataLoading } = usePlayerData();
+  const fight = useSelectedFight();
 
   // Extract data from hooks with memoization
-  const events = useMemo(() => damageEvents || [], [damageEvents]);
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
     [reportMasterData]
@@ -30,37 +27,49 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
 
   // Compute loading and error states
   const isLoading = useMemo(() => {
-    return isDamageEventsLoading || isMasterDataLoading || isPlayerDataLoading;
-  }, [isDamageEventsLoading, isMasterDataLoading, isPlayerDataLoading]);
+    return isDamageEventsLookupLoading || isMasterDataLoading || isPlayerDataLoading;
+  }, [isDamageEventsLookupLoading, isMasterDataLoading, isPlayerDataLoading]);
 
   const isDataReady = useMemo(() => {
     return !isLoading;
   }, [isLoading]);
-
-  // IMPORTANT: All hooks must be called before any early returns
 
   // Memoize damage calculations to prevent unnecessary recalculations
   const damageStatistics = useMemo(() => {
     const damageByPlayer: Record<number, number> = {};
     const damageEventsBySource: Record<number, number> = {};
 
-    events.forEach((event) => {
-      if ('sourceID' in event && event.sourceID != null) {
-        const playerId = Number(event.sourceID);
-        const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
-        if (!damageByPlayer[playerId]) {
-          damageByPlayer[playerId] = 0;
+    // Convert string keys to numbers and calculate totals
+    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
+      const playerId = Number(playerIdStr);
+      let totalDamage = 0;
+      let eventCount = 0;
+
+      events.forEach((event) => {
+        if (!event.targetIsFriendly) {
+          const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
+          totalDamage += amount;
+          eventCount++;
         }
-        damageByPlayer[playerId] += amount;
-        if (!damageEventsBySource[playerId]) {
-          damageEventsBySource[playerId] = 0;
-        }
-        damageEventsBySource[playerId]++;
+      });
+
+      if (totalDamage > 0) {
+        damageByPlayer[playerId] = totalDamage;
+        damageEventsBySource[playerId] = eventCount;
       }
     });
 
     return { damageByPlayer, damageEventsBySource };
-  }, [events]);
+  }, [damageEventsByPlayer]);
+
+  // Calculate active percentages using ESO logs methodology
+  const activePercentages = useMemo(() => {
+    if (!fight || !damageEventsByPlayer) {
+      return {};
+    }
+
+    return calculateActivePercentages(fight, damageEventsByPlayer);
+  }, [fight, damageEventsByPlayer]);
 
   const fightDuration = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -70,25 +79,33 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
   }, [fight]);
 
   const isPlayerActor = useMemo(() => {
-    return (id: string | number) => {
+    return (id: string) => {
       const actor = masterData.actorsById[id];
-      return actor && actor.type === 'Player';
+      if (!actor) {
+        return false;
+      }
+
+      if (fight?.friendlyPlayers?.some((friendlyId) => friendlyId?.toString() === id)) {
+        return true;
+      }
+
+      return fight?.friendlyNPCs?.some((npc) => npc?.id?.toString() === id);
     };
-  }, [masterData.actorsById]);
+  }, [masterData.actorsById, fight]);
 
   // Helper function to determine player role
   const getPlayerRole = useMemo(() => {
     return (playerId: string): 'dps' | 'tank' | 'healer' => {
       if (!playerData?.playersById) return 'dps';
-      
+
       const player = playerData.playersById[playerId];
       const role = player?.role as string;
-      
+
       // Map plural forms to singular forms
       if (role === 'tanks') return 'tank';
       if (role === 'healers') return 'healer';
       if (role === 'dps') return 'dps';
-      
+
       return 'dps'; // default fallback
     };
   }, [playerData]);
@@ -98,6 +115,7 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
       .filter(([id]) => isPlayerActor(id))
       .map(([id, total]) => {
         const totalDamage = Number(total);
+        const playerId = Number(id);
 
         // Prefer masterData actor name if available
         const actor = masterData.actorsById[id];
@@ -109,17 +127,29 @@ export const DamageDonePanel: React.FC<DamageDonePanelProps> = ({ fight, reportC
 
         const role = getPlayerRole(id);
 
+        // Get active percentage for this player
+        const activeData = activePercentages[playerId];
+        const activePercentage = activeData?.activePercentage ?? 0;
+
         return {
           id,
           name,
           total: totalDamage,
           dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
+          activePercentage,
           iconUrl,
           role,
         };
       })
       .sort((a, b) => b.dps - a.dps);
-  }, [damageStatistics.damageByPlayer, isPlayerActor, masterData.actorsById, fightDuration, getPlayerRole]);
+  }, [
+    damageStatistics.damageByPlayer,
+    isPlayerActor,
+    masterData.actorsById,
+    fightDuration,
+    getPlayerRole,
+    activePercentages,
+  ]);
 
   // Show loading spinner while data is being fetched
   if (isLoading) {

@@ -1,15 +1,14 @@
 // Script to fetch ESO Logs access token and run GraphQL codegen (TypeScript)
-import { resolve } from 'path';
-import axios from 'axios';
 import { execSync } from 'child_process';
+
+import axios from 'axios';
 import { config } from 'dotenv';
 
-config({ path: resolve(__dirname, '.env') });
+config(); // Load .env file
 
 const CLIENT_ID = process.env.OAUTH_CLIENT_ID;
 const CLIENT_SECRET = process.env.OAUTH_CLIENT_SECRET;
-const TOKEN_URL =
-  process.env.OAUTH_PROVIDER_TOKEN_URL || 'https://www.esologs.com/oauth/token';
+const TOKEN_URL = process.env.OAUTH_PROVIDER_TOKEN_URL || 'https://www.esologs.com/oauth/token';
 
 if (!CLIENT_ID || !CLIENT_SECRET) {
   console.error('Missing OAUTH_CLIENT_ID or OAUTH_CLIENT_SECRET in .env');
@@ -27,18 +26,18 @@ async function getAccessToken(): Promise<string> {
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
     });
     // Cast response to expected type
-    if (typeof response.data === 'object' && response.data !== null && 'access_token' in response.data) {
+    if (
+      typeof response.data === 'object' &&
+      response.data !== null &&
+      'access_token' in response.data
+    ) {
       return (response.data as { access_token: string }).access_token;
     }
     throw new Error('Invalid response from token endpoint');
   } catch (err) {
     // Type guard for axios error
-    if (err && typeof err === 'object' && 'isAxiosError' in err && (err as any).isAxiosError) {
-      const axiosErr = err as any;
-      console.error(
-        'Failed to fetch access token:',
-        axiosErr.response?.data || axiosErr.message,
-      );
+    if (axios.isAxiosError(err)) {
+      console.error('Failed to fetch access token:', err.response?.data || err.message);
     } else if (err instanceof Error) {
       console.error('Failed to fetch access token:', err.message);
     } else {

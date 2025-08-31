@@ -1,8 +1,15 @@
 import React from 'react';
 
-import { useDeathEvents, useDamageEvents, useReportMasterData, usePlayerData } from '../../../hooks';
+import {
+  useDeathEvents,
+  useDamageEvents,
+  useReportMasterData,
+  usePlayerData,
+  useCastEvents,
+} from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { DeathEvent } from '../../../types/combatlogEvents';
+import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
 
@@ -28,6 +35,8 @@ interface DeathInfo {
   stamina: number | null;
   maxStamina: number | null;
   wasBlocking: boolean | null;
+  deathDurationMs: number | null;
+  resurrectionTime: number | null;
 }
 
 export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
@@ -37,13 +46,33 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   // Use hooks to get data
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { castEvents, isCastEventsLoading } = useCastEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData } = usePlayerData();
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
 
-    // OPTIMIZED: Pre-build lookup maps to avoid repeated computations
+    // Calculate death durations first
+    const deathDurations = calculateDeathDurations(
+      deathEvents,
+      castEvents,
+      fight.startTime,
+      fight.endTime
+    );
+
+    // Create a map of death durations by player ID and timestamp for quick lookup
+    const deathDurationMap = new Map<string, Map<number, (typeof deathDurations)[0]>>();
+    deathDurations.forEach((duration) => {
+      const playerId = duration.playerId.toString();
+      if (!deathDurationMap.has(playerId)) {
+        deathDurationMap.set(playerId, new Map());
+      }
+      const playerDurations = deathDurationMap.get(playerId);
+      if (playerDurations) {
+        playerDurations.set(duration.deathTime, duration);
+      }
+    }); // OPTIMIZED: Pre-build lookup maps to avoid repeated computations
     const abilityNameCache = new Map<number, string>();
     const getAbilityName = (abilityId: number): string | undefined => {
       if (abilityNameCache.has(abilityId)) {
@@ -167,6 +196,10 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           };
         }
 
+        // Get death duration data for this death
+        const playerDurations = deathDurationMap.get(playerId);
+        const deathDurationData = playerDurations?.get(deathEvent.timestamp ?? 0);
+
         deaths.push({
           playerId,
           timestamp: deathEvent.timestamp ?? 0,
@@ -175,6 +208,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           stamina: deathEvent.targetResources.stamina,
           maxStamina: deathEvent.targetResources.maxStamina,
           wasBlocking: false,
+          deathDurationMs: deathDurationData?.deathDurationMs ?? null,
+          resurrectionTime: deathDurationData?.resurrectionTime ?? null,
         });
 
         lastDeathTimestamp = deathEvent.timestamp;
@@ -188,12 +223,14 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     fight?.endTime,
     deathEvents,
     damageEvents,
+    castEvents,
     reportMasterData.actorsById,
     reportMasterData.abilitiesById,
   ]);
 
   // Calculate combined loading state
-  const isLoading = isDeathEventsLoading || isDamageEventsLoading || isMasterDataLoading;
+  const isLoading =
+    isDeathEventsLoading || isDamageEventsLoading || isCastEventsLoading || isMasterDataLoading;
 
   if (isLoading) {
     return (
@@ -214,7 +251,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     .map(([id, actor]) => ({
       id,
       name: actor?.name || id,
-      role: playerData?.playersById?.[id]?.role || 'dps' // Default to 'dps' if role not found
+      role: playerData?.playersById?.[id]?.role || 'dps', // Default to 'dps' if role not found
     }));
 
   return (

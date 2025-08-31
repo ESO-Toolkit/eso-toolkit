@@ -285,7 +285,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <PlayersPanel />
         </Box>
         <Box sx={{ display: validSelectedTab === 2 ? 'block' : 'none' }}>
-          <DamageDonePanel fight={fight} />
+          <DamageDonePanel />
         </Box>
         <Box sx={{ display: validSelectedTab === 3 ? 'block' : 'none' }}>
           <HealingDonePanel fight={fight} />
