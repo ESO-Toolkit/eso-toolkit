@@ -474,7 +474,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                     textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                   }}
                 >
-                  {row.activePercentage > 0 ? formatNumber(Math.round(row.dps / (row.activePercentage / 100))) : 'N/A'}
+                  {row.activePercentage > 0
+                    ? formatNumber(Math.round(row.dps / (row.activePercentage / 100)))
+                    : 'N/A'}
                 </Typography>
               </Box>
             );
@@ -552,7 +554,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                         textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                       }}
                     >
-                      {row.activePercentage > 0 ? `${formatNumber(Math.round(row.dps / (row.activePercentage / 100)))} Active` : 'N/A Active'}
+                      {row.activePercentage > 0
+                        ? `${formatNumber(Math.round(row.dps / (row.activePercentage / 100)))} Active`
+                        : 'N/A Active'}
                     </Typography>
                   </Box>
                 </Box>

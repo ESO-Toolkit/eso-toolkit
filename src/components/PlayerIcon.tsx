@@ -21,11 +21,11 @@ export const PlayerIcon: React.FC<PlayerIconProps> = ({ player }) => {
       ) : (
         <Avatar sx={{ width: 40, height: 40 }} />
       )}
-      <Box 
-        sx={{ 
-          position: 'absolute', 
-          bottom: -2, 
-          right: -2, 
+      <Box
+        sx={{
+          position: 'absolute',
+          bottom: -2,
+          right: -2,
           zIndex: 1,
           display: 'flex',
           alignItems: 'center',
