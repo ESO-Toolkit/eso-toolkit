@@ -1,6 +1,7 @@
 // Import MUI icons
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AnalyticsIcon from '@mui/icons-material/Analytics';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import FlareIcon from '@mui/icons-material/Flare';
@@ -38,6 +39,19 @@ import { FightFragment } from '../../graphql/generated';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
+import { CriticalDamageValidationPanel } from './critical_damage_validation/CriticalDamageValidationPanel';
+import { DamageDonePanel } from './damage/DamageDonePanel';
+import { DamageReductionPanel } from './damage_reduction/DamageReductionPanel';
+import { DeathEventPanel } from './deaths/DeathEventPanel';
+import { DiagnosticsPanel } from './debug/DiagnosticsPanel';
+import { EventsPanel } from './debug/EventsPanel';
+import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
+import { TargetEventsPanel } from './debug/TargetEventsPanel';
+import { HealingDonePanel } from './healing/HealingDonePanel';
+import { AurasPanel } from './insights/AurasPanel';
+import { BuffsOverviewPanel } from './insights/BuffsOverviewPanel';
+import { InsightsPanel } from './insights/InsightsPanel';
+import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
 
@@ -591,6 +605,16 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
             sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
           />
+
+          <Tab
+            value={TabId.CRITICAL_DAMAGE_VALIDATION}
+            icon={
+              <Tooltip title="Critical Damage Validation">
+                <AnalyticsIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -718,6 +742,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
               <DebuffsOverviewPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.CRITICAL_DAMAGE_VALIDATION && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE_VALIDATION} />}>
+              <CriticalDamageValidationPanel fight={fight} />
             </Suspense>
           )}
         </AnimatedTabContent>

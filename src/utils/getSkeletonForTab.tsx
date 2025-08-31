@@ -30,6 +30,7 @@ export enum TabId {
   AURAS_OVERVIEW = 'auras-overview',
   BUFFS_OVERVIEW = 'buffs-overview',
   DEBUFFS_OVERVIEW = 'debuffs-overview',
+  CRITICAL_DAMAGE_VALIDATION = 'critical-damage-validation',
 }
 
 // Shared header skeleton for FightDetailsView
