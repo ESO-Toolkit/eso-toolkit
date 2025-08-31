@@ -51,8 +51,12 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   // Show info when no targets are available
   if (selectedTargetIds.size === 0) {
     return (
-      <Box>
-        <Typography variant="h4" gutterBottom>
+      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+        <Typography variant="h6" sx={{ 
+          mb: 2, 
+          fontFamily: 'Space Grotesk, sans-serif',
+          textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+        }}>
           Penetration Analysis
         </Typography>
 
@@ -65,8 +69,12 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   }
 
   return (
-    <Box>
-      <Typography variant="h4" gutterBottom>
+    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+      <Typography variant="h6" sx={{ 
+        mb: 2, 
+        fontFamily: 'Space Grotesk, sans-serif',
+        textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+      }}>
         Penetration Analysis
       </Typography>
 
@@ -91,7 +99,13 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
         </Box>
       ) : (
         /* Render all players in accordion format */
-        <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 2,
+          }}
+        >
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Penetration analysis for all players against{' '}
             {selectedTargetIds.size === 1
