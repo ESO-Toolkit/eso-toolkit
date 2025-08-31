@@ -14,8 +14,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import type { ChipProps } from '@mui/material/Chip';
-import type { Theme } from '@mui/material/styles';
-import { keyframes, SxProps } from '@mui/system';
+import { SxProps, Theme, useTheme } from '@mui/material/styles';
+import { keyframes } from '@mui/system';
 import React from 'react';
 
 import mundusIcon from '../../../assets/MundusStone.png';
@@ -109,83 +109,73 @@ const glossyBaseSx = {
 const buildVariantSx = (variant: string): SxProps<Theme> => {
   const v: Record<string, SxProps<Theme>> = {
     green: {
-      background:
-        'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 50%, rgba(34, 197, 94, 0.03) 100%)',
-      borderColor: 'rgba(34, 197, 94, 0.25)',
+      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%)',
+      borderColor: 'rgba(5, 150, 105, 0.3)',
       '& .MuiChip-label': {
-        color: '#15803d',
+        color: '#065f46',
       },
     },
     blue: {
-      background:
-        'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(59, 130, 246, 0.03) 100%)',
-      borderColor: 'rgba(59, 130, 246, 0.25)',
+      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%)',
+      borderColor: 'rgba(37, 99, 235, 0.3)',
       '& .MuiChip-label': {
-        color: '#1d4ed8',
+        color: '#1e3a8a',
       },
     },
     lightBlue: {
-      background:
-        'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(14, 165, 233, 0.03) 100%)',
-      borderColor: 'rgba(14, 165, 233, 0.25)',
+      background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(56, 189, 248, 0.04) 100%)',
+      borderColor: 'rgba(2, 132, 199, 0.3)',
       '& .MuiChip-label': {
-        color: '#0369a1',
+        color: '#0c4a6e',
       },
     },
     purple: {
-      background:
-        'linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(147, 51, 234, 0.03) 100%)',
-      borderColor: 'rgba(147, 51, 234, 0.25)',
+      background: 'linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(168, 85, 247, 0.04) 100%)',
+      borderColor: 'rgba(126, 34, 206, 0.3)',
       '& .MuiChip-label': {
-        color: '#7c3aed',
+        color: '#581c87',
       },
     },
     indigo: {
-      background:
-        'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(99, 102, 241, 0.03) 100%)',
-      borderColor: 'rgba(99, 102, 241, 0.25)',
+      background: 'linear-gradient(135deg, rgba(67, 56, 202, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(129, 140, 248, 0.04) 100%)',
+      borderColor: 'rgba(67, 56, 202, 0.3)',
       '& .MuiChip-label': {
-        color: '#4338ca',
+        color: '#3730a3',
       },
     },
     gold: {
-      background:
-        'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(245, 158, 11, 0.03) 100%)',
-      borderColor: 'rgba(245, 158, 11, 0.25)',
+      background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(251, 191, 36, 0.04) 100%)',
+      borderColor: 'rgba(217, 119, 6, 0.3)',
       '& .MuiChip-label': {
-        color: '#d97706',
+        color: '#92400e',
       },
     },
     silver: {
-      background:
-        'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(148, 163, 184, 0.03) 100%)',
-      borderColor: 'rgba(148, 163, 184, 0.25)',
+      background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.12) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(203, 213, 225, 0.04) 100%)',
+      borderColor: 'rgba(100, 116, 139, 0.3)',
       '& .MuiChip-label': {
-        color: '#475569',
+        color: '#334155',
       },
     },
     championRed: {
-      background:
-        'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(239, 68, 68, 0.03) 100%)',
-      borderColor: 'rgba(239, 68, 68, 0.25)',
+      background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(248, 113, 113, 0.04) 100%)',
+      borderColor: 'rgba(220, 38, 38, 0.3)',
       '& .MuiChip-label': {
-        color: '#dc2626',
+        color: '#991b1b',
       },
     },
     championBlue: {
-      background:
-        'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(59, 130, 246, 0.03) 100%)',
-      borderColor: 'rgba(59, 130, 246, 0.25)',
+      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%)',
+      borderColor: 'rgba(37, 99, 235, 0.3)',
       '& .MuiChip-label': {
-        color: '#1d4ed8',
+        color: '#1e3a8a',
       },
     },
     championGreen: {
-      background:
-        'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 50%, rgba(34, 197, 94, 0.03) 100%)',
-      borderColor: 'rgba(34, 197, 94, 0.25)',
+      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%)',
+      borderColor: 'rgba(5, 150, 105, 0.3)',
       '& .MuiChip-label': {
-        color: '#15803d',
+        color: '#065f46',
       },
     },
     legendary: {
@@ -194,7 +184,10 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
       borderImage:
         'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
       border: '1px solid transparent',
-      color: '#ffffff',
+      '& .MuiChip-label': {
+        color: '#1f2937',
+        fontWeight: 'bold',
+      },
       animation: `${legendaryGlow} 3s ease-in-out infinite`,
     },
   };
