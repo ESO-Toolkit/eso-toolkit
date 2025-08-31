@@ -55,8 +55,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
     });
   }, [damageRows, sortField, sortDirection]);
 
-  // Calculate max damage for percentage calculations
-  const maxDamage = Math.max(...sortedRows.map((row) => row.total));
+  // Calculate total damage for percentage calculations
+  const totalDamage = sortedRows.reduce((sum, row) => sum + row.total, 0);
 
   // Handle column header clicks for sorting
   const handleSort = (field: SortField): void => {
@@ -102,10 +102,85 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             color: '#888',
             fontSize: '0.75rem',
             fontStyle: 'italic',
+            display: { xs: 'none', sm: 'block' },
           }}
         >
           Click column headers to sort
         </Typography>
+      </Box>
+
+      {/* Mobile Sort Controls */}
+      <Box
+        sx={{
+          display: { xs: 'flex', sm: 'none' },
+          gap: 1,
+          mb: 2,
+          flexWrap: 'wrap',
+        }}
+      >
+        <Box
+          onClick={() => handleSort('name')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor: sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color: sortField === 'name' ? '#4caf50' : '#ecf0f1',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(76, 175, 80, 0.15)',
+              color: '#4caf50',
+            },
+          }}
+        >
+          Name{getSortIcon('name')}
+        </Box>
+        <Box
+          onClick={() => handleSort('total')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor: sortField === 'total' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color: sortField === 'total' ? '#4caf50' : '#ecf0f1',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(76, 175, 80, 0.15)',
+              color: '#4caf50',
+            },
+          }}
+        >
+          Amount{getSortIcon('total')}
+        </Box>
+        <Box
+          onClick={() => handleSort('dps')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor: sortField === 'dps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color: sortField === 'dps' ? '#4caf50' : '#ecf0f1',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(76, 175, 80, 0.15)',
+              color: '#4caf50',
+            },
+          }}
+        >
+          DPS{getSortIcon('dps')}
+        </Box>
       </Box>
       {damageRows.length > 0 ? (
         <Box
@@ -157,7 +232,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
           {/* Header */}
           <Box
             sx={{
-              display: 'grid',
+              display: { xs: 'none', sm: 'grid' },
               gridTemplateColumns: '1fr 2fr 1fr',
               gap: 2,
               p: 1.5,
@@ -246,14 +321,15 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
 
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
-            const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentage = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
               <Box
                 key={row.id}
                 sx={{
-                  display: 'grid',
+                  // Desktop grid layout
+                  display: { xs: 'none', sm: 'grid' },
                   gridTemplateColumns: '1fr 2fr 1fr',
                   gap: 2,
                   p: 1.5,
@@ -346,6 +422,109 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 >
                   {formatNumber(row.dps)}
                 </Typography>
+              </Box>
+            );
+          })}
+
+          {/* Mobile Card Layout */}
+          {sortedRows.map((row, index) => {
+            const percentage = ((row.total / totalDamage) * 100).toFixed(2);
+            const playerColor = getPlayerColor(row.role);
+
+            return (
+              <Box
+                key={`mobile-${row.id}`}
+                sx={{
+                  display: { xs: 'block', sm: 'none' },
+                  p: 2,
+                  backgroundColor: 'transparent',
+                  borderBottom:
+                    index < damageRows.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                  position: 'relative',
+                  zIndex: 1,
+                  transition: 'all 0.2s ease',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                  },
+                }}
+              >
+                {/* Mobile Header: Name and DPS */}
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
+                    {row.iconUrl && (
+                      <Avatar
+                        src={row.iconUrl}
+                        alt="icon"
+                        sx={{ width: 28, height: 28, flexShrink: 0 }}
+                      />
+                    )}
+                    <Typography
+                      sx={{
+                        color: playerColor,
+                        fontWeight: 500,
+                        fontSize: '0.9rem',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      {row.name}
+                    </Typography>
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: '#ecf0f1',
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      ml: 1,
+                    }}
+                  >
+                    {formatNumber(row.dps)} DPS
+                  </Typography>
+                </Box>
+
+                {/* Mobile Progress Bar and Amount */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography
+                    sx={{
+                      color: '#ecf0f1',
+                      fontWeight: 500,
+                      fontSize: '0.8rem',
+                      minWidth: '45px',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {percentage}%
+                  </Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={parseFloat(percentage)}
+                      sx={{
+                        height: 6,
+                        borderRadius: 1,
+                        backgroundColor: '#757575',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: playerColor,
+                          borderRadius: 1,
+                        },
+                      }}
+                    />
+                  </Box>
+                  <Typography
+                    sx={{
+                      color: '#ecf0f1',
+                      fontSize: '0.8rem',
+                      minWidth: '70px',
+                      textAlign: 'right',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    }}
+                  >
+                    {formatNumber(row.total)}
+                  </Typography>
+                </Box>
               </Box>
             );
           })}
