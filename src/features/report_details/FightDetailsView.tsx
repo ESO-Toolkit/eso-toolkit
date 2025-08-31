@@ -246,7 +246,14 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         </Tabs>
 
         {/* Experimental Toggle */}
-        <Tooltip title="Toggle experimental features (Location Heatmap, Raw Events, etc.)">
+        <Tooltip title={
+          <Box>
+            <Box>Toggle experimental features</Box>
+            <Box sx={{ fontSize: '0.8em', opacity: 0.8, mt: 0.5 }}>
+              Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis
+            </Box>
+          </Box>
+        }>
           <FormControlLabel
             control={
               <Switch
@@ -256,11 +263,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               />
             }
             label={
-              <Tooltip title="Experimental features are in development and may change. Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
-                <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
-                  🧪
-                </Box>
-              </Tooltip>
+              <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+                🧪
+              </Box>
             }
             sx={{
               flexShrink: 0,
