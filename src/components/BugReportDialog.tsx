@@ -159,7 +159,7 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
     }
   };
 
-  const renderStepContent = (step: number): JSX.Element => {
+  const renderStepContent = (step: number): React.JSX.Element => {
     switch (step) {
       case 0:
         return (
@@ -459,7 +459,7 @@ export const BugReportFab: React.FC<BugReportFabProps> = ({
 export const useBugReport = (): {
   openBugReport: (data?: Partial<ManualBugReport>) => void;
   closeBugReport: () => void;
-  BugReportDialog: () => JSX.Element;
+  BugReportDialog: () => React.ReactElement;
   isOpen: boolean;
 } => {
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -476,7 +476,7 @@ export const useBugReport = (): {
     setInitialData({});
   }, []);
 
-  const BugReportComponent = (): JSX.Element => (
+  const BugReportComponent = (): React.ReactElement => (
     <BugReportDialog
       open={dialogOpen}
       onClose={closeBugReport}

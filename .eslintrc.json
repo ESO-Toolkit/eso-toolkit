@@ -1,8 +1,12 @@
 {
   "extends": ["react-app", "plugin:@typescript-eslint/recommended"],
-  "plugins": ["storybook", "@typescript-eslint", "import"],
+  "plugins": ["storybook", "@typescript-eslint", "import", "deprecation"],
+  "parserOptions": {
+    "project": "./tsconfig.json"
+  },
   "rules": {
     "import/no-default-export": "error",
+    "deprecation/deprecation": "error",
     "import/order": [
       "error",
       {
@@ -22,6 +26,12 @@
     ]
   },
   "overrides": [
+    {
+      "files": ["**/*.test.ts", "**/*.test.tsx", "**/*.stories.ts", "**/*.stories.tsx"],
+      "parserOptions": {
+        "project": null
+      }
+    },
     {
       "files": [
         "src/index.tsx",

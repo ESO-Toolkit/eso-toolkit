@@ -92,7 +92,7 @@ export interface DataGridProps<T = unknown> {
 }
 
 // Column filter component
-const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): JSX.Element => {
+const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX.Element => {
   const theme = useTheme();
   const columnFilterValue = column.getFilterValue();
   const { columnDef } = column;
@@ -196,7 +196,7 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): JSX.Eleme
 };
 
 // Pagination component
-const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): JSX.Element => {
+const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.JSX.Element => {
   const theme = useTheme();
 
   return (
@@ -349,7 +349,7 @@ const DataGridToolbar = <T,>({
   totalRows: number;
   enableFiltering?: boolean;
   pageSizeOptions: number[];
-}): JSX.Element => {
+}): React.JSX.Element => {
   const theme = useTheme();
 
   return (
@@ -473,7 +473,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
   enablePagination = true,
   loading = false,
   emptyMessage = 'No data available',
-}: DataGridProps<T>): JSX.Element => {
+}: DataGridProps<T>): React.JSX.Element => {
   const theme = useTheme();
 
   // Memoize theme-based styles to prevent recreation on every render
