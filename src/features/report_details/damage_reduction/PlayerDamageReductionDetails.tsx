@@ -28,8 +28,8 @@ import { Line } from 'react-chartjs-2';
 
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { resolveActorName } from '../../../utils/resolveActorName';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';
+import { resolveActorName } from '../../../utils/resolveActorName';
 
 // Register Chart.js components
 ChartJS.register(
