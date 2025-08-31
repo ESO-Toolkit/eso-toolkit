@@ -165,9 +165,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           }}
         >
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
-            <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+            <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center', flexGrow: 1 }}>
               <PlayerIcon player={player} />
               <Typography variant="subtitle1" fontWeight="bold" sx={{
+                fontSize: '1.75rem',
                 textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
               }}>
                 {resolveActorName(player)}
@@ -224,9 +225,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         }}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
-          <Box sx={{ display: 'flex', flexDirection: 'row' }}>
+          <Box sx={{ display: 'flex', flexDirection: 'row', alignItems: 'center' }}>
             <PlayerIcon player={player} />
             <Typography variant="subtitle1" fontWeight="bold" sx={{
+              fontSize: '1.75rem',
               textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
             }}>
               {resolveActorName(player)}
