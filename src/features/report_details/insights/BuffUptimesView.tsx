@@ -24,7 +24,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
 }) => {
   if (isLoading) {
     return (
-      <Box sx={{ mt: 2 }}>
+      <Box>
         <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           <Typography variant="h6">Buff Uptimes</Typography>
           <Button variant="outlined" size="small" disabled>
