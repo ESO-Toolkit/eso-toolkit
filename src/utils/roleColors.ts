@@ -44,7 +44,7 @@ interface RoleIndicatorProps {
 export const RoleIndicator: React.FC<RoleIndicatorProps> = ({ role }) => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  
+
   return React.createElement('span', {
     style: {
       display: 'inline-block',
@@ -53,9 +53,7 @@ export const RoleIndicator: React.FC<RoleIndicatorProps> = ({ role }) => {
       borderRadius: '50%',
       backgroundColor: getRoleColorSolid(role, isDarkMode),
       border: `2px solid ${isDarkMode ? 'white' : '#f1f5f9'}`,
-      boxShadow: isDarkMode 
-        ? '0 0 4px rgba(0, 0, 0, 0.5)'
-        : '0 1px 1px rgb(88 124 146 / 81%)',
+      boxShadow: isDarkMode ? '0 0 4px rgba(0, 0, 0, 0.5)' : '0 1px 1px rgb(88 124 146 / 81%)',
       flexShrink: 0,
     },
     'aria-label': `Role: ${role}`,

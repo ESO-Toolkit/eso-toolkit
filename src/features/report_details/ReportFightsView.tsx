@@ -412,16 +412,23 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     if (darkMode) {
       return {
         // Dark mode fight card colors
-        killGradient: 'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
+        killGradient:
+          'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
         killShadow: '0 0 6px rgba(76, 217, 100, 0.45)',
         trashGradient: 'linear-gradient(90deg, rgb(23 43 48 / 30%) 0%, rgb(0 0 0 / 85%) 100%)',
         trashShadow: '0 0 6px rgba(189, 195, 199, 0.35)',
-        falsePositiveGradient: 'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
-        wipeRedGradient: 'linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)',
-        wipeOrangeGradient: 'linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)',
-        wipeYellowGradient: 'linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)',
-        wipeLowGradient: 'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)',
-        wipeVeryLowGradient: 'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)',
+        falsePositiveGradient:
+          'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
+        wipeRedGradient:
+          'linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)',
+        wipeOrangeGradient:
+          'linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)',
+        wipeYellowGradient:
+          'linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)',
+        wipeLowGradient:
+          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)',
+        wipeVeryLowGradient:
+          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)',
         wipeShadow: '0 0 6px rgba(255, 99, 71, 0.45)',
         hoverBg: 'rgba(255,255,255,0.025)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
@@ -430,7 +437,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         badgeShadowKill: '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
         // Circle counter colors (solid colors for dark mode)
         circleGreen: '#4caf50',
-        circleYellow: '#ffc107', 
+        circleYellow: '#ffc107',
         circleOrange: '#ff7043',
         // Difficulty badge colors
         normalColor: '#4caf50',
@@ -441,25 +448,34 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     } else {
       return {
         // Light mode fight card colors - much darker gradients for visibility
-        killGradient: 'linear-gradient(90deg, rgba(5, 150, 105, 0.95) 0%, rgba(6, 78, 59, 0.9) 100%)',
+        killGradient:
+          'linear-gradient(90deg, rgba(5, 150, 105, 0.95) 0%, rgba(6, 78, 59, 0.9) 100%)',
         killShadow: '0 0 6px rgba(5, 150, 105, 0.4)',
-        trashGradient: 'linear-gradient(90deg, rgba(148, 163, 184, 0.8) 0%, rgba(100, 116, 139, 0.85) 100%)',
+        trashGradient:
+          'linear-gradient(90deg, rgba(148, 163, 184, 0.8) 0%, rgba(100, 116, 139, 0.85) 100%)',
         trashShadow: '0 0 6px rgba(100, 116, 139, 0.4)',
-        falsePositiveGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.85) 100%)',
-        wipeRedGradient: 'linear-gradient(90deg, rgba(220, 38, 38, 0.95) 0%, rgba(185, 28, 28, 0.9) 100%)',
-        wipeOrangeGradient: 'linear-gradient(90deg, rgba(234, 88, 12, 0.9) 0%, rgba(194, 65, 12, 0.85) 100%)',
-        wipeYellowGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.85) 0%, rgba(180, 83, 9, 0.8) 100%)',
-        wipeLowGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.8) 0%, rgba(180, 83, 9, 0.75) 100%)',
-        wipeVeryLowGradient: 'linear-gradient(90deg, rgba(217, 119, 6, 0.75) 0%, rgba(132, 204, 22, 0.7) 100%)',
+        falsePositiveGradient:
+          'linear-gradient(90deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.85) 100%)',
+        wipeRedGradient:
+          'linear-gradient(90deg, rgba(220, 38, 38, 0.95) 0%, rgba(185, 28, 28, 0.9) 100%)',
+        wipeOrangeGradient:
+          'linear-gradient(90deg, rgba(234, 88, 12, 0.9) 0%, rgba(194, 65, 12, 0.85) 100%)',
+        wipeYellowGradient:
+          'linear-gradient(90deg, rgba(217, 119, 6, 0.85) 0%, rgba(180, 83, 9, 0.8) 100%)',
+        wipeLowGradient:
+          'linear-gradient(90deg, rgba(217, 119, 6, 0.8) 0%, rgba(180, 83, 9, 0.75) 100%)',
+        wipeVeryLowGradient:
+          'linear-gradient(90deg, rgba(217, 119, 6, 0.75) 0%, rgba(132, 204, 22, 0.7) 100%)',
         wipeShadow: '0 0 6px rgba(220, 38, 38, 0.4)',
         hoverBg: 'rgba(30, 41, 59, 0.05)',
         badgeBorder: '1px solid rgba(100, 116, 139, 0.4)',
         badgeBorderKill: '1px solid rgba(5, 150, 105, 0.6)',
         badgeShadow: '0 4px 8px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-        badgeShadowKill: '0 4px 8px rgba(5, 150, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+        badgeShadowKill:
+          '0 4px 8px rgba(5, 150, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
         // Circle counter colors (solid colors for light mode)
         circleGreen: '#059669',
-        circleYellow: '#f59e0b', 
+        circleYellow: '#f59e0b',
         circleOrange: '#dc2626',
         // Difficulty badge colors (proper light mode versions)
         normalColor: '#059669',
@@ -1107,24 +1123,24 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               borderRadius: 10,
               backdropFilter: 'blur(8px)',
               WebkitBackdropFilter: 'blur(8px)',
-              border: isWipe
-                ? getThemeColors.badgeBorder
-                : getThemeColors.badgeBorderKill,
-              boxShadow: isWipe
-                ? getThemeColors.badgeShadow
-                : getThemeColors.badgeShadowKill,
+              border: isWipe ? getThemeColors.badgeBorder : getThemeColors.badgeBorderKill,
+              boxShadow: isWipe ? getThemeColors.badgeShadow : getThemeColors.badgeShadowKill,
               zIndex: 2,
             }}
           >
             <Typography
               sx={{
-                color: isWipe 
-                  ? (darkMode ? '#ff9800' : '#dc2626') 
-                  : (darkMode ? '#4ade80' : '#059669'),
+                color: isWipe
+                  ? darkMode
+                    ? '#ff9800'
+                    : '#dc2626'
+                  : darkMode
+                    ? '#4ade80'
+                    : '#059669',
                 fontSize: '0.75rem',
                 lineHeight: 1,
                 fontWeight: 600,
-                textShadow: darkMode 
+                textShadow: darkMode
                   ? '0 1px 2px rgba(0,0,0,0.5)'
                   : '0 1px 1px rgba(59, 130, 246, 0.2)',
               }}
@@ -1418,7 +1434,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           fontSize: '10px',
                           fontWeight: 600,
                           color: color,
-                          textShadow: darkMode 
+                          textShadow: darkMode
                             ? '0 1px 2px rgba(0,0,0,0.5)'
                             : '0 1px 1px rgba(59, 130, 246, 0.2)',
                           background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
@@ -1494,9 +1510,12 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                   component="span"
                                   sx={{
                                     fontWeight: 700,
-                                    color: difficultyLabel === 'Veteran HM' 
-                                      ? getThemeColors.hmColor 
-                                      : (darkMode ? '#94a3b8' : '#64748b'),
+                                    color:
+                                      difficultyLabel === 'Veteran HM'
+                                        ? getThemeColors.hmColor
+                                        : darkMode
+                                          ? '#94a3b8'
+                                          : '#64748b',
                                   }}
                                 >
                                   ({difficultyLabel})

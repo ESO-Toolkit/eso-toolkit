@@ -259,22 +259,22 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
-              borderBottom: roleColors.isDarkMode 
-                ? '1px solid rgba(255, 255, 255, 0.08)' 
+              borderBottom: roleColors.isDarkMode
+                ? '1px solid rgba(255, 255, 255, 0.08)'
                 : '1px solid rgba(15, 23, 42, 0.08)',
               fontWeight: 600,
               fontSize: '0.875rem',
               color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
-              textShadow: roleColors.isDarkMode 
-                ? '0 1px 3px rgba(0,0,0,0.5)' 
+              textShadow: roleColors.isDarkMode
+                ? '0 1px 3px rgba(0,0,0,0.5)'
                 : '0 1px 1px rgba(0,0,0,0.1)',
               position: 'relative',
               overflow: 'hidden',
               borderRadius: '25px',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              border: roleColors.isDarkMode 
-                ? '1px solid rgba(255, 255, 255, 0.15)' 
+              border: roleColors.isDarkMode
+                ? '1px solid rgba(255, 255, 255, 0.15)'
                 : '1px solid rgba(15, 23, 42, 0.15)',
               boxShadow: roleColors.isDarkMode
                 ? '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)'
@@ -324,7 +324,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { 
+                '&:hover': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
@@ -336,7 +336,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { 
+                '&:hover': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
@@ -349,7 +349,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { 
+                '&:hover': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
@@ -362,7 +362,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { 
+                '&:hover': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
               }}
@@ -415,8 +415,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                       maxWidth: '120px',
-                      ...(roleColors.isDarkMode 
-                        ? { 
+                      ...(roleColors.isDarkMode
+                        ? {
                             color: roleColors.getPlayerColor(row.role),
                             textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                           }
@@ -426,8 +426,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                             WebkitBackgroundClip: 'text',
                             WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
                             textShadow: '0 1px 1px rgba(0,0,0,0.2)',
-                          }
-                      ),
+                          }),
                     }}
                   >
                     {row.name}
@@ -442,7 +441,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       fontWeight: 500,
                       fontSize: '0.875rem',
                       minWidth: '60px',
-                      textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.15)',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {percentage}%
@@ -460,7 +461,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       fontSize: '0.875rem',
                       minWidth: '60px',
                       textAlign: 'right',
-                      textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.15)',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {formatNumber(row.total)}
@@ -474,7 +477,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                     fontWeight: 700,
                     fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.12)',
+                    textShadow: roleColors.isDarkMode
+                      ? '0 1px 3px rgba(0,0,0,0.5)'
+                      : '0 1px 1px rgba(0,0,0,0.12)',
                   }}
                 >
                   {formatNumber(row.dps)}
@@ -483,13 +488,25 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 {/* Active DPS */}
                 <Typography
                   sx={{
-                    color: row.activePercentage > 0 ? (roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9') : (roleColors.isDarkMode ? '#888' : '#64748b'),
+                    color:
+                      row.activePercentage > 0
+                        ? roleColors.isDarkMode
+                          ? '#38bdf8'
+                          : '#0ea5e9'
+                        : roleColors.isDarkMode
+                          ? '#888'
+                          : '#64748b',
                     fontWeight: 700,
                     fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow: row.activePercentage > 0
-                      ? (roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 0 rgba(14,165,233,0.25)')
-                      : (roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.1)'),
+                    textShadow:
+                      row.activePercentage > 0
+                        ? roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(14,165,233,0.25)'
+                        : roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.1)',
                   }}
                 >
                   {row.activePercentage > 0
@@ -547,8 +564,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
                         maxWidth: '150px',
-                        ...(roleColors.isDarkMode 
-                          ? { 
+                        ...(roleColors.isDarkMode
+                          ? {
                               color: roleColors.getPlayerColor(row.role),
                               textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                             }
@@ -558,8 +575,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                               WebkitBackgroundClip: 'text',
                               WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
                               textShadow: '0 1px 1px rgba(0,0,0,0.2)',
-                            }
-                        ),
+                            }),
                       }}
                     >
                       {row.name}

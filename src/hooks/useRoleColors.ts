@@ -30,7 +30,7 @@ export const useRoleColors = (): RoleColors => {
   const roleColors = useMemo(() => {
     const colors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS;
     const solidColors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
-    
+
     return {
       dps: colors.dps,
       healer: colors.healer,
@@ -58,11 +58,11 @@ export const useRoleColors = (): RoleColors => {
         background: isDarkMode
           ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
           : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
-        border: isDarkMode 
-          ? '1px solid rgba(255, 255, 255, 0.1)' 
+        border: isDarkMode
+          ? '1px solid rgba(255, 255, 255, 0.1)'
           : '1px solid rgba(15, 23, 42, 0.12)',
-        boxShadow: isDarkMode 
-          ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)' 
+        boxShadow: isDarkMode
+          ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
           : '0 4px 12px 0 rgba(15, 23, 42, 0.08)',
       }),
       // Get accordion text shadow (theme-aware)
@@ -81,18 +81,14 @@ export const useRoleColors = (): RoleColors => {
       getProgressBarStyles: (barBgColor?: string) => ({
         height: 8,
         borderRadius: 4,
-        backgroundColor: isDarkMode
-          ? 'rgba(117, 117, 117, 0.3)'
-          : 'rgba(203, 213, 225, 0.4)',
+        backgroundColor: isDarkMode ? 'rgba(117, 117, 117, 0.3)' : 'rgba(203, 213, 225, 0.4)',
         border: isDarkMode ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
-        boxShadow: isDarkMode 
-          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.4)' 
+        boxShadow: isDarkMode
+          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.4)'
           : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
         '& .MuiLinearProgress-bar': {
           borderRadius: 4,
-          boxShadow: isDarkMode 
-            ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
-            : '0 1px 2px rgba(0, 0, 0, 0.15)',
+          boxShadow: isDarkMode ? '0 1px 3px rgba(0, 0, 0, 0.3)' : '0 1px 2px rgba(0, 0, 0, 0.15)',
           ...(barBgColor ? { backgroundColor: barBgColor } : {}),
         },
       }),
