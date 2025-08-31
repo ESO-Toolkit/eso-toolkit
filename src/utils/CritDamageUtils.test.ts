@@ -1,4 +1,4 @@
-﻿import {
+import {
   createMockCombatantInfoEvent,
   createMockCombatantAura,
 } from '../test/utils/combatLogMockFactories';

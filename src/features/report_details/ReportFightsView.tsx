@@ -883,7 +883,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
-  const renderFightCard = (fight: FightFragment, idx: number): JSX.Element => {
+  const renderFightCard = (fight: FightFragment, idx: number): React.ReactNode => {
     // Debug logging for Hall of Fleshcraft
     if (fight.name && fight.name.includes('Hall of Fleshcraft')) {
       console.log('Hall of Fleshcraft fight data:', {

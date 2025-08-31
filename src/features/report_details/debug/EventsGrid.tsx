@@ -69,7 +69,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
         size: 120,
         cell: (info) => {
           const date = new Date(info.getValue());
-          return date.toISOString().substr(11, 12); // HH:mm:ss.sss
+          return date.toISOString().substring(11, 23); // HH:mm:ss.sss
         },
       }),
       columnHelper.accessor('type', {
@@ -117,6 +117,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
               textarea.value = JSON.stringify(props.row.original.originalEvent, null, 2);
               document.body.appendChild(textarea);
               textarea.select();
+              // eslint-disable-next-line deprecation/deprecation
               document.execCommand('copy');
               document.body.removeChild(textarea);
             }
