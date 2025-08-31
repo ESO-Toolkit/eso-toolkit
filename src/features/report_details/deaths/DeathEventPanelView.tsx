@@ -451,9 +451,16 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                 whiteSpace: 'nowrap',
                                 flex: 1,
                                 minWidth: 0,
+                                '&::before': {
+                                  content: `'${attack.wasBlocked ? '🛡️' : '✕'}'`,
+                                  display: 'inline-block',
+                                  width: '16px',
+                                  textAlign: 'center',
+                                  marginRight: '4px',
+                                }
                               }}
                             >
-                              • {attack.abilityName || 'Unknown'} by {attackSourceName}
+                              {attack.abilityName || 'Unknown'} by {attackSourceName}
                             </Typography>
                             <Box
                               sx={{
@@ -474,9 +481,6 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                 >
                                   {attack.amount.toLocaleString()}
                                 </Typography>
-                              )}
-                              {attack.wasBlocked && (
-                                <Typography sx={{ fontSize: '0.7rem' }}>🛡️</Typography>
                               )}
                             </Box>
                           </Box>
