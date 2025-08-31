@@ -58,7 +58,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return (
       <Box mt={2}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Death Events 💀
+        💀 Death Events
         </Typography>
         <Box
           sx={{
