@@ -135,7 +135,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return (
       <Box mt={2}>
         <Typography variant="h6" sx={{ mb: 2 }}>
-          Death Events 💀
+        💀 Death Events
         </Typography>
         <Box
           sx={{
@@ -174,7 +174,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     <Box mt={2}>
       {/* Header with summary */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
-        <Typography variant="h6">Death Events 💀</Typography>
+        <Typography variant="h6">💀 Death Events</Typography>
         <Box sx={{ display: 'flex', gap: 1 }}>
           <Chip
             label={`${totalDeaths} Total Deaths`}
