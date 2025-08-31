@@ -191,14 +191,14 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
             </Typography>
           </Box>
           {!isLoading && (
-            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, alignItems: 'center' }}>
               {/* Max Penetration */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
                 <Typography
                   variant="caption"
                   sx={{ 
                     color: 'text.secondary', 
-                    fontSize: '0.65rem',
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
@@ -224,7 +224,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                     sx={{ 
                       color: penetrationData.max > 18200 ? '#5ce572' : '#ff6666',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
                     }}
                   >
                     {penetrationData.max}
@@ -233,12 +233,12 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               </Box>
 
               {/* Effective Penetration */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
                 <Typography
                   variant="caption"
                   sx={{ 
                     color: 'text.secondary', 
-                    fontSize: '0.65rem',
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
@@ -264,7 +264,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                     sx={{ 
                       color: penetrationData.effective > 18200 ? '#7ee8ff' : '#ffd54f',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
                     }}
                   >
                     {penetrationData.effective.toFixed(0)}
@@ -273,12 +273,12 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
               </Box>
 
               {/* Time at Cap */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
                 <Typography
                   variant="caption"
                   sx={{ 
                     color: 'text.secondary', 
-                    fontSize: '0.65rem',
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
                     fontWeight: 500,
                     textTransform: 'uppercase',
                     letterSpacing: '0.05em',
@@ -316,7 +316,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                         ? '#ffd54f'
                         : '#ff6666',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
                     }}
                   >
                     {penetrationData.timeAtCapPercentage.toFixed(0)}%
@@ -331,6 +331,142 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         {/* Only render content when panel is expanded */}
         {expanded && (
           <Box>
+            {/* Mobile Metrics - Only visible on mobile */}
+            {!isLoading && (
+              <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 2, mb: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {/* Max Penetration */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontSize: '0.65rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      mb: 0.25
+                    }}
+                  >
+                    Max
+                  </Typography>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      background: penetrationData.max > 18200 
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                      border: `1px solid ${penetrationData.max > 18200 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: penetrationData.max > 18200 ? '#5ce572' : '#ff6666',
+                        fontWeight: 600,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      {penetrationData.max}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Effective Penetration */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontSize: '0.65rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      mb: 0.25
+                    }}
+                  >
+                    Effective
+                  </Typography>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      background: penetrationData.effective > 18200 
+                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                      border: `1px solid ${penetrationData.effective > 18200 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: penetrationData.effective > 18200 ? '#7ee8ff' : '#ffd54f',
+                        fontWeight: 600,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      {penetrationData.effective.toFixed(0)}
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Time at Cap */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{ 
+                      color: 'text.secondary', 
+                      fontSize: '0.65rem',
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.05em',
+                      mb: 0.25
+                    }}
+                  >
+                    At Cap
+                  </Typography>
+                  <Box
+                    sx={{
+                      px: 1.5,
+                      py: 0.5,
+                      borderRadius: 1,
+                      background: penetrationData.timeAtCapPercentage >= 80
+                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                        : penetrationData.timeAtCapPercentage >= 50
+                        ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                      border: `1px solid ${
+                        penetrationData.timeAtCapPercentage >= 80 
+                          ? 'rgba(76, 217, 100, 0.3)'
+                          : penetrationData.timeAtCapPercentage >= 50
+                          ? 'rgba(255, 193, 7, 0.35)'
+                          : 'rgba(255, 68, 68, 0.3)'
+                      }`,
+                      backdropFilter: 'blur(10px)',
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{ 
+                        color: penetrationData.timeAtCapPercentage >= 80 
+                          ? '#5ce572'
+                          : penetrationData.timeAtCapPercentage >= 50
+                          ? '#ffd54f'
+                          : '#ff6666',
+                        fontWeight: 600,
+                        fontSize: '0.8rem'
+                      }}
+                    >
+                      {penetrationData.timeAtCapPercentage.toFixed(0)}%
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+            )}
 
             {/* Penetration Sources Checklist */}
             <StatChecklist
