@@ -695,7 +695,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       }}
                                     >
                                       {displayList.map((name, idx) => (
-                                        <Tooltip key={idx} title={list[idx] || name}>
+                                        <Tooltip 
+                                          key={idx} 
+                                          title={list[idx] || name}
+                                          enterTouchDelay={0}
+                                          leaveTouchDelay={3000}
+                                        >
                                           <Box
                                             sx={{
                                               display: 'inline-flex',
@@ -758,6 +763,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       sx={{ display: 'inline-flex', alignItems: 'center' }}
                                     >
                                       <Tooltip
+                                        enterTouchDelay={0}
+                                        leaveTouchDelay={3000}
                                         title={(() => {
                                           const clsKey = toClassKey(player.type);
                                           const rich = buildTooltipPropsFromClassAndName(
@@ -850,6 +857,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                         sx={{ display: 'inline-flex', alignItems: 'center' }}
                                       >
                                         <Tooltip
+                                          enterTouchDelay={0}
+                                          leaveTouchDelay={3000}
                                           title={(() => {
                                             const clsKey = toClassKey(player.type);
                                             const rich = buildTooltipPropsFromClassAndName(
@@ -1079,6 +1088,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 >
                                   <Tooltip
                                     title={`Food/Drink: ${foodAura ? foodAura.name : 'None'}`}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
                                   >
                                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <span role="img" aria-label="food">
@@ -1100,7 +1111,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip title="Deaths in this fight">
+                                  <Tooltip 
+                                    title="Deaths in this fight"
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
                                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <span role="img" aria-label="deaths">
                                         💀
@@ -1109,7 +1124,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip title="Successful resurrects performed">
+                                  <Tooltip 
+                                    title="Successful resurrects performed"
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
                                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <span role="img" aria-label="resurrects">
                                         ❤️
@@ -1118,7 +1137,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip title="Casts per Minute">
+                                  <Tooltip 
+                                    title="Casts per Minute"
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
                                     <span style={{ display: 'inline-flex', alignItems: 'center' }}>
                                       <span role="img" aria-label="cpm">
                                         🐭
