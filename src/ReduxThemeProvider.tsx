@@ -24,7 +24,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           accent: '#38bdf8',
           accent2: '#00e1ff',
           ok: '#22c55e',
-          warn: '#f59e0b',
+          warn: '#ff9800',
           danger: '#ef4444',
           border: '#1f2937',
         } as const;
@@ -39,7 +39,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           accent: '#0f172a',
           accent2: '#1e293b',
           ok: '#059669',
-          warn: '#d97706',
+          warn: '#f97316',
           danger: '#dc2626',
           border: '#e2e8f0',
         } as const;

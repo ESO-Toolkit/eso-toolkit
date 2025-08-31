@@ -3,6 +3,7 @@ import React, { useState, useMemo } from 'react';
 
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
+import { useRoleColors } from '../../../hooks';
 
 interface HealingRow {
   id: string;
@@ -28,6 +29,7 @@ type SortDirection = 'asc' | 'desc';
  * Dumb component that only handles rendering the healing done panel UI
  */
 export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ healingRows }) => {
+  const roleColors = useRoleColors();
   const { reportId, fightId } = useSelectedReportAndFight();
   const [sortField, setSortField] = useState<SortField>('raw');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -91,18 +93,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
     return Math.round(num).toLocaleString();
   };
 
-  // Get color based on player role
-  const getPlayerColor = (role?: 'dps' | 'tank' | 'healer'): string => {
-    switch (role) {
-      case 'tank':
-        return '#62baff';
-      case 'healer':
-        return '#b970ff';
-      case 'dps':
-      default:
-        return '#ff8b61';
-    }
-  };
+  // Get color based on player role using theme-aware colors
+  const getPlayerColor = roleColors.getPlayerColor;
 
   const handleResurrectClick = (playerId: string): void => {
     if (reportId && fightId) {
@@ -412,7 +404,6 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   )}
                   <Typography
                     sx={{
-                      color: playerColor,
                       fontWeight: 500,
                       fontSize: '0.875rem',
                       overflow: 'hidden',
@@ -420,7 +411,19 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       whiteSpace: 'nowrap',
                       flex: 1,
                       minWidth: 0,
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      ...(roleColors.isDarkMode 
+                        ? { 
+                            color: playerColor,
+                            textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                          }
+                        : {
+                            background: roleColors.getGradientColor(row.role),
+                            backgroundClip: 'text',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: row.role === 'dps' ? '#ffbd7dd9' : 'transparent',
+                            textShadow: '0 1px 1px rgb(88 124 146 / 81%)',
+                          }
+                      ),
                     }}
                   >
                     {row.name}
@@ -431,11 +434,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
                   <Typography
                     sx={{
-                      color: '#ecf0f1',
+                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
                       fontWeight: 500,
                       fontSize: '0.875rem',
                       minWidth: '48px',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {percentage}%
@@ -457,11 +460,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   </Box>
                   <Typography
                     sx={{
-                      color: '#ecf0f1',
+                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
                       fontSize: '0.875rem',
                       minWidth: '60px',
                       textAlign: 'right',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {formatNumber(row.raw)}
@@ -471,11 +474,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 {/* HPS */}
                 <Typography
                   sx={{
-                    color: '#ecf0f1',
+                    color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
                     fontWeight: 700,
                     fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 1px rgba(0,0,0,0.12)',
                   }}
                 >
                   {formatNumber(row.hps)}
@@ -484,11 +487,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 {/* Overheal */}
                 <Typography
                   sx={{
-                    color: '#b388ff',
+                    color: roleColors.isDarkMode ? '#b388ff' : '#7c3aed',
                     fontWeight: 500,
                     fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                    textShadow: roleColors.isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 0 rgba(124,58,237,0.2)',
                   }}
                 >
                   {formatNumber(row.overheal)}
@@ -538,13 +541,22 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     )}
                     <Typography
                       sx={{
-                        color: playerColor,
                         fontWeight: 500,
                         fontSize: '0.9rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        maxWidth: '150px',
+                        ...(roleColors.isDarkMode 
+                          ? { color: playerColor }
+                          : {
+                              background: roleColors.getGradientColor(row.role),
+                              backgroundClip: 'text',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7dd9' : 'transparent',
+                              textShadow: '0 1px 1px rgb(88 124 146 / 81%)',
+                            }
+                        ),
                       }}
                     >
                       {row.name}
