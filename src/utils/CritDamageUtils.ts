@@ -45,10 +45,18 @@ export interface CriticalDamageNotImplementedSource extends BaseCriticalDamageSo
   source: 'not_implemented';
 }
 
-export enum ComputedCriticalDamageSources {
-  FATED_FORTUNE,
+export enum AlwaysOnCriticalDamageSources {
   DEXTERITY,
   FIGHTING_FINESSE,
+}
+
+export interface CriticalDamageAlwaysOnSource extends BaseCriticalDamageSource {
+  key: AlwaysOnCriticalDamageSources;
+  source: 'always_on';
+}
+
+export enum ComputedCriticalDamageSources {
+  FATED_FORTUNE,
   SUL_XAN_TORMENT,
   MORA_SCRIBE_THESIS,
   HARPOONER_WADING_KILT,
@@ -70,7 +78,8 @@ export type CriticalDamageSource =
   | CriticalDamageBuffSource
   | CriticalDamageDebuffSource
   | CriticalDamageComputedSource
-  | CriticalDamageNotImplementedSource;
+  | CriticalDamageNotImplementedSource
+  | CriticalDamageAlwaysOnSource;
 
 export type CriticalDamageSourceWithActiveState = CriticalDamageSource & { wasActive: boolean };
 
@@ -83,16 +92,17 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
-    key: ComputedCriticalDamageSources.DEXTERITY,
+    key: AlwaysOnCriticalDamageSources.DEXTERITY,
     name: 'Dexterity',
     description:
       'Critical damage from Medium Armor Dexterity passive (2% per piece of medium armor)',
-    source: 'computed',
+    source: 'always_on',
   },
   {
+    key: AlwaysOnCriticalDamageSources.FIGHTING_FINESSE,
     name: 'Fighting Finesse',
     description: 'Critical damage from Fighting Finesse champion point (8%)',
-    source: 'not_implemented',
+    source: 'always_on',
   },
   {
     key: ComputedCriticalDamageSources.SUL_XAN_TORMENT,
@@ -253,11 +263,6 @@ export function isComputedSourceActive(
   switch (source.key) {
     case ComputedCriticalDamageSources.FATED_FORTUNE:
       return isAuraActive(combatantInfo, KnownAbilities.FATED_FORTUNE_STAGE_ONE);
-    case ComputedCriticalDamageSources.DEXTERITY:
-      return isAuraActive(combatantInfo, KnownAbilities.DEXTERITY);
-    case ComputedCriticalDamageSources.FIGHTING_FINESSE:
-      // TODO: determine how to tell if this CP is active
-      return true;
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT:
       return isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
     case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS:
@@ -310,6 +315,9 @@ export function getEnabledCriticalDamageSources(
       case 'computed':
         isActive = isComputedSourceActive(combatantInfo, source, debuffLookup);
         break;
+      case 'always_on':
+        isActive = true;
+        break;
     }
 
     if (isActive) {
@@ -346,6 +354,9 @@ export function getAllCriticalDamageSourcesWithActiveState(
       case 'computed':
         wasActive = isComputedSourceActive(combatantInfo, source, debuffLookup);
         break;
+      case 'always_on':
+        wasActive = true;
+        break;
     }
 
     result.push({
@@ -360,8 +371,8 @@ export function getAllCriticalDamageSourcesWithActiveState(
 export function calculateCriticalDamageAtTimestamp(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
-  combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole | undefined,
+  combatantInfo: CombatantInfoEvent,
+  playerData: PlayerDetailsWithRole,
   timestamp: number
 ): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
@@ -371,6 +382,7 @@ export function calculateCriticalDamageAtTimestamp(
   let computedCriticalDamage = 0;
   let buffCriticalDamage = 0;
   let debuffCriticalDamage = 0;
+  let alwaysOnCriticalDamage = 0;
 
   for (const source of CRITICAL_DAMAGE_SOURCES) {
     let isActive = false;
@@ -413,6 +425,9 @@ export function calculateCriticalDamageAtTimestamp(
           );
         }
         break;
+      case 'always_on':
+        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo);
+        break;
     }
   }
 
@@ -422,19 +437,17 @@ export function calculateCriticalDamageAtTimestamp(
     auraCriticalDamage +
     computedCriticalDamage +
     buffCriticalDamage +
-    debuffCriticalDamage
+    debuffCriticalDamage +
+    alwaysOnCriticalDamage
   );
 }
 
-export function calculateStaticCriticalDamage(
-  combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole | undefined,
-  debuffLookup: BuffLookupData
-): number {
+export function calculateStaticCriticalDamage(combatantInfo: CombatantInfoEvent): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
 
   let gearCriticalDamage = 0;
   let auraCriticalDamage = 0;
+  let alwaysOnCriticalDamage = 0;
 
   for (const source of CRITICAL_DAMAGE_SOURCES) {
     let isActive = false;
@@ -452,10 +465,13 @@ export function calculateStaticCriticalDamage(
           gearCriticalDamage += source.value;
         }
         break;
+      case 'always_on':
+        alwaysOnCriticalDamage += getCritDamageFromAlwaysOnSource(source, combatantInfo);
+        break;
     }
   }
 
-  return baseCriticalDamage + gearCriticalDamage + auraCriticalDamage;
+  return baseCriticalDamage + gearCriticalDamage + auraCriticalDamage + alwaysOnCriticalDamage;
 }
 
 export function calculateDynamicCriticalDamageAtTimestamp(
@@ -531,11 +547,6 @@ export function getCritDamageFromComputedSource(
         return CriticalDamageValues.FATED_FORTUNE;
       }
       return 0;
-    case ComputedCriticalDamageSources.DEXTERITY:
-      const mediumGear = combatantInfo.gear?.filter((item) => item.type === ArmorType.MEDIUM);
-      return mediumGear.length * CriticalDamageValues.DEXTERITY_PER_PIECE;
-    case ComputedCriticalDamageSources.FIGHTING_FINESSE:
-      return CriticalDamageValues.FIGHTING_FINESSE;
     case ComputedCriticalDamageSources.SUL_XAN_TORMENT:
       // Check if player has 5 pieces of Sul-Xan's Torment equipped
       const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
@@ -591,5 +602,18 @@ export function getCritDamageFromComputedSource(
       }
 
       return activeWeaknessCount * CriticalDamageValues.ELEMENTAL_CATALYST_PER_WEAKNESS;
+  }
+}
+
+export function getCritDamageFromAlwaysOnSource(
+  source: CriticalDamageAlwaysOnSource,
+  combatantInfo: CombatantInfoEvent | null
+): number {
+  switch (source.key) {
+    case AlwaysOnCriticalDamageSources.DEXTERITY:
+      const medPieces = combatantInfo?.gear?.filter((item) => item.type === ArmorType.MEDIUM);
+      return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
+    case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE:
+      return CriticalDamageValues.FIGHTING_FINESSE;
   }
 }

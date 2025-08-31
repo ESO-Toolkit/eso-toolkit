@@ -22,6 +22,7 @@ export interface StatChecklistSource {
   wasActive: boolean;
   description: string;
   link?: string;
+  sourceType?: 'not_implemented' | 'always_on' | string; // Add source type information
 }
 
 interface StatChecklistProps {
@@ -115,7 +116,10 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
         <CardContent sx={{ p: 2 }}>
           <List dense>
             {visibleSources.map((source, index) => {
-              const isUnimplemented = source.description.includes('[NOT FULLY IMPLEMENTED');
+              const isUnimplemented =
+                source.sourceType === 'not_implemented' ||
+                source.description.includes('[NOT FULLY IMPLEMENTED');
+              const isAlwaysOn = source.sourceType === 'always_on';
 
               return (
                 <ListItem key={index} disablePadding>
@@ -150,6 +154,25 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
                             />
                           </Tooltip>
                         )}
+                        {isAlwaysOn && (
+                          <Tooltip title="This source is treated as always being active.">
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: 10,
+                                fontWeight: 'bold',
+                                color: 'primary.main',
+                                backgroundColor: 'rgba(25, 118, 210, 0.12)',
+                                px: 0.5,
+                                py: 0.25,
+                                borderRadius: 0.5,
+                                ml: 0.5,
+                              }}
+                            >
+                              ALWAYS ON
+                            </Typography>
+                          </Tooltip>
+                        )}
                       </Box>
                     }
                     secondary={
@@ -178,7 +201,8 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
             })}
           </List>
           <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: 'block' }}>
-            ✓ = Source was active during this fight | ✗ = Source was not used
+            ✓ = Source was active during this fight | ✗ = Source was not used | ⚠ = Not fully
+            implemented | ALWAYS ON = Always active when conditions are met
           </Typography>
         </CardContent>
       </Card>

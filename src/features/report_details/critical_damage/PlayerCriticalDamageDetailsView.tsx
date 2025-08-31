@@ -129,6 +129,20 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   player,
   onExpandChange,
 }) => {
+  // Transform critical damage sources to StatChecklistSource format
+  const statChecklistSources = React.useMemo(() => {
+    return criticalDamageSources.map((source) => ({
+      name: source.name,
+      wasActive: source.wasActive,
+      description: source.description,
+      sourceType: source.source,
+      // Add link if it's a known ability that can be looked up
+      link:
+        'ability' in source
+          ? `https://www.esoui.com/downloads/info7-ESOUIAddOnCollection.html`
+          : undefined,
+    }));
+  }, [criticalDamageSources]);
   if (!criticalDamageData) {
     return (
       <Accordion
@@ -586,7 +600,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
             {/* Critical Damage Sources Checklist */}
             <StatChecklist
-              sources={criticalDamageSources}
+              sources={statChecklistSources}
               title="Critical Damage Sources"
               loading={isLoading}
             />
