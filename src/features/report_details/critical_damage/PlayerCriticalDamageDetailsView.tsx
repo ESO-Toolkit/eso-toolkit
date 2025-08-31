@@ -6,7 +6,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Paper,
-  Tooltip,
 } from '@mui/material';
 import type { TooltipItem } from 'chart.js';
 import {

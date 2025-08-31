@@ -98,12 +98,13 @@ export const DamageDonePanel: React.FC = () => {
     return (playerId: string): 'dps' | 'tank' | 'healer' => {
       if (!playerData?.playersById) return 'dps';
 
-      const player = playerData.playersById[playerId];
-      const role = player?.role as string;
+      // Try both string and numeric keys since playerData might use either
+      const player = playerData.playersById[playerId] || playerData.playersById[Number(playerId)];
+      const role = player?.role;
 
-      // Map plural forms to singular forms
-      if (role === 'tanks') return 'tank';
-      if (role === 'healers') return 'healer';
+      // The role should already be normalized in the store
+      if (role === 'tank') return 'tank';
+      if (role === 'healer') return 'healer';
       if (role === 'dps') return 'dps';
 
       return 'dps'; // default fallback
