@@ -58,11 +58,20 @@ export const fetchPlayerData = createAsyncThunk<
 
       const playersById: Record<string, PlayerDetailsWithRole> = {};
 
+      // Map role strings to our expected role types
+      const roleMap: Record<string, 'dps' | 'tank' | 'healer'> = {
+        healers: 'healer',
+        tanks: 'tank',
+        dps: 'dps',
+        damage: 'dps', // Handle both 'dps' and 'damage' keys
+      };
+
       for (const [key, arr] of Object.entries(playerDetails)) {
+        const role = roleMap[key.toLowerCase()] || 'dps'; // Default to 'dps' if role not found
         for (const player of arr) {
           playersById[player.id] = {
             ...player,
-            role: key,
+            role,
           };
         }
       }

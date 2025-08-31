@@ -15,7 +15,7 @@ interface DamageDonePanelViewProps {
   damageRows: DamageRow[];
 }
 
-type SortField = 'name' | 'total' | 'dps';
+type SortField = 'name' | 'total' | 'dps' | 'activeDps';
 type SortDirection = 'asc' | 'desc';
 
 /**
@@ -43,6 +43,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
         case 'dps':
           aValue = a.dps;
           bValue = b.dps;
+          break;
+        case 'activeDps':
+          aValue = a.activePercentage > 0 ? a.dps / (a.activePercentage / 100) : 0;
+          bValue = b.activePercentage > 0 ? b.dps / (b.activePercentage / 100) : 0;
           break;
         default:
           return 0;
@@ -185,6 +189,28 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
         >
           DPS{getSortIcon('dps')}
         </Box>
+        <Box
+          onClick={() => handleSort('activeDps')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor:
+              sortField === 'activeDps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.2)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color: sortField === 'activeDps' ? '#4caf50' : '#ecf0f1',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: 'rgba(76, 175, 80, 0.15)',
+              color: '#4caf50',
+            },
+          }}
+        >
+          Active DPS{getSortIcon('activeDps')}
+        </Box>
       </Box>
       {damageRows.length > 0 ? (
         <Box
@@ -237,7 +263,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1fr 2fr 1fr 1fr',
+              gridTemplateColumns: '1fr 2fr 100px 100px',
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -321,6 +347,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             >
               DPS{getSortIcon('dps')}
             </Box>
+            <Box
+              sx={{
+                textAlign: 'right',
+                cursor: 'pointer',
+                userSelect: 'none',
+                '&:hover': { color: '#4caf50' },
+              }}
+              onClick={() => handleSort('activeDps')}
+            >
+              Active DPS{getSortIcon('activeDps')}
+            </Box>
           </Box>
 
           {/* Data Rows */}
@@ -334,7 +371,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1fr 2fr 1fr 1fr',
+                  gridTemplateColumns: '1fr 2fr 100px 100px',
                   gap: 2,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -426,6 +463,21 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 >
                   {formatNumber(row.dps)}
                 </Typography>
+
+                {/* Active DPS */}
+                <Typography
+                  sx={{
+                    color: row.activePercentage > 0 ? '#4caf50' : '#888',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    textAlign: 'right',
+                    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                  }}
+                >
+                  {row.activePercentage > 0
+                    ? formatNumber(Math.round(row.dps / (row.activePercentage / 100)))
+                    : 'N/A'}
+                </Typography>
               </Box>
             );
           })}
@@ -483,17 +535,30 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       {row.name}
                     </Typography>
                   </Box>
-                  <Typography
-                    sx={{
-                      color: '#ecf0f1',
-                      fontWeight: 700,
-                      fontSize: '0.9rem',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                      ml: 1,
-                    }}
-                  >
-                    {formatNumber(row.dps)} DPS
-                  </Typography>
+                  <Box sx={{ ml: 1, textAlign: 'right' }}>
+                    <Typography
+                      sx={{
+                        color: '#ecf0f1',
+                        fontWeight: 700,
+                        fontSize: '0.9rem',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      {formatNumber(row.dps)} DPS
+                    </Typography>
+                    <Typography
+                      sx={{
+                        color: row.activePercentage > 0 ? '#4caf50' : '#888',
+                        fontWeight: 600,
+                        fontSize: '0.8rem',
+                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      }}
+                    >
+                      {row.activePercentage > 0
+                        ? `${formatNumber(Math.round(row.dps / (row.activePercentage / 100)))} Active`
+                        : 'N/A Active'}
+                    </Typography>
+                  </Box>
                 </Box>
 
                 {/* Mobile Progress Bar and Amount */}
