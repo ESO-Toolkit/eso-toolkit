@@ -100,11 +100,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         sx={{
           display: 'flex',
           alignItems: 'center',
-          gap: 2,
           mb: 1,
-          pl: 1,
           width: '100%',
           minWidth: 0,
+          overflow: 'hidden',
         }}
       >
         <Tabs
@@ -114,25 +113,46 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           sx={{
             minWidth: 'auto',
             flexGrow: 1,
+            minHeight: 'auto',
             '& .MuiTabs-indicator': {
               backgroundColor: '#406374',
               transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
             },
             '& .MuiTabs-flexContainer': {
-              gap: 0,
+              gap: '8px',
               justifyContent: 'flex-start',
+              padding: '0 0px',
+              margin: 0,
+              minHeight: 'auto',
             },
             '& .MuiTabs-scroller': {
-              // Remove overflow: 'visible' to allow scrolling
+              overflow: 'auto !important',
+              padding: '0 0px',
+              margin: 0,
+              '&::-webkit-scrollbar': {
+                display: 'none',
+              },
+              scrollbarWidth: 'none',
+            },
+            '& .MuiTabs-scrollButtons': {
+              width: 32,
+              minWidth: 32,
+              padding: 0,
+              margin: 0,
+              '&.Mui-disabled': {
+                opacity: 0.3,
+              },
             },
             '& .MuiTab-root': {
               minWidth: 48,
+              minHeight: 48,
               padding: '6px 12px',
+              margin: 0,
               opacity: 1,
             },
           }}
           variant="scrollable"
-          scrollButtons={true}
+          scrollButtons="auto"
           allowScrollButtonsMobile
         >
           <Tooltip title="Insights">
