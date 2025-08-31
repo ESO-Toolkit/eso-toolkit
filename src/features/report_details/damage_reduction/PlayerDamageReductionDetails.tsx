@@ -182,9 +182,142 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
             </Typography>
           </Box>
           {!isLoading && (
-            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, alignItems: 'center' }}>
               {/* Max Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  Max
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 
+                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    border: `1px solid ${resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? '#5ce572' : '#ff6666',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
+                    {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Average Damage Reduction */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  Average
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 
+                      ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                    border: `1px solid ${resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? '#7ee8ff' : '#ffd54f',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
+                    {resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Static Damage Reduction */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: { xs: 50, sm: 60 } }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  Static
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
+                    border: '1px solid rgba(175, 82, 222, 0.3)',
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: '#c57fff',
+                      fontWeight: 600,
+                      fontSize: { xs: '0.65rem', sm: '0.7rem' }
+                    }}
+                  >
+                    {staticDamageReduction.toFixed(1)}%
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </Box>
+      </AccordionSummary>
+      <AccordionDetails
+        sx={{
+          backgroundColor: theme.palette.background.default,
+          borderBottomLeftRadius: '8px',
+          borderBottomRightRadius: '8px',
+          pt: 2,
+        }}
+      >
+        <Stack spacing={3}>
+          {/* Mobile Metrics - Only visible on mobile */}
+          {!isLoading && (
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, gap: 2, mb: 3, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {/* Max Damage Reduction */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
                 <Typography
                   variant="caption"
                   sx={{ 
@@ -215,7 +348,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     sx={{ 
                       color: resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? '#5ce572' : '#ff6666',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: '0.8rem'
                     }}
                   >
                     {resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%
@@ -224,7 +357,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               </Box>
 
               {/* Average Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
                 <Typography
                   variant="caption"
                   sx={{ 
@@ -255,7 +388,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     sx={{ 
                       color: resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? '#7ee8ff' : '#ffd54f',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: '0.8rem'
                     }}
                   >
                     {resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%
@@ -264,7 +397,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               </Box>
 
               {/* Static Damage Reduction */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 70 }}>
                 <Typography
                   variant="caption"
                   sx={{ 
@@ -293,7 +426,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                     sx={{ 
                       color: '#c57fff',
                       fontWeight: 600,
-                      fontSize: '0.7rem'
+                      fontSize: '0.8rem'
                     }}
                   >
                     {staticDamageReduction.toFixed(1)}%
@@ -302,17 +435,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               </Box>
             </Box>
           )}
-        </Box>
-      </AccordionSummary>
-      <AccordionDetails
-        sx={{
-          backgroundColor: theme.palette.background.default,
-          borderBottomLeftRadius: '8px',
-          borderBottomRightRadius: '8px',
-          pt: 2,
-        }}
-      >
-        <Stack spacing={3}>
+
           {/* Summary Statistics */}
           <Card sx={{
             background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.15) 0%, rgba(175, 82, 222, 0.08) 50%, rgba(175, 82, 222, 0.04) 100%)',
