@@ -13,6 +13,7 @@ import React from 'react';
 import { AbilityIcon } from '../../../components/AbilityIcon';
 import { FightFragment } from '../../../graphql/generated';
 import { KnownAbilities } from '../../../types/abilities';
+import { RotationAnalysisPanel } from '../rotation/RotationAnalysisPanel';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';
@@ -359,6 +360,13 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
           <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <DamageTypeBreakdownPanel fight={fight} />
+          </Paper>
+        </Box>
+
+        {/* Rotation Analysis Panel - Full Width */}
+        <Box sx={{ flex: '1 1 100%', minWidth: '300px' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+            <RotationAnalysisPanel fight={fight} />
           </Paper>
         </Box>
       </Box>
