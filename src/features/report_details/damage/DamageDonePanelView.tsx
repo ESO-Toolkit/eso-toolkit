@@ -216,8 +216,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             border: '1px solid rgba(255, 255, 255, 0.15)',
             boxShadow:
               '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
-            background:
-              'linear-gradient(135deg, rgb(231 250 255 / 35%) 0%, rgb(184 196 235 / 25%) 50%, rgb(163 163 230 / 18%) 100%)',
+            background: roleColors.isDarkMode
+              ? 'linear-gradient(135deg, rgba(32, 89, 105, 0.35) 0%, rgba(67, 107, 119, 0.25) 50%, rgba(236, 240, 241, 0.18) 100%)'
+              : 'linear-gradient(135deg, rgb(231 250 255 / 35%) 0%, rgb(184 196 235 / 25%) 50%, rgb(163 163 230 / 18%) 100%)',
             transition: 'all 0.3s ease',
             '&::before': {
               content: '""',
