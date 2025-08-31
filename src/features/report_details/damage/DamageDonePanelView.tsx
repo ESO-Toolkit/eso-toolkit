@@ -130,16 +130,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+              sortField === 'name' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'name' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'name' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -152,16 +152,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'total' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+              sortField === 'total' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'total' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'total' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -174,16 +174,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'dps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+              sortField === 'dps' ? 'rgba(255, 139, 97, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'dps' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'dps' ? '#ff8b61' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(255, 139, 97, 0.15)',
+              color: '#ff8b61',
             },
           }}
         >
@@ -196,16 +196,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'activeDps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+              sortField === 'activeDps' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'activeDps' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'activeDps' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -320,7 +320,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('name')}
             >
@@ -330,7 +330,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('total')}
             >
@@ -341,7 +341,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('dps')}
             >
@@ -352,7 +352,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('activeDps')}
             >
@@ -467,7 +467,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 {/* Active DPS */}
                 <Typography
                   sx={{
-                    color: row.activePercentage > 0 ? '#4caf50' : '#888',
+                    color: row.activePercentage > 0 ? '#38bdf8' : '#888',
                     fontWeight: 700,
                     fontSize: '0.875rem',
                     textAlign: 'right',
@@ -548,7 +548,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                     </Typography>
                     <Typography
                       sx={{
-                        color: row.activePercentage > 0 ? '#4caf50' : '#888',
+                        color: row.activePercentage > 0 ? '#38bdf8' : '#888',
                         fontWeight: 600,
                         fontSize: '0.8rem',
                         textShadow: '0 1px 3px rgba(0,0,0,0.5)',

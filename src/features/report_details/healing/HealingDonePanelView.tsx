@@ -149,11 +149,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'name' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'name' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -171,11 +171,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'raw' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'raw' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -193,11 +193,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'hps' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'hps' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -215,11 +215,11 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'overheal' ? '#4caf50' : '#ecf0f1',
+            color: sortField === 'overheal' ? '#38bdf8' : '#ecf0f1',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(76, 175, 80, 0.15)',
-              color: '#4caf50',
+              backgroundColor: 'rgba(56, 181, 248, 0.15)',
+              color: '#38bdf8',
             },
           }}
         >
@@ -278,7 +278,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1fr 2fr 1fr 1fr',
+              gridTemplateColumns: '2fr 3fr 1fr 1fr',
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -335,7 +335,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('name')}
             >
@@ -345,7 +345,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('raw')}
             >
@@ -356,7 +356,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('hps')}
             >
@@ -367,7 +367,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#4caf50' },
+                '&:hover': { color: '#38bdf8' },
               }}
               onClick={() => handleSort('overheal')}
             >
@@ -386,7 +386,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1fr 2fr 1fr 1fr',
+                  gridTemplateColumns: '2fr 3fr 1fr 1fr',
                   gap: 2,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -418,6 +418,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
+                      flex: 1,
+                      minWidth: 0,
                       textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                     }}
                   >
@@ -432,13 +434,13 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       color: '#ecf0f1',
                       fontWeight: 500,
                       fontSize: '0.875rem',
-                      minWidth: '60px',
+                      minWidth: '48px',
                       textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                     }}
                   >
                     {percentage}%
                   </Typography>
-                  <Box sx={{ width: '200px', minWidth: '200px' }}>
+                  <Box sx={{ flex: 1, minWidth: '80px' }}>
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
@@ -482,14 +484,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 {/* Overheal */}
                 <Typography
                   sx={{
-                    color: '#ff9800',
+                    color: '#b388ff',
                     fontWeight: 500,
                     fontSize: '0.875rem',
                     textAlign: 'right',
                     textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                   }}
                 >
-                  {formatNumber(row.overheal)} ({row.overhealPercentage.toFixed(1)}%)
+                  {formatNumber(row.overheal)}
                 </Typography>
               </Box>
             );
@@ -613,7 +615,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                     }}
                   >
-                    Overheal: {formatNumber(row.overheal)} ({row.overhealPercentage.toFixed(1)}%)
+                    Overheal: {formatNumber(row.overheal)}
                   </Typography>
                   {row.ressurects > 0 && (
                     <Box
@@ -627,10 +629,10 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                         cursor: 'pointer',
                         userSelect: 'none',
                         fontSize: '0.7rem',
-                        color: '#4caf50',
+                        color: '#38bdf8',
                         transition: 'all 0.2s ease',
                         '&:hover': {
-                          backgroundColor: 'rgba(76, 175, 80, 0.3)',
+                          backgroundColor: 'rgba(56, 181, 248, 0.3)',
                         },
                       }}
                     >
