@@ -1121,8 +1121,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             <Typography
               sx={{
                 color: isWipe 
-                  ? (darkMode ? '#ff9800' : '#ffffff') 
-                  : (darkMode ? '#4ade80' : '#ffffff'),
+                  ? (darkMode ? '#ff9800' : '#dc2626') 
+                  : (darkMode ? '#4ade80' : '#059669'),
                 fontSize: '0.75rem',
                 lineHeight: 1,
                 fontWeight: 600,

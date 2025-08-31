@@ -1,4 +1,4 @@
-import { Box, Typography, Card, CardContent, Chip, Skeleton, Avatar } from '@mui/material';
+import { Box, Typography, Card, CardContent, Chip, Skeleton, Avatar, useTheme } from '@mui/material';
 import React from 'react';
 
 import { ReportActorFragment } from '../../../graphql/generated';
@@ -71,6 +71,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   fight,
   isLoading = false,
 }) => {
+  const theme = useTheme();
   // Create a map of player IDs to their data for quick lookup
   const playerMap = React.useMemo(() => {
     const map = new Map<string, PlayerData>();
@@ -114,9 +115,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
               key={i}
               sx={{
                 borderRadius: '16px',
-                background:
-                  'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
+                border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(15, 23, 42, 0.12)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
               }}
@@ -154,7 +156,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
           <Typography variant="h6" sx={{ color: '#4caf50', mb: 1 }}>
             🎉 Flawless Victory!
           </Typography>
-          <Typography sx={{ color: '#ecf0f1' }}>No deaths detected in this fight.</Typography>
+          <Typography sx={{ color: theme.palette.text.primary }}>No deaths detected in this fight.</Typography>
         </Box>
       </Box>
     );
@@ -201,7 +203,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
       {/* Death summary chips */}
       <Box sx={{ mb: 3 }}>
-        <Typography variant="subtitle2" sx={{ mb: 1, color: '#ecf0f1', fontWeight: 600 }}>
+        <Typography variant="subtitle2" sx={{ mb: 1, color: theme.palette.text.primary, fontWeight: 600 }}>
           Death Summary
         </Typography>
         <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -218,8 +220,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 label={`${playerName}: ${count}`}
                 size="small"
                 sx={{
-                  backgroundColor: 'rgb(0 0 0 / 15%)',
-                  color: '#d2c7c6',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgb(0 0 0 / 15%)' : 'rgb(248 113 113 / 15%)',
+                  color: theme.palette.mode === 'dark' ? '#d2c7c6' : '#dc2626',
                   border: '1px solid rgb(255 7 7 / 29%)',
                   '&:hover': link
                     ? {
@@ -280,9 +282,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
               key={idx}
               sx={{
                 borderRadius: '16px',
-                background:
-                  'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-                border: '1px solid rgba(255, 255, 255, 0.15)',
+                background: theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
+                border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(15, 23, 42, 0.12)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 boxShadow:
@@ -297,8 +300,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   left: '-100%',
                   width: '100%',
                   height: '50%',
-                  background:
-                    'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)'
+                    : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.08), transparent)',
                   transform: 'skewX(-25deg)',
                   transition: 'left 0.5s ease',
                 },
@@ -330,7 +334,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       sx={{
                         color: getPlayerColor(playerMap.get(info.playerId)?.role),
                         fontWeight: 600,
-                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        textShadow: theme.palette.mode === 'dark' 
+                          ? '0 1px 3px rgba(0,0,0,0.5)' 
+                          : '0 1px 1px rgba(0,0,0,0.1)',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -341,7 +347,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     <Typography
                       variant="caption"
                       sx={{
-                        color: '#ecf0f1',
+                        color: theme.palette.text.primary,
                         opacity: 0.8,
                         fontSize: '0.75rem',
                       }}
@@ -388,7 +394,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: '#ecf0f1',
+                      color: theme.palette.text.primary,
                       fontWeight: 600,
                       display: 'block',
                       mb: 0.5,
@@ -401,7 +407,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     <Typography
                       variant="body2"
                       sx={{
-                        color: '#ecf0f1',
+                        color: theme.palette.text.primary,
                         opacity: 0.9,
                         fontSize: '0.8rem',
                         lineHeight: 1.4,
@@ -433,7 +439,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   ) : (
                     <Typography
                       variant="body2"
-                      sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}
+                      sx={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}
                     >
                       No killing blow information
                     </Typography>
@@ -445,7 +451,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: '#ecf0f1',
+                      color: theme.palette.text.primary,
                       fontWeight: 600,
                       display: 'block',
                       mb: 0.5,
@@ -483,7 +489,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             <Typography
                               variant="caption"
                               sx={{
-                                color: '#ecf0f1',
+                                color: theme.palette.text.primary,
                                 opacity: 0.8,
                                 fontSize: '0.7rem',
                                 lineHeight: 1.2,
@@ -528,7 +534,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   ) : (
                     <Typography
                       variant="body2"
-                      sx={{ color: '#ecf0f1', opacity: 0.8, fontSize: '0.8rem' }}
+                      sx={{ color: theme.palette.text.secondary, fontSize: '0.8rem' }}
                     >
                       No recent attacks recorded
                     </Typography>
