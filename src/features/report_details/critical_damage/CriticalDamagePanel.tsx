@@ -115,11 +115,7 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
         );
 
         // Calculate static critical damage for this player
-        const staticCriticalDamage = calculateStaticCriticalDamage(
-          combatantInfo,
-          playerData.playersById[player.id],
-          debuffsLookup
-        );
+        const staticCriticalDamage = calculateStaticCriticalDamage(combatantInfo);
 
         return {
           player,
@@ -137,6 +133,12 @@ export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({ fight 
     // Now iterate through timestamps and calculate critical damage for all players at once
     for (let i = 0; i <= fightDurationSeconds; i++) {
       const timestamp = fightStart + i * 1000;
+
+      // Ensure we don't go beyond the actual fight end time
+      // This prevents querying buff lookups beyond their valid range
+      if (timestamp > fightEnd) {
+        break;
+      }
 
       // Apply the timestamp calculations to each player
       playersData.forEach((playerData) => {

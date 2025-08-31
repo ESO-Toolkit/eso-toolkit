@@ -92,6 +92,17 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   fightDurationSeconds,
   onExpandChange,
 }) => {
+  // Transform penetration sources to StatChecklistSource format for consistency
+  const statChecklistSources = React.useMemo(() => {
+    return penetrationSources.map((source) => ({
+      name: source.name,
+      wasActive: source.wasActive,
+      description: source.description,
+      link: source.link,
+      // Penetration sources don't currently preserve source type information
+      // They rely on description text detection for unimplemented sources
+    }));
+  }, [penetrationSources]);
   if (!penetrationData) {
     return (
       <Accordion
@@ -539,7 +550,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
 
             {/* Penetration Sources Checklist */}
             <StatChecklist
-              sources={penetrationSources}
+              sources={statChecklistSources}
               title="Penetration Sources"
               loading={isLoading}
             />
