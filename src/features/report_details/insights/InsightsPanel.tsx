@@ -62,7 +62,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
         );
         if (talentFound) {
           if (!result[knownAbility]) result[knownAbility] = [];
-          result[knownAbility].push(String(player.displayName || player.name || player.id));
+          const playerArray = result[knownAbility];
+          if (playerArray) {
+            playerArray.push(String(player.displayName || player.name || player.id));
+          }
         }
       });
     });
@@ -90,8 +93,9 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
           if (event.sourceID != null && playerData?.playersById[sourceId]) {
             const player = playerData.playersById[sourceId];
             const playerName = String(player.displayName || player.name || sourceId);
-            if (result[knownAbility]) {
-              result[knownAbility].add(playerName);
+            const playerSet = result[knownAbility];
+            if (playerSet) {
+              playerSet.add(playerName);
             }
           }
         }
