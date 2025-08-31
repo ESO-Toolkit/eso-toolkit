@@ -14,8 +14,8 @@ import {
   Tooltip,
 } from '@mui/material';
 import type { ChipProps } from '@mui/material/Chip';
-import { SxProps, Theme, useTheme } from '@mui/material/styles';
-import { keyframes } from '@mui/system';
+import type { Theme } from '@mui/material/styles';
+import { keyframes, SxProps } from '@mui/system';
 import React from 'react';
 
 import mundusIcon from '../../../assets/MundusStone.png';
@@ -58,7 +58,7 @@ const legendaryGlow = keyframes`
   }
 `;
 
-const getGlossyBaseSx = (theme: Theme) => ({
+const glossyBaseSx = {
   position: 'relative',
   overflow: 'hidden',
   cursor: 'pointer',
@@ -67,13 +67,12 @@ const getGlossyBaseSx = (theme: Theme) => ({
   backdropFilter: 'blur(10px)',
   WebkitBackdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.15)',
-  boxShadow: theme.palette.mode === 'dark'
-    ? '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)'
-    : '0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1)',
+  boxShadow:
+    '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
   '& .MuiChip-label': {
-    color: theme.palette.mode === 'dark' ? '#ffffff' : '#1f2937',
-    textShadow: theme.palette.mode === 'dark' ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 2px rgba(255,255,255,0.8)',
-    fontWeight: theme.palette.mode === 'dark' ? 500 : 600,
+    color: '#ffffff',
+    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+    fontWeight: 500,
   },
   '&::before': {
     content: '""',
@@ -99,184 +98,129 @@ const getGlossyBaseSx = (theme: Theme) => ({
   },
   '&:hover': {
     transform: 'translateY(-2px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)'
-      : '0 8px 24px 0 rgba(59, 130, 246, 0.25), 0 4px 12px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15)',
+    boxShadow:
+      '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
   },
   '&:hover::before': {
     left: '100%',
   },
-});
+};
 
-const buildVariantSx = (variant: string, theme: Theme): SxProps<Theme> => {
-  const isDark = theme.palette.mode === 'dark';
-  
-  const darkVariants: Record<string, SxProps<Theme>> = {
+const buildVariantSx = (variant: string): SxProps<Theme> => {
+  const v: Record<string, SxProps<Theme>> = {
     green: {
-      background: 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
       borderColor: 'rgba(76, 217, 100, 0.3)',
       color: '#5ce572',
     },
     blue: {
-      background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
       borderColor: 'rgba(0, 122, 255, 0.3)',
       color: '#4da3ff',
     },
     lightBlue: {
-      background: 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
       borderColor: 'rgba(94, 234, 255, 0.35)',
       color: '#7ee8ff',
     },
     purple: {
-      background: 'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
       borderColor: 'rgba(175, 82, 222, 0.3)',
       color: '#c57fff',
     },
     indigo: {
-      background: 'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
       borderColor: 'rgba(88, 86, 214, 0.3)',
-      '& .MuiChip-label': { color: '#8583ff' },
+      color: '#8583ff',
     },
     gold: {
-      background: 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
       borderColor: 'rgba(255, 193, 7, 0.35)',
       color: '#ffd54f',
     },
     silver: {
-      background: 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
       borderColor: 'rgba(236, 240, 241, 0.35)',
       color: '#ecf0f1',
     },
     championRed: {
-      background: 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
       borderColor: 'rgba(255, 68, 68, 0.3)',
-      '& .MuiChip-label': { color: '#ff6666' },
+      color: '#ff6666',
     },
     championBlue: {
-      background: 'linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%)',
       borderColor: 'rgba(68, 136, 255, 0.3)',
-      '& .MuiChip-label': { color: '#66aaff' },
+      color: '#66aaff',
     },
     championGreen: {
-      background: 'linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%)',
+      background:
+        'linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%)',
       borderColor: 'rgba(68, 255, 136, 0.3)',
-      '& .MuiChip-label': { color: '#66ffaa' },
+      color: '#66ffaa',
     },
     legendary: {
-      background: 'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
-      borderImage: 'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
+      background:
+        'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
+      borderImage:
+        'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
       border: '1px solid transparent',
       color: '#ffffff',
       animation: `${legendaryGlow} 3s ease-in-out infinite`,
     },
   };
-
-  const lightVariants: Record<string, SxProps<Theme>> = {
-    green: {
-      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%)',
-      borderColor: 'rgba(5, 150, 105, 0.3)',
-      '& .MuiChip-label': { color: '#065f46' },
-    },
-    blue: {
-      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%)',
-      borderColor: 'rgba(37, 99, 235, 0.3)',
-      '& .MuiChip-label': { color: '#1e3a8a' },
-    },
-    lightBlue: {
-      background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(56, 189, 248, 0.04) 100%)',
-      borderColor: 'rgba(2, 132, 199, 0.3)',
-      '& .MuiChip-label': { color: '#0c4a6e' },
-    },
-    purple: {
-      background: 'linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(168, 85, 247, 0.04) 100%)',
-      borderColor: 'rgba(126, 34, 206, 0.3)',
-      '& .MuiChip-label': { color: '#581c87' },
-    },
-    indigo: {
-      background: 'linear-gradient(135deg, rgba(67, 56, 202, 0.12) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(129, 140, 248, 0.04) 100%)',
-      borderColor: 'rgba(67, 56, 202, 0.3)',
-      '& .MuiChip-label': { color: '#3730a3' },
-    },
-    gold: {
-      background: 'linear-gradient(135deg, rgba(217, 119, 6, 0.12) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(251, 191, 36, 0.04) 100%)',
-      borderColor: 'rgba(217, 119, 6, 0.3)',
-      '& .MuiChip-label': { color: '#92400e' },
-    },
-    silver: {
-      background: 'linear-gradient(135deg, rgba(100, 116, 139, 0.12) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(203, 213, 225, 0.04) 100%)',
-      borderColor: 'rgba(100, 116, 139, 0.3)',
-      '& .MuiChip-label': { color: '#334155' },
-    },
-    championRed: {
-      background: 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(248, 113, 113, 0.04) 100%)',
-      borderColor: 'rgba(220, 38, 38, 0.3)',
-      '& .MuiChip-label': { color: '#991b1b' },
-    },
-    championBlue: {
-      background: 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(96, 165, 250, 0.04) 100%)',
-      borderColor: 'rgba(37, 99, 235, 0.3)',
-      '& .MuiChip-label': { color: '#1e3a8a' },
-    },
-    championGreen: {
-      background: 'linear-gradient(135deg, rgba(5, 150, 105, 0.12) 0%, rgba(16, 185, 129, 0.08) 50%, rgba(34, 197, 94, 0.04) 100%)',
-      borderColor: 'rgba(5, 150, 105, 0.3)',
-      '& .MuiChip-label': { color: '#065f46' },
-    },
-    legendary: {
-      background: 'linear-gradient(135deg, rgba(255,0,150,0.2) 0%, rgba(255,150,0,0.2) 20%, rgba(255,255,0,0.2) 40%, rgba(0,255,0,0.2) 60%, rgba(0,150,255,0.2) 80%, rgba(150,0,255,0.2) 100%)',
-      borderImage: 'linear-gradient(135deg, #ff0096, #ff9600, #ffff00, #00ff00, #0096ff, #9600ff) 1',
-      border: '1px solid transparent',
-      '& .MuiChip-label': { color: '#1f2937', fontWeight: 'bold' },
-      animation: `${legendaryGlow} 3s ease-in-out infinite`,
-    },
-  };
-
-  const variants = isDark ? darkVariants : lightVariants;
-  const baseStyles = getGlossyBaseSx(theme);
-  
-  return { ...baseStyles, ...(variants[variant] || variants.silver) } as SxProps<Theme>;
+  return { ...glossyBaseSx, ...(v[variant] || v.silver) } as SxProps<Theme>;
 };
 
-const getGearChipProps = (setName: string, count: number, theme: Theme): Partial<ChipProps> => {
+const getGearChipProps = (setName: string, count: number): Partial<ChipProps> => {
   const n = normalizeGearName(setName);
   // Mythics first (explicit list)
   if (MYTHIC_SET_NAMES.has(n)) {
     return {
-      sx: buildVariantSx('gold', theme),
+      sx: buildVariantSx('gold'),
     };
   }
   // Arena weapons
   if (ARENA_SET_NAMES.has(n)) {
     return {
-      sx: buildVariantSx('blue', theme),
+      sx: buildVariantSx('blue'),
     };
   }
   // Special case: 4-piece Highland Sentinel uses a specific font color
   if (count === 4 && n === normalizeGearName('Highland Sentinel')) {
     return {
-      sx: buildVariantSx('green', theme),
+      sx: buildVariantSx('lime'),
     };
   }
   // 5-piece sets
   if (count >= 5) {
     return {
-      sx: buildVariantSx('green', theme),
+      sx: buildVariantSx('green'),
     };
   }
   // Two-piece monsters
   if (count === 2 && MONSTER_ONE_PIECE_HINTS.has(n)) {
     return {
-      sx: buildVariantSx('purple', theme),
+      sx: buildVariantSx('purple'),
     };
   }
   // One-piece monsters
   if (count === 1 && MONSTER_ONE_PIECE_HINTS.has(n)) {
     return {
-      sx: buildVariantSx('lightBlue', theme),
+      sx: buildVariantSx('lightBlue'),
     };
   }
   // Default neutral
-  return { sx: buildVariantSx('silver', theme) };
+  return { sx: buildVariantSx('silver') };
 };
 
 // Detect common ESO food/drink buffs by aura name
@@ -558,7 +502,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   fightStartTime,
   fightEndTime,
 }) => {
-  const theme = useTheme();
   // Encoded pins filter provided by user for casts view
   const CASTS_PINS =
     '2%24Off%24%23244F4B%24expression%24ability.id+NOT+IN%2816499%2C28541%2C16165%2C16145%2C18350%2C28549%2C45223%2C18396%2C16277%2C115548%2C85572%2C23196%2C95040%2C39301%2C63507%2C22269%2C95042%2C191078%2C32910%2C41963%2C16261%2C45221%2C48076%2C32974%2C21970%2C41838%2C16565%2C45227%2C118604%2C26832%2C15383%2C45382%2C16420%2C68401%2C47193%2C190583%2C16212%2C228524%2C186981%2C16037%2C15435%2C15279%2C72931%2C45228%2C16688%2C61875%2C61874%29';
@@ -992,7 +935,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 {/* Gear Sets title and weight counter removed; weight counter shown next to player name */}
                                 <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={48}>
                                   {playerGear[player.id]?.map((rec, idx) => {
-                                    const chipProps = getGearChipProps(rec.labelName, rec.count, theme);
+                                    const chipProps = getGearChipProps(rec.labelName, rec.count);
                                     return (
                                       <Chip
                                         key={idx}
@@ -1045,8 +988,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 p: 1,
                                 border: '1px solid var(--border)',
                                 borderRadius: 1,
-                                backgroundColor: 'rgb(0 0 0 / 26%)',
-                                boxShadow: 'rgb(0 0 0) 0px 2px 4px',
+                                backgroundColor: 'rgba(2,6,23,0.25)',
+                                boxShadow: 'rgb(6 9 11) 0px 2px 4px',
                               }}
                             >
                               <Box
@@ -1250,7 +1193,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           size="small"
                                           title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
                                           sx={{
-                                            ...buildVariantSx('indigo', theme),
+                                            ...buildVariantSx('indigo'),
                                             '& .MuiChip-label': { fontSize: '0.58rem' },
                                           }}
                                         />
@@ -1286,8 +1229,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                 ? 'championRed'
                                                 : cp.color === 'blue'
                                                   ? 'championBlue'
-                                                  : 'championGreen',
-                                              theme
+                                                  : 'championGreen'
                                             ),
                                             '& .MuiChip-label': { fontSize: '0.58rem' },
                                           }}
