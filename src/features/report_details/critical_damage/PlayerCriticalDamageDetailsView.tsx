@@ -167,7 +167,9 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
             <Box sx={{ display: 'flex', flexDirection: 'row' }}>
               <PlayerIcon player={player} />
-              <Typography variant="subtitle1" fontWeight="bold">
+              <Typography variant="subtitle1" fontWeight="bold" sx={{
+                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+              }}>
                 {resolveActorName(player)}
               </Typography>
             </Box>
@@ -224,7 +226,9 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             <PlayerIcon player={player} />
-            <Typography variant="subtitle1" fontWeight="bold">
+            <Typography variant="subtitle1" fontWeight="bold" sx={{
+              textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+            }}>
               {resolveActorName(player)}
             </Typography>
           </Box>
@@ -391,7 +395,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   WebkitBackdropFilter: 'blur(10px)',
                 }}
               >
-                <Typography variant="h6" sx={{ mb: 2 }}>
+                <Typography variant="h6" sx={{ 
+                  mb: 2,
+                  textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+                }}>
                   Critical Multiplier Analysis
                 </Typography>
                 <Typography variant="body2" sx={{ mb: 1 }}>
@@ -462,7 +469,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 WebkitBackdropFilter: 'blur(10px)',
               }}
             >
-              <Typography variant="h6" sx={{ mb: 2 }}>
+              <Typography variant="h6" sx={{ 
+                mb: 2,
+                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+              }}>
                 Critical Damage vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
