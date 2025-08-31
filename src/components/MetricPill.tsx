@@ -125,9 +125,10 @@ export const MetricPill: React.FC<MetricPillProps> = ({
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           mb: 0.25,
-          textShadow: theme.palette.mode === 'dark' 
-            ? '0 1px 2px rgba(0,0,0,0.5)' 
-            : '0 1px 1px rgba(15, 23, 42, 0.1)',
+          textShadow:
+            theme.palette.mode === 'dark'
+              ? '0 1px 2px rgba(0,0,0,0.5)'
+              : '0 1px 1px rgba(15, 23, 42, 0.1)',
         }}
       >
         {label}
@@ -137,9 +138,10 @@ export const MetricPill: React.FC<MetricPillProps> = ({
         sx={{
           fontWeight: 600,
           fontSize: size === 'sm' ? '0.8rem' : { xs: '0.65rem', sm: '0.7rem' },
-          textShadow: theme.palette.mode === 'dark' 
-            ? '0 1px 3px rgba(0,0,0,0.6)' 
-            : '0 1px 2px rgba(15, 23, 42, 0.15)',
+          textShadow:
+            theme.palette.mode === 'dark'
+              ? '0 1px 3px rgba(0,0,0,0.6)'
+              : '0 1px 2px rgba(15, 23, 42, 0.15)',
         }}
       >
         {value}

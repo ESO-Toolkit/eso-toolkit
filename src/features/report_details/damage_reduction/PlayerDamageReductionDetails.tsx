@@ -194,13 +194,21 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               <MetricPill
                 label="Max"
                 value={`${resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%`}
-                intent={resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? 'success' : 'danger'}
+                intent={
+                  resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                    ? 'success'
+                    : 'danger'
+                }
                 size="md"
               />
               <MetricPill
                 label="Average"
                 value={`${resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%`}
-                intent={resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? 'info' : 'warning'}
+                intent={
+                  resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40
+                    ? 'info'
+                    : 'warning'
+                }
                 size="md"
               />
               <MetricPill
@@ -210,8 +218,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   resistanceToDamageReduction(staticResistance) >= 30
                     ? 'success'
                     : resistanceToDamageReduction(staticResistance) >= 20
-                    ? 'warning'
-                    : 'danger'
+                      ? 'warning'
+                      : 'danger'
                 }
                 size="md"
               />
@@ -242,13 +250,21 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
               <MetricPill
                 label="Max"
                 value={`${resistanceToDamageReduction(maxDynamicResistance + staticResistance).toFixed(1)}%`}
-                intent={resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50 ? 'success' : 'danger'}
+                intent={
+                  resistanceToDamageReduction(maxDynamicResistance + staticResistance) >= 50
+                    ? 'success'
+                    : 'danger'
+                }
                 size="sm"
               />
               <MetricPill
                 label="Average"
                 value={`${resistanceToDamageReduction(averageDynamicResistance + staticResistance).toFixed(1)}%`}
-                intent={resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40 ? 'info' : 'warning'}
+                intent={
+                  resistanceToDamageReduction(averageDynamicResistance + staticResistance) >= 40
+                    ? 'info'
+                    : 'warning'
+                }
                 size="sm"
               />
               <MetricPill
@@ -258,8 +274,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   resistanceToDamageReduction(staticResistance) >= 30
                     ? 'success'
                     : resistanceToDamageReduction(staticResistance) >= 20
-                    ? 'warning'
-                    : 'danger'
+                      ? 'warning'
+                      : 'danger'
                 }
                 size="sm"
               />

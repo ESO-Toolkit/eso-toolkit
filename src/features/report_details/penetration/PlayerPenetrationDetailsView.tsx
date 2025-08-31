@@ -95,7 +95,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   onExpandChange,
 }) => {
   const roleColors = useRoleColors();
-  
+
   // Transform penetration sources to StatChecklistSource format for consistency
   const statChecklistSources = React.useMemo(() => {
     return penetrationSources.map((source) => ({
@@ -233,8 +233,8 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                   penetrationData.timeAtCapPercentage >= 80
                     ? 'success'
                     : penetrationData.timeAtCapPercentage >= 50
-                    ? 'warning'
-                    : 'danger'
+                      ? 'warning'
+                      : 'danger'
                 }
                 size="md"
               />
@@ -277,8 +277,8 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                     penetrationData.timeAtCapPercentage >= 80
                       ? 'success'
                       : penetrationData.timeAtCapPercentage >= 50
-                      ? 'warning'
-                      : 'danger'
+                        ? 'warning'
+                        : 'danger'
                   }
                   size="sm"
                 />

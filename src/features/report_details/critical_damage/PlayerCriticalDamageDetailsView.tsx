@@ -132,7 +132,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   onExpandChange,
 }) => {
   const roleColors = useRoleColors();
-  
+
   // Transform critical damage sources to StatChecklistSource format
   const statChecklistSources = React.useMemo(() => {
     return criticalDamageSources.map((source) => ({
@@ -273,8 +273,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   criticalDamageData.effectiveCriticalDamage >= 125
                     ? 'success'
                     : criticalDamageData.effectiveCriticalDamage >= 100
-                    ? 'warning'
-                    : 'danger'
+                      ? 'warning'
+                      : 'danger'
                 }
                 size="md"
               />
@@ -286,8 +286,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   criticalDamageData.timeAtCapPercentage >= 80
                     ? 'success'
                     : criticalDamageData.timeAtCapPercentage >= 50
-                    ? 'warning'
-                    : 'danger'
+                      ? 'warning'
+                      : 'danger'
                 }
                 size="md"
               />
@@ -325,8 +325,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     criticalDamageData.effectiveCriticalDamage >= 125
                       ? 'success'
                       : criticalDamageData.effectiveCriticalDamage >= 100
-                      ? 'warning'
-                      : 'danger'
+                        ? 'warning'
+                        : 'danger'
                   }
                   size="sm"
                 />
@@ -338,8 +338,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                     criticalDamageData.timeAtCapPercentage >= 80
                       ? 'success'
                       : criticalDamageData.timeAtCapPercentage >= 50
-                      ? 'warning'
-                      : 'danger'
+                        ? 'warning'
+                        : 'danger'
                   }
                   size="sm"
                 />

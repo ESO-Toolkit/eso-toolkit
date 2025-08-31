@@ -225,9 +225,10 @@ export const HeaderBar: React.FC = () => {
                   gap: 1,
                   fontWeight: 800,
                   letterSpacing: '-.02em',
-                  background: theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--accent-2) 100%)'
-                    : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--accent-2) 100%)'
+                      : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -306,9 +307,10 @@ export const HeaderBar: React.FC = () => {
             variant="h4"
             sx={{
               fontWeight: 800,
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)'
-                : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)'
+                  : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',

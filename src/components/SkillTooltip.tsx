@@ -231,20 +231,22 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 sx={{
                   fontWeight: 800,
                   letterSpacing: '-.01em',
-                  ...(theme.palette.mode === 'dark' ? {
-                    background:
-                      'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                  } : {
-                    background:
-                      'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
-                    textShadow: '0 1px 3px rgba(15, 23, 42, 0.3)',
-                  }),
+                  ...(theme.palette.mode === 'dark'
+                    ? {
+                        background:
+                          'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                      }
+                    : {
+                        background:
+                          'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                        textShadow: '0 1px 3px rgba(15, 23, 42, 0.3)',
+                      }),
                   lineHeight: 1.1,
                   fontSize: { xs: '0.86rem', sm: '0.92rem' },
                   mb: 0,
