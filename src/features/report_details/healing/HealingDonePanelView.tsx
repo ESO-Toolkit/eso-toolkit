@@ -489,7 +489,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                   }}
                 >
-                  {formatNumber(row.overheal)} ({row.overhealPercentage.toFixed(1)}%)
+                  {formatNumber(row.overheal)}
                 </Typography>
               </Box>
             );
@@ -613,7 +613,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       textShadow: '0 1px 3px rgba(0,0,0,0.5)',
                     }}
                   >
-                    Overheal: {formatNumber(row.overheal)} ({row.overhealPercentage.toFixed(1)}%)
+                    Overheal: {formatNumber(row.overheal)}
                   </Typography>
                   {row.ressurects > 0 && (
                     <Box
