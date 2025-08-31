@@ -437,8 +437,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                             background: roleColors.getGradientColor(row.role),
                             backgroundClip: 'text',
                             WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: row.role === 'dps' ? '#ffbd7dd9' : 'transparent',
-                            textShadow: '0 1px 1px rgb(88 124 146 / 81%)',
+                            WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
+                            textShadow: '0 1px 1px rgba(0,0,0,0.2)',
                           }
                       ),
                     }}
@@ -570,8 +570,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                               background: roleColors.getGradientColor(row.role),
                               backgroundClip: 'text',
                               WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7dd9' : 'transparent',
-                              textShadow: '0 1px 1px rgb(88 124 146 / 81%)',
+                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
+                              textShadow: '0 1px 1px rgba(0,0,0,0.2)',
                             }
                         ),
                       }}

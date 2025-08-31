@@ -23,7 +23,7 @@ const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) 
   '& .hamburger-line': {
     width: 24,
     height: 2,
-    backgroundColor: '#ffffff',
+    backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
     borderRadius: 2,
     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
     transformOrigin: 'center',
