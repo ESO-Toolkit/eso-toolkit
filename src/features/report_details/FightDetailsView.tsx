@@ -246,7 +246,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         </Tabs>
 
         {/* Experimental Toggle */}
-        <Tooltip title="Enable experimental tabs: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
+        <Tooltip title="Toggle experimental features (Location Heatmap, Raw Events, etc.)">
           <FormControlLabel
             control={
               <Switch
@@ -255,10 +255,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 size="small"
               />
             }
-            label="Experimental"
+            label={
+              <Tooltip title="Experimental features are in development and may change. Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents, and Rotation Analysis">
+                <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
+                  🧪
+                </Box>
+              </Tooltip>
+            }
             sx={{
               flexShrink: 0,
-              '& .MuiFormControlLabel-label': { fontSize: '0.875rem' },
+              margin: 0,
+              '& .MuiFormControlLabel-label': { margin: 0, padding: '8px 0' },
             }}
           />
         </Tooltip>
