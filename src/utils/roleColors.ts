@@ -1,5 +1,5 @@
-import React from 'react';
 import { useTheme } from '@mui/material';
+import React from 'react';
 
 // Dark mode role colors (original)
 export const DARK_ROLE_COLORS = {
@@ -26,13 +26,13 @@ export const ROLE_COLORS = DARK_ROLE_COLORS; // Keep for backward compatibility
 
 type Role = 'dps' | 'healer' | 'tank';
 
-export const getRoleColor = (role: Role, isDarkMode: boolean = true): string => {
+export const getRoleColor = (role: Role, isDarkMode = true): string => {
   const colors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS;
   return colors[role] || '#9e9e9e'; // Default to gray if role not found
 };
 
 // Get solid color for cases where gradients can't be used (like progress bars)
-export const getRoleColorSolid = (role: Role, isDarkMode: boolean = true): string => {
+export const getRoleColorSolid = (role: Role, isDarkMode = true): string => {
   const colors = isDarkMode ? DARK_ROLE_COLORS : LIGHT_ROLE_COLORS_SOLID;
   return colors[role] || '#9e9e9e'; // Default to gray if role not found
 };

@@ -14,11 +14,10 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  useTheme,
 } from '@mui/material';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { useNavigate } from 'react-router-dom';
 
 import { FightFragment, ReportFragment } from '../../graphql/generated';
 import { RootState } from '../../store/storeWithHistory';
@@ -406,7 +405,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   reportData,
 }) => {
   const navigate = useNavigate();
-  const theme = useTheme();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
 
   // Theme-aware color utilities with enhanced light mode support
@@ -430,10 +428,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         badgeBorderKill: '1px solid rgba(76, 217, 100, 0.3)',
         badgeShadow: '0 4px 12px rgba(255, 99, 71, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
         badgeShadowKill: '0 4px 12px rgba(76, 217, 100, 0.2), inset 0 1px 0 rgba(255,255,255,0.2)',
-        // Circle counter colors (gradients for dark mode)
-        circleGreen: 'linear-gradient(135deg, #4caf50 0%, #66bb6a 100%)',
-        circleYellow: 'linear-gradient(135deg, #ff9800 0%, #ffb74d 50%, #ffc107 100%)', 
-        circleOrange: 'linear-gradient(135deg, #ff9800 0%, #ff7043 100%)',
+        // Circle counter colors (solid colors for dark mode)
+        circleGreen: '#4caf50',
+        circleYellow: '#ffc107', 
+        circleOrange: '#ff7043',
         // Difficulty badge colors
         normalColor: '#4caf50',
         veteranColor: '#2196f3',
@@ -459,10 +457,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         badgeBorderKill: '1px solid rgba(5, 150, 105, 0.6)',
         badgeShadow: '0 4px 8px rgba(220, 38, 38, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
         badgeShadowKill: '0 4px 8px rgba(5, 150, 105, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
-        // Circle counter colors (gradients for light mode)
-        circleGreen: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-        circleYellow: 'linear-gradient(135deg, #f59e0b 0%, #fbbf24 50%, #f97316 100%)', 
-        circleOrange: 'linear-gradient(135deg, #dc2626 0%, #ef4444 100%)',
+        // Circle counter colors (solid colors for light mode)
+        circleGreen: '#059669',
+        circleYellow: '#f59e0b', 
+        circleOrange: '#dc2626',
         // Difficulty badge colors (proper light mode versions)
         normalColor: '#059669',
         veteranColor: '#0284c7',

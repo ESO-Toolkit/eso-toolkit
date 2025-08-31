@@ -1,11 +1,29 @@
 import { useTheme } from '@mui/material';
+import type { Theme } from '@mui/material';
+import type { SystemStyleObject } from '@mui/system';
 import { useMemo } from 'react';
 
 import { DARK_ROLE_COLORS, LIGHT_ROLE_COLORS, LIGHT_ROLE_COLORS_SOLID } from '../utils/roleColors';
 
 type Role = 'dps' | 'healer' | 'tank';
 
-export const useRoleColors = () => {
+interface RoleColors {
+  dps: string;
+  healer: string;
+  tank: string;
+  getColor: (role: Role) => string;
+  getPlayerColor: (role?: Role) => string;
+  getGradientColor: (role?: Role) => string;
+  getTableBackground: () => string;
+  getAccordionBackground: () => string;
+  getAccordionStyles: () => SystemStyleObject<Theme>;
+  getAccordionTextShadow: () => string;
+  getProgressBarBackground: () => string;
+  getProgressBarStyles: (barBgColor?: string) => SystemStyleObject<Theme>;
+  isDarkMode: boolean;
+}
+
+export const useRoleColors = (): RoleColors => {
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
@@ -60,7 +78,7 @@ export const useRoleColors = () => {
           : 'rgba(203, 213, 225, 0.4)'; // Light slate with transparency for light mode
       },
       // Get progress bar styling (modern, accessible, theme-aware)
-      getProgressBarStyles: () => ({
+      getProgressBarStyles: (barBgColor?: string) => ({
         height: 8,
         borderRadius: 4,
         backgroundColor: isDarkMode
@@ -75,6 +93,7 @@ export const useRoleColors = () => {
           boxShadow: isDarkMode 
             ? '0 1px 3px rgba(0, 0, 0, 0.3)' 
             : '0 1px 2px rgba(0, 0, 0, 0.15)',
+          ...(barBgColor ? { backgroundColor: barBgColor } : {}),
         },
       }),
       // Check if we're in dark mode

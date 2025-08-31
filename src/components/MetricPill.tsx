@@ -1,6 +1,7 @@
-import React from 'react';
 import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
+import type { SystemStyleObject } from '@mui/system';
+import React from 'react';
 
 export type MetricIntent = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
 
@@ -16,7 +17,11 @@ export interface MetricPillProps {
   sx?: SxProps<Theme>;
 }
 
-const intentStyles = (theme: Theme, intent: MetricIntent, variant: NonNullable<MetricPillProps['variant']>) => {
+const intentStyles = (
+  theme: Theme,
+  intent: MetricIntent,
+  variant: NonNullable<MetricPillProps['variant']>
+): SystemStyleObject<Theme> => {
   // Match existing styling patterns from the codebase
   const palette = {
     success: {

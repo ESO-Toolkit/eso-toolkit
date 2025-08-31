@@ -1,10 +1,10 @@
-import { IconButton, Box, Tooltip, useTheme } from '@mui/material';
+import { IconButton, Box, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { setDarkMode } from '../store/ui/uiSlice';
 import { RootState } from '../store/storeWithHistory';
+import { setDarkMode } from '../store/ui/uiSlice';
 
 const ThemeToggleButton = styled(IconButton)<{ darkMode: boolean }>(({ theme, darkMode }) => ({
   width: 44,
@@ -59,11 +59,10 @@ const IconContainer = styled(Box)<{ darkMode: boolean; isVisible: boolean }>(({ 
 export const ThemeToggle: React.FC = () => {
   const dispatch = useDispatch();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
-  const theme = useTheme();
   
   const [isAnimating, setIsAnimating] = React.useState(false);
 
-  const handleToggle = () => {
+  const handleToggle = (): void => {
     setIsAnimating(true);
     setTimeout(() => {
       dispatch(setDarkMode(!darkMode));
