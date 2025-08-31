@@ -1,4 +1,4 @@
-import { Box, Typography, LinearProgress, Avatar } from '@mui/material';
+import { Box, Typography, LinearProgress, Avatar, useTheme } from '@mui/material';
 import React from 'react';
 
 export interface BuffUptime {
@@ -49,6 +49,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   fightId,
   selectedTargetId,
 }) => {
+  const theme = useTheme();
   const pct = Math.max(0, Math.min(100, buff.uptimePercentage));
 
   const onClick = React.useCallback((): void => {
@@ -140,7 +141,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
             sx={{
               fontWeight: 600,
               color: 'white',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+              textShadow: theme.palette.mode === 'dark' 
+                ? '1px 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5)'
+                : '1px 1px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.4)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -152,7 +155,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
             variant="caption"
             sx={{
               color: 'rgba(255,255,255,0.9)',
-              textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+              textShadow: theme.palette.mode === 'dark' 
+                ? '1px 1px 2px rgba(0,0,0,0.8)'
+                : '1px 1px 3px rgba(0,0,0,0.9), 0 0 10px rgba(0,0,0,0.6)',
             }}
           >
             {buff.applications} applications • {buff.uptime.toFixed(1)}s total
@@ -165,7 +170,9 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           sx={{
             fontWeight: 700,
             color: 'white',
-            textShadow: '1px 1px 2px rgba(0,0,0,0.7)',
+            textShadow: theme.palette.mode === 'dark' 
+              ? '1px 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5)'
+              : '1px 1px 4px rgba(0,0,0,0.9), 0 0 15px rgba(0,0,0,0.7), 0 0 20px rgba(0,0,0,0.4)',
             flexShrink: 0,
           }}
         >

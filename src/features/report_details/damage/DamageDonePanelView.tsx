@@ -216,9 +216,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
             border: '1px solid rgba(255, 255, 255, 0.15)',
             boxShadow:
               '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
-            background: roleColors.isDarkMode
-              ? 'linear-gradient(135deg, rgba(32, 89, 105, 0.35) 0%, rgba(67, 107, 119, 0.25) 50%, rgba(236, 240, 241, 0.18) 100%)'
-              : 'linear-gradient(135deg, rgb(231 250 255 / 35%) 0%, rgb(184 196 235 / 25%) 50%, rgb(163 163 230 / 18%) 100%)',
+            background: roleColors.getTableBackground(),
             transition: 'all 0.3s ease',
             '&::before': {
               content: '""',
@@ -261,21 +259,29 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              borderBottom: roleColors.isDarkMode 
+                ? '1px solid rgba(255, 255, 255, 0.08)' 
+                : '1px solid rgba(15, 23, 42, 0.08)',
               fontWeight: 600,
               fontSize: '0.875rem',
-              color: '#ecf0f1',
-              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+              color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
+              textShadow: roleColors.isDarkMode 
+                ? '0 1px 3px rgba(0,0,0,0.5)' 
+                : '0 1px 1px rgba(0,0,0,0.1)',
               position: 'relative',
               overflow: 'hidden',
               borderRadius: '25px',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              border: '1px solid rgba(255, 255, 255, 0.15)',
-              boxShadow:
-                '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
-              background:
-                'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
+              border: roleColors.isDarkMode 
+                ? '1px solid rgba(255, 255, 255, 0.15)' 
+                : '1px solid rgba(15, 23, 42, 0.15)',
+              boxShadow: roleColors.isDarkMode
+                ? '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)'
+                : '0 4px 12px 0 rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8), inset 0 -1px 0 rgba(15, 23, 42, 0.05)',
+              background: roleColors.isDarkMode
+                ? 'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(241, 245, 249, 0.95) 100%)',
               transition: 'all 0.3s ease',
               '&::before': {
                 content: '""',
@@ -284,8 +290,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 left: '-100%',
                 width: '100%',
                 height: '50%',
-                background:
-                  'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)',
+                background: roleColors.isDarkMode
+                  ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)'
+                  : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.08), transparent)',
                 transform: 'skewX(-25deg)',
                 transition: 'left 0.5s ease',
               },
@@ -296,14 +303,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 left: 0,
                 right: 0,
                 height: '50%',
-                background: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                background: roleColors.isDarkMode
+                  ? 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)'
+                  : 'linear-gradient(180deg, rgba(15,23,42,0.08) 0%, transparent 100%)',
                 borderRadius: '25px 25px 25px 25px',
                 pointerEvents: 'none',
               },
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow:
-                  '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
+                boxShadow: roleColors.isDarkMode
+                  ? '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)'
+                  : '0 6px 20px 0 rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255,255,255,0.9), inset 0 -1px 0 rgba(15, 23, 42, 0.08)',
               },
               '&:hover::before': {
                 left: '100%',
@@ -314,7 +324,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#38bdf8' },
+                '&:hover': { 
+                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                },
               }}
               onClick={() => handleSort('name')}
             >
@@ -324,7 +336,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
               sx={{
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#38bdf8' },
+                '&:hover': { 
+                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                },
               }}
               onClick={() => handleSort('total')}
             >
@@ -335,7 +349,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#38bdf8' },
+                '&:hover': { 
+                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                },
               }}
               onClick={() => handleSort('dps')}
             >
@@ -346,7 +362,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                 textAlign: 'right',
                 cursor: 'pointer',
                 userSelect: 'none',
-                '&:hover': { color: '#38bdf8' },
+                '&:hover': { 
+                  color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                },
               }}
               onClick={() => handleSort('activeDps')}
             >

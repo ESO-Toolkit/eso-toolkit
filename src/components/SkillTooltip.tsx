@@ -1,4 +1,4 @@
-import { Box, Card, CardContent, Chip, Divider, Stack, Typography } from '@mui/material';
+import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
@@ -67,6 +67,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   stats,
   description,
 }) => {
+  const theme = useTheme();
   const slugFromId =
     abilityId != null
       ? ((abilityIcons as Record<string, string>)[String(abilityId)] ??
@@ -230,11 +231,20 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 sx={{
                   fontWeight: 800,
                   letterSpacing: '-.01em',
-                  background:
-                    'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
+                  ...(theme.palette.mode === 'dark' ? {
+                    background:
+                      'linear-gradient(135deg, #ffffff 0%, rgb(149 223 255 / 89%) 50%, rgb(200 243 255) 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  } : {
+                    background:
+                      'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                    textShadow: '0 1px 3px rgba(15, 23, 42, 0.3)',
+                  }),
                   lineHeight: 1.1,
                   fontSize: { xs: '0.86rem', sm: '0.92rem' },
                   mb: 0,
