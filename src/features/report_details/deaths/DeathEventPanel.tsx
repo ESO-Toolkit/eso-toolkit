@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { useDeathEvents, useDamageEvents, useReportMasterData } from '../../../hooks';
+import { useDeathEvents, useDamageEvents, useReportMasterData, usePlayerData } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { DeathEvent } from '../../../types/combatlogEvents';
 
@@ -38,6 +38,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  const { playerData } = usePlayerData();
 
   const deathInfos: DeathInfo[] = React.useMemo(() => {
     if (!fight?.startTime || !fight?.endTime) return [];
@@ -207,12 +208,22 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     );
   }
 
+  // Prepare players data with roles
+  const players = Object.entries(reportMasterData.actorsById)
+    .filter(([_, actor]) => actor?.type === 'Player')
+    .map(([id, actor]) => ({
+      id,
+      name: actor?.name || id,
+      role: playerData?.playersById?.[id]?.role || 'dps' // Default to 'dps' if role not found
+    }));
+
   return (
     <DeathEventPanelView
       deathInfos={deathInfos}
       actorsById={reportMasterData.actorsById}
+      players={players}
       reportId={reportId}
-      fightId={fightId ? Number(fightId) : undefined}
+      fightId={fightId ? parseInt(fightId, 10) : undefined}
       fight={fight}
       isLoading={isLoading}
     />
