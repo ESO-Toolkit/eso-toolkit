@@ -92,7 +92,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           '& .MuiLinearProgress-bar': {
             borderRadius: 2,
             background: theme.palette.mode === 'dark'
-              ? 'linear-gradient(90deg, #06b6d4 0%, #3b82f6 25%, #8b5cf6 75%, #ec4899 100%)'
+              ? 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%)'
               : 'linear-gradient(90deg, #67e8f9 0%, #93c5fd 25%, #c4b5fd 75%, #f9a8d4 100%)',
             boxShadow: theme.palette.mode === 'dark' 
               ? '0 2px 8px rgba(59, 130, 246, 0.3), 0 0 20px rgba(139, 92, 246, 0.2)'
