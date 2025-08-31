@@ -68,11 +68,11 @@ const glossyBaseSx = {
   WebkitBackdropFilter: 'blur(10px)',
   border: '1px solid rgba(255, 255, 255, 0.15)',
   boxShadow:
-    '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
+    '0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1)',
   '& .MuiChip-label': {
-    color: '#ffffff',
-    textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-    fontWeight: 500,
+    color: '#1f2937',
+    textShadow: '0 1px 2px rgba(255,255,255,0.8)',
+    fontWeight: 600,
   },
   '&::before': {
     content: '""',
@@ -99,7 +99,7 @@ const glossyBaseSx = {
   '&:hover': {
     transform: 'translateY(-2px)',
     boxShadow:
-      '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
+      '0 8px 24px 0 rgba(59, 130, 246, 0.25), 0 4px 12px 0 rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.15)',
   },
   '&:hover::before': {
     left: '100%',
@@ -110,63 +110,83 @@ const buildVariantSx = (variant: string): SxProps<Theme> => {
   const v: Record<string, SxProps<Theme>> = {
     green: {
       background:
-        'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)',
-      borderColor: 'rgba(76, 217, 100, 0.3)',
-      color: '#5ce572',
+        'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 50%, rgba(34, 197, 94, 0.03) 100%)',
+      borderColor: 'rgba(34, 197, 94, 0.25)',
+      '& .MuiChip-label': {
+        color: '#15803d',
+      },
     },
     blue: {
       background:
-        'linear-gradient(135deg, rgba(0, 122, 255, 0.25) 0%, rgba(0, 122, 255, 0.15) 50%, rgba(0, 122, 255, 0.08) 100%)',
-      borderColor: 'rgba(0, 122, 255, 0.3)',
-      color: '#4da3ff',
+        'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(59, 130, 246, 0.03) 100%)',
+      borderColor: 'rgba(59, 130, 246, 0.25)',
+      '& .MuiChip-label': {
+        color: '#1d4ed8',
+      },
     },
     lightBlue: {
       background:
-        'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
-      borderColor: 'rgba(94, 234, 255, 0.35)',
-      color: '#7ee8ff',
+        'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(14, 165, 233, 0.03) 100%)',
+      borderColor: 'rgba(14, 165, 233, 0.25)',
+      '& .MuiChip-label': {
+        color: '#0369a1',
+      },
     },
     purple: {
       background:
-        'linear-gradient(135deg, rgba(175, 82, 222, 0.25) 0%, rgba(175, 82, 222, 0.15) 50%, rgba(175, 82, 222, 0.08) 100%)',
-      borderColor: 'rgba(175, 82, 222, 0.3)',
-      color: '#c57fff',
+        'linear-gradient(135deg, rgba(147, 51, 234, 0.15) 0%, rgba(147, 51, 234, 0.08) 50%, rgba(147, 51, 234, 0.03) 100%)',
+      borderColor: 'rgba(147, 51, 234, 0.25)',
+      '& .MuiChip-label': {
+        color: '#7c3aed',
+      },
     },
     indigo: {
       background:
-        'linear-gradient(135deg, rgba(88, 86, 214, 0.25) 0%, rgba(88, 86, 214, 0.15) 50%, rgba(88, 86, 214, 0.08) 100%)',
-      borderColor: 'rgba(88, 86, 214, 0.3)',
-      color: '#8583ff',
+        'linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(99, 102, 241, 0.08) 50%, rgba(99, 102, 241, 0.03) 100%)',
+      borderColor: 'rgba(99, 102, 241, 0.25)',
+      '& .MuiChip-label': {
+        color: '#4338ca',
+      },
     },
     gold: {
       background:
-        'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
-      borderColor: 'rgba(255, 193, 7, 0.35)',
-      color: '#ffd54f',
+        'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.08) 50%, rgba(245, 158, 11, 0.03) 100%)',
+      borderColor: 'rgba(245, 158, 11, 0.25)',
+      '& .MuiChip-label': {
+        color: '#d97706',
+      },
     },
     silver: {
       background:
-        'linear-gradient(135deg, rgba(236, 240, 241, 0.25) 0%, rgba(236, 240, 241, 0.15) 50%, rgba(236, 240, 241, 0.08) 100%)',
-      borderColor: 'rgba(236, 240, 241, 0.35)',
-      color: '#ecf0f1',
+        'linear-gradient(135deg, rgba(148, 163, 184, 0.15) 0%, rgba(148, 163, 184, 0.08) 50%, rgba(148, 163, 184, 0.03) 100%)',
+      borderColor: 'rgba(148, 163, 184, 0.25)',
+      '& .MuiChip-label': {
+        color: '#475569',
+      },
     },
     championRed: {
       background:
-        'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
-      borderColor: 'rgba(255, 68, 68, 0.3)',
-      color: '#ff6666',
+        'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(239, 68, 68, 0.08) 50%, rgba(239, 68, 68, 0.03) 100%)',
+      borderColor: 'rgba(239, 68, 68, 0.25)',
+      '& .MuiChip-label': {
+        color: '#dc2626',
+      },
     },
     championBlue: {
       background:
-        'linear-gradient(135deg, rgba(68, 136, 255, 0.25) 0%, rgba(68, 136, 255, 0.15) 50%, rgba(68, 136, 255, 0.08) 100%)',
-      borderColor: 'rgba(68, 136, 255, 0.3)',
-      color: '#66aaff',
+        'linear-gradient(135deg, rgba(59, 130, 246, 0.15) 0%, rgba(59, 130, 246, 0.08) 50%, rgba(59, 130, 246, 0.03) 100%)',
+      borderColor: 'rgba(59, 130, 246, 0.25)',
+      '& .MuiChip-label': {
+        color: '#1d4ed8',
+      },
     },
     championGreen: {
       background:
-        'linear-gradient(135deg, rgba(68, 255, 136, 0.25) 0%, rgba(68, 255, 136, 0.15) 50%, rgba(68, 255, 136, 0.08) 100%)',
-      borderColor: 'rgba(68, 255, 136, 0.3)',
-      color: '#66ffaa',
+        'linear-gradient(135deg, rgba(34, 197, 94, 0.15) 0%, rgba(34, 197, 94, 0.08) 50%, rgba(34, 197, 94, 0.03) 100%)',
+      borderColor: 'rgba(34, 197, 94, 0.25)',
+      '& .MuiChip-label': {
+        color: '#15803d',
+      },
     },
     legendary: {
       background:
@@ -988,8 +1008,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 p: 1,
                                 border: '1px solid var(--border)',
                                 borderRadius: 1,
-                                backgroundColor: 'rgba(2,6,23,0.25)',
-                                boxShadow: 'rgb(6 9 11) 0px 2px 4px',
+                                backgroundColor: 'rgb(223 239 255 / 25%)',
+                                boxShadow: 'rgb(167 199 220) 0px 2px 4px',
                               }}
                             >
                               <Box

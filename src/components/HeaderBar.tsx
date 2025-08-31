@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/
 import { useAuth } from '../features/auth/AuthContext';
 
 import discordIcon from '@/assets/discord-icon.svg';
+import { ThemeToggle } from './ThemeToggle';
 
 // Animated Hamburger Icon
 const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) => ({
@@ -151,6 +152,7 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
   const navigate = useNavigate();
+  const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
 
@@ -222,8 +224,9 @@ export const HeaderBar: React.FC = () => {
                   gap: 1,
                   fontWeight: 800,
                   letterSpacing: '-.02em',
-                  background:
-                    'linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--accent-2) 100%)',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--accent-2) 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
@@ -264,6 +267,7 @@ export const HeaderBar: React.FC = () => {
                 {item.text}
               </Button>
             ))}
+            <ThemeToggle />
             {isLoggedIn ? (
               <Button color="inherit" onClick={handleLogout} className="u-focus-ring u-hover-glow">
                 Log out
@@ -301,7 +305,9 @@ export const HeaderBar: React.FC = () => {
             variant="h4"
             sx={{
               fontWeight: 800,
-              background: 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)',
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)'
+                : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
@@ -339,10 +345,23 @@ export const HeaderBar: React.FC = () => {
             </MobileNavButton>
           ))}
 
+          <Box
+            sx={{
+              animationDelay: `${navItems.length * 0.1 + 0.1}s`,
+              animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
+              '@keyframes slideInUp': {
+                '0%': { opacity: 0, transform: 'translateY(30px)' },
+                '100%': { opacity: 1, transform: 'translateY(0)' },
+              },
+            }}
+          >
+            <ThemeToggle />
+          </Box>
+
           <MobileNavButton
             onClick={isLoggedIn ? handleLogout : handleLogin}
             sx={{
-              animationDelay: `${navItems.length * 0.1}s`,
+              animationDelay: `${navItems.length * 0.1 + 0.2}s`,
               animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
               background: isLoggedIn
                 ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
