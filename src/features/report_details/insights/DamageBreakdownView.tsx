@@ -7,6 +7,7 @@ import {
   Avatar,
   Skeleton,
   Chip,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 
@@ -35,6 +36,8 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
   totalDamage,
   isLoading,
 }) => {
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
   if (isLoading) {
     return (
       <Box sx={{ mt: 2 }}>
@@ -97,9 +100,9 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                               sx={{
                                 height: 16,
                                 fontSize: '0.625rem',
-                                backgroundColor: '#4e579857',
-                                color: 'rgba(255, 255, 255, 0.87)',
-                                border: '1px solid #45566f',
+                                backgroundColor: isDarkMode ? '#4e579857' : 'rgba(67, 56, 202, 0.12)',
+                                color: isDarkMode ? 'rgba(255, 255, 255, 0.87)' : '#3730a3',
+                                border: isDarkMode ? '1px solid #45566f' : '1px solid rgba(67, 56, 202, 0.3)',
                               }}
                             />
                           </Box>
@@ -124,20 +127,22 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
                             borderRadius: 28,
                             backdropFilter: 'blur(10px)',
                             WebkitBackdropFilter: 'blur(10px)',
-                            border: '1px solid rgba(94, 234, 255, 0.35)',
-                            boxShadow:
-                              '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
-                            background:
-                              'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)',
-                            color: '#7ee8ff',
+                            border: isDarkMode ? '1px solid rgba(94, 234, 255, 0.35)' : '1px solid rgba(2, 132, 199, 0.3)',
+                            boxShadow: isDarkMode
+                              ? '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)'
+                              : '0 4px 16px 0 rgba(59, 130, 246, 0.15), 0 2px 8px 0 rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.1)',
+                            background: isDarkMode
+                              ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                              : 'linear-gradient(135deg, rgba(2, 132, 199, 0.12) 0%, rgba(14, 165, 233, 0.08) 50%, rgba(56, 189, 248, 0.04) 100%)',
+                            color: isDarkMode ? '#7ee8ff' : '#0c4a6e',
                             height: 28,
                             '& .MuiChip-label': {
                               px: 1.25,
                               fontWeight: 700,
                               fontSize: '0.9rem',
                               lineHeight: 1,
-                              color: '#ffffff',
-                              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                              color: isDarkMode ? '#ffffff' : '#0c4a6e',
+                              textShadow: isDarkMode ? '0 1px 3px rgba(0,0,0,0.5)' : '0 1px 2px rgba(255,255,255,0.8)',
                             },
                             '&::after': {
                               content: '""',
