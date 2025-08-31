@@ -110,7 +110,12 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
               <Typography variant="subtitle1" sx={{ fontWeight: 'bold' }}>
                 {analysis.playerName}
               </Typography>
-              <Chip label={`${analysis.averageAPM.toFixed(1)} APM`} size="small" color="primary" variant="outlined" />
+              <Chip
+                label={`${analysis.averageAPM.toFixed(1)} APM`}
+                size="small"
+                color="primary"
+                variant="outlined"
+              />
             </Box>
           </AccordionSummary>
 
@@ -199,7 +204,11 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                             <ListItemText
                               primary={
                                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <Typography variant="body2" color="primary" sx={{ fontWeight: 'bold' }}>
+                                  <Typography
+                                    variant="body2"
+                                    color="primary"
+                                    sx={{ fontWeight: 'bold' }}
+                                  >
                                     {priority.higherPrioritySkill}
                                   </Typography>
                                   <Typography variant="body2" color="textSecondary">
@@ -208,11 +217,17 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                                   <Typography variant="body2">
                                     {priority.lowerPrioritySkill}
                                   </Typography>
-                                  <Chip 
-                                    label={`${(priority.confidence * 100).toFixed(0)}%`} 
-                                    size="small" 
+                                  <Chip
+                                    label={`${(priority.confidence * 100).toFixed(0)}%`}
+                                    size="small"
                                     variant="outlined"
-                                    color={priority.confidence > 0.7 ? 'success' : priority.confidence > 0.4 ? 'warning' : 'default'}
+                                    color={
+                                      priority.confidence > 0.7
+                                        ? 'success'
+                                        : priority.confidence > 0.4
+                                          ? 'warning'
+                                          : 'default'
+                                    }
                                   />
                                 </Box>
                               }
@@ -245,9 +260,9 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                                   <Typography variant="body2" sx={{ fontWeight: 'bold' }}>
                                     {skill.abilityName}
                                   </Typography>
-                                  <Chip 
-                                    label={`${(skill.spammableScore * 100).toFixed(0)}%`} 
-                                    size="small" 
+                                  <Chip
+                                    label={`${(skill.spammableScore * 100).toFixed(0)}%`}
+                                    size="small"
                                     color="primary"
                                     variant="outlined"
                                   />
@@ -303,16 +318,26 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     </Typography>
                     {analysis.generalRotation.commonSequences.length > 0 ? (
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                        {analysis.generalRotation.commonSequences.slice(0, 3).map((sequence, index) => (
-                          <Box key={index} sx={{ p: 1, border: '1px solid rgba(255,255,255,0.1)', borderRadius: 1 }}>
-                            <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
-                              {sequence.sequence.join(' → ')}
-                            </Typography>
-                            <Typography variant="caption" color="textSecondary">
-                              {sequence.frequency}x used • {sequence.averageInterval.toFixed(1)}s avg
-                            </Typography>
-                          </Box>
-                        ))}
+                        {analysis.generalRotation.commonSequences
+                          .slice(0, 3)
+                          .map((sequence, index) => (
+                            <Box
+                              key={index}
+                              sx={{
+                                p: 1,
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: 1,
+                              }}
+                            >
+                              <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 0.5 }}>
+                                {sequence.sequence.join(' → ')}
+                              </Typography>
+                              <Typography variant="caption" color="textSecondary">
+                                {sequence.frequency}x used • {sequence.averageInterval.toFixed(1)}s
+                                avg
+                              </Typography>
+                            </Box>
+                          ))}
                       </Box>
                     ) : (
                       <Typography variant="body2" color="textSecondary">
@@ -331,12 +356,7 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
                     {analysis.generalRotation.fillerAbilities.length > 0 ? (
                       <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
                         {analysis.generalRotation.fillerAbilities.map((ability, index) => (
-                          <Chip
-                            key={index}
-                            label={ability}
-                            size="small"
-                            variant="outlined"
-                          />
+                          <Chip key={index} label={ability} size="small" variant="outlined" />
                         ))}
                       </Box>
                     ) : (

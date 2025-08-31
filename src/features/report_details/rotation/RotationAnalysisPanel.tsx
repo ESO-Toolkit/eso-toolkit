@@ -83,30 +83,30 @@ interface ResourceEfficiencyData {
 // Helper function to analyze skill priorities based on interrupt patterns
 const analyzeSkillPriorities = (abilities: AbilityUsage[]): SkillPriority[] => {
   const priorities: SkillPriority[] = [];
-  
+
   // Sort abilities by usage frequency for priority analysis
   const sortedAbilities = [...abilities].sort((a, b) => b.useCount - a.useCount);
-  
+
   // Analyze interruption patterns between abilities
   for (let i = 0; i < sortedAbilities.length - 1; i++) {
     for (let j = i + 1; j < sortedAbilities.length; j++) {
       const higherFreqAbility = sortedAbilities[i];
       const lowerFreqAbility = sortedAbilities[j];
-      
+
       // Calculate interruption count based on timestamp patterns
       let interruptionCount = 0;
       const timeThreshold = 5000; // 5 seconds
-      
-      higherFreqAbility.timestamps.forEach(timestamp => {
-        const nearbyLowerCasts = lowerFreqAbility.timestamps.filter(t => 
-          Math.abs(t - timestamp) < timeThreshold && t < timestamp
+
+      higherFreqAbility.timestamps.forEach((timestamp) => {
+        const nearbyLowerCasts = lowerFreqAbility.timestamps.filter(
+          (t) => Math.abs(t - timestamp) < timeThreshold && t < timestamp
         );
         interruptionCount += nearbyLowerCasts.length;
       });
-      
+
       if (interruptionCount > 0) {
         const confidence = Math.min(interruptionCount / Math.max(lowerFreqAbility.useCount, 1), 1);
-        
+
         priorities.push({
           higherPrioritySkill: higherFreqAbility.abilityName,
           lowerPrioritySkill: lowerFreqAbility.abilityName,
@@ -116,46 +116,45 @@ const analyzeSkillPriorities = (abilities: AbilityUsage[]): SkillPriority[] => {
       }
     }
   }
-  
+
   // Return top 5 most significant priorities
-  return priorities
-    .sort((a, b) => b.confidence - a.confidence)
-    .slice(0, 5);
+  return priorities.sort((a, b) => b.confidence - a.confidence).slice(0, 5);
 };
 
 // Helper function to identify spammable skills
 const identifySpammableSkills = (abilities: AbilityUsage[]): SpammableSkill[] => {
   const spammableSkills: SpammableSkill[] = [];
-  
-  abilities.forEach(ability => {
+
+  abilities.forEach((ability) => {
     if (ability.timestamps.length < 3) return; // Need at least 3 casts to determine spammability
-    
+
     // Calculate intervals between casts
     const intervals: number[] = [];
     let burstCount = 0;
-    
+
     for (let i = 1; i < ability.timestamps.length; i++) {
       const interval = (ability.timestamps[i] - ability.timestamps[i - 1]) / 1000;
       intervals.push(interval);
-      
+
       // Count bursts (casts within 3 seconds of each other)
       if (interval < 3) {
         burstCount++;
       }
     }
-    
-    const averageInterval = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
-    
+
+    const averageInterval =
+      intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+
     // Calculate spammable score based on:
     // - Low average interval (more spammable if cast frequently)
     // - High burst count (more spammable if cast in quick succession)
     // - High usage count (more likely to be a primary rotation ability)
     const frequencyScore = Math.min(ability.useCount / 20, 1); // Normalize to 0-1
-    const intervalScore = Math.max(0, 1 - (averageInterval / 10)); // Lower interval = higher score
+    const intervalScore = Math.max(0, 1 - averageInterval / 10); // Lower interval = higher score
     const burstScore = Math.min(burstCount / (ability.useCount - 1), 1); // Normalize burst frequency
-    
-    const spammableScore = (frequencyScore * 0.4) + (intervalScore * 0.4) + (burstScore * 0.2);
-    
+
+    const spammableScore = frequencyScore * 0.4 + intervalScore * 0.4 + burstScore * 0.2;
+
     // Only include abilities with a significant spammable score
     if (spammableScore > 0.3) {
       spammableSkills.push({
@@ -166,29 +165,28 @@ const identifySpammableSkills = (abilities: AbilityUsage[]): SpammableSkill[] =>
       });
     }
   });
-  
+
   // Return top spammable skills sorted by score
-  return spammableSkills
-    .sort((a, b) => b.spammableScore - a.spammableScore)
-    .slice(0, 3);
+  return spammableSkills.sort((a, b) => b.spammableScore - a.spammableScore).slice(0, 3);
 };
 
 // Helper function to analyze general rotation patterns
 const analyzeGeneralRotation = (
-  abilities: AbilityUsage[], 
-  allCastEvents: UnifiedCastEvent[], 
+  abilities: AbilityUsage[],
+  allCastEvents: UnifiedCastEvent[],
   playerId: string,
   friendlyPlayerIds: Set<string>
 ): GeneralRotation => {
   // Filter cast events for this player and other friendly players, sorted by timestamp
   const playerCastEvents = allCastEvents
-    .filter(event => 
-      String(event.sourceID) === playerId && 
-      event.sourceIsFriendly &&
-      friendlyPlayerIds.has(String(event.sourceID))
+    .filter(
+      (event) =>
+        String(event.sourceID) === playerId &&
+        event.sourceIsFriendly &&
+        friendlyPlayerIds.has(String(event.sourceID))
     )
     .sort((a, b) => a.timestamp - b.timestamp);
-  
+
   if (playerCastEvents.length < 5) {
     return {
       commonSequences: [],
@@ -196,70 +194,75 @@ const analyzeGeneralRotation = (
       fillerAbilities: [],
     };
   }
-  
+
   // Find common sequences of 3-5 abilities
   const sequences: { [key: string]: number } = {};
   const sequenceLength = 3;
-  
+
   for (let i = 0; i <= playerCastEvents.length - sequenceLength; i++) {
-    const sequence = playerCastEvents
-      .slice(i, i + sequenceLength)
-      .map(event => {
-        const ability = abilities.find(a => a.abilityId === event.abilityGameID);
-        return ability?.abilityName || 'Unknown';
-      });
-    
+    const sequence = playerCastEvents.slice(i, i + sequenceLength).map((event) => {
+      const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
+      return ability?.abilityName || 'Unknown';
+    });
+
     const sequenceKey = sequence.join(' → ');
     sequences[sequenceKey] = (sequences[sequenceKey] || 0) + 1;
   }
-  
+
   // Find opener sequence (first 5 abilities used most commonly at fight start)
   const openerSequence = playerCastEvents
     .slice(0, Math.min(5, playerCastEvents.length))
-    .map(event => {
-      const ability = abilities.find(a => a.abilityId === event.abilityGameID);
+    .map((event) => {
+      const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
       return ability?.abilityName || 'Unknown';
     });
-  
+
   // Identify filler abilities (low-priority abilities used between main rotation)
   const sortedAbilities = [...abilities].sort((a, b) => b.useCount - a.useCount);
-  const mainRotationAbilities = sortedAbilities.slice(0, Math.max(3, Math.floor(sortedAbilities.length * 0.6)));
+  const mainRotationAbilities = sortedAbilities.slice(
+    0,
+    Math.max(3, Math.floor(sortedAbilities.length * 0.6))
+  );
   const fillerAbilities = sortedAbilities
     .slice(mainRotationAbilities.length)
-    .filter(ability => ability.averageTimeBetweenCasts > 0 && ability.averageTimeBetweenCasts < 15) // Short cooldowns
-    .map(ability => ability.abilityName)
+    .filter(
+      (ability) => ability.averageTimeBetweenCasts > 0 && ability.averageTimeBetweenCasts < 15
+    ) // Short cooldowns
+    .map((ability) => ability.abilityName)
     .slice(0, 3);
-  
+
   // Convert sequences to common sequences with frequency and timing data
   const commonSequences: RotationSequence[] = Object.entries(sequences)
     .filter(([_, frequency]) => frequency >= 2) // Only sequences that occurred multiple times
     .map(([sequenceKey, frequency]) => {
       const abilityNames = sequenceKey.split(' → ');
-      
+
       // Calculate average interval for this sequence
       let totalInterval = 0;
       let intervalCount = 0;
-      
+
       for (let i = 0; i <= playerCastEvents.length - abilityNames.length; i++) {
         const sequenceMatch = playerCastEvents
           .slice(i, i + abilityNames.length)
           .every((event, idx) => {
-            const ability = abilities.find(a => a.abilityId === event.abilityGameID);
+            const ability = abilities.find((a) => a.abilityId === event.abilityGameID);
             return ability?.abilityName === abilityNames[idx];
           });
-        
+
         if (sequenceMatch) {
           const sequenceEvents = playerCastEvents.slice(i, i + abilityNames.length);
           if (sequenceEvents.length > 1) {
-            const interval = (sequenceEvents[sequenceEvents.length - 1].timestamp - sequenceEvents[0].timestamp) / 1000;
+            const interval =
+              (sequenceEvents[sequenceEvents.length - 1].timestamp - sequenceEvents[0].timestamp) /
+              1000;
             totalInterval += interval;
             intervalCount++;
           }
         }
       }
-      
+
       const averageInterval = intervalCount > 0 ? totalInterval / intervalCount : 0;
-      
+
       return {
         sequence: abilityNames,
         frequency,
@@ -268,7 +271,7 @@ const analyzeGeneralRotation = (
     })
     .sort((a, b) => b.frequency - a.frequency)
     .slice(0, 5);
-  
+
   return {
     commonSequences,
     openerSequence,
@@ -311,12 +314,12 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     castEvents.forEach((castEvent: UnifiedCastEvent) => {
       // Skip if not from a friendly player
       if (!castEvent.sourceIsFriendly) return;
-      
+
       const playerId = String(castEvent.sourceID || '');
-      
+
       // Additional check: ensure this player is in the friendlyPlayers list
       if (!friendlyPlayerIds.has(playerId)) return;
-      
+
       const playerInfo = playersById[playerId] as
         | { displayName?: string; name?: string }
         | undefined;
@@ -385,7 +388,12 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       analysis.spammableSkills = identifySpammableSkills(analysis.abilities);
 
       // Generate general rotation analysis
-      analysis.generalRotation = analyzeGeneralRotation(analysis.abilities, castEvents, analysis.playerId, friendlyPlayerIds);
+      analysis.generalRotation = analyzeGeneralRotation(
+        analysis.abilities,
+        castEvents,
+        analysis.playerId,
+        friendlyPlayerIds
+      );
 
       // Calculate average time between casts for each ability
       analysis.abilities.forEach((ability) => {
@@ -394,7 +402,8 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           for (let i = 1; i < ability.timestamps.length; i++) {
             intervals.push((ability.timestamps[i] - ability.timestamps[i - 1]) / 1000);
           }
-          ability.averageTimeBetweenCasts = intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
+          ability.averageTimeBetweenCasts =
+            intervals.reduce((sum, interval) => sum + interval, 0) / intervals.length;
         }
       });
     });
@@ -414,7 +423,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
       const resourceEvent = event as ResourceChangeEvent;
       if (resourceEvent.type === 'resourcechange') {
         const playerId = String(resourceEvent.targetID || '');
-        
+
         // Only process resource events for friendly players
         if (!friendlyPlayerIds.has(playerId)) return;
 
