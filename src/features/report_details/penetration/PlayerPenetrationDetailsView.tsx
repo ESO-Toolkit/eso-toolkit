@@ -94,9 +94,43 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
 }) => {
   if (!penetrationData) {
     return (
-      <Accordion expanded={expanded} onChange={onExpandChange}>
-        <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+      <Accordion 
+        expanded={expanded} 
+        onChange={onExpandChange}
+        variant="outlined"
+        className="u-hover-lift u-fade-in-up"
+        sx={{
+          background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+          border: '1px solid rgba(255, 255, 255, 0.1)',
+          borderRadius: 2,
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+          '&:before': {
+            display: 'none',
+          },
+          '&.Mui-expanded': {
+            margin: 0,
+          },
+          margin: 0,
+          mb: 2,
+        }}
+      >
+        <AccordionSummary 
+          expandIcon={<ExpandMoreIcon />}
+          sx={{
+            '& .MuiAccordionSummary-content': {
+              margin: '12px 0',
+            },
+            '&.Mui-expanded .MuiAccordionSummary-content': {
+              margin: '12px 0',
+            },
+          }}
+        >
+          <Typography variant="h6" sx={{ 
+            flexGrow: 1,
+            textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+          }}>
             {name}
           </Typography>
         </AccordionSummary>
@@ -108,45 +142,183 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   }
 
   return (
-    <Accordion expanded={expanded} onChange={onExpandChange}>
+    <Accordion 
+      expanded={expanded} 
+      onChange={onExpandChange}
+      variant="outlined"
+      className="u-hover-lift u-fade-in-up"
+      sx={{
+        background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: 2,
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
+        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
+        '&:before': {
+          display: 'none',
+        },
+        '&.Mui-expanded': {
+          margin: 0,
+        },
+        margin: 0,
+        mb: 2,
+      }}
+    >
       <AccordionSummary
         expandIcon={<ExpandMoreIcon />}
         aria-controls={`panel-${id}-content`}
+        sx={{
+          '& .MuiAccordionSummary-content': {
+            margin: '12px 0',
+          },
+          '&.Mui-expanded .MuiAccordionSummary-content': {
+            margin: '12px 0',
+          },
+        }}
         id={`panel-${id}-header`}
       >
         <Box sx={{ display: 'flex', justifyContent: 'space-between', width: '100%', pr: 2 }}>
           <Box sx={{ display: 'flex', flexDirection: 'row' }}>
             <PlayerIcon player={player} />
-            <Typography variant="subtitle1" fontWeight="bold">
+            <Typography variant="subtitle1" fontWeight="bold" sx={{
+              textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+            }}>
               {resolveActorName(player)}
             </Typography>
           </Box>
           {!isLoading && (
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
-              <Typography
-                variant="body2"
-                color={penetrationData.max > 18200 ? 'success' : 'secondary'}
-              >
-                Max: {penetrationData.max} pen
-              </Typography>
-              <Typography
-                variant="body2"
-                color={penetrationData.effective > 18200 ? 'success' : 'secondary'}
-              >
-                Effective: {penetrationData.effective.toFixed(0)} pen
-              </Typography>
-              <Typography
-                variant="body2"
-                color={
-                  penetrationData.timeAtCapPercentage >= 80
-                    ? 'success'
-                    : penetrationData.timeAtCapPercentage >= 50
-                      ? 'warning'
-                      : 'secondary'
-                }
-              >
-                At Cap: {penetrationData.timeAtCapPercentage.toFixed(1)}% of time
-              </Typography>
+            <Box sx={{ display: 'flex', gap: 3, alignItems: 'center' }}>
+              {/* Max Penetration */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: '0.65rem',
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  Max
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: penetrationData.max > 18200 
+                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    border: `1px solid ${penetrationData.max > 18200 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: penetrationData.max > 18200 ? '#5ce572' : '#ff6666',
+                      fontWeight: 600,
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    {penetrationData.max}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Effective Penetration */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: '0.65rem',
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  Effective
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: penetrationData.effective > 18200 
+                      ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
+                    border: `1px solid ${penetrationData.effective > 18200 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: penetrationData.effective > 18200 ? '#7ee8ff' : '#ffd54f',
+                      fontWeight: 600,
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    {penetrationData.effective.toFixed(0)}
+                  </Typography>
+                </Box>
+              </Box>
+
+              {/* Time at Cap */}
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', minWidth: 60 }}>
+                <Typography
+                  variant="caption"
+                  sx={{ 
+                    color: 'text.secondary', 
+                    fontSize: '0.65rem',
+                    fontWeight: 500,
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    mb: 0.25
+                  }}
+                >
+                  At Cap
+                </Typography>
+                <Box
+                  sx={{
+                    px: 1.5,
+                    py: 0.5,
+                    borderRadius: 1,
+                    background: penetrationData.timeAtCapPercentage >= 80
+                      ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
+                      : penetrationData.timeAtCapPercentage >= 50
+                      ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
+                    border: `1px solid ${
+                      penetrationData.timeAtCapPercentage >= 80 
+                        ? 'rgba(76, 217, 100, 0.3)'
+                        : penetrationData.timeAtCapPercentage >= 50
+                        ? 'rgba(255, 193, 7, 0.35)'
+                        : 'rgba(255, 68, 68, 0.3)'
+                    }`,
+                    backdropFilter: 'blur(10px)',
+                  }}
+                >
+                  <Typography
+                    variant="body2"
+                    sx={{ 
+                      color: penetrationData.timeAtCapPercentage >= 80 
+                        ? '#5ce572'
+                        : penetrationData.timeAtCapPercentage >= 50
+                        ? '#ffd54f'
+                        : '#ff6666',
+                      fontWeight: 600,
+                      fontSize: '0.7rem'
+                    }}
+                  >
+                    {penetrationData.timeAtCapPercentage.toFixed(0)}%
+                  </Typography>
+                </Box>
+              </Box>
             </Box>
           )}
         </Box>
@@ -155,13 +327,6 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
         {/* Only render content when panel is expanded */}
         {expanded && (
           <Box>
-            <Typography variant="body2" sx={{ mb: 2 }}>
-              <strong>Player ID:</strong> {id}
-            </Typography>
-
-            <Typography variant="body2" sx={{ mb: 1 }}>
-              <strong>Data Points:</strong> {penetrationData.dataPoints.length}
-            </Typography>
 
             {/* Penetration Sources Checklist */}
             <StatChecklist
@@ -171,8 +336,22 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
             />
 
             {/* Penetration vs Time Chart */}
-            <Paper variant="outlined" sx={{ p: 2, mb: 2 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+            <Paper 
+              variant="outlined" 
+              sx={{ 
+                p: 2, 
+                mb: 2,
+                background: 'linear-gradient(135deg, rgba(0, 122, 255, 0.15) 0%, rgba(0, 122, 255, 0.08) 50%, rgba(0, 122, 255, 0.04) 100%)',
+                border: '1px solid rgba(0, 122, 255, 0.3)',
+                borderRadius: 2,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            >
+              <Typography variant="h6" sx={{ 
+                mb: 2,
+                textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
+              }}>
                 Penetration vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
