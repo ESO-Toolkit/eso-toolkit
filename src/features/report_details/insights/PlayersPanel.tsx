@@ -10,7 +10,13 @@ import {
   useReportMasterData,
 } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
-import { KnownAbilities, MundusStones, RED_CHAMPION_POINTS, BLUE_CHAMPION_POINTS, GREEN_CHAMPION_POINTS } from '../../../types/abilities';
+import {
+  KnownAbilities,
+  MundusStones,
+  RED_CHAMPION_POINTS,
+  BLUE_CHAMPION_POINTS,
+  GREEN_CHAMPION_POINTS,
+} from '../../../types/abilities';
 import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { PlayerGear } from '../../../types/playerDetails';
 import {
@@ -141,7 +147,10 @@ export const PlayersPanel: React.FC = () => {
 
   // Calculate champion points per player using champion point constants from combatantinfo auras
   const championPointsByPlayer = React.useMemo(() => {
-    const result: Record<string, Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>> = {};
+    const result: Record<
+      string,
+      Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
+    > = {};
 
     if (!combatantInfoEvents || !abilitiesById) return result;
 
@@ -174,11 +183,11 @@ export const PlayersPanel: React.FC = () => {
               for (const aura of auras as CombatantAura[]) {
                 const abilityId = aura.ability;
                 if (!allChampionPoints.has(abilityId) || seen.has(abilityId)) continue;
-                
+
                 seen.add(abilityId);
                 const ability = abilitiesById[abilityId];
                 const name = ability?.name || `Unknown CP (${abilityId})`;
-                
+
                 // Determine color based on which set it belongs to
                 let color: 'red' | 'blue' | 'green';
                 if (RED_CHAMPION_POINTS.has(abilityId)) {
@@ -188,7 +197,7 @@ export const PlayersPanel: React.FC = () => {
                 } else {
                   color = 'green';
                 }
-                
+
                 result[playerId].push({ name, id: abilityId, color });
               }
             }

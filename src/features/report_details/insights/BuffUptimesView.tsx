@@ -61,7 +61,7 @@ export const BuffUptimesView: React.FC<BuffUptimesViewProps> = ({
                   key={buff.abilityGameID}
                   sx={{
                     py: 1,
-                    pl: .5,
+                    pl: 0.5,
                     '&:hover': {
                       backgroundColor: reportId && fightId ? 'action.hover' : 'transparent',
                     },

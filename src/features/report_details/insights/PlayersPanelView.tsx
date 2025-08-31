@@ -695,8 +695,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       }}
                                     >
                                       {displayList.map((name, idx) => (
-                                        <Tooltip 
-                                          key={idx} 
+                                        <Tooltip
+                                          key={idx}
                                           title={list[idx] || name}
                                           enterTouchDelay={0}
                                           leaveTouchDelay={3000}
@@ -1111,7 +1111,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip 
+                                  <Tooltip
                                     title="Deaths in this fight"
                                     enterTouchDelay={0}
                                     leaveTouchDelay={3000}
@@ -1124,7 +1124,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip 
+                                  <Tooltip
                                     title="Successful resurrects performed"
                                     enterTouchDelay={0}
                                     leaveTouchDelay={3000}
@@ -1137,7 +1137,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     </span>
                                   </Tooltip>{' '}
                                   •{' '}
-                                  <Tooltip 
+                                  <Tooltip
                                     title="Casts per Minute"
                                     enterTouchDelay={0}
                                     leaveTouchDelay={3000}

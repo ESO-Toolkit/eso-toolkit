@@ -63,7 +63,7 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
                   key={debuff.abilityGameID}
                   sx={{
                     py: 1,
-                    pl: .5,
+                    pl: 0.5,
                     '&:hover': {
                       backgroundColor: reportId && fightId ? 'action.hover' : 'transparent',
                     },

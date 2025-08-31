@@ -111,8 +111,6 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
     }
   };
 
-
-
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -145,7 +143,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'name' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -166,7 +165,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'raw' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'raw' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -187,7 +187,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'hps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'hps' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -208,7 +209,8 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             px: 2,
             py: 0.5,
             borderRadius: '12px',
-            backgroundColor: sortField === 'overheal' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
+            backgroundColor:
+              sortField === 'overheal' ? 'rgba(76, 175, 80, 0.2)' : 'rgba(255, 255, 255, 0.1)',
             border: '1px solid rgba(255, 255, 255, 0.2)',
             cursor: 'pointer',
             userSelect: 'none',
@@ -516,7 +518,14 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 }}
               >
                 {/* Mobile Header: Name and HPS */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 1.5,
+                  }}
+                >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
                     {row.iconUrl && (
                       <Avatar
@@ -594,7 +603,9 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 </Box>
 
                 {/* Mobile Overheal and Resurrects */}
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Box
+                  sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                >
                   <Typography
                     sx={{
                       color: '#ff9800',

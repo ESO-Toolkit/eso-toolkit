@@ -35,11 +35,15 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-      <Typography variant="h6" sx={{ 
-        mb: 2, 
-        fontFamily: 'Space Grotesk, sans-serif',
-        textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-      }}>
+      <Typography
+        variant="h6"
+        sx={{
+          mb: 2,
+          fontFamily: 'Space Grotesk, sans-serif',
+          textShadow:
+            '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+        }}
+      >
         Critical Damage Analysis
       </Typography>
 
@@ -51,20 +55,20 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
         }}
       >
         {players.map((player) => {
-        const playerCriticalDamageData = criticalDamageData.get(player.id);
+          const playerCriticalDamageData = criticalDamageData.get(player.id);
 
-        return (
-          <PlayerCriticalDamageDetails
-            key={player.id}
-            id={player.id}
-            name={player.name}
-            fight={fight}
-            expanded={expandedPanels[player.id] || false}
-            onExpandChange={onExpandChange(player.id)}
-            criticalDamageData={playerCriticalDamageData || null}
-            isLoading={isLoading}
-          />
-        );
+          return (
+            <PlayerCriticalDamageDetails
+              key={player.id}
+              id={player.id}
+              name={player.name}
+              fight={fight}
+              expanded={expandedPanels[player.id] || false}
+              onExpandChange={onExpandChange(player.id)}
+              criticalDamageData={playerCriticalDamageData || null}
+              isLoading={isLoading}
+            />
+          );
         })}
       </Box>
     </Box>

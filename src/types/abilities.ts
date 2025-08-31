@@ -355,6 +355,12 @@ export enum KnownAbilities {
   MINOR_SORCERY = 62800,
   MINOR_VULNERABILITY = 79717,
 
+  GLACIAL_COLOSSUS = 122388,
+  SUMMON_CHARGED_ATRONACH = 23495,
+  AGGRESSIVE_HORN = 40223,
+  REPLENISHING_BARRIER = 40239,
+  REVIVING_BARRIER = 40237,
+
   // TODO: Add more penetration-related abilities
   // Examples:
   // NIGHT_MOTHERS_GAZE = <id>,

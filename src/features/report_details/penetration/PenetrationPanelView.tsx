@@ -52,11 +52,15 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
   if (selectedTargetIds.size === 0) {
     return (
       <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-        <Typography variant="h6" sx={{ 
-          mb: 2, 
-          fontFamily: 'Space Grotesk, sans-serif',
-          textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-        }}>
+        <Typography
+          variant="h6"
+          sx={{
+            mb: 2,
+            fontFamily: 'Space Grotesk, sans-serif',
+            textShadow:
+              '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+          }}
+        >
           Penetration Analysis
         </Typography>
 
@@ -70,11 +74,15 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
 
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-      <Typography variant="h6" sx={{ 
-        mb: 2, 
-        fontFamily: 'Space Grotesk, sans-serif',
-        textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)'
-      }}>
+      <Typography
+        variant="h6"
+        sx={{
+          mb: 2,
+          fontFamily: 'Space Grotesk, sans-serif',
+          textShadow:
+            '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+        }}
+      >
         Penetration Analysis
       </Typography>
 
