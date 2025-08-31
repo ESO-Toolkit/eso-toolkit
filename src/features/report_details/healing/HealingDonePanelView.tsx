@@ -468,7 +468,13 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
-                      sx={roleColors.getProgressBarStyles(playerColor)}
+                      sx={{
+                        ...roleColors.getProgressBarStyles(),
+                        '& .MuiLinearProgress-bar': {
+                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
+                          backgroundColor: playerColor,
+                        },
+                      }}
                     />
                   </Box>
                   <Typography
@@ -615,8 +621,12 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       variant="determinate"
                       value={parseFloat(percentage)}
                       sx={{
-                        ...roleColors.getProgressBarStyles(playerColor),
+                        ...roleColors.getProgressBarStyles(),
                         height: 6, // Slightly smaller for mobile
+                        '& .MuiLinearProgress-bar': {
+                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
+                          backgroundColor: playerColor,
+                        },
                       }}
                     />
                   </Box>

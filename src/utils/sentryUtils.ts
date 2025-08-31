@@ -53,17 +53,22 @@ export const initializeSentry = (): void => {
             (navigator as ExtendedNavigator).connection?.effectiveType || 'unknown',
         };
 
-        // Add performance timing data if available
-        if (performance && performance.timing) {
-          event.extra = {
-            ...event.extra,
-            performance: {
-              loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart,
-              domReady:
-                performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-              renderTime: performance.timing.domComplete - performance.timing.domLoading,
-            },
-          };
+        // Add performance timing data if available using modern Navigation API
+        if (performance && performance.getEntriesByType) {
+          const navigationEntries = performance.getEntriesByType(
+            'navigation'
+          ) as PerformanceNavigationTiming[];
+          if (navigationEntries.length > 0) {
+            const nav = navigationEntries[0];
+            event.extra = {
+              ...event.extra,
+              performance: {
+                loadTime: nav.loadEventEnd - nav.fetchStart,
+                domReady: nav.domContentLoadedEventEnd - nav.fetchStart,
+                renderTime: nav.domComplete - nav.domInteractive,
+              },
+            };
+          }
         }
 
         // Add memory usage if available
@@ -145,16 +150,22 @@ export const captureApplicationContext = (store?: {
     };
   }
 
-  // Add performance information
-  if (performance && performance.timing) {
+  // Add performance information using modern Navigation API
+  if (performance && performance.getEntriesByType) {
+    const navigationEntries = performance.getEntriesByType(
+      'navigation'
+    ) as PerformanceNavigationTiming[];
     const paintEntries = performance.getEntriesByType('paint');
-    context.performance = {
-      loadTime: performance.timing.loadEventEnd - performance.timing.navigationStart,
-      domReady: performance.timing.domContentLoadedEventEnd - performance.timing.navigationStart,
-      firstPaint: paintEntries.find((entry) => entry.name === 'first-paint')?.startTime,
-      firstContentfulPaint: paintEntries.find((entry) => entry.name === 'first-contentful-paint')
-        ?.startTime,
-    };
+    if (navigationEntries.length > 0) {
+      const nav = navigationEntries[0];
+      context.performance = {
+        loadTime: nav.loadEventEnd - nav.fetchStart,
+        domReady: nav.domContentLoadedEventEnd - nav.fetchStart,
+        firstPaint: paintEntries.find((entry) => entry.name === 'first-paint')?.startTime,
+        firstContentfulPaint: paintEntries.find((entry) => entry.name === 'first-contentful-paint')
+          ?.startTime,
+      };
+    }
   }
 
   return context;

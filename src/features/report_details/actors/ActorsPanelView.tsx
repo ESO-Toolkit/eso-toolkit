@@ -52,7 +52,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
           textArea.value = JSON.stringify(playerData, null, 2);
           document.body.appendChild(textArea);
           textArea.select();
-          document.execCommand('copy');
+          try {
+            // eslint-disable-next-line deprecation/deprecation
+            document.execCommand('copy');
+          } catch (err) {
+            console.warn('Copy command failed:', err);
+          }
           document.body.removeChild(textArea);
         }
       }
@@ -79,7 +84,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
           textArea.value = JSON.stringify(actorData, null, 2);
           document.body.appendChild(textArea);
           textArea.select();
-          document.execCommand('copy');
+          try {
+            // eslint-disable-next-line deprecation/deprecation
+            document.execCommand('copy');
+          } catch (err) {
+            console.warn('Copy command failed:', err);
+          }
           document.body.removeChild(textArea);
         }
       }
@@ -112,7 +122,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         textArea.value = JSON.stringify(playerCombatantInfoEvents, null, 2);
         document.body.appendChild(textArea);
         textArea.select();
-        document.execCommand('copy');
+        try {
+          // eslint-disable-next-line deprecation/deprecation
+          document.execCommand('copy');
+        } catch (err) {
+          console.warn('Copy command failed:', err);
+        }
         document.body.removeChild(textArea);
       }
     },
