@@ -206,7 +206,14 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+                  gridTemplateColumns: { 
+                    xs: '1fr', 
+                    sm: ABILITY_DATA.some(ability => 
+                      ability.knownAbilities.some(
+                        knownAbility => (abilityEquipped[knownAbility]?.length || 0) > 2
+                      )
+                    ) ? '1fr' : '1fr 1fr' 
+                  },
                   gap: 1,
                 }}
               >
