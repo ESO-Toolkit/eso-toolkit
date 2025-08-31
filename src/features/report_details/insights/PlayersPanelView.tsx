@@ -58,7 +58,7 @@ const legendaryGlow = keyframes`
   }
 `;
 
-const getGlossyBaseSx = (theme: Theme) => ({
+const getGlossyBaseSx = (theme: Theme): SxProps<Theme> => ({
   position: 'relative',
   overflow: 'hidden',
   cursor: 'pointer',

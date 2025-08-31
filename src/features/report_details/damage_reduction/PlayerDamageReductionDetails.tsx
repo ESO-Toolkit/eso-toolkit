@@ -26,8 +26,8 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 
-import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { resistanceToDamageReduction } from '../../../utils/damageReductionUtils';

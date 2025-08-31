@@ -451,13 +451,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
-                      sx={{
-                        ...roleColors.getProgressBarStyles(),
-                        '& .MuiLinearProgress-bar': {
-                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
-                          backgroundColor: playerColor,
-                        },
-                      }}
+                      sx={roleColors.getProgressBarStyles(playerColor)}
                     />
                   </Box>
                   <Typography
@@ -616,12 +610,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                       variant="determinate"
                       value={parseFloat(percentage)}
                       sx={{
-                        ...roleColors.getProgressBarStyles(),
+                        ...roleColors.getProgressBarStyles(playerColor),
                         height: 6, // Slightly smaller for mobile
-                        '& .MuiLinearProgress-bar': {
-                          ...roleColors.getProgressBarStyles()['& .MuiLinearProgress-bar'],
-                          backgroundColor: playerColor,
-                        },
                       }}
                     />
                   </Box>

@@ -22,8 +22,8 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 
-import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -94,7 +94,8 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
   fightDurationSeconds,
   onExpandChange,
 }) => {
-<<<<<<< HEAD
+  const roleColors = useRoleColors();
+  
   // Transform penetration sources to StatChecklistSource format for consistency
   const statChecklistSources = React.useMemo(() => {
     return penetrationSources.map((source) => ({
@@ -106,9 +107,6 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       // They rely on description text detection for unimplemented sources
     }));
   }, [penetrationSources]);
-=======
-  const roleColors = useRoleColors();
->>>>>>> 5b51d26 (fixed accordion lightmode colors)
   if (!penetrationData) {
     return (
       <Accordion

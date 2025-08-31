@@ -23,8 +23,8 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 
-import { PlayerIcon } from '../../../components/PlayerIcon';
 import { MetricPill } from '../../../components/MetricPill';
+import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
 import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
@@ -131,7 +131,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   player,
   onExpandChange,
 }) => {
-<<<<<<< HEAD
+  const roleColors = useRoleColors();
+  
   // Transform critical damage sources to StatChecklistSource format
   const statChecklistSources = React.useMemo(() => {
     return criticalDamageSources.map((source) => ({
@@ -146,9 +147,6 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           : undefined,
     }));
   }, [criticalDamageSources]);
-=======
-  const roleColors = useRoleColors();
->>>>>>> 5b51d26 (fixed accordion lightmode colors)
   if (!criticalDamageData) {
     return (
       <Accordion

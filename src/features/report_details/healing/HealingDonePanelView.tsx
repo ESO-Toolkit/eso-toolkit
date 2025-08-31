@@ -1,9 +1,9 @@
 import { Box, Typography, Avatar, LinearProgress } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
+import { useRoleColors } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
-import { useRoleColors } from '../../../hooks';
 
 interface HealingRow {
   id: string;
