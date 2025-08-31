@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Tooltip, Typography } from '@mui/material';
+import { Box, Tooltip, Typography, useTheme } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material';
 
 export type MetricIntent = 'success' | 'warning' | 'danger' | 'info' | 'neutral';
@@ -52,7 +52,7 @@ const intentStyles = (theme: Theme, intent: MetricIntent, variant: NonNullable<M
     return {
       background: 'transparent',
       border: `1px solid ${p.border}`,
-      color: p.text,
+      color: theme.palette.mode === 'dark' ? p.text : '#000000',
       backdropFilter: 'blur(10px)',
     };
   }
@@ -61,7 +61,7 @@ const intentStyles = (theme: Theme, intent: MetricIntent, variant: NonNullable<M
     return {
       background: 'transparent',
       border: `2px solid ${p.text}`,
-      color: p.text,
+      color: theme.palette.mode === 'dark' ? p.text : '#000000',
       backdropFilter: 'blur(10px)',
     };
   }
@@ -70,7 +70,7 @@ const intentStyles = (theme: Theme, intent: MetricIntent, variant: NonNullable<M
   return {
     background: p.bg,
     border: `1px solid ${p.border}`,
-    color: p.text,
+    color: theme.palette.mode === 'dark' ? p.text : '#000000',
     backdropFilter: 'blur(10px)',
   };
 };
@@ -86,6 +86,7 @@ export const MetricPill: React.FC<MetricPillProps> = ({
   ariaLabel,
   sx,
 }) => {
+  const theme = useTheme();
   const content = (
     <Box
       role="text"
@@ -119,6 +120,9 @@ export const MetricPill: React.FC<MetricPillProps> = ({
           textTransform: 'uppercase',
           letterSpacing: '0.05em',
           mb: 0.25,
+          textShadow: theme.palette.mode === 'dark' 
+            ? '0 1px 2px rgba(0,0,0,0.5)' 
+            : '0 1px 1px rgba(15, 23, 42, 0.1)',
         }}
       >
         {label}
@@ -128,6 +132,9 @@ export const MetricPill: React.FC<MetricPillProps> = ({
         sx={{
           fontWeight: 600,
           fontSize: size === 'sm' ? '0.8rem' : { xs: '0.65rem', sm: '0.7rem' },
+          textShadow: theme.palette.mode === 'dark' 
+            ? '0 1px 3px rgba(0,0,0,0.6)' 
+            : '0 1px 2px rgba(15, 23, 42, 0.15)',
         }}
       >
         {value}
