@@ -105,8 +105,9 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
       </Typography>
 
       {damageTypeBreakdown.length > 0 ? (
-        <List disablePadding>
-          {damageTypeBreakdown.map((damageType, idx) => {
+        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+          <List disablePadding>
+            {damageTypeBreakdown.map((damageType, idx) => {
             const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
             // Try custom mapping first (by display name), then fall back to enum-based mapping
             const color =
@@ -241,7 +242,8 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
               </ListItem>
             );
           })}
-        </List>
+          </List>
+        </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">
           No damage events found for friendly players.

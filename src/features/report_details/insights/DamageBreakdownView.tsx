@@ -69,8 +69,9 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
       </Typography>
 
       {damageBreakdown.length > 0 ? (
-        <List disablePadding>
-          {damageBreakdown.slice(0, 15).map((damage) => {
+        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+          <List disablePadding>
+            {damageBreakdown.slice(0, 15).map((damage) => {
             const percentage = totalDamage > 0 ? (damage.totalDamage / totalDamage) * 100 : 0;
             return (
               <ListItem key={damage.abilityGameID} sx={{ py: 1, pl: 0 }} divider>
@@ -258,7 +259,8 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = ({
               </ListItem>
             );
           })}
-        </List>
+          </List>
+        </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">
           No damage events found for friendly players.

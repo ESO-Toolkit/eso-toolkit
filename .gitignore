@@ -29,3 +29,6 @@ storybook-static
 
 # fetch checkpoints
 data/abilities.fetch.checkpoint.json
+
+# nested repository folder
+eso-log-aggregator/
