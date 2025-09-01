@@ -1330,7 +1330,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       '&:hover': {
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         background: 'rgba(255, 255, 255, 0.04)',
-                        boxShadow: '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                        boxShadow:
+                          '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                         transform: 'translateY(-1px)',
                       },
                     }}
