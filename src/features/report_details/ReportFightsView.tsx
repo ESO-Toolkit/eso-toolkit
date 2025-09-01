@@ -1074,7 +1074,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             key={trialRun.id}
             expanded={expandedEncounters.has(trialRun.id)}
             onChange={() => toggleEncounter(trialRun.id)}
-            sx={{ mb: 2 }}
+            sx={{
+              mb: expandedEncounters.has(trialRun.id) ? 3 : 2,
+              '&.Mui-expanded': {
+                marginBottom: 3,
+                '& + .MuiAccordion-root': {
+                  marginTop: 2,
+                },
+              },
+            }}
           >
             <AccordionSummary expandIcon={<ExpandMoreIcon />}>
               <Box
