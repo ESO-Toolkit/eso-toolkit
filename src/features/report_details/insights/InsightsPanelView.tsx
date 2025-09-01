@@ -91,7 +91,14 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
       >
         {/* Fight Insights Header - Full Width */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <Typography variant="h6" gutterBottom>
               Fight Insights
             </Typography>
@@ -307,38 +314,80 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         {/* All panels in flexbox with 2 items per row */}
 
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <StatusEffectUptimesPanel fight={fight} />
           </Paper>
         </Box>
 
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <BuffUptimesPanel fight={fight} />
           </Paper>
         </Box>
 
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <DebuffUptimesPanel fight={fight} />
           </Paper>
         </Box>
 
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <DamageBreakdownPanel fight={fight} />
           </Paper>
         </Box>
 
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <DamageTypeBreakdownPanel fight={fight} />
           </Paper>
         </Box>
 
         {/* Rotation Analysis Panel - Full Width */}
         <Box sx={{ flex: '1 1 100%', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
+          <Paper 
+            elevation={2} 
+            sx={{ 
+              p: 2, 
+              height: '100%',
+              background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+            }}
+          >
             <RotationAnalysisPanel fight={fight} />
           </Paper>
         </Box>
