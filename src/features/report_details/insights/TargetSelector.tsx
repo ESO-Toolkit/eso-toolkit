@@ -24,11 +24,9 @@ export const TargetSelector: React.FC = () => {
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
   const handleTargetChange = React.useCallback(
-    (event: SelectChangeEvent<number | null>): void => {
+    (event: SelectChangeEvent<string>): void => {
       const value = event.target.value;
-      dispatch(
-        setSelectedTargetId(!value ? null : typeof value === 'string' ? Number(value) : value)
-      );
+      dispatch(setSelectedTargetId(!value ? null : Number(value)));
     },
     [dispatch]
   );
@@ -76,7 +74,7 @@ export const TargetSelector: React.FC = () => {
         <InputLabel id="target-selector-label">Select Target</InputLabel>
         <Select
           labelId="target-selector-label"
-          value={selectedTargetId || ''}
+          value={selectedTargetId?.toString() || ''}
           label="Select Target"
           onChange={handleTargetChange}
         >
@@ -84,7 +82,7 @@ export const TargetSelector: React.FC = () => {
             <em>All Boss Targets</em>
           </MenuItem>
           {targetsList.map((target) => (
-            <MenuItem key={target.id} value={target.id || ''}>
+            <MenuItem key={target.id} value={target.id?.toString() || ''}>
               {target.name} (ID: {target.id})
             </MenuItem>
           ))}

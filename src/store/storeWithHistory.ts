@@ -1,18 +1,20 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
-import { persistStore, persistReducer } from 'redux-persist';
-import storage from 'redux-persist/lib/storage';
 import { createBrowserHistory } from 'history';
 import { createReduxHistoryContext } from 'redux-first-history';
+import { persistStore, persistReducer } from 'redux-persist';
+import storage from 'redux-persist/lib/storage';
 
-import uiReducer from './ui/uiSlice';
-import reportReducer from './report/reportSlice';
+import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import playerDataReducer from './player_data/playerDataSlice';
-import { eventsReducer } from './events_data';
+import reportReducer from './report/reportSlice';
+import uiReducer from './ui/uiSlice';
 
 // Create history
 export const history = createBrowserHistory();
-const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({ history });
+const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHistoryContext({
+  history,
+});
 
 // Root reducer - adding essential slices
 const rootReducer = combineReducers({
@@ -40,9 +42,9 @@ const store = configureStore({
     getDefaultMiddleware({
       serializableCheck: {
         ignoredActions: [
-          'persist/PERSIST', 
+          'persist/PERSIST',
           'persist/REHYDRATE',
-          '@@router/LOCATION_CHANGE' // Ignore router actions for serialization
+          '@@router/LOCATION_CHANGE', // Ignore router actions for serialization
         ],
       },
     }).concat(routerMiddleware),

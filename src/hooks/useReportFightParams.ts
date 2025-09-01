@@ -10,7 +10,8 @@ export function useReportFightParams(): {
   const location = useSelector((state: RootState) => state.router?.location);
 
   // Fallback to browser location if Redux router state is not available
-  const pathname = location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
+  const pathname =
+    location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
 
   // Parse the pathname to extract reportId and fightId
   // Expected format: /report/:reportId/fight/:fightId or /report/:reportId
