@@ -4,7 +4,10 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchCombatantInfoEvents, resetCombatantInfoEventsLoading } from '../store/events_data/combatantInfoEventsSlice';
+import {
+  fetchCombatantInfoEvents,
+  resetCombatantInfoEventsLoading,
+} from '../store/events_data/combatantInfoEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectCombatantInfoEvents,
@@ -35,9 +38,17 @@ export function useCombatantInfoEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    console.log('🔍 useCombatantInfoEvents effect triggered', { reportId, hasSelectedFight: !!selectedFight });
+    console.log('🔍 useCombatantInfoEvents effect triggered', {
+      reportId,
+      hasSelectedFight: !!selectedFight,
+    });
     if (reportId && selectedFight) {
-      console.log('📡 Dispatching fetchCombatantInfoEvents for reportId:', reportId, 'fightId:', selectedFight.id);
+      console.log(
+        '📡 Dispatching fetchCombatantInfoEvents for reportId:',
+        reportId,
+        'fightId:',
+        selectedFight.id
+      );
       dispatch(
         fetchCombatantInfoEvents({
           reportCode: reportId,

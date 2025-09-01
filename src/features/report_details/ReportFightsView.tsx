@@ -419,10 +419,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         trashShadow: '0 0 6px rgba(189, 195, 199, 0.35)',
         falsePositiveGradient:
           'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
-        wipeRedGradient:
-          'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgb(239, 68, 68) 100%)',
-        wipeOrangeGradient:
-          'linear-gradient(90deg, rgb(239, 68, 68) 0%, rgb(251, 146, 60) 100%)',
+        wipeRedGradient: 'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgb(239, 68, 68) 100%)',
+        wipeOrangeGradient: 'linear-gradient(90deg, rgb(239, 68, 68) 0%, rgb(251, 146, 60) 100%)',
         wipeYellowGradient:
           'linear-gradient(90deg, rgba(251, 146, 60, 0.96) 0%, rgba(252, 211, 77, 0.92) 100%)',
         wipeLowGradient:
@@ -531,8 +529,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       const currentBoss = bossFights[i];
       const nextBoss = bossFights[i + 1];
       const bossName = currentBoss.name || 'Unknown Boss';
-      const instanceCount = currentBoss.enemyNPCs?.[0]?.instanceCount || 1;
-      // Use boss name without instance count for progression tracking
       // Instance count should only be used for encounter IDs, not for determining resets
       const bossProgressionKey = bossName; // Just the boss name, not including instance count
 

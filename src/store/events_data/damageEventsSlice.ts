@@ -92,7 +92,7 @@ export const fetchDamageEvents = createAsyncThunk(
         loading: state.loading,
         lastFetchedReportId: state.cacheMetadata.lastFetchedReportId,
         lastFetchedFightId: state.cacheMetadata.lastFetchedFightId,
-        eventsCount: state.events.length
+        eventsCount: state.events.length,
       });
 
       // Check if damage events are already cached for this report and fight
@@ -150,7 +150,7 @@ const damageEventsSlice = createSlice({
         console.log('✅ fetchDamageEvents.fulfilled - Loading complete', {
           eventsCount: action.payload.length,
           reportCode: action.meta.arg.reportCode,
-          fightId: action.meta.arg.fight.id
+          fightId: action.meta.arg.fight.id,
         });
         state.events = action.payload;
         state.loading = false;
@@ -164,7 +164,7 @@ const damageEventsSlice = createSlice({
       })
       .addCase(fetchDamageEvents.rejected, (state, action) => {
         console.error('❌ fetchDamageEvents.rejected - Error occurred', {
-          error: action.error.message || 'Unknown error'
+          error: action.error.message || 'Unknown error',
         });
         state.loading = false;
         state.error = action.error.message || 'Failed to fetch damage events';

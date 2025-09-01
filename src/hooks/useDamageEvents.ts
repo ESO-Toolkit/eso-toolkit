@@ -4,7 +4,10 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchDamageEvents, resetDamageEventsLoading } from '../store/events_data/damageEventsSlice';
+import {
+  fetchDamageEvents,
+  resetDamageEventsLoading,
+} from '../store/events_data/damageEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { selectDamageEvents, selectDamageEventsLoading } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -36,9 +39,18 @@ export function useDamageEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    console.log('🔍 useDamageEvents effect triggered', { reportId, fightId, hasSelectedFight: !!selectedFight });
+    console.log('🔍 useDamageEvents effect triggered', {
+      reportId,
+      fightId,
+      hasSelectedFight: !!selectedFight,
+    });
     if (reportId && selectedFight) {
-      console.log('📡 Dispatching fetchDamageEvents for reportId:', reportId, 'fightId:', selectedFight.id);
+      console.log(
+        '📡 Dispatching fetchDamageEvents for reportId:',
+        reportId,
+        'fightId:',
+        selectedFight.id
+      );
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,

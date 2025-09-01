@@ -92,16 +92,16 @@ export const fetchPlayerData = createAsyncThunk<
   {
     condition: ({ reportCode, fightId }, { getState }) => {
       const state = getState() as { playerData: PlayerDataState };
-      
+
       console.log('🧪 Checking player data thunk condition', {
         reportCode,
         fightId,
         loading: state.playerData.loading,
         lastFetchedReportId: state.playerData.cacheMetadata.lastFetchedReportId,
         lastFetchedFightId: state.playerData.cacheMetadata.lastFetchedFightId,
-        playerCount: Object.keys(state.playerData.playersById).length
+        playerCount: Object.keys(state.playerData.playersById).length,
       });
-      
+
       if (
         state.playerData.cacheMetadata.lastFetchedReportId === reportCode &&
         state.playerData.cacheMetadata.lastFetchedFightId === fightId
@@ -155,7 +155,7 @@ const playerDataSlice = createSlice({
         console.log('✅ fetchPlayerData.fulfilled - Loading complete', {
           playerCount: Object.keys(action.payload.playersById).length,
           reportCode: action.payload.reportCode,
-          fightId: action.payload.fightId
+          fightId: action.payload.fightId,
         });
         state.playersById = action.payload.playersById;
         state.loading = false;
@@ -167,7 +167,7 @@ const playerDataSlice = createSlice({
       })
       .addCase(fetchPlayerData.rejected, (state, action) => {
         console.error('❌ fetchPlayerData.rejected - Error occurred', {
-          error: action.payload || action.error?.message || 'Unknown error'
+          error: action.payload || action.error?.message || 'Unknown error',
         });
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch player data';

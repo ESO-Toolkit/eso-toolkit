@@ -150,5 +150,6 @@ const combatantInfoEventsSlice = createSlice({
   },
 });
 
-export const { clearCombatantInfoEvents, resetCombatantInfoEventsLoading } = combatantInfoEventsSlice.actions;
+export const { clearCombatantInfoEvents, resetCombatantInfoEventsLoading } =
+  combatantInfoEventsSlice.actions;
 export default combatantInfoEventsSlice.reducer;

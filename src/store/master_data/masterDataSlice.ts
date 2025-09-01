@@ -95,15 +95,15 @@ export const fetchReportMasterData = createAsyncThunk<
   {
     condition: ({ reportCode }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
-      
+
       console.log('🧪 Checking thunk condition for reportCode:', reportCode, {
         lastFetchedReportId: state.masterData.cacheMetadata.lastFetchedReportId,
         loaded: state.masterData.loaded,
         loading: state.masterData.loading,
         actorCount: Object.keys(state.masterData.actorsById).length,
-        abilityCount: Object.keys(state.masterData.abilitiesById).length
+        abilityCount: Object.keys(state.masterData.abilitiesById).length,
       });
-      
+
       // Check if we already have master data for this report
       if (
         state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
@@ -165,7 +165,7 @@ const masterDataSlice = createSlice({
           console.log('✅ fetchReportMasterData.fulfilled - Loading complete', {
             actors: action.payload.actors.length,
             abilities: action.payload.abilities.length,
-            reportCode: action.payload.reportCode
+            reportCode: action.payload.reportCode,
           });
           state.abilitiesById = action.payload.abilitiesById;
           state.actorsById = action.payload.actorsById;
@@ -181,7 +181,7 @@ const masterDataSlice = createSlice({
       )
       .addCase(fetchReportMasterData.rejected, (state, action) => {
         console.error('❌ fetchReportMasterData.rejected - Error occurred', {
-          error: action.payload || action.error?.message || 'Unknown error'
+          error: action.payload || action.error?.message || 'Unknown error',
         });
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch master data';
