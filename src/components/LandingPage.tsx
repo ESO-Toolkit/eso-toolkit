@@ -12,7 +12,9 @@ import { useAppDispatch } from '../store/useAppDispatch';
 // Styled components using your existing design
 const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: theme.palette.background.default,
+  background: theme.palette.mode === 'dark' 
+    ? theme.palette.background.default 
+    : 'transparent',
   position: 'relative',
   overflowX: 'hidden',
   overflowY: 'visible',
@@ -260,10 +262,8 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   gap: 0,
   marginBottom: '0rem',
   padding: 0,
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)'
-      : 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)',
+  background: 'transparent !important',
+  backgroundImage: 'none !important',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(56, 189, 248, 0.2)'
