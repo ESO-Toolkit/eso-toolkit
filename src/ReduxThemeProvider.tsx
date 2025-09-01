@@ -86,7 +86,8 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
               // Only add transitions to commonly themed elements
               'body, .MuiPaper-root, .MuiButton-root, .MuiIconButton-root': {
-                transition: 'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
+                transition:
+                  'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
             },
