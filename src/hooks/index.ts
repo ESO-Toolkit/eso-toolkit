@@ -5,6 +5,7 @@ export { usePlayerData } from './usePlayerData';
 
 // UI hooks
 export { useRoleColors } from './useRoleColors';
+export { useBrowserAwareDarkMode } from './useBrowserAwareDarkMode';
 
 // Event data hooks
 export { useEventData } from './useEventData';

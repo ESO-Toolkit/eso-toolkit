@@ -1,32 +1,28 @@
 import { IconButton, Box, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
-import { RootState } from '../store/storeWithHistory';
-import { setDarkMode } from '../store/ui/uiSlice';
+import { useBrowserAwareDarkMode } from '../hooks/useBrowserAwareDarkMode';
 
 const ThemeToggleButton = styled(IconButton)<{ darkMode: boolean }>(({ theme, darkMode }) => ({
-  width: 44,
-  height: 44,
-  borderRadius: 12,
-  border: darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(3, 105, 161, 0.3)',
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  border: darkMode ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(15, 23, 42, 0.08)',
   background: darkMode
-    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
-    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.8) 100%)',
-  backdropFilter: 'blur(10px)',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    ? 'rgba(15, 23, 42, 0.4)'
+    : 'rgba(255, 255, 255, 0.8)',
+  backdropFilter: 'blur(8px)',
+  transition: 'all 0.2s ease-in-out',
   position: 'relative',
   overflow: 'hidden',
+  minWidth: 32,
   '&:hover': {
     background: darkMode
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(241, 245, 249, 0.9) 100%)',
-    borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(3, 105, 161, 0.5)',
-    transform: 'scale(1.05)',
-    boxShadow: darkMode
-      ? '0 8px 25px rgba(56, 189, 248, 0.2)'
-      : '0 8px 25px rgba(3, 105, 161, 0.15)',
+      ? 'rgba(15, 23, 42, 0.6)'
+      : 'rgba(255, 255, 255, 0.95)',
+    borderColor: darkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(15, 23, 42, 0.15)',
+    transform: 'scale(1.02)',
   },
   '&:active': {
     transform: 'scale(0.98)',
@@ -38,73 +34,83 @@ const IconContainer = styled(Box)<{ darkMode: boolean; isVisible: boolean }>(
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontSize: '18px',
-    opacity: isVisible ? 1 : 0,
+    fontSize: '14px',
+    opacity: isVisible ? 0.8 : 0,
     transform: isVisible ? 'scale(1) rotate(0deg)' : 'scale(0.3) rotate(-180deg)',
-    transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    transition: 'all 0.2s ease-in-out',
     position: 'absolute',
     top: '50%',
     left: '50%',
-    marginTop: '-9px',
-    marginLeft: '-9px',
-    color: darkMode ? '#fbbf24' : '#0369a1',
-    textShadow: darkMode ? '0 0 8px rgba(251, 191, 36, 0.5)' : '0 0 8px rgba(3, 105, 161, 0.3)',
+    marginTop: '-7px',
+    marginLeft: '-7px',
+    color: darkMode ? '#cbd5e1' : '#475569',
+    filter: darkMode ? 'drop-shadow(0 1px 2px rgba(0, 0, 0, 0.3))' : 'drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1))',
   })
 );
 
 export const ThemeToggle: React.FC = () => {
-  const dispatch = useDispatch();
-  const darkMode = useSelector((state: RootState) => state.ui.darkMode);
-
-  const [isAnimating, setIsAnimating] = React.useState(false);
+  const { darkMode, toggleDarkMode } = useBrowserAwareDarkMode();
+  
+  // Local state for instant visual feedback
+  const [optimisticDarkMode, setOptimisticDarkMode] = React.useState(darkMode);
+  
+  // Sync with actual state when it changes
+  React.useEffect(() => {
+    setOptimisticDarkMode(darkMode);
+  }, [darkMode]);
 
   const handleToggle = (): void => {
-    setIsAnimating(true);
-    setTimeout(() => {
-      dispatch(setDarkMode(!darkMode));
-      setTimeout(() => setIsAnimating(false), 200);
-    }, 100);
+    const newMode = !optimisticDarkMode;
+    
+    // INSTANT visual update via CSS classes and custom properties
+    if (typeof document !== 'undefined') {
+      // Toggle body class for instant CSS changes
+      document.body.classList.toggle('dark-mode', newMode);
+      document.body.classList.toggle('light-mode', !newMode);
+      
+      // Update CSS custom properties instantly
+      const root = document.documentElement;
+      if (newMode) {
+        // Dark mode tokens
+        root.style.setProperty('--bg', '#0b1220');
+        root.style.setProperty('--panel', '#0f172a');
+        root.style.setProperty('--text', '#e5e7eb');
+        root.style.setProperty('--muted', '#94a3b8');
+      } else {
+        // Light mode tokens
+        root.style.setProperty('--bg', '#fafbfc');
+        root.style.setProperty('--panel', '#ffffff');
+        root.style.setProperty('--text', '#1e293b');
+        root.style.setProperty('--muted', '#64748b');
+      }
+    }
+    
+    // Local state for component
+    setOptimisticDarkMode(newMode);
+    // Redux update in background (for persistence)
+    toggleDarkMode();
   };
 
   return (
     <Tooltip
-      title={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+      title={optimisticDarkMode ? 'Light mode' : 'Dark mode'}
       placement="bottom"
-      arrow
     >
       <ThemeToggleButton
-        darkMode={darkMode}
+        darkMode={optimisticDarkMode}
         onClick={handleToggle}
-        aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+        aria-label={optimisticDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
         className="u-focus-ring"
       >
         {/* Sun Icon (Light Mode) */}
-        <IconContainer darkMode={darkMode} isVisible={!darkMode && !isAnimating}>
+        <IconContainer darkMode={optimisticDarkMode} isVisible={!optimisticDarkMode}>
           ☀️
         </IconContainer>
 
         {/* Moon Icon (Dark Mode) */}
-        <IconContainer darkMode={darkMode} isVisible={darkMode && !isAnimating}>
+        <IconContainer darkMode={optimisticDarkMode} isVisible={optimisticDarkMode}>
           🌙
         </IconContainer>
-
-        {/* Transition sparkles */}
-        {isAnimating && (
-          <IconContainer
-            darkMode={darkMode}
-            isVisible={true}
-            sx={{
-              animation: 'sparkle 0.6s ease-in-out',
-              '@keyframes sparkle': {
-                '0%': { opacity: 0, transform: 'scale(0.3) rotate(-90deg)' },
-                '50%': { opacity: 1, transform: 'scale(1.2) rotate(0deg)' },
-                '100%': { opacity: 0, transform: 'scale(0.8) rotate(90deg)' },
-              },
-            }}
-          >
-            ✨
-          </IconContainer>
-        )}
       </ThemeToggleButton>
     </Tooltip>
   );
