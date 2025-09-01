@@ -619,12 +619,6 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       sx={{
                         ...roleColors.getProgressBarStyles(playerColor),
                         height: 6, // Slightly smaller for mobile
-<<<<<<< HEAD
-                        '& .MuiLinearProgress-bar': {
-                          backgroundColor: playerColor,
-                        },
-=======
->>>>>>> 0b63a2518e5a3356418be0bbc3db1830073cb706
                       }}
                     />
                   </Box>
