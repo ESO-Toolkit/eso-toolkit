@@ -2,13 +2,12 @@ import CssBaseline from '@mui/material/CssBaseline';
 import GlobalStyles from '@mui/material/GlobalStyles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React from 'react';
-import { useSelector } from 'react-redux';
 
-import { RootState } from './store/storeWithHistory';
+import { useBrowserAwareDarkMode } from './hooks/useBrowserAwareDarkMode';
 
 export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Keep the selector so we can enable light mode later without refactors
-  const darkMode = useSelector((state: RootState) => state.ui.darkMode);
+  // Use browser-aware dark mode hook that handles system preferences
+  const { darkMode } = useBrowserAwareDarkMode();
 
   // Design tokens - Dynamic light/dark support
   const tokens = React.useMemo(() => {
@@ -82,6 +81,13 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 color: tokens.text,
                 // Enable variable font optical sizing where supported
                 fontOpticalSizing: 'auto',
+                // Smooth theme transitions
+                transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out',
+              },
+              // Only add transitions to commonly themed elements
+              'body, .MuiPaper-root, .MuiButton-root, .MuiIconButton-root': {
+                transition:
+                  'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
             },

@@ -9,8 +9,17 @@ export interface UIState {
   selectedTabId: number | null;
 }
 
+// Detect system theme preference
+const getSystemThemePreference = (): boolean => {
+  if (typeof window !== 'undefined' && window.matchMedia) {
+    return window.matchMedia('(prefers-color-scheme: dark)').matches;
+  }
+  // Default to dark mode if we can't detect system preference
+  return true;
+};
+
 const initialState: UIState = {
-  darkMode: true,
+  darkMode: getSystemThemePreference(),
   sidebarOpen: false,
   showExperimentalTabs: false,
   selectedTargetId: null,
@@ -24,6 +33,12 @@ const uiSlice = createSlice({
   reducers: {
     setDarkMode(state, action: PayloadAction<boolean>) {
       state.darkMode = action.payload;
+    },
+    toggleDarkMode(state) {
+      state.darkMode = !state.darkMode;
+    },
+    syncWithSystemTheme(state) {
+      state.darkMode = getSystemThemePreference();
     },
     setSidebarOpen(state, action: PayloadAction<boolean>) {
       state.sidebarOpen = action.payload;
@@ -51,6 +66,8 @@ const uiSlice = createSlice({
 
 export const {
   setDarkMode,
+  toggleDarkMode,
+  syncWithSystemTheme,
   setSidebarOpen,
   toggleSidebar,
   setShowExperimentalTabs,
