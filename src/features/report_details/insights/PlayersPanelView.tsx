@@ -710,7 +710,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                     >
                       {/* Left column: identity, talents, gear, issues */}
                       <Box flex={0} minWidth={0}>
-                        <Box display="flex" alignItems="center" mb={1.5}>
+                        <Box display="flex" alignItems="center" mb={1.5} sx={{ position: 'relative' }}>
                           <PlayerIcon player={player} />
                           <Box>
                             <Box display="flex" alignItems="center" gap={0.75}>
@@ -753,6 +753,38 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 </Typography>
                               </Box>
                             </Box>
+                          </Box>
+                          <Tooltip
+                            title={`Role: ${player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS'}`}
+                            enterTouchDelay={0}
+                            leaveTouchDelay={3000}
+                          >
+                            <Box 
+                              sx={{
+                                position: 'absolute',
+                                top: 0,
+                                right: 0,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                sx={{
+                                  fontSize: 32,
+                                  lineHeight: 1,
+                                  filter: 'none',
+                                }}
+                                role="img"
+                                aria-label={`Role: ${player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS'}`}
+                              >
+                                {player.role === 'tank' ? '🛡️' : player.role === 'healer' ? '❤️' : '⚔️'}
+                              </Typography>
+                            </Box>
+                          </Tooltip>
+                        </Box>
+                        <Box>
                             {(() => {
                               const baseKey = toClassKey(player.type);
                               const sublines = CLASS_SUBLINES[baseKey];
@@ -826,7 +858,6 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 </Box>
                               );
                             })()}
-                          </Box>
                         </Box>
                         {/* Talents (title removed for cleaner UI) */}
                         {talents.length > 0 && (
