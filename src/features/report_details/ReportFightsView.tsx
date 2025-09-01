@@ -1281,9 +1281,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           borderRadius: '50%',
                           backdropFilter: 'blur(10px)',
                           WebkitBackdropFilter: 'blur(10px)',
-                          border: `1px solid ${color}`,
+                          border: `1px solid ${color}66`,
                           boxShadow:
-                            '0 4px 16px 0 rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                            '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
@@ -1330,7 +1330,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       '&:hover': {
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         background: 'rgba(255, 255, 255, 0.04)',
-                        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15), 0 1px 4px rgba(0, 0, 0, 0.1)',
+                        boxShadow:
+                          '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
                         transform: 'translateY(-1px)',
                       },
                     }}

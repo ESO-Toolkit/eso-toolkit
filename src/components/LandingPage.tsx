@@ -1,6 +1,6 @@
 import LinkIcon from '@mui/icons-material/Link';
 import { Box, Button, Container, TextField, Typography, useTheme } from '@mui/material';
-import { styled } from '@mui/material/styles';
+import { styled, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -323,7 +323,9 @@ const ToolsSection = styled(Container)(({ theme }) => ({
   maxWidth: '1200px',
 }));
 
-const SectionTitle = styled(Typography)(({ theme }) => ({
+const SectionTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'theme',
+})<{ theme?: Theme }>(({ theme }) => ({
   textAlign: 'center',
   fontSize: '2.5rem',
   fontWeight: 700,
@@ -820,7 +822,7 @@ export const LandingPage: React.FC = () => {
         <BadgeContainer>
           <MarketingBadge>⚔️ Battle-Tested by ESO Veterans</MarketingBadge>
         </BadgeContainer>
-        <SectionTitle>Our Tools</SectionTitle>
+        <SectionTitle variant="h2">Our Tools</SectionTitle>
         <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
 
         <ToolsGrid>
@@ -912,7 +914,7 @@ export const LandingPage: React.FC = () => {
       </ToolsSection>
 
       <ToolsSection id="about">
-        <SectionTitle>Built By Players, For Players</SectionTitle>
+        <SectionTitle variant="h2">Built By Players, For Players</SectionTitle>
         <SectionSubtitle>
           ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
           Online experience. Our tools are constantly updated to match the latest game patches and
