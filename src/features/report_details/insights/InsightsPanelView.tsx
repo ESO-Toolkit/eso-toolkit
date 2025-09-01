@@ -95,6 +95,8 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           display: 'flex',
           flexWrap: 'wrap',
           gap: 2,
+          opacity: 1,
+          transition: 'opacity 0.2s ease-in-out',
         }}
       >
         {/* Fight Insights Header - Full Width */}

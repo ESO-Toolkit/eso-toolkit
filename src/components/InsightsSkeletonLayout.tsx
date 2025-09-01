@@ -15,16 +15,37 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
       {/* Target Selection Skeleton */}
       {showHeader && (
         <Box sx={{ mb: 2 }}>
-          <Skeleton variant="rounded" width={220} height={56} />
+          <Box sx={{ minWidth: 200 }}>
+            <Skeleton variant="rounded" width={200} height={56} />
+          </Box>
         </Box>
       )}
 
       {/* Tabs Skeleton */}
       {showTabs && (
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} variant="circular" width={36} height={36} />
-          ))}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          mb: 1,
+          width: '100%',
+          gap: 1,
+          overflowX: 'auto' 
+        }}>
+          <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton 
+                key={i} 
+                variant="rounded" 
+                width={36} 
+                height={36}
+                sx={{ 
+                  borderRadius: '50%',
+                  flexShrink: 0,
+                }}
+              />
+            ))}
+          </Box>
+          <Skeleton variant="rounded" width={140} height={32} />
         </Box>
       )}
 
@@ -34,11 +55,13 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
           display: 'flex',
           flexWrap: 'wrap',
           gap: 2,
+          opacity: 1,
+          transition: 'opacity 0.2s ease-in-out',
         }}
       >
         {/* Fight Insights - First column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom>
               Fight Insights
             </Typography>
@@ -103,7 +126,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Status Effects - Second column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Status Effect Uptimes
             </Typography>
@@ -133,7 +156,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Buff Uptimes - Third column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
               <Typography variant="h6" sx={{ mt: 2 }}>Buff Uptimes</Typography>
               <Skeleton variant="rounded" width={120} height={32} />
@@ -164,7 +187,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Debuff Uptimes - Fourth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Debuff Uptimes
             </Typography>
@@ -194,7 +217,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Damage Breakdown - Fifth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Damage Breakdown
             </Typography>
@@ -233,7 +256,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Damage by Type - Sixth column */}
         <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Damage by Type
             </Typography>
@@ -274,7 +297,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 
         {/* Rotation Analysis - Full width */}
         <Box sx={{ flex: '1 1 100%', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: 'fit-content' }}>
+          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
             <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
               Rotation Analysis
             </Typography>

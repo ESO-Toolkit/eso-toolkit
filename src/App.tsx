@@ -1,5 +1,7 @@
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+
+import { TabAwareLoadingSkeleton } from './components/TabAwareLoadingSkeleton';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';
@@ -36,7 +38,7 @@ const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect }))
 );
 
-// Loading fallback component - generic for all routes
+// Loading fallback component - simple and fast
 const LoadingFallback: React.FC = () => (
   <Box display="flex" justifyContent="center" alignItems="center" height="400px">
     <CircularProgress />

@@ -46,7 +46,7 @@ import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
 
-import { InsightsSkeletonLayout } from '../../components/InsightsSkeletonLayout';
+import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
 import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
 import { TalentsGridPanel } from './talents/TalentsGridPanel';
@@ -76,22 +76,41 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       <Box mt={2}>
         {/* Target Selection */}
         <Box sx={{ mb: 2 }}>
-          <Skeleton variant="rounded" width={220} height={56} />
+          <FormControl sx={{ minWidth: 200 }}>
+            <Skeleton variant="rounded" width={200} height={56} />
+          </FormControl>
         </Box>
         
         {/* Tabs */}
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} variant="circular" width={36} height={36} />
-          ))}
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center',
+          mb: 1,
+          width: '100%',
+          minWidth: 0,
+          overflow: 'hidden',
+        }}>
+          <Box sx={{ 
+            display: 'flex', 
+            gap: 1, 
+            flexGrow: 1, 
+            minWidth: 'auto',
+            '& > *': { flexShrink: 0 }
+          }}>
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton 
+                key={i} 
+                variant="circular"
+                width={36} 
+                height={36}
+              />
+            ))}
+          </Box>
+          <Skeleton variant="rounded" width={140} height={32} sx={{ ml: 1 }} />
         </Box>
         
-        {/* Content area - only show insights skeleton if on insights tab */}
-        {validSelectedTab === 0 ? (
-          <InsightsSkeletonLayout />
-        ) : (
-          <Skeleton variant="rectangular" height={400} />
-        )}
+        {/* Content area - show appropriate skeleton for each tab */}
+        {getSkeletonForTab(validSelectedTab, false)}
       </Box>
     );
   }

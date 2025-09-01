@@ -3,6 +3,8 @@ import { Paper, Typography, Button, Box, Stack, Tooltip, Skeleton, CircularProgr
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
+
 import { FightFragment } from '../../graphql/generated';
 
 import { FightDetails } from './FightDetails';
