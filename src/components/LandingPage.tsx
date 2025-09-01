@@ -12,9 +12,7 @@ import { useAppDispatch } from '../store/useAppDispatch';
 // Styled components using your existing design
 const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  background: theme.palette.mode === 'dark' 
-    ? theme.palette.background.default 
-    : 'transparent',
+  background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
   position: 'relative',
   overflowX: 'hidden',
   overflowY: 'visible',

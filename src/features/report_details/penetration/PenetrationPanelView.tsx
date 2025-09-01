@@ -61,7 +61,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
               '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
           }}
         >
-         ✒️ Penetration Analysis
+          ✒️ Penetration Analysis
         </Typography>
 
         <Alert severity="info" sx={{ mt: 2 }}>

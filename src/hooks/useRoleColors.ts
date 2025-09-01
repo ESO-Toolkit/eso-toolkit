@@ -57,9 +57,7 @@ export const useRoleColors = (): RoleColors => {
       getAccordionStyles: () => ({
         background:
           'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(213 201 255 / 15%) 50%, rgb(255 255 255 / 8%) 100%)',
-        border: isDarkMode
-          ? '1px solid rgba(66, 45, 45, 0.1)'
-          : '1px solid rgba(15, 23, 42, 0.12)',
+        border: isDarkMode ? '1px solid rgba(66, 45, 45, 0.1)' : '1px solid rgba(15, 23, 42, 0.12)',
         boxShadow: isDarkMode
           ? '0 8px 32px 0 rgba(0, 0, 0, 0.37)'
           : '0 4px 12px 0 rgba(15, 23, 42, 0.08)',

@@ -466,31 +466,30 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       }}
                     >
                       <Typography
-  variant="body2"
-  sx={{
-    color: theme.palette.mode === 'dark' ? 'white' : 'black',
-    fontSize: '0.8rem',
-    fontWeight: 300,
-    display: 'inline',
-  }}
->
-  {info.stamina !== null && info.maxStamina !== null ? (
-    <>
-      {info.stamina}/{info.maxStamina} (
-      <span
-        style={{
-          fontWeight: 800,
-        }}
-      >
-        {Math.round((info.stamina / info.maxStamina) * 100)}%
-      </span>
-      )
-    </>
-  ) : (
-    info.stamina ?? 'Unknown'
-  )}
-</Typography>
-
+                        variant="body2"
+                        sx={{
+                          color: theme.palette.mode === 'dark' ? 'white' : 'black',
+                          fontSize: '0.8rem',
+                          fontWeight: 300,
+                          display: 'inline',
+                        }}
+                      >
+                        {info.stamina !== null && info.maxStamina !== null ? (
+                          <>
+                            {info.stamina}/{info.maxStamina} (
+                            <span
+                              style={{
+                                fontWeight: 800,
+                              }}
+                            >
+                              {Math.round((info.stamina / info.maxStamina) * 100)}%
+                            </span>
+                            )
+                          </>
+                        ) : (
+                          (info.stamina ?? 'Unknown')
+                        )}
+                      </Typography>
                     </Box>
                   </Box>
                 </Box>

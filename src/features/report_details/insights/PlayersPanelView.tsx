@@ -627,7 +627,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
     return (
       <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
         <Typography variant="h6" gutterBottom>
-        🫂 Raid Roster
+          🫂 Raid Roster
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Loading player data...
