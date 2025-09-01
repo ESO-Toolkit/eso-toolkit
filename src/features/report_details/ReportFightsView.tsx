@@ -7,7 +7,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  Skeleton,
   Collapse,
   Switch,
   FormControlLabel,
@@ -19,6 +18,7 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/generated';
 import { RootState } from '../../store/storeWithHistory';
 
@@ -535,7 +535,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Use boss name without instance count for progression tracking
       // Instance count should only be used for encounter IDs, not for determining resets
       const bossProgressionKey = bossName; // Just the boss name, not including instance count
-      const bossInstanceKey = `${bossName}-${instanceCount}`; // For unique encounter IDs
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
@@ -552,100 +551,25 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName),
       });
 
-      // Check if this represents a reset (going back to an earlier boss after progressing)
+      // SIMPLIFIED APPROACH: Don't try to separate trial instances
+      // Just group all bosses from the same trial together
+      // This avoids all the complex edge cases and false separations
       let shouldStartNewRun = false;
 
-      // Special handling for trials with variable boss mechanics
-      const isCloudrest = trialName.includes('Cloudrest');
-      const isAsylum = trialName.includes('Asylum Sanctorium');
-      const isLucentCitadel =
-        trialName.includes('Lucent Citadel') || trialName.includes("Sanity's Edge");
-
-      if (bossInstancesSeen.has(bossProgressionKey)) {
-        // We've seen this boss name before (regardless of instance count)
-        // Check if we've progressed past it to other bosses
-        const lastSeenIndex = bossProgressionOrder.lastIndexOf(bossProgressionKey);
-        const bossesAfterLastSeen = bossProgressionOrder.slice(lastSeenIndex + 1);
-        const uniqueBossesAfter = [...new Set(bossesAfterLastSeen)];
-
-        // For Cloudrest and Asylum, be more lenient about "resets"
-        // These trials allow repeated attempts at the main boss with different mini combinations
-        if (isCloudrest || isAsylum) {
-          // Only consider it a reset if there's a significant time gap (> 10 minutes)
-          // or if we're clearly starting from the beginning again
-          const timeSinceLastSeen =
-            currentBoss.startTime -
-            (bossFights.find(
-              (f) => `${f.name}-${f.enemyNPCs?.[0]?.instanceCount || 1}` === bossInstanceKey
-            )?.endTime || 0);
-
-          const isMainBoss =
-            (isCloudrest && bossName.includes("Z'Maja")) ||
-            (isAsylum && bossName.includes('Saint Olms'));
-
-          // Only start new run if it's been > 10 minutes OR we're going back to first mini after main boss
-          shouldStartNewRun =
-            timeSinceLastSeen > 600000 || // 10 minutes
-            (!isMainBoss &&
-              uniqueBossesAfter.some(
-                (boss) => boss.includes("Z'Maja") || boss.includes('Saint Olms')
-              ));
-        }
-        // Special handling for Lucent Citadel/Sanity's Edge
-        else if (isLucentCitadel) {
-          // For Lucent Citadel, we need to be smart about detecting actual trial resets
-          // 1. If we're seeing the first boss again after seeing later bosses, it's likely a new run
-          // 2. If the boss order is out of sequence, it might be a new run
-          // 3. If there's a significant time gap, it might be a new run
-
-          // Get the last time we saw this boss
-          const lastSeenFight = bossFights.find(
-            (f) =>
-              f.name === currentBoss.name &&
-              (f.enemyNPCs?.[0]?.instanceCount || 1) ===
-                (currentBoss.enemyNPCs?.[0]?.instanceCount || 1)
-          );
-
-          if (lastSeenFight) {
-            const timeSinceLastSeen = currentBoss.startTime - lastSeenFight.endTime;
-
-            // Check if we've seen other bosses since we last saw this one
-            const lastSeenIndex = bossProgressionOrder.lastIndexOf(bossProgressionKey);
-            const bossesAfterLastSeen = bossProgressionOrder.slice(lastSeenIndex + 1);
-
-            // If we've seen other bosses since this one, it's likely a new run
-            shouldStartNewRun = bossesAfterLastSeen.length > 0;
-
-            // If it's been a long time (> 30 minutes), it's definitely a new run
-            if (!shouldStartNewRun && timeSinceLastSeen > 1800000) {
-              // 30 minutes
-              shouldStartNewRun = true;
-            }
-          }
-        } else {
-          // Original logic for other trials
-          shouldStartNewRun = uniqueBossesAfter.length > 0;
-        }
-      }
-
-      if (shouldStartNewRun) {
-        // Reset progression tracking
-        currentRunNumber++;
-        bossInstancesSeen.clear();
-        bossProgressionOrder.length = 0;
-      }
-
-      // Check if we're switching to a different trial - if so, start a new run
+      // Only separate if this is a completely different trial
       const currentRunTrialName = trialNamesByRun[currentRunNumber];
       if (currentRunTrialName && currentRunTrialName !== trialName) {
+        shouldStartNewRun = true;
         console.log('🔄 TRIAL SWITCH DETECTED:', {
           currentRunTrialName,
           newTrialName: trialName,
           bossName,
           startingNewRun: true,
         });
+      }
 
-        // Start a new run for the different trial
+      if (shouldStartNewRun) {
+        // Reset progression tracking
         currentRunNumber++;
         bossInstancesSeen.clear();
         bossProgressionOrder.length = 0;
@@ -659,7 +583,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       trialNamesByRun[currentRunNumber] = trialName;
 
       const trialRunId = `${trialName}-run-${currentRunNumber}`;
-      const trialRunName = `${trialName} #${currentRunNumber}`;
+      const trialRunName = `${trialName}`;
 
       // Find or create the trial run
       let currentTrialRun = trialRuns.find((run) => run.id === trialRunId);
@@ -865,75 +789,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   };
 
   if (loading) {
-    return (
-      <Paper
-        elevation={0}
-        square
-        sx={{
-          p: 0,
-          m: 0,
-          width: '100%',
-          maxWidth: '100vw',
-          boxSizing: 'border-box',
-          background: 'transparent',
-        }}
-      >
-        <Box
-          sx={{
-            p: { xs: 2, sm: 3 },
-            mb: 3,
-            backgroundColor: 'background.paper',
-            borderRadius: { xs: 0, sm: 1 },
-            boxShadow: 2,
-          }}
-        >
-          <Skeleton variant="rounded" width={200} height={40} sx={{ mb: 3 }} />
-          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-            <Skeleton variant="rounded" width={120} height={40} />
-            <Skeleton variant="rounded" width={160} height={40} />
-          </Box>
-          <Box sx={{ mb: 3 }}>
-            <Skeleton variant="text" width={300} height={32} sx={{ mb: 2 }} />
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                gap: 2,
-              }}
-            >
-              {[...Array(4)].map((_, i) => (
-                <Paper key={i} sx={{ p: 2, height: '100%' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
-                    <Skeleton variant="circular" width={40} height={40} sx={{ mr: 1.5 }} />
-                    <Skeleton variant="text" width={120} height={24} />
-                  </Box>
-                  <Skeleton variant="rounded" width="100%" height={120} sx={{ mb: 1.5 }} />
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                    <Skeleton variant="text" width={80} height={20} />
-                    <Skeleton variant="text" width={60} height={20} />
-                  </Box>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Skeleton variant="text" width={100} height={20} />
-                    <Skeleton variant="text" width={40} height={20} />
-                  </Box>
-                </Paper>
-              ))}
-            </Box>
-          </Box>
-          <Skeleton variant="text" width={260} sx={{ mb: 2 }} />
-          {[...Array(3)].map((_, idx) => (
-            <Box key={idx} sx={{ mb: 2 }}>
-              <Skeleton variant="text" width={140} height={28} sx={{ mb: 1 }} />
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                {[...Array(6)].map((__, j) => (
-                  <Skeleton key={j} variant="rounded" width={88} height={36} />
-                ))}
-              </Box>
-            </Box>
-          ))}
-        </Box>
-      </Paper>
-    );
+    return <ReportFightsSkeleton />;
   }
 
   if (!fights?.length) {
