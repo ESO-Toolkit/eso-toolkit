@@ -7,7 +7,6 @@ import {
   List,
   ListItem,
   ListItemButton,
-  Skeleton,
   Collapse,
   Switch,
   FormControlLabel,
@@ -19,9 +18,9 @@ import React from 'react';
 import { useSelector } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 
+import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 import { FightFragment, ReportFragment } from '../../graphql/generated';
 import { RootState } from '../../store/storeWithHistory';
-import { ReportFightsSkeleton } from '../../components/ReportFightsSkeleton';
 
 import { BossAvatar } from './BossAvatar';
 
@@ -536,7 +535,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Use boss name without instance count for progression tracking
       // Instance count should only be used for encounter IDs, not for determining resets
       const bossProgressionKey = bossName; // Just the boss name, not including instance count
-      const bossInstanceKey = `${bossName}-${instanceCount}`; // For unique encounter IDs
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
@@ -557,7 +555,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Just group all bosses from the same trial together
       // This avoids all the complex edge cases and false separations
       let shouldStartNewRun = false;
-      
+
       // Only separate if this is a completely different trial
       const currentRunTrialName = trialNamesByRun[currentRunNumber];
       if (currentRunTrialName && currentRunTrialName !== trialName) {

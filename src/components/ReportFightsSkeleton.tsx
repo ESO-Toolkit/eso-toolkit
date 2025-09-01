@@ -1,13 +1,5 @@
-import {
-  Box,
-  Paper,
-  Typography,
-  Skeleton,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-} from '@mui/material';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import { Box, Paper, Skeleton, Accordion, AccordionSummary, AccordionDetails } from '@mui/material';
 import React from 'react';
 
 interface ReportFightsSkeletonProps {
@@ -15,9 +7,7 @@ interface ReportFightsSkeletonProps {
   instanceCount?: number;
 }
 
-export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
-  instanceCount,
-}) => {
+export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ instanceCount }) => {
   // Generate a realistic number of instances (3-6) if not specified
   const actualInstanceCount = React.useMemo(() => {
     if (instanceCount !== undefined) return instanceCount;
@@ -81,7 +71,9 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                     <Skeleton variant="text" width={180} height={24} />
                     <Skeleton variant="rounded" width={80} height={20} />
-                    {actualInstanceCount > 1 && <Skeleton variant="rounded" width={30} height={20} />}
+                    {actualInstanceCount > 1 && (
+                      <Skeleton variant="rounded" width={30} height={20} />
+                    )}
                   </Box>
                 </Box>
                 {/* Kill Counter Circle */}
@@ -90,99 +82,103 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
             </AccordionSummary>
             <AccordionDetails>
               {/* Boss Encounters */}
-              {Array.from({ length: Math.floor(Math.random() * 3) + 3 }).map((_, encounterIndex) => (
-                <Box
-                  key={encounterIndex}
-                  sx={{
-                    mb: 2,
-                    p: 2,
-                    borderRadius: 2,
-                    border: '1px solid rgba(255, 255, 255, 0.0)',
-                  }}
-                >
-                  {/* Encounter Header */}
+              {Array.from({ length: Math.floor(Math.random() * 3) + 3 }).map(
+                (_, encounterIndex) => (
                   <Box
+                    key={encounterIndex}
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      mb: 1,
+                      mb: 2,
+                      p: 2,
+                      borderRadius: 2,
+                      border: '1px solid rgba(255, 255, 255, 0.0)',
                     }}
                   >
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                      <Skeleton variant="circular" width={32} height={32} />
-                      <Skeleton variant="text" width={120} height={20} />
+                    {/* Encounter Header */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        mb: 1,
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                        <Skeleton variant="circular" width={32} height={32} />
+                        <Skeleton variant="text" width={120} height={20} />
+                      </Box>
+                      {/* Trash toggle (shown randomly) */}
+                      {Math.random() > 0.5 && (
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Skeleton variant="text" width={30} height={16} />
+                          <Skeleton variant="rounded" width={40} height={24} />
+                        </Box>
+                      )}
                     </Box>
-                    {/* Trash toggle (shown randomly) */}
-                    {Math.random() > 0.5 && (
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Skeleton variant="text" width={30} height={16} />
-                        <Skeleton variant="rounded" width={40} height={24} />
-                      </Box>
-                    )}
-                  </Box>
 
-                  {/* Fight Cards Grid */}
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                      gap: 1,
-                    }}
-                  >
-                    {/* Generate 2-5 fight cards per encounter */}
-                    {Array.from({ length: Math.floor(Math.random() * 4) + 2 }).map((_, cardIndex) => (
-                      <Box
-                        key={cardIndex}
-                        sx={{
-                          width: '100%',
-                          height: 64,
-                          borderRadius: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          position: 'relative',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {/* Fight card background gradient effect */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            right: '20%', // Show partial fill to simulate wipe/kill states
-                            background: `linear-gradient(90deg, rgba(76, 217, 100, 0.1) 0%, rgba(94, 234, 255, 0.1) 100%)`,
-                            borderRadius: 1,
-                          }}
-                        />
-                        {/* Status badge skeleton */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -120%)',
-                          }}
-                        >
-                          <Skeleton variant="rounded" width={24} height={16} />
-                        </Box>
-                        {/* Time/duration skeleton */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 6,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                          }}
-                        >
-                          <Skeleton variant="text" width={60} height={12} />
-                        </Box>
-                      </Box>
-                    ))}
+                    {/* Fight Cards Grid */}
+                    <Box
+                      sx={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                        gap: 1,
+                      }}
+                    >
+                      {/* Generate 2-5 fight cards per encounter */}
+                      {Array.from({ length: Math.floor(Math.random() * 4) + 2 }).map(
+                        (_, cardIndex) => (
+                          <Box
+                            key={cardIndex}
+                            sx={{
+                              width: '100%',
+                              height: 64,
+                              borderRadius: 1,
+                              border: '1px solid',
+                              borderColor: 'divider',
+                              position: 'relative',
+                              overflow: 'hidden',
+                            }}
+                          >
+                            {/* Fight card background gradient effect */}
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                bottom: 0,
+                                right: '20%', // Show partial fill to simulate wipe/kill states
+                                background: `linear-gradient(90deg, rgba(76, 217, 100, 0.1) 0%, rgba(94, 234, 255, 0.1) 100%)`,
+                                borderRadius: 1,
+                              }}
+                            />
+                            {/* Status badge skeleton */}
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -120%)',
+                              }}
+                            >
+                              <Skeleton variant="rounded" width={24} height={16} />
+                            </Box>
+                            {/* Time/duration skeleton */}
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                bottom: 6,
+                                left: '50%',
+                                transform: 'translateX(-50%)',
+                              }}
+                            >
+                              <Skeleton variant="text" width={60} height={12} />
+                            </Box>
+                          </Box>
+                        )
+                      )}
+                    </Box>
                   </Box>
-                </Box>
-              ))}
+                )
+              )}
             </AccordionDetails>
           </Accordion>
         ))}
