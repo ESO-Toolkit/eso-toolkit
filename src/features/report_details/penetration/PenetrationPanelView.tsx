@@ -58,7 +58,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
             mb: 2,
             fontFamily: 'Space Grotesk, sans-serif',
             textShadow:
-              '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+              '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.2)',
           }}
         >
           ✒️ Penetration Analysis
@@ -80,7 +80,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           mb: 2,
           fontFamily: 'Space Grotesk, sans-serif',
           textShadow:
-            '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+            '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.1), 0 8px 16px rgba(0, 0, 0, 0.2)',
         }}
       >
         ✒️ Penetration Analysis

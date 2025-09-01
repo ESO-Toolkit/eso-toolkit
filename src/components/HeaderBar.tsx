@@ -149,6 +149,30 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+// Calculator SVG icon component
+type CalculatorProps = {
+  size: string;
+};
+
+const Calculator = ({ size }: CalculatorProps): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 48 48"
+    aria-hidden="true"
+    focusable="false"
+  >
+    <path fill="#616161" d="M40 16H8v24c0 2.2 1.8 4 4 4h24c2.2 0 4-1.8 4-4V16z"/>
+    <path fill="#424242" d="M36 4H12C9.8 4 8 5.8 8 8v9h32V8c0-2.2-1.8-4-4-4z"/>
+    <path fill="#9CCC65" d="M36 14H12c-.6 0-1-.4-1-1V8c0-.6.4-1 1-1h24c.6 0 1 .4 1 1v5c0 .6-.4 1-1 1z"/>
+    <path fill="#33691E" d="M33 10h2v2h-2zm-4 0h2v2h-2z"/>
+    <path fill="#FF5252" d="M36 23h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1z"/>
+    <path fill="#E0E0E0" d="M15 23h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm-14 6h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm-14 6h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm-14 6h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm7 0h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1z"/>
+    <path fill="#BDBDBD" d="M36 29h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm0 6h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1zm0 6h-3c-.6 0-1-.4-1-1v-2c0-.6.4-1 1-1h3c.6 0 1 .4 1 1v2c0 .6-.4 1-1 1z"/>
+  </svg>
+);
+
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
   const navigate = useNavigate();
@@ -187,7 +211,7 @@ export const HeaderBar: React.FC = () => {
     },
     {
       text: 'Calculator',
-      icon: '🧮',
+      icon: <Calculator size="18" />,
       href: 'https://esohelper.tools/calculator',
     },
     {
@@ -249,7 +273,6 @@ export const HeaderBar: React.FC = () => {
                 href={item.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="u-focus-ring u-hover-glow"
                 startIcon={
                   typeof item.icon === 'string' ? (
                     <Box
@@ -264,17 +287,121 @@ export const HeaderBar: React.FC = () => {
                     item.icon
                   )
                 }
+                sx={{
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
+                    borderRadius: 'inherit',
+                  },
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    background: theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.08)'
+                      : 'rgba(59, 130, 246, 0.06)',
+                    borderColor: theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.2)'
+                      : 'rgba(59, 130, 246, 0.15)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                      : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                    '&::before': {
+                      opacity: 1,
+                    },
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                }}
               >
                 {item.text}
               </Button>
             ))}
             <ThemeToggle />
             {isLoggedIn ? (
-              <Button color="inherit" onClick={handleLogout} className="u-focus-ring u-hover-glow">
+              <Button 
+                color="inherit" 
+                onClick={handleLogout}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    background: theme.palette.mode === 'dark'
+                      ? 'rgba(239, 68, 68, 0.08)'
+                      : 'rgba(220, 38, 38, 0.06)',
+                    borderColor: theme.palette.mode === 'dark'
+                      ? 'rgba(239, 68, 68, 0.2)'
+                      : 'rgba(220, 38, 38, 0.15)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                      : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                }}
+              >
                 Log out
               </Button>
             ) : (
-              <Button color="inherit" onClick={handleLogin} className="u-focus-ring u-hover-glow">
+              <Button 
+                color="inherit" 
+                onClick={handleLogin}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    background: theme.palette.mode === 'dark'
+                      ? 'rgba(34, 197, 94, 0.08)'
+                      : 'rgba(22, 163, 74, 0.06)',
+                    borderColor: theme.palette.mode === 'dark'
+                      ? 'rgba(34, 197, 94, 0.2)'
+                      : 'rgba(22, 163, 74, 0.15)',
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 4px 20px rgba(34, 197, 94, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                      : '0 4px 20px rgba(22, 163, 74, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                }}
+              >
                 Log in
               </Button>
             )}

@@ -260,7 +260,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             xs: '1fr',
             sm: 'repeat(1, 1fr)',
             md: 'repeat(2, 1fr)',
-            lg: 'repeat(3, 1fr)',
+            lg: deathInfos.length < 3 ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)',
           },
           gap: 2,
         }}
