@@ -13,9 +13,6 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         cache: 'npm'
-        cache-dependency-path: |
-          package.json
-          package-lock.json
 
     - name: Install dependencies
       shell: bash

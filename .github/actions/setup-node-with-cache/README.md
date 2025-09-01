@@ -25,7 +25,8 @@ steps:
 
 1. Sets up Node.js using `actions/setup-node@v4`
 2. Configures npm caching with cache invalidation based on both `package.json` and `package-lock.json`
-3. Installs dependencies using `npm ci`
+3. Updates npm to the latest version to avoid known issues with optional dependencies
+4. Installs dependencies using `npm ci` with optimized flags to avoid common CI issues
 
 ## Benefits
 
