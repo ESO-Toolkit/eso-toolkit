@@ -12,7 +12,7 @@ import { ReportFightProvider } from '../ReportFightContext';
 export const AppLayout: React.FC = () => {
   const { isLoggedIn } = useAuth();
   const location = useLocation();
-  
+
   // Check if we're on the landing page (root path)
   const isLandingPage = location.pathname === '/' || location.pathname === '';
 
