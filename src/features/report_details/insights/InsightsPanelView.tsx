@@ -1,14 +1,4 @@
-import {
-  Box,
-  Typography,
-  Paper,
-  List,
-  ListItem,
-  ListItemText,
-  CircularProgress,
-  Skeleton,
-  useTheme,
-} from '@mui/material';
+import { Box, Typography, Paper, List, ListItem, ListItemText, useTheme } from '@mui/material';
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';

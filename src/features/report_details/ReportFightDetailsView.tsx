@@ -1,9 +1,16 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Paper, Typography, Button, Box, Stack, Tooltip, Skeleton, CircularProgress } from '@mui/material';
+import {
+  Paper,
+  Typography,
+  Button,
+  Box,
+  Stack,
+  Tooltip,
+  Skeleton,
+  CircularProgress,
+} from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-
-import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
 
 import { FightFragment } from '../../graphql/generated';
 

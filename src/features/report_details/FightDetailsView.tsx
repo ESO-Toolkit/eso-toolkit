@@ -22,13 +22,13 @@ import {
   FormControl,
   FormControlLabel,
   Switch,
-  Stack,
   Skeleton,
   Icon,
 } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/generated';
+import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
 
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
@@ -45,8 +45,6 @@ import { BuffsOverviewPanel } from './insights/BuffsOverviewPanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
-
-import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
 import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
 import { TalentsGridPanel } from './talents/TalentsGridPanel';
@@ -80,35 +78,34 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             <Skeleton variant="rounded" width={200} height={56} />
           </FormControl>
         </Box>
-        
+
         {/* Tabs */}
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center',
-          mb: 1,
-          width: '100%',
-          minWidth: 0,
-          overflow: 'hidden',
-        }}>
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 1, 
-            flexGrow: 1, 
-            minWidth: 'auto',
-            '& > *': { flexShrink: 0 }
-          }}>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 1,
+            width: '100%',
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              flexGrow: 1,
+              minWidth: 'auto',
+              '& > *': { flexShrink: 0 },
+            }}
+          >
             {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton 
-                key={i} 
-                variant="circular"
-                width={36} 
-                height={36}
-              />
+              <Skeleton key={i} variant="circular" width={36} height={36} />
             ))}
           </Box>
           <Skeleton variant="rounded" width={140} height={32} sx={{ ml: 1 }} />
         </Box>
-        
+
         {/* Content area - show appropriate skeleton for each tab */}
         {getSkeletonForTab(validSelectedTab, false)}
       </Box>

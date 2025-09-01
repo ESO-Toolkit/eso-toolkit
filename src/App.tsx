@@ -1,7 +1,5 @@
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-
-import { TabAwareLoadingSkeleton } from './components/TabAwareLoadingSkeleton';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route } from 'react-router-dom';

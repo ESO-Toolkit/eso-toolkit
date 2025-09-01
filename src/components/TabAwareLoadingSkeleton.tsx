@@ -7,7 +7,7 @@ export const TabAwareLoadingSkeleton: React.FC = () => {
   // Check if we're on a fight details route
   const isFightRoute = (): boolean => {
     if (typeof window === 'undefined') return false;
-    
+
     const path = window.location.pathname;
     return path.includes('/fight/') || path.includes('/live');
   };
@@ -24,7 +24,7 @@ export const TabAwareLoadingSkeleton: React.FC = () => {
   // Read from browser URL directly since useSearchParams isn't available during Suspense
   const getSelectedTabFromURL = (): number => {
     if (typeof window === 'undefined') return 0;
-    
+
     const urlParams = new URLSearchParams(window.location.search);
     return Number(urlParams.get('selectedTabId')) || 0;
   };

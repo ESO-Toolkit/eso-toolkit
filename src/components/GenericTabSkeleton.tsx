@@ -10,7 +10,7 @@ interface GenericTabSkeletonProps {
 }
 
 export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
-  title = "Loading...",
+  title = 'Loading...',
   showChart = false,
   chartHeight = 300,
   showTable = true,
@@ -20,27 +20,49 @@ export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
     <Box sx={{ mt: 2 }}>
       <Paper elevation={2} sx={{ p: 2 }}>
         <Skeleton variant="text" width="200px" height={28} sx={{ mb: 2 }} />
-        
+
         {showChart && (
           <Box sx={{ mb: 3 }}>
-            <Skeleton variant="rectangular" width="100%" height={chartHeight} sx={{ borderRadius: 1 }} />
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height={chartHeight}
+              sx={{ borderRadius: 1 }}
+            />
           </Box>
         )}
-        
+
         {showTable && (
           <Box>
             {/* Table header */}
-            <Box sx={{ display: 'flex', gap: 2, mb: 1, pb: 1, borderBottom: '1px solid rgba(0,0,0,0.12)' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                gap: 2,
+                mb: 1,
+                pb: 1,
+                borderBottom: '1px solid rgba(0,0,0,0.12)',
+              }}
+            >
               <Skeleton variant="text" width="30%" height={20} />
               <Skeleton variant="text" width="20%" height={20} />
               <Skeleton variant="text" width="15%" height={20} />
               <Skeleton variant="text" width="15%" height={20} />
               <Skeleton variant="text" width="20%" height={20} />
             </Box>
-            
+
             {/* Table rows */}
             {Array.from({ length: tableRows }).map((_, index) => (
-              <Box key={index} sx={{ display: 'flex', gap: 2, alignItems: 'center', py: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+              <Box
+                key={index}
+                sx={{
+                  display: 'flex',
+                  gap: 2,
+                  alignItems: 'center',
+                  py: 1.5,
+                  borderBottom: '1px solid rgba(0,0,0,0.06)',
+                }}
+              >
                 <Skeleton variant="circular" width={32} height={32} />
                 <Skeleton variant="text" width="25%" height={16} />
                 <Skeleton variant="text" width="15%" height={16} />
