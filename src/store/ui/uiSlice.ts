@@ -2,69 +2,57 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 export interface UIState {
   darkMode: boolean;
-  sidebarOpen: boolean;
-  showExperimentalTabs: boolean;
-  selectedTargetId: number | null;
   selectedPlayerId: number | null;
   selectedTabId: number | null;
+  selectedTargetId: number | null;
+  showExperimentalTabs: boolean;
+  sidebarOpen: boolean;
 }
 
-// Detect system theme preference
-const getSystemThemePreference = (): boolean => {
-  if (typeof window !== 'undefined' && window.matchMedia) {
-    return window.matchMedia('(prefers-color-scheme: dark)').matches;
-  }
-  // Default to dark mode if we can't detect system preference
-  return true;
-};
-
 const initialState: UIState = {
-  darkMode: true, // Default to dark mode, Redux Persist will override with saved value
-  sidebarOpen: false,
-  showExperimentalTabs: false,
-  selectedTargetId: null,
+  darkMode: true, // Default to dark mode
   selectedPlayerId: null,
   selectedTabId: null,
+  selectedTargetId: null,
+  showExperimentalTabs: false,
+  sidebarOpen: false,
 };
 
 const uiSlice = createSlice({
   name: 'ui',
   initialState,
   reducers: {
-    setDarkMode(state, action: PayloadAction<boolean>) {
+    setDarkMode: (state, action: PayloadAction<boolean>) => {
       state.darkMode = action.payload;
     },
-    toggleDarkMode(state) {
+    toggleDarkMode: (state) => {
       state.darkMode = !state.darkMode;
     },
-    syncWithSystemTheme(state) {
-      state.darkMode = getSystemThemePreference();
+    syncWithSystemTheme: (state) => {
+      // This will be handled by the hook logic
+      const prefersDark =
+        typeof window !== 'undefined' && window.matchMedia
+          ? window.matchMedia('(prefers-color-scheme: dark)').matches
+          : true;
+      state.darkMode = prefersDark;
     },
-    // Add action to clear persisted data for debugging
-    clearPersistedData(state) {
-      // This will trigger a re-persist with current state
-      state.darkMode = getSystemThemePreference();
-    },
-    setSidebarOpen(state, action: PayloadAction<boolean>) {
-      state.sidebarOpen = action.payload;
-    },
-    toggleSidebar(state) {
-      state.sidebarOpen = !state.sidebarOpen;
-    },
-    setShowExperimentalTabs(state, action: PayloadAction<boolean>) {
-      state.showExperimentalTabs = action.payload;
-    },
-    toggleExperimentalTabs(state) {
-      state.showExperimentalTabs = !state.showExperimentalTabs;
-    },
-    setSelectedTargetId(state, action: PayloadAction<number | null>) {
-      state.selectedTargetId = action.payload;
-    },
-    setSelectedPlayerId(state, action: PayloadAction<number | null>) {
+    setSelectedPlayerId: (state, action: PayloadAction<number | null>) => {
       state.selectedPlayerId = action.payload;
     },
-    setSelectedTabId(state, action: PayloadAction<number | null>) {
+    setSelectedTabId: (state, action: PayloadAction<number | null>) => {
       state.selectedTabId = action.payload;
+    },
+    setSelectedTargetId: (state, action: PayloadAction<number | null>) => {
+      state.selectedTargetId = action.payload;
+    },
+    setShowExperimentalTabs: (state, action: PayloadAction<boolean>) => {
+      state.showExperimentalTabs = action.payload;
+    },
+    setSidebarOpen: (state, action: PayloadAction<boolean>) => {
+      state.sidebarOpen = action.payload;
+    },
+    toggleSidebar: (state) => {
+      state.sidebarOpen = !state.sidebarOpen;
     },
   },
 });
@@ -73,13 +61,11 @@ export const {
   setDarkMode,
   toggleDarkMode,
   syncWithSystemTheme,
-  clearPersistedData,
-  setSidebarOpen,
-  toggleSidebar,
-  setShowExperimentalTabs,
-  toggleExperimentalTabs,
-  setSelectedTargetId,
   setSelectedPlayerId,
   setSelectedTabId,
+  setSelectedTargetId,
+  setShowExperimentalTabs,
+  setSidebarOpen,
+  toggleSidebar,
 } = uiSlice.actions;
 export default uiSlice.reducer;

@@ -3,12 +3,11 @@ import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
+import discordIcon from '../assets/discord-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 
 import { ThemeToggle } from './ThemeToggle';
-
-import discordIcon from '@/assets/discord-icon.svg';
 
 // Animated Hamburger Icon
 const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) => ({

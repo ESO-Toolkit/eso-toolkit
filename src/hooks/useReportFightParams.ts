@@ -7,11 +7,15 @@ export function useReportFightParams(): {
   fightId: string | undefined;
 } {
   // Access the router state from redux-first-history
-  const location = useSelector((state: RootState) => state.router.location);
+  const location = useSelector((state: RootState) => state.router?.location);
+
+  // Fallback to browser location if Redux router state is not available
+  const pathname =
+    location?.pathname || (typeof window !== 'undefined' ? window.location.pathname : '');
 
   // Parse the pathname to extract reportId and fightId
   // Expected format: /report/:reportId/fight/:fightId or /report/:reportId
-  const pathParts = location?.pathname?.split('/').filter(Boolean) || [];
+  const pathParts = pathname?.split('/').filter(Boolean) || [];
 
   let reportId: string | undefined;
   let fightId: string | undefined;

@@ -96,7 +96,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   if (isMasterDataLoading || isDebuffEventsLoading) {
     return (
       <DebuffUptimesView
-        selectedTargetId={selectedTargetId || null}
+        selectedTargetId={selectedTargetId}
         debuffUptimes={[]}
         isLoading={true}
         showAllDebuffs={showAllDebuffs}
@@ -109,7 +109,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
 
   return (
     <DebuffUptimesView
-      selectedTargetId={selectedTargetId || null}
+      selectedTargetId={selectedTargetId}
       debuffUptimes={debuffUptimes}
       isLoading={false}
       showAllDebuffs={showAllDebuffs}

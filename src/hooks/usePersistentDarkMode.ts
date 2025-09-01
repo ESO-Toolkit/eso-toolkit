@@ -44,13 +44,11 @@ export const usePersistentDarkMode = (): UsePersistentDarkModeReturn => {
   const dispatch = useDispatch();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);
 
-  // Initialize dark mode from localStorage on mount
+  // Initialize dark mode from localStorage on mount (only once)
   useEffect(() => {
     const savedPreference = getSavedDarkModePreference();
-    if (savedPreference !== darkMode) {
-      dispatch(setDarkMode(savedPreference));
-    }
-  }, [dispatch, darkMode]);
+    dispatch(setDarkMode(savedPreference));
+  }, [dispatch]); // Only depend on dispatch, not darkMode
 
   // Save to localStorage whenever darkMode changes
   useEffect(() => {
