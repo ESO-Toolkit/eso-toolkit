@@ -710,7 +710,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                     >
                       {/* Left column: identity, talents, gear, issues */}
                       <Box flex={0} minWidth={0}>
-                        <Box display="flex" alignItems="center" mb={1.5} sx={{ position: 'relative' }}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          mb={1.5}
+                          sx={{ position: 'relative' }}
+                        >
                           <PlayerIcon player={player} />
                           <Box>
                             <Box display="flex" alignItems="center" gap={0.75}>
@@ -759,7 +764,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             enterTouchDelay={0}
                             leaveTouchDelay={3000}
                           >
-                            <Box 
+                            <Box
                               sx={{
                                 position: 'absolute',
                                 top: 0,
@@ -779,85 +784,89 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 role="img"
                                 aria-label={`Role: ${player.role === 'tank' ? 'Tank' : player.role === 'healer' ? 'Healer' : 'DPS'}`}
                               >
-                                {player.role === 'tank' ? '🛡️' : player.role === 'healer' ? '❤️' : '⚔️'}
+                                {player.role === 'tank'
+                                  ? '🛡️'
+                                  : player.role === 'healer'
+                                    ? '❤️'
+                                    : '⚔️'}
                               </Typography>
                             </Box>
                           </Tooltip>
                         </Box>
                         <Box>
-                            {(() => {
-                              const baseKey = toClassKey(player.type);
-                              const sublines = CLASS_SUBLINES[baseKey];
-                              const classes = parseClasses(player.type);
-                              const fallbackList = classes.length
-                                ? classes
-                                : ([player.type].filter(Boolean) as string[]);
-                              const list = sublines ? sublines : fallbackList.slice(0, 3);
-                              const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
-                              return (
-                                <Box
-                                  sx={{
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    minWidth: 0,
-                                    mt: 0.25,
-                                    mb: 0.5,
-                                    pr: 1,
-                                    pl: 0,
-                                  }}
-                                >
-                                  <OneLineAutoFit minScale={0.9}>
-                                    <Box
-                                      sx={{
-                                        display: 'inline-flex',
-                                        alignItems: 'center',
-                                        gap: 0.5,
-                                        whiteSpace: 'nowrap',
-                                      }}
-                                    >
-                                      {displayList.map((name, idx) => (
-                                        <Tooltip
-                                          key={idx}
-                                          title={list[idx] || name}
-                                          enterTouchDelay={0}
-                                          leaveTouchDelay={3000}
+                          {(() => {
+                            const baseKey = toClassKey(player.type);
+                            const sublines = CLASS_SUBLINES[baseKey];
+                            const classes = parseClasses(player.type);
+                            const fallbackList = classes.length
+                              ? classes
+                              : ([player.type].filter(Boolean) as string[]);
+                            const list = sublines ? sublines : fallbackList.slice(0, 3);
+                            const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
+                            return (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  minWidth: 0,
+                                  mt: 0.25,
+                                  mb: 0.5,
+                                  pr: 1,
+                                  pl: 0,
+                                }}
+                              >
+                                <OneLineAutoFit minScale={0.9}>
+                                  <Box
+                                    sx={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: 0.5,
+                                      whiteSpace: 'nowrap',
+                                    }}
+                                  >
+                                    {displayList.map((name, idx) => (
+                                      <Tooltip
+                                        key={idx}
+                                        title={list[idx] || name}
+                                        enterTouchDelay={0}
+                                        leaveTouchDelay={3000}
+                                      >
+                                        <Box
+                                          sx={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: 0.35,
+                                          }}
                                         >
-                                          <Box
-                                            sx={{
-                                              display: 'inline-flex',
-                                              alignItems: 'center',
-                                              gap: 0.35,
-                                            }}
-                                          >
-                                            {idx > 0 && (
-                                              <Typography
-                                                variant="caption"
-                                                sx={{ color: 'text.secondary', opacity: 0.7 }}
-                                              >
-                                                •
-                                              </Typography>
-                                            )}
-                                            <ClassIcon
-                                              className={baseKey}
-                                              size={12}
-                                              style={{ opacity: 0.8, flexShrink: 0 }}
-                                            />
+                                          {idx > 0 && (
                                             <Typography
                                               variant="caption"
-                                              color="text.secondary"
-                                              noWrap
-                                              sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
+                                              sx={{ color: 'text.secondary', opacity: 0.7 }}
                                             >
-                                              {name}
+                                              •
                                             </Typography>
-                                          </Box>
-                                        </Tooltip>
-                                      ))}
-                                    </Box>
-                                  </OneLineAutoFit>
-                                </Box>
-                              );
-                            })()}
+                                          )}
+                                          <ClassIcon
+                                            className={baseKey}
+                                            size={12}
+                                            style={{ opacity: 0.8, flexShrink: 0 }}
+                                          />
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                            noWrap
+                                            sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
+                                          >
+                                            {name}
+                                          </Typography>
+                                        </Box>
+                                      </Tooltip>
+                                    ))}
+                                  </Box>
+                                </OneLineAutoFit>
+                              </Box>
+                            );
+                          })()}
                         </Box>
                         {/* Talents (title removed for cleaner UI) */}
                         {talents.length > 0 && (
