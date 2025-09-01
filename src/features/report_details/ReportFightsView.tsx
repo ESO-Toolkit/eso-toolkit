@@ -699,33 +699,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       });
     }
 
-    // Post-process to only show run numbers when there are multiple runs of the same zone
-    const zoneRunCounts = trialRuns?.reduce(
-      (acc, run) => {
-        const baseName = run.name.replace(/#\d+/, ''); // Remove existing run numbers
-        acc[baseName] = (acc[baseName] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    // Update trial run names to only show numbers when there are duplicates
+    // Update trial run names to remove any existing run numbers
     const updatedTrialRuns = trialRuns?.map((run) => {
       const baseName = run.name.replace(/#\d+$/, '');
-      const runMatch = run.name.match(/#(\d+)$/);
-      const runNumber = runMatch ? parseInt(runMatch[1]) : 1;
-
-      if (zoneRunCounts[baseName] > 1) {
-        return {
-          ...run,
-          name: `${baseName} #${runNumber}`,
-        };
-      } else {
-        return {
-          ...run,
-          name: baseName,
-        };
-      }
+      
+      return {
+        ...run,
+        name: baseName,
+      };
     });
 
     // Calculate trial difficulty for each individual run based on its own fights
@@ -1114,9 +1095,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         .replace(/#\d+/, '') // Remove run number
                         .trim();
 
-                      // Extract run number
-                      const runMatch = trialRun.name.match(/#(\d+)/);
-                      const runNumber = runMatch ? runMatch[1] : null;
 
                       // Get difficulty label from the calculated trial difficulty
                       const difficultyLabel = trialRun.difficultyLabel;
@@ -1167,23 +1145,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               }}
                             >
                               {difficultyLabel}
-                            </Box>
-                          )}
-                          {runNumber && (
-                            <Box
-                              component="span"
-                              sx={{
-                                fontWeight: 700,
-                                color: '#00bcd4',
-                                backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                                px: 0.75,
-                                py: 0.25,
-                                borderRadius: 1,
-                                fontSize: '0.85em',
-                                flexShrink: 0,
-                              }}
-                            >
-                              #{runNumber}
                             </Box>
                           )}
                         </>
