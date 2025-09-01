@@ -42,7 +42,7 @@ const HeroSection = styled(Box)(({ theme }) => ({
     minHeight: '60vh',
     padding: '1rem 1rem 0rem',
     alignItems: 'flex-start',
-    paddingTop: '0rem',
+    paddingTop: '3rem',
   },
   '&::before': {
     content: '""',
