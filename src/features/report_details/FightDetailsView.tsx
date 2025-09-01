@@ -22,13 +22,13 @@ import {
   FormControl,
   FormControlLabel,
   Switch,
-  Stack,
   Skeleton,
   Icon,
 } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/generated';
+import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
 
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
@@ -72,16 +72,42 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   if (loading) {
     return (
       <Box mt={2}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 3 }}>
-          <Skeleton variant="rounded" width={220} height={56} />
-          <Skeleton variant="rounded" width={220} height={40} />
-        </Stack>
-        <Box sx={{ display: 'flex', gap: 1, mb: 2, overflowX: 'auto' }}>
-          {Array.from({ length: 8 }).map((_, i) => (
-            <Skeleton key={i} variant="circular" width={36} height={36} />
-          ))}
+        {/* Target Selection */}
+        <Box sx={{ mb: 2 }}>
+          <FormControl sx={{ minWidth: 200 }}>
+            <Skeleton variant="rounded" width={200} height={56} />
+          </FormControl>
         </Box>
-        <Skeleton variant="rectangular" height={360} />
+
+        {/* Tabs */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            mb: 1,
+            width: '100%',
+            minWidth: 0,
+            overflow: 'hidden',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'flex',
+              gap: 1,
+              flexGrow: 1,
+              minWidth: 'auto',
+              '& > *': { flexShrink: 0 },
+            }}
+          >
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} variant="circular" width={36} height={36} />
+            ))}
+          </Box>
+          <Skeleton variant="rounded" width={140} height={32} sx={{ ml: 1 }} />
+        </Box>
+
+        {/* Content area - show appropriate skeleton for each tab */}
+        {getSkeletonForTab(validSelectedTab, false)}
       </Box>
     );
   }

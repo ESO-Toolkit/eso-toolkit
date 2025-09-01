@@ -1,5 +1,14 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
-import { Paper, Typography, Button, Box, Stack, Tooltip, Skeleton } from '@mui/material';
+import {
+  Paper,
+  Typography,
+  Button,
+  Box,
+  Stack,
+  Tooltip,
+  Skeleton,
+  CircularProgress,
+} from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -36,7 +45,11 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
           <Skeleton variant="text" width={140} height={28} />
         </Stack>
         <Skeleton variant="text" width={200} />
-        <Skeleton variant="rectangular" height={220} sx={{ mt: 2 }} />
+        <Box sx={{ mt: 2 }}>
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        </Box>
       </Paper>
     );
   }

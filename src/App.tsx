@@ -36,9 +36,9 @@ const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect }))
 );
 
-// Loading fallback component
+// Loading fallback component - simple and fast
 const LoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="200px">
+  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
     <CircularProgress />
   </Box>
 );
