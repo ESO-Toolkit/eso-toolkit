@@ -413,22 +413,22 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       return {
         // Dark mode fight card colors
         killGradient:
-          'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
+          'linear-gradient(90deg, rgba(76, 217, 99, 0.88) 0%, rgba(94, 234, 255, 0.85) 100%)',
         killShadow: '0 0 6px rgba(76, 217, 100, 0.45)',
         trashGradient: 'linear-gradient(90deg, rgb(23 43 48 / 30%) 0%, rgb(0 0 0 / 85%) 100%)',
         trashShadow: '0 0 6px rgba(189, 195, 199, 0.35)',
         falsePositiveGradient:
           'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
         wipeRedGradient:
-          'linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)',
+          'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgba(239, 68, 68, 0.97) 100%)',
         wipeOrangeGradient:
-          'linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)',
+          'linear-gradient(90deg, rgba(239, 68, 68, 0.93) 0%, rgba(251, 146, 60, 0.97) 100%)',
         wipeYellowGradient:
-          'linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)',
+          'linear-gradient(90deg, rgba(251, 146, 60, 0.92) 0%, rgba(252, 211, 77, 0.92) 100%)',
         wipeLowGradient:
-          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)',
+          'linear-gradient(90deg, rgba(252, 211, 77, 0.92) 0%, rgba(253, 230, 138, 0.87) 100%)',
         wipeVeryLowGradient:
-          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)',
+          'linear-gradient(90deg, rgb(252, 211, 77) 0%, rgba(162, 230, 53, 0.95) 100%)',
         wipeShadow: '0 0 6px rgba(255, 99, 71, 0.45)',
         hoverBg: 'rgba(255,255,255,0.025)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
