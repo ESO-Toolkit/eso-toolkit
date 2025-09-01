@@ -12,6 +12,7 @@ import {
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
+import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
 import { FightFragment } from '../../../graphql/generated';
 import { KnownAbilities } from '../../../types/abilities';
 import { RotationAnalysisPanel } from '../rotation/RotationAnalysisPanel';
@@ -84,60 +85,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
 }) => {
   const theme = useTheme();
   if (isLoading) {
-    return (
-      <>
-        <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <CircularProgress size={20} />
-            <Typography variant="h6">Loading Fight Insights...</Typography>
-          </Box>
-
-          <Box sx={{ mt: 2 }}>
-            <Skeleton variant="text" width="60%" height={24} />
-            <Box sx={{ mt: 2 }}>
-              <Skeleton variant="text" width="40%" height={20} />
-              {[...Array(3)].map((_, index) => (
-                <Skeleton key={index} variant="text" width="80%" height={20} sx={{ mt: 1 }} />
-              ))}
-            </Box>
-            <Box sx={{ mt: 2 }}>
-              <Skeleton variant="text" width="40%" height={20} />
-              {[...Array(2)].map((_, index) => (
-                <Skeleton key={index} variant="text" width="80%" height={20} sx={{ mt: 1 }} />
-              ))}
-            </Box>
-          </Box>
-        </Paper>
-
-        <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <CircularProgress size={16} />
-            <Typography variant="h6">Loading Status Effects & Uptimes Analysis...</Typography>
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <Skeleton variant="rectangular" width="100%" height={40} />
-            <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
-            <Skeleton variant="rectangular" width="100%" height={40} sx={{ mt: 3 }} />
-            <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
-            <Skeleton variant="rectangular" width="100%" height={40} sx={{ mt: 3 }} />
-            <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
-          </Box>
-        </Paper>
-
-        <Paper elevation={2} sx={{ p: 2, mt: 2 }}>
-          <Box display="flex" alignItems="center" gap={2}>
-            <CircularProgress size={16} />
-            <Typography variant="h6">Loading Damage Analysis...</Typography>
-          </Box>
-          <Box sx={{ mt: 2 }}>
-            <Skeleton variant="rectangular" width="100%" height={40} />
-            <Skeleton variant="rectangular" width="100%" height={300} sx={{ mt: 2 }} />
-            <Skeleton variant="rectangular" width="100%" height={40} sx={{ mt: 3 }} />
-            <Skeleton variant="rectangular" width="100%" height={250} sx={{ mt: 2 }} />
-          </Box>
-        </Paper>
-      </>
-    );
+    return <InsightsSkeletonLayout />;
   }
   return (
     <>
