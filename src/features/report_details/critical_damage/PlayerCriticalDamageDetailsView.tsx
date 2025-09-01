@@ -23,8 +23,10 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 import { Line } from 'react-chartjs-2';
 
+import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
+import { useRoleColors } from '../../../hooks';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
   CriticalDamageSource,
@@ -129,6 +131,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   player,
   onExpandChange,
 }) => {
+  const roleColors = useRoleColors();
+
   // Transform critical damage sources to StatChecklistSource format
   const statChecklistSources = React.useMemo(() => {
     return criticalDamageSources.map((source) => ({
@@ -151,13 +155,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
         variant="outlined"
         className="u-hover-lift u-fade-in-up"
         sx={{
-          background:
-            'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          ...roleColors.getAccordionStyles(),
           borderRadius: 2,
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
-          boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
           '&:before': {
             display: 'none',
           },
@@ -187,8 +188,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 fontWeight="bold"
                 sx={{
                   fontSize: '1.75rem',
-                  textShadow:
-                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                  textShadow: roleColors.getAccordionTextShadow(),
                 }}
               >
                 {resolveActorName(player)}
@@ -215,13 +215,10 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
       variant="outlined"
       className="u-hover-lift u-fade-in-up"
       sx={{
-        background:
-          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        ...roleColors.getAccordionStyles(),
         borderRadius: 2,
         backdropFilter: 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
-        boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.37)',
         '&:before': {
           display: 'none',
         },
@@ -253,172 +250,47 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               fontWeight="bold"
               sx={{
                 fontSize: '1.75rem',
-                textShadow:
-                  '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                textShadow: roleColors.getAccordionTextShadow(),
               }}
             >
               {resolveActorName(player)}
             </Typography>
           </Box>
           {!isLoading && (
-            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 3, alignItems: 'center' }}>
-              {/* Max Critical Damage */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  minWidth: { xs: 50, sm: 60 },
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: { xs: '0.6rem', sm: '0.65rem' },
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
-                  }}
-                >
-                  Max
-                </Typography>
-                <Box
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 1,
-                    background:
-                      maxCriticalDamage >= 125
-                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
-                    border: `1px solid ${maxCriticalDamage >= 125 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
-                    backdropFilter: 'blur(10px)',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: maxCriticalDamage >= 125 ? '#5ce572' : '#ff6666',
-                      fontWeight: 600,
-                      fontSize: { xs: '0.7rem', sm: '0.8rem' },
-                    }}
-                  >
-                    {maxCriticalDamage}%
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Effective Critical Damage */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  minWidth: 60,
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '0.65rem',
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
-                  }}
-                >
-                  Effective
-                </Typography>
-                <Box
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 1,
-                    background:
-                      criticalDamageData.effectiveCriticalDamage >= 125
-                        ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
-                    border: `1px solid ${criticalDamageData.effectiveCriticalDamage >= 125 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
-                    backdropFilter: 'blur(10px)',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color:
-                        criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
-                      fontWeight: 600,
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    {criticalDamageData.effectiveCriticalDamage.toFixed(1)}%
-                  </Typography>
-                </Box>
-              </Box>
-
-              {/* Time at Cap */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  minWidth: 60,
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    color: 'text.secondary',
-                    fontSize: '0.65rem',
-                    fontWeight: 500,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.05em',
-                    mb: 0.25,
-                  }}
-                >
-                  At Cap
-                </Typography>
-                <Box
-                  sx={{
-                    px: 1.5,
-                    py: 0.5,
-                    borderRadius: 1,
-                    background:
-                      criticalDamageData.timeAtCapPercentage >= 80
-                        ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                        : criticalDamageData.timeAtCapPercentage >= 50
-                          ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
-                    border: `1px solid ${
-                      criticalDamageData.timeAtCapPercentage >= 80
-                        ? 'rgba(76, 217, 100, 0.3)'
-                        : criticalDamageData.timeAtCapPercentage >= 50
-                          ? 'rgba(255, 193, 7, 0.35)'
-                          : 'rgba(255, 68, 68, 0.3)'
-                    }`,
-                    backdropFilter: 'blur(10px)',
-                  }}
-                >
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color:
-                        criticalDamageData.timeAtCapPercentage >= 80
-                          ? '#5ce572'
-                          : criticalDamageData.timeAtCapPercentage >= 50
-                            ? '#ffd54f'
-                            : '#ff6666',
-                      fontWeight: 600,
-                      fontSize: '0.8rem',
-                    }}
-                  >
-                    {criticalDamageData.timeAtCapPercentage.toFixed(0)}%
-                  </Typography>
-                </Box>
-              </Box>
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 2.5, alignItems: 'center' }}>
+              <MetricPill
+                label="Max"
+                value={maxCriticalDamage}
+                suffix="%"
+                intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                size="md"
+              />
+              <MetricPill
+                label="Effective"
+                value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
+                suffix="%"
+                intent={
+                  criticalDamageData.effectiveCriticalDamage >= 125
+                    ? 'success'
+                    : criticalDamageData.effectiveCriticalDamage >= 100
+                      ? 'warning'
+                      : 'danger'
+                }
+                size="md"
+              />
+              <MetricPill
+                label="At Cap"
+                value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
+                suffix="%"
+                intent={
+                  criticalDamageData.timeAtCapPercentage >= 80
+                    ? 'success'
+                    : criticalDamageData.timeAtCapPercentage >= 50
+                      ? 'warning'
+                      : 'danger'
+                }
+                size="md"
+              />
             </Box>
           )}
         </Box>
@@ -438,163 +310,39 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   flexWrap: 'wrap',
                 }}
               >
-                {/* Max Critical Damage */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    minWidth: 70,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.65rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.25,
-                    }}
-                  >
-                    Max
-                  </Typography>
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      background:
-                        maxCriticalDamage >= 125
-                          ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
-                      border: `1px solid ${maxCriticalDamage >= 125 ? 'rgba(76, 217, 100, 0.3)' : 'rgba(255, 68, 68, 0.3)'}`,
-                      backdropFilter: 'blur(10px)',
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color: maxCriticalDamage >= 125 ? '#5ce572' : '#ff6666',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {maxCriticalDamage}%
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Effective Critical Damage */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    minWidth: 70,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.65rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.25,
-                    }}
-                  >
-                    Effective
-                  </Typography>
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      background:
-                        criticalDamageData.effectiveCriticalDamage >= 125
-                          ? 'linear-gradient(135deg, rgba(94, 234, 255, 0.25) 0%, rgba(94, 234, 255, 0.15) 50%, rgba(94, 234, 255, 0.08) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)',
-                      border: `1px solid ${criticalDamageData.effectiveCriticalDamage >= 125 ? 'rgba(94, 234, 255, 0.35)' : 'rgba(255, 193, 7, 0.35)'}`,
-                      backdropFilter: 'blur(10px)',
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color:
-                          criticalDamageData.effectiveCriticalDamage >= 125 ? '#7ee8ff' : '#ffd54f',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {criticalDamageData.effectiveCriticalDamage.toFixed(1)}%
-                    </Typography>
-                  </Box>
-                </Box>
-
-                {/* Time at Cap */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    minWidth: 70,
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: 'text.secondary',
-                      fontSize: '0.65rem',
-                      fontWeight: 500,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.05em',
-                      mb: 0.25,
-                    }}
-                  >
-                    At Cap
-                  </Typography>
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      borderRadius: 1,
-                      background:
-                        criticalDamageData.timeAtCapPercentage >= 80
-                          ? 'linear-gradient(135deg, rgba(76, 217, 100, 0.25) 0%, rgba(76, 217, 100, 0.15) 50%, rgba(76, 217, 100, 0.08) 100%)'
-                          : criticalDamageData.timeAtCapPercentage >= 50
-                            ? 'linear-gradient(135deg, rgba(255, 193, 7, 0.25) 0%, rgba(255, 193, 7, 0.15) 50%, rgba(255, 193, 7, 0.08) 100%)'
-                            : 'linear-gradient(135deg, rgba(255, 68, 68, 0.25) 0%, rgba(255, 68, 68, 0.15) 50%, rgba(255, 68, 68, 0.08) 100%)',
-                      border: `1px solid ${
-                        criticalDamageData.timeAtCapPercentage >= 80
-                          ? 'rgba(76, 217, 100, 0.3)'
-                          : criticalDamageData.timeAtCapPercentage >= 50
-                            ? 'rgba(255, 193, 7, 0.35)'
-                            : 'rgba(255, 68, 68, 0.3)'
-                      }`,
-                      backdropFilter: 'blur(10px)',
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        color:
-                          criticalDamageData.timeAtCapPercentage >= 80
-                            ? '#5ce572'
-                            : criticalDamageData.timeAtCapPercentage >= 50
-                              ? '#ffd54f'
-                              : '#ff6666',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                      }}
-                    >
-                      {criticalDamageData.timeAtCapPercentage.toFixed(0)}%
-                    </Typography>
-                  </Box>
-                </Box>
+                <MetricPill
+                  label="Max"
+                  value={maxCriticalDamage}
+                  suffix="%"
+                  intent={maxCriticalDamage >= 125 ? 'success' : 'danger'}
+                  size="sm"
+                />
+                <MetricPill
+                  label="Effective"
+                  value={criticalDamageData.effectiveCriticalDamage.toFixed(1)}
+                  suffix="%"
+                  intent={
+                    criticalDamageData.effectiveCriticalDamage >= 125
+                      ? 'success'
+                      : criticalDamageData.effectiveCriticalDamage >= 100
+                        ? 'warning'
+                        : 'danger'
+                  }
+                  size="sm"
+                />
+                <MetricPill
+                  label="At Cap"
+                  value={criticalDamageData.timeAtCapPercentage.toFixed(0)}
+                  suffix="%"
+                  intent={
+                    criticalDamageData.timeAtCapPercentage >= 80
+                      ? 'success'
+                      : criticalDamageData.timeAtCapPercentage >= 50
+                        ? 'warning'
+                        : 'danger'
+                  }
+                  size="sm"
+                />
               </Box>
             )}
 
@@ -625,7 +373,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                   sx={{
                     mb: 2,
                     textShadow:
-                      '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                   }}
                 >
                   Critical Multiplier Analysis
@@ -704,7 +452,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 sx={{
                   mb: 2,
                   textShadow:
-                    '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
+                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                 }}
               >
                 Critical Damage vs Time

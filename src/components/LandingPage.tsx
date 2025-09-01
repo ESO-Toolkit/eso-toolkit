@@ -1,5 +1,5 @@
 import LinkIcon from '@mui/icons-material/Link';
-import { Box, Button, Container, TextField, Typography } from '@mui/material';
+import { Box, Button, Container, TextField, Typography, useTheme } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -103,20 +103,26 @@ const HeroContent = styled(Box)(({ theme }) => ({
 
 const HeroTitle = styled(Typography)(({ theme }) => ({
   fontWeight: 900,
-  background: 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)'
+      : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
   WebkitBackgroundClip: 'text',
   WebkitTextFillColor: 'transparent',
   backgroundClip: 'text',
   letterSpacing: '-0.02em',
   lineHeight: 1.5,
-  textShadow: `
-    0 0 20px rgba(56, 189, 248, 0.5),
-    0 0 40px rgba(56, 189, 248, 0.3),
-    0 0 60px rgba(0, 225, 255, 0.2),
-    0 4px 8px rgba(0, 0, 0, 0.3),
-    0 8px 16px rgba(0, 0, 0, 0.2),
-    0 16px 32px rgba(0, 0, 0, 0.1)
-  `,
+  textShadow:
+    theme.palette.mode === 'dark'
+      ? `
+      0 0 20px rgba(56, 189, 248, 0.5),
+      0 0 40px rgba(56, 189, 248, 0.3),
+      0 0 60px rgba(0, 225, 255, 0.2),
+      0 4px 8px rgba(0, 0, 0, 0.3),
+      0 8px 16px rgba(0, 0, 0, 0.2),
+      0 16px 32px rgba(0, 0, 0, 0.1)
+    `
+      : '0 1px 2px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.05)',
   animation: 'shimmer 3s ease-in-out infinite',
   margin: '0 auto 2rem auto',
   textAlign: 'center',
@@ -157,7 +163,10 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   },
   '& .light-text': {
     fontWeight: '300 !important',
-    background: 'white !important',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'white !important'
+        : 'linear-gradient(135deg, #475569 0%, #64748b 100%) !important',
     WebkitBackgroundClip: 'text !important',
     WebkitTextFillColor: 'transparent !important',
     backgroundClip: 'text !important',
@@ -177,7 +186,10 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   '& .highlight-text': {
     position: 'relative',
     display: 'inline-block',
-    background: 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #fff 0%, #38bdf8 50%, #00e1ff 100%)'
+        : 'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
@@ -218,7 +230,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
 
 const HeroSubtitle = styled(Typography)(({ theme }) => ({
   fontSize: '1.5rem',
-  color: 'rgba(255, 255, 255, 0.9)',
+  color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(51, 65, 85, 0.8)',
   marginTop: theme.spacing(3),
   marginBottom: theme.spacing(6),
   fontWeight: 400,
@@ -248,10 +260,19 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   gap: 0,
   marginBottom: '0rem',
   padding: 0,
-  background: 'linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)'
+      : 'linear-gradient(135deg, rgba(248, 250, 252, 0.9) 0%, rgba(241, 245, 249, 0.95) 100%)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.2)'
+      : '1px solid rgba(30, 41, 59, 0.15)',
   borderRadius: '16px',
-  boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 20px 60px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+      : '0 10px 25px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.7)',
   transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   overflow: 'visible',
   position: 'relative',
@@ -264,13 +285,19 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     height: '1px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)'
+        : 'linear-gradient(90deg, transparent, rgba(30, 41, 59, 0.3), transparent)',
   },
   '&:hover': {
     transform: 'translateY(-4px)',
     boxShadow:
-      '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-    borderColor: 'rgba(56, 189, 248, 0.4)',
+      theme.palette.mode === 'dark'
+        ? '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 40px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+        : '0 20px 40px rgba(15, 23, 42, 0.12), 0 0 20px rgba(30, 41, 59, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+    borderColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(30, 41, 59, 0.25)',
   },
   [theme.breakpoints.down('md')]: {
     maxWidth: '500px',
@@ -346,8 +373,12 @@ const ToolsGrid = styled(Box)(({ theme }) => ({
 }));
 
 const ToolCard = styled(Box)(({ theme }) => ({
-  background: 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)',
-  border: '1px solid #1f2937',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
+      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.9) 100%)',
+  border:
+    theme.palette.mode === 'dark' ? '1px solid #1f2937' : '1px solid rgba(203, 213, 225, 0.5)',
   borderRadius: '14px',
   padding: '2rem',
   transition: 'all 0.3s ease',
@@ -372,7 +403,10 @@ const ToolCard = styled(Box)(({ theme }) => ({
   },
   '&:hover': {
     transform: 'translateY(-5px)',
-    boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.1)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.1)'
+        : '0 10px 30px rgba(15, 23, 42, 0.1), 0 0 30px rgba(56, 189, 248, 0.08)',
     borderColor: 'rgba(56, 189, 248, 0.3)',
   },
 }));
@@ -412,14 +446,23 @@ const ToolFeatures = styled('ul')(({ theme }) => ({
 const ToolAction = styled(Button)(({ theme }) => ({
   width: '100%',
   padding: '0.8rem 1.5rem',
-  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05))',
-  color: '#e9fbff',
-  border: '1px solid rgba(56, 189, 248, 0.3)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05))'
+      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0.03))',
+  color: theme.palette.mode === 'dark' ? '#e9fbff' : '#0c4a6e',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.3)'
+      : '1px solid rgba(56, 189, 248, 0.25)',
   borderRadius: '8px',
   transition: 'all 0.3s ease',
   fontWeight: 600,
   '&:hover': {
-    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.15))',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.15))'
+        : 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.08))',
     boxShadow: '0 4px 15px rgba(56, 189, 248, 0.2)',
   },
 }));
@@ -554,6 +597,7 @@ export const LandingPage: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const theme = useTheme();
 
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
@@ -673,7 +717,7 @@ export const LandingPage: React.FC = () => {
                   },
                 },
                 '& .MuiInputLabel-root': {
-                  color: '#94a3b8',
+                  color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
                   left: '3.5rem',
                   top: { xs: '2px', sm: '4px' },
                   fontSize: { xs: '0.85rem', sm: '0.95rem' },
@@ -685,14 +729,17 @@ export const LandingPage: React.FC = () => {
                       xs: 'translate(3.5rem, -12px) scale(0.75)',
                       sm: 'translate(3.5rem, -10px) scale(0.75)',
                     },
-                    backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.9)'
+                        : 'rgba(248, 250, 252, 0.95)',
                     padding: '2px 8px',
                     borderRadius: '4px',
                   },
                 },
                 '& .MuiInputBase-input': {
                   padding: { xs: '16px 0', sm: '18px 0' },
-                  color: '#e5e7eb',
+                  color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
                   fontSize: { xs: '0.9rem', sm: '1rem' },
                 },
               }}
@@ -879,8 +926,14 @@ export const LandingPage: React.FC = () => {
         component="footer"
         sx={{
           padding: '3rem 2rem',
-          background: 'linear-gradient(180deg, transparent, rgba(3,7,18,0.8))',
-          borderTop: '1px solid #1f2937',
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, transparent, rgba(3,7,18,0.8))'
+              : 'linear-gradient(180deg, transparent, rgba(248, 250, 252, 0.8))',
+          borderTop:
+            theme.palette.mode === 'dark'
+              ? '1px solid #1f2937'
+              : '1px solid rgba(203, 213, 225, 0.5)',
           marginTop: '4rem',
           textAlign: 'center',
         }}
@@ -890,7 +943,10 @@ export const LandingPage: React.FC = () => {
             href="https://esohelper.tools/text-editor"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#94a3b8', textDecoration: 'none' }}
+            style={{
+              color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+              textDecoration: 'none',
+            }}
           >
             Text Editor
           </a>
@@ -898,7 +954,10 @@ export const LandingPage: React.FC = () => {
             href="https://esohelper.tools/calculator"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#94a3b8', textDecoration: 'none' }}
+            style={{
+              color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+              textDecoration: 'none',
+            }}
           >
             Calculator
           </a>
@@ -906,7 +965,10 @@ export const LandingPage: React.FC = () => {
             href="https://discord.gg/mMjwcQYFdc"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#94a3b8', textDecoration: 'none' }}
+            style={{
+              color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+              textDecoration: 'none',
+            }}
           >
             Discord
           </a>
@@ -914,7 +976,10 @@ export const LandingPage: React.FC = () => {
             href="https://github.com/esohelper"
             target="_blank"
             rel="noopener noreferrer"
-            style={{ color: '#94a3b8', textDecoration: 'none' }}
+            style={{
+              color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+              textDecoration: 'none',
+            }}
           >
             GitHub
           </a>

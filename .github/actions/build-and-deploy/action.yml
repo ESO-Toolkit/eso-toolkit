@@ -19,15 +19,7 @@ outputs:
 runs:
   using: 'composite'
   steps:
-    - name: Set up Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        cache: 'npm'
-
-    - name: Install dependencies
-      shell: bash
-      run: npm ci
+    - uses: ./.github/actions/setup-node-with-cache
 
     - name: Set release version
       if: inputs.release_version != ''

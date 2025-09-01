@@ -36,12 +36,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Build
         run: npm run build
 
@@ -49,12 +44,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Lint
         run: npm run lint
 
@@ -62,12 +52,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Check formatting
         run: npm run format:check
 
@@ -75,12 +60,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Test
         run: npm test
 
@@ -88,12 +68,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Typecheck
         run: npm run typecheck
 
@@ -101,12 +76,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
       - name: Build Storybook
         run: npm run build-storybook
         env:

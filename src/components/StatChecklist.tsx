@@ -15,6 +15,7 @@ import {
   Skeleton,
   Tooltip,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material';
 import React from 'react';
 
 export interface StatChecklistSource {
@@ -29,12 +30,14 @@ interface StatChecklistProps {
   sources: StatChecklistSource[];
   title?: string;
   loading?: boolean;
+  titleSx?: SxProps<Theme>;
 }
 
 export const StatChecklist: React.FC<StatChecklistProps> = ({
   sources,
   title = 'Sources',
   loading = false,
+  titleSx,
 }) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
@@ -87,10 +90,13 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
       >
         <Typography
           variant="h6"
-          sx={{
-            textShadow:
-              '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.4), 0 8px 16px rgba(0,0,0,0.2)',
-          }}
+          sx={[
+            {
+              textShadow:
+                '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
+            },
+            ...(Array.isArray(titleSx) ? titleSx : titleSx ? [titleSx] : []),
+          ]}
         >
           {title}
         </Typography>

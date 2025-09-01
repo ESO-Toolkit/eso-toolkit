@@ -16,14 +16,7 @@ jobs:
           # Sentry needs access to commit history for better release tracking
           fetch-depth: 0
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
+      - uses: ./.github/actions/setup-node-with-cache
 
       - name: Set release version
         id: version

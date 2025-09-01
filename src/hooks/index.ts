@@ -3,6 +3,9 @@ export { useReportMasterData } from './useReportMasterData';
 export { useReportData } from './useReportData';
 export { usePlayerData } from './usePlayerData';
 
+// UI hooks
+export { useRoleColors } from './useRoleColors';
+
 // Event data hooks
 export { useEventData } from './useEventData';
 export { useDamageEvents, useDamageEventsLookup } from './useDamageEvents';
