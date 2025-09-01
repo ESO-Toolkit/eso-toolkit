@@ -32,10 +32,9 @@ const { createReduxHistory, routerMiddleware, routerReducer } = createReduxHisto
 });
 
 const uiPersistConfig = {
-  key: 'root',
-  whitelist: ['ui'],
+  key: 'ui',
   storage,
-  transforms: [],
+  blacklist: ['darkMode'], // Don't persist darkMode, let our custom hook handle it
 };
 
 const store = configureStore({

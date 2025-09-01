@@ -1,7 +1,7 @@
 import { Box } from '@mui/material';
 import Container from '@mui/material/Container';
 import React from 'react';
-import { Outlet } from 'react-router-dom';
+import { Outlet, useLocation } from 'react-router-dom';
 
 import { HeaderBar } from '../components/HeaderBar';
 import { useAuth } from '../features/auth/AuthContext';
@@ -11,6 +11,10 @@ import { ReportFightProvider } from '../ReportFightContext';
 
 export const AppLayout: React.FC = () => {
   const { isLoggedIn } = useAuth();
+  const location = useLocation();
+
+  // Check if we're on the landing page (root path)
+  const isLandingPage = location.pathname === '/' || location.pathname === '';
 
   if (!isLoggedIn) {
     return (
@@ -19,13 +23,13 @@ export const AppLayout: React.FC = () => {
         <Container
           maxWidth="md"
           sx={{
-            px: { xs: 0, sm: 2 },
+            px: { xs: isLandingPage ? 2 : 0, sm: 2 },
           }}
         >
           <Box
             sx={{
-              pt: { xs: 0, sm: 2 },
-              pb: { xs: 0, sm: 4 },
+              pt: { xs: isLandingPage ? 2 : 0, sm: 2 },
+              pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
               minHeight: '100vh',
               overflowY: 'auto',
             }}
@@ -45,13 +49,13 @@ export const AppLayout: React.FC = () => {
           <Container
             maxWidth="md"
             sx={{
-              px: { xs: 0, sm: 2 },
+              px: { xs: isLandingPage ? 2 : 0, sm: 2 },
             }}
           >
             <Box
               sx={{
-                pt: { xs: 0, sm: 8 },
-                pb: { xs: 0, sm: 4 },
+                pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
+                pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
                 minHeight: '100vh',
                 overflowY: 'auto',
               }}

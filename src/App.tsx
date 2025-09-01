@@ -59,7 +59,7 @@ const App: React.FC = () => {
 
   return (
     <ReduxProvider store={store}>
-      <PersistGate loading={null} persistor={persistor}>
+      <PersistGate loading={<LoadingFallback />} persistor={persistor}>
         <AuthProvider>
           <EsoLogsClientProvider>
             <AppRoutes />

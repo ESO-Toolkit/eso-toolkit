@@ -19,7 +19,7 @@ const getSystemThemePreference = (): boolean => {
 };
 
 const initialState: UIState = {
-  darkMode: getSystemThemePreference(),
+  darkMode: true, // Default to dark mode, Redux Persist will override with saved value
   sidebarOpen: false,
   showExperimentalTabs: false,
   selectedTargetId: null,
@@ -38,6 +38,11 @@ const uiSlice = createSlice({
       state.darkMode = !state.darkMode;
     },
     syncWithSystemTheme(state) {
+      state.darkMode = getSystemThemePreference();
+    },
+    // Add action to clear persisted data for debugging
+    clearPersistedData(state) {
+      // This will trigger a re-persist with current state
       state.darkMode = getSystemThemePreference();
     },
     setSidebarOpen(state, action: PayloadAction<boolean>) {
@@ -68,6 +73,7 @@ export const {
   setDarkMode,
   toggleDarkMode,
   syncWithSystemTheme,
+  clearPersistedData,
   setSidebarOpen,
   toggleSidebar,
   setShowExperimentalTabs,

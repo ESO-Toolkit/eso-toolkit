@@ -2,7 +2,7 @@ import { IconButton, Box, Tooltip } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 
-import { useBrowserAwareDarkMode } from '../hooks/useBrowserAwareDarkMode';
+import { usePersistentDarkMode } from '../hooks/usePersistentDarkMode';
 
 const ThemeToggleButton = styled(IconButton)<{ darkMode: boolean }>(({ theme, darkMode }) => ({
   width: 32,
@@ -47,7 +47,7 @@ const IconContainer = styled(Box)<{ darkMode: boolean; isVisible: boolean }>(
 );
 
 export const ThemeToggle: React.FC = () => {
-  const { darkMode, toggleDarkMode } = useBrowserAwareDarkMode();
+  const { darkMode, toggleDarkMode } = usePersistentDarkMode();
 
   // Local state for instant visual feedback
   const [optimisticDarkMode, setOptimisticDarkMode] = React.useState(darkMode);

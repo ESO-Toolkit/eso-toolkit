@@ -3,11 +3,11 @@ import GlobalStyles from '@mui/material/GlobalStyles';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import React from 'react';
 
-import { useBrowserAwareDarkMode } from './hooks/useBrowserAwareDarkMode';
+import { usePersistentDarkMode } from './hooks/usePersistentDarkMode';
 
 export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // Use browser-aware dark mode hook that handles system preferences
-  const { darkMode } = useBrowserAwareDarkMode();
+  // Use persistent dark mode hook that handles localStorage persistence
+  const { darkMode } = usePersistentDarkMode();
 
   // Design tokens - Dynamic light/dark support
   const tokens = React.useMemo(() => {
