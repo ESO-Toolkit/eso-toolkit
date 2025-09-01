@@ -55,7 +55,8 @@ export const useRoleColors = (): RoleColors => {
       },
       // Get accordion styling (reusable for all accordion components)
       getAccordionStyles: () => ({
-        background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+        background:
+          'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
         border: isDarkMode
           ? '1px solid rgba(255, 255, 255, 0.1)'
           : '1px solid rgba(15, 23, 42, 0.12)',

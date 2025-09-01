@@ -195,7 +195,8 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           MuiAccordion: {
             styleOverrides: {
               root: {
-                background: 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                background:
+                  'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
                 border: `1px solid ${tokens.border}`,
                 borderRadius: 12,
                 boxShadow: darkMode
