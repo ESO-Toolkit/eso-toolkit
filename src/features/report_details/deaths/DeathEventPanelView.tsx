@@ -183,7 +183,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             size="small"
             sx={{
               backgroundColor: 'rgba(244, 67, 54, 0.2)',
-              color: '#f44336',
+              color: theme.palette.mode === 'dark' ? '#f44336' : '#a13931',
               border: '1px solid rgba(244, 67, 54, 0.3)',
             }}
           />
@@ -192,7 +192,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             size="small"
             sx={{
               backgroundColor: 'rgba(255, 152, 0, 0.2)',
-              color: '#ff9800',
+              color: theme.palette.mode === 'dark' ? '#ff9800' : '#b77d27',
               border: '1px solid rgba(255, 152, 0, 0.3)',
             }}
           />
@@ -349,7 +349,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         color: roleColors.getPlayerColor(
                           playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank'
                         ),
-                        fontWeight: 800,
+                        fontWeight: 400,
+                        fontFamily: '"Space Grotesk", "Inter", system-ui',
                         textShadow:
                           theme.palette.mode === 'dark'
                             ? '0 1px 3px rgba(0,0,0,0.5)'
