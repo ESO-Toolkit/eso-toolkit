@@ -8,7 +8,7 @@ import { useAuth } from '../features/auth/AuthContext';
 
 import { ThemeToggle } from './ThemeToggle';
 
-import discordIcon from '@/assets/discord-icon.svg';
+import discordIcon from '../assets/discord-icon.svg';
 
 // Animated Hamburger Icon
 const HamburgerButton = styled(IconButton)<{ open: boolean }>(({ theme, open }) => ({
