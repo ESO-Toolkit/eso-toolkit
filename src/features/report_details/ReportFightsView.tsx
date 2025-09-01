@@ -420,11 +420,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         falsePositiveGradient:
           'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
         wipeRedGradient:
-          'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgba(239, 68, 68, 0.97) 100%)',
+          'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgb(239, 68, 68) 100%)',
         wipeOrangeGradient:
-          'linear-gradient(90deg, rgba(239, 68, 68, 0.93) 0%, rgba(251, 146, 60, 0.97) 100%)',
+          'linear-gradient(90deg, rgb(239, 68, 68) 0%, rgb(251, 146, 60) 100%)',
         wipeYellowGradient:
-          'linear-gradient(90deg, rgba(251, 146, 60, 0.92) 0%, rgba(252, 211, 77, 0.92) 100%)',
+          'linear-gradient(90deg, rgba(251, 146, 60, 0.96) 0%, rgba(252, 211, 77, 0.92) 100%)',
         wipeLowGradient:
           'linear-gradient(90deg, rgba(252, 211, 77, 0.92) 0%, rgba(253, 230, 138, 0.87) 100%)',
         wipeVeryLowGradient:
