@@ -912,7 +912,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                             height: isUltimate ? 34 : 32,
                                             border: isUltimate
                                               ? '1.5px solid #b3b3b3f2'
-                                              : '1px solid #b5b8bd59',
+                                              : theme.palette.mode === 'dark'
+                                                ? '1px solid #b5b8bd59'
+                                                : '1px solid #1e3a8a',
                                             boxShadow: isUltimate
                                               ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
                                               : 'none',
@@ -1006,7 +1008,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                               height: isUltimate ? 34 : 32,
                                               border: isUltimate
                                                 ? '1.5px solid #b3b3b3f2'
-                                                : '1px solid #b5b8bd59',
+                                                : theme.palette.mode === 'dark'
+                                                  ? '1px solid #b5b8bd59'
+                                                  : '1px solid #1e3a8a',
                                               boxShadow: isUltimate
                                                 ? 'inset 0 2px 4px rgb(0 0 0 / 100%), 0 0 0 1px rgb(255 255 255 / 18%), 0 0 10px rgb(255 255 255 / 25%), 0 2px 6px rgb(0 0 0 / 60%)'
                                                 : 'none',
@@ -1380,7 +1384,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                             variant="outlined"
                             sx={{
                               mt: 1,
-                              borderColor: 'warning.main',
+                              borderColor:
+                                theme.palette.mode === 'light' ? '#000000' : 'warning.main',
                               backgroundColor: 'rgba(255,193,7,0.07)',
                               borderTop: '1px solid #5c574d',
                               borderTopLeftRadius: '5px',
@@ -1401,7 +1406,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 variant="body2"
                                 fontWeight="bold"
                                 sx={{
-                                  color: 'warning.main',
+                                  color: '#c06220',
                                   display: 'flex',
                                   alignItems: 'center',
                                   gap: 1,
