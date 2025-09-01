@@ -29,7 +29,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     } else {
       // Light mode tokens with balanced contrast for readability
       return {
-        bg: '#fafbfc',
+        bg: 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
         panel: '#ffffff',
         panel2: '#f8fafc',
         text: '#1e293b',
