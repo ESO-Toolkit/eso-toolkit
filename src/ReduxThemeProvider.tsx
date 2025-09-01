@@ -192,6 +192,29 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
+          MuiAccordion: {
+            styleOverrides: {
+              root: {
+                background: darkMode
+                  ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.3) 50%, rgba(0, 0, 0, 0.2) 100%)'
+                  : 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                border: `1px solid ${tokens.border}`,
+                borderRadius: 12,
+                boxShadow: darkMode
+                  ? '0 4px 12px rgba(0, 0, 0, 0.15)'
+                  : '0 2px 8px rgba(15, 23, 42, 0.04)',
+                '&:before': {
+                  display: 'none', // Remove the default MUI accordion divider
+                },
+                '&:not(:last-child)': {
+                  borderBottom: 0,
+                },
+                '&.Mui-expanded': {
+                  margin: 0, // Prevent margin changes when expanded
+                },
+              },
+            },
+          },
         },
       }),
     [darkMode, tokens]
