@@ -119,6 +119,11 @@ const combatantInfoEventsSlice = createSlice({
         eventCount: 0,
       };
     },
+    resetCombatantInfoEventsLoading(state) {
+      console.log('🔄 Resetting stuck combatant info events loading state');
+      state.loading = false;
+      state.error = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -145,5 +150,6 @@ const combatantInfoEventsSlice = createSlice({
   },
 });
 
-export const { clearCombatantInfoEvents } = combatantInfoEventsSlice.actions;
+export const { clearCombatantInfoEvents, resetCombatantInfoEventsLoading } =
+  combatantInfoEventsSlice.actions;
 export default combatantInfoEventsSlice.reducer;

@@ -56,7 +56,10 @@ const MobileMenuOverlay = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
   left: 0,
   right: 0,
   bottom: 0,
-  background: 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
+      : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
   backdropFilter: 'blur(20px)',
   zIndex: 1300,
   display: 'flex',
@@ -73,7 +76,10 @@ const MobileMenuOverlay = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 70%)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.1) 0%, transparent 70%)'
+        : 'radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 70%)',
     animation: open ? 'pulse-bg 4s ease-in-out infinite alternate' : 'none',
   },
   '@keyframes pulse-bg': {
@@ -97,10 +103,16 @@ const MobileMenuContent = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
 const MobileNavButton = styled(Button)(({ theme }) => ({
   minWidth: 280,
   height: 64,
-  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
+      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.2)'
+      : '1px solid rgba(59, 130, 246, 0.15)',
   borderRadius: 16,
-  color: '#ffffff',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
   fontSize: '1.1rem',
   fontWeight: 600,
   textTransform: 'none',
@@ -115,14 +127,24 @@ const MobileNavButton = styled(Button)(({ theme }) => ({
     left: '-100%',
     width: '100%',
     height: '100%',
-    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent)'
+        : 'linear-gradient(90deg, transparent, rgba(15, 23, 42, 0.1), transparent)',
     transition: 'left 0.6s ease',
   },
   '&:hover': {
-    background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)',
-    borderColor: 'rgba(56, 189, 248, 0.4)',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.12) 0%, rgba(99, 102, 241, 0.08) 100%)',
+    borderColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(59, 130, 246, 0.25)',
     transform: 'translateY(-2px) scale(1.02)',
-    boxShadow: '0 10px 30px rgba(56, 189, 248, 0.2)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 10px 30px rgba(56, 189, 248, 0.2)'
+        : '0 10px 30px rgba(59, 130, 246, 0.15)',
     '&::before': {
       left: '100%',
     },
@@ -138,13 +160,18 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   right: 20,
   width: 48,
   height: 48,
-  background: 'rgba(56, 189, 248, 0.1)',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
+  background:
+    theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.2)'
+      : '1px solid rgba(59, 130, 246, 0.15)',
   borderRadius: 12,
-  color: '#ffffff',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
   transition: 'all 0.3s ease',
   '&:hover': {
-    background: 'rgba(56, 189, 248, 0.2)',
+    background:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(59, 130, 246, 0.12)',
     transform: 'rotate(90deg) scale(1.1)',
   },
 }));
@@ -430,18 +457,20 @@ export const HeaderBar: React.FC = () => {
             )}
           </Box>
 
-          <HamburgerButton
-            open={mobileOpen}
-            onClick={handleDrawerToggle}
-            sx={{ display: { xs: 'block', md: 'none' } }}
-            aria-label="toggle navigation"
-          >
-            <HamburgerLines>
-              <Box className="hamburger-line" />
-              <Box className="hamburger-line" />
-              <Box className="hamburger-line" />
-            </HamburgerLines>
-          </HamburgerButton>
+          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
+            <ThemeToggle />
+            <HamburgerButton
+              open={mobileOpen}
+              onClick={handleDrawerToggle}
+              aria-label="toggle navigation"
+            >
+              <HamburgerLines>
+                <Box className="hamburger-line" />
+                <Box className="hamburger-line" />
+                <Box className="hamburger-line" />
+              </HamburgerLines>
+            </HamburgerButton>
+          </Box>
         </Toolbar>
       </AppBar>
 
@@ -497,33 +526,40 @@ export const HeaderBar: React.FC = () => {
             </MobileNavButton>
           ))}
 
-          <Box
-            sx={{
-              animationDelay: `${navItems.length * 0.1 + 0.1}s`,
-              animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-              '@keyframes slideInUp': {
-                '0%': { opacity: 0, transform: 'translateY(30px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' },
-              },
-            }}
-          >
-            <ThemeToggle />
-          </Box>
-
           <MobileNavButton
             onClick={isLoggedIn ? handleLogout : handleLogin}
             sx={{
-              animationDelay: `${navItems.length * 0.1 + 0.2}s`,
+              animationDelay: `${navItems.length * 0.1 + 0.1}s`,
               animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
               background: isLoggedIn
-                ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
-                : 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)',
-              borderColor: isLoggedIn ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                ? theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(185, 28, 28, 0.04) 100%)'
+                : theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)'
+                  : 'linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%)',
+              borderColor: isLoggedIn
+                ? theme.palette.mode === 'dark'
+                  ? 'rgba(239, 68, 68, 0.2)'
+                  : 'rgba(220, 38, 38, 0.15)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(34, 197, 94, 0.2)'
+                  : 'rgba(22, 163, 74, 0.15)',
               '&:hover': {
                 background: isLoggedIn
-                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
-                  : 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)',
-                borderColor: isLoggedIn ? 'rgba(239, 68, 68, 0.4)' : 'rgba(34, 197, 94, 0.4)',
+                  ? theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(185, 28, 28, 0.08) 100%)'
+                  : theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(21, 128, 61, 0.08) 100%)',
+                borderColor: isLoggedIn
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(239, 68, 68, 0.4)'
+                    : 'rgba(220, 38, 38, 0.25)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(34, 197, 94, 0.4)'
+                    : 'rgba(22, 163, 74, 0.25)',
               },
               '@keyframes slideInUp': {
                 '0%': { opacity: 0, transform: 'translateY(30px)' },

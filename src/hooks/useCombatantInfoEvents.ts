@@ -4,7 +4,10 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchCombatantInfoEvents } from '../store/events_data/combatantInfoEventsSlice';
+import {
+  fetchCombatantInfoEvents,
+  resetCombatantInfoEventsLoading,
+} from '../store/events_data/combatantInfoEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
 import {
   selectCombatantInfoEvents,
@@ -23,6 +26,10 @@ export function useCombatantInfoEvents(): {
   const fights = useSelector(selectReportFights);
   const client = useEsoLogsClientInstance();
 
+  // Move selectors BEFORE the effects that use them
+  const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
+  const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
+
   // Get the specific fight from the report data
   const selectedFight = React.useMemo(() => {
     if (!fightId || !fights) return null;
@@ -31,7 +38,17 @@ export function useCombatantInfoEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
+    console.log('🔍 useCombatantInfoEvents effect triggered', {
+      reportId,
+      hasSelectedFight: !!selectedFight,
+    });
     if (reportId && selectedFight) {
+      console.log(
+        '📡 Dispatching fetchCombatantInfoEvents for reportId:',
+        reportId,
+        'fightId:',
+        selectedFight.id
+      );
       dispatch(
         fetchCombatantInfoEvents({
           reportCode: reportId,
@@ -42,8 +59,17 @@ export function useCombatantInfoEvents(): {
     }
   }, [dispatch, reportId, selectedFight, client]);
 
-  const combatantInfoEvents = useSelector(selectCombatantInfoEvents);
-  const isCombatantInfoEventsLoading = useSelector(selectCombatantInfoEventsLoading);
+  // Add timeout to detect stuck loading state
+  React.useEffect(() => {
+    if (isCombatantInfoEventsLoading && reportId && selectedFight) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Combatant info events loading timeout detected - resetting loading state');
+        dispatch(resetCombatantInfoEventsLoading());
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isCombatantInfoEventsLoading, reportId, selectedFight, dispatch]);
 
   return React.useMemo(
     () => ({

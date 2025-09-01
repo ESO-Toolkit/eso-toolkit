@@ -103,12 +103,12 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
-  // DEBUG: Log boss name matching
-  console.log('🎯 BOSS NAME DEBUG:', {
-    originalBossName: bossName,
-    cleanBossName,
-    zoneName,
-  });
+  // DEBUG: Log boss name matching (commented out to reduce console noise)
+  // console.log('🎯 BOSS NAME DEBUG:', {
+  //   originalBossName: bossName,
+  //   cleanBossName,
+  //   zoneName,
+  // });
 
   // Sanity's Edge bosses
   if (
@@ -413,22 +413,20 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       return {
         // Dark mode fight card colors
         killGradient:
-          'linear-gradient(90deg, rgba(76, 217, 100, 0.65) 0%, rgba(94, 234, 255, 0.55) 100%)',
+          'linear-gradient(90deg, rgba(76, 217, 99, 0.88) 0%, rgba(94, 234, 255, 0.85) 100%)',
         killShadow: '0 0 6px rgba(76, 217, 100, 0.45)',
         trashGradient: 'linear-gradient(90deg, rgb(23 43 48 / 30%) 0%, rgb(0 0 0 / 85%) 100%)',
         trashShadow: '0 0 6px rgba(189, 195, 199, 0.35)',
         falsePositiveGradient:
           'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
-        wipeRedGradient:
-          'linear-gradient(90deg, rgba(220, 38, 38, 0.7) 0%, rgba(239, 68, 68, 0.6) 100%)',
-        wipeOrangeGradient:
-          'linear-gradient(90deg, rgba(239, 68, 68, 0.65) 0%, rgba(251, 146, 60, 0.55) 100%)',
+        wipeRedGradient: 'linear-gradient(90deg, rgb(220, 38, 38) 0%, rgb(239, 68, 68) 100%)',
+        wipeOrangeGradient: 'linear-gradient(90deg, rgb(239, 68, 68) 0%, rgb(251, 146, 60) 100%)',
         wipeYellowGradient:
-          'linear-gradient(90deg, rgba(251, 146, 60, 0.6) 0%, rgba(252, 211, 77, 0.5) 100%)',
+          'linear-gradient(90deg, rgba(251, 146, 60, 0.96) 0%, rgba(252, 211, 77, 0.92) 100%)',
         wipeLowGradient:
-          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(253, 230, 138, 0.45) 100%)',
+          'linear-gradient(90deg, rgba(252, 211, 77, 0.92) 0%, rgba(253, 230, 138, 0.87) 100%)',
         wipeVeryLowGradient:
-          'linear-gradient(90deg, rgba(252, 211, 77, 0.55) 0%, rgba(163, 230, 53, 0.45) 100%)',
+          'linear-gradient(90deg, rgb(252, 211, 77) 0%, rgba(162, 230, 53, 0.95) 100%)',
         wipeShadow: '0 0 6px rgba(255, 99, 71, 0.45)',
         hoverBg: 'rgba(255,255,255,0.025)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
@@ -531,25 +529,23 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       const currentBoss = bossFights[i];
       const nextBoss = bossFights[i + 1];
       const bossName = currentBoss.name || 'Unknown Boss';
-      const instanceCount = currentBoss.enemyNPCs?.[0]?.instanceCount || 1;
-      // Use boss name without instance count for progression tracking
       // Instance count should only be used for encounter IDs, not for determining resets
       const bossProgressionKey = bossName; // Just the boss name, not including instance count
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
 
-      // DEBUG: Log difficulty mapping data
-      console.log('🔍 DIFFICULTY DEBUG:', {
-        bossName,
-        trialName,
-        difficulty: currentBoss.difficulty,
-        startTime: new Date(currentBoss.startTime).toLocaleTimeString(),
-        endTime: new Date(currentBoss.endTime).toLocaleTimeString(),
-        instanceCount,
-        bossPercentage: currentBoss.bossPercentage,
-        currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName),
-      });
+      // DEBUG: Log difficulty mapping data (commented out to reduce console noise)
+      // console.log('🔍 DIFFICULTY DEBUG:', {
+      //   bossName,
+      //   trialName,
+      //   difficulty: currentBoss.difficulty,
+      //   startTime: new Date(currentBoss.startTime).toLocaleTimeString(),
+      //   endTime: new Date(currentBoss.endTime).toLocaleTimeString(),
+      //   instanceCount,
+      //   bossPercentage: currentBoss.bossPercentage,
+      //   currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName),
+      // });
 
       // SIMPLIFIED APPROACH: Don't try to separate trial instances
       // Just group all bosses from the same trial together
@@ -699,33 +695,14 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       });
     }
 
-    // Post-process to only show run numbers when there are multiple runs of the same zone
-    const zoneRunCounts = trialRuns?.reduce(
-      (acc, run) => {
-        const baseName = run.name.replace(/#\d+/, ''); // Remove existing run numbers
-        acc[baseName] = (acc[baseName] || 0) + 1;
-        return acc;
-      },
-      {} as Record<string, number>
-    );
-
-    // Update trial run names to only show numbers when there are duplicates
+    // Update trial run names to remove any existing run numbers
     const updatedTrialRuns = trialRuns?.map((run) => {
       const baseName = run.name.replace(/#\d+$/, '');
-      const runMatch = run.name.match(/#(\d+)$/);
-      const runNumber = runMatch ? parseInt(runMatch[1]) : 1;
 
-      if (zoneRunCounts[baseName] > 1) {
-        return {
-          ...run,
-          name: `${baseName} #${runNumber}`,
-        };
-      } else {
-        return {
-          ...run,
-          name: baseName,
-        };
-      }
+      return {
+        ...run,
+        name: baseName,
+      };
     });
 
     // Calculate trial difficulty for each individual run based on its own fights
@@ -1114,10 +1091,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         .replace(/#\d+/, '') // Remove run number
                         .trim();
 
-                      // Extract run number
-                      const runMatch = trialRun.name.match(/#(\d+)/);
-                      const runNumber = runMatch ? runMatch[1] : null;
-
                       // Get difficulty label from the calculated trial difficulty
                       const difficultyLabel = trialRun.difficultyLabel;
 
@@ -1167,23 +1140,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                               }}
                             >
                               {difficultyLabel}
-                            </Box>
-                          )}
-                          {runNumber && (
-                            <Box
-                              component="span"
-                              sx={{
-                                fontWeight: 700,
-                                color: '#00bcd4',
-                                backgroundColor: 'rgba(0, 188, 212, 0.1)',
-                                px: 0.75,
-                                py: 0.25,
-                                borderRadius: 1,
-                                fontSize: '0.85em',
-                                flexShrink: 0,
-                              }}
-                            >
-                              #{runNumber}
                             </Box>
                           )}
                         </>
