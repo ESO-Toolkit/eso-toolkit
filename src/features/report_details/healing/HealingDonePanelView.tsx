@@ -426,6 +426,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
+                      fontFamily: '"Space Grotesk", "Inter", system-ui',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
@@ -564,6 +565,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                       sx={{
                         fontWeight: 500,
                         fontSize: '0.9rem',
+                        fontFamily: '"Space Grotesk", "Inter", system-ui',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
