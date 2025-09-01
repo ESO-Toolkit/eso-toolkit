@@ -106,7 +106,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6">Healing Done By Player</Typography>
+        <Typography variant="h6">💜Healing Done By Player</Typography>
         <Typography
           variant="caption"
           sx={{
