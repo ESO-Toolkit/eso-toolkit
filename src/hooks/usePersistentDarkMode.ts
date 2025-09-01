@@ -50,7 +50,7 @@ export const usePersistentDarkMode = (): UsePersistentDarkModeReturn => {
     if (savedPreference !== darkMode) {
       dispatch(setDarkMode(savedPreference));
     }
-  }, [dispatch, darkMode]);
+  }, [dispatch]);
 
   // Save to localStorage whenever darkMode changes
   useEffect(() => {
