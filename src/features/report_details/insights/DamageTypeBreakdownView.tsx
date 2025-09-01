@@ -105,143 +105,145 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
       </Typography>
 
       {damageTypeBreakdown.length > 0 ? (
-        <List disablePadding>
-          {damageTypeBreakdown.map((damageType, idx) => {
-            const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
-            // Try custom mapping first (by display name), then fall back to enum-based mapping
-            const color =
-              CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
-              DAMAGE_TYPE_COLORS[damageType.damageType] ||
-              '#6B7280'; // Default gray
-            const icon =
-              CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
-              DAMAGE_TYPE_ICONS[damageType.damageType] ||
-              '💥'; // Default explosion
+        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+          <List disablePadding>
+            {damageTypeBreakdown.map((damageType, idx) => {
+              const percentage = totalDamage > 0 ? (damageType.totalDamage / totalDamage) * 100 : 0;
+              // Try custom mapping first (by display name), then fall back to enum-based mapping
+              const color =
+                CUSTOM_DAMAGE_TYPE_COLORS[damageType.displayName] ||
+                DAMAGE_TYPE_COLORS[damageType.damageType] ||
+                '#6B7280'; // Default gray
+              const icon =
+                CUSTOM_DAMAGE_TYPE_ICONS[damageType.displayName] ||
+                DAMAGE_TYPE_ICONS[damageType.damageType] ||
+                '💥'; // Default explosion
 
-            return (
-              <ListItem key={idx} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
-                <Box sx={{ width: '100%' }}>
-                  {/* Progress bar container with content inside */}
-                  <Box
-                    sx={{
-                      position: 'relative',
-                      height: 48,
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      bgcolor: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,255,255,0.08)'
-                          : 'rgba(0,0,0,0.06)',
-                    }}
-                  >
-                    {/* Progress bar fill */}
-                    <Box
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        height: '100%',
-                        width: `${Math.max(0, Math.min(100, percentage))}%`,
-                        bgcolor: color,
-                        borderRadius: 2,
-                        transition: 'width 0.3s ease-in-out',
-                      }}
-                    />
-
-                    {/* Content overlay */}
+              return (
+                <ListItem key={idx} sx={{ py: 1.5, pl: 0.5, pr: 1.5 }} divider>
+                  <Box sx={{ width: '100%' }}>
+                    {/* Progress bar container with content inside */}
                     <Box
                       sx={{
                         position: 'relative',
-                        height: '100%',
-                        display: 'flex',
-                        alignItems: 'center',
-                        px: 2,
-                        zIndex: 1,
+                        height: 48,
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
                       }}
                     >
-                      {/* Icon */}
-                      <Avatar
+                      {/* Progress bar fill */}
+                      <Box
                         sx={{
-                          width: 32,
-                          height: 32,
-                          bgcolor: 'transparent',
-                          fontSize: '1.2rem',
-                          filter:
-                            'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
-                          textShadow:
-                            '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          height: '100%',
+                          width: `${Math.max(0, Math.min(100, percentage))}%`,
+                          bgcolor: color,
+                          borderRadius: 2,
+                          transition: 'width 0.3s ease-in-out',
                         }}
-                        variant="rounded"
-                      >
-                        {icon}
-                      </Avatar>
+                      />
 
-                      {/* Labels */}
-                      <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
-                        <Typography
-                          variant="body2"
+                      {/* Content overlay */}
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          height: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          px: 2,
+                          zIndex: 1,
+                        }}
+                      >
+                        {/* Icon */}
+                        <Avatar
                           sx={{
-                            fontWeight: 700,
-                            color: 'white',
-                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                            lineHeight: 1.2,
+                            width: 32,
+                            height: 32,
+                            bgcolor: 'transparent',
+                            fontSize: '1.2rem',
+                            filter:
+                              'drop-shadow(0px 0px 2px rgba(0,0,0,0.8)) drop-shadow(0px 0px 4px rgba(255,255,255,0.3))',
+                            textShadow:
+                              '0px 0px 2px rgba(0,0,0,0.9), 0px 0px 4px rgba(255,255,255,0.4)',
                           }}
+                          variant="rounded"
                         >
-                          {damageType.displayName}
-                        </Typography>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                          {icon}
+                        </Avatar>
+
+                        {/* Labels */}
+                        <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                           <Typography
-                            variant="caption"
+                            variant="body2"
                             sx={{
-                              color: 'rgba(255,255,255,0.9)',
-                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                              fontWeight: 500,
+                              fontWeight: 700,
+                              color: 'white',
+                              textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                              lineHeight: 1.2,
                             }}
                           >
-                            {formatNumber(damageType.totalDamage)} dmg
+                            {damageType.displayName}
                           </Typography>
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.9)',
+                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {formatNumber(damageType.totalDamage)} dmg
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.7)',
+                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              }}
+                            >
+                              •
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'rgba(255,255,255,0.9)',
+                                textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                                fontWeight: 500,
+                              }}
+                            >
+                              {formatNumber(Math.round(damageType.averageDamage))} avg
+                            </Typography>
+                          </Box>
+                        </Box>
+
+                        {/* Percentage */}
+                        <Box sx={{ textAlign: 'right' }}>
                           <Typography
-                            variant="caption"
+                            variant="h6"
                             sx={{
-                              color: 'rgba(255,255,255,0.7)',
-                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
+                              fontWeight: 700,
+                              color: 'white',
+                              textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
                             }}
                           >
-                            •
-                          </Typography>
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: 'rgba(255,255,255,0.9)',
-                              textShadow: '1px 1px 1px rgba(0,0,0,0.8)',
-                              fontWeight: 500,
-                            }}
-                          >
-                            {formatNumber(Math.round(damageType.averageDamage))} avg
+                            {percentage.toFixed(1)}%
                           </Typography>
                         </Box>
                       </Box>
-
-                      {/* Percentage */}
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontWeight: 700,
-                            color: 'white',
-                            textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                          }}
-                        >
-                          {percentage.toFixed(1)}%
-                        </Typography>
-                      </Box>
                     </Box>
                   </Box>
-                </Box>
-              </ListItem>
-            );
-          })}
-        </List>
+                </ListItem>
+              );
+            })}
+          </List>
+        </Box>
       ) : (
         <Typography variant="body2" color="text.secondary">
           No damage events found for friendly players.
