@@ -5,7 +5,9 @@
       "Bash(npm run build:*)",
       "Bash(cat:*)",
       "Bash(npm start)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run dev:*)",
+      "WebFetch(domain:localhost)"
     ],
     "deny": [],
     "ask": []

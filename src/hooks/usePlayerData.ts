@@ -7,7 +7,7 @@ import {
   selectPlayerData,
   selectPlayerDataLoadingState,
 } from '../store/player_data/playerDataSelectors';
-import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
+import { fetchPlayerData, PlayerDataState, resetPlayerDataLoading } from '../store/player_data/playerDataSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function usePlayerData(): {
@@ -18,17 +18,32 @@ export function usePlayerData(): {
   const dispatch = useAppDispatch();
   const { reportId, fightId } = useSelectedReportAndFight();
 
+  // Move selectors BEFORE the effects that use them
+  const playerData = useSelector(selectPlayerData);
+  const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);
+
   React.useEffect(() => {
+    console.log('🔍 usePlayerData effect triggered', { reportId, fightId, hasClient: !!client });
     if (reportId && fightId) {
       const fightIdNumber = parseInt(fightId, 10);
       if (!isNaN(fightIdNumber)) {
+        console.log('📡 Dispatching fetchPlayerData for reportId:', reportId, 'fightId:', fightIdNumber);
         dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
       }
     }
   }, [dispatch, reportId, fightId, client]);
 
-  const playerData = useSelector(selectPlayerData);
-  const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);
+  // Add timeout to detect stuck loading state
+  React.useEffect(() => {
+    if (isPlayerDataLoading && reportId && fightId) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Player data loading timeout detected - resetting loading state');
+        dispatch(resetPlayerDataLoading());
+      }, 10000); // 10 second timeout
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isPlayerDataLoading, reportId, fightId, dispatch]);
 
   return React.useMemo(
     () => ({ playerData, isPlayerDataLoading }),

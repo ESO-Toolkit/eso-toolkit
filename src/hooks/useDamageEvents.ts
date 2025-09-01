@@ -4,7 +4,7 @@ import { useSelector } from 'react-redux';
 import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
+import { fetchDamageEvents, resetDamageEventsLoading } from '../store/events_data/damageEventsSlice';
 import { selectReportFights } from '../store/report/reportSelectors';
 import { selectDamageEvents, selectDamageEventsLoading } from '../store/selectors/eventsSelectors';
 import { useAppDispatch } from '../store/useAppDispatch';
@@ -24,6 +24,10 @@ export function useDamageEvents(): {
   const { reportId, fightId } = useSelectedReportAndFight();
   const fights = useSelector(selectReportFights);
 
+  // Move selectors BEFORE the effects that use them
+  const damageEvents = useSelector(selectDamageEvents);
+  const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
+
   // Get the specific fight from the report data
   const selectedFight = React.useMemo(() => {
     if (!fightId || !fights) return null;
@@ -32,7 +36,9 @@ export function useDamageEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
+    console.log('🔍 useDamageEvents effect triggered', { reportId, fightId, hasSelectedFight: !!selectedFight });
     if (reportId && selectedFight) {
+      console.log('📡 Dispatching fetchDamageEvents for reportId:', reportId, 'fightId:', selectedFight.id);
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,
@@ -41,10 +47,19 @@ export function useDamageEvents(): {
         })
       );
     }
-  }, [dispatch, reportId, selectedFight, client]);
+  }, [dispatch, reportId, selectedFight, client, fightId]);
 
-  const damageEvents = useSelector(selectDamageEvents);
-  const isDamageEventsLoading = useSelector(selectDamageEventsLoading);
+  // Add timeout to detect stuck loading state
+  React.useEffect(() => {
+    if (isDamageEventsLoading && reportId && selectedFight) {
+      const timeout = setTimeout(() => {
+        console.warn('⚠️ Damage events loading timeout detected - resetting loading state');
+        dispatch(resetDamageEventsLoading());
+      }, 15000); // 15 second timeout (damage events can take longer due to pagination)
+
+      return () => clearTimeout(timeout);
+    }
+  }, [isDamageEventsLoading, reportId, selectedFight, dispatch]);
 
   return React.useMemo(
     () => ({ damageEvents, isDamageEventsLoading, selectedFight }),
