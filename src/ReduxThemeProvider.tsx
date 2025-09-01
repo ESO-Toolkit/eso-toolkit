@@ -39,7 +39,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         ok: '#059669',
         warn: '#f97316',
         danger: '#dc2626',
-        border: '#e2e8f0',
+        border: '#bcd9ff',
       } as const;
     }
   }, [darkMode]);
@@ -108,7 +108,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               root: {
                 background: darkMode
                   ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-                  : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(250,252,255,0.95) 100%)',
+                  : 'linear-gradient(180deg, rgb(230 241 248 / 56%) 0%, rgb(255 255 255 / 95%) 100%)',
                 border: `1px solid ${tokens.border}`,
                 borderRadius: 14,
                 boxShadow: darkMode
@@ -202,7 +202,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             styleOverrides: {
               root: {
                 background:
-                  'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                  'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
                 border: `1px solid ${tokens.border}`,
                 borderRadius: 12,
                 boxShadow: darkMode
