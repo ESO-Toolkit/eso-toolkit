@@ -16,4 +16,7 @@ runs:
 
     - name: Install dependencies
       shell: bash
-      run: npm ci
+      run: |
+        # Clean install to ensure fresh native bindings
+        rm -rf node_modules
+        npm ci --prefer-offline --no-audit --no-fund
