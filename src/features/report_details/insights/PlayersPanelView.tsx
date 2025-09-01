@@ -627,7 +627,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
     return (
       <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
         <Typography variant="h6" gutterBottom>
-          Players
+          🫂 Raid Roster
         </Typography>
         <Typography variant="body2" color="text.secondary">
           Loading player data...
@@ -639,7 +639,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6">Players</Typography>
+        <Typography variant="h6">🫂 Raid Roster</Typography>
         {fightStartTime && fightEndTime && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
             <Typography

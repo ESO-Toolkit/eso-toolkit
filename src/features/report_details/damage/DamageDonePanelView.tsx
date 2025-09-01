@@ -93,7 +93,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6">Damage Done By Player</Typography>
+        <Typography variant="h6">⚔️ Damage Done By Player</Typography>
         <Typography
           variant="caption"
           sx={{
@@ -411,6 +411,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
                     sx={{
                       fontWeight: 500,
                       fontSize: '0.875rem',
+                      fontFamily: '"Space Grotesk", "Inter", system-ui',
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',

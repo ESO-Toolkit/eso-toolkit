@@ -183,7 +183,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             size="small"
             sx={{
               backgroundColor: 'rgba(244, 67, 54, 0.2)',
-              color: '#f44336',
+              color: theme.palette.mode === 'dark' ? '#f44336' : '#a13931',
               border: '1px solid rgba(244, 67, 54, 0.3)',
             }}
           />
@@ -192,7 +192,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             size="small"
             sx={{
               backgroundColor: 'rgba(255, 152, 0, 0.2)',
-              color: '#ff9800',
+              color: theme.palette.mode === 'dark' ? '#ff9800' : '#b77d27',
               border: '1px solid rgba(255, 152, 0, 0.3)',
             }}
           />
@@ -349,7 +349,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         color: roleColors.getPlayerColor(
                           playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank'
                         ),
-                        fontWeight: 800,
+                        fontWeight: 400,
+                        fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
                         textShadow:
                           theme.palette.mode === 'dark'
                             ? '0 1px 3px rgba(0,0,0,0.5)'
@@ -467,14 +468,27 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       <Typography
                         variant="body2"
                         sx={{
-                          color: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                          color: theme.palette.mode === 'dark' ? 'white' : 'black',
                           fontSize: '0.8rem',
-                          fontWeight: 500,
+                          fontWeight: 300,
+                          display: 'inline',
                         }}
                       >
-                        {info.stamina !== null && info.maxStamina !== null
-                          ? `${info.stamina}/${info.maxStamina} (${Math.round((info.stamina / info.maxStamina) * 100)}%)`
-                          : `${info.stamina ?? 'Unknown'}`}
+                        {info.stamina !== null && info.maxStamina !== null ? (
+                          <>
+                            {info.stamina}/{info.maxStamina} (
+                            <span
+                              style={{
+                                fontWeight: 800,
+                              }}
+                            >
+                              {Math.round((info.stamina / info.maxStamina) * 100)}%
+                            </span>
+                            )
+                          </>
+                        ) : (
+                          (info.stamina ?? 'Unknown')
+                        )}
                       </Typography>
                     </Box>
                   </Box>
@@ -522,7 +536,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         variant="body2"
                         sx={{
                           color:
-                            theme.palette.mode === 'dark' ? theme.palette.text.primary : '#dc2626',
+                            theme.palette.mode === 'dark' ? theme.palette.text.primary : '#1e293b',
                           fontSize: '0.8rem',
                           lineHeight: 1.4,
                           fontWeight: 900,
@@ -530,7 +544,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       >
                         <span style={{ fontWeight: 500 }}>Killed</span>{' '}
                         <span style={{ fontWeight: 400 }}>by</span>{' '}
-                        <span style={{ fontWeight: 900 }}>
+                        <span
+                          style={{
+                            fontWeight: 300,
+                            color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
+                          }}
+                        >
                           {info.killingBlow.abilityName || 'Unknown'}
                         </span>
                         {killingBlowSourceName && info.killingBlow.sourceID && (
@@ -540,12 +559,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             <span
                               style={{
                                 fontWeight: 900,
-                                color: roleColors.getPlayerColor(
-                                  playerMap.get(info.killingBlow.sourceID.toString())?.role as
-                                    | 'dps'
-                                    | 'healer'
-                                    | 'tank'
-                                ),
+                                color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
                               }}
                             >
                               {killingBlowSourceName}
@@ -556,7 +570,14 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                           <>
                             {' '}
                             <span style={{ fontWeight: 400 }}>by</span>{' '}
-                            <span style={{ fontWeight: 600 }}>{killingBlowSourceName}</span>
+                            <span
+                              style={{
+                                fontWeight: 600,
+                                color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
+                              }}
+                            >
+                              {killingBlowSourceName}
+                            </span>
                           </>
                         )}
                       </Typography>
@@ -650,7 +671,23 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               {typeof attack.amount === 'number' && (
                                 <Typography
                                   variant="caption"
-                                  sx={{ color: '#ff6b35', fontSize: '0.7rem', fontWeight: 900 }}
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#ff845a' : '#c2410c',
+                                    fontSize: '0.75rem',
+                                    fontWeight: 900,
+                                    textShadow:
+                                      theme.palette.mode === 'dark'
+                                        ? '0 1px 2px rgba(0,0,0,0.0)'
+                                        : '0 1px 0 rgba(255,255,255,0.7)',
+                                    background:
+                                      theme.palette.mode === 'dark'
+                                        ? 'linear-gradient(180deg, #ffb199, #ff6b35)'
+                                        : 'none',
+                                    WebkitBackgroundClip:
+                                      theme.palette.mode === 'dark' ? 'text' : 'initial',
+                                    WebkitTextFillColor:
+                                      theme.palette.mode === 'dark' ? 'transparent' : 'initial',
+                                  }}
                                 >
                                   {attack.amount.toLocaleString()}
                                 </Typography>

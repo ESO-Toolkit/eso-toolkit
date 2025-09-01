@@ -175,6 +175,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               padding: '6px 12px',
               margin: 0,
               opacity: 1,
+              borderRadius: 100,
             },
           }}
           variant="scrollable"
