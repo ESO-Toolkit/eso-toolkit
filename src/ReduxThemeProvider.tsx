@@ -127,7 +127,24 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               paper: {
                 background: 'none',
                 backgroundImage: 'none',
-                backgroundColor: darkMode ? '#30394d' : '#ffffff',
+                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                color: darkMode ? '#e5e7eb' : '#1e293b',
+                border: darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)',
+                '& .MuiMenuItem-root': {
+                  color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+                  '&:hover': {
+                    backgroundColor: `${darkMode ? '#1e293b' : '#f5f5f5'} !important`,
+                    color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+                  },
+                  '&.Mui-selected': {
+                    backgroundColor: `${darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)'} !important`,
+                    color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
+                    '&:hover': {
+                      backgroundColor: `${darkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(25, 118, 210, 0.12)'} !important`,
+                      color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+                    },
+                  },
+                },
               },
             },
           },
@@ -136,7 +153,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               paper: {
                 background: 'none',
                 backgroundImage: 'none',
-                backgroundColor: darkMode ? '#30394d' : '#ffffff',
+                backgroundColor: darkMode ? '#0f172a' : '#ffffff',
+                color: darkMode ? '#e5e7eb' : '#1e293b',
+                border: darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)',
               },
             },
           },
@@ -241,9 +260,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             styleOverrides: {
               root: {
                 fontWeight: 500,
-                color: darkMode ? tokens.accent : '#64748b',
+                color: darkMode ? '#94a3b8' : '#64748b', // Light gray in dark mode, slate gray in light mode
                 '&.Mui-focused': {
-                  color: tokens.accent,
+                  color: darkMode ? '#ffffff' : '#000000', // White in dark mode, black in light mode
                 },
               },
             },
@@ -252,12 +271,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             styleOverrides: {
               select: {
                 backgroundColor: darkMode ? tokens.panel : 'rgba(255, 255, 255, 0.9)',
+                color: `${darkMode ? tokens.text : '#000000'} !important`,
                 borderRadius: 8,
                 '&:hover': {
                   backgroundColor: darkMode ? tokens.panel2 : 'rgba(255, 255, 255, 1)',
+                  color: `${darkMode ? tokens.text : '#000000'} !important`,
                 },
                 '&.Mui-focused': {
                   backgroundColor: darkMode ? tokens.bg : 'rgba(255, 255, 255, 1)',
+                  color: `${darkMode ? tokens.text : '#000000'} !important`,
                 },
               },
             },
@@ -447,9 +469,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           '.MuiDialog-root .MuiInputLabel-root': {
-            color: `${darkMode ? tokens.accent : '#1976d2'} !important`,
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
             '&.Mui-focused': {
-              color: `${darkMode ? tokens.accent : '#1976d2'} !important`,
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
             },
           },
           '.MuiDialog-root .MuiSelect-select': {
@@ -457,7 +479,102 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&:hover': {
               backgroundColor: `${darkMode ? tokens.panel2 : '#f5f5f5'} !important`,
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
             },
+            '&.Mui-focused': {
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
+            },
+          },
+          // Force Select component text color globally with highest specificity
+          '.MuiSelect-select': {
+            color: `${darkMode ? tokens.text : '#000000'} !important`,
+            '&:hover': {
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
+            },
+            '&.Mui-focused': {
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
+            },
+          },
+          // Override specific MUI generated class names with maximum specificity
+          '.MuiInputBase-root.MuiOutlinedInput-root.MuiSelect-root .MuiSelect-select': {
+            color: `${darkMode ? tokens.text : '#000000'} !important`,
+          },
+          '[class*="MuiInputBase-root"][class*="MuiOutlinedInput-root"][class*="MuiSelect-root"] .MuiSelect-select': {
+            color: `${darkMode ? tokens.text : '#000000'} !important`,
+          },
+          // Target the exact problematic class pattern
+          '[class*="css-"][class*="MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root"] .MuiSelect-select': {
+            color: `${darkMode ? tokens.text : '#000000'} !important`,
+          },
+          // Override InputLabel colors globally with maximum specificity
+          '.MuiInputLabel-root': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            '&.Mui-focused': {
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+            },
+            '&.Mui-error': {
+              color: `${darkMode ? '#f87171' : '#dc2626'} !important`,
+            },
+          },
+          // Override specific MUI generated InputLabel classes
+          '.MuiFormControl-root .MuiInputLabel-root': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            '&.Mui-focused': {
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+            },
+          },
+          '[class*="MuiFormControl-root"][class*="MuiTextField-root"] .MuiInputLabel-root': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            '&.Mui-focused': {
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+            },
+          },
+          // Target the exact problematic InputLabel class pattern
+          '[class*="css-"][class*="MuiFormControl-root-MuiTextField-root"] .MuiInputLabel-root': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            '&.Mui-focused': {
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+            },
+          },
+          // Global placeholder text styling with maximum specificity
+          'input::placeholder, textarea::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          '.MuiInputBase-input::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          '.MuiOutlinedInput-input::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          // Target specific MUI input classes for placeholder styling
+          '[class*="MuiInputBase-input"]::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          '[class*="MuiOutlinedInput-input"]::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          // Ultra-specific targeting for the bug report dialog placeholder text
+          'div[role="dialog"] input::placeholder, div[role="dialog"] textarea::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          'div[role="dialog"] .MuiInputBase-input::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          // Force override any existing placeholder styles in styled components
+          '*[class*="TextField"] input::placeholder, *[class*="TextField"] textarea::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
+          },
+          '*[class*="TextField"] .MuiInputBase-input::placeholder': {
+            color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+            opacity: '1 !important',
           },
           // Fix stepper/tab navigation
           '.MuiDialog-root .MuiStepper-root': {
@@ -528,6 +645,19 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               backgroundColor: 'transparent !important',
               color: `${darkMode ? tokens.text : '#000000'} !important`,
             },
+            // Fix placeholder text colors
+            '& input::placeholder': {
+              color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+              opacity: '1 !important',
+            },
+            '& textarea::placeholder': {
+              color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+              opacity: '1 !important',
+            },
+            '& .MuiInputBase-input::placeholder': {
+              color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
+              opacity: '1 !important',
+            },
           },
           // Fix form controls and wrappers
           '.MuiDialog-root .MuiFormControl-root': {
@@ -575,6 +705,50 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             '&:not([class*="Mui"])': {
               backgroundColor: 'transparent !important',
             },
+          },
+          // Force MenuItem text colors globally with highest specificity
+          '.MuiMenuItem-root': {
+            color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+            '& *': {
+              color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+            },
+            '&:hover': {
+              backgroundColor: `${darkMode ? '#1e293b' : '#f5f5f5'} !important`,
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+              '& *': {
+                color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+              },
+            },
+            '&.Mui-selected': {
+              backgroundColor: `${darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)'} !important`,
+              color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
+              '& *': {
+                color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
+              },
+              '&:hover': {
+                backgroundColor: `${darkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(25, 118, 210, 0.12)'} !important`,
+                color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+                '& *': {
+                  color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+                },
+              },
+            },
+          },
+          // Additional specific targeting for MenuItem content
+          '.MuiMenuItem-root .MuiListItemText-root, .MuiMenuItem-root .MuiListItemText-primary, .MuiMenuItem-root .MuiTypography-root': {
+            color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+          },
+          '.MuiMenuItem-root:hover .MuiListItemText-root, .MuiMenuItem-root:hover .MuiListItemText-primary, .MuiMenuItem-root:hover .MuiTypography-root': {
+            color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+          },
+          '.MuiMenuItem-root.Mui-selected .MuiListItemText-root, .MuiMenuItem-root.Mui-selected .MuiListItemText-primary, .MuiMenuItem-root.Mui-selected .MuiTypography-root': {
+            color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
+          },
+          // Force Menu and Popover paper backgrounds globally
+          '.MuiMenu-paper, .MuiPopover-paper': {
+            backgroundColor: `${darkMode ? '#0f172a' : '#ffffff'} !important`,
+            color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+            border: `${darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)'} !important`,
           },
           // Enhanced scrollbar styles for TextFields and form elements
           '.MuiTextField-root textarea, .MuiOutlinedInput-input': {
