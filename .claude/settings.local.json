@@ -11,7 +11,8 @@
       "Read(c:\\Users\\brayd\\Pictures\\Screenshots/**)",
       "Read(c:\\Users\\brayd\\Pictures\\Screenshots/**)",
       "Bash(npm run lint)",
-      "Bash(npm install:*)"
+      "Bash(npm install:*)",
+      "Bash(npm ci:*)"
     ],
     "deny": [],
     "ask": []
