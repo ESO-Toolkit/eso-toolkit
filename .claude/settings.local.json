@@ -9,7 +9,9 @@
       "Bash(npm run dev:*)",
       "WebFetch(domain:localhost)",
       "Read(c:\\Users\\brayd\\Pictures\\Screenshots/**)",
-      "Read(c:\\Users\\brayd\\Pictures\\Screenshots/**)"
+      "Read(c:\\Users\\brayd\\Pictures\\Screenshots/**)",
+      "Bash(npm run lint)",
+      "Bash(npm install:*)"
     ],
     "deny": [],
     "ask": []

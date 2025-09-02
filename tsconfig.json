@@ -42,5 +42,5 @@
     }
   },
   "include": ["src"],
-  "exclude": ["node_modules", "build", "**/*.stories.tsx", "**/*.test.tsx", "**/*.test.ts"]
+  "exclude": ["node_modules", "build", "**/*.stories.tsx", "**/*.test.tsx", "**/*.test.ts", "src/data/skill-lines/**/*"]
 }

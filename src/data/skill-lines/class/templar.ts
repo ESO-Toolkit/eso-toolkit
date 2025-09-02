@@ -1,0 +1,670 @@
+import { SkillsetData } from '../../skillsets/Skillset';
+
+export const templarData: SkillsetData = {
+  class: 'Templar',
+  skillLines: {
+    aedricSpear: {
+      name: 'Aedric Spear',
+      icon: '⚔️',
+      ultimates: {
+        radialSweep: {
+          name: 'Radial Sweep',
+          type: 'ultimate',
+          cost: '75 Ultimate',
+          castTime: '0.25 second',
+          target: 'Area',
+          duration: '6 seconds',
+          radius: '8 meters',
+          description: 'Swing your spear around dealing Magic Damage over time.',
+          initialDamage: '2323 Magic Damage',
+          damageOverTime: '1161 Magic Damage every 2 seconds for 6 seconds',
+          morphs: {
+            crescentSweep: {
+              name: 'Crescent Sweep',
+              initialDamage: '2399 Magic Damage',
+              damageOverTime: '1161 Magic Damage every 2 seconds for 6 seconds',
+              description: 'Enemies in path take 60% more damage.',
+              pathBonus: '60% more damage to enemies in path',
+            },
+            everlastingSweep: {
+              name: 'Everlasting Sweep',
+              duration: '10 seconds',
+              initialDamage: '2399 Physical Damage',
+              damageOverTime: '1161 Physical Damage every 2 seconds for 10 seconds',
+              description: 'Deals Physical Damage, duration extends per enemy hit.',
+              durationExtension: '2 seconds per enemy hit',
+            },
+          },
+        },
+      },
+      activeAbilities: {
+        piercingJavelin: {
+          name: 'Piercing Javelin',
+          type: 'active',
+          cost: '3780 Magicka',
+          target: 'Enemy',
+          maxRange: '22 meters',
+          description:
+            'Hurl your spear with godlike strength, ignoring resistances and knocking back.',
+          damage: '1392 Magic Damage',
+          knockback: '8 meters',
+          ignoresResistances: true,
+          cannotBeBlocked: true,
+          morphs: {
+            auroraJavelin: {
+              name: 'Aurora Javelin',
+              damage: '1438 Magic Damage',
+              description: 'Deals more damage based on distance from target.',
+              distanceBonus: '2% per meter away from target, up to 40% max',
+            },
+            bindingJavelin: {
+              name: 'Binding Javelin',
+              cost: '3213 Stamina',
+              damage: '1393 Physical Damage',
+              description: 'Stamina morph that stuns instead of knocking back.',
+              stun: '4 seconds',
+            },
+          },
+        },
+        puncturingStrikes: {
+          name: 'Puncturing Strikes',
+          type: 'active',
+          cost: '2295 Magicka',
+          castTime: '0.8 second',
+          target: 'Area',
+          radius: '8 meters',
+          description: 'Launch a relentless three-strike assault in front of you.',
+          damage: '889 Magic Damage per strike',
+          strikes: 3,
+          maxTargets: 6,
+          snare: '40% Movement Speed reduction for 0.5 seconds',
+          morphs: {
+            puncturingSweep: {
+              name: 'Puncturing Sweep',
+              damage: '919 Magic Damage per strike',
+              description: 'Heals you for 25% of damage dealt.',
+              heal: '25% of damage dealt',
+            },
+            bitingJabs: {
+              name: 'Biting Jabs',
+              cost: '2295 Stamina',
+              damage: '919 Physical Damage per strike',
+              description: 'Stamina morph that grants Major Brutality and Sorcery.',
+              statusChance: '10% chance per strike to apply Sundered',
+              buff: 'Major Brutality and Sorcery (+20% Weapon/Spell Damage for 10 seconds)',
+            },
+          },
+        },
+        sunShield: {
+          name: 'Sun Shield',
+          type: 'active',
+          cost: '4590 Magicka',
+          target: 'Area',
+          duration: '6 seconds',
+          radius: '5 meters',
+          description: 'Surround yourself with solar rays for damage and protection.',
+          damage: '1742 Magic Damage to nearby enemies',
+          shield: '4800 damage absorption',
+          shieldScaling: '10% increase per enemy hit, up to 60%',
+          debuff: 'Minor Maim (-5% damage done for 10 seconds)',
+          morphs: {
+            blazingShield: {
+              name: 'Blazing Shield',
+              shield: '4800 damage absorption',
+              shieldScaling: '10% increase per enemy hit, up to 60%',
+              description: 'Shield explodes when it expires, dealing damage.',
+              explosion: '33% of damage absorbed as Magic Damage to nearby enemies',
+            },
+            radiantWard: {
+              name: 'Radiant Ward',
+              cost: '4320 Magicka',
+              damage: '1742 Magic Damage to nearby enemies',
+              shield: '4958 damage absorption',
+              shieldScaling: '20% increase per enemy hit, up to 120%',
+              description: 'Initially damages nearby enemies, larger shield scaling.',
+            },
+          },
+        },
+        spearShards: {
+          name: 'Spear Shards',
+          type: 'active',
+          cost: '2970 Magicka',
+          target: 'Ground',
+          duration: '10 seconds',
+          maxRange: '28 meters',
+          radius: '6 meters',
+          description: 'Call down divine wrath dealing AoE damage over time.',
+          initialDamage: '1742 Magic Damage',
+          damageOverTime: '166 Magic Damage every 1 second for 10 seconds',
+          synergy: 'Blessed Shards - restores 3960 Magicka or Stamina (whichever max is higher)',
+          morphs: {
+            blazingSpear: {
+              name: 'Blazing Spear',
+              damageOverTime: '276 Magic Damage every 1 second for 10 seconds',
+              description: 'Immobilizes enemies hit by initial impact.',
+              immobilize: '4 seconds for enemies hit by initial impact',
+            },
+            luminousShards: {
+              name: 'Luminous Shards',
+              cost: '2700 Magicka',
+              damageOverTime: '165 Magic Damage every 1 second for 10 seconds',
+              description: 'Synergy restores both Magicka and Stamina.',
+              synergy: 'Holy Shards - restores 3960 Magicka AND Stamina',
+            },
+          },
+        },
+        focusedCharge: {
+          name: 'Focused Charge',
+          type: 'active',
+          cost: '3780 Magicka',
+          target: 'Enemy',
+          maxRange: '22 meters',
+          description: 'Charge with your lance, dealing damage and taunting.',
+          damage: '1392 Magic Damage',
+          taunt: '15 seconds',
+          offBalance: '3 seconds if enemy was casting',
+          interrupt: true,
+          buff: 'Major Protection (-10% damage taken for 7 seconds)',
+          morphs: {
+            topplingCharge: {
+              name: 'Toppling Charge',
+              cost: '3510 Magicka',
+              damage: '1393 Magic Damage',
+              description: 'Stuns the target for 3 seconds.',
+              stun: '3 seconds',
+            },
+            explosiveCharge: {
+              name: 'Explosive Charge',
+              radius: '6 meters',
+              damage: '1799 Magic Damage',
+              description: 'Deals AoE damage around the target.',
+              buff: 'Major Protection (-10% damage taken for 15 seconds)',
+            },
+          },
+        },
+      },
+      passives: {
+        balancedWarrior: {
+          name: 'Balanced Warrior',
+          description: 'Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
+        },
+        burningLight: {
+          name: 'Burning Light',
+          description:
+            'When you deal damage you generate a stack of Burning Light for 3 seconds. After reaching 4 stacks, you deal 500 Magic Damage to your target. This effect can stack once every half second and scales off the higher of your Weapon or Spell Damage.',
+        },
+        piercingSpear: {
+          name: 'Piercing Spear',
+          description:
+            'Increases your Critical Damage by 12%. Increases your damage done to blocking players by 12%.',
+          requirement: 'Aedric Spear ability slotted',
+        },
+        spearWall: {
+          name: 'Spear Wall',
+          description:
+            'Gain Minor Berserk and Minor Protection for 6 seconds, increasing damage done and reducing damage taken by 5%.',
+          trigger: 'When activating an Aedric Spear ability',
+        },
+      },
+    },
+    dawnsWrath: {
+      name: "Dawn's Wrath",
+      icon: '🌅',
+      ultimates: {
+        nova: {
+          name: 'Nova',
+          type: 'ultimate',
+          cost: '250 Ultimate',
+          target: 'Ground',
+          duration: '8 seconds',
+          maxRange: '28 meters',
+          radius: '8 meters',
+          description: 'Call down a solar fragment dealing damage over time with Major Maim.',
+          damage: '1161 Magic Damage every 1 second for 8 seconds',
+          debuff: 'Major Maim (-10% damage done)',
+          synergy: 'Supernova - 2607 Magic Damage and 3 second stun',
+          morphs: {
+            solarPrison: {
+              name: 'Solar Prison',
+              damage: '1199 Magic Damage every 1 second for 8 seconds',
+              description: 'Enhanced synergy deals more damage and longer stun.',
+              synergy: 'Gravity Crush - 5215 Magic Damage and 5 second stun',
+            },
+            solarDisturbance: {
+              name: 'Solar Disturbance',
+              cost: '225 Ultimate',
+              description: 'Reduced cost with extended Major Maim duration.',
+              debuff: 'Major Maim (-10% damage done for 10 seconds)',
+            },
+          },
+        },
+      },
+      activeAbilities: {
+        sunFire: {
+          name: 'Sun Fire',
+          type: 'active',
+          cost: '2970 Magicka',
+          target: 'Enemy',
+          duration: '20 seconds',
+          maxRange: '28 meters',
+          description: 'Blast enemy with radiant heat dealing direct and damage over time.',
+          initialDamage: '1161 Flame Damage',
+          damageOverTime: '3470 Flame Damage over 20 seconds',
+          buff: 'Major Savagery and Prophecy (+2629 Weapon/Spell Critical rating for 20 seconds)',
+          morphs: {
+            vampiresBane: {
+              name: "Vampire's Bane",
+              duration: '30 seconds',
+              damageOverTime: '5370 Flame Damage over 30 seconds',
+              description: 'Extended 30-second duration.',
+              buff: 'Major Savagery and Prophecy (+2629 Weapon/Spell Critical rating for 30 seconds)',
+            },
+            reflectiveLight: {
+              name: 'Reflective Light',
+              radius: '5 meters',
+              maxTargets: 3,
+              damage: '1199 Flame Damage to up to 3 enemies',
+              snare: '40% Movement Speed reduction for 3 seconds',
+              description: 'Hits up to 3 enemies and grants Major Savagery/Prophecy.',
+            },
+          },
+        },
+        solarFlare: {
+          name: 'Solar Flare',
+          type: 'active',
+          cost: '2700 Magicka',
+          castTime: '0.8 second',
+          target: 'Enemy',
+          maxRange: '28 meters',
+          description: 'Conjure solar energy increasing class ability damage.',
+          damage: '2404 Magic Damage',
+          classDamageBuff: '5% class ability damage for 10 seconds',
+          buff: 'Empower (+70% Heavy Attack damage vs monsters for 10 seconds)',
+          morphs: {
+            darkFlare: {
+              name: 'Dark Flare',
+              cost: '2430 Magicka',
+              damage: '2483 Magic Damage',
+              radius: '8 meters',
+              description: 'Applies Major Defile to target and nearby enemies.',
+              debuff: 'Major Defile (-12% healing received for 4 seconds)',
+            },
+            solarBarrage: {
+              name: 'Solar Barrage',
+              target: 'Area',
+              duration: '20 seconds',
+              radius: '8 meters',
+              damage: '435 Magic Damage every 2 seconds',
+              classDamageBuff: '5% class ability damage for 20 seconds',
+              description: 'AoE version that pulses around you.',
+            },
+          },
+        },
+        backlash: {
+          name: 'Backlash',
+          type: 'active',
+          cost: '2160 Magicka',
+          target: 'Enemy',
+          duration: '6 seconds',
+          maxRange: '28 meters',
+          description: 'Mark enemy with expanding sunlight for delayed burst damage.',
+          initialDamage: '1161 Magic Damage',
+          burstDamage: '1284 Magic Damage',
+          damageScaling: 'Up to 200% based on damage dealt during duration',
+          limitation: 'Only one Backlash active at a time',
+          morphs: {
+            purifyingLight: {
+              name: 'Purifying Light',
+              burstDamage: '1285 Magic Damage',
+              description: 'Also heals you and nearby allies over time.',
+              healingOverTime:
+                '599 Health every 2 seconds over 10 seconds to you and nearby allies',
+            },
+            powerOfTheLight: {
+              name: 'Power of the Light',
+              cost: '1337 Stamina',
+              initialDamage: '1161 Physical Damage',
+              burstDamage: '1285 Physical Damage',
+              description: 'Stamina morph that applies Sundered status.',
+              statusEffect: 'Sundered on each hit',
+            },
+          },
+        },
+        eclipse: {
+          name: 'Eclipse',
+          type: 'active',
+          cost: '4320 Magicka',
+          target: 'Enemy',
+          duration: '4 seconds',
+          maxRange: '28 meters',
+          description: 'Envelop enemy in lightless sphere punishing their attacks.',
+          effects: {
+            firstAttack: '30% Movement Speed reduction for 4 seconds',
+            secondAttack: 'Immobilize for 3 seconds',
+            thirdAttack: 'Stun for 3 seconds',
+          },
+          cooldown: 'Effects activate once every 1 second',
+          morphs: {
+            unstableCore: {
+              name: 'Unstable Core',
+              radius: '5 meters',
+              description: 'Each trigger deals escalating Magic Damage.',
+              effects: {
+                firstAttack: '30% Movement Speed reduction + 449 Magic Damage',
+                secondAttack: 'Immobilize + 898 Magic Damage',
+                thirdAttack: 'Stun + 1799 Magic Damage',
+              },
+            },
+            livingDark: {
+              name: 'Living Dark',
+              cost: '4050 Magicka',
+              target: 'Self',
+              duration: '10 seconds',
+              description: 'Self-targeted version that protects and heals you.',
+              effect: '40% Movement Speed reduction to attackers for 3 seconds',
+              healing: '2066 Health when taking direct damage',
+              cooldown: 'Once every half second',
+            },
+          },
+        },
+        radiantDestruction: {
+          name: 'Radiant Destruction',
+          type: 'active',
+          castTime: '3.8 seconds',
+          target: 'Enemy',
+          maxRange: '28 meters',
+          description: 'Channel holy fire beam dealing massive damage to low-health enemies.',
+          damage: '7248 Magic Damage over 3.8 seconds',
+          lowHealthBonus: 'Up to 500% more damage to enemies below 33% Health',
+          morphs: {
+            radiantGlory: {
+              name: 'Radiant Glory',
+              damage: '7482 Magic Damage over 3.8 seconds',
+              description: 'Heals you for 15% of damage inflicted.',
+              healing: '15% of damage dealt',
+            },
+            radiantOppression: {
+              name: 'Radiant Oppression',
+              damage: '7482 Magic Damage over 3.8 seconds',
+              description: 'Higher 40% health threshold for bonus damage.',
+              lowHealthBonus: 'Up to 500% more damage to enemies below 40% Health',
+            },
+          },
+        },
+      },
+      passives: {
+        enduringRays: {
+          name: 'Enduring Rays',
+          description:
+            'Increases the duration of your Sun Fire, Eclipse, Solar Flare, and Nova abilities by 2 seconds.',
+        },
+        illuminate: {
+          name: 'Illuminate',
+          description:
+            "Casting a Dawn's Wrath ability grants Minor Sorcery to you and your group for 20 seconds, increasing your Spell Damage by 10%.",
+        },
+        prism: {
+          name: 'Prism',
+          description:
+            "Casting a Dawn's Wrath ability while in combat generates 3 Ultimate. This effect can occur once every 6 seconds.",
+        },
+        restoringSpirit: {
+          name: 'Restoring Spirit',
+          description:
+            'Reduces the Health, Magicka, Stamina, and Ultimate costs of your abilities by 5%.',
+        },
+      },
+    },
+    restoringLight: {
+      name: 'Restoring Light',
+      icon: '✨',
+      ultimates: {
+        riteOfPassage: {
+          name: 'Rite of Passage',
+          type: 'ultimate',
+          cost: '125 Ultimate',
+          castTime: '4 seconds',
+          target: 'Area',
+          duration: '4 seconds',
+          radius: '20 meters',
+          description: 'Channel divine grace healing you and allies over time.',
+          healing: '2787 Health every 1 second for 4 seconds',
+          immunity: 'All disabling effects while channeling',
+          immobile: 'Cannot move while channeling',
+          morphs: {
+            remembrance: {
+              name: 'Remembrance',
+              healing: '2788 Health every 1 second for 4 seconds',
+              description: 'Shorter duration but grants Major Protection.',
+              buff: 'Major Protection (-10% damage taken for 10 seconds)',
+            },
+            practicedIncantation: {
+              name: 'Practiced Incantation',
+              castTime: '8 seconds',
+              duration: '8 seconds',
+              healing: '2788 Health every 1 second for 8 seconds',
+              description: 'Extended 8-second channel duration.',
+            },
+          },
+        },
+      },
+      activeAbilities: {
+        rushedCeremony: {
+          name: 'Rushed Ceremony',
+          type: 'active',
+          cost: '4590 Magicka',
+          target: 'Cone',
+          radius: '28 meters',
+          description: 'Beacon your inner light for burst healing.',
+          healing: '3486 Health',
+          morphs: {
+            breathOfLife: {
+              name: 'Breath of Life',
+              healing: '3485 Health to primary target',
+              secondaryHealing: '1199 Health to one other injured target',
+              description: 'Also heals one other injured target.',
+            },
+            honorTheDead: {
+              name: 'Honor the Dead',
+              healing: '3485 Health',
+              description: 'Restores Magicka when healing low-health targets.',
+              magickaRestore:
+                '18% of ability cost every 2 seconds over 6 seconds when healing targets below 75% Health',
+            },
+          },
+        },
+        healingRitual: {
+          name: 'Healing Ritual',
+          type: 'active',
+          cost: '5265 Magicka',
+          target: 'Area',
+          radius: '10 meters',
+          description: 'Focus spiritual devotion for area healing.',
+          healing: '2613 Health',
+          morphs: {
+            ritualOfRebirth: {
+              name: 'Ritual of Rebirth',
+              healing: '2614 Health in area',
+              bonusHealing: '2700 Health to single ally outside radius',
+              description: 'Additional heal for ally outside the radius.',
+            },
+            hastyPrayer: {
+              name: 'Hasty Prayer',
+              cost: '4995 Magicka',
+              healing: '2614 Health',
+              description: 'Affected targets gain Minor Expedition.',
+              buff: 'Minor Expedition (+15% Movement Speed for 10 seconds)',
+            },
+          },
+        },
+        restoringAura: {
+          name: 'Restoring Aura',
+          type: 'active',
+          target: 'Area',
+          duration: '20 seconds',
+          radius: '12 meters',
+          description: 'Champion divine glory granting resource recovery buffs.',
+          buffs: [
+            'Minor Endurance (+15% Health Recovery)',
+            'Minor Fortitude (+15% Magicka Recovery)',
+            'Minor Intellect (+15% Stamina Recovery)',
+          ],
+          passive: 'Effects apply to you while slotted on either bar',
+          morphs: {
+            radiantAura: {
+              name: 'Radiant Aura',
+              duration: '60 seconds',
+              radius: '28 meters',
+              description: 'Extended duration, passive benefits while slotted.',
+              passive: 'Buffs apply while slotted on either bar',
+            },
+            repentance: {
+              name: 'Repentance',
+              radius: '12 meters',
+              description: 'Consume corpses for healing and Stamina restoration.',
+              healing: '3000 Health per corpse',
+              staminaRestore: '3000 Stamina per corpse',
+              passive: 'Minor Fortitude, Endurance, and Intellect while slotted',
+            },
+          },
+        },
+        runeFocus: {
+          name: 'Rune Focus',
+          type: 'active',
+          cost: '1080 Magicka',
+          target: 'Area',
+          duration: '20 seconds',
+          radius: '3 meters',
+          description: 'Create protective rune granting Major Resolve and healing.',
+          buff: 'Major Resolve (+5948 Physical and Spell Resistance)',
+          healing: '319 Health every 1 second',
+          runeBonus: '200% more healing while standing in rune',
+          morphs: {
+            channeledFocus: {
+              name: 'Channeled Focus',
+              duration: '25 seconds',
+              description: 'Magicka recovery with enhanced healing inside rune.',
+              magickaRecovery: '242 Magicka every 1 second over duration',
+              runeBonus: '200% more healing while standing in rune',
+            },
+            restoringFocus: {
+              name: 'Restoring Focus',
+              cost: '918 Stamina',
+              healing: '413 Health every 1 second',
+              description: 'Stamina morph with stronger healing.',
+              staminaRecovery: '242 Stamina every 1 second over duration',
+            },
+          },
+        },
+        cleansingRitual: {
+          name: 'Cleansing Ritual',
+          type: 'active',
+          cost: '4860 Magicka',
+          target: 'Area',
+          duration: '20 seconds',
+          radius: '12 meters',
+          description: 'Exalt in sacred light cleansing debuffs and healing over time.',
+          cleansing: 'Up to 2 harmful effects from self immediately',
+          healing: '843 Health every 2 seconds for 20 seconds',
+          synergy: 'Purify - cleanses all harmful effects and heals for 1912 Health',
+          morphs: {
+            extendedRitual: {
+              name: 'Extended Ritual',
+              duration: '30 seconds',
+              cleansing: 'Up to 5 harmful effects from self immediately',
+              healing: '844 Health every 2 seconds for 30 seconds',
+              description: 'Longer duration, cleanses more harmful effects.',
+            },
+            ritualOfRetribution: {
+              name: 'Ritual of Retribution',
+              cost: '4050 Magicka',
+              description: 'Damages enemies instead of healing allies.',
+              damage: '435 Magic Damage every 2 seconds for 20 seconds',
+              damageEscalation: 'Increases by 12% per tick',
+            },
+          },
+        },
+      },
+      passives: {
+        lightWeaver: {
+          name: 'Light Weaver',
+          description:
+            'When you heal an ally under 50% Health with a Restoring Light ability, you grant them 2 Ultimate. Activating an ability with a cast or channel time while in combat causes you to automatically block all attacks at no cost for 2 seconds, up to once every 15 seconds.',
+        },
+        masterRitualist: {
+          name: 'Master Ritualist',
+          description:
+            'Increases resurrection speed by 20%. Resurrected allies return with 100% more Health. Gives you a 50% chance to fill an empty Soul Gem after each successful resurrection.',
+        },
+        mending: {
+          name: 'Mending',
+          description:
+            "Increases your healing done by up to 13%, in proportion to the severity of the target's wounds.",
+        },
+        sacredGround: {
+          name: 'Sacred Ground',
+          description:
+            'While standing in your own Cleansing Ritual, Rune Focus, or Rite of Passage area effects and for up to 4 seconds after leaving them you gain Minor Mending, increasing your healing done by 8%. Also increases the amount of damage you can block by 10% for the duration.',
+        },
+      },
+    },
+  },
+  mechanics: {
+    statusEffects: {
+      sundered: {
+        name: 'Sundered',
+        description: 'Applied by Biting Jabs and Power of the Light for armor reduction',
+      },
+      burningLight: {
+        name: 'Burning Light',
+        description: 'Stack-based damage system requiring 4 stacks to trigger 500 Magic Damage',
+        maxStacks: 4,
+        damage: '500 Magic Damage',
+        stackInterval: 'Once every half second',
+      },
+    },
+    synergies: {
+      blessedShards: {
+        name: 'Blessed Shards',
+        restoration: '3960 Magicka or Stamina (whichever max is higher)',
+      },
+      holyShards: {
+        name: 'Holy Shards',
+        restoration: '3960 Magicka AND Stamina',
+      },
+      supernova: {
+        name: 'Supernova',
+        damage: '2607 Magic Damage',
+        stun: '3 seconds',
+      },
+      gravityCrush: {
+        name: 'Gravity Crush',
+        damage: '5215 Magic Damage',
+        stun: '5 seconds',
+      },
+      purify: {
+        name: 'Purify',
+        effect: 'Cleanses all harmful effects',
+        healing: '1912 Health',
+      },
+    },
+    specialMechanics: {
+      eclipse: {
+        name: 'Eclipse System',
+        description:
+          'Escalating punishment for enemy attacks with different effects per attack number',
+      },
+      backlash: {
+        name: 'Backlash System',
+        description: 'Delayed burst damage that scales with damage dealt during mark duration',
+        maxScaling: '200% damage increase',
+      },
+      radiantDestruction: {
+        name: 'Execute Mechanic',
+        description: 'Massive damage increase against low health enemies',
+        threshold: '33% Health (40% for Radiant Oppression)',
+        maxBonus: '500% more damage',
+      },
+    },
+  },
+};
