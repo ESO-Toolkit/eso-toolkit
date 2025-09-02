@@ -1,4 +1,4 @@
-import { BugReport, Send } from '@mui/icons-material';
+import { BugReport, Send, Feedback, ChatBubbleOutline } from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -20,30 +20,97 @@ import {
   Stepper,
   Step,
   StepLabel,
+  CircularProgress,
   SelectChangeEvent,
+  styled,
 } from '@mui/material';
 import React, { useState, useCallback } from 'react';
 
 import { BUG_REPORT_CATEGORIES, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
 import { submitManualBugReport, addBreadcrumb } from '../utils/sentryUtils';
 
-interface BugReportDialogProps {
+interface FeedbackDialogProps {
   open: boolean;
   onClose: () => void;
+  initialType?: 'bug' | 'feedback';
   initialCategory?: BugReportCategory;
   initialTitle?: string;
   initialDescription?: string;
 }
 
-const steps = ['Bug Details', 'Additional Information', 'Review & Submit'];
+// Legacy interface for backward compatibility
+interface BugReportDialogProps extends Omit<FeedbackDialogProps, 'initialType'> {
+  initialCategory?: BugReportCategory;
+  initialTitle?: string;
+  initialDescription?: string;
+}
 
-export const BugReportDialog: React.FC<BugReportDialogProps> = ({
+const getBugSteps = (): string[] => ['Bug Details', 'Additional Information', 'Review & Submit'];
+const getFeedbackSteps = (): string[] => ['Feedback Details', 'Additional Information', 'Review & Submit'];
+
+// Create styled components with forced dark mode styling
+const DarkTextField = styled(TextField)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3) !important' : 'rgba(25, 118, 210, 0.4) !important',
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5) !important' : 'rgba(25, 118, 210, 0.6) !important',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.8) !important' : 'rgba(25, 118, 210, 0.9) !important',
+    },
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
+    },
+  },
+  '& .MuiInputLabel-root': {
+    color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+    '&.Mui-focused': {
+      color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+    },
+  },
+}));
+
+const DarkSelect = styled(Select)(({ theme }) => ({
+  '& .MuiOutlinedInput-root': {
+    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+    '& fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3) !important' : 'rgba(25, 118, 210, 0.4) !important',
+    },
+    '&:hover fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5) !important' : 'rgba(25, 118, 210, 0.6) !important',
+    },
+    '&.Mui-focused fieldset': {
+      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.8) !important' : 'rgba(25, 118, 210, 0.9) !important',
+    },
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
+    },
+    '&.Mui-focused': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
+    },
+  },
+  backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+  color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+}));
+
+export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   open,
   onClose,
+  initialType = 'bug',
   initialCategory = BUG_REPORT_CATEGORIES.OTHER,
   initialTitle = '',
   initialDescription = '',
 }) => {
+  const steps = initialType === 'bug' ? getBugSteps() : getFeedbackSteps();
+  const isBugReport = initialType === 'bug';
   const [activeStep, setActiveStep] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -164,58 +231,90 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
       case 0:
         return (
           <Stack spacing={3}>
-            <TextField
+            <DarkTextField
               fullWidth
-              label="Bug Title"
+              label={isBugReport ? "Bug Title" : "Feedback Title"}
               value={reportData.title}
               onChange={handleInputChange('title')}
-              placeholder="Brief description of the issue"
+              placeholder={isBugReport ? "Brief description of the issue" : "Brief summary of your feedback"}
               required
             />
 
-            <TextField
+            <DarkTextField
               fullWidth
-              label="Bug Description"
+              label={isBugReport ? "Bug Description" : "Feedback Description"}
               value={reportData.description}
               onChange={handleInputChange('description')}
               multiline
               rows={4}
-              placeholder="Detailed description of what went wrong"
+              placeholder={isBugReport ? "Detailed description of what went wrong" : "Share your thoughts, suggestions, or experience"}
               required
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <FormControl fullWidth>
-                <InputLabel>Category</InputLabel>
-                <Select
+                <InputLabel>{isBugReport ? "Category" : "Feedback Type"}</InputLabel>
+                <DarkSelect
                   value={reportData.category}
                   onChange={handleInputChange('category')}
-                  label="Category"
+                  label={isBugReport ? "Category" : "Feedback Type"}
                 >
-                  {Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
-                    <MenuItem key={key} value={value}>
-                      {key
-                        .replace(/_/g, ' ')
-                        .toLowerCase()
-                        .replace(/\b\w/g, (l) => l.toUpperCase())}
-                    </MenuItem>
-                  ))}
-                </Select>
+                  {isBugReport ? (
+                    Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
+                      <MenuItem key={key} value={value}>
+                        {key
+                          .replace(/_/g, ' ')
+                          .toLowerCase()
+                          .replace(/\b\w/g, (l) => l.toUpperCase())}
+                      </MenuItem>
+                    ))
+                  ) : (
+                    [
+                      { key: 'FEATURE_REQUEST', label: 'Feature Request' },
+                      { key: 'IMPROVEMENT', label: 'Improvement Suggestion' },
+                      { key: 'USABILITY', label: 'Usability Feedback' },
+                      { key: 'DESIGN', label: 'Design Feedback' },
+                      { key: 'PERFORMANCE', label: 'Performance Feedback' },
+                      { key: 'GENERAL', label: 'General Feedback' },
+                      { key: 'COMPLIMENT', label: 'Compliment' },
+                    ].map(({ key, label }) => (
+                      <MenuItem key={key} value={key.toLowerCase()}>
+                        {label}
+                      </MenuItem>
+                    ))
+                  )}
+                </DarkSelect>
               </FormControl>
 
-              <FormControl fullWidth>
-                <InputLabel>Severity</InputLabel>
-                <Select
-                  value={reportData.severity}
-                  onChange={handleInputChange('severity')}
-                  label="Severity"
-                >
-                  <MenuItem value="low">Low</MenuItem>
-                  <MenuItem value="medium">Medium</MenuItem>
-                  <MenuItem value="high">High</MenuItem>
-                  <MenuItem value="critical">Critical</MenuItem>
-                </Select>
-              </FormControl>
+              {isBugReport && (
+                <FormControl fullWidth>
+                  <InputLabel>Severity</InputLabel>
+                  <DarkSelect
+                    value={reportData.severity}
+                    onChange={handleInputChange('severity')}
+                    label="Severity"
+                  >
+                    <MenuItem value="low">Low</MenuItem>
+                    <MenuItem value="medium">Medium</MenuItem>
+                    <MenuItem value="high">High</MenuItem>
+                    <MenuItem value="critical">Critical</MenuItem>
+                  </DarkSelect>
+                </FormControl>
+              )}
+              {!isBugReport && (
+                <FormControl fullWidth>
+                  <InputLabel>Priority</InputLabel>
+                  <DarkSelect
+                    value={reportData.severity}
+                    onChange={handleInputChange('severity')}
+                    label="Priority"
+                  >
+                    <MenuItem value="low">Low Priority</MenuItem>
+                    <MenuItem value="medium">Medium Priority</MenuItem>
+                    <MenuItem value="high">High Priority</MenuItem>
+                  </DarkSelect>
+                </FormControl>
+              )}
             </Stack>
           </Stack>
         );
@@ -223,7 +322,9 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
       case 1:
         return (
           <Stack spacing={3}>
-            <Typography variant="h6">Steps to Reproduce (Optional)</Typography>
+            <Typography variant="h6">
+              {isBugReport ? 'Steps to Reproduce (Optional)' : 'Additional Context (Optional)'}
+            </Typography>
             {reportData.steps?.map((step, index) => (
               <Stack key={index} direction="row" spacing={1} alignItems="center">
                 <Chip label={index + 1} size="small" />
@@ -232,6 +333,35 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
                   value={step}
                   onChange={(e) => handleStepsChange(index, e.target.value)}
                   placeholder={`Step ${index + 1}`}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 2,
+                      background: (theme) => 
+                        theme.palette.mode === 'dark'
+                          ? '#0f172a'
+                          : 'rgba(255, 255, 255, 0.7)',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      '&:hover': {
+                        background: (theme) => 
+                          theme.palette.mode === 'dark'
+                            ? '#0d1430'
+                            : 'rgba(255, 255, 255, 0.9)',
+                        transform: 'translateY(-1px)',
+                      },
+                      '&.Mui-focused': {
+                        background: (theme) => 
+                          theme.palette.mode === 'dark'
+                            ? '#0b1220'
+                            : 'rgba(255, 255, 255, 1)',
+                        boxShadow: (theme) => 
+                          theme.palette.mode === 'dark'
+                            ? `0 0 0 2px ${theme.palette.primary.main}40`
+                            : `0 0 0 2px ${theme.palette.primary.main}40`,
+                      },
+                    },
+                  }}
                 />
                 {(reportData.steps?.length || 0) > 1 && (
                   <Button size="small" onClick={() => removeStep(index)} sx={{ minWidth: 'auto' }}>
@@ -240,28 +370,130 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
                 )}
               </Stack>
             ))}
-            <Button variant="outlined" onClick={addStep} size="small">
+            <Button 
+              variant="outlined" 
+              onClick={addStep} 
+              size="small"
+              sx={{
+                borderRadius: 2,
+                border: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(56, 189, 248, 0.3)'
+                    : '1px solid rgba(15, 23, 42, 0.2)',
+                color: (theme) => theme.palette.primary.main,
+                background: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '#0f172a'
+                    : 'rgba(255, 255, 255, 0.6)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                fontWeight: 500,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.1)'
+                      : 'rgba(15, 23, 42, 0.05)',
+                  borderColor: (theme) => theme.palette.primary.main,
+                  transform: 'translateY(-1px)',
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.15)'
+                      : '0 4px 12px rgba(15, 23, 42, 0.1)',
+                },
+              }}
+            >
               Add Step
             </Button>
 
             <TextField
               fullWidth
-              label="Expected Behavior"
+              label={isBugReport ? "Expected Behavior" : "What would you like to see?"}
               value={reportData.expectedBehavior}
               onChange={handleInputChange('expectedBehavior')}
               multiline
               rows={2}
-              placeholder="What should have happened?"
+              placeholder={isBugReport ? "What should have happened?" : "Describe your ideal solution or outcome"}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '#0f172a'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '#0d1430'
+                        : 'rgba(255, 255, 255, 0.95)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&.Mui-focused': {
+                    background: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '#0b1220'
+                        : 'rgba(255, 255, 255, 1)',
+                    boxShadow: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? `0 0 0 2px ${theme.palette.primary.main}40`
+                        : `0 0 0 2px ${theme.palette.primary.main}40`,
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  fontWeight: 500,
+                  '&.Mui-focused': {
+                    color: (theme) => theme.palette.primary.main,
+                  },
+                },
+              }}
             />
 
             <TextField
               fullWidth
-              label="Actual Behavior"
+              label={isBugReport ? "Actual Behavior" : "Current Experience"}
               value={reportData.actualBehavior}
               onChange={handleInputChange('actualBehavior')}
               multiline
               rows={2}
-              placeholder="What actually happened?"
+              placeholder={isBugReport ? "What actually happened?" : "Describe the current state or your experience"}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 2,
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '#0f172a'
+                      : 'rgba(255, 255, 255, 0.8)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    background: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '#0d1430'
+                        : 'rgba(255, 255, 255, 0.95)',
+                    transform: 'translateY(-1px)',
+                  },
+                  '&.Mui-focused': {
+                    background: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '#0b1220'
+                        : 'rgba(255, 255, 255, 1)',
+                    boxShadow: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? `0 0 0 2px ${theme.palette.primary.main}40`
+                        : `0 0 0 2px ${theme.palette.primary.main}40`,
+                  },
+                },
+                '& .MuiInputLabel-root': {
+                  fontWeight: 500,
+                  '&.Mui-focused': {
+                    color: (theme) => theme.palette.primary.main,
+                  },
+                },
+              }}
             />
           </Stack>
         );
@@ -269,11 +501,14 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
       case 2:
         return (
           <Stack spacing={2}>
-            <Typography variant="h6">Review Your Bug Report</Typography>
+            <Typography variant="h6">
+              {isBugReport ? 'Review Your Bug Report' : 'Review Your Feedback'}
+            </Typography>
 
             <Alert severity="info">
-              Please review your bug report before submitting. This information will help our
-              development team identify and fix the issue more quickly.
+              {isBugReport 
+                ? 'Please review your bug report before submitting. This information will help our development team identify and fix the issue more quickly.'
+                : 'Please review your feedback before submitting. We value your input and will use it to improve the application.'}
             </Alert>
 
             <Box
@@ -319,17 +554,96 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
 
       default:
         return (
-          <Stack spacing={3} alignItems="center">
-            <Typography variant="h5" color="success.main">
-              ✓ Bug Report Submitted Successfully!
-            </Typography>
-            <Typography variant="body1" textAlign="center">
-              Thank you for reporting this issue. Our development team has been notified and will
-              investigate the problem.
-            </Typography>
-            <Alert severity="success" sx={{ width: '100%' }}>
-              Your bug report has been automatically tagged with relevant system information to help
-              with debugging.
+          <Stack spacing={4} alignItems="center" sx={{ py: 4 }}>
+            <Box
+              sx={{
+                width: 80,
+                height: 80,
+                borderRadius: '50%',
+                background: (theme) => 
+                  `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.main}10 100%)`,
+                border: (theme) => `2px solid ${theme.palette.success.main}40`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                position: 'relative',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  inset: -4,
+                  borderRadius: '50%',
+                  background: (theme) => 
+                    `conic-gradient(from 0deg, ${theme.palette.success.main}40, transparent, ${theme.palette.success.main}40)`,
+                  animation: 'spin 3s linear infinite',
+                  '@keyframes spin': {
+                    '0%': { transform: 'rotate(0deg)' },
+                    '100%': { transform: 'rotate(360deg)' },
+                  },
+                  zIndex: -1,
+                },
+              }}
+            >
+              <Typography 
+                variant="h3" 
+                sx={{ 
+                  color: 'success.main',
+                  filter: 'drop-shadow(0 0 8px currentColor)',
+                }}
+              >
+                ✓
+              </Typography>
+            </Box>
+            
+            <Box textAlign="center">
+              <Typography 
+                variant="h4" 
+                sx={{
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontWeight: 600,
+                  background: (theme) => 
+                    `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  mb: 2,
+                }}
+              >
+                {isBugReport ? 'Bug Report' : 'Feedback'} Submitted!
+              </Typography>
+              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, lineHeight: 1.6 }}>
+                {isBugReport 
+                  ? 'Thank you for reporting this issue. Our development team has been notified and will investigate the problem.'
+                  : 'Thank you for your feedback! We appreciate your input and will use it to improve the application.'}
+              </Typography>
+            </Box>
+            
+            <Alert 
+              severity="success" 
+              sx={{ 
+                width: '100%',
+                borderRadius: 2,
+                background: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(56, 142, 60, 0.05) 100%)',
+                border: (theme) => 
+                  `1px solid ${theme.palette.success.main}30`,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                '& .MuiAlert-icon': {
+                  filter: 'drop-shadow(0 0 4px currentColor)',
+                },
+                '& .MuiAlert-message': {
+                  fontSize: '0.95rem',
+                  lineHeight: 1.5,
+                },
+              }}
+            >
+              {isBugReport
+                ? 'Your bug report has been automatically tagged with relevant system information to help with debugging.'
+                : 'Your feedback has been recorded with relevant context information to help us understand your experience better.'}
             </Alert>
           </Stack>
         );
@@ -343,33 +657,266 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
       maxWidth="md"
       fullWidth
       PaperProps={{
-        sx: { minHeight: '60vh' },
+        sx: {
+          minHeight: '60vh',
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%)',
+          backdropFilter: 'blur(20px)',
+          WebkitBackdropFilter: 'blur(20px)',
+          border: (theme) => 
+            theme.palette.mode === 'dark'
+              ? '1px solid rgba(56, 189, 248, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
+          borderRadius: 3,
+          boxShadow: (theme) => 
+            theme.palette.mode === 'dark'
+              ? '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+              : '0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 60px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+        },
+      }}
+      slotProps={{
+        backdrop: {
+          sx: {
+            backgroundColor: (theme) => 
+              theme.palette.mode === 'dark'
+                ? 'rgba(0, 0, 0, 0.8)'
+                : 'rgba(15, 23, 42, 0.4)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+          },
+        },
       }}
     >
-      <DialogTitle>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <BugReport />
-          <Typography variant="h6">Report a Bug</Typography>
+      <DialogTitle
+        sx={{
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
+              : 'linear-gradient(135deg, rgba(15, 23, 42, 0.05) 0%, rgba(30, 41, 59, 0.03) 100%)',
+          borderBottom: (theme) => 
+            theme.palette.mode === 'dark'
+              ? '1px solid rgba(56, 189, 248, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.08)',
+          borderRadius: '24px 24px 0 0',
+          position: 'relative',
+          overflow: 'hidden',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                : `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="center" spacing={2}>
+          <Box
+            sx={{
+              width: 48,
+              height: 48,
+              borderRadius: 2,
+              background: (theme) => 
+                isBugReport
+                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)'
+                  : `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.secondary.main}20 100%)`,
+              border: (theme) => 
+                isBugReport
+                  ? '1px solid rgba(239, 68, 68, 0.3)'
+                  : `1px solid ${theme.palette.primary.main}30`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
+            {isBugReport ? (
+              <BugReport sx={{ color: '#ef4444', fontSize: 24 }} />
+            ) : (
+              <Feedback sx={{ color: 'primary.main', fontSize: 24 }} />
+            )}
+          </Box>
+          <Box>
+            <Typography 
+              variant="h5" 
+              sx={{ 
+                fontFamily: 'Space Grotesk, Inter, system-ui',
+                fontWeight: 600,
+                background: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                    : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                WebkitBackgroundClip: 'text',
+                WebkitTextFillColor: 'transparent',
+                backgroundClip: 'text',
+              }}
+            >
+              {isBugReport ? 'Report a Bug' : 'Send Feedback'}
+            </Typography>
+            <Typography 
+              variant="body2" 
+              color="text.secondary"
+              sx={{ mt: 0.5, opacity: 0.8 }}
+            >
+              {isBugReport 
+                ? 'Help us improve by reporting issues'
+                : 'Share your thoughts and suggestions'
+              }
+            </Typography>
+          </Box>
         </Stack>
       </DialogTitle>
 
-      <DialogContent>
+      <DialogContent
+        sx={{
+          p: 4,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? '#0b1220'
+              : 'rgba(255, 255, 255, 0.5)',
+          position: 'relative',
+        }}
+      >
         {activeStep < steps.length && (
-          <Stepper activeStep={activeStep} sx={{ mb: 4 }}>
-            {steps.map((label) => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
+          <Box
+            sx={{
+              mb: 4,
+              p: 3,
+              borderRadius: 2,
+              background: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)',
+              border: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.1)'
+                  : '1px solid rgba(15, 23, 42, 0.08)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+            }}
+          >
+            <Stepper 
+              activeStep={activeStep} 
+              sx={{
+                '& .MuiStepLabel-root': {
+                  fontFamily: 'Inter, system-ui',
+                },
+                '& .MuiStepIcon-root': {
+                  fontSize: '1.5rem',
+                  '&.Mui-active': {
+                    color: (theme) => theme.palette.primary.main,
+                    filter: 'drop-shadow(0 0 8px currentColor)',
+                  },
+                  '&.Mui-completed': {
+                    color: (theme) => theme.palette.success.main,
+                  },
+                },
+                '& .MuiStepConnector-line': {
+                  borderColor: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.2)'
+                      : 'rgba(15, 23, 42, 0.2)',
+                },
+              }}
+            >
+              {steps.map((label) => (
+                <Step key={label}>
+                  <StepLabel
+                    sx={{
+                      '& .MuiStepLabel-label': {
+                        fontSize: '0.95rem',
+                        fontWeight: 500,
+                      },
+                      '& .MuiStepLabel-label.Mui-active': {
+                        color: (theme) => theme.palette.primary.main,
+                        fontWeight: 600,
+                      },
+                    }}
+                  >
+                    {label}
+                  </StepLabel>
+                </Step>
+              ))}
+            </Stepper>
+          </Box>
         )}
 
-        {renderStepContent(activeStep)}
+        <Box
+          sx={{
+            p: 3,
+            borderRadius: 2,
+            background: (theme) => 
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+            border: (theme) => 
+              theme.palette.mode === 'dark'
+                ? '1px solid rgba(56, 189, 248, 0.1)'
+                : '1px solid rgba(15, 23, 42, 0.08)',
+            backdropFilter: 'blur(10px)',
+            WebkitBackdropFilter: 'blur(10px)',
+            minHeight: 400,
+          }}
+        >
+          {renderStepContent(activeStep)}
+        </Box>
       </DialogContent>
 
-      <DialogActions sx={{ p: 3, pt: 0 }}>
+      <DialogActions 
+        sx={{ 
+          p: 4, 
+          pt: 2,
+          background: (theme) => 
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)',
+          borderTop: (theme) => 
+            theme.palette.mode === 'dark'
+              ? '1px solid rgba(56, 189, 248, 0.1)'
+              : '1px solid rgba(15, 23, 42, 0.08)',
+          borderRadius: '0 0 24px 24px',
+          backdropFilter: 'blur(10px)',
+          WebkitBackdropFilter: 'blur(10px)',
+        }}
+      >
         {submitted ? (
-          <Button onClick={handleClose} variant="contained" color="primary">
+          <Button 
+            onClick={handleClose} 
+            variant="contained" 
+            color="primary"
+            size="large"
+            sx={{
+              borderRadius: 2,
+              px: 4,
+              py: 1.5,
+              background: (theme) => 
+                `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              boxShadow: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                  : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              fontWeight: 600,
+              fontSize: '1.05rem',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                transform: 'translateY(-2px)',
+                boxShadow: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
+                    : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              },
+              '&:active': {
+                transform: 'translateY(-1px)',
+              },
+            }}
+          >
             Close
           </Button>
         ) : (
@@ -378,13 +925,70 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
             spacing={2}
             sx={{ width: '100%', justifyContent: 'space-between' }}
           >
-            <Button onClick={handleClose} disabled={isSubmitting}>
+            <Button 
+              onClick={handleClose} 
+              disabled={isSubmitting}
+              size="large"
+              sx={{
+                borderRadius: 2,
+                px: 3,
+                py: 1.5,
+                color: 'text.secondary',
+                fontSize: '1rem',
+                fontWeight: 500,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.1)'
+                      : 'rgba(15, 23, 42, 0.05)',
+                  color: (theme) => theme.palette.primary.main,
+                  transform: 'translateY(-1px)',
+                },
+              }}
+            >
               Cancel
             </Button>
 
             <Stack direction="row" spacing={1}>
               {activeStep > 0 && (
-                <Button onClick={handleBack} disabled={isSubmitting}>
+                <Button 
+                  onClick={handleBack} 
+                  disabled={isSubmitting}
+                  variant="outlined"
+                  size="large"
+                  sx={{
+                    borderRadius: 2,
+                    px: 3,
+                    py: 1.5,
+                    border: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '1px solid rgba(56, 189, 248, 0.3)'
+                        : '1px solid rgba(15, 23, 42, 0.2)',
+                    color: (theme) => theme.palette.primary.main,
+                    background: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '#0f172a'
+                        : 'rgba(255, 255, 255, 0.8)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    fontSize: '1rem',
+                    fontWeight: 500,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      background: (theme) => 
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.1)'
+                          : 'rgba(15, 23, 42, 0.05)',
+                      borderColor: (theme) => theme.palette.primary.main,
+                      transform: 'translateY(-1px)',
+                      boxShadow: (theme) => 
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 15px rgba(56, 189, 248, 0.2)'
+                          : '0 4px 15px rgba(15, 23, 42, 0.1)',
+                    },
+                  }}
+                >
                   Back
                 </Button>
               )}
@@ -394,6 +998,35 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
                   variant="contained"
                   onClick={handleNext}
                   disabled={!isStepValid(activeStep)}
+                  size="large"
+                  sx={{
+                    borderRadius: 2,
+                    px: 4,
+                    py: 1.5,
+                    background: (theme) => 
+                      `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                    boxShadow: (theme) => 
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                        : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                    fontWeight: 600,
+                    fontSize: '1.05rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: (theme) => 
+                        theme.palette.mode === 'dark'
+                          ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
+                          : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-1px)',
+                    },
+                    '&:disabled': {
+                      opacity: 0.6,
+                      transform: 'none',
+                    },
+                  }}
                 >
                   Next
                 </Button>
@@ -402,9 +1035,44 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
                   variant="contained"
                   onClick={handleSubmit}
                   disabled={!isStepValid(activeStep) || isSubmitting}
-                  startIcon={<Send />}
+                  startIcon={<Send sx={{ fontSize: 20 }} />}
+                  size="large"
+                  sx={{
+                    borderRadius: 2,
+                    px: 4,
+                    py: 1.5,
+                    background: (theme) => 
+                      isBugReport
+                        ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)'
+                        : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                    boxShadow: (theme) => 
+                      isBugReport
+                        ? '0 4px 20px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                        : theme.palette.mode === 'dark'
+                          ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                          : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                    fontWeight: 600,
+                    fontSize: '1.05rem',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: (theme) => 
+                        isBugReport
+                          ? '0 6px 30px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
+                          : theme.palette.mode === 'dark'
+                            ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
+                            : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-1px)',
+                    },
+                    '&:disabled': {
+                      opacity: 0.6,
+                      transform: 'none',
+                    },
+                  }}
                 >
-                  {isSubmitting ? 'Submitting...' : 'Submit Bug Report'}
+                  {isSubmitting ? 'Submitting...' : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
                 </Button>
               )}
             </Stack>
@@ -415,45 +1083,276 @@ export const BugReportDialog: React.FC<BugReportDialogProps> = ({
   );
 };
 
-// Floating Action Button for quick bug reporting
-interface BugReportFabProps {
+// Modern Floating Feedback Button with glassmorphism design
+interface ModernFeedbackFabProps {
   position?: {
     bottom?: number;
     right?: number;
   };
 }
 
-export const BugReportFab: React.FC<BugReportFabProps> = ({
-  position = { bottom: 16, right: 16 },
+export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
+  position = { bottom: 24, right: 24 },
 }) => {
   const [dialogOpen, setDialogOpen] = useState(false);
-
-  const handleClick = (): void => {
-    addBreadcrumb('Bug report FAB clicked', 'ui');
+  const [feedbackType, setFeedbackType] = useState<'bug' | 'feedback'>('bug');
+  const [isExpanded, setIsExpanded] = useState(false);
+  
+  const handleBugReportClick = (): void => {
+    addBreadcrumb('Modern feedback FAB clicked - Bug Report', 'ui');
+    setFeedbackType('bug');
     setDialogOpen(true);
+    setIsExpanded(false);
   };
+
+  const handleFeedbackClick = (): void => {
+    addBreadcrumb('Modern feedback FAB clicked - General Feedback', 'ui');
+    setFeedbackType('feedback');
+    setDialogOpen(true);
+    setIsExpanded(false);
+  };
+
+  const toggleExpanded = (): void => {
+    setIsExpanded(!isExpanded);
+  };
+
+  // Create styled components with forced dark mode styling
+  const DarkTextField = styled(TextField)(({ theme }) => ({
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+      color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+      '& fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&:hover fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&:hover': {
+        backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
+      },
+      '&.Mui-focused': {
+        backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
+      },
+    },
+    '& .MuiInputLabel-root': {
+      color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      '&.Mui-focused': {
+        color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+    },
+  }));
+
+  const DarkSelect = styled(Select)(({ theme }) => ({
+    '& .MuiOutlinedInput-root': {
+      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+      color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+      '& fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&:hover fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&.Mui-focused fieldset': {
+        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+      },
+      '&:hover': {
+        backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
+      },
+      '&.Mui-focused': {
+        backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
+      },
+    },
+    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+  }));
 
   return (
     <>
-      <Zoom in={!dialogOpen}>
-        <Fab
-          color="secondary"
-          onClick={handleClick}
-          sx={{
-            position: 'fixed',
-            bottom: position.bottom,
-            right: position.right,
-            zIndex: 1000,
-          }}
-        >
-          <BugReport />
-        </Fab>
-      </Zoom>
+      <Box
+        sx={{
+          position: 'fixed',
+          bottom: position.bottom,
+          right: position.right,
+          zIndex: 1000,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-end',
+          gap: 1.5,
+        }}
+      >
+        {/* Expanded Action Buttons */}
+        <Zoom in={isExpanded && !dialogOpen}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, alignItems: 'flex-end' }}>
+            <Fab
+              size="medium"
+              onClick={handleFeedbackClick}
+              sx={{
+                background: (theme) => 
+                  theme.palette.mode === 'dark' 
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.15) 0%, rgba(30, 41, 59, 0.15) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(56, 189, 248, 0.3)'
+                    : '1px solid rgba(15, 23, 42, 0.2)',
+                boxShadow: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '0 8px 32px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 8px 32px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                color: (theme) => theme.palette.primary.main,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px) scale(1.05)',
+                  background: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.25) 0%, rgba(30, 41, 59, 0.25) 100%)',
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '0 12px 40px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 12px 40px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            >
+              <ChatBubbleOutline />
+            </Fab>
+            
+            <Fab
+              size="medium"
+              onClick={handleBugReportClick}
+              sx={{
+                background: (theme) => 
+                  theme.palette.mode === 'dark' 
+                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                boxShadow: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 8px 32px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                color: '#ef4444',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-2px) scale(1.05)',
+                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '0 12px 40px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 12px 40px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            >
+              <BugReport />
+            </Fab>
+          </Box>
+        </Zoom>
 
-      <BugReportDialog open={dialogOpen} onClose={() => setDialogOpen(false)} />
+        {/* Main Floating Action Button */}
+        <Zoom in={!dialogOpen}>
+          <Fab
+            onClick={toggleExpanded}
+            sx={{
+              width: 64,
+              height: 64,
+              background: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
+                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              border: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.15)'
+                  : '1px solid rgba(255, 255, 255, 0.2)',
+              boxShadow: (theme) => 
+                theme.palette.mode === 'dark'
+                  ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
+              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
+              overflow: 'visible',
+              '&::before': {
+                content: '""',
+                position: 'absolute',
+                inset: -2,
+                borderRadius: '50%',
+                background: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`
+                    : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
+                opacity: 0,
+                transition: 'opacity 0.3s ease',
+                zIndex: -1,
+              },
+              '&:hover': {
+                transform: 'translateY(-4px) scale(1.08)',
+                boxShadow: (theme) => 
+                  theme.palette.mode === 'dark'
+                    ? '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 80px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                    : '0 12px 40px rgba(15, 23, 42, 0.2), 0 0 80px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                filter: 'brightness(1.1)',
+              },
+              '&:hover::before': {
+                opacity: 0.3,
+              },
+              '&:active': {
+                transform: 'translateY(-2px) scale(1.03)',
+              },
+              animation: isExpanded ? 'none' : 'pulse-glow 4s ease-in-out infinite',
+              '@keyframes pulse-glow': {
+                '0%, 100%': {
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+                '50%': {
+                  boxShadow: (theme) => 
+                    theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 80px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 80px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+              },
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transform: isExpanded ? 'rotate(45deg)' : 'rotate(0deg)',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              }}
+            >
+              {isExpanded ? (
+                <Box sx={{ fontSize: 28, lineHeight: 1 }}>✕</Box>
+              ) : (
+                <Feedback sx={{ fontSize: 28 }} />
+              )}
+            </Box>
+          </Fab>
+        </Zoom>
+      </Box>
+
+      <FeedbackDialog
+        open={dialogOpen} 
+        onClose={() => setDialogOpen(false)}
+        initialType={feedbackType}
+      />
     </>
   );
 };
+
+// Legacy export for backward compatibility
+export const BugReportFab = ModernFeedbackFab;
 
 // Hook for programmatic bug reporting
 export const useBugReport = (): {
@@ -477,9 +1376,10 @@ export const useBugReport = (): {
   }, []);
 
   const BugReportComponent = (): React.ReactElement => (
-    <BugReportDialog
+    <FeedbackDialog
       open={dialogOpen}
       onClose={closeBugReport}
+      initialType="bug"
       initialCategory={initialData.category}
       initialTitle={initialData.title}
       initialDescription={initialData.description}
@@ -493,3 +1393,8 @@ export const useBugReport = (): {
     isOpen: dialogOpen,
   };
 };
+
+// Legacy BugReportDialog component for backward compatibility
+export const BugReportDialog: React.FC<BugReportDialogProps> = (props) => (
+  <FeedbackDialog {...props} initialType="bug" />
+);
