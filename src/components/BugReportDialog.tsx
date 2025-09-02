@@ -24,7 +24,9 @@ import {
   styled,
   useTheme,
   useMediaQuery,
+  Theme,
 } from '@mui/material';
+import type { SxProps } from '@mui/material/styles';
 import React, { useState, useCallback } from 'react';
 
 import { BUG_REPORT_CATEGORIES, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
@@ -95,84 +97,100 @@ const StyledDialog = styled(Dialog)(({ theme }) => ({
   },
 }));
 
-const DarkTextField = styled(TextField)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-    '& fieldset': {
-      borderColor:
-        theme.palette.mode === 'dark'
-          ? 'rgba(56, 189, 248, 0.3) !important'
-          : 'rgba(75, 85, 99, 0.5) !important', // Dark grey for light mode
-    },
-    '&:hover fieldset': {
-      borderColor:
-        theme.palette.mode === 'dark'
-          ? 'rgba(56, 189, 248, 0.5) !important'
-          : 'rgba(55, 65, 81, 0.7) !important', // Darker grey on hover
-    },
-    '&.Mui-focused fieldset': {
-      borderColor:
-        theme.palette.mode === 'dark'
-          ? 'rgba(56, 189, 248, 0.8) !important'
-          : '#1976d2 !important', // Keep blue focus for accessibility
-    },
-    '&:hover': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
-    },
-    '&.Mui-focused': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
-    },
-    // Style placeholder text with higher specificity and multiple selectors
-    '& input::placeholder, & input::-webkit-input-placeholder, & input::-moz-placeholder, & input:-ms-input-placeholder': {
-      color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-      opacity: '1 !important',
-      WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-    },
-    '& textarea::placeholder, & textarea::-webkit-input-placeholder, & textarea::-moz-placeholder, & textarea:-ms-input-placeholder': {
-      color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-      opacity: '1 !important',
-      WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-    },
-    // Additional selectors for better browser compatibility
-    '& .MuiInputBase-input::placeholder, & .MuiInputBase-input::-webkit-input-placeholder, & .MuiInputBase-input::-moz-placeholder, & .MuiInputBase-input:-ms-input-placeholder': {
-      color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-      opacity: '1 !important',
-      WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
-    },
-  },
-  '& .MuiInputLabel-root': {
-    color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-    fontWeight: 400, // Lighter font weight for labels
-    '&.Mui-focused': {
-      color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-    },
-  },
-  // Fix Select dropdown menus
-  '& .MuiSelect-root': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-  },
-}));
+// Unused styled component - commented out to fix lint warning
+// const DarkTextField = styled(TextField)(({ theme }) => ({
+//   '& .MuiOutlinedInput-root': {
+//     backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+//     color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+//     '& fieldset': {
+//       borderColor:
+//         theme.palette.mode === 'dark'
+//           ? 'rgba(56, 189, 248, 0.3) !important'
+//           : 'rgba(75, 85, 99, 0.5) !important', // Dark grey for light mode
+//     },
+//     '&:hover fieldset': {
+//       borderColor:
+//         theme.palette.mode === 'dark'
+//           ? 'rgba(56, 189, 248, 0.5) !important'
+//           : 'rgba(55, 65, 81, 0.7) !important', // Darker grey on hover
+//     },
+//     '&.Mui-focused fieldset': {
+//       borderColor:
+//         theme.palette.mode === 'dark'
+//           ? 'rgba(56, 189, 248, 0.8) !important'
+//           : '#1976d2 !important', // Keep blue focus for accessibility
+//     },
+//     '&:hover': {
+//       backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
+//     },
+//     '&.Mui-focused': {
+//       backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
+//     },
+//     // Style placeholder text with higher specificity and multiple selectors
+//     '& input::placeholder, & input::-webkit-input-placeholder, & input::-moz-placeholder, & input:-ms-input-placeholder': {
+//       color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//       opacity: '1 !important',
+//       WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//     },
+//     '& textarea::placeholder, & textarea::-webkit-input-placeholder, & textarea::-moz-placeholder, & textarea:-ms-input-placeholder': {
+//       color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//       opacity: '1 !important',
+//       WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//     },
+//     // Additional selectors for better browser compatibility
+//     '& .MuiInputBase-input::placeholder, & .MuiInputBase-input::-webkit-input-placeholder, & .MuiInputBase-input::-moz-placeholder, & .MuiInputBase-input:-ms-input-placeholder': {
+//       color: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//       opacity: '1 !important',
+//       WebkitTextFillColor: `${theme.palette.mode === 'dark' ? '#94a3b8' : 'rgba(0, 0, 0, 0.6)'} !important`,
+//     },
+//   },
+//   '& .MuiInputLabel-root': {
+//     color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+//     fontWeight: 400, // Lighter font weight for labels
+//     '&.Mui-focused': {
+//       color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
+//     },
+//   },
+//   // Fix Select dropdown menus
+//   '& .MuiSelect-root': {
+//     backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
+//     color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+//   },
+// }));
 
 // Add global styles for Select dropdowns
-const SelectMenuStyles = {
-  '& .MuiPaper-root': {
-    backgroundColor: '#0f172a !important',
-    '& .MuiMenuItem-root': {
-      color: '#ffffff !important',
-      '&:hover': {
-        backgroundColor: '#1e293b !important',
-      },
-      '&.Mui-selected': {
-        backgroundColor: 'rgba(56, 189, 248, 0.1) !important',
+const getSelectMenuProps = (theme: Theme): { PaperProps: { sx: SxProps<Theme> } } => ({
+  PaperProps: {
+    sx: {
+      bgcolor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+      color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+      border:
+        theme.palette.mode === 'dark'
+          ? '1px solid rgba(56, 189, 248, 0.2)'
+          : '1px solid rgba(0, 0, 0, 0.23)',
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2)'
+          : '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+      '& .MuiMenuItem-root': {
+        color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
         '&:hover': {
-          backgroundColor: 'rgba(56, 189, 248, 0.2) !important',
+          bgcolor: theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5',
+        },
+        '&.Mui-selected': {
+          bgcolor:
+            theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)',
+          '&:hover': {
+            bgcolor:
+              theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.2)'
+                : 'rgba(25, 118, 210, 0.12)',
+          },
         },
       },
     },
   },
-};
+});
 
 export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   open,
@@ -186,7 +204,6 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const steps = initialType === 'bug' ? getBugSteps() : getFeedbackSteps();
   const isBugReport = initialType === 'bug';
-
 
   // Force override dialog background to be transparent and theme-neutral
   React.useEffect(() => {
@@ -417,30 +434,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   label={isBugReport ? 'Category' : 'Feedback Type'}
                   sx={{
                     '& .MuiSelect-select': {
-                      color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+                      color: (theme) =>
+                        theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
                     },
                   }}
-                  slotProps={{
-                    paper: {
-                      sx: {
-                        backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-                        color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                        border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(56, 189, 248, 0.2) !important' : '1px solid rgba(0, 0, 0, 0.23) !important',
-                        '& .MuiMenuItem-root': {
-                          color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                          '&:hover': {
-                            backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e293b !important' : '#f5f5f5 !important',
-                          },
-                          '&.Mui-selected': {
-                            backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1) !important' : 'rgba(25, 118, 210, 0.08) !important',
-                            '&:hover': {
-                              backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2) !important' : 'rgba(25, 118, 210, 0.12) !important',
-                            },
-                          },
-                        },
-                      },
-                    },
-                  }}
+                  MenuProps={getSelectMenuProps(theme)}
                 >
                   {isBugReport
                     ? Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
@@ -474,30 +472,36 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     value={reportData.severity}
                     onChange={handleSelectChange('severity')}
                     label="Severity"
+                    MenuProps={getSelectMenuProps(theme)}
                     sx={{
+                      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
                       '& .MuiSelect-select': {
-                        color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? '#ffffff !important'
+                            : '#000000 !important',
+                        backgroundColor: 'transparent !important',
                       },
-                    }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-                          color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                          border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(56, 189, 248, 0.2) !important' : '1px solid rgba(0, 0, 0, 0.23) !important',
-                          '& .MuiMenuItem-root': {
-                            color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                            '&:hover': {
-                              backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e293b !important' : '#f5f5f5 !important',
-                            },
-                            '&.Mui-selected': {
-                              backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1) !important' : 'rgba(25, 118, 210, 0.08) !important',
-                              '&:hover': {
-                                backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2) !important' : 'rgba(25, 118, 210, 0.12) !important',
-                              },
-                            },
-                          },
-                        },
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.3) !important'
+                            : 'rgba(75, 85, 99, 0.5) !important',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5) !important'
+                            : 'rgba(55, 65, 81, 0.7) !important',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.8) !important'
+                            : '#1976d2 !important',
                       },
                     }}
                   >
@@ -515,30 +519,36 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     value={reportData.severity}
                     onChange={handleSelectChange('severity')}
                     label="Priority"
+                    MenuProps={getSelectMenuProps(theme)}
                     sx={{
+                      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
                       '& .MuiSelect-select': {
-                        color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? '#ffffff !important'
+                            : '#000000 !important',
+                        backgroundColor: 'transparent !important',
                       },
-                    }}
-                    slotProps={{
-                      paper: {
-                        sx: {
-                          backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-                          color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                          border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(56, 189, 248, 0.2) !important' : '1px solid rgba(0, 0, 0, 0.23) !important',
-                          '& .MuiMenuItem-root': {
-                            color: (theme) => theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-                            '&:hover': {
-                              backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e293b !important' : '#f5f5f5 !important',
-                            },
-                            '&.Mui-selected': {
-                              backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1) !important' : 'rgba(25, 118, 210, 0.08) !important',
-                              '&:hover': {
-                                backgroundColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2) !important' : 'rgba(25, 118, 210, 0.12) !important',
-                              },
-                            },
-                          },
-                        },
+                      '& .MuiOutlinedInput-root': {
+                        backgroundColor: theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                      },
+                      '& .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.3) !important'
+                            : 'rgba(75, 85, 99, 0.5) !important',
+                      },
+                      '&:hover .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.5) !important'
+                            : 'rgba(55, 65, 81, 0.7) !important',
+                      },
+                      '&.Mui-focused .MuiOutlinedInput-notchedOutline': {
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.8) !important'
+                            : '#1976d2 !important',
                       },
                     }}
                   >
@@ -555,7 +565,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       case 1:
         return (
           <Stack spacing={3}>
-            <Typography variant="h6" sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}
+            >
               {isBugReport ? 'Steps to Reproduce (Optional)' : 'Additional Context (Optional)'}
             </Typography>
             {reportData.steps?.map((step, index) => (
@@ -601,7 +614,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(148, 163, 184, 0.3)'
                     : '1px solid rgba(15, 23, 42, 0.2)',
-                color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                 background: (theme) =>
                   theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.6)',
                 backdropFilter: 'blur(8px)',
@@ -610,11 +623,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   background: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? '#1e293b'
-                      : 'rgba(15, 23, 42, 0.05)',
-                  borderColor: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b',
-                  color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                    theme.palette.mode === 'dark' ? '#1e293b' : 'rgba(15, 23, 42, 0.05)',
+                  borderColor: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b'),
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#000000'),
                   transform: 'translateY(-1px)',
                   boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
@@ -699,18 +710,24 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       case 2:
         return (
           <Stack spacing={2}>
-            <Typography variant="h6" sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}>
+            <Typography
+              variant="h6"
+              sx={{ fontFamily: 'Space Grotesk, Inter, system-ui', fontWeight: 500 }}
+            >
               {isBugReport ? 'Review Your Bug Report' : 'Review Your Feedback'}
             </Typography>
 
-            <Alert 
+            <Alert
               severity="info"
               sx={{
-                backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
-                border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
-                color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(148, 163, 184, 0.3)'
+                    : '1px solid rgba(148, 163, 184, 0.2)',
+                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                 '& .MuiAlert-icon': {
-                  color: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
                 },
               }}
             >
@@ -722,11 +739,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             <Box
               sx={{
                 p: 2,
-                bgcolor: (theme) => theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff',
+                bgcolor: (theme) => (theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'),
                 borderRadius: 1,
                 border: '1px solid',
-                borderColor: (theme) => theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.3)' : 'rgba(15, 23, 42, 0.2)',
-                color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(148, 163, 184, 0.3)'
+                    : 'rgba(15, 23, 42, 0.2)',
+                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
               }}
             >
               <Typography variant="subtitle1" gutterBottom>
@@ -743,7 +763,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
               {reportData.steps && reportData.steps.some((s) => s.trim()) && (
                 <Box>
-                  <Typography variant="subtitle2" gutterBottom sx={{ fontFamily: 'Inter, system-ui', fontWeight: 500 }}>
+                  <Typography
+                    variant="subtitle2"
+                    gutterBottom
+                    sx={{ fontFamily: 'Inter, system-ui', fontWeight: 500 }}
+                  >
                     Steps to Reproduce:
                   </Typography>
                   <ol>
@@ -837,18 +861,21 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               sx={{
                 width: '100%',
                 borderRadius: 2,
-                backgroundColor: (theme) => theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc',
-                border: (theme) => theme.palette.mode === 'dark' ? '1px solid rgba(148, 163, 184, 0.3)' : '1px solid rgba(148, 163, 184, 0.2)',
-                color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                backgroundColor: (theme) => (theme.palette.mode === 'dark' ? '#1e293b' : '#f8fafc'),
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(148, 163, 184, 0.3)'
+                    : '1px solid rgba(148, 163, 184, 0.2)',
+                color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 '& .MuiAlert-icon': {
-                  color: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
                 },
                 '& .MuiAlert-message': {
                   fontSize: '0.95rem',
                   lineHeight: 1.5,
-                  color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                  color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                 },
               }}
             >
@@ -917,7 +944,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           overflow: 'hidden',
           // Fix mobile title positioning
           flexShrink: 0,
-          // Add safe area insets for mobile top area  
+          // Add safe area insets for mobile top area
           paddingTop: { xs: 'max(16px, env(safe-area-inset-top))', sm: 3 },
           paddingLeft: { xs: 'max(16px, env(safe-area-inset-left))', sm: 3 },
           paddingRight: { xs: 'max(16px, env(safe-area-inset-right))', sm: 3 },
@@ -979,7 +1006,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             >
               {isBugReport ? 'Report a Bug' : 'Send Feedback'}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, opacity: 0.7, fontWeight: 400 }}>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mt: 0.5, opacity: 0.7, fontWeight: 400 }}
+            >
               {isBugReport
                 ? 'Help us improve by reporting issues'
                 : 'Share your thoughts and suggestions'}
@@ -1037,9 +1068,16 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                       color: 'primary.main',
                     }}
                   >
-                    <Box component="span" sx={{ fontWeight: 300 }}>Step </Box>
-                    <Box component="span" sx={{ fontWeight: 700 }}>{activeStep + 1}</Box>
-                    <Box component="span" sx={{ fontWeight: 300 }}> of {steps.length}</Box>
+                    <Box component="span" sx={{ fontWeight: 300 }}>
+                      Step{' '}
+                    </Box>
+                    <Box component="span" sx={{ fontWeight: 700 }}>
+                      {activeStep + 1}
+                    </Box>
+                    <Box component="span" sx={{ fontWeight: 300 }}>
+                      {' '}
+                      of {steps.length}
+                    </Box>
                   </Typography>
                   <Box
                     sx={{
@@ -1093,13 +1131,13 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   },
                   '& .MuiStepIcon-root': {
                     fontSize: '1.5rem',
-                    color: (theme) => theme.palette.mode === 'dark' ? '#64748b' : '#94a3b8',
+                    color: (theme) => (theme.palette.mode === 'dark' ? '#64748b' : '#94a3b8'),
                     '&.Mui-active': {
-                      color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                      color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                       filter: 'none',
                     },
                     '&.Mui-completed': {
-                      color: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
                     },
                   },
                   '& .MuiStepConnector-line': {
@@ -1118,15 +1156,15 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                           fontSize: '0.95rem',
                           fontFamily: 'Space Grotesk, Inter, system-ui',
                           fontWeight: 500,
-                          color: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                          color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
                         },
                         '& .MuiStepLabel-label.Mui-active': {
-                          color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                          color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                           fontFamily: 'Space Grotesk, Inter, system-ui',
                           fontWeight: 500,
                         },
                         '& .MuiStepLabel-label.Mui-completed': {
-                          color: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                          color: (theme) => (theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b'),
                         },
                       }}
                     >
@@ -1268,7 +1306,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                       theme.palette.mode === 'dark'
                         ? '1px solid rgba(148, 163, 184, 0.3)'
                         : '1px solid rgba(15, 23, 42, 0.2)',
-                    color: (theme) => theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                    color: (theme) => (theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b'),
                     background: (theme) =>
                       theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
@@ -1278,11 +1316,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       background: (theme) =>
-                        theme.palette.mode === 'dark'
-                          ? '#1e293b'
-                          : 'rgba(15, 23, 42, 0.05)',
-                      borderColor: (theme) => theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b',
-                      color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                        theme.palette.mode === 'dark' ? '#1e293b' : 'rgba(15, 23, 42, 0.05)',
+                      borderColor: (theme) =>
+                        theme.palette.mode === 'dark' ? '#94a3b8' : '#1e293b',
+                      color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#000000'),
                       transform: 'translateY(-1px)',
                       boxShadow: (theme) =>
                         theme.palette.mode === 'dark'

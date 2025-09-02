@@ -129,7 +129,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 backgroundImage: 'none',
                 backgroundColor: darkMode ? '#0f172a' : '#ffffff',
                 color: darkMode ? '#e5e7eb' : '#1e293b',
-                border: darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)',
+                border: darkMode
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(0, 0, 0, 0.23)',
                 '& .MuiMenuItem-root': {
                   color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
                   '&:hover': {
@@ -155,7 +157,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 backgroundImage: 'none',
                 backgroundColor: darkMode ? '#0f172a' : '#ffffff',
                 color: darkMode ? '#e5e7eb' : '#1e293b',
-                border: darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)',
+                border: darkMode
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(0, 0, 0, 0.23)',
               },
             },
           },
@@ -499,13 +503,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           '.MuiInputBase-root.MuiOutlinedInput-root.MuiSelect-root .MuiSelect-select': {
             color: `${darkMode ? tokens.text : '#000000'} !important`,
           },
-          '[class*="MuiInputBase-root"][class*="MuiOutlinedInput-root"][class*="MuiSelect-root"] .MuiSelect-select': {
-            color: `${darkMode ? tokens.text : '#000000'} !important`,
-          },
+          '[class*="MuiInputBase-root"][class*="MuiOutlinedInput-root"][class*="MuiSelect-root"] .MuiSelect-select':
+            {
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
+            },
           // Target the exact problematic class pattern
-          '[class*="css-"][class*="MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root"] .MuiSelect-select': {
-            color: `${darkMode ? tokens.text : '#000000'} !important`,
-          },
+          '[class*="css-"][class*="MuiInputBase-root-MuiOutlinedInput-root-MuiSelect-root"] .MuiSelect-select':
+            {
+              color: `${darkMode ? tokens.text : '#000000'} !important`,
+            },
           // Override InputLabel colors globally with maximum specificity
           '.MuiInputLabel-root': {
             color: `${darkMode ? '#94a3b8' : '#64748b'} !important`,
@@ -735,15 +741,18 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             },
           },
           // Additional specific targeting for MenuItem content
-          '.MuiMenuItem-root .MuiListItemText-root, .MuiMenuItem-root .MuiListItemText-primary, .MuiMenuItem-root .MuiTypography-root': {
-            color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
-          },
-          '.MuiMenuItem-root:hover .MuiListItemText-root, .MuiMenuItem-root:hover .MuiListItemText-primary, .MuiMenuItem-root:hover .MuiTypography-root': {
-            color: `${darkMode ? '#ffffff' : '#000000'} !important`,
-          },
-          '.MuiMenuItem-root.Mui-selected .MuiListItemText-root, .MuiMenuItem-root.Mui-selected .MuiListItemText-primary, .MuiMenuItem-root.Mui-selected .MuiTypography-root': {
-            color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
-          },
+          '.MuiMenuItem-root .MuiListItemText-root, .MuiMenuItem-root .MuiListItemText-primary, .MuiMenuItem-root .MuiTypography-root':
+            {
+              color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
+            },
+          '.MuiMenuItem-root:hover .MuiListItemText-root, .MuiMenuItem-root:hover .MuiListItemText-primary, .MuiMenuItem-root:hover .MuiTypography-root':
+            {
+              color: `${darkMode ? '#ffffff' : '#000000'} !important`,
+            },
+          '.MuiMenuItem-root.Mui-selected .MuiListItemText-root, .MuiMenuItem-root.Mui-selected .MuiListItemText-primary, .MuiMenuItem-root.Mui-selected .MuiTypography-root':
+            {
+              color: `${darkMode ? '#ffffff' : '#1e293b'} !important`,
+            },
           // Force Menu and Popover paper backgrounds globally
           '.MuiMenu-paper, .MuiPopover-paper': {
             backgroundColor: `${darkMode ? '#0f172a' : '#ffffff'} !important`,
