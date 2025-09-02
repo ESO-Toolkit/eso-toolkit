@@ -723,7 +723,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 variant="subtitle1"
                                 sx={{
                                   fontFamily: 'space grotesk',
-                                  fontSize: '1.4rem',
+                                  fontSize: '1.15rem',
                                   fontWeight: 100,
                                   lineHeight: 1.2,
                                 }}
