@@ -20,7 +20,6 @@ import {
   Stepper,
   Step,
   StepLabel,
-  CircularProgress,
   SelectChangeEvent,
   styled,
 } from '@mui/material';
@@ -46,7 +45,11 @@ interface BugReportDialogProps extends Omit<FeedbackDialogProps, 'initialType'> 
 }
 
 const getBugSteps = (): string[] => ['Bug Details', 'Additional Information', 'Review & Submit'];
-const getFeedbackSteps = (): string[] => ['Feedback Details', 'Additional Information', 'Review & Submit'];
+const getFeedbackSteps = (): string[] => [
+  'Feedback Details',
+  'Additional Information',
+  'Review & Submit',
+];
 
 // Create styled components with forced dark mode styling
 const DarkTextField = styled(TextField)(({ theme }) => ({
@@ -54,13 +57,22 @@ const DarkTextField = styled(TextField)(({ theme }) => ({
     backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
     color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
     '& fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3) !important' : 'rgba(25, 118, 210, 0.4) !important',
+      borderColor:
+        theme.palette.mode === 'dark'
+          ? 'rgba(56, 189, 248, 0.3) !important'
+          : 'rgba(25, 118, 210, 0.4) !important',
     },
     '&:hover fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5) !important' : 'rgba(25, 118, 210, 0.6) !important',
+      borderColor:
+        theme.palette.mode === 'dark'
+          ? 'rgba(56, 189, 248, 0.5) !important'
+          : 'rgba(25, 118, 210, 0.6) !important',
     },
     '&.Mui-focused fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.8) !important' : 'rgba(25, 118, 210, 0.9) !important',
+      borderColor:
+        theme.palette.mode === 'dark'
+          ? 'rgba(56, 189, 248, 0.8) !important'
+          : 'rgba(25, 118, 210, 0.9) !important',
     },
     '&:hover': {
       backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
@@ -75,30 +87,6 @@ const DarkTextField = styled(TextField)(({ theme }) => ({
       color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
     },
   },
-}));
-
-const DarkSelect = styled(Select)(({ theme }) => ({
-  '& .MuiOutlinedInput-root': {
-    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-    '& fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3) !important' : 'rgba(25, 118, 210, 0.4) !important',
-    },
-    '&:hover fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5) !important' : 'rgba(25, 118, 210, 0.6) !important',
-    },
-    '&.Mui-focused fieldset': {
-      borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.8) !important' : 'rgba(25, 118, 210, 0.9) !important',
-    },
-    '&:hover': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
-    },
-    '&.Mui-focused': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
-    },
-  },
-  backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-  color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
 }));
 
 export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
@@ -159,10 +147,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
   const handleInputChange =
     (field: keyof ManualBugReport) =>
-    (
-      event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | SelectChangeEvent<string>
-    ) => {
+    (event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const value = event.target.value;
+      setReportData((prev) => ({ ...prev, [field]: value }));
+    };
+
+  const handleSelectChange =
+    (field: keyof ManualBugReport) => (event: SelectChangeEvent<string>) => {
+      const value = event.target.value as string;
       setReportData((prev) => ({ ...prev, [field]: value }));
     };
 
@@ -233,86 +225,90 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           <Stack spacing={3}>
             <DarkTextField
               fullWidth
-              label={isBugReport ? "Bug Title" : "Feedback Title"}
+              label={isBugReport ? 'Bug Title' : 'Feedback Title'}
               value={reportData.title}
               onChange={handleInputChange('title')}
-              placeholder={isBugReport ? "Brief description of the issue" : "Brief summary of your feedback"}
+              placeholder={
+                isBugReport ? 'Brief description of the issue' : 'Brief summary of your feedback'
+              }
               required
             />
 
             <DarkTextField
               fullWidth
-              label={isBugReport ? "Bug Description" : "Feedback Description"}
+              label={isBugReport ? 'Bug Description' : 'Feedback Description'}
               value={reportData.description}
               onChange={handleInputChange('description')}
               multiline
               rows={4}
-              placeholder={isBugReport ? "Detailed description of what went wrong" : "Share your thoughts, suggestions, or experience"}
+              placeholder={
+                isBugReport
+                  ? 'Detailed description of what went wrong'
+                  : 'Share your thoughts, suggestions, or experience'
+              }
               required
             />
 
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
               <FormControl fullWidth>
-                <InputLabel>{isBugReport ? "Category" : "Feedback Type"}</InputLabel>
-                <DarkSelect
+                <InputLabel>{isBugReport ? 'Category' : 'Feedback Type'}</InputLabel>
+                <Select
                   value={reportData.category}
-                  onChange={handleInputChange('category')}
-                  label={isBugReport ? "Category" : "Feedback Type"}
+                  onChange={handleSelectChange('category')}
+                  label={isBugReport ? 'Category' : 'Feedback Type'}
                 >
-                  {isBugReport ? (
-                    Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
-                      <MenuItem key={key} value={value}>
-                        {key
-                          .replace(/_/g, ' ')
-                          .toLowerCase()
-                          .replace(/\b\w/g, (l) => l.toUpperCase())}
-                      </MenuItem>
-                    ))
-                  ) : (
-                    [
-                      { key: 'FEATURE_REQUEST', label: 'Feature Request' },
-                      { key: 'IMPROVEMENT', label: 'Improvement Suggestion' },
-                      { key: 'USABILITY', label: 'Usability Feedback' },
-                      { key: 'DESIGN', label: 'Design Feedback' },
-                      { key: 'PERFORMANCE', label: 'Performance Feedback' },
-                      { key: 'GENERAL', label: 'General Feedback' },
-                      { key: 'COMPLIMENT', label: 'Compliment' },
-                    ].map(({ key, label }) => (
-                      <MenuItem key={key} value={key.toLowerCase()}>
-                        {label}
-                      </MenuItem>
-                    ))
-                  )}
-                </DarkSelect>
+                  {isBugReport
+                    ? Object.entries(BUG_REPORT_CATEGORIES).map(([key, value]) => (
+                        <MenuItem key={key} value={value}>
+                          {key
+                            .replace(/_/g, ' ')
+                            .toLowerCase()
+                            .replace(/\b\w/g, (l) => l.toUpperCase())}
+                        </MenuItem>
+                      ))
+                    : [
+                        { key: 'FEATURE_REQUEST', label: 'Feature Request' },
+                        { key: 'IMPROVEMENT', label: 'Improvement Suggestion' },
+                        { key: 'USABILITY', label: 'Usability Feedback' },
+                        { key: 'DESIGN', label: 'Design Feedback' },
+                        { key: 'PERFORMANCE', label: 'Performance Feedback' },
+                        { key: 'GENERAL', label: 'General Feedback' },
+                        { key: 'COMPLIMENT', label: 'Compliment' },
+                      ].map(({ key, label }) => (
+                        <MenuItem key={key} value={key.toLowerCase()}>
+                          {label}
+                        </MenuItem>
+                      ))}
+                </Select>
               </FormControl>
 
               {isBugReport && (
                 <FormControl fullWidth>
                   <InputLabel>Severity</InputLabel>
-                  <DarkSelect
+                  <Select
                     value={reportData.severity}
-                    onChange={handleInputChange('severity')}
+                    onChange={handleSelectChange('severity')}
                     label="Severity"
                   >
                     <MenuItem value="low">Low</MenuItem>
                     <MenuItem value="medium">Medium</MenuItem>
                     <MenuItem value="high">High</MenuItem>
                     <MenuItem value="critical">Critical</MenuItem>
-                  </DarkSelect>
+                  </Select>
                 </FormControl>
               )}
               {!isBugReport && (
                 <FormControl fullWidth>
                   <InputLabel>Priority</InputLabel>
-                  <DarkSelect
+                  <Select
                     value={reportData.severity}
-                    onChange={handleInputChange('severity')}
+                    onChange={handleSelectChange('severity')}
                     label="Priority"
                   >
                     <MenuItem value="low">Low Priority</MenuItem>
                     <MenuItem value="medium">Medium Priority</MenuItem>
                     <MenuItem value="high">High Priority</MenuItem>
-                  </DarkSelect>
+                  </Select>
                 </FormControl>
               )}
             </Stack>
@@ -336,26 +332,20 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   sx={{
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 2,
-                      background: (theme) => 
-                        theme.palette.mode === 'dark'
-                          ? '#0f172a'
-                          : 'rgba(255, 255, 255, 0.7)',
+                      background: (theme) =>
+                        theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.7)',
                       backdropFilter: 'blur(8px)',
                       WebkitBackdropFilter: 'blur(8px)',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       '&:hover': {
-                        background: (theme) => 
-                          theme.palette.mode === 'dark'
-                            ? '#0d1430'
-                            : 'rgba(255, 255, 255, 0.9)',
+                        background: (theme) =>
+                          theme.palette.mode === 'dark' ? '#0d1430' : 'rgba(255, 255, 255, 0.9)',
                         transform: 'translateY(-1px)',
                       },
                       '&.Mui-focused': {
-                        background: (theme) => 
-                          theme.palette.mode === 'dark'
-                            ? '#0b1220'
-                            : 'rgba(255, 255, 255, 1)',
-                        boxShadow: (theme) => 
+                        background: (theme) =>
+                          theme.palette.mode === 'dark' ? '#0b1220' : 'rgba(255, 255, 255, 1)',
+                        boxShadow: (theme) =>
                           theme.palette.mode === 'dark'
                             ? `0 0 0 2px ${theme.palette.primary.main}40`
                             : `0 0 0 2px ${theme.palette.primary.main}40`,
@@ -370,33 +360,31 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 )}
               </Stack>
             ))}
-            <Button 
-              variant="outlined" 
-              onClick={addStep} 
+            <Button
+              variant="outlined"
+              onClick={addStep}
               size="small"
               sx={{
                 borderRadius: 2,
-                border: (theme) => 
+                border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(56, 189, 248, 0.3)'
                     : '1px solid rgba(15, 23, 42, 0.2)',
                 color: (theme) => theme.palette.primary.main,
-                background: (theme) => 
-                  theme.palette.mode === 'dark'
-                    ? '#0f172a'
-                    : 'rgba(255, 255, 255, 0.6)',
+                background: (theme) =>
+                  theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.6)',
                 backdropFilter: 'blur(8px)',
                 WebkitBackdropFilter: 'blur(8px)',
                 fontWeight: 500,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  background: (theme) => 
+                  background: (theme) =>
                     theme.palette.mode === 'dark'
                       ? 'rgba(56, 189, 248, 0.1)'
                       : 'rgba(15, 23, 42, 0.05)',
                   borderColor: (theme) => theme.palette.primary.main,
                   transform: 'translateY(-1px)',
-                  boxShadow: (theme) => 
+                  boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 4px 12px rgba(56, 189, 248, 0.15)'
                       : '0 4px 12px rgba(15, 23, 42, 0.1)',
@@ -408,35 +396,33 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
             <TextField
               fullWidth
-              label={isBugReport ? "Expected Behavior" : "What would you like to see?"}
+              label={isBugReport ? 'Expected Behavior' : 'What would you like to see?'}
               value={reportData.expectedBehavior}
               onChange={handleInputChange('expectedBehavior')}
               multiline
               rows={2}
-              placeholder={isBugReport ? "What should have happened?" : "Describe your ideal solution or outcome"}
+              placeholder={
+                isBugReport
+                  ? 'What should have happened?'
+                  : 'Describe your ideal solution or outcome'
+              }
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  background: (theme) => 
-                    theme.palette.mode === 'dark'
-                      ? '#0f172a'
-                      : 'rgba(255, 255, 255, 0.8)',
+                  background: (theme) =>
+                    theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.8)',
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    background: (theme) => 
-                      theme.palette.mode === 'dark'
-                        ? '#0d1430'
-                        : 'rgba(255, 255, 255, 0.95)',
+                    background: (theme) =>
+                      theme.palette.mode === 'dark' ? '#0d1430' : 'rgba(255, 255, 255, 0.95)',
                     transform: 'translateY(-1px)',
                   },
                   '&.Mui-focused': {
-                    background: (theme) => 
-                      theme.palette.mode === 'dark'
-                        ? '#0b1220'
-                        : 'rgba(255, 255, 255, 1)',
-                    boxShadow: (theme) => 
+                    background: (theme) =>
+                      theme.palette.mode === 'dark' ? '#0b1220' : 'rgba(255, 255, 255, 1)',
+                    boxShadow: (theme) =>
                       theme.palette.mode === 'dark'
                         ? `0 0 0 2px ${theme.palette.primary.main}40`
                         : `0 0 0 2px ${theme.palette.primary.main}40`,
@@ -453,35 +439,33 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
             <TextField
               fullWidth
-              label={isBugReport ? "Actual Behavior" : "Current Experience"}
+              label={isBugReport ? 'Actual Behavior' : 'Current Experience'}
               value={reportData.actualBehavior}
               onChange={handleInputChange('actualBehavior')}
               multiline
               rows={2}
-              placeholder={isBugReport ? "What actually happened?" : "Describe the current state or your experience"}
+              placeholder={
+                isBugReport
+                  ? 'What actually happened?'
+                  : 'Describe the current state or your experience'
+              }
               sx={{
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2,
-                  background: (theme) => 
-                    theme.palette.mode === 'dark'
-                      ? '#0f172a'
-                      : 'rgba(255, 255, 255, 0.8)',
+                  background: (theme) =>
+                    theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.8)',
                   backdropFilter: 'blur(10px)',
                   WebkitBackdropFilter: 'blur(10px)',
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    background: (theme) => 
-                      theme.palette.mode === 'dark'
-                        ? '#0d1430'
-                        : 'rgba(255, 255, 255, 0.95)',
+                    background: (theme) =>
+                      theme.palette.mode === 'dark' ? '#0d1430' : 'rgba(255, 255, 255, 0.95)',
                     transform: 'translateY(-1px)',
                   },
                   '&.Mui-focused': {
-                    background: (theme) => 
-                      theme.palette.mode === 'dark'
-                        ? '#0b1220'
-                        : 'rgba(255, 255, 255, 1)',
-                    boxShadow: (theme) => 
+                    background: (theme) =>
+                      theme.palette.mode === 'dark' ? '#0b1220' : 'rgba(255, 255, 255, 1)',
+                    boxShadow: (theme) =>
                       theme.palette.mode === 'dark'
                         ? `0 0 0 2px ${theme.palette.primary.main}40`
                         : `0 0 0 2px ${theme.palette.primary.main}40`,
@@ -506,7 +490,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             </Typography>
 
             <Alert severity="info">
-              {isBugReport 
+              {isBugReport
                 ? 'Please review your bug report before submitting. This information will help our development team identify and fix the issue more quickly.'
                 : 'Please review your feedback before submitting. We value your input and will use it to improve the application.'}
             </Alert>
@@ -560,7 +544,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 width: 80,
                 height: 80,
                 borderRadius: '50%',
-                background: (theme) => 
+                background: (theme) =>
                   `linear-gradient(135deg, ${theme.palette.success.main}20 0%, ${theme.palette.success.main}10 100%)`,
                 border: (theme) => `2px solid ${theme.palette.success.main}40`,
                 display: 'flex',
@@ -574,7 +558,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   position: 'absolute',
                   inset: -4,
                   borderRadius: '50%',
-                  background: (theme) => 
+                  background: (theme) =>
                     `conic-gradient(from 0deg, ${theme.palette.success.main}40, transparent, ${theme.palette.success.main}40)`,
                   animation: 'spin 3s linear infinite',
                   '@keyframes spin': {
@@ -585,9 +569,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 },
               }}
             >
-              <Typography 
-                variant="h3" 
-                sx={{ 
+              <Typography
+                variant="h3"
+                sx={{
                   color: 'success.main',
                   filter: 'drop-shadow(0 0 8px currentColor)',
                 }}
@@ -595,14 +579,14 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 ✓
               </Typography>
             </Box>
-            
+
             <Box textAlign="center">
-              <Typography 
-                variant="h4" 
+              <Typography
+                variant="h4"
                 sx={{
                   fontFamily: 'Space Grotesk, Inter, system-ui',
                   fontWeight: 600,
-                  background: (theme) => 
+                  background: (theme) =>
                     `linear-gradient(135deg, ${theme.palette.success.main} 0%, ${theme.palette.success.light} 100%)`,
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -612,24 +596,27 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               >
                 {isBugReport ? 'Bug Report' : 'Feedback'} Submitted!
               </Typography>
-              <Typography variant="body1" color="text.secondary" sx={{ maxWidth: 400, lineHeight: 1.6 }}>
-                {isBugReport 
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{ maxWidth: 400, lineHeight: 1.6 }}
+              >
+                {isBugReport
                   ? 'Thank you for reporting this issue. Our development team has been notified and will investigate the problem.'
                   : 'Thank you for your feedback! We appreciate your input and will use it to improve the application.'}
               </Typography>
             </Box>
-            
-            <Alert 
-              severity="success" 
-              sx={{ 
+
+            <Alert
+              severity="success"
+              sx={{
                 width: '100%',
                 borderRadius: 2,
-                background: (theme) => 
+                background: (theme) =>
                   theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgba(76, 175, 80, 0.1) 0%, rgba(56, 142, 60, 0.1) 100%)'
                     : 'linear-gradient(135deg, rgba(76, 175, 80, 0.05) 0%, rgba(56, 142, 60, 0.05) 100%)',
-                border: (theme) => 
-                  `1px solid ${theme.palette.success.main}30`,
+                border: (theme) => `1px solid ${theme.palette.success.main}30`,
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
                 '& .MuiAlert-icon': {
@@ -659,18 +646,18 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       PaperProps={{
         sx: {
           minHeight: '60vh',
-          background: (theme) => 
+          background: (theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%)'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%)',
           backdropFilter: 'blur(20px)',
           WebkitBackdropFilter: 'blur(20px)',
-          border: (theme) => 
+          border: (theme) =>
             theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.2)'
               : '1px solid rgba(15, 23, 42, 0.1)',
           borderRadius: 3,
-          boxShadow: (theme) => 
+          boxShadow: (theme) =>
             theme.palette.mode === 'dark'
               ? '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 60px rgba(56, 189, 248, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
               : '0 25px 50px -12px rgba(15, 23, 42, 0.25), 0 0 60px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
@@ -679,10 +666,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       slotProps={{
         backdrop: {
           sx: {
-            backgroundColor: (theme) => 
-              theme.palette.mode === 'dark'
-                ? 'rgba(0, 0, 0, 0.8)'
-                : 'rgba(15, 23, 42, 0.4)',
+            backgroundColor: (theme) =>
+              theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.8)' : 'rgba(15, 23, 42, 0.4)',
             backdropFilter: 'blur(8px)',
             WebkitBackdropFilter: 'blur(8px)',
           },
@@ -691,11 +676,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
     >
       <DialogTitle
         sx={{
-          background: (theme) => 
+          background: (theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(0, 225, 255, 0.05) 100%)'
               : 'linear-gradient(135deg, rgba(15, 23, 42, 0.05) 0%, rgba(30, 41, 59, 0.03) 100%)',
-          borderBottom: (theme) => 
+          borderBottom: (theme) =>
             theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.2)'
               : '1px solid rgba(15, 23, 42, 0.08)',
@@ -709,7 +694,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             left: 0,
             right: 0,
             height: '2px',
-            background: (theme) => 
+            background: (theme) =>
               theme.palette.mode === 'dark'
                 ? `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                 : `linear-gradient(90deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
@@ -722,11 +707,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               width: 48,
               height: 48,
               borderRadius: 2,
-              background: (theme) => 
+              background: (theme) =>
                 isBugReport
                   ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.2) 100%)'
                   : `linear-gradient(135deg, ${theme.palette.primary.main}20 0%, ${theme.palette.secondary.main}20 100%)`,
-              border: (theme) => 
+              border: (theme) =>
                 isBugReport
                   ? '1px solid rgba(239, 68, 68, 0.3)'
                   : `1px solid ${theme.palette.primary.main}30`,
@@ -744,12 +729,12 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             )}
           </Box>
           <Box>
-            <Typography 
-              variant="h5" 
-              sx={{ 
+            <Typography
+              variant="h5"
+              sx={{
                 fontFamily: 'Space Grotesk, Inter, system-ui',
                 fontWeight: 600,
-                background: (theme) => 
+                background: (theme) =>
                   theme.palette.mode === 'dark'
                     ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                     : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
@@ -760,15 +745,10 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             >
               {isBugReport ? 'Report a Bug' : 'Send Feedback'}
             </Typography>
-            <Typography 
-              variant="body2" 
-              color="text.secondary"
-              sx={{ mt: 0.5, opacity: 0.8 }}
-            >
-              {isBugReport 
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, opacity: 0.8 }}>
+              {isBugReport
                 ? 'Help us improve by reporting issues'
-                : 'Share your thoughts and suggestions'
-              }
+                : 'Share your thoughts and suggestions'}
             </Typography>
           </Box>
         </Stack>
@@ -777,10 +757,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       <DialogContent
         sx={{
           p: 4,
-          background: (theme) => 
-            theme.palette.mode === 'dark'
-              ? '#0b1220'
-              : 'rgba(255, 255, 255, 0.5)',
+          background: (theme) =>
+            theme.palette.mode === 'dark' ? '#0b1220' : 'rgba(255, 255, 255, 0.5)',
           position: 'relative',
         }}
       >
@@ -790,11 +768,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               mb: 4,
               p: 3,
               borderRadius: 2,
-              background: (theme) => 
+              background: (theme) =>
                 theme.palette.mode === 'dark'
                   ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
                   : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)',
-              border: (theme) => 
+              border: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '1px solid rgba(56, 189, 248, 0.1)'
                   : '1px solid rgba(15, 23, 42, 0.08)',
@@ -802,8 +780,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               WebkitBackdropFilter: 'blur(10px)',
             }}
           >
-            <Stepper 
-              activeStep={activeStep} 
+            <Stepper
+              activeStep={activeStep}
               sx={{
                 '& .MuiStepLabel-root': {
                   fontFamily: 'Inter, system-ui',
@@ -819,7 +797,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                   },
                 },
                 '& .MuiStepConnector-line': {
-                  borderColor: (theme) => 
+                  borderColor: (theme) =>
                     theme.palette.mode === 'dark'
                       ? 'rgba(56, 189, 248, 0.2)'
                       : 'rgba(15, 23, 42, 0.2)',
@@ -852,11 +830,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           sx={{
             p: 3,
             borderRadius: 2,
-            background: (theme) => 
+            background: (theme) =>
               theme.palette.mode === 'dark'
                 ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
                 : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
-            border: (theme) => 
+            border: (theme) =>
               theme.palette.mode === 'dark'
                 ? '1px solid rgba(56, 189, 248, 0.1)'
                 : '1px solid rgba(15, 23, 42, 0.08)',
@@ -869,15 +847,15 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         </Box>
       </DialogContent>
 
-      <DialogActions 
-        sx={{ 
-          p: 4, 
+      <DialogActions
+        sx={{
+          p: 4,
           pt: 2,
-          background: (theme) => 
+          background: (theme) =>
             theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, #0f172a 0%, #0d1430 100%)'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)',
-          borderTop: (theme) => 
+          borderTop: (theme) =>
             theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.1)'
               : '1px solid rgba(15, 23, 42, 0.08)',
@@ -887,18 +865,18 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
         }}
       >
         {submitted ? (
-          <Button 
-            onClick={handleClose} 
-            variant="contained" 
+          <Button
+            onClick={handleClose}
+            variant="contained"
             color="primary"
             size="large"
             sx={{
               borderRadius: 2,
               px: 4,
               py: 1.5,
-              background: (theme) => 
+              background: (theme) =>
                 `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              boxShadow: (theme) => 
+              boxShadow: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
                   : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -907,7 +885,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
                 transform: 'translateY(-2px)',
-                boxShadow: (theme) => 
+                boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
                     : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
@@ -925,8 +903,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
             spacing={2}
             sx={{ width: '100%', justifyContent: 'space-between' }}
           >
-            <Button 
-              onClick={handleClose} 
+            <Button
+              onClick={handleClose}
               disabled={isSubmitting}
               size="large"
               sx={{
@@ -938,7 +916,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                 fontWeight: 500,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  background: (theme) => 
+                  background: (theme) =>
                     theme.palette.mode === 'dark'
                       ? 'rgba(56, 189, 248, 0.1)'
                       : 'rgba(15, 23, 42, 0.05)',
@@ -952,8 +930,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 
             <Stack direction="row" spacing={1}>
               {activeStep > 0 && (
-                <Button 
-                  onClick={handleBack} 
+                <Button
+                  onClick={handleBack}
                   disabled={isSubmitting}
                   variant="outlined"
                   size="large"
@@ -961,28 +939,26 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     borderRadius: 2,
                     px: 3,
                     py: 1.5,
-                    border: (theme) => 
+                    border: (theme) =>
                       theme.palette.mode === 'dark'
                         ? '1px solid rgba(56, 189, 248, 0.3)'
                         : '1px solid rgba(15, 23, 42, 0.2)',
                     color: (theme) => theme.palette.primary.main,
-                    background: (theme) => 
-                      theme.palette.mode === 'dark'
-                        ? '#0f172a'
-                        : 'rgba(255, 255, 255, 0.8)',
+                    background: (theme) =>
+                      theme.palette.mode === 'dark' ? '#0f172a' : 'rgba(255, 255, 255, 0.8)',
                     backdropFilter: 'blur(10px)',
                     WebkitBackdropFilter: 'blur(10px)',
                     fontSize: '1rem',
                     fontWeight: 500,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      background: (theme) => 
+                      background: (theme) =>
                         theme.palette.mode === 'dark'
                           ? 'rgba(56, 189, 248, 0.1)'
                           : 'rgba(15, 23, 42, 0.05)',
                       borderColor: (theme) => theme.palette.primary.main,
                       transform: 'translateY(-1px)',
-                      boxShadow: (theme) => 
+                      boxShadow: (theme) =>
                         theme.palette.mode === 'dark'
                           ? '0 4px 15px rgba(56, 189, 248, 0.2)'
                           : '0 4px 15px rgba(15, 23, 42, 0.1)',
@@ -1003,9 +979,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     borderRadius: 2,
                     px: 4,
                     py: 1.5,
-                    background: (theme) => 
+                    background: (theme) =>
                       `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: (theme) => 
+                    boxShadow: (theme) =>
                       theme.palette.mode === 'dark'
                         ? '0 4px 20px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
                         : '0 4px 20px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -1014,7 +990,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: (theme) => 
+                      boxShadow: (theme) =>
                         theme.palette.mode === 'dark'
                           ? '0 6px 30px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
                           : '0 6px 30px rgba(15, 23, 42, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
@@ -1041,11 +1017,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     borderRadius: 2,
                     px: 4,
                     py: 1.5,
-                    background: (theme) => 
+                    background: (theme) =>
                       isBugReport
                         ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%)'
                         : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-                    boxShadow: (theme) => 
+                    boxShadow: (theme) =>
                       isBugReport
                         ? '0 4px 20px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
                         : theme.palette.mode === 'dark'
@@ -1056,7 +1032,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       transform: 'translateY(-2px)',
-                      boxShadow: (theme) => 
+                      boxShadow: (theme) =>
                         isBugReport
                           ? '0 6px 30px rgba(239, 68, 68, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.25)'
                           : theme.palette.mode === 'dark'
@@ -1072,7 +1048,9 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
                     },
                   }}
                 >
-                  {isSubmitting ? 'Submitting...' : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
+                  {isSubmitting
+                    ? 'Submitting...'
+                    : `Submit ${isBugReport ? 'Bug Report' : 'Feedback'}`}
                 </Button>
               )}
             </Stack>
@@ -1097,7 +1075,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'bug' | 'feedback'>('bug');
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   const handleBugReportClick = (): void => {
     addBreadcrumb('Modern feedback FAB clicked - Bug Report', 'ui');
     setFeedbackType('bug');
@@ -1115,59 +1093,6 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
   const toggleExpanded = (): void => {
     setIsExpanded(!isExpanded);
   };
-
-  // Create styled components with forced dark mode styling
-  const DarkTextField = styled(TextField)(({ theme }) => ({
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-      color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-      '& fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&:hover fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&:hover': {
-        backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
-      },
-      '&.Mui-focused': {
-        backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      '&.Mui-focused': {
-        color: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-    },
-  }));
-
-  const DarkSelect = styled(Select)(({ theme }) => ({
-    '& .MuiOutlinedInput-root': {
-      backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-      color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-      '& fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&:hover fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&.Mui-focused fieldset': {
-        borderColor: theme.palette.mode === 'dark' ? '#38bdf8 !important' : '#1976d2 !important',
-      },
-      '&:hover': {
-        backgroundColor: theme.palette.mode === 'dark' ? '#0d1430 !important' : '#f5f5f5 !important',
-      },
-      '&.Mui-focused': {
-        backgroundColor: theme.palette.mode === 'dark' ? '#0b1220 !important' : '#ffffff !important',
-      },
-    },
-    backgroundColor: theme.palette.mode === 'dark' ? '#0f172a !important' : '#ffffff !important',
-    color: theme.palette.mode === 'dark' ? '#ffffff !important' : '#000000 !important',
-  }));
 
   return (
     <>
@@ -1190,17 +1115,17 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               size="medium"
               onClick={handleFeedbackClick}
               sx={{
-                background: (theme) => 
-                  theme.palette.mode === 'dark' 
+                background: (theme) =>
+                  theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.15) 100%)'
                     : 'linear-gradient(135deg, rgba(15, 23, 42, 0.15) 0%, rgba(30, 41, 59, 0.15) 100%)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
-                border: (theme) => 
+                border: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(56, 189, 248, 0.3)'
                     : '1px solid rgba(15, 23, 42, 0.2)',
-                boxShadow: (theme) => 
+                boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 8px 32px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                     : '0 8px 32px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
@@ -1208,11 +1133,11 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-2px) scale(1.05)',
-                  background: (theme) => 
+                  background: (theme) =>
                     theme.palette.mode === 'dark'
                       ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.25) 100%)'
                       : 'linear-gradient(135deg, rgba(15, 23, 42, 0.25) 0%, rgba(30, 41, 59, 0.25) 100%)',
-                  boxShadow: (theme) => 
+                  boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 12px 40px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
                       : '0 12px 40px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -1221,19 +1146,19 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             >
               <ChatBubbleOutline />
             </Fab>
-            
+
             <Fab
               size="medium"
               onClick={handleBugReportClick}
               sx={{
-                background: (theme) => 
-                  theme.palette.mode === 'dark' 
+                background: (theme) =>
+                  theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)'
                     : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)',
                 backdropFilter: 'blur(20px)',
                 WebkitBackdropFilter: 'blur(20px)',
                 border: '1px solid rgba(239, 68, 68, 0.3)',
-                boxShadow: (theme) => 
+                boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                     : '0 8px 32px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
@@ -1241,8 +1166,9 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-2px) scale(1.05)',
-                  background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
-                  boxShadow: (theme) => 
+                  background:
+                    'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                  boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 12px 40px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
                       : '0 12px 40px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -1261,21 +1187,21 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             sx={{
               width: 64,
               height: 64,
-              background: (theme) => 
+              background: (theme) =>
                 theme.palette.mode === 'dark'
                   ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
                   : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
               backdropFilter: 'blur(20px)',
               WebkitBackdropFilter: 'blur(20px)',
-              border: (theme) => 
+              border: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '1px solid rgba(255, 255, 255, 0.15)'
                   : '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow: (theme) => 
+              boxShadow: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                   : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              color: (theme) => theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
+              color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff'),
               transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
               position: 'relative',
               overflow: 'visible',
@@ -1284,7 +1210,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 position: 'absolute',
                 inset: -2,
                 borderRadius: '50%',
-                background: (theme) => 
+                background: (theme) =>
                   theme.palette.mode === 'dark'
                     ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`
                     : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
@@ -1294,7 +1220,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               },
               '&:hover': {
                 transform: 'translateY(-4px) scale(1.08)',
-                boxShadow: (theme) => 
+                boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
                     ? '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 80px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
                     : '0 12px 40px rgba(15, 23, 42, 0.2), 0 0 80px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
@@ -1309,13 +1235,13 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               animation: isExpanded ? 'none' : 'pulse-glow 4s ease-in-out infinite',
               '@keyframes pulse-glow': {
                 '0%, 100%': {
-                  boxShadow: (theme) => 
+                  boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                       : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                 },
                 '50%': {
-                  boxShadow: (theme) => 
+                  boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
                       ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 80px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
                       : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 80px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
@@ -1343,7 +1269,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
       </Box>
 
       <FeedbackDialog
-        open={dialogOpen} 
+        open={dialogOpen}
         onClose={() => setDialogOpen(false)}
         initialType={feedbackType}
       />

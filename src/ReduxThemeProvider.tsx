@@ -49,9 +49,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       createTheme({
         palette: {
           mode: darkMode ? 'dark' : 'light',
-          background: { 
-            default: tokens.bg, 
-            paper: darkMode ? tokens.panel : '#ffffff'
+          background: {
+            default: tokens.bg,
+            paper: darkMode ? tokens.panel : '#ffffff',
           },
           primary: { main: tokens.accent },
           secondary: { main: tokens.accent2 },
@@ -285,20 +285,6 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                   : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%) !important',
                 backdropFilter: 'blur(10px) !important',
                 WebkitBackdropFilter: 'blur(10px) !important',
-              },
-            },
-          },
-          MuiBox: {
-            styleOverrides: {
-              root: {
-                // Only apply to boxes inside dialogs to avoid affecting the entire app
-                '.MuiDialog-root &': {
-                  background: darkMode
-                    ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%) !important`
-                    : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%) !important',
-                  backdropFilter: 'blur(10px) !important',
-                  WebkitBackdropFilter: 'blur(10px) !important',
-                },
               },
             },
           },
