@@ -25,11 +25,12 @@ export const ReportFights: React.FC = () => {
       const duration = reportData.endTime - reportData.startTime;
       const minutes = Math.floor(duration / 60000);
       const seconds = Math.floor((duration % 60000) / 1000);
-      
-      const description = `ESO combat log analysis for ${fightsCount} encounter${fightsCount !== 1 ? 's' : ''}. ` +
+
+      const description =
+        `ESO combat log analysis for ${fightsCount} encounter${fightsCount !== 1 ? 's' : ''}. ` +
         `Total duration: ${minutes}:${seconds.toString().padStart(2, '0')}. ` +
         `View detailed damage, healing, and performance metrics.`;
-      
+
       return {
         title,
         description,

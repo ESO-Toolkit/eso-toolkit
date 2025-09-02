@@ -20,7 +20,7 @@ export const DynamicMetaTags: React.FC<DynamicMetaTagsProps> = ({
   type = 'website',
 }) => {
   useEffect(() => {
-    const updateMetaTag = (property: string, content: string) => {
+    const updateMetaTag = (property: string, content: string): void => {
       let element = document.querySelector(`meta[property="${property}"]`) as HTMLMetaElement;
       if (!element) {
         element = document.createElement('meta');
@@ -30,7 +30,7 @@ export const DynamicMetaTags: React.FC<DynamicMetaTagsProps> = ({
       element.content = content;
     };
 
-    const updateMetaName = (name: string, content: string) => {
+    const updateMetaName = (name: string, content: string): void => {
       let element = document.querySelector(`meta[name="${name}"]`) as HTMLMetaElement;
       if (!element) {
         element = document.createElement('meta');
@@ -80,7 +80,6 @@ export const DynamicMetaTags: React.FC<DynamicMetaTagsProps> = ({
     if (url) {
       updateMetaName('twitter:url', url);
     }
-
   }, [title, description, image, url, type]);
 
   return null; // This component doesn't render anything
@@ -93,26 +92,24 @@ export const generateReportMetaTags = (
   playerName?: string,
   dps?: number,
   duration?: number
-) => {
+): { title: string; description: string; url: string; type: 'article' } => {
   const baseTitle = `${reportCode} Analysis`;
-  const title = fightName 
-    ? `${fightName} - ${baseTitle}`
-    : baseTitle;
+  const title = fightName ? `${fightName} - ${baseTitle}` : baseTitle;
 
   let description = `Detailed combat log analysis for ESO report ${reportCode}.`;
-  
+
   if (fightName && playerName && dps) {
     description += ` ${playerName} achieved ${Math.round(dps).toLocaleString()} DPS on ${fightName}.`;
   } else if (fightName) {
     description += ` Analysis of ${fightName} encounter.`;
   }
-  
+
   if (duration) {
     const minutes = Math.floor(duration / 60000);
     const seconds = Math.floor((duration % 60000) / 1000);
     description += ` Fight duration: ${minutes}:${seconds.toString().padStart(2, '0')}.`;
   }
-  
+
   description += ' View detailed damage breakdowns, buff uptimes, and performance insights.';
 
   return {
@@ -130,19 +127,19 @@ export const generatePlayerMetaTags = (
   className?: string,
   dps?: number,
   fightName?: string
-) => {
+): { title: string; description: string; url: string; type: 'article' } => {
   const title = `${playerName}'s Performance - ${reportCode}`;
-  
+
   let description = `Combat analysis for ${playerName}`;
   if (className) {
     description += ` (${className})`;
   }
   description += ` in ESO report ${reportCode}.`;
-  
+
   if (dps && fightName) {
     description += ` Achieved ${Math.round(dps).toLocaleString()} DPS on ${fightName}.`;
   }
-  
+
   description += ' Detailed damage breakdowns, rotation analysis, and optimization tips.';
 
   return {
