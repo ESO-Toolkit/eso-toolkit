@@ -700,7 +700,7 @@ export const GREEN_CHAMPION_POINTS = Object.freeze(
 
 // Food Buffs
 export const TRI_STAT_FOOD = Object.freeze(new Set([68411, 68411, 61218, 127596]));
-export const HEALTH_AND_REGEN_FOOD = Object.freeze(new Set([89971]));
+export const HEALTH_AND_REGEN_FOOD = Object.freeze(new Set([89971, 72824]));
 export const HEALTH_FOOD = Object.freeze(new Set([84732, 84733, 89973]));
 export const MAGICKA_FOOD = Object.freeze(new Set([89972, 84720]));
 export const STAMINA_FOOD = Object.freeze(new Set([61255, 86673]));
