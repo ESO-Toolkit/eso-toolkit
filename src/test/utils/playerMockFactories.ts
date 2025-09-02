@@ -26,7 +26,7 @@ export const createMockCombatantInfo = (
     defaultGear[i] = {
       id: 0, // id = 0 means no gear in that slot
       slot: i,
-      quality: 0,
+      quality: 1,
       icon: '',
       name: '',
       championPoints: 0,
