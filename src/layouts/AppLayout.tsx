@@ -3,6 +3,7 @@ import Container from '@mui/material/Container';
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import { Footer } from '../components/Footer';
 import { HeaderBar } from '../components/HeaderBar';
 import { useAuth } from '../features/auth/AuthContext';
 import { Login } from '../features/auth/Login';
@@ -18,25 +19,35 @@ export const AppLayout: React.FC = () => {
 
   if (!isLoggedIn) {
     return (
-      <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
+      <Box
+        sx={{
+          position: 'relative',
+          minHeight: '100vh',
+          bgcolor: 'background.default',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
         <HeaderBar />
         <Container
           maxWidth="md"
           sx={{
             px: { xs: isLandingPage ? 2 : 0, sm: 2 },
+            flex: 1,
           }}
         >
           <Box
             sx={{
               pt: { xs: isLandingPage ? 2 : 0, sm: 2 },
               pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
-              minHeight: '100vh',
+              minHeight: 'calc(100vh - 200px)',
               overflowY: 'auto',
             }}
           >
             <Login />
           </Box>
         </Container>
+        <Footer />
       </Box>
     );
   }
@@ -44,25 +55,35 @@ export const AppLayout: React.FC = () => {
   return (
     <ReduxThemeProvider>
       <ReportFightProvider>
-        <Box sx={{ position: 'relative', minHeight: '100vh', bgcolor: 'background.default' }}>
+        <Box
+          sx={{
+            position: 'relative',
+            minHeight: '100vh',
+            bgcolor: 'background.default',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
           <HeaderBar />
           <Container
             maxWidth="md"
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
+              flex: 1,
             }}
           >
             <Box
               sx={{
                 pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
                 pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
-                minHeight: '100vh',
+                minHeight: 'calc(100vh - 200px)',
                 overflowY: 'auto',
               }}
             >
               <Outlet />
             </Box>
           </Container>
+          <Footer />
         </Box>
       </ReportFightProvider>
     </ReduxThemeProvider>
