@@ -346,10 +346,53 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             '--warn': tokens.warn,
             '--danger': tokens.danger,
             '--border': tokens.border,
+            // Modern scrollbar theme variables
+            '--scrollbar-track': darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)',
+            '--scrollbar-thumb': darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.25)',
+            '--scrollbar-thumb-hover': darkMode
+              ? 'rgba(56, 189, 248, 0.5)'
+              : 'rgba(15, 23, 42, 0.4)',
+            '--scrollbar-thumb-active': darkMode
+              ? 'rgba(56, 189, 248, 0.7)'
+              : 'rgba(15, 23, 42, 0.55)',
           },
           // Force dark mode form styling with highest specificity
           '.MuiDialog-root': {
             backgroundColor: 'transparent !important',
+            // Custom scrollbar styles for dialogs and forms
+            '& ::-webkit-scrollbar': {
+              width: '12px',
+              height: '12px',
+            },
+            '& ::-webkit-scrollbar-track': {
+              background: darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)',
+              borderRadius: '6px',
+              margin: '2px',
+            },
+            '& ::-webkit-scrollbar-thumb': {
+              background: darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.25)',
+              borderRadius: '6px',
+              border: darkMode
+                ? '2px solid rgba(15, 23, 42, 0.5)'
+                : '2px solid rgba(188, 217, 255, 0.2)',
+              backgroundClip: 'padding-box',
+              transition: 'background-color 0.2s ease, border-color 0.2s ease',
+            },
+            '& ::-webkit-scrollbar-thumb:hover': {
+              background: darkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(15, 23, 42, 0.4)',
+            },
+            '& ::-webkit-scrollbar-thumb:active': {
+              background: darkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(15, 23, 42, 0.55)',
+            },
+            '& ::-webkit-scrollbar-corner': {
+              background: darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)',
+            },
+            '& *': {
+              scrollbarWidth: 'thin',
+              scrollbarColor: darkMode
+                ? 'rgba(56, 189, 248, 0.3) rgba(15, 23, 42, 0.5)'
+                : 'rgba(15, 23, 42, 0.25) rgba(188, 217, 255, 0.2)',
+            },
           },
           '.MuiDialog-root .MuiDialog-paper': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
@@ -531,6 +574,86 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           '.MuiDialog-root div': {
             '&:not([class*="Mui"])': {
               backgroundColor: 'transparent !important',
+            },
+          },
+          // Enhanced scrollbar styles for TextFields and form elements
+          '.MuiTextField-root textarea, .MuiOutlinedInput-input': {
+            '&::-webkit-scrollbar': {
+              width: '8px',
+              height: '8px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(188, 217, 255, 0.15)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(15, 23, 42, 0.3)',
+              borderRadius: '4px',
+              border: darkMode
+                ? '1px solid rgba(15, 23, 42, 0.3)'
+                : '1px solid rgba(188, 217, 255, 0.15)',
+              backgroundClip: 'padding-box',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.45)',
+            },
+          },
+        }}
+      />
+      <GlobalStyles
+        styles={{
+          // Global scrollbar styles with highest specificity
+          '*': {
+            '&::-webkit-scrollbar': {
+              width: '12px !important',
+              height: '12px !important',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
+              borderRadius: '6px !important',
+              margin: '2px !important',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: `${darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(15, 23, 42, 0.25)'} !important`,
+              borderRadius: '6px !important',
+              border: `${darkMode ? '2px solid rgba(15, 23, 42, 0.5)' : '2px solid rgba(188, 217, 255, 0.2)'} !important`,
+              backgroundClip: 'padding-box !important',
+              transition: 'background-color 0.2s ease, border-color 0.2s ease !important',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: `${darkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(15, 23, 42, 0.4)'} !important`,
+            },
+            '&::-webkit-scrollbar-thumb:active': {
+              background: `${darkMode ? 'rgba(56, 189, 248, 0.7)' : 'rgba(15, 23, 42, 0.55)'} !important`,
+            },
+            '&::-webkit-scrollbar-corner': {
+              background: `${darkMode ? 'rgba(15, 23, 42, 0.5)' : 'rgba(188, 217, 255, 0.2)'} !important`,
+            },
+            scrollbarWidth: 'thin !important',
+            scrollbarColor: `${
+              darkMode
+                ? 'rgba(56, 189, 248, 0.3) rgba(15, 23, 42, 0.5)'
+                : 'rgba(15, 23, 42, 0.25) rgba(188, 217, 255, 0.2)'
+            } !important`,
+          },
+          // Specific overrides for form elements with smaller scrollbars
+          'textarea, input[type="text"], .MuiOutlinedInput-input': {
+            '&::-webkit-scrollbar': {
+              width: '8px !important',
+              height: '8px !important',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: `${darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(188, 217, 255, 0.15)'} !important`,
+              borderRadius: '4px !important',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: `${darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(15, 23, 42, 0.3)'} !important`,
+              borderRadius: '4px !important',
+              border: `${darkMode ? '1px solid rgba(15, 23, 42, 0.3)' : '1px solid rgba(188, 217, 255, 0.15)'} !important`,
+              backgroundClip: 'padding-box !important',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: `${darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.45)'} !important`,
             },
           },
         }}
