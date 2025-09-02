@@ -1,77 +1,68 @@
 import React from 'react';
 
 import { useReportMasterData } from '../../../hooks';
-import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
-import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 
 import { BuffsOverviewPanelView } from './BuffsOverviewPanelView';
 
+// Define the interface for the data expected by the view
 export interface BuffOverviewData extends Record<string, unknown> {
   buffName: string;
   buffId: number;
-  icon?: string;
-  gameId: string;
+  icon: string;
+  gameId: string; // Keep for compatibility with existing view
   activeTargetsCount: number;
   totalApplications: number;
 }
 
-/**
- * Panel that shows all buffs applied to friendly targets during the fight
- */
 export const BuffsOverviewPanel: React.FC = () => {
-  // Get report/fight context
-  const { reportId, fightId } = useSelectedReportAndFight();
+  const { buffLookupData, isBuffLookupLoading, buffLookupError } = useBuffLookupTask();
+  const { reportMasterData } = useReportMasterData();
 
-  // Get data hooks
-  const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
+  // Transform the BuffLookupData into BuffOverviewData
+  const buffOverviewData: BuffOverviewData[] = React.useMemo(() => {
+    if (!buffLookupData || !reportMasterData?.abilitiesById) return [];
 
-  // Process buffs data
-  const buffsData = React.useMemo(() => {
-    if (!friendlyBuffsLookup?.buffIntervals || !reportMasterData?.abilitiesById) {
-      return [];
-    }
+    const overviewData: BuffOverviewData[] = [];
 
-    const buffDataMap = new Map<number, BuffOverviewData>();
+    // Iterate through each buff ability in the buff intervals
+    for (const [abilityIdStr, intervals] of Object.entries(buffLookupData.buffIntervals)) {
+      const abilityId = parseInt(abilityIdStr, 10);
+      const ability = reportMasterData.abilitiesById[abilityId];
 
-    // Iterate through all buff intervals to collect unique buffs
-    for (const [abilityGameID, intervals] of friendlyBuffsLookup.buffIntervals) {
-      // Get ability info from master data
-      const ability = reportMasterData.abilitiesById[abilityGameID];
+      // Get unique targets that have this buff at any point
+      const uniqueTargets = new Set<number>();
+      let totalApplications = 0;
 
-      // Count unique targets that had this buff
-      const uniqueTargets = new Set(intervals.map((interval) => interval.targetID));
+      for (const interval of intervals) {
+        uniqueTargets.add(interval.targetID);
+        totalApplications += 1; // Each interval represents one application
+      }
 
-      // Count total applications (number of intervals)
-      const totalApplications = intervals.length;
-
-      const buffData: BuffOverviewData = {
-        buffName: ability?.name || `Unknown Buff ${abilityGameID}`,
-        buffId: abilityGameID,
-        icon: ability?.icon || undefined,
-        gameId: String(abilityGameID),
+      overviewData.push({
+        buffName: ability?.name || `Unknown Buff (${abilityId})`,
+        buffId: abilityId,
+        icon: ability?.icon || '',
+        gameId: abilityIdStr, // Use string version for compatibility
         activeTargetsCount: uniqueTargets.size,
         totalApplications,
-      };
-
-      buffDataMap.set(abilityGameID, buffData);
+      });
     }
 
-    // Convert to array and sort by number of targets (most popular first)
-    return Array.from(buffDataMap.values()).sort(
-      (a, b) =>
-        b.activeTargetsCount - a.activeTargetsCount || b.totalApplications - a.totalApplications
-    );
-  }, [friendlyBuffsLookup, reportMasterData]);
-
-  const isLoading = isFriendlyBuffEventsLoading || isMasterDataLoading;
+    // Sort by total applications (descending) then by name
+    return overviewData.sort((a, b) => {
+      if (a.totalApplications !== b.totalApplications) {
+        return b.totalApplications - a.totalApplications;
+      }
+      return a.buffName.localeCompare(b.buffName);
+    });
+  }, [buffLookupData, reportMasterData?.abilitiesById]);
 
   return (
     <BuffsOverviewPanelView
-      buffsData={buffsData}
-      isLoading={isLoading}
-      reportId={reportId}
-      fightId={fightId}
+      buffOverviewData={buffOverviewData}
+      isLoading={isBuffLookupLoading}
+      error={buffLookupError}
     />
   );
 };

@@ -324,7 +324,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           <DeathEventPanel fight={fight} />
         </Box>
         <Box sx={{ display: validSelectedTab === 5 ? 'block' : 'none' }}>
-          <CriticalDamagePanel fight={fight} />
+          <CriticalDamagePanel />
         </Box>
         <Box sx={{ display: validSelectedTab === 6 ? 'block' : 'none' }}>
           <PenetrationPanel fight={fight} />

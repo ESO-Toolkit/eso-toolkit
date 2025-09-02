@@ -567,13 +567,6 @@ function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number
 }
 
 /**
- * Check if a specific damage reduction source is not fully implemented
- */
-export function isSourceNotImplemented(source: DamageReductionSource): boolean {
-  return source.source === 'not_implemented';
-}
-
-/**
  * Helper function to check if player has a shield or frost staff equipped
  * Bulwark Champion Point provides 1900 resistance while either is equipped
  */

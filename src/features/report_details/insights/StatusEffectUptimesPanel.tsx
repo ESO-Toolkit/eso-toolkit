@@ -3,31 +3,12 @@ import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
-import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
-import { useHostileBuffsLookup } from '../../../hooks/useHostileBuffEvents';
-import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
-import { KnownAbilities } from '../../../types/abilities';
-import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
 
 import { StatusEffectUptimesView } from './StatusEffectUptimesView';
 
-// Define the specific status effect debuff abilities to track
-const STATUS_EFFECT_BUFF_ABILITIES = Object.freeze(
-  new Set([
-    KnownAbilities.OVERCHARGED,
-    KnownAbilities.SUNDERED,
-    KnownAbilities.CONCUSSION,
-    KnownAbilities.CHILL,
-    KnownAbilities.DISEASED,
-  ])
-);
-
-// Define the specific status effect debuff abilities to track
-const STATUS_EFFECT_DEBUFF_ABILITIES = Object.freeze(
-  new Set([KnownAbilities.BURNING, KnownAbilities.POISONED, KnownAbilities.HEMMORRHAGING])
-);
+import { useStatusEffectUptimesTask } from '@/hooks';
 
 interface StatusEffectUptimesPanelProps {
   fight: FightFragment;
@@ -37,62 +18,31 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   const selectedTargetId = useSelector(selectSelectedTargetId);
   const { reportId, fightId } = useSelectedReportAndFight();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
-  const { hostileBuffsLookup, isHostileBuffEventsLoading } = useHostileBuffsLookup();
-  const realTargetIds = useSelectedTargetIds();
 
-  // Extract stable fight properties
-  const fightStartTime = fight?.startTime;
-  const fightEndTime = fight?.endTime;
-  const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
+  // Use the worker-based selector for status effect uptimes
+  const { statusEffectUptimesData, isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
 
-  // Calculate status effect uptimes using the utility function
-  const statusEffectUptimes = React.useMemo(() => {
-    if (!fightDuration || !fightStartTime || !fightEndTime) {
-      return [];
+  // Enhance the results with ability names from master data
+  const enhancedStatusEffectUptimes = React.useMemo(() => {
+    if (!statusEffectUptimesData || !reportMasterData?.abilitiesById) {
+      return statusEffectUptimesData;
     }
 
-    const debuffUptimes = computeBuffUptimes(debuffsLookup, {
-      abilityIds: STATUS_EFFECT_DEBUFF_ABILITIES,
-      targetIds: realTargetIds,
-      fightStartTime,
-      fightEndTime,
-      fightDuration,
-      abilitiesById: reportMasterData?.abilitiesById || {},
-      isDebuff: true,
-      hostilityType: 1,
+    return statusEffectUptimesData.map((uptime) => {
+      const ability = reportMasterData.abilitiesById[uptime.abilityGameID];
+      return {
+        ...uptime,
+        abilityName: ability?.name || uptime.abilityName,
+        icon: ability?.icon || uptime.icon,
+      };
     });
+  }, [statusEffectUptimesData, reportMasterData?.abilitiesById]);
 
-    const buffUptimes = computeBuffUptimes(hostileBuffsLookup, {
-      abilityIds: STATUS_EFFECT_BUFF_ABILITIES,
-      targetIds: realTargetIds,
-      fightStartTime,
-      fightEndTime,
-      fightDuration,
-      abilitiesById: reportMasterData?.abilitiesById || {},
-      isDebuff: false,
-      hostilityType: 1,
-    });
-
-    // Combine and sort all uptimes
-    return [...debuffUptimes, ...buffUptimes].sort(
-      (a, b) => b.uptimePercentage - a.uptimePercentage
-    );
-  }, [
-    debuffsLookup,
-    hostileBuffsLookup,
-    fightDuration,
-    fightStartTime,
-    fightEndTime,
-    reportMasterData?.abilitiesById,
-    realTargetIds,
-  ]);
-
-  if (isMasterDataLoading || isDebuffEventsLoading || isHostileBuffEventsLoading) {
+  if (isMasterDataLoading || isStatusEffectUptimesLoading) {
     return (
       <StatusEffectUptimesView
         selectedTargetId={selectedTargetId}
-        statusEffectUptimes={undefined}
+        statusEffectUptimes={null}
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
@@ -103,7 +53,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
   return (
     <StatusEffectUptimesView
       selectedTargetId={selectedTargetId}
-      statusEffectUptimes={statusEffectUptimes}
+      statusEffectUptimes={enhancedStatusEffectUptimes}
       isLoading={false}
       reportId={reportId}
       fightId={fightId}

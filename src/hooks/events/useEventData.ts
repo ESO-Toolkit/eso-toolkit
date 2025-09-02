@@ -1,11 +1,11 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { ReportActorFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchDamageEvents } from '../store/events_data/damageEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
+import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { ReportActorFragment } from '../../graphql/generated';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { fetchDamageEvents } from '../../store/events_data/damageEventsSlice';
+import { selectReportFights } from '../../store/report/reportSelectors';
 import {
   selectAllEvents,
   selectDamageEvents,
@@ -23,8 +23,8 @@ import {
   selectCastEventsLoading,
   selectResourceEventsLoading,
   selectEventPlayers,
-} from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
+} from '../../store/selectors/eventsSelectors';
+import { useAppDispatch } from '../../store/useAppDispatch';
 import {
   LogEvent,
   DamageEvent,
@@ -34,7 +34,7 @@ import {
   DebuffEvent,
   ResourceChangeEvent,
   UnifiedCastEvent,
-} from '../types/combatlogEvents';
+} from '../../types/combatlogEvents';
 
 export function useEventData(): {
   allEvents: LogEvent[];

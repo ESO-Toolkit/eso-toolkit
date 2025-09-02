@@ -3,7 +3,7 @@ import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
-import { useDebuffLookup } from '../../../hooks/useDebuffEvents';
+import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
@@ -35,7 +35,7 @@ const IMPORTANT_DEBUFF_ABILITIES = new Set([
 
 export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight }) => {
   const { reportId, fightId } = useSelectedReportAndFight();
-  const { debuffsLookup, isDebuffEventsLoading } = useDebuffLookup();
+  const { result: debuffsLookup, isLoading: isDebuffEventsLoading } = useWorkerDebuffLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
@@ -57,7 +57,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
 
     // Get all debuff ability IDs from the lookup
     const debuffAbilityIds = new Set<number>();
-    debuffsLookup.buffIntervals.forEach((intervals, abilityGameID) => {
+    Object.keys(debuffsLookup.buffIntervals).forEach((abilityGameIDStr) => {
+      const abilityGameID = parseInt(abilityGameIDStr, 10);
       debuffAbilityIds.add(abilityGameID);
     });
 

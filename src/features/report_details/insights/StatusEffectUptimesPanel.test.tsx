@@ -19,14 +19,21 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     [KnownAbilities.OVERCHARGED]: { name: 'Overcharged', icon: 'overcharged.png' },
   };
 
+  // Helper function to create BuffLookupData from Map-like structure
+  const createBuffLookupData = (
+    intervals: Record<number, Array<{ start: number; end: number; targetID: number }>>
+  ): {
+    buffIntervals: Record<string, Array<{ start: number; end: number; targetID: number }>>;
+  } => ({
+    buffIntervals: intervals,
+  });
+
   it('should correctly calculate debuff uptimes using the utility function', () => {
     // Mock debuffs lookup similar to what the component would receive
-    const debuffsLookup = {
-      buffIntervals: new Map([
-        [KnownAbilities.BURNING, [{ start: 1000, end: 6000, targetID: 111 }]], // 5 seconds = 50%
-        [KnownAbilities.POISONED, [{ start: 2000, end: 5000, targetID: 111 }]], // 3 seconds = 30%
-      ]),
-    };
+    const debuffsLookup = createBuffLookupData({
+      [KnownAbilities.BURNING]: [{ start: 1000, end: 6000, targetID: 111 }], // 5 seconds = 50%
+      [KnownAbilities.POISONED]: [{ start: 2000, end: 5000, targetID: 111 }], // 3 seconds = 30%
+    });
 
     const STATUS_EFFECT_DEBUFF_ABILITIES = new Set([
       KnownAbilities.BURNING,
@@ -65,11 +72,9 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
   it('should correctly calculate buff uptimes using the utility function', () => {
     // Mock friendly buffs lookup similar to what the component would receive
-    const friendlyBuffsLookup = {
-      buffIntervals: new Map([
-        [KnownAbilities.OVERCHARGED, [{ start: 1500, end: 8500, targetID: 111 }]], // 7 seconds = 70%
-      ]),
-    };
+    const friendlyBuffsLookup = createBuffLookupData({
+      [KnownAbilities.OVERCHARGED]: [{ start: 1500, end: 8500, targetID: 111 }], // 7 seconds = 70%
+    });
 
     const STATUS_EFFECT_BUFF_ABILITIES = new Set([
       KnownAbilities.OVERCHARGED,
@@ -101,17 +106,13 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
   });
 
   it('should handle combined buff and debuff results sorting correctly', () => {
-    const debuffsLookup = {
-      buffIntervals: new Map([
-        [KnownAbilities.BURNING, [{ start: 1000, end: 4000, targetID: 111 }]], // 3 seconds = 30%
-      ]),
-    };
+    const debuffsLookup = createBuffLookupData({
+      [KnownAbilities.BURNING]: [{ start: 1000, end: 4000, targetID: 111 }], // 3 seconds = 30%
+    });
 
-    const friendlyBuffsLookup = {
-      buffIntervals: new Map([
-        [KnownAbilities.OVERCHARGED, [{ start: 1500, end: 6500, targetID: 111 }]], // 5 seconds = 50%
-      ]),
-    };
+    const friendlyBuffsLookup = createBuffLookupData({
+      [KnownAbilities.OVERCHARGED]: [{ start: 1500, end: 6500, targetID: 111 }], // 5 seconds = 50%
+    });
 
     const debuffResults = computeBuffUptimes(debuffsLookup, {
       abilityIds: new Set([KnownAbilities.BURNING]),
@@ -168,11 +169,9 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
     ).toEqual([]);
 
     // Test with zero fight duration (component checks for this)
-    const mockLookup = {
-      buffIntervals: new Map([
-        [KnownAbilities.BURNING, [{ start: 1000, end: 6000, targetID: 111 }]],
-      ]),
-    };
+    const mockLookup = createBuffLookupData({
+      [KnownAbilities.BURNING]: [{ start: 1000, end: 6000, targetID: 111 }],
+    });
 
     expect(
       computeBuffUptimes(mockLookup, {

@@ -17,7 +17,7 @@ interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
 interface PlayerCriticalDamageDetailsProps {
   id: number;
   name: string;
-  fight: FightFragment;
+  fight: FightFragment | undefined;
   expanded?: boolean;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   criticalDamageData: PlayerCriticalDamageDataExtended | null;
@@ -41,7 +41,8 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
     return playerData.playersById[id] || null;
   }, [playerData, id]);
 
-  const fightDurationSeconds = (fight.endTime - fight.startTime) / 1000;
+  const fightDurationSeconds =
+    fight?.endTime && fight?.startTime ? (fight.endTime - fight.startTime) / 1000 : 1;
 
   if (!player) {
     return null;

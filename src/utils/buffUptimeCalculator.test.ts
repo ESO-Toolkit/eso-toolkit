@@ -1,6 +1,6 @@
+import { BuffLookupData } from './BuffLookupUtils';
 import {
   BuffInterval,
-  BuffLookup,
   BuffUptimeCalculatorOptions,
   computeBuffUptimes,
 } from './buffUptimeCalculator';
@@ -32,9 +32,15 @@ describe('buffUptimeCalculator', () => {
   });
 
   // Helper function to create mock buff lookup
-  const createBuffLookup = (intervals: Map<number, BuffInterval[]>): BuffLookup => ({
-    buffIntervals: intervals,
-  });
+  const createBuffLookup = (intervals: Map<number, BuffInterval[]>): BuffLookupData => {
+    const buffIntervalsObj: { [key: string]: BuffInterval[] } = {};
+    for (const [abilityGameID, intervalArray] of intervals.entries()) {
+      buffIntervalsObj[abilityGameID.toString()] = intervalArray;
+    }
+    return {
+      buffIntervals: buffIntervalsObj,
+    };
+  };
 
   // Mock abilities lookup
   const mockAbilitiesById = {

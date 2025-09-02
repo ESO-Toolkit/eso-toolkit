@@ -2,8 +2,7 @@ import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
-import { Routes, Route } from 'react-router-dom';
-import { HistoryRouter } from 'redux-first-history/rr6';
+import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { BugReportFab } from './components/BugReportDialog';
@@ -12,7 +11,7 @@ import { LandingPage } from './components/LandingPage';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
-import store, { persistor, history } from './store/storeWithHistory';
+import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
 
 // Initialize Sentry before the app starts
@@ -97,7 +96,7 @@ const AppRoutes: React.FC = () => {
   }
 
   return (
-    <HistoryRouter history={history}>
+    <HashRouter>
       <ErrorBoundary>
         <Routes>
           <Route
@@ -148,7 +147,7 @@ const AppRoutes: React.FC = () => {
           </Route>
         </Routes>
       </ErrorBoundary>
-    </HistoryRouter>
+    </HashRouter>
   );
 };
 

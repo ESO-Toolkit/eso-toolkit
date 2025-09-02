@@ -1,13 +1,13 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchCastEvents } from '../store/events_data/castEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
-import { selectCastEvents, selectCastEventsLoading } from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
+import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { FightFragment } from '../../graphql/generated';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { fetchCastEvents } from '../../store/events_data/castEventsSlice';
+import { selectReportFights } from '../../store/report/reportSelectors';
+import { selectCastEvents, selectCastEventsLoading } from '../../store/selectors/eventsSelectors';
+import { useAppDispatch } from '../../store/useAppDispatch';
 
 export function useCastEvents(): {
   castEvents: ReturnType<typeof selectCastEvents>;

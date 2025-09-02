@@ -84,14 +84,20 @@ describe('damageReductionUtils', () => {
 
   const createMockBuffLookup = (
     abilities: Array<{ ability: KnownAbilities; intervals: Array<[number, number]> }>
-  ): BuffLookupData => ({
-    buffIntervals: new Map(
-      abilities.map(({ ability, intervals }) => [
-        ability,
-        intervals.map(([start, end]) => ({ start, end, targetID: 123 })), // Use same player ID as tests
-      ])
-    ),
-  });
+  ): BuffLookupData => {
+    const buffIntervals: Record<
+      string,
+      Array<{ start: number; end: number; targetID: number }>
+    > = {};
+    abilities.forEach(({ ability, intervals }) => {
+      buffIntervals[ability.toString()] = intervals.map(([start, end]) => ({
+        start,
+        end,
+        targetID: 123,
+      })); // Use same player ID as tests
+    });
+    return { buffIntervals };
+  };
 
   describe('resistanceToDamageReduction', () => {
     it('should return 0 for negative or zero resistance', () => {

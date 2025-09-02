@@ -1,29 +1,24 @@
-import { BuffInterval, BuffLookup } from '../../utils/buffUptimeCalculator';
+import { BuffLookupData } from '../../utils/BuffLookupUtils';
+import { BuffInterval } from '../../utils/buffUptimeCalculator';
 
 /**
  * General purpose test utility functions and constants
  */
 
 // Common mock constants for consistent testing
-export const MOCK_CONSTANTS = {
-  ABILITIES: {
-    TEST_ABILITY_1: 12345,
-    TEST_ABILITY_2: 67890,
-  },
-  TARGETS: {
-    TARGET_1: 111,
-    TARGET_2: 222,
-  },
-  SOURCES: {
-    SOURCE_1: 333,
-    SOURCE_2: 444,
-  },
-  FIGHT: {
-    START: 1000,
-    END: 11000,
-    DURATION: 10000, // 10 seconds
-  },
-};
+// This file contains test utilities and mock data
+
+/**
+ * Test constants for ability IDs - these are ESO Logs ability IDs
+ */
+export const MOCK_ABILITY_IDS = {
+  MAJOR_FORCE: 61747,
+  MAJOR_BRUTALITY: 61687,
+  MAJOR_SORCERY: 61685,
+  EMPOWER: 61737,
+  MAJOR_SAVAGERY: 61686,
+  MINOR_FORCE: 61749,
+} as const;
 
 /**
  * Helper function to create mock buff intervals for testing buff calculations
@@ -43,7 +38,7 @@ export const createBuffInterval = (
 /**
  * Helper function to create mock buff lookup data
  */
-export const createBuffLookup = (intervals: Map<number, BuffInterval[]>): BuffLookup => ({
+export const createBuffLookup = (intervals: { [key: string]: BuffInterval[] }): BuffLookupData => ({
   buffIntervals: intervals,
 });
 
@@ -61,44 +56,4 @@ export const createMockAbilitiesById = (
     };
   });
   return abilities;
-};
-
-/**
- * Helper to generate arrays of mock data for performance testing
- */
-export const generateMockArray = <T>(length: number, factory: (index: number) => T): T[] => {
-  return Array.from({ length }, (_, i) => factory(i));
-};
-
-/**
- * Creates random test data for performance and stress testing
- */
-export const createRandomTestData = {
-  /**
-   * Generates random timestamps within a fight duration
-   */
-  timestamp: (fightStart: number, fightEnd: number): number => {
-    return Math.floor(Math.random() * (fightEnd - fightStart)) + fightStart;
-  },
-
-  /**
-   * Generates random ability ID from a predefined set
-   */
-  abilityId: (abilityIds: number[]): number => {
-    return abilityIds[Math.floor(Math.random() * abilityIds.length)];
-  },
-
-  /**
-   * Generates random damage amount within a range
-   */
-  damage: (min = 500, max = 2500): number => {
-    return Math.floor(Math.random() * (max - min)) + min;
-  },
-
-  /**
-   * Determines if an event should be critical based on probability
-   */
-  isCritical: (critRate = 0.3): boolean => {
-    return Math.random() < critRate;
-  },
 };

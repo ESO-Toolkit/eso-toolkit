@@ -1,39 +1,22 @@
 import { Box, Typography, Alert } from '@mui/material';
 import React from 'react';
 
-import { FightFragment } from '../../../graphql/generated';
-import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { PenetrationSourceWithActiveState } from '../../../utils/PenetrationUtils';
+import { FightFragment as Fight } from '../../../graphql/generated';
+import { PlayerDetailsWithRole as Player } from '../../../store/player_data/playerDataSlice';
+import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
 import { PlayerPenetrationDetails } from './PlayerPenetrationDetails';
 
-interface PenetrationDataPoint {
-  timestamp: number;
-  penetration: number;
-  relativeTime: number; // Time since fight start in seconds
-}
-
-interface PlayerPenetrationData {
-  playerId: string;
-  playerName: string;
-  dataPoints: PenetrationDataPoint[];
-  max: number;
-  effective: number;
-  timeAtCapPercentage: number;
-  penetrationSources: PenetrationSourceWithActiveState[];
-  playerBasePenetration: number;
-}
-
-interface PenetrationPanelViewProps {
-  players: PlayerDetailsWithRole[];
-  selectedTargetIds: Set<number>;
-  fight: FightFragment;
-  expandedPlayers: Record<string, boolean>;
-  onPlayerExpandChange: (
+export interface PenetrationPanelViewProps {
+  readonly penetrationData: Record<string, PlayerPenetrationData> | null;
+  readonly players: Player[];
+  readonly selectedTargetIds: Set<number>;
+  readonly isLoading: boolean;
+  readonly fight: Fight;
+  readonly expandedPlayers: Record<number, boolean>;
+  readonly onPlayerExpandChange: (
     playerId: string
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
-  penetrationData: Map<string, PlayerPenetrationData>;
-  isLoading: boolean;
 }
 
 /**
@@ -123,7 +106,7 @@ export const PenetrationPanelView: React.FC<PenetrationPanelViewProps> = ({
           </Typography>
 
           {players.map((player) => {
-            const playerPenetrationData = penetrationData.get(player.id.toString());
+            const playerPenetrationData = penetrationData?.[player.id.toString()] || null;
 
             return (
               <PlayerPenetrationDetails

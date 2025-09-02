@@ -1,17 +1,17 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchResourceEvents } from '../store/events_data/resourceEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
+import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
+import { FightFragment } from '@/graphql/generated';
+import { useSelectedReportAndFight } from '@/ReportFightContext';
+import { fetchResourceEvents } from '@/store/events_data/resourceEventsSlice';
+import { selectReportFights } from '@/store/report/reportSelectors';
 import {
   selectResourceEvents,
   selectResourceEventsLoading,
-} from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
-import { ResourceChangeEvent } from '../types/combatlogEvents';
+} from '@/store/selectors/eventsSelectors';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { ResourceChangeEvent } from '@/types/combatlogEvents';
 
 export function useResourceEvents(): {
   resourceEvents: ResourceChangeEvent[];

@@ -76,20 +76,3 @@ export function calculateDeathDurations(
 
   return deathDurations;
 }
-
-/**
- * Format death duration for display
- * @param durationMs Duration in milliseconds
- * @returns Formatted string (e.g., "1m 23.5s", "45.2s")
- */
-export function formatDeathDuration(durationMs: number): string {
-  const totalSeconds = durationMs / 1000;
-
-  if (totalSeconds >= 60) {
-    const minutes = Math.floor(totalSeconds / 60);
-    const seconds = (totalSeconds % 60).toFixed(1);
-    return `${minutes}m ${seconds}s`;
-  } else {
-    return `${totalSeconds.toFixed(1)}s`;
-  }
-}

@@ -2,15 +2,15 @@ import { BuffEvent } from '../types/combatlogEvents';
 import { DebuffEvent } from '../types/combatlogEvents';
 
 // Efficient buff lookup data structure
-interface BuffTimeInterval {
+export interface BuffTimeInterval {
   start: number;
   end: number;
   targetID: number; // Track which target this interval applies to
 }
 
-// POJO data structure for buff lookup
+// POJO data structure for buff lookup - serializable for worker communication
 export interface BuffLookupData {
-  buffIntervals: Map<number, BuffTimeInterval[]>;
+  buffIntervals: { [key: string]: BuffTimeInterval[] };
 }
 
 /**
@@ -95,8 +95,14 @@ export function createBuffLookup(buffEvents: BuffEvent[], fightEndTime?: number)
     intervals.sort((a, b) => a.start - b.start);
   }
 
+  // Convert Map to POJO for serialization
+  const buffIntervalsObj: { [key: string]: BuffTimeInterval[] } = {};
+  for (const [abilityGameID, intervals] of buffIntervals.entries()) {
+    buffIntervalsObj[abilityGameID.toString()] = intervals;
+  }
+
   return {
-    buffIntervals,
+    buffIntervals: buffIntervalsObj,
   };
 }
 
@@ -113,7 +119,7 @@ export function isBuffActive(
   abilityGameID: number,
   timestamp?: number
 ): boolean {
-  const intervals = buffLookup.buffIntervals.get(abilityGameID);
+  const intervals = buffLookup.buffIntervals[abilityGameID.toString()];
   if (!intervals || intervals.length === 0) {
     return false;
   }
@@ -124,7 +130,9 @@ export function isBuffActive(
   }
 
   // Check if any interval contains the timestamp (regardless of target)
-  return intervals.some((interval) => timestamp >= interval.start && timestamp <= interval.end);
+  return intervals.some(
+    (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end
+  );
 }
 
 /**
@@ -145,25 +153,26 @@ export function isBuffActiveOnTarget(
   timestamp?: number,
   targetID?: number
 ): boolean {
-  const intervals = buffLookup.buffIntervals.get(abilityGameID);
+  const intervals = buffLookup.buffIntervals[abilityGameID.toString()];
   if (!intervals || intervals.length === 0) {
     return false;
   }
 
-  // If no timestamp provided, check if buff was ever active on target
+  // If timestamp is undefined, check if buff was ever active on target
   if (timestamp === undefined) {
     if (targetID === undefined) {
-      // Return true if any intervals exist (buff was active on any target)
       return intervals.length > 0;
     } else {
       // Return true if any interval exists for this target
-      return intervals.some((interval) => interval.targetID === targetID);
+      return intervals.some((interval: BuffTimeInterval) => interval.targetID === targetID);
     }
   }
 
   // If no target specified, check if buff is active on any target at the timestamp
   if (targetID === undefined) {
-    return intervals.some((interval) => timestamp >= interval.start && timestamp <= interval.end);
+    return intervals.some(
+      (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end
+    );
   }
 
   // Binary search for intervals containing the timestamp on the specific target
@@ -209,43 +218,6 @@ export function isBuffActiveOnTarget(
  * @param timestamp - The timestamp to check
  * @returns Array of target IDs that have the buff active at the timestamp, sorted
  */
-export function getActiveTargets(
-  buffLookup: BuffLookupData,
-  abilityGameID: number,
-  timestamp: number
-): number[] {
-  const intervals = buffLookup.buffIntervals.get(abilityGameID);
-  if (!intervals || intervals.length === 0) {
-    return [];
-  }
-
-  // Find all targets with active buffs at the timestamp
-  const activeTargets = new Set<number>();
-  for (const interval of intervals) {
-    if (timestamp >= interval.start && timestamp <= interval.end) {
-      activeTargets.add(interval.targetID);
-    }
-  }
-
-  return Array.from(activeTargets).sort((a, b) => a - b);
-}
-
-/**
- * Checks if a buff is active at a specific timestamp on any target.
- * This is a convenience function that explicitly checks for general buff state.
- *
- * @param buffLookup - The buff lookup data structure
- * @param abilityGameID - The ability ID to check
- * @param timestamp - The timestamp to check
- * @returns True if the buff is active on any target at the timestamp
- */
-export function isBuffActiveOnAnyTarget(
-  buffLookup: BuffLookupData,
-  abilityGameID: number,
-  timestamp: number
-): boolean {
-  return isBuffActive(buffLookup, abilityGameID, timestamp);
-}
 
 /**
  * Creates a buff lookup data structure for debuff events.
@@ -326,7 +298,13 @@ export function createDebuffLookup(
     intervals.sort((a, b) => a.start - b.start);
   }
 
+  // Convert Map to POJO for serialization
+  const buffIntervalsObj: { [key: string]: BuffTimeInterval[] } = {};
+  for (const [abilityGameID, intervals] of debuffIntervals.entries()) {
+    buffIntervalsObj[abilityGameID.toString()] = intervals;
+  }
+
   return {
-    buffIntervals: debuffIntervals, // Reusing the same interface for consistency
+    buffIntervals: buffIntervalsObj, // Reusing the same interface for consistency
   };
 }

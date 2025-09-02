@@ -219,12 +219,12 @@ export function isAuraActive(
 }
 
 export function isBuffActive(buffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
-  const intervals = buffLookup.buffIntervals.get(abilityId);
+  const intervals = buffLookup.buffIntervals[abilityId.toString()];
   return intervals !== undefined && intervals.length > 0;
 }
 
 export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
-  const intervals = debuffLookup.buffIntervals.get(abilityId);
+  const intervals = debuffLookup.buffIntervals[abilityId.toString()];
   return intervals !== undefined && intervals.length > 0;
 }
 
