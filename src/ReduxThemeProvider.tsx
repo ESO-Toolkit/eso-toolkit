@@ -78,6 +78,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 minHeight: '100%',
                 overflow: 'visible',
                 background: tokens.bg,
+                backgroundAttachment: 'fixed',
                 color: tokens.text,
                 // Enable variable font optical sizing where supported
                 fontOpticalSizing: 'auto',
