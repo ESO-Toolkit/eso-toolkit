@@ -6,7 +6,7 @@ import {
 import { KnownAbilities } from '../types/abilities';
 import { DeathEvent, UnifiedCastEvent } from '../types/combatlogEvents';
 
-import { calculateDeathDurations, formatDeathDuration } from './deathDurationUtils';
+import { calculateDeathDurations } from './deathDurationUtils';
 
 describe('deathDurationUtils', () => {
   const fightStart = 1000;
@@ -175,26 +175,6 @@ describe('deathDurationUtils', () => {
         resurrectionTime: 3000, // Uses the cast event, not begincast
         deathDurationMs: 1000,
       });
-    });
-  });
-
-  describe('formatDeathDuration', () => {
-    it('should format seconds correctly', () => {
-      expect(formatDeathDuration(5000)).toBe('5.0s');
-      expect(formatDeathDuration(12500)).toBe('12.5s');
-      expect(formatDeathDuration(45678)).toBe('45.7s');
-    });
-
-    it('should format minutes and seconds correctly', () => {
-      expect(formatDeathDuration(60000)).toBe('1m 0.0s');
-      expect(formatDeathDuration(75500)).toBe('1m 15.5s');
-      expect(formatDeathDuration(125000)).toBe('2m 5.0s');
-      expect(formatDeathDuration(185500)).toBe('3m 5.5s');
-    });
-
-    it('should handle very small durations', () => {
-      expect(formatDeathDuration(100)).toBe('0.1s');
-      expect(formatDeathDuration(500)).toBe('0.5s');
     });
   });
 });

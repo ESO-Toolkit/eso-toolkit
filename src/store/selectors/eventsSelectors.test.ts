@@ -197,7 +197,7 @@ describe('Buff Lookup Selectors', () => {
 
       const result = selectHostileBuffLookup(state);
 
-      expect(result.buffIntervals.size).toBe(0);
+      expect(Object.keys(result.buffIntervals).length).toBe(0);
     });
 
     it('should create buffLookup when events are available', () => {
@@ -237,7 +237,7 @@ describe('Buff Lookup Selectors', () => {
 
       const result = selectDebuffLookup(state);
 
-      expect(result.buffIntervals.size).toBe(0);
+      expect(Object.keys(result.buffIntervals).length).toBe(0);
     });
 
     it('should create debuffLookup when events are available', () => {
