@@ -45,7 +45,7 @@ export const useRoleColors = (): RoleColors => {
       getTableBackground: (): string => {
         return isDarkMode
           ? 'linear-gradient(135deg, rgba(32, 89, 105, 0.35) 0%, rgba(67, 107, 119, 0.25) 50%, rgba(236, 240, 241, 0.18) 100%)'
-          : 'linear-gradient(135deg, rgb(231 250 255 / 35%) 0%, rgb(184 196 235 / 25%) 50%, rgb(163 163 230 / 18%) 100%)';
+          : 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)';
       },
       // Get accordion background gradient (reusable for all accordion components)
       getAccordionBackground: (): string => {
