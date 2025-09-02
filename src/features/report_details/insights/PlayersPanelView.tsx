@@ -323,7 +323,7 @@ const FOOD_REGEXPS: RegExp[] = [
   /Increase\s+Max\s+Health\s+&\s+Stamina/i,
   /Jewels\s+of\s+Misrule/i,
   /Lava\s+Foot\s+Soup.*Saltrice/i,
-  /Orzorga/i,
+  /Smoked\s+Bear\s+Haunch/i,
   /Witchmother.?s\s+Potent\s+Brew/i,
 ];
 
