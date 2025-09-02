@@ -16,6 +16,8 @@ import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { setSelectedTargetId } from '../../../store/ui/uiSlice';
 import { useAppDispatch } from '../../../store/useAppDispatch';
 
+const ALL_BOSSES_SENTINEL = 'ALL_BOSSES';
+
 export const TargetSelector: React.FC = () => {
   const dispatch = useAppDispatch();
 
@@ -26,7 +28,7 @@ export const TargetSelector: React.FC = () => {
   const handleTargetChange = React.useCallback(
     (event: SelectChangeEvent<string>): void => {
       const value = event.target.value;
-      dispatch(setSelectedTargetId(!value ? null : Number(value)));
+      dispatch(setSelectedTargetId(value === ALL_BOSSES_SENTINEL ? null : Number(value)));
     },
     [dispatch]
   );
@@ -71,16 +73,16 @@ export const TargetSelector: React.FC = () => {
   return (
     <Box sx={{ mb: 2 }}>
       <FormControl fullWidth size="small">
-        <InputLabel id="target-selector-label">Select Target</InputLabel>
+        <InputLabel id="target-selector-label" shrink={true}>
+          Target
+        </InputLabel>
         <Select
           labelId="target-selector-label"
-          value={selectedTargetId?.toString() || ''}
-          label="Select Target"
+          value={selectedTargetId?.toString() || ALL_BOSSES_SENTINEL}
+          label="Target"
           onChange={handleTargetChange}
         >
-          <MenuItem value="">
-            <em>All Boss Targets</em>
-          </MenuItem>
+          <MenuItem value={ALL_BOSSES_SENTINEL}>All Bosses</MenuItem>
           {targetsList.map((target) => (
             <MenuItem key={target.id} value={target.id?.toString() || ''}>
               {target.name} (ID: {target.id})
