@@ -55,7 +55,7 @@
     "analyze-all": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-bundle": "npm run build && node analyze-bundle.js",
     "benchmark": "node benchmark-dev-server.js",
-    "test": "jest --watchAll=false",
+    "test": "jest",
     "test:watch": "jest",
     "test:coverage": "set COVERAGE=true && jest --coverage --watchAll=false",
     "test:coverage:watch": "set COVERAGE=true && jest --coverage --watchAll",
