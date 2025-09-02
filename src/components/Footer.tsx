@@ -31,7 +31,7 @@ export const Footer: React.FC = () => {
       }}
     >
       <Container
-        maxWidth="xl"
+        maxWidth="lg"
         sx={{
           px: { xs: 3, sm: 4, lg: 6 },
           py: { xs: 6, md: 8 },

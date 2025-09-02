@@ -1,4 +1,4 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme } from '@mui/material';
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme, Container } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -272,7 +272,8 @@ export const HeaderBar: React.FC = () => {
           transition: 'box-shadow .2s ease',
         }}
       >
-        <Toolbar sx={{ display: 'flex', gap: 2 }}>
+        <Container maxWidth="xl">
+          <Toolbar sx={{ display: 'flex', gap: 2, px: 0 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
             <Button
               color="inherit"
@@ -470,7 +471,8 @@ export const HeaderBar: React.FC = () => {
               </HamburgerLines>
             </HamburgerButton>
           </Box>
-        </Toolbar>
+          </Toolbar>
+        </Container>
       </AppBar>
 
       {/* Modern Mobile Menu Overlay */}
