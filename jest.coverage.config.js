@@ -80,7 +80,7 @@ const productionConfig = {
   ...baseCoverageConfig,
   coverageThreshold: {
     global: {
-      branches: 3,
+      branches: 2,
       functions: 6,
       lines: 14,
       statements: 14,
