@@ -719,13 +719,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                           <PlayerIcon player={player} />
                           <Box>
                             <Box display="flex" alignItems="center" gap={0.75}>
-                              <Typography 
+                              <Typography
                                 variant="subtitle1"
-                                sx={{ 
+                                sx={{
                                   fontFamily: 'space grotesk',
                                   fontSize: '1.4rem',
                                   fontWeight: 100,
-                                  lineHeight: 1.2 
+                                  lineHeight: 1.2,
                                 }}
                               >
                                 {resolveActorName(player)}
