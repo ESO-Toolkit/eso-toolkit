@@ -1041,7 +1041,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           <Box
             sx={{
               mb: { xs: 2, sm: 4 },
-              mt: { xs: 2, sm: 0 }, // Add top margin on mobile
+              mt: { xs: 2, sm: 2 }, // Add top margin on mobile
               p: { xs: 2, sm: 3 },
               borderRadius: 2,
               background: (theme) =>
