@@ -1146,6 +1146,13 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
           flexDirection: 'column',
           alignItems: 'flex-end',
           gap: 1.5,
+          // Add iOS Safari specific fixes
+          WebkitTransform: 'translateZ(0)', // Force hardware acceleration
+          transform: 'translateZ(0)',
+          willChange: 'transform', // Optimize for animations
+          // Ensure container maintains its layout during theme transitions
+          minWidth: '56px',
+          minHeight: '56px',
         }}
       >
         {/* Expanded Action Buttons */}
@@ -1155,32 +1162,28 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               size="small"
               onClick={handleFeedbackClick}
               sx={{
-                background: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                    : 'linear-gradient(135deg, rgba(15, 23, 42, 0.15) 0%, rgba(30, 41, 59, 0.15) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
+                // Simplified background for better iOS Safari compatibility
+                backgroundColor: (theme) => theme.palette.primary.main,
+                background: (theme) => theme.palette.primary.main,
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '1px solid rgba(56, 189, 248, 0.3)'
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
                     : '1px solid rgba(15, 23, 42, 0.2)',
+                // Simplified shadow
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 8px 32px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 8px 32px rgba(15, 23, 42, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                color: (theme) => theme.palette.primary.main,
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    ? '0 4px 16px rgba(0, 0, 0, 0.3)'
+                    : '0 4px 16px rgba(15, 23, 42, 0.15)',
+                color: '#ffffff',
+                transition: 'all 0.2s ease-out',
+                borderRadius: '50%',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-2px) scale(1.05)',
-                  background: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.25) 0%, rgba(30, 41, 59, 0.25) 100%)',
+                  transform: 'translateY(-1px) scale(1.03)',
                   boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? '0 12px 40px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                      : '0 12px 40px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                      ? '0 6px 20px rgba(0, 0, 0, 0.4)'
+                      : '0 6px 20px rgba(15, 23, 42, 0.2)',
                 },
               }}
             >
@@ -1191,27 +1194,27 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               size="small"
               onClick={handleBugReportClick}
               sx={{
-                background: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)'
-                    : 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(220, 38, 38, 0.15) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(239, 68, 68, 0.3)',
+                // Use solid red color for bug reports
+                backgroundColor: '#ef4444',
+                background: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.5)',
+                // Simplified shadow
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 8px 32px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 8px 32px rgba(239, 68, 68, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                color: '#ef4444',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    ? '0 4px 16px rgba(239, 68, 68, 0.3)'
+                    : '0 4px 16px rgba(239, 68, 68, 0.2)',
+                color: '#ffffff',
+                transition: 'all 0.2s ease-out',
+                borderRadius: '50%',
+                overflow: 'hidden',
                 '&:hover': {
-                  transform: 'translateY(-2px) scale(1.05)',
-                  background:
-                    'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(220, 38, 38, 0.25) 100%)',
+                  transform: 'translateY(-1px) scale(1.03)',
+                  backgroundColor: '#dc2626',
+                  background: '#dc2626',
                   boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? '0 12px 40px rgba(239, 68, 68, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                      : '0 12px 40px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                      ? '0 6px 20px rgba(239, 68, 68, 0.4)'
+                      : '0 6px 20px rgba(239, 68, 68, 0.3)',
                 },
               }}
             >
@@ -1227,66 +1230,39 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             sx={{
               width: { xs: 56, sm: 64 },
               height: { xs: 56, sm: 64 },
-              background: (theme) =>
-                theme.palette.mode === 'dark'
-                  ? `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`
-                  : `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              // Simplified background to avoid theme transition issues on iOS Safari
+              backgroundColor: (theme) => theme.palette.primary.main,
+              background: (theme) => theme.palette.primary.main,
+              // Removed backdrop filters that cause iOS Safari issues
               border: (theme) =>
                 theme.palette.mode === 'dark'
                   ? '1px solid rgba(255, 255, 255, 0.15)'
                   : '1px solid rgba(255, 255, 255, 0.2)',
+              // Simplified box shadow
               boxShadow: (theme) =>
                 theme.palette.mode === 'dark'
-                  ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                  : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              color: (theme) => (theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff'),
-              transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                  ? '0 8px 24px rgba(0, 0, 0, 0.4)'
+                  : '0 8px 24px rgba(15, 23, 42, 0.15)',
+              color: '#ffffff',
+              // Reduced transition duration for better iOS Safari performance
+              transition: 'all 0.2s ease-out',
               position: 'relative',
-              overflow: 'visible',
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                inset: -2,
-                borderRadius: '50%',
-                background: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`
-                    : `linear-gradient(45deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main}, ${theme.palette.primary.main})`,
-                opacity: 0,
-                transition: 'opacity 0.3s ease',
-                zIndex: -1,
-              },
+              // Remove complex pseudo-elements that cause rendering issues
               '&:hover': {
-                transform: 'translateY(-4px) scale(1.08)',
+                transform: 'translateY(-2px) scale(1.05)',
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 12px 40px rgba(0, 0, 0, 0.4), 0 0 80px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                    : '0 12px 40px rgba(15, 23, 42, 0.2), 0 0 80px rgba(15, 23, 42, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-                filter: 'brightness(1.1)',
-              },
-              '&:hover::before': {
-                opacity: 0.3,
+                    ? '0 12px 32px rgba(0, 0, 0, 0.5)'
+                    : '0 12px 32px rgba(15, 23, 42, 0.2)',
               },
               '&:active': {
-                transform: 'translateY(-2px) scale(1.03)',
+                transform: 'translateY(-1px) scale(1.02)',
               },
-              animation: isExpanded ? 'none' : 'pulse-glow 4s ease-in-out infinite',
-              '@keyframes pulse-glow': {
-                '0%, 100%': {
-                  boxShadow: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                      : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 60px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                },
-                '50%': {
-                  boxShadow: (theme) =>
-                    theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3), 0 0 80px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                      : '0 8px 32px rgba(15, 23, 42, 0.15), 0 0 80px rgba(15, 23, 42, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                },
-              },
+              // Simplified animation without complex keyframes
+              animation: isExpanded ? 'none' : 'none',
+              // Ensure button maintains shape during theme transitions
+              borderRadius: '50%',
+              overflow: 'hidden',
             }}
           >
             <Box
@@ -1295,7 +1271,12 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 transform: isExpanded ? 'rotate(45deg)' : 'rotate(0deg)',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'transform 0.2s ease-out',
+                // Force hardware acceleration for smoother rotation on iOS
+                WebkitTransform: isExpanded ? 'rotate(45deg) translateZ(0)' : 'rotate(0deg) translateZ(0)',
+                willChange: 'transform',
+                width: '100%',
+                height: '100%',
               }}
             >
               {isExpanded ? (
