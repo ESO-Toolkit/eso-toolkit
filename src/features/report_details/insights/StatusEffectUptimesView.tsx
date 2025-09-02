@@ -5,7 +5,7 @@ import { BuffUptime, BuffUptimeProgressBar } from './BuffUptimeProgressBar';
 
 interface StatusEffectUptimesViewProps {
   selectedTargetId: number | null;
-  statusEffectUptimes: BuffUptime[] | undefined;
+  statusEffectUptimes: BuffUptime[] | null;
   isLoading: boolean;
   reportId: string | null;
   fightId: string | null;

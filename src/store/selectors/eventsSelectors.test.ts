@@ -2,10 +2,8 @@ import { BuffEvent, DebuffEvent } from '../../types/combatlogEvents';
 import { RootState } from '../storeWithHistory';
 
 import {
-  selectFriendlyBuffLookup,
   selectHostileBuffLookup,
   selectDebuffLookup,
-  selectCombinedBuffLookup,
   selectSelectedFightId,
   selectCurrentFight,
 } from './eventsSelectors';
@@ -183,53 +181,7 @@ const createMockDebuffEvent = (
 });
 
 describe('Buff Lookup Selectors', () => {
-  describe('selectFriendlyBuffLookup', () => {
-    it('should return empty buffLookup when loading', () => {
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          friendlyBuffs: {
-            ...createMockState().events.friendlyBuffs,
-            loading: true,
-          },
-        },
-      });
-
-      const result = selectFriendlyBuffLookup(state);
-
-      expect(result.buffIntervals.size).toBe(0);
-    });
-
-    it('should return empty buffLookup when no events', () => {
-      const state = createMockState();
-
-      const result = selectFriendlyBuffLookup(state);
-
-      expect(result.buffIntervals.size).toBe(0);
-    });
-
-    it('should create buffLookup when events are available', () => {
-      const buffEvents = [
-        createMockBuffEvent(1100, 123, 10),
-        createMockBuffEvent(1500, 123, 10, 'removebuff'),
-      ];
-
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          friendlyBuffs: {
-            ...createMockState().events.friendlyBuffs,
-            events: buffEvents,
-          },
-        },
-      });
-
-      const result = selectFriendlyBuffLookup(state);
-
-      expect(result.buffIntervals).toBeDefined();
-      expect(result.buffIntervals.has(123)).toBe(true);
-    });
-  });
+  // ...existing code...
 
   describe('selectHostileBuffLookup', () => {
     it('should return empty buffLookup when loading', () => {
@@ -267,7 +219,7 @@ describe('Buff Lookup Selectors', () => {
       const result = selectHostileBuffLookup(state);
 
       expect(result.buffIntervals).toBeDefined();
-      expect(result.buffIntervals.has(456)).toBe(true);
+      expect(456 in result.buffIntervals).toBe(true);
     });
   });
 
@@ -307,51 +259,7 @@ describe('Buff Lookup Selectors', () => {
       const result = selectDebuffLookup(state);
 
       expect(result.buffIntervals).toBeDefined();
-      expect(result.buffIntervals.has(789)).toBe(true);
-    });
-  });
-
-  describe('selectCombinedBuffLookup', () => {
-    it('should return empty buffLookup when either friendly or hostile buffs are loading', () => {
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          friendlyBuffs: {
-            ...createMockState().events.friendlyBuffs,
-            loading: true,
-          },
-        },
-      });
-
-      const result = selectCombinedBuffLookup(state);
-
-      expect(result.buffIntervals.size).toBe(0);
-    });
-
-    it('should combine friendly and hostile buff events', () => {
-      const friendlyEvents = [createMockBuffEvent(1100, 123, 10)];
-      const hostileEvents = [createMockBuffEvent(1200, 456, 20)];
-
-      const state = createMockState({
-        events: {
-          ...createMockState().events,
-          friendlyBuffs: {
-            ...createMockState().events.friendlyBuffs,
-            events: friendlyEvents,
-          },
-          hostileBuffs: {
-            ...createMockState().events.hostileBuffs,
-            events: hostileEvents,
-          },
-        },
-      });
-
-      const result = selectCombinedBuffLookup(state);
-
-      expect(result.buffIntervals).toBeDefined();
-      // Should contain both abilities
-      expect(result.buffIntervals.has(123)).toBe(true);
-      expect(result.buffIntervals.has(456)).toBe(true);
+      expect(789 in result.buffIntervals).toBe(true);
     });
   });
 

@@ -1,20 +1,17 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import {
-  fetchCombatantInfoEvents,
-  resetCombatantInfoEventsLoading,
-} from '../store/events_data/combatantInfoEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
+import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
+import { FightFragment } from '../../graphql/generated';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { fetchCombatantInfoEvents } from '../../store/events_data/combatantInfoEventsSlice';
+import { selectReportFights } from '../../store/report/reportSelectors';
 import {
   selectCombatantInfoEvents,
   selectCombatantInfoEventsLoading,
-} from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
-import { CombatantInfoEvent } from '../types/combatlogEvents';
+} from '../../store/selectors/eventsSelectors';
+import { useAppDispatch } from '../../store/useAppDispatch';
+import { CombatantInfoEvent } from '../../types/combatlogEvents';
 
 export function useCombatantInfoEvents(): {
   combatantInfoEvents: CombatantInfoEvent[];
@@ -58,18 +55,6 @@ export function useCombatantInfoEvents(): {
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
-
-  // Add timeout to detect stuck loading state
-  React.useEffect(() => {
-    if (isCombatantInfoEventsLoading && reportId && selectedFight) {
-      const timeout = setTimeout(() => {
-        console.warn('⚠️ Combatant info events loading timeout detected - resetting loading state');
-        dispatch(resetCombatantInfoEventsLoading());
-      }, 10000); // 10 second timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isCombatantInfoEventsLoading, reportId, selectedFight, dispatch]);
 
   return React.useMemo(
     () => ({

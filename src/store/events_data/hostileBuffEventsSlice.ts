@@ -66,8 +66,7 @@ const fetchEventsForInterval = async (
   reportCode: string,
   fight: FightFragment,
   intervalStart: number,
-  intervalEnd: number,
-  hostilityType: HostilityType
+  intervalEnd: number
 ): Promise<BuffEvent[]> => {
   let allEvents: LogEvent[] = [];
   let nextPageTimestamp: number | null = null;
@@ -81,7 +80,7 @@ const fetchEventsForInterval = async (
         fightIds: [Number(fight.id)],
         startTime: nextPageTimestamp ?? intervalStart,
         endTime: intervalEnd,
-        hostilityType: hostilityType,
+        hostilityType: HostilityType.Enemies,
       },
     });
 
@@ -112,8 +111,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
           reportCode,
           fight,
           interval.startTime,
-          interval.endTime,
-          HostilityType.Enemies
+          interval.endTime
         );
 
         return {

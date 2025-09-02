@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { CombatantInfoEvent } from '../types/combatlogEvents';
+import { CombatantInfoEvent } from '../../types/combatlogEvents';
 
 import { useCombatantInfoEvents } from './useCombatantInfoEvents';
 

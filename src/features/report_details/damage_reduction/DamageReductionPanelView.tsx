@@ -14,7 +14,7 @@ interface DamageReductionPanelProps {
   fight: FightFragment;
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
-  damageReductionData: Map<number, PlayerDamageReductionData>;
+  damageReductionData: Record<number, PlayerDamageReductionData> | null;
   isLoading: boolean;
 }
 
@@ -51,7 +51,7 @@ export const DamageReductionPanelView: React.FC<DamageReductionPanelProps> = ({
         }}
       >
         {players.map((player) => {
-          const playerDamageReductionData = damageReductionData.get(player.id);
+          const playerDamageReductionData = damageReductionData?.[player.id] || null;
 
           return (
             <PlayerDamageReductionDetails

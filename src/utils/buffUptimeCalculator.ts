@@ -1,12 +1,10 @@
+import { BuffLookupData } from './BuffLookupUtils';
+
 export interface BuffInterval {
   start: number;
   end: number;
   targetID: number;
   sourceID?: number;
-}
-
-export interface BuffLookup {
-  buffIntervals: Map<number, BuffInterval[]>;
 }
 
 export interface BuffUptimeResult {
@@ -46,7 +44,7 @@ export interface BuffUptimeCalculatorOptions {
  * Utility function to compute buff uptimes from a buff lookup with flexible filtering
  */
 export function computeBuffUptimes(
-  buffLookup: BuffLookup | null | undefined,
+  buffLookup: BuffLookupData | null | undefined,
   options: BuffUptimeCalculatorOptions
 ): BuffUptimeResult[] {
   if (!buffLookup || !options.fightDuration) {
@@ -67,7 +65,8 @@ export function computeBuffUptimes(
 
   const uptimes: BuffUptimeResult[] = [];
 
-  buffLookup.buffIntervals.forEach((intervals, abilityGameID) => {
+  Object.entries(buffLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
+    const abilityGameID = parseInt(abilityGameIDStr, 10);
     // Filter to only include specified ability IDs
     if (!abilityIds.has(abilityGameID)) {
       return;
@@ -76,7 +75,7 @@ export function computeBuffUptimes(
     const ability = abilitiesById[abilityGameID];
 
     // Apply filtering based on source and target IDs
-    const filteredIntervals = intervals.filter((interval) => {
+    const filteredIntervals = intervals.filter((interval: BuffInterval) => {
       // Filter by target IDs if specified
       if (targetIds && !targetIds.has(interval.targetID)) {
         return false;
@@ -97,7 +96,7 @@ export function computeBuffUptimes(
     // Calculate cumulative uptime across filtered intervals
     const targetUptimes = new Map<string, { totalDuration: number; applications: number }>();
 
-    filteredIntervals.forEach((interval) => {
+    filteredIntervals.forEach((interval: BuffInterval) => {
       const targetId = String(interval.targetID);
       const start = Math.max(interval.start, fightStartTime);
       const end = Math.min(interval.end, fightEndTime);

@@ -8,17 +8,10 @@ export { useRoleColors } from './useRoleColors';
 export { useBrowserAwareDarkMode } from './useBrowserAwareDarkMode';
 
 // Event data hooks
-export { useEventData } from './useEventData';
-export { useDamageEvents, useDamageEventsLookup } from './useDamageEvents';
-export { useHealingEvents } from './useHealingEvents';
-export { useFriendlyBuffEvents } from './useFriendlyBuffEvents';
-export { useHostileBuffEvents } from './useHostileBuffEvents';
-export { useDebuffEvents } from './useDebuffEvents';
-export { useDeathEvents } from './useDeathEvents';
-export { useResourceEvents } from './useResourceEvents';
-export { useCombatantInfoEvents } from './useCombatantInfoEvents';
-export { useCombatantInfoRecord } from './useCombatantInfoRecord';
-export { useCastEvents } from './useCastEvents';
+export * from './events';
+
+// Task Hooks
+export * from './workerTasks';
 
 // Utility hooks
 export { useReportFightParams } from './useReportFightParams';

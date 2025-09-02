@@ -2,7 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
-import { useFriendlyBuffLookup } from '../../../hooks/useFriendlyBuffEvents';
+import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
 import { computeBuffUptimes } from '../../../utils/buffUptimeCalculator';
@@ -40,7 +40,8 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
 
 export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => {
   const { reportId, fightId } = useSelectedReportAndFight();
-  const { friendlyBuffsLookup, isFriendlyBuffEventsLoading } = useFriendlyBuffLookup();
+  const { buffLookupData: friendlyBuffsLookup, isBuffLookupLoading: isFriendlyBuffEventsLoading } =
+    useBuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   // State for toggling between important buffs only and all buffs
@@ -72,7 +73,8 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
 
     // Get all buff ability IDs from the lookup that are type '2' (buffs)
     const buffAbilityIds = new Set<number>();
-    friendlyBuffsLookup.buffIntervals.forEach((intervals, abilityGameID) => {
+    Object.entries(friendlyBuffsLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
+      const abilityGameID = parseInt(abilityGameIDStr, 10);
       const ability = reportMasterData.abilitiesById[abilityGameID];
       // Only include buffs (type === '2')
       if (ability?.type === '2') {

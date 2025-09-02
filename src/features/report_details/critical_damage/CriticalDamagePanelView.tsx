@@ -15,10 +15,10 @@ interface PlayerCriticalDamageDataExtended extends PlayerCriticalDamageData {
 
 interface CriticalDamagePanelProps {
   players: PlayerDetailsWithRole[];
-  fight: FightFragment;
+  fight: FightFragment | undefined;
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
-  criticalDamageData: Map<number, PlayerCriticalDamageDataExtended>;
+  criticalDamageData: Record<number, PlayerCriticalDamageDataExtended> | null;
   isLoading: boolean;
 }
 
@@ -54,7 +54,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
         }}
       >
         {players.map((player) => {
-          const playerCriticalDamageData = criticalDamageData.get(player.id);
+          const playerCriticalDamageData = criticalDamageData?.[player.id];
 
           return (
             <PlayerCriticalDamageDetails

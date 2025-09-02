@@ -1,14 +1,14 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchDeathEvents } from '../store/events_data/deathEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
-import { selectDeathEvents, selectDeathEventsLoading } from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
-import { DeathEvent } from '../types/combatlogEvents';
+import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
+import { FightFragment } from '@/graphql/generated';
+import { useSelectedReportAndFight } from '@/ReportFightContext';
+import { fetchDeathEvents } from '@/store/events_data/deathEventsSlice';
+import { selectReportFights } from '@/store/report/reportSelectors';
+import { selectDeathEvents, selectDeathEventsLoading } from '@/store/selectors/eventsSelectors';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { DeathEvent } from '@/types/combatlogEvents';
 
 export function useDeathEvents(): {
   deathEvents: DeathEvent[];

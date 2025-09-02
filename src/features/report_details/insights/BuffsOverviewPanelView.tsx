@@ -7,17 +7,15 @@ import { DataGrid } from '../../../components/DataGrid';
 import { BuffOverviewData } from './BuffsOverviewPanel';
 
 interface BuffsOverviewPanelViewProps {
-  buffsData: BuffOverviewData[];
+  buffOverviewData: BuffOverviewData[];
   isLoading: boolean;
-  reportId?: string | null;
-  fightId?: string | null;
+  error?: string | null;
 }
 
 export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
-  buffsData,
+  buffOverviewData,
   isLoading,
-  reportId,
-  fightId,
+  error,
 }) => {
   // Column definitions for the DataGrid
   const columns = React.useMemo<ColumnDef<BuffOverviewData>[]>(
@@ -32,7 +30,7 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
               {icon && (
                 <Avatar
-                  src={icon}
+                  src={`https://assets.rpglogs.com/img/eso/abilities/${icon}.png`}
                   alt={buffName}
                   sx={{
                     width: 24,
@@ -133,9 +131,9 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
       </Typography>
 
       <DataGrid<BuffOverviewData>
-        data={buffsData}
+        data={buffOverviewData}
         columns={columns}
-        title={`Buffs (${buffsData.length} unique)`}
+        title={`Buffs (${buffOverviewData.length} unique)`}
         height={600}
         initialPageSize={25}
         pageSizeOptions={[10, 25, 50, 100]}
@@ -143,7 +141,7 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         enableFiltering={true}
         enablePagination={true}
         loading={isLoading}
-        emptyMessage="No buff data available"
+        emptyMessage={error || 'No buff data available'}
       />
     </Box>
   );

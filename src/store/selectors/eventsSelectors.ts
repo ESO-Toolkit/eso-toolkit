@@ -2,22 +2,22 @@ import { createSelector } from '@reduxjs/toolkit';
 
 import { FightFragment } from '../../graphql/generated';
 import {
-  BuffEvent,
-  CombatantInfoEvent,
-  DamageEvent,
-  DeathEvent,
-  DebuffEvent,
-  HealEvent,
-  ResourceChangeEvent,
   UnifiedCastEvent,
+  DamageEvent,
+  HealEvent,
+  BuffEvent,
+  DeathEvent,
+  CombatantInfoEvent,
+  DebuffEvent,
+  ResourceChangeEvent,
 } from '../../types/combatlogEvents';
 import { createBuffLookup, createDebuffLookup, BuffLookupData } from '../../utils/BuffLookupUtils';
 import { selectActorsById } from '../master_data/masterDataSelectors';
-import { selectReport, selectReportFights } from '../report/reportSelectors';
+import { selectReportFights } from '../report/reportSelectors';
 import { RootState } from '../storeWithHistory';
 
 // Basic event selectors for the new modular structure
-export const selectEvents = (state: RootState): RootState['events'] => state.events;
+
 export const selectDamageEvents = (state: RootState): DamageEvent[] => state.events.damage.events;
 export const selectHealingEvents = (state: RootState): HealEvent[] => state.events.healing.events;
 export const selectFriendlyBuffEvents = (state: RootState): BuffEvent[] =>
@@ -90,30 +90,6 @@ export const selectEventPlayers = createSelector(
 );
 
 // Parameterized version for backward compatibility (when you need a specific fight)
-export const selectEventPlayersByFightId = createSelector(
-  [selectActorsById, selectCurrentFight],
-  (actorsById, fight) => {
-    const friendlyPlayers = fight?.friendlyPlayers ?? [];
-    return friendlyPlayers
-      .filter((id): id is number => typeof id === 'number' && id !== null)
-      .map((id) => actorsById[id])
-      .filter(Boolean);
-  }
-);
-
-// Legacy selector that defaults to first fight for backwards compatibility
-export const selectEventPlayersLegacy = createSelector(
-  [selectActorsById, selectReport],
-  (actorsById, report) => {
-    // Default to first fight if no selectedFightId
-    const fight = report.data?.fights?.[0];
-    const friendlyPlayers = fight?.friendlyPlayers ?? [];
-    return friendlyPlayers
-      .filter((id): id is number => typeof id === 'number' && id !== null)
-      .map((id) => actorsById[id])
-      .filter(Boolean);
-  }
-);
 
 // Combined selectors
 export const selectAllEvents = createSelector(
@@ -146,89 +122,18 @@ export const selectAllEvents = createSelector(
 );
 
 // Loading state selectors
-export const selectEventsLoadingState = createSelector(
-  [
-    selectDamageEventsLoading,
-    selectHealingEventsLoading,
-    selectDeathEventsLoading,
-    selectCombatantInfoEventsLoading,
-    selectDebuffEventsLoading,
-    selectCastEventsLoading,
-    selectResourceEventsLoading,
-  ],
-  (
-    damageLoading,
-    healingLoading,
-    deathLoading,
-    combatantInfoLoading,
-    debuffLoading,
-    castLoading,
-    resourceLoading
-  ) => ({
-    damage: damageLoading,
-    healing: healingLoading,
-    deaths: deathLoading,
-    combatantInfo: combatantInfoLoading,
-    debuffs: debuffLoading,
-    casts: castLoading,
-    resources: resourceLoading,
-  })
-);
 
 /**
- * Selector for friendly buff lookup data with loading state.
+ * Traditional selector for friendly buff lookup data with loading state.
  * Uses the currently selected fight from Redux state.
+ *
+ * @deprecated Use useSelectFriendlyBuffLookup() hook for worker-based calculation
  */
-export const selectFriendlyBuffLookup = createSelector(
-  [selectFriendlyBuffEvents, selectFriendlyBuffEventsLoading, selectCurrentFight],
-  (buffEvents, isLoading, fight): BuffLookupData => {
-    if (isLoading || !buffEvents || buffEvents.length === 0) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Get fight end time for proper buff duration handling
-    const fightEndTime = fight?.endTime;
-
-    return createBuffLookup(buffEvents, fightEndTime);
-  }
-);
-
-/**
- * Legacy selector for friendly buff lookup data with loading state.
- * Returns null for buffLookup if no events or still loading.
- * @deprecated Use selectFriendlyBuffLookup (updated) or selectFriendlyBuffLookupByFightId instead
- */
-export const selectFriendlyBuffLookupLegacy = createSelector(
-  [selectFriendlyBuffEvents, selectFriendlyBuffEventsLoading, selectCurrentFight],
-  (buffEvents, isLoading, fight): BuffLookupData => {
-    if (isLoading || !buffEvents || buffEvents.length === 0) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Get fight end time for proper buff duration handling
-    const fightEndTime = fight?.endTime;
-
-    return createBuffLookup(buffEvents, fightEndTime);
-  }
-);
 
 /**
  * Selector for hostile buff lookup data with loading state.
  * Uses a specific fight by ID instead of defaulting to fights[0].
  */
-export const selectHostileBuffLookupByFightId = createSelector(
-  [selectHostileBuffEvents, selectHostileBuffEventsLoading, selectCurrentFight],
-  (buffEvents, isLoading, fight): BuffLookupData => {
-    if (isLoading || !buffEvents || buffEvents.length === 0) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Get fight end time for proper buff duration handling
-    const fightEndTime = fight?.endTime;
-
-    return createBuffLookup(buffEvents, fightEndTime);
-  }
-);
 
 /**
  * Selector for hostile buff lookup data with loading state.
@@ -238,7 +143,7 @@ export const selectHostileBuffLookup = createSelector(
   [selectHostileBuffEvents, selectHostileBuffEventsLoading, selectCurrentFight],
   (buffEvents, isLoading, fight): BuffLookupData => {
     if (isLoading || !buffEvents || buffEvents.length === 0) {
-      return { buffIntervals: new Map() };
+      return { buffIntervals: {} };
     }
 
     // Get fight end time for proper buff duration handling
@@ -252,19 +157,6 @@ export const selectHostileBuffLookup = createSelector(
  * Selector for debuff lookup data with loading state.
  * Uses a specific fight by ID instead of defaulting to fights[0].
  */
-export const selectDebuffLookupByFightId = createSelector(
-  [selectDebuffEvents, selectDebuffEventsLoading, selectCurrentFight],
-  (debuffEvents, isLoading, fight): BuffLookupData => {
-    if (isLoading || !debuffEvents || debuffEvents.length === 0) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Get fight end time for proper debuff duration handling
-    const fightEndTime = fight?.endTime;
-
-    return createDebuffLookup(debuffEvents, fightEndTime);
-  }
-);
 
 /**
  * Selector for debuff lookup data with loading state.
@@ -274,44 +166,12 @@ export const selectDebuffLookup = createSelector(
   [selectDebuffEvents, selectDebuffEventsLoading, selectCurrentFight],
   (debuffEvents, isLoading, fight): BuffLookupData => {
     if (isLoading || !debuffEvents || debuffEvents.length === 0) {
-      return { buffIntervals: new Map() };
+      return { buffIntervals: {} };
     }
 
     // Get fight end time for proper debuff duration handling
     const fightEndTime = fight?.endTime;
 
     return createDebuffLookup(debuffEvents, fightEndTime);
-  }
-);
-
-/**
- * Selector that combines friendly and hostile buff lookups into a single lookup.
- * Returns an empty lookup if either friendly or hostile buffs are still loading.
- */
-export const selectCombinedBuffLookup = createSelector(
-  [
-    selectFriendlyBuffEvents,
-    selectHostileBuffEvents,
-    selectFriendlyBuffEventsLoading,
-    selectHostileBuffEventsLoading,
-    selectCurrentFight,
-  ],
-  (friendlyBuffs, hostileBuffs, friendlyLoading, hostileLoading, fight): BuffLookupData => {
-    // Return empty if either is still loading
-    if (friendlyLoading || hostileLoading) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Combine both event arrays
-    const allBuffEvents = [...(friendlyBuffs || []), ...(hostileBuffs || [])];
-
-    if (allBuffEvents.length === 0) {
-      return { buffIntervals: new Map() };
-    }
-
-    // Get fight end time for proper buff duration handling
-    const fightEndTime = fight?.endTime;
-
-    return createBuffLookup(allBuffEvents, fightEndTime);
   }
 );

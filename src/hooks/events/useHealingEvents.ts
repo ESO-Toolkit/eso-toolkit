@@ -1,17 +1,14 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useEsoLogsClientInstance } from '../EsoLogsClientContext';
-import { FightFragment } from '../graphql/generated';
-import { useSelectedReportAndFight } from '../ReportFightContext';
-import { fetchHealingEvents } from '../store/events_data/healingEventsSlice';
-import { selectReportFights } from '../store/report/reportSelectors';
-import {
-  selectHealingEvents,
-  selectHealingEventsLoading,
-} from '../store/selectors/eventsSelectors';
-import { useAppDispatch } from '../store/useAppDispatch';
-import { HealEvent } from '../types/combatlogEvents';
+import { useEsoLogsClientInstance } from '@/EsoLogsClientContext';
+import { FightFragment } from '@/graphql/generated';
+import { useSelectedReportAndFight } from '@/ReportFightContext';
+import { fetchHealingEvents } from '@/store/events_data/healingEventsSlice';
+import { selectReportFights } from '@/store/report/reportSelectors';
+import { selectHealingEvents, selectHealingEventsLoading } from '@/store/selectors/eventsSelectors';
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { HealEvent } from '@/types/combatlogEvents';
 
 export function useHealingEvents(): {
   healingEvents: HealEvent[];
