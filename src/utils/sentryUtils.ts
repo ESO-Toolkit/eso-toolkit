@@ -25,6 +25,12 @@ interface ExtendedPerformance extends Performance {
  * Initialize Sentry with comprehensive configuration
  */
 export const initializeSentry = (): void => {
+  // Only initialize Sentry in production builds
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('Sentry disabled - not in production build');
+    return;
+  }
+
   Sentry.init({
     dsn: SENTRY_CONFIG.dsn,
     environment: SENTRY_CONFIG.environment,
