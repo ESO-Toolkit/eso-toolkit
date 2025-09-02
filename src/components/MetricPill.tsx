@@ -107,6 +107,10 @@ export const MetricPill: React.FC<MetricPillProps> = ({
         borderRadius: 1,
         ...intentStyles(theme, intent, variant),
         outline: 'none',
+        boxShadow:
+          theme.palette.mode === 'light'
+            ? 'rgba(0, 0, 0, 0.16) 0px 10px 36px 0px, rgba(0, 0, 0, 0.06) 0px 0px 0px 1px'
+            : 'none',
         transition: 'transform 120ms ease, box-shadow 120ms ease',
         '&:hover': {
           transform: 'translateY(-1px)',
