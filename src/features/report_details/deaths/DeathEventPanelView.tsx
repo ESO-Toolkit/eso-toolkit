@@ -83,6 +83,33 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     return `${minutes}:${seconds.padStart(4, '0')}`;
   };
 
+  // Calculate skills summary for killing blows
+  const skillsSummary = React.useMemo(() => {
+    const skillCounts: Record<string, { count: number; abilityId?: number }> = {};
+
+    deathInfos.forEach((info) => {
+      if (info.killingBlow?.abilityName) {
+        const abilityName = info.killingBlow.abilityName;
+        if (skillCounts[abilityName]) {
+          skillCounts[abilityName].count++;
+        } else {
+          skillCounts[abilityName] = {
+            count: 1,
+            abilityId: info.killingBlow.abilityId || undefined,
+          };
+        }
+      }
+    });
+
+    // Sort by count (descending) and then by name
+    return Object.entries(skillCounts).sort(([nameA, dataA], [nameB, dataB]) => {
+      if (dataB.count !== dataA.count) {
+        return dataB.count - dataA.count;
+      }
+      return nameA.localeCompare(nameB);
+    });
+  }, [deathInfos]);
+
   // Show skeleton loading while data is being fetched
   if (isLoading) {
     return (
@@ -251,6 +278,46 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
           })}
         </Box>
       </Box>
+
+      {/* Skills Summary */}
+      {skillsSummary.length > 0 && (
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 1, color: theme.palette.text.primary, fontWeight: 600 }}
+          >
+            ⚔️ Deadly Skills Summary
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {skillsSummary.map(([skillName, data]) => (
+              <Chip
+                key={skillName}
+                label={`${skillName}: ${data.count}`}
+                size="small"
+                sx={{
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(139, 69, 19, 0.25)'
+                      : 'rgba(255, 193, 7, 0.15)',
+                  color: theme.palette.mode === 'dark' ? '#ffab91' : '#bf5f00',
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 171, 145, 0.4)'
+                      : 'rgba(255, 193, 7, 0.3)'
+                  }`,
+                  '&:hover': {
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(139, 69, 19, 0.35)'
+                        : 'rgba(255, 193, 7, 0.25)',
+                    transform: 'translateY(-1px)',
+                  },
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      )}
 
       {/* Death events grid */}
       <Box
