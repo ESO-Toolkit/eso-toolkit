@@ -286,7 +286,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 borderRadius: '16px',
                 background:
                   theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
+                    ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
                     : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
                 border:
                   theme.palette.mode === 'dark'
