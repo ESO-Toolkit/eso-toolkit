@@ -8,6 +8,7 @@ import {
   Tooltip,
   Skeleton,
   CircularProgress,
+  useTheme,
 } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -32,6 +33,8 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightId,
 }) => {
   const navigate = useNavigate();
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
 
   // Show loading panel if fights are loading or missing
   if (fightsLoading) {
@@ -75,37 +78,84 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
             right: 16,
             textTransform: 'none',
             fontSize: '0.875rem',
+            borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
+            '&:hover': {
+              borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
+            },
           }}
         >
           ESO Logs
         </Button>
       </Tooltip>
-      <Button
-        variant="outlined"
-        sx={{
-          mb: 2,
-          color: 'text.secondary',
-          bgcolor: (theme) =>
-            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.03)',
-          borderColor: (theme) =>
-            theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.14)' : 'rgba(0,0,0,0.14)',
-          textTransform: 'none',
-          '&:hover': {
-            bgcolor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
-            borderColor: (theme) =>
-              theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.2)',
-          },
-        }}
+      <Box
+        component="button"
         onClick={() => {
           navigate(`/report/${reportId}`);
         }}
+        sx={{
+          mb: 2,
+          background: 'none',
+          border: 'none',
+          padding: 0,
+          cursor: 'pointer',
+          fontFamily: 'Space Grotesk, Inter, system-ui',
+          fontSize: '0.875rem',
+          fontWeight: 500,
+          color: isDarkMode ? 'rgba(226, 232, 240, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+          position: 'relative',
+          textDecoration: 'none',
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          '&::before': {
+            content: '"←"',
+            fontSize: '1rem',
+            fontWeight: 600,
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
+              : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            transition: 'transform 0.3s ease',
+            marginRight: '4px',
+          },
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            bottom: -2,
+            left: 0,
+            width: '0%',
+            height: '2px',
+            background: isDarkMode
+              ? 'linear-gradient(135deg, #38bdf8 0%, #9333ea 100%)'
+              : 'linear-gradient(135deg, #3b82f6 0%, #9333ea 100%)',
+            borderRadius: '1px',
+            transition: 'width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          },
+          '&:hover': {
+            color: isDarkMode ? '#e2e8f0' : '#1e293b',
+            transform: 'translateX(-4px)',
+            '&::before': {
+              transform: 'translateX(-2px) scale(1.1)',
+            },
+            '&::after': {
+              width: '100%',
+            },
+          },
+          '&:focus-visible': {
+            outline: `2px solid ${isDarkMode ? '#38bdf8' : '#3b82f6'}`,
+            outlineOffset: '4px',
+            borderRadius: '4px',
+          },
+        }}
       >
         Back to Fight List
-      </Button>
+      </Box>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Typography variant="h6" gutterBottom={false}>
+        <Typography variant="h6" gutterBottom={false} sx={{ fontSize: '2.25rem' }}>
           {fight.name} ({fight.id})
         </Typography>
       </Stack>
