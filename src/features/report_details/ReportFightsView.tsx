@@ -1046,6 +1046,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         >
           {reportData?.title || 'Report Details'}
         </Typography>
+
+        {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         {encounters.map((trialRun) => (
           <Accordion
             key={trialRun.id}
