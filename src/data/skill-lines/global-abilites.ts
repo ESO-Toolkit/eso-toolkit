@@ -1,4 +1,4 @@
-import { SkillsetData } from './Skillset';
+import { SkillsetData } from '../skillsets/Skillset';
 
 export const globalAbilitiesData: SkillsetData = {
   class: 'Global',
@@ -249,7 +249,8 @@ export const globalAbilitiesData: SkillsetData = {
       passives: {
         continuousAttack: {
           name: 'Continuous Attack',
-          description: 'Increases Weapon and Spell Damage by 2% for each enemy player killed, up to 20%.',
+          description:
+            'Increases Weapon and Spell Damage by 2% for each enemy player killed, up to 20%.',
         },
       },
     },
@@ -333,7 +334,8 @@ export const globalAbilitiesData: SkillsetData = {
       passives: {
         triStat: {
           name: 'Tri Stat',
-          description: 'Increases Health, Magicka, and Stamina by 2% per Destruction Staff ability slotted.',
+          description:
+            'Increases Health, Magicka, and Stamina by 2% per Destruction Staff ability slotted.',
         },
       },
     },
@@ -569,10 +571,7 @@ export const globalAbilitiesData: SkillsetData = {
             rallyingCry: {
               name: 'Rally',
               description: 'Grants Major Brutality and Sorcery when cast.',
-              buffs: [
-                'Major Brutality (+20% Weapon Damage)',
-                'Major Sorcery (+20% Spell Damage)',
-              ],
+              buffs: ['Major Brutality (+20% Weapon Damage)', 'Major Sorcery (+20% Spell Damage)'],
               duration: '33 seconds',
             },
           },
@@ -604,7 +603,8 @@ export const globalAbilitiesData: SkillsetData = {
       passives: {
         continuousAttack: {
           name: 'Continuous Attack',
-          description: 'Increases Weapon and Spell Damage by 2% for each enemy player killed, up to 20%.',
+          description:
+            'Increases Weapon and Spell Damage by 2% for each enemy player killed, up to 20%.',
         },
         reach: {
           name: 'Reach',
@@ -824,7 +824,7 @@ export const globalAbilitiesData: SkillsetData = {
             focused: {
               name: 'Focused Aim',
               description: 'Ignores armor and grants Minor Berserk.',
-              ignore: 'Ignores 50% of target\'s Physical Resistance',
+              ignore: "Ignores 50% of target's Physical Resistance",
               buff: 'Minor Berserk (+8% damage done)',
             },
           },

@@ -5,7 +5,6 @@ import { AbilityIcon } from '../../../components/AbilityIcon';
 import { InsightsSkeletonLayout } from '../../../components/InsightsSkeletonLayout';
 import { FightFragment } from '../../../graphql/generated';
 import { KnownAbilities } from '../../../types/abilities';
-import { RotationAnalysisPanel } from '../rotation/RotationAnalysisPanel';
 
 import { BuffUptimesPanel } from './BuffUptimesPanel';
 import { DamageBreakdownPanel } from './DamageBreakdownPanel';

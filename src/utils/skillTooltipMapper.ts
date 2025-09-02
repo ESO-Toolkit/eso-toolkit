@@ -164,20 +164,20 @@ export const CLASS_DATA: Record<string, SkillsetData> = {
 // Normalize ability names to handle elemental staff variants
 function normalizeAbilityName(abilityName: string): string {
   const name = abilityName.trim();
-  
+
   // Handle Blockade variants - these all refer to "Elemental Blockade"
   if (name.startsWith('Blockade of ')) {
     return 'Elemental Blockade';
   }
-  
-  // Handle Wall variants - these all refer to "Wall of Elements"  
+
+  // Handle Wall variants - these all refer to "Wall of Elements"
   if (name.startsWith('Wall of ') && !name.includes('Elements')) {
     return 'Wall of Elements';
   }
-  
+
   // Add more elemental variants as needed
   // Could add Impulse variants, etc.
-  
+
   return name;
 }
 
@@ -189,7 +189,7 @@ function findAbilityNodeByName(
   if (!cls || !cls.skillLines) return null;
   const target = (abilityName || '').trim();
   const normalizedTarget = normalizeAbilityName(target);
-  
+
   for (const line of Object.values(cls.skillLines)) {
     const skillLineName = line?.name || '';
     // Categories we support
@@ -224,37 +224,42 @@ function findAbilityNodeByName(
 // Create fallback tooltip for known weapon abilities
 function createWeaponAbilityFallback(abilityName: string): SkillTooltipProps | null {
   const normalizedName = normalizeAbilityName(abilityName);
-  
+
   // Handle Blockade variants
   if (normalizedName === 'Elemental Blockade' || abilityName.startsWith('Blockade of ')) {
     return {
       name: abilityName,
       lineText: 'Destruction Staff',
-      description: 'Slam your staff down to create an elemental barrier in front of you, dealing Magic Damage to enemies in the target area every second. Blockade of Fire deals additional damage to Burning enemies. Blockade of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields. Blockade of Storms sets Concussed enemies Off Balance.',
+      description:
+        'Slam your staff down to create an elemental barrier in front of you, dealing Magic Damage to enemies in the target area every second. Blockade of Fire deals additional damage to Burning enemies. Blockade of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields. Blockade of Storms sets Concussed enemies Off Balance.',
       stats: [
         { label: 'Cost', value: '2970 Magicka' },
         { label: 'Target', value: 'Area' },
         { label: 'Duration', value: '15 seconds' },
-        { label: 'Radius', value: '18 meters' }
-      ]
+        { label: 'Radius', value: '18 meters' },
+      ],
     };
   }
-  
-  // Handle Wall variants  
-  if (normalizedName === 'Wall of Elements' || (abilityName.startsWith('Wall of ') && !abilityName.includes('Elements'))) {
+
+  // Handle Wall variants
+  if (
+    normalizedName === 'Wall of Elements' ||
+    (abilityName.startsWith('Wall of ') && !abilityName.includes('Elements'))
+  ) {
     return {
       name: abilityName,
       lineText: 'Destruction Staff',
-      description: 'Slam your staff down to create an elemental barrier in front of you, dealing Magic Damage to enemies in the target area every second. Wall of Fire deals additional damage to Burning enemies. Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields. Wall of Storms sets Concussed enemies Off Balance.',
+      description:
+        'Slam your staff down to create an elemental barrier in front of you, dealing Magic Damage to enemies in the target area every second. Wall of Fire deals additional damage to Burning enemies. Wall of Frost costs more, but snares and reduces armor against Chilled enemies and grants damage shields. Wall of Storms sets Concussed enemies Off Balance.',
       stats: [
         { label: 'Cost', value: '2970 Magicka' },
-        { label: 'Target', value: 'Area' }, 
+        { label: 'Target', value: 'Area' },
         { label: 'Duration', value: '10 seconds' },
-        { label: 'Radius', value: '18 meters' }
-      ]
+        { label: 'Radius', value: '18 meters' },
+      ],
     };
   }
-  
+
   return null;
 }
 
@@ -268,13 +273,13 @@ export function buildTooltipPropsFromClassAndName(
     // If no class data, try weapon ability fallback
     return createWeaponAbilityFallback(abilityName);
   }
-  
+
   const found = findAbilityNodeByName(cls, abilityName);
   if (!found) {
     // If not found in class data, try weapon ability fallback
     return createWeaponAbilityFallback(abilityName);
   }
-  
+
   const { node, parent, skillLineName } = found;
   return mapSkillToTooltipProps({
     className: cls.class || capitalCase(classKey),
