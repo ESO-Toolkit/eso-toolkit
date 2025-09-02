@@ -60,11 +60,7 @@ query getGuilds(
   }
 }
 
-query getGuildByName(
-  $name: String!
-  $serverSlug: String!
-  $serverRegion: String!
-) {
+query getGuildByName($name: String!, $serverSlug: String!, $serverRegion: String!) {
   guildData {
     guild(name: $name, serverSlug: $serverSlug, serverRegion: $serverRegion) {
       id
@@ -87,21 +83,10 @@ query getGuildByName(
   }
 }
 
-query getGuildAttendance(
-  $guildId: Int!
-  $guildTagID: Int
-  $limit: Int
-  $page: Int
-  $zoneID: Int
-) {
+query getGuildAttendance($guildId: Int!, $guildTagID: Int, $limit: Int, $page: Int, $zoneID: Int) {
   guildData {
     guild(id: $guildId) {
-      attendance(
-        guildTagID: $guildTagID
-        limit: $limit
-        page: $page
-        zoneID: $zoneID
-      ) {
+      attendance(guildTagID: $guildTagID, limit: $limit, page: $page, zoneID: $zoneID) {
         total
         per_page
         current_page
