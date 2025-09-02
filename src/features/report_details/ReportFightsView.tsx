@@ -936,7 +936,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                   ? getThemeColors.trashShadow
                   : getThemeColors.killShadow,
               borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
-              opacity: 0.15,
+              opacity: 0.4,
               zIndex: 0,
             },
           }}
