@@ -5,7 +5,7 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { BugReportFab } from './components/BugReportDialog';
+import { ModernFeedbackFab } from './components/BugReportDialog';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
@@ -63,7 +63,7 @@ const App: React.FC = () => {
           <EsoLogsClientProvider>
             <AppRoutes />
             {/* Add floating bug report button in production */}
-            <BugReportFab />
+            <ModernFeedbackFab />
           </EsoLogsClientProvider>
         </AuthProvider>
       </PersistGate>
