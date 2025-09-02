@@ -15,6 +15,7 @@ interface DamageRow {
 
 interface DamageDonePanelViewProps {
   damageRows: DamageRow[];
+  selectedTargetNames?: string[] | null;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps';
@@ -23,7 +24,10 @@ type SortDirection = 'asc' | 'desc';
 /**
  * Dumb component that only handles rendering the damage done panel UI
  */
-export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damageRows }) => {
+export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
+  damageRows,
+  selectedTargetNames,
+}) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc');
@@ -93,7 +97,18 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({ damage
   return (
     <Box>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
-        <Typography variant="h6">⚔️ Damage Done By Player</Typography>
+        <Typography variant="h6">
+          ⚔️ Damage Done By Player
+          {selectedTargetNames && selectedTargetNames.length > 0 && (
+            <Typography component="span" variant="body2" sx={{ color: 'primary.main', ml: 1 }}>
+              (vs{' '}
+              {selectedTargetNames.length === 1
+                ? selectedTargetNames[0]
+                : `${selectedTargetNames.length} targets`}
+              )
+            </Typography>
+          )}
+        </Typography>
         <Typography
           variant="caption"
           sx={{
