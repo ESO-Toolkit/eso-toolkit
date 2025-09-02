@@ -154,7 +154,7 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(2.2rem, 7vw, 2rem)',
+    fontSize: 'clamp(2.3rem, 7vw, 2rem)',
     lineHeight: 1.5,
   },
   '@keyframes shimmer': {
@@ -162,7 +162,8 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
     '50%': { opacity: 0.85 },
   },
   '& .light-text': {
-    fontWeight: '300 !important',
+    fontFamily: 'Inter, sans-serif !important',
+    fontWeight: '100 !important',
     background:
       theme.palette.mode === 'dark'
         ? 'white !important'
@@ -229,21 +230,21 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
 }));
 
 const HeroSubtitle = styled(Typography)(({ theme }) => ({
-  fontSize: '1.5rem',
+  fontSize: 'clamp(1.1rem,2vw,1.4rem)',
   color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(51, 65, 85, 0.8)',
   marginTop: theme.spacing(3),
   marginBottom: theme.spacing(6),
-  fontWeight: 400,
-  lineHeight: 1.5,
-  maxWidth: '600px',
+  fontWeight: 300,
+  lineHeight: 1.7,
+  maxWidth: '800px',
   margin: '24px auto 48px auto',
   [theme.breakpoints.down('md')]: {
     fontSize: '1.25rem',
-    maxWidth: '500px',
+    maxWidth: '700px',
     margin: '20px auto 40px auto',
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1.2em',
+    fontSize: 'clamp(1.1rem,2vw,1.4rem)',
     minWidth: '100%',
     margin: '16px auto 32px auto',
     lineHeight: 1.6,
