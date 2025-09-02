@@ -219,7 +219,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
             size="small"
             sx={{
               backgroundColor: 'rgba(255, 152, 0, 0.2)',
-              color: theme.palette.mode === 'dark' ? '#ff9800' : '#b77d27',
+              color: theme.palette.mode === 'dark' ? '#ff9800' : '#795013',
               border: '1px solid rgba(255, 152, 0, 0.3)',
             }}
           />
@@ -298,18 +298,18 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   backgroundColor:
                     theme.palette.mode === 'dark'
                       ? 'rgba(139, 69, 19, 0.25)'
-                      : 'rgba(255, 193, 7, 0.15)',
-                  color: theme.palette.mode === 'dark' ? '#ffab91' : '#bf5f00',
+                      : 'rgba(241,245,249,0.8)',
+                  color: theme.palette.mode === 'dark' ? '#ffab91' : '#ba2626cc',
                   border: `1px solid ${
                     theme.palette.mode === 'dark'
                       ? 'rgba(255, 171, 145, 0.4)'
-                      : 'rgba(255, 193, 7, 0.3)'
+                      : 'rgba(174, 174, 174, 0.3)'
                   }`,
                   '&:hover': {
                     backgroundColor:
                       theme.palette.mode === 'dark'
                         ? 'rgba(139, 69, 19, 0.35)'
-                        : 'rgba(255, 193, 7, 0.25)',
+                        : 'rgba(216, 224, 233, 0.05)',
                     transform: 'translateY(-1px)',
                   },
                 }}
