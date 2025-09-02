@@ -57,41 +57,41 @@ const getFeedbackSteps = (): string[] => [
 const StyledDialog = styled(Dialog)(({ theme }) => ({
   // Target all possible MUI Dialog paper classes with maximum specificity
   '&.MuiDialog-root .MuiDialog-paper.MuiPaper-root': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? '#0b1220 !important' 
-      : 'rgba(255, 255, 255, 0.95) !important',
-    background: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
+    backgroundColor:
+      theme.palette.mode === 'dark' ? '#0b1220 !important' : 'rgba(255, 255, 255, 0.95) !important',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
     color: theme.palette.mode === 'dark' ? '#ffffff !important' : 'rgba(0, 0, 0, 0.87) !important',
   },
   '& .MuiDialog-paper': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? '#0b1220 !important' 
-      : 'rgba(255, 255, 255, 0.95) !important',
-    background: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
+    backgroundColor:
+      theme.palette.mode === 'dark' ? '#0b1220 !important' : 'rgba(255, 255, 255, 0.95) !important',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
     color: theme.palette.mode === 'dark' ? '#ffffff !important' : 'rgba(0, 0, 0, 0.87) !important',
   },
   // Target by specific CSS classes that might be generated
   '& .MuiPaper-root': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? '#0b1220 !important' 
-      : 'rgba(255, 255, 255, 0.95) !important',
-    background: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
+    backgroundColor:
+      theme.palette.mode === 'dark' ? '#0b1220 !important' : 'rgba(255, 255, 255, 0.95) !important',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
     color: theme.palette.mode === 'dark' ? '#ffffff !important' : 'rgba(0, 0, 0, 0.87) !important',
   },
   // Try to override by elevation classes as well
   '& .MuiPaper-elevation24': {
-    backgroundColor: theme.palette.mode === 'dark' 
-      ? '#0b1220 !important' 
-      : 'rgba(255, 255, 255, 0.95) !important',
-    background: theme.palette.mode === 'dark' 
-      ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
-      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
+    backgroundColor:
+      theme.palette.mode === 'dark' ? '#0b1220 !important' : 'rgba(255, 255, 255, 0.95) !important',
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, #0b1220 0%, #0d1430 100%) !important'
+        : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.98) 100%) !important',
   },
 }));
 
@@ -148,7 +148,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
   // Force override dialog background to be transparent and theme-neutral
   React.useEffect(() => {
     if (open) {
-      const applyTransparentStyles = () => {
+      const applyTransparentStyles = (): void => {
         const dialogs = document.querySelectorAll('.MuiDialog-paper');
         dialogs.forEach((dialog: Element) => {
           const element = dialog as HTMLElement;
@@ -394,7 +394,12 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
               {isBugReport ? 'Steps to Reproduce (Optional)' : 'Additional Context (Optional)'}
             </Typography>
             {reportData.steps?.map((step, index) => (
-              <Stack key={index} direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+              <Stack
+                key={index}
+                direction={{ xs: 'column', sm: 'row' }}
+                spacing={1}
+                alignItems={{ xs: 'stretch', sm: 'center' }}
+              >
                 <Chip label={index + 1} size="small" />
                 <DarkTextField
                   fullWidth
@@ -644,7 +649,8 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
           WebkitBackdropFilter: 'blur(20px)',
           border: '1px solid rgba(255, 255, 255, 0.2)',
           borderRadius: '12px',
-          boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+          boxShadow:
+            '0 25px 50px -12px rgba(0, 0, 0, 0.3), 0 0 60px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
         },
       }}
       slotProps={{
@@ -1157,7 +1163,14 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
       >
         {/* Expanded Action Buttons */}
         <Zoom in={isExpanded && !dialogOpen}>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: { xs: 0.8, sm: 1 }, alignItems: 'flex-end' }}>
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: { xs: 0.8, sm: 1 },
+              alignItems: 'flex-end',
+            }}
+          >
             <Fab
               size="small"
               onClick={handleFeedbackClick}
@@ -1273,7 +1286,9 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
                 transform: isExpanded ? 'rotate(45deg)' : 'rotate(0deg)',
                 transition: 'transform 0.2s ease-out',
                 // Force hardware acceleration for smoother rotation on iOS
-                WebkitTransform: isExpanded ? 'rotate(45deg) translateZ(0)' : 'rotate(0deg) translateZ(0)',
+                WebkitTransform: isExpanded
+                  ? 'rotate(45deg) translateZ(0)'
+                  : 'rotate(0deg) translateZ(0)',
                 willChange: 'transform',
                 width: '100%',
                 height: '100%',
