@@ -1,6 +1,5 @@
 import React, { createContext, useContext, ReactNode } from 'react';
-
-import { useReportFightParams } from './hooks/useReportFightParams';
+import { useParams } from 'react-router-dom';
 
 interface ReportFightContextType {
   reportId: string | undefined | null;
@@ -10,7 +9,7 @@ interface ReportFightContextType {
 export const ReportFightContext = createContext<ReportFightContextType | undefined>(undefined);
 
 export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useParams();
 
   const contextValue = React.useMemo(
     () => ({
