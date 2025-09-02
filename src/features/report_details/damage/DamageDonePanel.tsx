@@ -1,7 +1,14 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
-import { useDamageEventsLookup, useReportMasterData, usePlayerData } from '../../../hooks';
+import {
+  useDamageEventsLookup,
+  useReportMasterData,
+  usePlayerData,
+  useSelectedTargetIds,
+} from '../../../hooks';
+import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
@@ -18,6 +25,20 @@ export const DamageDonePanel: React.FC = () => {
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const fight = useSelectedFight();
+  const selectedTargetIds = useSelectedTargetIds();
+  const actorsById = useSelector(selectActorsById);
+
+  // Resolve selected target names for display
+  const selectedTargetNames = useMemo(() => {
+    if (selectedTargetIds.size === 0) return null;
+
+    const names = Array.from(selectedTargetIds).map((targetId) => {
+      const actor = actorsById[targetId];
+      return resolveActorName(actor, targetId);
+    });
+
+    return names;
+  }, [selectedTargetIds, actorsById]);
 
   // Extract data from hooks with memoization
   const masterData = useMemo(
@@ -46,7 +67,13 @@ export const DamageDonePanel: React.FC = () => {
       let eventCount = 0;
 
       events.forEach((event) => {
+        // Skip events that damage friendly targets
         if (!event.targetIsFriendly) {
+          // Apply target filter if specific targets are selected
+          if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
+            return; // Skip this event
+          }
+
           const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
           totalDamage += amount;
           eventCount++;
@@ -60,16 +87,39 @@ export const DamageDonePanel: React.FC = () => {
     });
 
     return { damageByPlayer, damageEventsBySource };
-  }, [damageEventsByPlayer]);
+  }, [damageEventsByPlayer, selectedTargetIds]);
 
-  // Calculate active percentages using ESO logs methodology
+  // Calculate active percentages using ESO logs methodology with target filtering
   const activePercentages = useMemo(() => {
     if (!fight || !damageEventsByPlayer) {
       return {};
     }
 
-    return calculateActivePercentages(fight, damageEventsByPlayer);
-  }, [fight, damageEventsByPlayer]);
+    // Filter damage events by selected target before calculating active percentages
+    const filteredDamageEventsByPlayer: Record<string, (typeof damageEventsByPlayer)[string]> = {};
+
+    Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
+      const filteredEvents = events.filter((event) => {
+        // Skip events that damage friendly targets
+        if (event.targetIsFriendly) {
+          return false;
+        }
+
+        // Apply target filter if specific targets are selected
+        if (selectedTargetIds.size > 0 && !selectedTargetIds.has(event.targetID)) {
+          return false;
+        }
+
+        return true;
+      });
+
+      if (filteredEvents.length > 0) {
+        filteredDamageEventsByPlayer[playerIdStr] = filteredEvents;
+      }
+    });
+
+    return calculateActivePercentages(fight, filteredDamageEventsByPlayer);
+  }, [fight, damageEventsByPlayer, selectedTargetIds]);
 
   const fightDuration = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -181,5 +231,5 @@ export const DamageDonePanel: React.FC = () => {
     );
   }
 
-  return <DamageDonePanelView damageRows={damageRows} />;
+  return <DamageDonePanelView damageRows={damageRows} selectedTargetNames={selectedTargetNames} />;
 };
