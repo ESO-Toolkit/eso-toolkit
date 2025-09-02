@@ -728,7 +728,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 />
                                 <Typography
                                   variant="caption"
-                                  sx={{ color: '#ff7a7a', fontSize: 11, lineHeight: 1 }}
+                                  sx={{
+                                    color: (theme) =>
+                                      theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
+                                    fontSize: 11,
+                                    lineHeight: 1,
+                                    fontWeight: 500,
+                                  }}
                                 >
                                   {armorWeights.heavy}
                                 </Typography>
@@ -740,7 +746,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                 </Typography>
                                 <Typography
                                   variant="caption"
-                                  sx={{ color: '#93f093', fontSize: 11, lineHeight: 1 }}
+                                  sx={{
+                                    color: (theme) =>
+                                      theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
+                                    fontSize: 11,
+                                    lineHeight: 1,
+                                    fontWeight: 500,
+                                  }}
                                 >
                                   {armorWeights.medium}
                                 </Typography>
