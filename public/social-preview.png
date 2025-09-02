@@ -1,0 +1,33 @@
+# Social Media Preview Image Instructions
+
+To create an optimal social media preview image for ESO Log Insights, create a 1200x630 PNG image with:
+
+## Design Elements:
+- **Background**: Dark theme matching the app (background: #1a1a1a or similar)
+- **Title**: "ESO Log Insights by NotaGuild" (prominent, white text)
+- **Subtitle**: "Advanced Elder Scrolls Online Combat Log Analytics"
+- **Visual Elements**: Charts, graphs, or combat-themed imagery
+- **ESO Branding**: Use ESO-themed colors (gold, deep blue, fantasy elements)
+- **Logo/Icon**: Include app icon or ESO-themed symbols
+
+## Technical Requirements:
+- **Dimensions**: 1200x630 pixels (Facebook/Twitter recommended ratio)
+- **Format**: PNG with good compression
+- **File Size**: Under 8MB (ideally under 1MB)
+- **Safe Area**: Keep important text/elements in center 1200x630 area
+
+## Color Palette (from app):
+- Primary: #7289da (Discord blue)
+- Background: #1a1a1a (dark)
+- Accent: #38bdf8 (light blue)
+- Text: #ffffff (white)
+- Muted: #64748b (gray)
+
+## Content Suggestions:
+- Show sample damage charts/graphs
+- Include ESO class icons
+- Display sample DPS numbers
+- Add "Free Combat Log Analysis" tagline
+- Include website URL: bkrupa.github.io/eso-log-aggregator
+
+Once created, replace this file with the actual PNG image.
