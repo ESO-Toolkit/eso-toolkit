@@ -272,8 +272,8 @@ export const HeaderBar: React.FC = () => {
           transition: 'box-shadow .2s ease',
         }}
       >
-        <Container maxWidth="xl">
-          <Toolbar sx={{ display: 'flex', gap: 2, px: 0 }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
+          <Toolbar sx={{ display: 'flex', gap: 2, px: 0, minHeight: 64 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
             <Button
               color="inherit"
