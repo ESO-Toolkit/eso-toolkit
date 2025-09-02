@@ -1,4 +1,13 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton, useTheme, Container } from '@mui/material';
+import {
+  AppBar,
+  Toolbar,
+  Typography,
+  Button,
+  Box,
+  IconButton,
+  useTheme,
+  Container,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
@@ -274,203 +283,203 @@ export const HeaderBar: React.FC = () => {
       >
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3 } }}>
           <Toolbar sx={{ display: 'flex', gap: 2, px: 0, minHeight: 64 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
-            <Button
-              color="inherit"
-              sx={{ p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
-              onClick={() => navigate('/')}
-            >
-              <Typography
-                variant="h6"
-                component="div"
-                sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 1,
-                  fontWeight: 800,
-                  letterSpacing: '-.02em',
-                  fontFamily: 'Space Grotesk,Inter,system-ui',
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
-                      : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
-                Log Analyzer
-              </Typography>
-            </Button>
-          </Box>
-
-          <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
-            {navItems.map((item) => (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
               <Button
-                key={item.text}
                 color="inherit"
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                startIcon={
-                  typeof item.icon === 'string' ? (
-                    <Box
-                      component="span"
-                      role="img"
-                      aria-label={item.text.toLowerCase()}
-                      sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
-                    >
-                      {item.icon}
-                    </Box>
-                  ) : (
-                    item.icon
-                  )
-                }
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
+                sx={{ p: 0, minWidth: 0, '&:hover': { background: 'transparent' } }}
+                onClick={() => navigate('/')}
+              >
+                <Typography
+                  variant="h6"
+                  component="div"
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                    fontWeight: 800,
+                    letterSpacing: '-.02em',
+                    fontFamily: 'Space Grotesk,Inter,system-ui',
                     background:
                       theme.palette.mode === 'dark'
-                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
-                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                    borderRadius: 'inherit',
-                  },
-                  '&:hover': {
-                    transform: 'translateY(-1px)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.08)'
-                        : 'rgba(59, 130, 246, 0.06)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.2)'
-                        : 'rgba(59, 130, 246, 0.15)',
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                        : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                        ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
+                        : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
+                  Log Analyzer
+                </Typography>
+              </Button>
+            </Box>
+
+            <Box sx={{ display: { xs: 'none', md: 'flex' }, alignItems: 'center', gap: 1.5 }}>
+              {navItems.map((item) => (
+                <Button
+                  key={item.text}
+                  color="inherit"
+                  href={item.href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  startIcon={
+                    typeof item.icon === 'string' ? (
+                      <Box
+                        component="span"
+                        role="img"
+                        aria-label={item.text.toLowerCase()}
+                        sx={{ fontSize: 16, lineHeight: 1, display: 'inline-block' }}
+                      >
+                        {item.icon}
+                      </Box>
+                    ) : (
+                      item.icon
+                    )
+                  }
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent',
+                    border: '1px solid transparent',
                     '&::before': {
-                      opacity: 1,
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
+                          : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
+                      borderRadius: 'inherit',
                     },
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
-              >
-                {item.text}
-              </Button>
-            ))}
-            <ThemeToggle />
-            {isLoggedIn ? (
-              <Button
-                color="inherit"
-                onClick={handleLogout}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  '&:hover': {
-                    transform: 'translateY(-1px)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(239, 68, 68, 0.08)'
-                        : 'rgba(220, 38, 38, 0.06)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(239, 68, 68, 0.2)'
-                        : 'rgba(220, 38, 38, 0.15)',
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                        : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
-              >
-                Log out
-              </Button>
-            ) : (
-              <Button
-                color="inherit"
-                onClick={handleLogin}
-                sx={{
-                  px: 2,
-                  py: 1,
-                  borderRadius: 2,
-                  textTransform: 'none',
-                  fontWeight: 500,
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  background: 'transparent',
-                  border: '1px solid transparent',
-                  '&:hover': {
-                    transform: 'translateY(-1px)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(34, 197, 94, 0.08)'
-                        : 'rgba(22, 163, 74, 0.06)',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(34, 197, 94, 0.2)'
-                        : 'rgba(22, 163, 74, 0.15)',
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 4px 20px rgba(34, 197, 94, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                        : '0 4px 20px rgba(22, 163, 74, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                  },
-                  '&:active': {
-                    transform: 'translateY(0)',
-                  },
-                }}
-              >
-                Log in
-              </Button>
-            )}
-          </Box>
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.08)'
+                          : 'rgba(59, 130, 246, 0.06)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(59, 130, 246, 0.15)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                          : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                      '&::before': {
+                        opacity: 1,
+                      },
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                    },
+                  }}
+                >
+                  {item.text}
+                </Button>
+              ))}
+              <ThemeToggle />
+              {isLoggedIn ? (
+                <Button
+                  color="inherit"
+                  onClick={handleLogout}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent',
+                    border: '1px solid transparent',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(239, 68, 68, 0.08)'
+                          : 'rgba(220, 38, 38, 0.06)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(239, 68, 68, 0.2)'
+                          : 'rgba(220, 38, 38, 0.15)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                          : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                    },
+                  }}
+                >
+                  Log out
+                </Button>
+              ) : (
+                <Button
+                  color="inherit"
+                  onClick={handleLogin}
+                  sx={{
+                    px: 2,
+                    py: 1,
+                    borderRadius: 2,
+                    textTransform: 'none',
+                    fontWeight: 500,
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    background: 'transparent',
+                    border: '1px solid transparent',
+                    '&:hover': {
+                      transform: 'translateY(-1px)',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(34, 197, 94, 0.08)'
+                          : 'rgba(22, 163, 74, 0.06)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(34, 197, 94, 0.2)'
+                          : 'rgba(22, 163, 74, 0.15)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 20px rgba(34, 197, 94, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                          : '0 4px 20px rgba(22, 163, 74, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(0)',
+                    },
+                  }}
+                >
+                  Log in
+                </Button>
+              )}
+            </Box>
 
-          <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
-            <ThemeToggle />
-            <HamburgerButton
-              open={mobileOpen}
-              onClick={handleDrawerToggle}
-              aria-label="toggle navigation"
-            >
-              <HamburgerLines>
-                <Box className="hamburger-line" />
-                <Box className="hamburger-line" />
-                <Box className="hamburger-line" />
-              </HamburgerLines>
-            </HamburgerButton>
-          </Box>
+            <Box sx={{ display: { xs: 'flex', md: 'none' }, alignItems: 'center', gap: 1 }}>
+              <ThemeToggle />
+              <HamburgerButton
+                open={mobileOpen}
+                onClick={handleDrawerToggle}
+                aria-label="toggle navigation"
+              >
+                <HamburgerLines>
+                  <Box className="hamburger-line" />
+                  <Box className="hamburger-line" />
+                  <Box className="hamburger-line" />
+                </HamburgerLines>
+              </HamburgerButton>
+            </Box>
           </Toolbar>
         </Container>
       </AppBar>
