@@ -96,7 +96,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <Typography variant="h6" gutterBottom>
@@ -320,7 +320,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <StatusEffectUptimesPanel fight={fight} />
@@ -334,7 +334,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <BuffUptimesPanel fight={fight} />
@@ -348,7 +348,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <DebuffUptimesPanel fight={fight} />
@@ -362,7 +362,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <DamageBreakdownPanel fight={fight} />
@@ -376,7 +376,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               p: 2,
               height: '100%',
               background:
-                'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)',
+                'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
             <DamageTypeBreakdownPanel fight={fight} />
