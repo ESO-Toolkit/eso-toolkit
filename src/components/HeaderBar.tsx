@@ -4,6 +4,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
+import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY, startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
 
@@ -290,16 +291,14 @@ export const HeaderBar: React.FC = () => {
                   fontFamily: 'Space Grotesk,Inter,system-ui',
                   background:
                     theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, #ffffff 0%, var(--accent) 50%, var(--accent-2) 100%)'
+                      ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
                       : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   backgroundClip: 'text',
                 }}
               >
-                <span role="img" aria-label="sword">
-                  ⚔️
-                </span>
+                <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
                 Log Analyzer
               </Typography>
             </Button>
@@ -487,15 +486,19 @@ export const HeaderBar: React.FC = () => {
               fontWeight: 800,
               background:
                 theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%)'
+                  ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
                   : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
               mb: 2,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 1,
             }}
           >
-            ⚔️ ESO Helper
+            <img src={esoLogo} alt="ESO Helpers" style={{ width: 32, height: 32 }} />
+            ESO Helper
           </Typography>
 
           {navItems.map((item, index) => (
