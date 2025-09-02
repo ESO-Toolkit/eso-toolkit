@@ -1175,28 +1175,32 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               size="small"
               onClick={handleFeedbackClick}
               sx={{
-                // Simplified background for better iOS Safari compatibility
-                backgroundColor: (theme) => theme.palette.primary.main,
-                background: (theme) => theme.palette.primary.main,
+                // Blue gradient for feedback button
+                background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
                 border: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '1px solid rgba(255, 255, 255, 0.2)'
-                    : '1px solid rgba(15, 23, 42, 0.2)',
-                // Simplified shadow
+                    ? '1px solid rgba(59, 130, 246, 0.3)'
+                    : '1px solid rgba(29, 78, 216, 0.3)',
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 4px 16px rgba(0, 0, 0, 0.3)'
-                    : '0 4px 16px rgba(15, 23, 42, 0.15)',
+                    ? '0 4px 16px rgba(59, 130, 246, 0.2)'
+                    : '0 4px 16px rgba(59, 130, 246, 0.15)',
                 color: '#ffffff',
                 transition: 'all 0.2s ease-out',
                 borderRadius: '50%',
                 overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-1px) scale(1.03)',
+                  // Lighter blue gradient on hover
+                  background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
                   boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? '0 6px 20px rgba(0, 0, 0, 0.4)'
-                      : '0 6px 20px rgba(15, 23, 42, 0.2)',
+                      ? '0 6px 20px rgba(59, 130, 246, 0.3)'
+                      : '0 6px 20px rgba(59, 130, 246, 0.25)',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(96, 165, 250, 0.5)'
+                      : 'rgba(59, 130, 246, 0.5)',
                 },
               }}
             >
@@ -1207,27 +1211,32 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
               size="small"
               onClick={handleBugReportClick}
               sx={{
-                // Use solid red color for bug reports
-                backgroundColor: '#ef4444',
-                background: '#ef4444',
-                border: '1px solid rgba(239, 68, 68, 0.5)',
-                // Simplified shadow
+                // Red gradient for bug report button
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(239, 68, 68, 0.3)'
+                    : '1px solid rgba(220, 38, 38, 0.3)',
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 4px 16px rgba(239, 68, 68, 0.3)'
-                    : '0 4px 16px rgba(239, 68, 68, 0.2)',
+                    ? '0 4px 16px rgba(239, 68, 68, 0.2)'
+                    : '0 4px 16px rgba(239, 68, 68, 0.15)',
                 color: '#ffffff',
                 transition: 'all 0.2s ease-out',
                 borderRadius: '50%',
                 overflow: 'hidden',
                 '&:hover': {
                   transform: 'translateY(-1px) scale(1.03)',
-                  backgroundColor: '#dc2626',
-                  background: '#dc2626',
+                  // Lighter red gradient on hover
+                  background: 'linear-gradient(135deg, #f87171 0%, #ef4444 100%)',
                   boxShadow: (theme) =>
                     theme.palette.mode === 'dark'
-                      ? '0 6px 20px rgba(239, 68, 68, 0.4)'
-                      : '0 6px 20px rgba(239, 68, 68, 0.3)',
+                      ? '0 6px 20px rgba(239, 68, 68, 0.3)'
+                      : '0 6px 20px rgba(239, 68, 68, 0.25)',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(248, 113, 113, 0.5)'
+                      : 'rgba(239, 68, 68, 0.5)',
                 },
               }}
             >
@@ -1243,37 +1252,35 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
             sx={{
               width: { xs: 56, sm: 64 },
               height: { xs: 56, sm: 64 },
-              // Simplified background to avoid theme transition issues on iOS Safari
-              backgroundColor: (theme) => theme.palette.primary.main,
-              background: (theme) => theme.palette.primary.main,
-              // Removed backdrop filters that cause iOS Safari issues
+              // Purple gradient as main color matching site aesthetic
+              background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
               border: (theme) =>
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.15)'
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-              // Simplified box shadow
+                  ? '1px solid rgba(139, 92, 246, 0.3)'
+                  : '1px solid rgba(168, 85, 247, 0.3)',
               boxShadow: (theme) =>
                 theme.palette.mode === 'dark'
-                  ? '0 8px 24px rgba(0, 0, 0, 0.4)'
-                  : '0 8px 24px rgba(15, 23, 42, 0.15)',
+                  ? '0 8px 24px rgba(139, 92, 246, 0.25)'
+                  : '0 8px 24px rgba(139, 92, 246, 0.15)',
               color: '#ffffff',
-              // Reduced transition duration for better iOS Safari performance
               transition: 'all 0.2s ease-out',
               position: 'relative',
-              // Remove complex pseudo-elements that cause rendering issues
               '&:hover': {
                 transform: 'translateY(-2px) scale(1.05)',
+                // Lighter purple gradient on hover
+                background: 'linear-gradient(135deg, #a78bfa 0%, #c084fc 100%)',
                 boxShadow: (theme) =>
                   theme.palette.mode === 'dark'
-                    ? '0 12px 32px rgba(0, 0, 0, 0.5)'
-                    : '0 12px 32px rgba(15, 23, 42, 0.2)',
+                    ? '0 12px 32px rgba(139, 92, 246, 0.4)'
+                    : '0 12px 32px rgba(139, 92, 246, 0.25)',
+                borderColor: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(167, 139, 250, 0.5)'
+                    : 'rgba(192, 132, 252, 0.5)',
               },
               '&:active': {
                 transform: 'translateY(-1px) scale(1.02)',
               },
-              // Simplified animation without complex keyframes
-              animation: isExpanded ? 'none' : 'none',
-              // Ensure button maintains shape during theme transitions
               borderRadius: '50%',
               overflow: 'hidden',
             }}
