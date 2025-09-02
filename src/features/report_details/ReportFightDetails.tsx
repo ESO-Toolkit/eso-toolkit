@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
 import { useReportData, useSelectedTabId } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
@@ -19,6 +20,20 @@ export const ReportFightDetails: React.FC = () => {
     return reportData?.fights?.find((f) => String(f?.id) === String(fightId));
   }, [reportData?.fights, fightId]);
 
+  // Generate dynamic meta tags for social sharing
+  const metaTags = React.useMemo(() => {
+    if (reportId && fight) {
+      return generateReportMetaTags(
+        reportId,
+        fight.name,
+        undefined, // playerName - could be added later for player-specific views
+        undefined, // dps - could be calculated from fight data
+        fight.endTime - fight.startTime
+      );
+    }
+    return null;
+  }, [reportId, fight]);
+
   React.useEffect(() => {
     if (reportData?.title) {
       document.title = `${reportData.title} - ${APPLICATION_NAME}`;
@@ -31,12 +46,15 @@ export const ReportFightDetails: React.FC = () => {
   const selectedTabId = useSelectedTabId();
 
   return (
-    <ReportFightDetailsView
-      fight={fight}
-      fightsLoading={isReportLoading}
-      selectedTabId={selectedTabId ?? undefined}
-      reportId={reportId || undefined}
-      fightId={fightId || undefined}
-    />
+    <>
+      {metaTags && <DynamicMetaTags {...metaTags} />}
+      <ReportFightDetailsView
+        fight={fight}
+        fightsLoading={isReportLoading}
+        selectedTabId={selectedTabId ?? undefined}
+        reportId={reportId || undefined}
+        fightId={fightId || undefined}
+      />
+    </>
   );
 };

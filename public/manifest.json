@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "ESO Log Insights",
+  "name": "ESO Log Insights by NotaGuild",
+  "description": "Advanced analytics and visualization tool for Elder Scrolls Online combat logs",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,6 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#7289da",
+  "background_color": "#1a1a1a"
 }
