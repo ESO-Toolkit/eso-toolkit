@@ -34,6 +34,9 @@ const ReportFights = React.lazy(() =>
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect }))
 );
+const Calculator = React.lazy(() =>
+  import('./components/Calculator').then((module) => ({ default: module.Calculator }))
+);
 
 // Loading fallback component - simple and fast
 const LoadingFallback: React.FC = () => (
@@ -139,6 +142,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <ReportFights />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/calculator"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Calculator />
                   </Suspense>
                 </ErrorBoundary>
               }

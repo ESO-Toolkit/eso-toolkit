@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ESO Penetration & Critical Calculator</title>
+    <link rel="stylesheet" href="styles.css?v=lite4">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>⚔️ ESO Calculator</h1>
+            <div class="subtitle"><strong>Penetration </strong> & <strong>Critical Damage</strong> Optimizer - <strong>U47</strong></div>
+        </div>
+
+        <!-- Tabs -->
+        <div class="tabs" role="tablist" aria-label="Calculators">
+            <button role="tab" id="tab-pen" aria-controls="panel-pen" aria-selected="true" tabindex="0">Penetration</button>
+            <button role="tab" id="tab-crit" aria-controls="panel-crit" aria-selected="false" tabindex="-1">Critical</button>
+            <button role="tab" id="tab-armor" aria-controls="panel-armor" aria-selected="false" tabindex="-1">Armor</button>
+        </div>
+
+        <div class="calculators-wrapper">
+            <!-- Penetration Panel -->
+            <div id="panel-pen" role="tabpanel" aria-labelledby="tab-pen">
+            <!-- Penetration Calculator -->
+            <div class="calculator calculator--penetration" data-calc="pen">
+                <h2 class="calculator__header">
+                    <span>Penetration Calculator</span>
+                </h2>
+                
+                <div class="calculator__content">
+                    <div class="calculator__controls">
+                        <button class="btn" onclick="toggleAllPen(true)">Check All</button>
+                        <button class="btn" onclick="toggleAllPen(false)">Uncheck All</button>
+                        <button class="btn btn--lite" type="button" onclick="toggleLiteMode()" aria-pressed="false" title="Toggle compact layout">Lite</button>
+                        <button type="button" class="btn btn--mode" data-mode="pve" aria-pressed="false" title="PvE mode">PvE</button>
+                        <button type="button" class="btn btn--mode" data-mode="pvp" aria-pressed="false" title="PvP mode">PvP</button>
+                    </div>
+
+                    <div class="calculator__section-title">Group Buffs</div>
+                    <div class="calculator__list" data-calc="pen" data-section="group-buffs"></div>
+
+                    <div class="calculator__section-title">Gear & Enchantments</div>
+                    <div class="calculator__list" data-calc="pen" data-section="gear"></div>
+
+                    <div class="calculator__section-title">Passives & Skills</div>
+                    <div class="calculator__list" data-calc="pen" data-section="passives"></div>
+
+                    <div class="calculator__section-title">Champion Points</div>
+                    <div class="calculator__list" data-calc="pen" data-section="cp"></div>
+                </div>
+
+                <div class="calculator__total-section">
+                    <div class="calculator__total">
+                        <span>Total Pen:</span>
+                        <span class="calculator__total-value">0 / 18,200</span>
+                    </div>
+                    <div class="calculator__cap-status">
+                        Calculating...
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Critical Panel -->
+            <div id="panel-crit" role="tabpanel" aria-labelledby="tab-crit" hidden>
+            <!-- Critical Damage Calculator -->
+            <div class="calculator calculator--critical" data-calc="crit">
+                <h2 class="calculator__header">
+                    <span>Critical Damage Calculator</span>
+                </h2>
+                
+                <div class="calculator__content">
+                    <div class="calculator__controls">
+                        <button class="btn" onclick="toggleAllCrit(true)">Check All</button>
+                        <button class="btn" onclick="toggleAllCrit(false)">Uncheck All</button>
+                        <button class="btn btn--lite" type="button" onclick="toggleLiteMode()" aria-pressed="false" title="Toggle compact layout">Lite</button>
+                        <button type="button" class="btn btn--mode" data-mode="pve" aria-pressed="false" title="PvE mode">PvE</button>
+                        <button type="button" class="btn btn--mode" data-mode="pvp" aria-pressed="false" title="PvP mode">PvP</button>
+                    </div>
+
+                    <div class="calculator__section-title">Base & Group Buffs</div>
+                    <div class="calculator__list" data-calc="crit" data-section="group-buffs"></div>
+
+                    <div class="calculator__section-title">Gear & Enchantments</div>
+                    <div class="calculator__list" data-calc="crit" data-section="gear"></div>
+
+                    <div class="calculator__section-title">Passives & Skills</div>
+                    <div class="calculator__list" data-calc="crit" data-section="passives"></div>
+
+                    <div class="calculator__section-title">Champion Points</div>
+                    <div class="calculator__list" data-calc="crit" data-section="cp"></div>
+                </div>
+
+                <div class="calculator__total-section">
+                    <div class="calculator__total">
+                        <span>Total Crit Dmg:</span>
+                        <span class="calculator__total-value">50% / 125%</span>
+                    </div>
+                    <div class="calculator__cap-status">
+                        Calculating...
+                    </div>
+                </div>
+            </div>
+            </div>
+
+            <!-- Armor Panel (placeholder) -->
+            <div id="panel-armor" role="tabpanel" aria-labelledby="tab-armor" hidden>
+                <div class="calculator calculator--armor" data-calc="armor">
+                    <h2 class="calculator__header">
+                        <span>Armor Calculator</span>
+                    </h2>
+                    <div class="calculator__content">
+                        <div class="calculator__section-title">Coming Soon</div>
+                        <div class="calculator__list" data-calc="armor" data-section="main"></div>
+                    </div>
+                    <div class="calculator__total-section">
+                        <div class="calculator__total">
+                            <span>Total Armor:</span>
+                            <span class="calculator__total-value">0</span>
+                        </div>
+                        <div class="calculator__cap-status">Preparing…</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="legend">
+            <h3>Legend & Cap Information</h3>
+            <div class="legend__items">
+                <!-- Red first: Over Cap -->
+                <div class="legend__item">
+                    <div class="legend__color legend__color--over"></div>
+                    <span>Over Cap</span>
+                </div>
+                <!-- Green middle: OK range (will be updated dynamically) -->
+                <div class="legend__item">
+                    <div class="legend__color legend__color--ok"></div>
+                    <span> 18,200-18,999 | 125-127%</span>
+                </div>
+                <!-- Yellow last: Below Cap -->
+                <div class="legend__item">
+                    <div class="legend__color legend__color--below"></div>
+                    <span>Below Cap</span>
+                </div>
+            </div>
+            <div class="legend__tips">
+                <div class="legend__tip legend__tip--pen"><strong>Optimal Penetration:</strong> 18,200-18,999 (PvE) or 33,300-37,000 (PvP)</div>
+                <div class="legend__tip legend__tip--crit"><strong>Optimal Critical Damage:</strong> 125-127%</div>
+            </div>
+            <div class="legend__note"><em>Grey italic numbers show per-stack values for stackable buffs</em></div>
+        </div>
+    </div>
+
+    <script src="script.js?v=lite4"></script>
+  </body>
+</html>

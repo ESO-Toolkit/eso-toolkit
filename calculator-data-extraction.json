@@ -1,0 +1,217 @@
+{
+  "constants": {
+    "PEN_CAP": 18200,
+    "CRIT_CAP": 125,
+    "PEN_MAX": 18999,
+    "CRIT_MAX": 127,
+    "PVP_PEN_CAP": 33300,
+    "PVP_PEN_MAX": 37000
+  },
+  "penData": {
+    "groupBuffs": [
+      { "name": "Major Breach", "enabled": true, "quantity": 1, "value": 5948, "isFlat": true, "category": "group" },
+      { "name": "Minor Breach", "enabled": true, "quantity": 1, "value": 2974, "isFlat": true, "category": "group" },
+      { "name": "Roar of Alkosh", "enabled": false, "quantity": 1, "value": 6000, "isFlat": true, "category": "group" },
+      { "name": "Crimson Oath's Rive", "enabled": false, "quantity": 1, "value": 3541, "isFlat": true, "category": "group" },
+      { "name": "Tremorscale", "enabled": false, "quantity": 1, "value": 2640, "isFlat": true, "category": "group" }
+    ],
+    "gear": [
+      { "name": "Legendary Infused Crusher Enchant", "enabled": true, "quantity": 1, "value": 2108, "isFlat": true, "category": "gear" },
+      { "name": "Runic Sunder", "enabled": true, "quantity": 1, "value": 2200, "isFlat": true, "category": "gear" },
+      { "name": "Crystal Weapon", "enabled": false, "quantity": 1, "value": 1000, "isFlat": true, "category": "gear" },
+      { "name": "Velothi Ur-Mage's Amulet", "enabled": true, "quantity": 1, "value": 1650, "isFlat": true, "category": "gear" },
+      { "name": "Shattered Fate", "enabled": false, "quantity": 1, "value": 7918, "isFlat": true, "category": "gear" },
+      { "name": "Armor Set Penetration Bonus", "enabled": false, "quantity": 1, "per": 1487, "maxQuantity": 2, "category": "gear" },
+      { "name": "Spriggan's Thorns", "enabled": false, "quantity": 1, "value": 3460, "isFlat": true, "category": "gear" },
+      { "name": "Sharpened (1H Trait)", "enabled": false, "quantity": 1, "value": 1638, "isFlat": true, "category": "gear" },
+      { "name": "Sharpened (2H Trait)", "enabled": false, "quantity": 1, "value": 3276, "isFlat": true, "category": "gear" },
+      { "name": "Arena 1-piece Bonus", "enabled": false, "quantity": 1, "value": 1190, "isFlat": true, "category": "gear" },
+      { "name": "Anthelmir", "enabled": false, "quantity": 5000, "per": 1, "maxQuantity": 100000, "minQuantity": 0, "step": 1, "quantityTitle": "Weapon Damage (enter WD)", "category": "gear" },
+      { "name": "Balorgh", "enabled": false, "quantity": 70, "per": 23, "maxQuantity": 500, "minQuantity": 0, "step": 1, "quantityTitle": "", "category": "gear" }
+    ],
+    "passives": [
+      { "name": "Wood Elf Passive: Hunter's Eye", "enabled": false, "quantity": 1, "value": 950, "isFlat": true, "category": "passive" },
+      { "name": "Grave Lord Passive: Dismember", "enabled": false, "quantity": 1, "value": 3271, "isFlat": true, "category": "passive" },
+      { "name": "Herald of the Tome: Splintered Secrets", "enabled": true, "quantity": 2, "per": 1240, "maxQuantity": 5, "category": "passive" },
+      { "name": "Light Armor Passive: Concentration", "enabled": true, "quantity": 1, "per": 939, "maxQuantity": 7, "category": "passive" },
+      { "name": "Dual Wield: Twin Blade and Blunt (Mace)", "enabled": false, "quantity": 1, "per": 1487, "maxQuantity": 2, "category": "passive" },
+      { "name": "Two Handed: Heavy Weapons (Maul)", "enabled": false, "quantity": 1, "value": 2974, "isFlat": true, "category": "passive" }
+    ],
+    "cp": [
+      { "name": "Champion Point: Piercing", "enabled": true, "quantity": 2, "per": 350, "maxQuantity": 2, "category": "cp" },
+      { "name": "Champion Point: Force of Nature", "enabled": false, "quantity": 3, "per": 220, "maxQuantity": 7, "category": "cp" }
+    ]
+  },
+  "critData": {
+    "groupBuffs": [
+      { "name": "Base Character Critical Damage", "enabled": true, "quantity": 1, "value": 50, "isFlat": true, "isPercent": true, "category": "group", "locked": true, "hideTooltip": true },
+      { "name": "Minor Force", "enabled": true, "quantity": 1, "value": 10, "isFlat": true, "isPercent": true, "category": "group" },
+      { "name": "Major Force", "enabled": false, "quantity": 1, "value": 20, "isFlat": true, "isPercent": true, "category": "group" },
+      { "name": "Minor Brittle", "enabled": true, "quantity": 1, "value": 10, "isFlat": true, "isPercent": true, "category": "group" },
+      { "name": "Major Brittle", "enabled": false, "quantity": 1, "value": 20, "isFlat": true, "isPercent": true, "category": "group" },
+      { "name": "Elemental Catalyst", "enabled": false, "quantity": 3, "per": 5, "maxQuantity": 3, "isPercent": true, "category": "group" }
+    ],
+    "gear": [
+      { "name": "Lucent Echoes", "enabled": true, "quantity": 1, "value": 11, "isFlat": true, "isPercent": true, "category": "gear" },
+      { "name": "Sul-Xan's Torment", "enabled": false, "quantity": 1, "value": 12, "isFlat": true, "isPercent": true, "category": "gear" },
+      { "name": "Mora Scribe's Thesis", "enabled": false, "quantity": 12, "per": 1, "maxQuantity": 12, "isPercent": true, "category": "gear" },
+      { "name": "Harpooner's Wading Kilt", "enabled": false, "quantity": 10, "per": 1, "maxQuantity": 10, "isPercent": true, "category": "gear" }
+    ],
+    "passives": [
+      { "name": "Herald of the Tome: Fated Fortune", "enabled": true, "quantity": 2, "per": 6, "maxQuantity": 2, "isPercent": true, "category": "passive" },
+      { "name": "Assassination: Hemorrhage", "enabled": true, "quantity": 2, "per": 5, "maxQuantity": 2, "isPercent": true, "category": "passive" },
+      { "name": "Aedric Spear: Piercing Spear", "enabled": false, "quantity": 1, "value": 12, "isFlat": true, "isPercent": true, "category": "passive" },
+      { "name": "Medium Armor: Dexterity", "enabled": true, "quantity": 6, "per": 2, "maxQuantity": 7, "isPercent": true, "category": "passive" },
+      { "name": "Animal Companions: Advanced Species", "enabled": false, "quantity": 1, "value": 15, "isFlat": true, "isPercent": true, "category": "passive" },
+      { "name": "Dual Wield: Twin Blade and Blunt (Axe)", "enabled": false, "quantity": 2, "per": 6, "maxQuantity": 2, "isPercent": true, "category": "passive" },
+      { "name": "Two Handed: Heavy Weapons (Axe)", "enabled": false, "quantity": 2, "per": 6, "maxQuantity": 2, "isPercent": true, "category": "passive" },
+      { "name": "Khajiit Passive: Feline Ambush", "enabled": false, "quantity": 1, "value": 12, "isFlat": true, "isPercent": true, "category": "passive" }
+    ],
+    "cp": [
+      { "name": "Fighting Finesse", "enabled": false, "quantity": 2, "per": 4, "maxQuantity": 2, "isPercent": true, "category": "cp" },
+      { "name": "Backstabber", "enabled": false, "quantity": 5, "per": 2, "maxQuantity": 5, "isPercent": true, "category": "cp" }
+    ]
+  },
+  "tooltips": {
+    "TOOLTIP_DICT": {
+      "Major Breach": "Reduces target's Physical and Spell Resistance by <strong>5948</strong>.",
+      "Minor Breach": "Reduces target's Physical and Spell Resistance by <strong>2974</strong>.",
+      "Minor Force": "Increases Critical Damage by <strong>10%</strong>.",
+      "Major Force": "Increases Critical Damage by <strong>20%</strong>.",
+      "Minor Brittle": "Target takes <strong>10%</strong> more Critical Damage.",
+      "Major Brittle": "Target takes <strong>20%</strong> more Critical Damage.",
+      "Elemental Catalyst": "Enemies take up to <strong>15%</strong> increased Critical Damage when affected by different elemental status effects.",
+      "Legendary Infused Crusher Enchant": "Targets the closest enemy you damage, applying Crusher to reduce their Armor. Only one enemy can be affected at a time. Value scales with enchant quality and with the Infused trait on the weapon.",
+      "Runic Sunder": "<em>Soldier of Apocrypha</em><br><strong>Target:</strong> Enemy • <strong>Range:</strong> 22m • <strong>Cost:</strong> 1377<div class=\"tt-head\"><strong>Skill description</strong></div>Craft a defensive Apocryphal rune that deals 1161 Physical Damage. The rune steals <strong>2200 Armor</strong> and applies <strong>Minor Maim</strong> for 15 seconds, reducing their damage done by 5%. The rune also taunts for 15 seconds if it would not cause taunt immunity, and generates Crux. While slotted, damage taken is reduced by 2% per active Crux.",
+      "Crystal Weapon": "<strong>Target:</strong> Self • <em>Dark Magic</em> • <strong>Cost:</strong> 2295<div class=\"tt-head\"><strong>Skill description</strong></div>Encase your weapon in dark crystals for 6 seconds, causing your next two Light or Heavy Attacks to deal additional damage and reduce the target's Armor by <strong>1000</strong> for 5 seconds.<br>The first hit deals <strong>2091 Physical Damage</strong> and the second deals <strong>836 Physical Damage</strong>.<br>After casting, your next non-Ultimate ability used within 3 seconds costs 10% less.",
+      "Velothi Ur-Mage's Amulet": "Mythic: Increases Penetration and Critical Damage, with reduced Healing Taken.",
+      "Shattered Fate": "Set effect grants significant Penetration based on stacks.",
+      "Roar of Alkosh": "Trial set: On synergy use, reduces enemies' Armor in an area.",
+      "Crimson Oath's Rive": "Dungeon set: Applying a Major or Minor Breach also reduces Armor to nearby enemies.",
+      "Tremorscale": "Monster set: Taunting an enemy triggers Physical Damage and reduces their Armor.",
+      "Wood Elf Passive: Hunter's Eye": "<em>Wood Elf (Bosmer)</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Stealth Detection radius by 1 meter. Increases your Movement Speed by 1% and your Physical and Spell Penetration by 300.<br><u>Rank 2</u>: Increases your Stealth Detection radius by 2 meters. Increases your Movement Speed by 3% and your Physical and Spell Penetration by 600.<br><u>Rank 3</u>: Increases your Stealth Detection radius by 3 meters. Increases your Movement Speed by 5% and your Physical and Spell Penetration by 950.",
+      "Grave Lord Passive: Dismember": "<em>Necromancer — Grave Lord</em><br><strong>Effect</strong><br><u>Rank 1</u>: While a Grave Lord ability is active, your Spell and Physical Penetration are increased by 1635.<br><u>Rank 2</u>: While a Grave Lord ability is active, your Spell and Physical Penetration are increased by 3271.",
+      "Herald of the Tome: Splintered Secrets": "<em>Arcanist — Herald of the Tome</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increase your Physical and Spell Penetration by 620 per Herald of the Tome ability slotted.<br><u>Rank 2</u>: Increase your Physical and Spell Penetration by 1240 per Herald of the Tome ability slotted.",
+      "Light Armor Passive: Concentration": "<em>Light Armor</em><br><div class=\"tt-head\"><strong>Skill description</strong></div>Increases your Physical and Spell Penetration by <strong>939</strong> for each piece of Light Armor worn.",
+      "Dual Wield: Twin Blade and Blunt (Mace)": "<em>Dual Wield</em><br><div class=\"tt-head\"><strong>Skill description</strong></div>Grants a bonus based on the type of weapon equipped: Each <strong>axe</strong> increases your Critical Damage done by 6%. Each <strong>mace</strong> increases your Offensive Penetration by <strong>1487</strong>. Each <strong>sword</strong> increases your Weapon and Spell Damage by 129. Each <strong>dagger</strong> increases your Critical Chance rating by 657.",
+      "Two Handed: Heavy Weapons (Maul)": "<em>Two Handed</em><br><div class=\"tt-head\"><strong>Skill description</strong></div>Grants a bonus based on the type of weapon equipped: <strong>Greatswords</strong> increase your Weapon and Spell Damage by 258. <strong>Battle Axes</strong> increase your Critical Damage done by 12%. <strong>Mauls</strong> increase your Offensive Penetration by <strong>2974</strong>.",
+      "Assassination: Hemorrhage": "<em>Nightblade — Assassination</em><br><strong>Effect</strong><br><u>With an Assassination ability slotted</u><br><u>Rank 1</u>: Increases your Critical Damage by <strong>5%</strong>. Dealing Critical Damage grants you and your group <strong>Minor Savagery</strong>, increasing Weapon Critical rating by <strong>1314</strong> for 10 seconds.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>10%</strong>. Dealing Critical Damage grants you and your group <strong>Minor Savagery</strong>, increasing Weapon Critical rating by <strong>1314</strong> for 20 seconds.",
+      "Herald of the Tome: Fated Fortune": "<em>Arcanist — Herald of the Tome</em><br><strong>Effect</strong><br><u>Rank 1</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>6%</strong> for 7 seconds.<br><u>Rank 2</u>: When you generate or consume Crux, increase your Critical Damage and Critical Healing by <strong>12%</strong> for 7 seconds.<br><div class=\"tooltip-source\"><em>Tooltips by ESO-Hub.com</em></div>",
+      "Aedric Spear: Piercing Spear": "<em>Templar — Aedric Spear</em><br><strong>Effect</strong><br><u>With an Aedric Spear ability slotted</u><br><u>Rank 1</u>: Increases your Critical Damage by <strong>6%</strong>. Increases your damage done to blocking players by <strong>6%</strong>.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>12%</strong>. Increases your damage done to blocking players by <strong>12%</strong>.",
+      "Medium Armor: Dexterity": "<em>Medium Armor</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Critical Damage and Healing done by <strong>1%</strong> for every <strong>2</strong> pieces of Medium Armor equipped.<br><u>Rank 2</u>: Increases your Critical Damage and Healing done by <strong>1%</strong> for every piece of Medium Armor equipped.<br><u>Rank 3</u>: Increases your Critical Damage and Healing done by <strong>2%</strong> for every piece of Medium Armor equipped.",
+      "Animal Companions: Advanced Species": "<em>Warden — Animal Companions</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Critical Damage by <strong>2%</strong> for each Animal Companion ability slotted.<br><u>Rank 2</u>: Increases your Critical Damage by <strong>5%</strong> for each Animal Companion ability slotted.",
+      "Dual Wield: Twin Blade and Blunt (Axe)": "<em>Dual Wield</em><br><strong>Effect</strong><br><u>While Dual Wielding</u><br><u>Rank 1</u>: Each <strong>axe</strong> increases your Critical Damage done by <strong>3%</strong>. Each <strong>mace</strong> increases your Offensive Penetration by 743. Each <strong>sword</strong> increases your Weapon and Spell Damage by 64. Each <strong>dagger</strong> increases your Critical Chance rating by 328.<br><u>Rank 2</u>: Each <strong>axe</strong> increases your Critical Damage done by <strong>6%</strong>. Each <strong>mace</strong> increases your Offensive Penetration by 1487. Each <strong>sword</strong> increases your Weapon and Spell Damage by 129. Each <strong>dagger</strong> increases your Critical Chance rating by 657.",
+      "Two Handed: Heavy Weapons (Axe)": "<em>Two Handed</em><br><strong>Effect</strong><br><u>With a Two-Handed weapon equipped</u><br><u>Rank 1</u>: <strong>Greatswords</strong> +129 Weapon & Spell Damage. <strong>Battle Axes</strong> +6% Critical Damage done. <strong>Mauls</strong> +1487 Offensive Penetration.<br><u>Rank 2</u>: <strong>Greatswords</strong> +258 Weapon & Spell Damage. <strong>Battle Axes</strong> +12% Critical Damage done. <strong>Mauls</strong> +2974 Offensive Penetration.",
+      "Khajiit Passive: Feline Ambush": "<em>Khajiit</em><br><strong>Effect</strong><br><u>Rank 1</u>: Increases your Critical Damage and Critical Healing by <strong>4%</strong>. Decreases your detection radius in Stealth by 1 meter.<br><u>Rank 2</u>: Increases your Critical Damage and Critical Healing by <strong>8%</strong>. Decreases your detection radius in Stealth by 2 meters.<br><u>Rank 3</u>: Increases your Critical Damage and Critical Healing by <strong>12%</strong>. Decreases your detection radius in Stealth by 3 meters.",
+      "Mora Scribe's Thesis": "Set: Builds stacks to increase Critical Damage up to a maximum.",
+      "Harpooner's Wading Kilt": "Mythic: Stacking Critical Chance/Critical Damage while staying in combat and avoiding direct damage.",
+      "Lucent Echoes": "Set: Grants a burst of Critical Damage after proccing its condition; strong for sustained crit-focused builds.",
+      "Sul-Xan's Torment": "Set: Provides Critical Damage when enemies are recently slain or affected; excels in add-heavy encounters.",
+      "Armor Set Penetration Bonus": "Extra Penetration granted by certain armor sets when wearing multiple pieces.<br>Examples:<ul><li><a href=\"https://eso-hub.com/en/sets/tide-born-wildstalker\" target=\"_blank\" rel=\"noopener\">Tide-born Wildstalker</a></li><li><a href=\"https://eso-hub.com/en/sets/ansuuls-torment\" target=\"_blank\" rel=\"noopener\">Ansuul's Torment</a></li></ul>"
+    },
+    "cpTooltips": {
+      "Champion Point: Piercing": "<strong>Champion Point: Piercing</strong><br>Increases Physical and Spell Penetration by 350 per stage.<br>Max 2 stages (700 total).",
+      "Champion Point: Force of Nature": "<strong>Champion Point: Force of Nature</strong><br>Increases Penetration based on unique status effects applied to the enemy.<br>Synergizes well with elemental status effects.",
+      "Fighting Finesse": "<strong>Fighting Finesse</strong><br>Raises Critical Damage and Healing by 4% per stage.<br>Max 2 stages (8% total).",
+      "Backstabber": "<strong>Backstabber</strong><br>Increases Critical Damage by 2% per stage when attacking from behind enemies.<br>Max 5 stages (10%)."
+    }
+  },
+  "modeFilters": {
+    "pve": {
+      "pen": [
+        "Major Breach",
+        "Minor Breach", 
+        "Roar of Alkosh",
+        "Crimson Oath's Rive",
+        "Tremorscale",
+        "Legendary Infused Crusher Enchant",
+        "Runic Sunder",
+        "Velothi Ur-Mage's Amulet",
+        "Armor Set Penetration Bonus",
+        "Balorgh",
+        "Dual Wield: Twin Blade and Blunt (Mace)",
+        "Grave Lord Passive: Dismember",
+        "Herald of the Tome: Splintered Secrets",
+        "Light Armor Passive: Concentration",
+        "Champion Point: Piercing",
+        "Champion Point: Force of Nature"
+      ],
+      "crit": [
+        "Base Character Critical Damage",
+        "Minor Force",
+        "Minor Brittle",
+        "Elemental Catalyst",
+        "Lucent Echoes",
+        "Sul-Xan's Torment",
+        "Mora Scribe's Thesis",
+        "Herald of the Tome: Fated Fortune",
+        "Assassination: Hemorrhage",
+        "Aedric Spear: Piercing Spear",
+        "Medium Armor: Dexterity",
+        "Animal Companions: Advanced Species",
+        "Dual Wield: Twin Blade and Blunt (Axe)",
+        "Two Handed: Heavy Weapons (Axe)",
+        "Khajiit Passive: Feline Ambush",
+        "Fighting Finesse",
+        "Backstabber"
+      ]
+    },
+    "pvp": {
+      "pen": [
+        "Major Breach",
+        "Minor Breach",
+        "Legendary Infused Crusher Enchant",
+        "Crystal Weapon",
+        "Spriggan's Thorns",
+        "Sharpened (1H Trait)",
+        "Sharpened (2H Trait)",
+        "Anthelmir",
+        "Balorgh",
+        "Wood Elf Passive: Hunter's Eye",
+        "Herald of the Tome: Splintered Secrets",
+        "Light Armor Passive: Concentration",
+        "Dual Wield: Twin Blade and Blunt (Mace)",
+        "Two Handed: Heavy Weapons (Maul)",
+        "Champion Point: Piercing"
+      ],
+      "crit": [
+        "Base Character Critical Damage",
+        "Minor Force",
+        "Major Force",
+        "Minor Brittle",
+        "Major Brittle",
+        "Harpooner's Wading Kilt",
+        "Herald of the Tome: Fated Fortune",
+        "Assassination: Hemorrhage",
+        "Aedric Spear: Piercing Spear",
+        "Medium Armor: Dexterity",
+        "Animal Companions: Advanced Species",
+        "Dual Wield: Twin Blade and Blunt (Axe)",
+        "Two Handed: Heavy Weapons (Axe)",
+        "Khajiit Passive: Feline Ambush",
+        "Fighting Finesse",
+        "Backstabber"
+      ]
+    }
+  },
+  "calculatorFunctions": {
+    "specialCalculations": {
+      "Anthelmir": "weaponDamage / 2.5",
+      "Balorgh": "ultimateCost * 23"
+    },
+    "valueCalculation": {
+      "flat": "item.value",
+      "stackable": "item.quantity * item.per"
+    },
+    "caps": {
+      "pve": {
+        "penetration": { "cap": 18200, "max": 18999 },
+        "critical": { "cap": 125, "max": 127 }
+      },
+      "pvp": {
+        "penetration": { "cap": 33300, "max": 37000 },
+        "critical": { "cap": 125, "max": 127 }
+      }
+    }
+  }
+}

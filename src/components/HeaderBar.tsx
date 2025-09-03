@@ -261,7 +261,7 @@ export const HeaderBar: React.FC = () => {
     {
       text: 'Calculator',
       icon: <Calculator size="18" />,
-      href: 'https://esohelper.tools/calculator',
+      href: '#/calculator',
     },
     {
       text: 'Discord',
