@@ -140,7 +140,7 @@ export interface AbilityMorph {
 
 interface Ultimate {
   name: string;
-  type: 'ultimate';
+  type?: 'ultimate';
   cost?: string;
   target: string;
   duration?: string;
@@ -155,7 +155,7 @@ interface Ultimate {
   spawnHealth?: string;
   maxBuff?: string;
   maxHealing?: string;
-  morphs:
+  morphs?:
     | {
         [key: string]: AbilityMorph;
       }
@@ -203,7 +203,7 @@ interface Ultimate {
 
 export interface ActiveAbility {
   name: string;
-  type: 'active';
+  type?: 'active';
   cost?: string;
   castTime?: string;
   target?: string;
@@ -246,7 +246,7 @@ export interface ActiveAbility {
         [key: string]: string;
       }
     | string[];
-  morphs:
+  morphs?:
     | {
         [key: string]: AbilityMorph;
       }

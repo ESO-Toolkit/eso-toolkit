@@ -569,9 +569,9 @@ export function getCritDamageFromComputedSource(
       const animalCompanionAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
         Object.values(wardenData.skillLines.animalCompanions.activeAbilities || {})
           .flatMap((ability) => {
-            return [ability, ...Object.values(ability.morphs)];
+            return [ability, ...(ability.morphs ? Object.values(ability.morphs) : [])];
           })
-          .some((a) => a.name === t.name)
+          .some((a) => a?.name === t.name)
       );
       return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
