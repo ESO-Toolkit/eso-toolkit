@@ -3,3 +3,12 @@ build/
 public/
 *.config.js
 craco.config.js
+coverage/
+dist/
+.storybook/
+src/**/*.d.ts
+src/data/abilities.json
+**/*.stories.ts
+**/*.stories.tsx
+**/*.test.ts
+**/*.test.tsx
