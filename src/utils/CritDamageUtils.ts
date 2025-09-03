@@ -567,7 +567,7 @@ export function getCritDamageFromComputedSource(
       // Count Animal Companions abilities on front bar
       if (!playerData) return 0;
       const animalCompanionAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
-        Object.values(wardenData.skillLines.animalCompanions.activeAbilities)
+        Object.values(wardenData.skillLines.animalCompanions.activeAbilities || {})
           .flatMap((ability) => {
             return [ability, ...Object.values(ability.morphs)];
           })

@@ -16,7 +16,9 @@
       "Bash(npx tsc:*)",
       "Bash(npm run lint:*)",
       "Bash(npm run format:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(node:*)",
+      "Bash(find:*)"
     ],
     "deny": [],
     "ask": []

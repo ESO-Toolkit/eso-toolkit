@@ -1,0 +1,182 @@
+import { SkillsetData } from '../skillsets/Skillset';
+
+export const fightersGuildData: SkillsetData = {
+  weapon: 'Fighters Guild',
+  skillLines: {
+    fightersGuild: {
+      name: 'Fighters Guild',
+      icon: '⚔️',
+      passives: [
+        {
+          name: 'Banish the Wicked',
+          description: 'You generate 3 Ultimate whenever you kill an enemy.',
+          requirement: 'WITH A FIGHTERS GUILD ABILITY SLOTTED'
+        },
+        {
+          name: 'Bounty Hunter',
+          description: 'Allows you to accept bounty quests from the Fighters Guild in Cyrodiil.',
+          requirement: ''
+        },
+        {
+          name: 'Intimidating Presence',
+          description: 'Allows you to Intimidate NPCs in conversation. Reduces the Stamina cost of your Fighters Guild abilities by 15%.',
+          requirement: ''
+        },
+        {
+          name: 'Skilled Tracker',
+          description: 'Your Fighters Guild abilities deal an additional 10% damage. This bonus doubles against player Vampires and Werewolves.',
+          requirement: ''
+        },
+        {
+          name: 'Slayer',
+          description: 'Increases your Weapon and Spell Damage by 3% for each Fighters Guild ability slotted.',
+          requirement: ''
+        }
+      ],
+      actives: [
+        {
+          name: 'Circle of Protection',
+          cost: '3780 Stamina',
+          target: 'Area',
+          duration: '20 seconds',
+          radius: '5 meters',
+          description: 'Brand the earth at your location with a rune of protection for 20 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%.',
+          morphs: [
+            {
+              name: 'Ring of Preservation',
+              cost: '3780 Stamina',
+              target: 'Area',
+              duration: '10 seconds',
+              radius: '5 meters',
+              description: 'Brand the earth at your location with a rune of protection for 10 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing damage taken by 5% and increasing Stamina Recovery by 15%, and are healed for 435 Health every 1 second.'
+            },
+            {
+              name: 'Turn Evil',
+              cost: '3780 Stamina',
+              target: 'Area',
+              duration: '20 seconds',
+              radius: '5 meters',
+              description: 'Brand the earth at your location with a rune of protection for 20 seconds. You and your allies in the area gain Minor Protection and Minor Endurance, reducing your damage taken by 5% and increasing your Stamina Recovery by 15%. Upon activation, enemies in the area are feared for 4 seconds.'
+            }
+          ]
+        },
+        {
+          name: 'Expert Hunter',
+          cost: '5130 Stamina',
+          target: 'Area',
+          duration: '5 seconds',
+          radius: '8 meters',
+          description: 'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+          morphs: [
+            {
+              name: 'Camouflaged Hunter',
+              cost: '5130 Stamina',
+              target: 'Area',
+              duration: '5 seconds',
+              radius: '8 meters',
+              description: 'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629. You also gain Minor Berserk for 5 seconds after dealing Critical Damage from an enemy\'s flank.'
+            },
+            {
+              name: 'Evil Hunter',
+              cost: '5130 Stamina',
+              target: 'Area',
+              duration: '5 seconds',
+              radius: '12 meters',
+              description: 'Invoke your expertise in anatomy and enemy behavior to detect stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While active, increases the damage of your Stamina costing Fighters Guild abilities by 25%. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.'
+            }
+          ]
+        },
+        {
+          name: 'Silver Bolts',
+          cost: '2700 Stamina',
+          target: 'Enemy',
+          maxRange: '28 meters',
+          description: 'Fire a Dawnguard Vampire Hunter\'s crossbow bolt to strike an enemy, dealing 2090 Physical Damage.',
+          morphs: [
+            {
+              name: 'Silver Leash',
+              cost: '3780 Stamina',
+              target: 'Enemy',
+              maxRange: '22 meters',
+              description: 'Fire a Dawnguard\'s crossbow hook to pull an enemy to you, dealing 1438 Physical Damage, taunting them for 15 seconds if they are not already taunted, and reducing their Movement Speed by 30% for 4 seconds.'
+            },
+            {
+              name: 'Silver Shards',
+              cost: '2700 Stamina',
+              target: 'Enemy',
+              maxRange: '28 meters',
+              radius: '5 meters',
+              description: 'Fire an augmented Dawnguard Vampire Hunter\'s crossbow bolt to strike an enemy, dealing 2091 Physical Damage. Fires additional bolts at other enemies near the initial target for 22% less damage.'
+            }
+          ]
+        },
+        {
+          name: 'Torchbearer',
+          cost: 'Determined by Highest Max Resource',
+          castTime: '2 seconds',
+          target: 'Cone',
+          radius: '8 meters',
+          description: 'Conjure an imbued torch and sweep the area in front of you three times with its power.'
+        },
+        {
+          name: 'Trap Beast',
+          cost: '3240 Stamina',
+          target: 'Area',
+          duration: '20 seconds',
+          radius: '2.5 meters',
+          description: 'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies who activate the trap are immobilized for 2 seconds.',
+          morphs: [
+            {
+              name: 'Barbed Trap',
+              cost: '3240 Stamina',
+              target: 'Area',
+              duration: '20 seconds',
+              radius: '2.5 meters',
+              description: 'Set a sharpened blade trap at your location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1438 Bleed Damage, an additional 3580 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies hit by the initial hit are afflicted with the Hemorrhaging status effect. Enemies who activate the trap are immobilized for 2 seconds.'
+            },
+            {
+              name: 'Lightweight Beast Trap',
+              cost: '2970 Stamina',
+              target: 'Ground',
+              duration: '20 seconds',
+              maxRange: '28 meters',
+              radius: '2.5 meters',
+              description: 'Launch a sharpened blade trap at a target location, which takes 1.5 seconds to arm and lasts for 20 seconds. When triggered, the trap deals 1161 Bleed Damage, an additional 3470 Bleed Damage over 20 seconds, and grants you Minor Force, increasing your Critical Damage by 10% for the duration. Enemies who activate the trap are immobilized for 2 seconds.'
+            }
+          ]
+        }
+      ],
+      ultimates: [
+        {
+          name: 'Dawnbreaker',
+          cost: '125 Ultimate',
+          castTime: '0.4 second',
+          target: 'Cone',
+          duration: '6 seconds',
+          radius: '10 meters',
+          description: 'Arm yourself with Meridia\'s sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds.',
+          morphs: [
+            {
+              name: 'Dawnbreaker of Smiting',
+              cost: '125 Ultimate',
+              castTime: '0.4 second',
+              target: 'Cone',
+              duration: '6 seconds',
+              radius: '10 meters',
+              description: 'Arm yourself with Meridia\'s sacred sword and dispense her retribution, dealing 3600 Physical Damage to enemies in front of you, an additional 4314 Physical Damage over 6 seconds, and stunning them for 2 seconds.'
+            },
+            {
+              name: 'Flawless Dawnbreaker',
+              cost: '125 Ultimate',
+              castTime: '0.4 second',
+              target: 'Cone',
+              duration: '6 seconds',
+              radius: '10 meters',
+              description: 'Arm yourself with Meridia\'s sacred sword and dispense her retribution, dealing 2904 Physical Damage to enemies in front of you and an additional 3483 Physical Damage over 6 seconds. After activating, your Weapon and Spell Damage is increased by 300 for 20 seconds.'
+            }
+          ]
+        }
+      ]
+    }
+  }
+};
