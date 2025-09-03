@@ -74,8 +74,8 @@ export const TargetSelector: React.FC = () => {
   }
 
   return (
-    <Box 
-      sx={{ 
+    <Box
+      sx={{
         mb: 2,
         position: 'relative',
         '&::before': {
