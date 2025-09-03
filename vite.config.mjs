@@ -28,12 +28,13 @@ export default defineConfig(({ command, mode }) => {
         include: '**/*.svg?react',
       }),
       react(),
-      eslint({
+      // Disable ESLint during build to reduce memory usage
+      ...(command === 'serve' ? [eslint({
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['node_modules', 'build'],
         emitWarning: true,
         emitError: false,
-      }),
+      })] : []),
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
@@ -68,11 +69,12 @@ export default defineConfig(({ command, mode }) => {
     // Build configuration
     build: {
       outDir: 'build',
-      sourcemap: true,
+      sourcemap: false, // Disable sourcemaps to reduce memory usage
       target: 'es2020',
+      minify: 'esbuild', // Use esbuild for faster, less memory-intensive minification
       rollupOptions: {
         output: {
-          // Manual chunk splitting for better caching
+          // Manual chunk splitting for better caching and reduced memory usage
           manualChunks: {
             vendor: ['react', 'react-dom'],
             mui: ['@mui/material', '@mui/icons-material'],
@@ -82,6 +84,8 @@ export default defineConfig(({ command, mode }) => {
             charts: ['chart.js', 'react-chartjs-2', 'chartjs-plugin-annotation'],
           },
         },
+        // Reduce memory usage during bundling
+        maxParallelFileOps: 2,
       },
       // Increase chunk size warning limit
       chunkSizeWarningLimit: 1000,

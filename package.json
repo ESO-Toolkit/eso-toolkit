@@ -51,7 +51,7 @@
     "dev": "vite",
     "start": "vite",
     "start:dev": "vite --mode development",
-    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" vite build",
+    "build": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "preview": "vite preview",
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "analyze-all": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
