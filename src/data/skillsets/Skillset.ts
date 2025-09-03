@@ -138,7 +138,7 @@ export interface AbilityMorph {
   [key: string]: string | number | boolean | object | string[] | undefined;
 }
 
-interface Ultimate {
+export interface Ultimate {
   name: string;
   type?: 'ultimate';
   cost?: string;
@@ -262,7 +262,7 @@ export interface ActiveAbility {
   [key: string]: string | number | boolean | object | string[] | undefined;
 }
 
-interface Passive {
+export interface Passive {
   name: string;
   description: string;
   requirement?: string;
@@ -270,7 +270,7 @@ interface Passive {
   [key: string]: string | undefined;
 }
 
-interface SkillLine {
+export interface SkillLine {
   name: string;
   icon?: string;
   ultimates?:

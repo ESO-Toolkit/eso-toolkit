@@ -559,7 +559,7 @@ function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number
   const wardenAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
     Object.values(wardenData.skillLines.wintersEmbrace.activeAbilities || {})
       .flatMap((ability) => {
-        return [ability, ...(ability.morphs ? Object.values(ability.morphs) : [])];
+        return [ability, ...Object.values(ability.morphs ?? {})];
       })
       .some((a) => a?.name === t.name)
   );
