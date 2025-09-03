@@ -18,7 +18,8 @@
       "Bash(npm run format:*)",
       "Bash(git add:*)",
       "Bash(node:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(git push:*)"
     ],
     "deny": [],
     "ask": []

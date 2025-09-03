@@ -129,7 +129,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           mb: 1,
           width: '100%',
           minWidth: 0,
-          overflow: 'hidden',
+          overflow: 'visible',
         }}
       >
         <Tabs
@@ -140,6 +140,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             minWidth: 'auto',
             flexGrow: 1,
             minHeight: 'auto',
+            overflow: 'visible !important',
             '& .MuiTabs-indicator': {
               backgroundColor: '#406374',
               transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
