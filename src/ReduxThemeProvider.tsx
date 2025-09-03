@@ -759,6 +759,14 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: `${darkMode ? '#e5e7eb' : '#1e293b'} !important`,
             border: `${darkMode ? '1px solid rgba(56, 189, 248, 0.2)' : '1px solid rgba(0, 0, 0, 0.23)'} !important`,
           },
+          // Remove calculator list item ::before pseudo-elements with maximum specificity
+          '.calculator-list-item::before, .calculator-list-item.MuiListItem-root::before, .MuiListItem-root.calculator-list-item::before, [class*="MuiListItem-root"]::before': {
+            display: 'none !important',
+            width: '0 !important',
+            height: '0 !important',
+            opacity: '0 !important',
+            visibility: 'hidden !important',
+          },
           // Enhanced scrollbar styles for TextFields and form elements
           '.MuiTextField-root textarea, .MuiOutlinedInput-input': {
             '&::-webkit-scrollbar': {

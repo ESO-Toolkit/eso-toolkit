@@ -447,6 +447,7 @@ const Calculator: React.FC = () => {
     return (
       <ListItem
         key={index}
+        className="calculator-list-item"
         sx={{
           display: 'grid',
           gridTemplateColumns: hasQuantity
@@ -511,20 +512,6 @@ const Calculator: React.FC = () => {
                   : 'none',
               }
             : {},
-          // Accent border for enabled items
-          ...(item.enabled &&
-            !liteMode && {
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: '3px',
-                backgroundColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6',
-                borderRadius: '2px 0 0 2px',
-              },
-            }),
         }}
         onClick={() => !item.locked && updateFunction(category, index, { enabled: !item.enabled })}
       >
