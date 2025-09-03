@@ -78,8 +78,8 @@
     "format:check": "prettier --check ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
     "codegen": "node --loader ts-node/esm run-codegen.mts",
     "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts",
-    "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "storybook": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" storybook dev -p 6006",
+    "build-storybook": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" storybook build"
   },
   "browserslist": {
     "production": [
