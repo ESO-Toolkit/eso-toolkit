@@ -2,7 +2,8 @@
   "extends": ["react-app", "plugin:@typescript-eslint/recommended"],
   "plugins": ["storybook", "@typescript-eslint", "import", "deprecation"],
   "parserOptions": {
-    "project": "./tsconfig.json"
+    "project": "./tsconfig.json",
+    "createDefaultProgram": false
   },
   "rules": {
     "import/no-default-export": "error",

@@ -42,7 +42,7 @@ import {
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
-import { buildTooltipPropsFromClassAndName } from '../../../utils/skillTooltipMapper';
+import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 
 // Glossy Chip styling (glassmorphism + shine) and color variants
 const legendaryGlow = keyframes`
@@ -916,10 +916,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                         leaveTouchDelay={3000}
                                         title={(() => {
                                           const clsKey = toClassKey(player.type);
-                                          const rich = buildTooltipPropsFromClassAndName(
-                                            clsKey,
-                                            talent.name
-                                          );
+                                          // Try ID-based lookup first, then fall back to name-based
+                                          const rich = buildTooltipProps({
+                                            abilityId: talent.guid,
+                                            abilityName: talent.name,
+                                            classKey: clsKey,
+                                          });
                                           const base = {
                                             name: talent.name,
                                             description: `${talent.name} (ID: ${talent.guid})`,
@@ -932,7 +934,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                   ? `${rich?.name ?? base.name} (Ultimate)`
                                                   : (rich?.name ?? base.name)
                                               }
-                                              iconUrl={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                              iconUrl={
+                                                rich?.iconUrl ||
+                                                `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                              }
+                                              abilityId={talent.guid}
                                             />
                                           );
                                         })()}
@@ -1012,10 +1018,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                           leaveTouchDelay={3000}
                                           title={(() => {
                                             const clsKey = toClassKey(player.type);
-                                            const rich = buildTooltipPropsFromClassAndName(
-                                              clsKey,
-                                              talent.name
-                                            );
+                                            // Try ID-based lookup first, then fall back to name-based
+                                            const rich = buildTooltipProps({
+                                              abilityId: talent.guid,
+                                              abilityName: talent.name,
+                                              classKey: clsKey,
+                                            });
                                             const base = {
                                               name: talent.name,
                                               description: `${talent.name} (ID: ${talent.guid})`,
@@ -1028,7 +1036,11 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                     ? `${rich?.name ?? base.name} (Ultimate)`
                                                     : (rich?.name ?? base.name)
                                                 }
-                                                iconUrl={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                                iconUrl={
+                                                  rich?.iconUrl ||
+                                                  `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                                }
+                                                abilityId={talent.guid}
                                               />
                                             );
                                           })()}

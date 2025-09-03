@@ -1,0 +1,177 @@
+import { SkillsetData } from '../skillsets/Skillset';
+
+export const magesGuildData: SkillsetData = {
+  weapon: 'Mages Guild',
+  skillLines: {
+    magesGuild: {
+      name: 'Mages Guild',
+      icon: '✨',
+      passives: [
+        {
+          name: 'Everlasting Magic',
+          description: 'Increases the duration of your Mages Guild abilities by 2 seconds.',
+          requirement: ''
+        },
+        {
+          name: 'Mage Adept',
+          description: 'Reduces the Magicka and Health cost of your Mages Guild abilities by 15%.',
+          requirement: ''
+        },
+        {
+          name: 'Magicka Controller',
+          description: 'Increases your Max Magicka and Magicka Recovery by 2% for each Mages Guild ability slotted.',
+          requirement: ''
+        },
+        {
+          name: 'Might of the Guild',
+          description: 'Casting a Mages Guild ability grants you Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 10 seconds.',
+          requirement: ''
+        },
+        {
+          name: 'Persuasive Will',
+          description: 'Allows you to Persuade NPCs in conversation.',
+          requirement: ''
+        }
+      ],
+      actives: [
+        {
+          name: 'Entropy',
+          cost: '2700 Magicka',
+          target: 'Enemy',
+          duration: '20 seconds',
+          maxRange: '28 meters',
+          description: 'Bind an enemy with chaotic magic, dealing 4631 Magic Damage over 20 seconds.',
+          morphs: [
+            {
+              name: 'Degeneration',
+              cost: '2430 Magicka',
+              target: 'Enemy',
+              duration: '20 seconds',
+              maxRange: '28 meters',
+              description: 'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds. Excess magic spills out from them, granting you Major Brutality and Sorcery, increasing your Weapon and Spell Damage by 20% for 20 seconds.'
+            },
+            {
+              name: 'Structured Entropy',
+              cost: '2700 Magicka',
+              target: 'Enemy',
+              duration: '20 seconds',
+              maxRange: '28 meters',
+              description: 'Bind an enemy with chaotic magic, dealing 4642 Magic Damage over 20 seconds, and healing you for 435 every 2 seconds.'
+            }
+          ]
+        },
+        {
+          name: 'Equilibrium',
+          cost: '6000 Health',
+          target: 'Self',
+          description: 'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds.',
+          morphs: [
+            {
+              name: 'Balance',
+              cost: '6000 Health',
+              target: 'Self',
+              description: 'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. After the exchange is complete, you gain Major Resolve for 30 seconds, increasing your Physical and Spell Resistance by 5948. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds.'
+            },
+            {
+              name: 'Spell Symmetry',
+              cost: '6000 Health',
+              target: 'Self',
+              description: 'Barter with Oblivion to trade vitality for power, sacrificing your Health in exchange for 3000 Magicka. After the exchange is complete, the cost of your next Magicka ability is reduced by 33% for 5 seconds. The exchange reduces your healing done and damage shield strength by 50% for 4 seconds.'
+            }
+          ]
+        },
+        {
+          name: 'Fire Rune',
+          cost: '3240 Magicka',
+          target: 'Ground',
+          duration: '20 seconds',
+          maxRange: '28 meters',
+          radius: '3 meters',
+          description: 'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage.',
+          morphs: [
+            {
+              name: 'Scalding Rune',
+              cost: '3240 Magicka',
+              target: 'Ground',
+              duration: '20 seconds',
+              maxRange: '28 meters',
+              radius: '3 meters',
+              description: 'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage and an additional 2871 Flame Damage over 22 seconds.'
+            },
+            {
+              name: 'Volcanic Rune',
+              cost: '2970 Magicka',
+              target: 'Ground',
+              duration: '20 seconds',
+              maxRange: '28 meters',
+              radius: '3 meters',
+              description: 'Inscribe a rune of cosmic fire on the earth, which takes 2 seconds to arm and lasts for 20 seconds. When triggered, the rune blasts all enemies in the target area for 2323 Flame Damage, knocks them into the air, and stuns them for 3 seconds.'
+            }
+          ]
+        },
+        {
+          name: 'Magelight',
+          cost: '5130 Magicka',
+          target: 'Area',
+          duration: '5 seconds',
+          radius: '8 meters',
+          description: 'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629.',
+          morphs: [
+            {
+              name: 'Inner Light',
+              cost: '5130 Magicka',
+              target: 'Area',
+              duration: '5 seconds',
+              radius: '8 meters',
+              description: 'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629 and your Max Magicka is increased by 5%.'
+            },
+            {
+              name: 'Radiant Magelight',
+              cost: '4860 Magicka',
+              target: 'Area',
+              duration: '5 seconds',
+              radius: '12 meters',
+              description: 'Summon a mote of magelight, revealing stealthed and invisible enemies around you for 5 seconds. Exposed enemies cannot return to stealth or invisibility for 4 seconds. While slotted you gain Major Savagery and Prophecy, increasing your Weapon and Spell Critical rating by 2629. You also prevent the stun from stealth attacks for you and nearby allies.'
+            }
+          ]
+        },
+        {
+          name: 'Ulfsild\'s Contingency',
+          cost: 'Determined by Highest Max Resource',
+          target: 'Self',
+          duration: '22 seconds',
+          radius: '8 meters',
+          description: 'Imbue yourself with the magical runes of Ulfsild. These runes trigger when you cast an ability with a cost, causing a burst of magic around you.'
+        }
+      ],
+      ultimates: [
+        {
+          name: 'Meteor',
+          cost: '200 Ultimate',
+          target: 'Enemy',
+          maxRange: '28 meters',
+          radius: '5 meters',
+          description: 'Call a comet down from the constellations to blast an enemy, dealing 4065 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds. After impact, enemies in the target area take 1161 Flame Damage every 1 second for 11 seconds.',
+          morphs: [
+            {
+              name: 'Ice Comet',
+              cost: '200 Ultimate',
+              target: 'Enemy',
+              maxRange: '28 meters',
+              radius: '5 meters',
+              description: 'Call a comet down from the constellations to blast an enemy, dealing 4620 Frost Damage to all enemies in the area, knocking them down, stunning them for 2 seconds, and reducing their Movement Speed by 50% for 5 seconds. After impact, enemies in the target area take 1319 Frost Damage every 1 second for 11 seconds.'
+            },
+            {
+              name: 'Shooting Star',
+              cost: '185 Ultimate',
+              target: 'Enemy',
+              maxRange: '28 meters',
+              radius: '5 meters',
+              description: 'Call a comet down from the constellations to blast an enemy, dealing 4067 Flame Damage to all enemies in the area, knocking them down, and stunning them for 2 seconds. After impact, enemies in the target area take 1161 Flame Damage every 1 second for 11 seconds. You generate 10 Ultimate for each enemy hit by the initial blast, up to 6 times.'
+            }
+          ]
+        }
+      ]
+    }
+  }
+};

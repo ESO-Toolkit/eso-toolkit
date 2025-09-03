@@ -140,7 +140,7 @@ export interface AbilityMorph {
 
 interface Ultimate {
   name: string;
-  type: 'ultimate';
+  type?: 'ultimate';
   cost?: string;
   target: string;
   duration?: string;
@@ -155,9 +155,11 @@ interface Ultimate {
   spawnHealth?: string;
   maxBuff?: string;
   maxHealing?: string;
-  morphs: {
-    [key: string]: AbilityMorph;
-  };
+  morphs?:
+    | {
+        [key: string]: AbilityMorph;
+      }
+    | AbilityMorph[];
 
   // Additional properties found in skill data
   knockback?: string;
@@ -201,7 +203,7 @@ interface Ultimate {
 
 export interface ActiveAbility {
   name: string;
-  type: 'active';
+  type?: 'active';
   cost?: string;
   castTime?: string;
   target?: string;
@@ -244,9 +246,11 @@ export interface ActiveAbility {
         [key: string]: string;
       }
     | string[];
-  morphs: {
-    [key: string]: AbilityMorph;
-  };
+  morphs?:
+    | {
+        [key: string]: AbilityMorph;
+      }
+    | AbilityMorph[];
 
   // Additional properties found in skill data
   knockback?: string;
@@ -268,16 +272,21 @@ interface Passive {
 
 interface SkillLine {
   name: string;
-  icon: string;
-  ultimates?: {
-    [key: string]: Ultimate;
-  };
-  activeAbilities: {
+  icon?: string;
+  ultimates?:
+    | Ultimate[]
+    | {
+        [key: string]: Ultimate;
+      };
+  activeAbilities?: {
     [key: string]: ActiveAbility;
   };
-  passives: {
-    [key: string]: Passive;
-  };
+  actives?: ActiveAbility[];
+  passives?:
+    | {
+        [key: string]: Passive;
+      }
+    | Passive[];
 }
 
 interface Mechanic {
@@ -292,11 +301,12 @@ interface Mechanic {
 }
 
 export interface SkillsetData {
-  class: string;
+  class?: string;
+  weapon?: string;
   skillLines: {
     [key: string]: SkillLine;
   };
-  mechanics: {
+  mechanics?: {
     [key: string]: Mechanic;
   };
 }

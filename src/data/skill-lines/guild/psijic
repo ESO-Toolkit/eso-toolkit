@@ -1,0 +1,175 @@
+import { SkillsetData } from '../skillsets/Skillset';
+
+export const psijicOrderData: SkillsetData = {
+  weapon: 'Psijic Order',
+  skillLines: {
+    psijicOrder: {
+      name: 'Psijic Order',
+      icon: '🌀',
+      passives: [
+        {
+          name: 'Clairvoyance',
+          description: 'Reduces the cost of your Psijic Order abilities by 15%.',
+          requirement: ''
+        },
+        {
+          name: 'Concentrated Barrier',
+          description: 'While you have a Psijic Order ability slotted and are Bracing, you gain a damage shield that absorbs 5000 damage. This damage shield recharges back to full strength after you spend 10 seconds not Bracing.',
+          requirement: ''
+        },
+        {
+          name: 'Deliberation',
+          description: 'While you are casting or channeling a Psijic Order ability you reduce your damage taken by 30%.',
+          requirement: ''
+        },
+        {
+          name: 'See the Unseen',
+          description: 'The insight you have gained from the Psijic Order grants you vision of the spiritual world. You can now interact with rifts all throughout Tamriel.',
+          requirement: ''
+        },
+        {
+          name: 'Spell Orb',
+          description: 'When you cast a Psijic Order ability while you are in combat, you generate a spell charge for 10 seconds. When you reach 5 spell charges, you launch a spell orb at the closest enemy to you dealing 1124 Magic Damage. This effect scales off your highest offensive stats.',
+          requirement: ''
+        }
+      ],
+      actives: [
+        {
+          name: 'Accelerate',
+          cost: '3780 Magicka',
+          target: 'Self',
+          description: 'Bend time and space around you to gain Major Expedition for 4 seconds and Minor Force for 20 seconds, increasing your Movement Speed by 30% and Critical Damage by 10%.',
+          morphs: [
+            {
+              name: 'Channeled Acceleration',
+              cost: '3510 Magicka',
+              castTime: '1.3 second',
+              target: 'Self',
+              description: 'Bend time and space around you to gain Major Expedition for 12 seconds and Minor Force for 1 minute, increasing your Movement Speed by 30% and Critical Damage by 10%.'
+            },
+            {
+              name: 'Race Against Time',
+              cost: '3780 Magicka',
+              target: 'Self',
+              description: 'Bend time and space around you to gain Major Expedition for 4 seconds and Minor Force for 20 seconds, increasing your Movement Speed by 30% and Critical Damage by 10%. Activating this ability removes all snares and immobilizations from you and grants immunity to them for 4 seconds.'
+            }
+          ]
+        },
+        {
+          name: 'Imbue Weapon',
+          cost: '2700 Stamina',
+          target: 'Self',
+          duration: '2 seconds',
+          description: 'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2090 Physical Damage. If the power is not consumed in time, you restore 1620 Stamina.',
+          morphs: [
+            {
+              name: 'Crushing Weapon',
+              cost: '2700 Stamina',
+              target: 'Self',
+              duration: '2 seconds',
+              description: 'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2160 Physical Damage and applying Major Breach to the target, reducing their Physical and Spell Resistance by 5948 for 5 seconds. If the power is not consumed in time, you restore 1620 Stamina.'
+            },
+            {
+              name: 'Elemental Weapon',
+              cost: '2700 Magicka',
+              target: 'Self',
+              duration: '2 seconds',
+              description: 'Infuse your weapon with power, causing your next Light Attack used within 2 seconds to deal an additional 2160 Magic Damage and apply the Burning, Concussion, or Chill elemental status effect. If the power is not consumed in time, you restore 1620 Magicka.'
+            }
+          ]
+        },
+        {
+          name: 'Meditate',
+          cost: '',
+          target: 'Self',
+          description: 'Focus your body and mind into a meditative state, healing for 1500 Health and restoring 1500 Magicka and Stamina every 1 second. You will remain in a meditative state until you toggle this ability off or are interrupted.',
+          morphs: [
+            {
+              name: 'Deep Thoughts',
+              cost: '',
+              target: 'Self',
+              description: 'Focus your body and mind into a meditative state, healing for 1500 Health and restoring 1900 Magicka and Stamina every 1 second. You will remain in a meditative state until you toggle this ability off or are interrupted.'
+            },
+            {
+              name: 'Introspection',
+              cost: '',
+              target: 'Self',
+              description: 'Focus your body and mind into a meditative state, healing for 1800 Health and restoring 1500 Magicka and Stamina every 1 second. Maintaining the channel increases the Health restored by 10% every tick, up to a maximum of 50%. You will remain in a meditative state until you toggle this ability off or are interrupted.'
+            }
+          ]
+        },
+        {
+          name: 'Mend Wounds',
+          cost: '',
+          target: 'Self',
+          description: 'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can only be used on allies. Your Light Attacks heal for 941. Your Heavy Attacks heal for 834 every 1 second, and restore 1155 Magicka to you for successfully healing.',
+          morphs: [
+            {
+              name: 'Mend Spirit',
+              cost: '',
+              target: 'Self',
+              description: 'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that only can be used on allies. Your Light Attacks heal for 972. Your Heavy Attacks heal for 863 every 1 second, and restore 1155 Magicka to you for successfully healing. After you heal an ally you grant them Major Resolve, increasing their Physical and Spell Resistance by 5948 for 5 seconds.'
+            },
+            {
+              name: 'Symbiosis',
+              cost: '',
+              target: 'Self',
+              description: 'Invoke the Rites of Moawita, replacing your Light and Heavy Attacks with healing abilities that can be used on allies. Your Light Attacks heal for 972. Your Heavy Attacks heal for 863 every 1 second, and restore 1155 Magicka to you for successfully healing. You heal yourself for 50% of the amount of healing done to the ally.'
+            }
+          ]
+        },
+        {
+          name: 'Time Stop',
+          cost: '7830 Magicka',
+          castTime: '2 seconds',
+          target: 'Ground',
+          maxRange: '28 meters',
+          radius: '8 meters',
+          description: 'Freeze the passage of time at the target location, gradually reducing the Movement Speed of enemies in the area during the channel before finally stunning them in place for 3 seconds when the channel completes.',
+          morphs: [
+            {
+              name: 'Borrowed Time',
+              cost: '7830 Magicka',
+              castTime: '2 seconds',
+              target: 'Ground',
+              maxRange: '28 meters',
+              radius: '8 meters',
+              description: 'Freeze the passage of time at the target location, gradually reducing the Movement Speed of enemies in the area during the channel before finally stunning them in place for 3 seconds when the channel completes. Enemies that are stunned gain 5000 Heal Absorption for 3 seconds, negating the next 5000 points of healing done.'
+            },
+            {
+              name: 'Time Freeze',
+              cost: '7560 Magicka',
+              target: 'Ground',
+              duration: '4 seconds',
+              maxRange: '28 meters',
+              radius: '8 meters',
+              description: 'Freeze the passage of time at the target location, gradually reducing the Movement Speed of enemies in the area over 4 seconds before finally stunning them in place for 3 seconds when the duration completes.'
+            }
+          ]
+        }
+      ],
+      ultimates: [
+        {
+          name: 'Undo',
+          cost: '165 Ultimate',
+          target: 'Self',
+          description: 'Step backwards in time, resetting your Health, Magicka, Stamina, and position to what they were 4 seconds ago.',
+          morphs: [
+            {
+              name: 'Precognition',
+              cost: '150 Ultimate',
+              target: 'Self',
+              description: 'Step backwards in time, resetting your Health, Magicka, Stamina, and position to what they were 4 seconds ago. You can cast this ability while you are crowd controlled and it automatically grants you Crowd Control Immunity.'
+            },
+            {
+              name: 'Temporal Guard',
+              cost: '150 Ultimate',
+              target: 'Self',
+              description: 'Step backwards in time, resetting your Health, Magicka, Stamina, and position to what they were 4 seconds ago. While slotted you gain Minor Protection, reducing your damage taken by 5%.'
+            }
+          ]
+        }
+      ]
+    }
+  }
+};
