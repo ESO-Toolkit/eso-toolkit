@@ -17,7 +17,10 @@ export const AppLayout: React.FC = () => {
   // Check if we're on the landing page (root path)
   const isLandingPage = location.pathname === '/' || location.pathname === '';
 
-  if (!isLoggedIn) {
+  // Check if we're on the calculator page (should work without login)
+  const isCalculatorPage = location.pathname === '/calculator';
+
+  if (!isLoggedIn && !isCalculatorPage) {
     return (
       <Box
         sx={{

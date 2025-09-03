@@ -1,0 +1,1105 @@
+/* ========================
+   Calculator UI Styles
+   ======================== */
+
+/* Reset & base */
+:root {
+  --bg: #0b1220;
+  --panel: #0f172a;
+  --panel-2: #0d1430;
+  --text: #e5e7eb;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+  --accent-2: #00e1ff;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --border: #1f2937;
+  /* Gap between sticky totals bar and viewport bottom */
+  --sticky-gap: 12px;
+}
+
+* {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+}
+body {
+  margin: 0;
+  font-family:
+    system-ui,
+    -apple-system,
+    Segoe UI,
+    Roboto,
+    Ubuntu,
+    Cantarell,
+    Noto Sans,
+    'Helvetica Neue',
+    Arial,
+    'Apple Color Emoji',
+    'Segoe UI Emoji';
+  background:
+    radial-gradient(1200px 80% at -10% 50%, rgba(0, 238, 255, 0.08), transparent 60%),
+    radial-gradient(1200px 80% at 110% 50%, rgba(0, 238, 255, 0.08), transparent 60%), var(--bg);
+  color: var(--text);
+}
+
+.container {
+  width: 100%;
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+}
+
+.header {
+  text-align: center;
+  margin-bottom: 16px;
+}
+.header h1 {
+  margin: 0 0 6px;
+  font-size: 28px;
+  letter-spacing: 0.3px;
+}
+.header .subtitle {
+  color: var(--muted);
+  font-size: 14px;
+}
+/* Header actions (e.g., Lite Mode toggle) */
+.header {
+  position: relative;
+}
+.header__actions {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.switch--lite {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+}
+.switch--lite input {
+  accent-color: var(--accent);
+  width: 18px;
+  height: 18px;
+}
+.switch--lite .switch__label {
+  font-size: 12px;
+}
+
+/* Tabs */
+.tabs[role='tablist'] {
+  display: flex;
+  gap: 8px;
+  padding: 8px;
+  border-radius: 10px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.8), rgba(2, 6, 23, 0.8));
+  border: 1px solid var(--border);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+  margin: 0 auto 14px;
+  max-width: 1024px;
+}
+.tabs[role='tablist'].is-wide {
+  max-width: none;
+  border-left: 0;
+  border-right: 0;
+  border-radius: 0;
+}
+.tabs [role='tab'] {
+  appearance: none;
+  border: 1px solid #686868;
+  background: #0b1220;
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  white-space: nowrap;
+  border: 1px solid #736c866e;
+}
+.tabs [role='tab'][aria-selected='true'] {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.18), rgba(56, 189, 248, 0.08));
+  border-color: #686868;
+  color: #e9fbff;
+  box-shadow:
+    0 0 0 1px rgba(56, 189, 248, 0.35) inset,
+    0 0 24px rgba(0, 225, 255, 0.15);
+}
+.tabs [role='tab']:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Panels */
+[role='tabpanel'][hidden] {
+  display: none;
+}
+.calculators-wrapper {
+  max-width: 1024px;
+  margin: 0 auto 20px;
+}
+.calculators-wrapper.is-wide {
+  max-width: none;
+}
+
+/* Calculator card */
+.calculator {
+  position: relative; /* Create positioning context */
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  /* Let the page handle scrolling; needed for sticky footer without inner scrollbar */
+  overflow: visible;
+  transition: all 0.3s ease;
+  /* let height be auto so page handles scrolling */
+  height: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba(15, 23, 42, 0.45), rgba(2, 6, 23, 0.45));
+  border-radius: 10px;
+}
+.info-icon {
+  font-size: 12px;
+  color: var(--accent);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  border-radius: 999px;
+  width: 18px;
+  height: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.calculator__content {
+  padding: 20px;
+  flex: 1; /* Allow content to take remaining space */
+  /* Let the parent .calculator handle scrolling for proper sticky behavior */
+  overflow: visible;
+  -webkit-overflow-scrolling: touch;
+  border-bottom: 1px solid var(--border);
+  border-bottom: none;
+  border-bottom-left-radius: 0px;
+  border-bottom-right-radius: 0px;
+  /* Space for the sticky footer + the floating gap */
+}
+.calculator__controls {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.btn {
+  background: linear-gradient(180deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05));
+  color: #e9fbff;
+  border: 1px solid rgb(113 113 113 / 19%);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  cursor: pointer;
+}
+.btn:hover {
+  filter: brightness(1.05);
+}
+/* Lite Mode button */
+.btn--lite {
+  position: relative;
+}
+.btn--lite::before {
+  content: '\26A1'; /* ⚡ */
+  margin-right: 6px;
+}
+.btn--lite[aria-pressed='true'] {
+  background: linear-gradient(180deg, rgba(34, 197, 94, 0.22), rgba(34, 197, 94, 0.08));
+  box-shadow: 0 0 0 1px rgba(34, 197, 94, 0.35) inset;
+}
+/* Mode buttons (PvE/PvP) */
+.btn--mode {
+  position: relative;
+}
+.btn--mode[data-mode='pve']::before {
+  content: '\1F5E1 '; /* 🗡 */
+  margin-right: 6px;
+}
+.btn--mode[data-mode='pvp']::before {
+  content: '\1F6E1 '; /* 🛡 */
+  margin-right: 6px;
+}
+.btn--mode[aria-pressed='true'] {
+  box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.35) inset;
+}
+.btn--mode[data-mode='pve'][aria-pressed='true'] {
+  background: linear-gradient(
+    180deg,
+    rgba(99, 102, 241, 0.22),
+    rgba(99, 102, 241, 0.08)
+  ); /* indigo */
+}
+.btn--mode[data-mode='pvp'][aria-pressed='true'] {
+  background: linear-gradient(
+    180deg,
+    rgba(236, 72, 153, 0.22),
+    rgba(236, 72, 153, 0.08)
+  ); /* pink */
+}
+/* Check/Uncheck All buttons: background + emojis, targeted via onclick attr */
+.calculator__controls .btn[onclick*='toggleAll'][onclick*='true'] {
+  background: rgb(0 0 0 / 15%);
+}
+.calculator__controls .btn[onclick*='toggleAll'][onclick*='true']::before {
+  content: '\2714'; /* ✔ */
+  margin-right: 6px;
+}
+.calculator__controls .btn[onclick*='toggleAll'][onclick*='false'] {
+  background: rgb(0 0 0 / 15%);
+}
+.calculator__controls .btn[onclick*='toggleAll'][onclick*='false']::before {
+  content: '\2716'; /* ✖ */
+  margin-right: 6px;
+}
+
+.calculator__section-title {
+  color: var(--muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  margin: 10px 2px 6px;
+}
+
+.calculator__list {
+  display: grid;
+  gap: 6px;
+}
+.calculator__item {
+  display: grid;
+  /* Columns: checkbox | qty | name | per | value */
+  grid-template-columns: auto 56px 1fr auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(2, 6, 23, 0.45);
+  border: 1px solid black;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* When item is enabled (checkbox checked), highlight border in white */
+.calculator__item:not(.is-disabled) {
+  border-color: rgba(255, 255, 255, 0.36);
+}
+.calculator__item.is-disabled {
+  opacity: 0.55;
+}
+.calculator__item.is-locked {
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.5), rgba(2, 6, 23, 0.3));
+  cursor: not-allowed;
+}
+/* Grey out quantity for locked items (e.g., Base Character Critical Damage) */
+.calculator__item.is-locked .calculator__item-qty {
+  color: var(--muted);
+  opacity: 0.75;
+}
+
+/* Bulk toggle visual hint: lighter border after Check All/Uncheck All */
+.calculator__item--bulk {
+  border-color: rgba(255, 255, 255, 0.75) !important;
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25) inset;
+}
+
+/* Bulk button active highlight */
+.btn--bulk-active {
+  border-color: transparent !important;
+  box-shadow:
+    0 0 0 1px rgba(255, 255, 255, 0.25) inset,
+    0 0 0 2px rgba(255, 255, 255, 0.06);
+}
+
+/* Custom checkbox to force white checkmark while keeping #38bdf8 fill */
+.calculator__item-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 7.5px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+/* Text shadow for all screen sizes */
+h2.calculator__header {
+  text-shadow: rgb(169 221 241 / 56%);
+}
+
+/* Margin styles only on mobile */
+@media (max-width: 768px) {
+  h2.calculator__header {
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+/* Center only the Critical header's span on mobile */
+@media (max-width: 768px) {
+  .calculator--critical .calculator__header span {
+    display: block;
+    text-align: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+}
+.calculator__item-checkbox:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 2px #ff8000;
+}
+.calculator__item-checkbox:checked {
+  background: #38bdf8;
+  border-color: #38bdf8;
+}
+.calculator__item-checkbox::after {
+  content: '';
+  width: 9px;
+  height: 5px;
+  border-left: 2px solid #ffffff;
+  border-bottom: 2px solid #ffffff;
+  transform: rotate(-45deg) scale(0);
+  transform-origin: center;
+  transition: transform 140ms ease-in-out;
+}
+.calculator__item-checkbox:checked::after {
+  transform: rotate(-45deg) scale(1);
+}
+.calculator__item-qty {
+  width: 56px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: #0b1220;
+  color: var(--text);
+}
+.calculator__item-name {
+  overflow-wrap: anywhere;
+  display: block; /* allow text to wrap naturally; children flow inline */
+}
+.calculator__item-per {
+  color: var(--muted);
+  font-style: italic;
+  font-size: 13px;
+}
+.calculator__item-value {
+  color: #38bdf8;
+  font-weight: 700;
+  text-shadow: 0 0 10px rgba(59, 130, 246, 0.25);
+  min-width: 4ch;
+}
+.calculator__item-value.is-locked-value {
+  text-shadow: none;
+}
+.badge--locked {
+  margin-left: 6px;
+  opacity: 0.85;
+  font-size: 12px;
+}
+
+/* Preserve native cursors for interactive children */
+.calculator__item input,
+.calculator__item button,
+.calculator__item a,
+.calculator__item .calculator__item-qty,
+.calculator__item .calculator__item-checkbox {
+  cursor: auto;
+}
+
+/* Subtle hover state to reinforce clickability */
+.calculator__item:hover {
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(2, 6, 23, 0.55);
+}
+
+/* Totals */
+.calculator__total-section {
+  position: sticky;
+  /* Float a bit above the viewport bottom and respect mobile safe areas */
+  bottom: calc(var(--sticky-gap) + env(safe-area-inset-bottom));
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  padding: 15px 20px;
+  /* Use a solid panel background so content doesn't show through while sticky */
+  background: var(--panel);
+  border-top: 1px solid var(--border);
+  border: 1px solid #565b656e;
+  border-radius: 2.5px 2.5px 10px 10px;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.15);
+  z-index: 10;
+}
+.calculator__total {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* center vertically for symmetry */
+  min-height: 48px; /* consistent row height */
+  padding: 2px 0;
+}
+.calculator__total > span:first-child {
+  color: var(--text);
+  font-weight: 700;
+  font-size: 32px;
+  letter-spacing: 0.2px;
+}
+.calculator__total-value {
+  font-weight: 900;
+  color: #93c5fd;
+  font-size: 36px;
+  line-height: 1;
+  margin-top: 0;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums; /* steadier width */
+  text-shadow: 0 0 18px rgba(147, 197, 253, 0.18);
+}
+.calculator__cap-status {
+  font-size: 14px;
+  color: var(--muted);
+  margin-top: 2px;
+}
+
+/* Cap status colors (no green background on at-cap) */
+.calculator__cap-status.under-cap,
+.calculator__total-value.under-cap {
+  color: var(--danger);
+}
+.calculator__cap-status.at-cap,
+.calculator__total-value.at-cap {
+  color: var(--ok);
+  background: none;
+}
+.calculator__cap-status.over-cap,
+.calculator__total-value.over-cap {
+  color: var(--warn);
+}
+
+/* Legend */
+.legend {
+  max-width: 1024px;
+  margin: 0 auto;
+  padding: 8px 12px 4px;
+  color: var(--muted);
+}
+.legend h3 {
+  margin: 20px 0;
+  color: var(--text);
+}
+.legend__items {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+  flex-direction: column;
+}
+.legend__item {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+.legend__color {
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  border: 1px solid var(--border);
+}
+.legend__color--ok {
+  background: rgba(34, 197, 94, 0.25);
+  border-color: rgba(34, 197, 94, 0.45);
+}
+.legend__color--below {
+  background: rgba(239, 68, 68, 0.25);
+  border-color: rgba(239, 68, 68, 0.45);
+}
+.legend__color--over {
+  background: rgba(245, 158, 11, 0.25);
+  border-color: rgba(245, 158, 11, 0.45);
+}
+.legend__tips {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+}
+.legend__note {
+  font-size: 13px;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+/* Legend Penetration responsive layout */
+.legend-pen__or {
+  opacity: 0.9;
+}
+@media (max-width: 720px) {
+  /* Ensure legend rows wrap consistently on mobile */
+  .legend__item {
+    align-items: flex-start;
+  }
+  .legend__item span {
+    display: block;
+    line-height: 1.45;
+  }
+  .legend__item .legend__color {
+    margin-top: 3px;
+  }
+  /* Specifically ensure the green (OK) range wraps nicely */
+  .legend__color--ok + span {
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: normal;
+    max-width: 100%;
+  }
+  /* Turn the penetration line into a 2-col layout on mobile */
+  .legend-pen {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px 14px;
+    align-items: center;
+  }
+  .legend-pen__label {
+    grid-column: 1 / -1;
+    display: block;
+    font-size: 12px;
+    font-style: italic;
+  }
+  .legend-pen__or {
+    display: none;
+  }
+  .legend-pen__pve,
+  .legend-pen__pvp {
+    display: block;
+  }
+}
+
+/* (Removed mobile-only stacked legend rules — simplified legend shows 'Optimal') */
+
+/* ========================
+     Lite Mode (compact UI)
+     ======================== */
+body.lite {
+  --sticky-gap: 8px;
+}
+body.lite .container {
+  padding: 14px 12px 28px;
+}
+body.lite .header h1 {
+  font-size: 22px;
+  margin-bottom: 4px;
+}
+/* Visible indicator that Lite Mode is active */
+body.lite .header h1::after {
+  content: ' \2014  Lite'; /* — Lite */
+  color: #22c55e;
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+body.lite .header .subtitle {
+  font-size: 12px;
+}
+body.lite .tabs[role='tablist'] {
+  padding: 4px;
+  gap: 5px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+}
+body.lite .tabs [role='tab'] {
+  padding: 4px 8px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+/* Stronger compact styling for clarity */
+body.lite .calculator {
+  padding: 8px 9px;
+  border-radius: 8px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.22);
+  border-color: var(--border);
+}
+body.lite .calculator__content {
+  padding: 8px 8px 2px;
+}
+body.lite .calculator__controls {
+  gap: 4px;
+  margin-bottom: 6px;
+}
+body.lite .btn {
+  padding: 4px 6px;
+  font-size: 11px;
+  border-radius: 6px;
+}
+/* Hide section headers in Lite to save space */
+body.lite .calculator__section-title {
+  display: none;
+}
+body.lite .calculator__list {
+  gap: 3px;
+}
+body.lite .calculator__item {
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 8px;
+}
+body.lite .calculator__item {
+  grid-template-columns: auto 44px 1fr auto auto;
+}
+body.lite .calculator__item-qty {
+  width: 44px;
+  padding: 3px 4px;
+  border-radius: 6px;
+}
+body.lite .calculator__item-checkbox {
+  width: 14px;
+  height: 14px;
+  border-radius: 6px;
+}
+body.lite .calculator__item-per {
+  font-size: 11px;
+}
+body.lite .calculator__item-value {
+  font-size: 13px;
+}
+body.lite .badge--locked {
+  font-size: 11px;
+}
+/* Sticky totals compact */
+body.lite .calculator__total-section {
+  padding: 8px 9px;
+  gap: 6px;
+  border-radius: 2px 2px 8px 8px;
+}
+body.lite .calculator__total {
+  min-height: 32px;
+}
+body.lite .calculator__total > span:first-child {
+  font-size: 16px;
+}
+body.lite .calculator__total-value {
+  font-size: 21px;
+}
+body.lite .calculator--penetration .calculator__total > span:first-child {
+  font-size: 18px;
+}
+body.lite .calculator--critical .calculator__total > span:first-child {
+  font-size: 16px;
+}
+body.lite .calculator__cap-status {
+  font-size: 12px;
+}
+/* Legend compact */
+body.lite .legend {
+  padding: 6px 10px 2px;
+}
+body.lite .legend h3 {
+  margin: 12px 0;
+  font-size: 16px;
+}
+body.lite .legend__items {
+  gap: 8px;
+}
+body.lite .legend__color {
+  width: 10px;
+  height: 10px;
+}
+body.lite .legend__note {
+  font-size: 12px;
+}
+/* Responsive overrides still apply; tighten mobile further in lite */
+
+/* Lite Mode: force single-line rows on mobile */
+@media (max-width: 720px) {
+  /* Keep a single-row grid in Lite (override the generic mobile wrap rules) */
+  body.lite .calculator__item {
+    grid-template-columns: auto 42px 1fr auto; /* checkbox, qty, name, value */
+    grid-auto-flow: column;
+    align-items: center;
+    gap: 4px;
+    padding-right: 36px; /* reserve room for tooltip icon absolutely positioned */
+  }
+  body.lite .calculator__item-qty {
+    order: 0;
+    grid-column: auto;
+    width: 42px;
+    padding: 2px 4px;
+  }
+  body.lite .calculator__item-name {
+    order: 0;
+    grid-column: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  body.lite .calculator__item-value {
+    white-space: nowrap;
+    font-size: 12.5px;
+  }
+  /* Smaller controls/text for tight mobile Lite */
+  body.lite .btn {
+    padding: 3px 6px;
+    font-size: 10.5px;
+  }
+  body.lite .tabs [role='tab'] {
+    padding: 3px 6px;
+    font-size: 10.5px;
+  }
+  body.lite .calculator__total-section {
+    padding: 7px 8px;
+  }
+  body.lite .calculator__total-value {
+    font-size: 20px;
+  }
+}
+@media (max-width: 720px) {
+  body.lite .calculator__item {
+    grid-template-columns: auto 1fr auto;
+    padding-right: 30px;
+  }
+  body.lite .item-tooltip-indicator {
+    right: 6px;
+    top: 6px;
+  }
+  body.lite .calculator__total > span:first-child {
+    font-size: 18px;
+  }
+  body.lite .calculator__total-value {
+    font-size: 22px;
+  }
+}
+
+/* Keep specific controls at regular size in Lite Mode */
+/* Desktop and general */
+body.lite .calculator__controls .btn[onclick='toggleAllPen(true)'],
+body.lite #tab-pen {
+  padding: 6px 10px;
+  font-size: 12.5px;
+}
+/* Mobile */
+@media (max-width: 720px) {
+  body.lite .calculator__controls .btn[onclick='toggleAllPen(true)'],
+  body.lite #tab-pen {
+    padding: 6px 10px;
+    font-size: 12.5px;
+  }
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .calculator__item {
+    grid-template-columns: auto 48px 1fr auto auto;
+    padding: 8px;
+    gap: 8px;
+  }
+  .calculator__item-qty {
+    width: 48px;
+  }
+  .btn {
+    padding: 7px 9px;
+    font-size: 12.5px;
+  }
+}
+
+/* ========================
+     PvE/PvP Mode Indicators
+     ======================== */
+/* Prepend a badge to the header title when a mode is active.
+     Use ::before so it can coexist with Lite's ::after suffix. */
+body.mode-pve .header h1::before {
+  content: 'PvE \2022 '; /* PvE • */
+  color: #a5b4fc; /* indigo-300 */
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+body.mode-pvp .header h1::before {
+  content: 'PvP \2022 '; /* PvP • */
+  color: #f9a8d4; /* pink-300 */
+  font-weight: 800;
+  letter-spacing: 0.3px;
+}
+
+@media (max-width: 720px) {
+  .calculator__item {
+    grid-template-columns: auto 1fr auto;
+    grid-auto-flow: row;
+  }
+  .calculator__item-qty {
+    order: 2;
+    grid-column: 1 / 2;
+  }
+  .calculator__item-name {
+    order: 2;
+    grid-column: 2 / 4;
+  }
+  .calculator__item-per {
+    display: none;
+  }
+  .calculator__total-section {
+    margin-top: 1rem;
+  }
+  /* Totals: slightly smaller value and slightly larger label on mobile */
+  .calculator__total > span:first-child {
+    font-size: 32px;
+  }
+  .calculator__total-value {
+    font-size: 36px;
+  }
+  /* Per-calculator total label sizing */
+  .calculator--penetration .calculator__total > span:first-child {
+    font-size: 22px;
+  }
+  .calculator--critical .calculator__total > span:first-child {
+    font-size: 20px;
+  }
+  /* Center the main tabs on mobile for better flow */
+  .tabs[role='tablist'] {
+    justify-content: center;
+  }
+  /* Controls: stack into a responsive grid and make buttons full-width for reliable tapping */
+  .calculator__controls {
+    display: grid;
+    /* Two columns so we can make Lite span both (100%) and PvE/PvP sit side-by-side (50% each) */
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .calculator__controls .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 10px 12px; /* increase touch target */
+    -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+    min-height: 40px;
+  }
+  /* Make the Lite button full-width (span both columns) */
+  .calculator__controls .btn--lite {
+    grid-column: 1 / -1;
+  }
+  /* PvE / PvP naturally occupy one column each (50%) in the 2-col grid */
+  .calculator__controls .btn--mode {
+    grid-column: auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  .container {
+    padding: 18px 10px 32px;
+  }
+  .header h1 {
+    font-size: 22px;
+  }
+  .tabs [role='tab'] {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .calculator__content {
+    padding: 8px 10px 4px;
+  }
+  .calculator__section-title {
+    margin: 8px 2px 6px;
+    font-size: 13px;
+  }
+  .calculator__item {
+    grid-template-columns: auto 1fr auto;
+    gap: 6px;
+    padding: 7px 8px;
+  }
+  .calculator__item-qty {
+    width: 44px;
+  }
+  /* Further tighten totals on very small screens */
+  .calculator__total > span:first-child {
+    font-size: 22px;
+  }
+  .calculator__total-value {
+    font-size: 28px;
+  }
+  /* Per-calculator total label sizing */
+  .calculator--penetration .calculator__total > span:first-child {
+    font-size: 22px;
+  }
+  .calculator--critical .calculator__total > span:first-child {
+    font-size: 20px;
+  }
+}
+
+/* ========================
+   Rich tooltip styles (active)
+   ======================== */
+.tooltip-box {
+  position: absolute;
+  display: none;
+  background: rgb(27 33 38 / 98%);
+  color: #e8f0f7;
+  border-radius: 8px;
+  padding: 10px 12px;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  pointer-events: none;
+  z-index: 10000;
+  line-height: 1.35;
+  opacity: 0;
+  transition: opacity 160ms ease;
+}
+
+/* Tooltip link colors (readable on dark bg) */
+.tooltip-box a {
+  color: #7ec8ff; /* light azure */
+  text-decoration: underline;
+}
+.tooltip-box a:visited {
+  color: #b3d9ff;
+}
+.tooltip-box a:hover,
+.tooltip-box a:focus {
+  color: #a4d8ff;
+  text-decoration-color: currentColor;
+}
+.tooltip-box a:active {
+  color: #c6e6ff;
+}
+
+/* Full-screen backdrop for mobile pinned tooltip */
+.tooltip-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  z-index: 9999; /* just beneath tooltip */
+}
+
+/* Centered tooltip presentation for coarse pointers */
+.tooltip-box.is-centered {
+  width: auto;
+  max-width: min(92vw, 380px);
+  left: 50%; /* JS will set concrete left/top, but keep centered defaults sane */
+  transform: translateX(0); /* no transform-based centering to avoid layout jitter */
+}
+
+/* Prevent background scrolling when tooltip is pinned on mobile */
+body.no-scroll {
+  overflow: hidden;
+  touch-action: none;
+}
+
+/* Mobile/coarse pointer refinement */
+@media (pointer: coarse), (max-width: 640px) {
+  .tooltip-box {
+    font-size: 14px;
+    line-height: 1.4;
+    padding: 12px 14px;
+    border-radius: 10px;
+    max-width: min(92vw, 380px);
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+  }
+  .tooltip-box a {
+    color: #9ad1ff;
+  }
+}
+.tooltip-box strong {
+  color: #ffd369;
+  font-weight: 700;
+}
+.tooltip-box strong:first-of-type {
+  margin-top: 0;
+}
+.tooltip-box em {
+  color: #c9d1d9;
+  opacity: 0.85;
+}
+/* Explicit heading wrapper to ensure spacing even after inline text */
+/* Do NOT globally force <strong> to block; headings must use .tt-head wrapper */
+/* Do not add spacing for the very first heading block in the tooltip */
+.tooltip-box > div:first-of-type > strong {
+  margin-top: 0;
+}
+/* General spacing between any two section rows in the tooltip */
+.tooltip-box div + div {
+  margin-top: 6px;
+}
+/* Extra guard: when a heading div follows another div, enforce spacing */
+.tooltip-box div + div > strong {
+  margin-top: 10px !important;
+}
+/* Keep certain tooltip rows on one line (used for Sharpened values) */
+.tooltip-box .tt-inline-list > div {
+  white-space: nowrap;
+}
+/* Stronger no-wrap utility to defeat overflow-wrap:anywhere on parents */
+.tooltip-box .nowrap {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: keep-all;
+}
+/* Ensure numbers in inline list remain inline */
+.tooltip-box .tt-inline-list strong {
+  display: inline;
+}
+
+/* Tooltip footer link styling (ESO-Hub link) */
+.tooltip-box .tooltip-source a {
+  text-decoration: none;
+  color: #9ad1ff;
+}
+.tooltip-box .tooltip-source .link-emoji {
+  display: inline-block;
+  margin-right: 4px;
+  text-decoration: none;
+}
+.tooltip-box .tooltip-source .link-text {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Question mark indicator shown in each item name */
+.item-tooltip-indicator {
+  width: 18px;
+  height: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(147, 197, 253, 0.35);
+  background: rgba(56, 189, 248, 0.1);
+  color: #e9fbff;
+  font-size: 12px;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 6px; /* spacing after text */
+  vertical-align: baseline; /* align with text baseline */
+}
+.item-tooltip-indicator:hover {
+  filter: brightness(1.1);
+}
+.item-tooltip-indicator:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  /* Reserve space at the end of the row for the question-mark and pin it there */
+  .calculator__item {
+    position: relative;
+    padding-right: 36px;
+  }
+  .calculator__item-name {
+    position: static;
+  }
+  .item-tooltip-indicator {
+    width: 20px;
+    height: 20px;
+    position: absolute;
+    right: 8px;
+    top: 8px;
+    transform: none;
+    margin-left: 0; /* avoid extra gap when moved to the end */
+    z-index: 2; /* ensure it's above text/value for reliable tapping */
+  }
+}
