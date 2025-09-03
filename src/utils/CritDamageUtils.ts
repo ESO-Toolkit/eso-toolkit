@@ -569,7 +569,7 @@ export function getCritDamageFromComputedSource(
       const animalCompanionAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
         Object.values(wardenData.skillLines.animalCompanions.activeAbilities || {})
           .flatMap((ability) => {
-            return [ability, ...(ability.morphs ? Object.values(ability.morphs) : [])];
+            return [ability, ...Object.values(ability.morphs ?? {})];
           })
           .some((a) => a?.name === t.name)
       );

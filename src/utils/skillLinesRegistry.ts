@@ -20,7 +20,7 @@ import { dualWieldData } from '../data/skill-lines/weapons/dualWield';
 import { oneHandAndShieldData } from '../data/skill-lines/weapons/oneHand';
 import { restorationStaffData } from '../data/skill-lines/weapons/restoration';
 import { twoHandedData } from '../data/skill-lines/weapons/twoHanded';
-import { SkillsetData } from '../data/skillsets/Skillset';
+import { SkillsetData, SkillLine } from '../data/skillsets/Skillset';
 
 // Registry of all skill lines organized by category
 export const SKILL_LINES_REGISTRY = {
@@ -112,7 +112,8 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
       // Search through each skill line
       for (const skillLine of Object.values(skillLineData.skillLines || {})) {
         if (!skillLine) continue;
-        const skillLineName = (skillLine as { name?: string }).name || '';
+        const typedSkillLine = skillLine as SkillLine;
+        const skillLineName = typedSkillLine.name || '';
 
         // Check different ability categories
         const categories: Array<'ultimates' | 'actives' | 'activeAbilities' | 'passives'> = [
@@ -123,19 +124,26 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
         ];
 
         for (const abilityType of categories) {
-          const collection = (skillLine as unknown as Record<string, unknown>)[abilityType];
+          let collection: unknown;
+          if (abilityType === 'activeAbilities') collection = typedSkillLine.activeAbilities;
+          else if (abilityType === 'ultimates') collection = typedSkillLine.ultimates;
+          else if (abilityType === 'actives') collection = typedSkillLine.actives;
+          else collection = typedSkillLine.passives;
           if (!collection) continue;
 
-          // Handle both array and object structures
-          const abilities = Array.isArray(collection) ? collection : Object.values(collection);
+          // Handle both array and object structures in a type-safe way
+          const abilities: unknown[] = Array.isArray(collection)
+            ? (collection as unknown[])
+            : Object.values(collection as Record<string, unknown>);
 
           for (const ability of abilities) {
             if (!ability || typeof ability !== 'object') continue;
 
             // Check base ability
-            if (ability.name?.toLowerCase().trim() === normalizedTarget) {
+            const abilityNode = ability as SkillNode;
+            if (abilityNode.name?.toLowerCase().trim() === normalizedTarget) {
               return {
-                node: ability as SkillNode,
+                node: abilityNode,
                 skillLineName,
                 skillLineData,
                 category,
@@ -144,21 +152,22 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
             }
 
             // Check morphs
-            if (ability.morphs) {
-              const morphs = Array.isArray(ability.morphs)
-                ? ability.morphs
-                : Object.values(ability.morphs);
+            if (abilityNode.morphs) {
+              const morphs = Array.isArray(abilityNode.morphs)
+                ? abilityNode.morphs
+                : Object.values(abilityNode.morphs);
 
               for (const morph of morphs) {
                 if (morph && typeof morph === 'object' && 'name' in morph) {
-                  if (morph.name?.toLowerCase().trim() === normalizedTarget) {
+                  const morphNode = morph as SkillNode;
+                  if (morphNode.name?.toLowerCase().trim() === normalizedTarget) {
                     return {
-                      node: morph as SkillNode,
+                      node: morphNode,
                       skillLineName,
                       skillLineData,
                       category,
                       abilityType,
-                      parent: ability as SkillNode,
+                      parent: abilityNode,
                     };
                   }
                 }
