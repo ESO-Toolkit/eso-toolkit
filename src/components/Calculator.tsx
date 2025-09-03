@@ -67,6 +67,69 @@ const CalculatorContainer = styled(Box, {
   alignItems: 'center',
 }));
 
+// Modern Switch styling
+const ModernSwitch = styled(Switch)(({ theme }) => ({
+  width: 58,
+  height: 32,
+  padding: 0,
+  '& .MuiSwitch-switchBase': {
+    padding: 0,
+    margin: 2,
+    transitionDuration: '300ms',
+    '&.Mui-checked': {
+      transform: 'translateX(26px)',
+      color: '#fff',
+      '& + .MuiSwitch-track': {
+        backgroundColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
+        opacity: 1,
+        border: 0,
+        boxShadow: theme.palette.mode === 'dark' 
+          ? '0 0 20px rgba(56, 189, 248, 0.3), inset 0 2px 4px rgba(0,0,0,0.1)'
+          : '0 0 15px rgba(15, 23, 42, 0.2), inset 0 2px 4px rgba(0,0,0,0.05)',
+      },
+      '&.Mui-disabled + .MuiSwitch-track': {
+        opacity: 0.5,
+      },
+    },
+    '&.Mui-focusVisible .MuiSwitch-thumb': {
+      color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
+      border: '6px solid #fff',
+    },
+    '&.Mui-disabled .MuiSwitch-thumb': {
+      color: theme.palette.mode === 'light'
+        ? theme.palette.grey[100]
+        : theme.palette.grey[600],
+    },
+    '&.Mui-disabled + .MuiSwitch-track': {
+      opacity: theme.palette.mode === 'light' ? 0.7 : 0.3,
+    },
+  },
+  '& .MuiSwitch-thumb': {
+    boxSizing: 'border-box',
+    width: 28,
+    height: 28,
+    background: 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+    boxShadow: '0 2px 8px rgba(0,0,0,0.15), 0 1px 3px rgba(0,0,0,0.2)',
+    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+    '&:hover': {
+      transform: 'scale(1.05)',
+      boxShadow: '0 3px 12px rgba(0,0,0,0.2), 0 2px 6px rgba(0,0,0,0.25)',
+    },
+  },
+  '& .MuiSwitch-track': {
+    borderRadius: 16,
+    backgroundColor: theme.palette.mode === 'light' ? '#94a3b8' : '#475569',
+    opacity: 1,
+    transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1)',
+    border: theme.palette.mode === 'dark' 
+      ? '1px solid rgba(148, 163, 184, 0.3)' 
+      : '1px solid rgba(71, 85, 105, 0.3)',
+    '&:hover': {
+      backgroundColor: theme.palette.mode === 'light' ? '#64748b' : '#64748b',
+    },
+  },
+}));
+
 const CalculatorCard = styled(Paper, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
 })<{ liteMode?: boolean }>(({ theme, liteMode }) => ({
@@ -751,20 +814,119 @@ const Calculator: React.FC = () => {
             >
               <FormControlLabel
                 control={
-                  <Switch
+                  <ModernSwitch
                     checked={liteMode}
                     onChange={(e) => setLiteMode(e.target.checked)}
-                    size={liteMode ? 'small' : 'small'}
                   />
                 }
-                label="⚡ Lite Mode"
+                label={
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography 
+                      component="span" 
+                      sx={{ 
+                        fontSize: '1.1rem',
+                        filter: liteMode ? 'none' : 'grayscale(0.5)',
+                        transition: 'filter 0.2s ease'
+                      }}
+                    >
+                      ⚡
+                    </Typography>
+                    <Typography 
+                      component="span" 
+                      sx={{ 
+                        fontSize: liteMode ? '0.8rem' : '1rem',
+                        fontWeight: 600,
+                        background: liteMode 
+                          ? 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)'
+                          : 'linear-gradient(135deg, #94a3b8 0%, #64748b 100%)',
+                        WebkitBackgroundClip: 'text',
+                        WebkitTextFillColor: 'transparent',
+                        backgroundClip: 'text',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Lite Mode
+                    </Typography>
+                  </Box>
+                }
                 sx={{
+                  margin: 0,
                   '& .MuiFormControlLabel-label': {
-                    fontSize: liteMode ? '0.8rem' : '1rem',
+                    marginLeft: 1,
                   },
                 }}
               />
-              <ButtonGroup size={liteMode ? 'small' : 'small'} variant="outlined">
+              <ButtonGroup 
+                size={liteMode ? 'small' : 'small'} 
+                variant="outlined"
+                sx={{
+                  '& .MuiButton-root': {
+                    borderRadius: '12px',
+                    fontWeight: 600,
+                    textTransform: 'none',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    '&:not(:last-child)': {
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    },
+                    '&:not(:first-of-type)': {
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                    },
+                    '&:first-of-type': {
+                      borderTopRightRadius: 0,
+                      borderBottomRightRadius: 0,
+                    },
+                    '&:last-child': {
+                      borderTopLeftRadius: 0,
+                      borderBottomLeftRadius: 0,
+                      borderTopRightRadius: '12px',
+                      borderBottomRightRadius: '12px',
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 6px 20px rgba(56, 189, 248, 0.15)'
+                        : '0 4px 16px rgba(15, 23, 42, 0.1)',
+                      zIndex: 1,
+                    },
+                    '&.MuiButton-contained': {
+                      background: `linear-gradient(135deg, ${theme.palette.primary.main} 0%, ${theme.palette.secondary.main} 100%)`,
+                      boxShadow: theme.palette.mode === 'dark'
+                        ? '0 4px 15px rgba(56, 189, 248, 0.25)'
+                        : '0 4px 15px rgba(15, 23, 42, 0.15)',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(45deg, rgba(255,255,255,0.1) 0%, transparent 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover::before': {
+                        opacity: 1,
+                      },
+                    },
+                    '&.MuiButton-outlined': {
+                      borderColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(56, 189, 248, 0.3)' 
+                        : 'rgba(15, 23, 42, 0.2)',
+                      backgroundColor: 'transparent',
+                      '&:hover': {
+                        borderColor: theme.palette.primary.main,
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.08)'
+                          : 'rgba(15, 23, 42, 0.04)',
+                      },
+                    },
+                  },
+                }}
+              >
                 <Button
                   variant={gameMode === 'pve' ? 'contained' : 'outlined'}
                   onClick={() => setGameMode('pve')}
@@ -799,6 +961,7 @@ const Calculator: React.FC = () => {
               borderColor: 'divider',
               mb: liteMode ? 1.5 : isMobile ? 2 : 3,
               px: 3,
+              position: 'relative',
             }}
           >
             <Tabs
@@ -806,15 +969,73 @@ const Calculator: React.FC = () => {
               onChange={(e, newValue) => setSelectedTab(newValue)}
               variant={isMobile ? 'fullWidth' : 'standard'}
               sx={{
+                '& .MuiTabs-indicator': {
+                  height: 3,
+                  borderRadius: '2px 2px 0 0',
+                  background: theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
+                    : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 -2px 12px rgba(56, 189, 248, 0.4)'
+                    : '0 -2px 8px rgba(15, 23, 42, 0.2)',
+                },
                 '& .MuiTab-root': {
                   fontSize: liteMode ? '0.8rem' : isMobile ? '0.875rem' : '0.9rem',
                   fontWeight: 600,
                   minHeight: liteMode ? 36 : isMobile ? 40 : 48,
+                  textTransform: 'none',
+                  borderRadius: '12px 12px 0 0',
+                  margin: '0 4px',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.05) 0%, rgba(0, 225, 255, 0.02) 100%)'
+                      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.03) 0%, rgba(30, 41, 59, 0.01) 100%)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
+                  },
+                  '&:hover': {
+                    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0f172a',
+                    transform: 'translateY(-2px)',
+                    '&::before': {
+                      opacity: 1,
+                    },
+                  },
+                  '&.Mui-selected': {
+                    color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                    background: theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(0, 225, 255, 0.08) 100%)'
+                      : 'linear-gradient(135deg, rgba(15, 23, 42, 0.08) 0%, rgba(30, 41, 59, 0.04) 100%)',
+                    fontWeight: 700,
+                    '&::before': {
+                      opacity: 1,
+                    },
+                  },
                 },
               }}
             >
-              <Tab label="Penetration" {...a11yProps(0)} />
-              <Tab label="Critical" {...a11yProps(1)} />
+              <Tab 
+                label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography component="span" sx={{ fontSize: '1rem' }}>🗡️</Typography>
+                  <Typography component="span">Penetration</Typography>
+                </Box>} 
+                {...a11yProps(0)} 
+              />
+              <Tab 
+                label={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography component="span" sx={{ fontSize: '1rem' }}>⚡</Typography>
+                  <Typography component="span">Critical</Typography>
+                </Box>} 
+                {...a11yProps(1)} 
+              />
             </Tabs>
           </Box>
 
@@ -839,6 +1060,40 @@ const Calculator: React.FC = () => {
                     sx={{
                       fontSize: isMobile ? '0.75rem' : '0.875rem',
                       px: isMobile ? 1.5 : 2,
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(34, 197, 94, 0.4)' 
+                        : 'rgba(5, 150, 105, 0.4)',
+                      color: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover': {
+                        borderColor: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? 'rgba(34, 197, 94, 0.08)'
+                          : 'rgba(5, 150, 105, 0.04)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme.palette.mode === 'dark'
+                          ? '0 6px 20px rgba(34, 197, 94, 0.15)'
+                          : '0 4px 16px rgba(5, 150, 105, 0.1)',
+                        '&::before': {
+                          opacity: 1,
+                        },
+                      },
                     }}
                   >
                     {isMobile ? 'All' : 'Check All'}
@@ -851,6 +1106,40 @@ const Calculator: React.FC = () => {
                     sx={{
                       fontSize: isMobile ? '0.75rem' : '0.875rem',
                       px: isMobile ? 1.5 : 2,
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(239, 68, 68, 0.4)' 
+                        : 'rgba(220, 38, 38, 0.4)',
+                      color: theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover': {
+                        borderColor: theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626',
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? 'rgba(239, 68, 68, 0.08)'
+                          : 'rgba(220, 38, 38, 0.04)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme.palette.mode === 'dark'
+                          ? '0 6px 20px rgba(239, 68, 68, 0.15)'
+                          : '0 4px 16px rgba(220, 38, 38, 0.1)',
+                        '&::before': {
+                          opacity: 1,
+                        },
+                      },
                     }}
                   >
                     {isMobile ? 'None' : 'Uncheck All'}
@@ -962,6 +1251,40 @@ const Calculator: React.FC = () => {
                     sx={{
                       fontSize: isMobile ? '0.75rem' : '0.875rem',
                       px: isMobile ? 1.5 : 2,
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(34, 197, 94, 0.4)' 
+                        : 'rgba(5, 150, 105, 0.4)',
+                      color: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(5, 150, 105, 0.05) 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover': {
+                        borderColor: theme.palette.mode === 'dark' ? '#22c55e' : '#059669',
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? 'rgba(34, 197, 94, 0.08)'
+                          : 'rgba(5, 150, 105, 0.04)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme.palette.mode === 'dark'
+                          ? '0 6px 20px rgba(34, 197, 94, 0.15)'
+                          : '0 4px 16px rgba(5, 150, 105, 0.1)',
+                        '&::before': {
+                          opacity: 1,
+                        },
+                      },
                     }}
                   >
                     {isMobile ? 'All' : 'Check All'}
@@ -974,6 +1297,40 @@ const Calculator: React.FC = () => {
                     sx={{
                       fontSize: isMobile ? '0.75rem' : '0.875rem',
                       px: isMobile ? 1.5 : 2,
+                      borderRadius: '12px',
+                      fontWeight: 600,
+                      textTransform: 'none',
+                      borderColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(239, 68, 68, 0.4)' 
+                        : 'rgba(220, 38, 38, 0.4)',
+                      color: theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s ease',
+                      },
+                      '&:hover': {
+                        borderColor: theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626',
+                        backgroundColor: theme.palette.mode === 'dark'
+                          ? 'rgba(239, 68, 68, 0.08)'
+                          : 'rgba(220, 38, 38, 0.04)',
+                        transform: 'translateY(-2px)',
+                        boxShadow: theme.palette.mode === 'dark'
+                          ? '0 6px 20px rgba(239, 68, 68, 0.15)'
+                          : '0 4px 16px rgba(220, 38, 38, 0.1)',
+                        '&::before': {
+                          opacity: 1,
+                        },
+                      },
                     }}
                   >
                     {isMobile ? 'None' : 'Uncheck All'}
