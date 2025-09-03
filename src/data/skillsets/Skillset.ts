@@ -274,19 +274,19 @@ interface SkillLine {
   name: string;
   icon?: string;
   ultimates?:
-    | any[]
+    | Ultimate[]
     | {
         [key: string]: Ultimate;
       };
   activeAbilities?: {
     [key: string]: ActiveAbility;
   };
-  actives?: any[];
+  actives?: ActiveAbility[];
   passives?:
     | {
         [key: string]: Passive;
       }
-    | any[];
+    | Passive[];
 }
 
 interface Mechanic {

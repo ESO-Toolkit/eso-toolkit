@@ -112,7 +112,7 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
       // Search through each skill line
       for (const skillLine of Object.values(skillLineData.skillLines || {})) {
         if (!skillLine) continue;
-        const skillLineName = (skillLine as any).name || '';
+        const skillLineName = (skillLine as { name?: string }).name || '';
 
         // Check different ability categories
         const categories: Array<'ultimates' | 'actives' | 'activeAbilities' | 'passives'> = [
@@ -123,7 +123,7 @@ export function findSkillByName(abilityName: string): SkillSearchResult | null {
         ];
 
         for (const abilityType of categories) {
-          const collection = (skillLine as any)?.[abilityType];
+          const collection = (skillLine as unknown as Record<string, unknown>)[abilityType];
           if (!collection) continue;
 
           // Handle both array and object structures
