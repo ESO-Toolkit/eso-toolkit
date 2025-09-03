@@ -81,19 +81,23 @@ export const TargetSelector: React.FC = () => {
         '&::before': {
           content: '""',
           position: 'absolute',
-          inset: 0,
-          borderRadius: 2,
-          padding: '1px',
+          top: '-4px',
+          left: '-4px',
+          right: '-4px',
+          bottom: '-4px',
+          borderRadius: '10px',
           background: isDarkMode
             ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(147, 51, 234, 0.3) 50%, rgba(239, 68, 68, 0.2) 100%)'
             : 'linear-gradient(135deg, rgba(59, 130, 246, 0.3) 0%, rgba(147, 51, 234, 0.2) 50%, rgba(236, 72, 153, 0.15) 100%)',
+          padding: '2px',
           mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           maskComposite: 'xor',
           WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
           WebkitMaskComposite: 'xor',
-          pointerEvents: 'none',
           opacity: 0.6,
           transition: 'opacity 0.3s ease',
+          pointerEvents: 'none',
+          zIndex: 1000,
         },
         '&:hover::before': {
           opacity: 1,
@@ -103,6 +107,7 @@ export const TargetSelector: React.FC = () => {
       <Box
         sx={{
           position: 'relative',
+          zIndex: 1001,
           background: isDarkMode
             ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.8) 50%, rgba(51, 65, 85, 0.7) 100%)'
             : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 50%, rgba(241, 245, 249, 0.85) 100%)',
@@ -148,6 +153,7 @@ export const TargetSelector: React.FC = () => {
               borderRadius: 2,
               fontFamily: 'Inter, system-ui',
               fontWeight: 500,
+              overflow: 'visible',
               '& fieldset': {
                 border: 'none',
               },
@@ -156,6 +162,31 @@ export const TargetSelector: React.FC = () => {
               },
               '&.Mui-focused fieldset': {
                 border: 'none',
+              },
+              '&.Mui-focused': {
+                backgroundColor: 'transparent !important',
+                boxShadow: 'none !important',
+                overflow: 'visible',
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: '-4px',
+                  left: '-4px',
+                  right: '-4px',
+                  bottom: '-4px',
+                  borderRadius: '10px',
+                  background: isDarkMode
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.6) 0%, rgba(147, 51, 234, 0.5) 50%, rgba(239, 68, 68, 0.4) 100%)'
+                    : 'linear-gradient(135deg, rgba(59, 130, 246, 0.5) 0%, rgba(147, 51, 234, 0.4) 50%, rgba(236, 72, 153, 0.3) 100%)',
+                  padding: '2px',
+                  mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  maskComposite: 'xor',
+                  WebkitMask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+                  WebkitMaskComposite: 'xor',
+                  opacity: 1,
+                  pointerEvents: 'none',
+                  zIndex: 1002,
+                },
               },
               '& .MuiSelect-select': {
                 padding: '14px 16px',

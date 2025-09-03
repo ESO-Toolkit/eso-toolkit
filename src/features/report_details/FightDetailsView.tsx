@@ -74,7 +74,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       <Box mt={2}>
         {/* Target Selection */}
         <Box sx={{ mb: 2 }}>
-          <FormControl sx={{ minWidth: 200 }}>
+          <FormControl sx={{ minWidth: 200, overflow: 'visible' }}>
             <Skeleton variant="rounded" width={200} height={56} />
           </FormControl>
         </Box>
@@ -116,7 +116,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     <React.Fragment>
       {/* Target Selection */}
       <Box sx={{ mb: 2 }}>
-        <FormControl sx={{ minWidth: 200 }}>
+        <FormControl sx={{ minWidth: 200, overflow: 'visible' }}>
           <TargetSelector />
         </FormControl>
       </Box>
