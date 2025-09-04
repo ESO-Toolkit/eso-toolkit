@@ -304,7 +304,7 @@ export const useErrorHandler = (): ((error: Error, errorInfo?: React.ErrorInfo) 
 // Higher-order component that wraps components with error boundary
 export const withErrorBoundary = <P extends object>(
   Component: React.ComponentType<P>,
-  fallback?: ReactNode
+  fallback?: ReactNode,
 ): React.ComponentType<P> => {
   const WrappedComponent = (props: P): React.ReactElement => (
     <ErrorBoundary fallback={fallback}>
@@ -346,5 +346,5 @@ export const SentryErrorBoundary = Sentry.withErrorBoundary(
       </Box>
     ),
     showDialog: true,
-  }
+  },
 );

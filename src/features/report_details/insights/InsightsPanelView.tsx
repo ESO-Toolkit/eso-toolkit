@@ -173,7 +173,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                       const players = abilityEquipped[knownAbility] || [];
                       return [...acc, ...players];
                     },
-                    []
+                    [],
                   );
 
                   // Remove duplicates in case a player has multiple variants equipped

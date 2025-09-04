@@ -45,7 +45,7 @@ export interface BuffUptimeCalculatorOptions {
  */
 export function computeBuffUptimes(
   buffLookup: BuffLookupData | null | undefined,
-  options: BuffUptimeCalculatorOptions
+  options: BuffUptimeCalculatorOptions,
 ): BuffUptimeResult[] {
   if (!buffLookup || !options.fightDuration) {
     return [];

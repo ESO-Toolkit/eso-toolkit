@@ -33,7 +33,7 @@ export function useCastEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -43,6 +43,6 @@ export function useCastEvents(): {
 
   return React.useMemo(
     () => ({ castEvents, isCastEventsLoading, selectedFight }),
-    [castEvents, isCastEventsLoading, selectedFight]
+    [castEvents, isCastEventsLoading, selectedFight],
   );
 }

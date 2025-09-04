@@ -43,19 +43,19 @@ export function useGetReportMasterDataQuery(
     Types.GetReportMasterDataQuery,
     Types.GetReportMasterDataQueryVariables
   > &
-    ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(
     GetReportMasterDataDocument,
-    options
+    options,
   );
 }
 export function useGetReportMasterDataLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetReportMasterDataQuery,
     Types.GetReportMasterDataQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<
@@ -69,7 +69,7 @@ export function useGetReportMasterDataSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetReportMasterDataQuery,
         Types.GetReportMasterDataQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
@@ -123,19 +123,19 @@ export function useGetReportPlayersOnlyQuery(
     Types.GetReportPlayersOnlyQuery,
     Types.GetReportPlayersOnlyQueryVariables
   > &
-    ({ variables: Types.GetReportPlayersOnlyQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetReportPlayersOnlyQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetReportPlayersOnlyQuery, Types.GetReportPlayersOnlyQueryVariables>(
     GetReportPlayersOnlyDocument,
-    options
+    options,
   );
 }
 export function useGetReportPlayersOnlyLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetReportPlayersOnlyQuery,
     Types.GetReportPlayersOnlyQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<
@@ -149,7 +149,7 @@ export function useGetReportPlayersOnlySuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetReportPlayersOnlyQuery,
         Types.GetReportPlayersOnlyQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };

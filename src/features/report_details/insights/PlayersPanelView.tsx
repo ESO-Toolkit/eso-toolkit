@@ -330,7 +330,7 @@ const FOOD_REGEXPS: RegExp[] = [
 ];
 
 function detectFoodFromAuras(
-  auras?: Array<{ name: string; id: number; stacks?: number }>
+  auras?: Array<{ name: string; id: number; stacks?: number }>,
 ): { name: string; id: number } | undefined {
   if (!auras || auras.length === 0) return undefined;
 
@@ -607,7 +607,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   }, []);
 
   const getArmorWeightCounts = (
-    gear: PlayerGear[]
+    gear: PlayerGear[],
   ): { heavy: number; medium: number; light: number } => {
     let heavy = 0,
       medium = 0,
@@ -1112,7 +1112,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                     const chipProps = getGearChipProps(
                                       rec.labelName,
                                       rec.count,
-                                      theme
+                                      theme,
                                     );
                                     return (
                                       <Chip
@@ -1253,7 +1253,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                 .replace(/^The\s+/i, '')}
                                             </Box>
                                           </Box>
-                                        )
+                                        ),
                                       )}
                                     </>
                                   )}
@@ -1417,12 +1417,12 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                                 : cp.color === 'blue'
                                                   ? 'championBlue'
                                                   : 'championGreen',
-                                              theme
+                                              theme,
                                             ),
                                             '& .MuiChip-label': { fontSize: '0.58rem' },
                                           }}
                                         />
-                                      )
+                                      ),
                                     )}
                                   </Box>
                                 </Box>

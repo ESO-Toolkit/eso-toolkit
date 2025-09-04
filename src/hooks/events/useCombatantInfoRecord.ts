@@ -25,6 +25,6 @@ export function useCombatantInfoRecord(): {
       combatantInfoRecord,
       isCombatantInfoEventsLoading,
     }),
-    [combatantInfoRecord, isCombatantInfoEventsLoading]
+    [combatantInfoRecord, isCombatantInfoEventsLoading],
   );
 }

@@ -39,7 +39,7 @@ ChartJS.register(
   ChartTooltip,
   Legend,
   Filler,
-  annotationPlugin
+  annotationPlugin,
 );
 
 interface PenetrationDataPoint {
@@ -320,7 +320,7 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 <Line
                   data={{
                     labels: penetrationData.dataPoints.map((point) =>
-                      point.relativeTime.toFixed(1)
+                      point.relativeTime.toFixed(1),
                     ),
                     datasets: [
                       {

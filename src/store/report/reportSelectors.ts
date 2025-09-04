@@ -7,7 +7,7 @@ import { RootState } from '../storeWithHistory';
 
 export const selectReport = (state: RootState): RootState['report'] => state.report;
 export const selectReportFights = (
-  state: RootState
+  state: RootState,
 ): Array<FightFragment | null> | undefined | null => state.report.data?.fights;
 export const selectReportId = (state: RootState): RootState['report']['reportId'] =>
   state.report.reportId;

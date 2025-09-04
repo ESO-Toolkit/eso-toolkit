@@ -150,7 +150,7 @@ const createMockBuffEvent = (
   timestamp: number,
   abilityGameID: number,
   targetID: number,
-  type: 'applybuff' | 'removebuff' = 'applybuff'
+  type: 'applybuff' | 'removebuff' = 'applybuff',
 ): BuffEvent => ({
   timestamp,
   type,
@@ -168,7 +168,7 @@ const createMockDebuffEvent = (
   timestamp: number,
   abilityGameID: number,
   targetID: number,
-  type: 'applydebuff' | 'removedebuff' = 'applydebuff'
+  type: 'applydebuff' | 'removedebuff' = 'applydebuff',
 ): DebuffEvent => ({
   timestamp,
   type,

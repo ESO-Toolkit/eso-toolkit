@@ -26,7 +26,7 @@ const setMockSelectedTabId = (value: number | null): void => {
 
 // Create a test-specific wrapper around the shared mock store
 const createTestMockStore = (
-  initialState: { ui?: Partial<UIState> } = {}
+  initialState: { ui?: Partial<UIState> } = {},
 ): ReturnType<typeof createMockStore> => {
   return createMockStore({
     initialState,

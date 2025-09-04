@@ -48,7 +48,7 @@ const CPM_EXCLUSION_LIST = Object.freeze(
     39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
     16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
     16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
-  ])
+  ]),
 );
 
 // This panel now uses report actors from masterData
@@ -96,7 +96,7 @@ export const PlayersPanel: React.FC = () => {
 
     // Get numeric mundus stone ability IDs from the enum (filter out string keys)
     const mundusStoneIds = Object.values(MundusStones).filter(
-      (v): v is number => typeof v === 'number'
+      (v): v is number => typeof v === 'number',
     );
     // Secondary: detect by ability name in case logs use alternate IDs (e.g., "Bonus (2): The Atronach")
     const mundusNameRegex =
@@ -114,7 +114,7 @@ export const PlayersPanel: React.FC = () => {
             (event: CombatantInfoEvent): event is CombatantInfoEvent =>
               event.type === 'combatantinfo' &&
               'sourceID' in event &&
-              String(event.sourceID) === playerId
+              String(event.sourceID) === playerId,
           );
 
           if (combatantInfoEventsForPlayer.length > 0) {
@@ -194,7 +194,7 @@ export const PlayersPanel: React.FC = () => {
             (event: CombatantInfoEvent): event is CombatantInfoEvent =>
               event.type === 'combatantinfo' &&
               'sourceID' in event &&
-              String(event.sourceID) === playerId
+              String(event.sourceID) === playerId,
           );
 
           if (combatantInfoEventsForPlayer.length > 0) {
@@ -473,7 +473,7 @@ export const PlayersPanel: React.FC = () => {
         fight.startTime,
         fight.endTime,
         aurasByPlayer[playerId] || [],
-        player.role
+        player.role,
       );
 
       result[playerId] = buildIssues;
@@ -560,7 +560,7 @@ export const PlayersPanel: React.FC = () => {
       resourceEvents,
       damageEvents,
       healingEvents,
-      castEvents.filter((e) => e.type === 'cast') as CastEvent[]
+      castEvents.filter((e) => e.type === 'cast') as CastEvent[],
     );
 
     console.log('🪶 Raw scribing analysis results:', allPlayersScribingResults);

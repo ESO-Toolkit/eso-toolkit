@@ -193,7 +193,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
       acc[info.playerId] = (acc[info.playerId] || 0) + 1;
       return acc;
     },
-    {} as Record<string, number>
+    {} as Record<string, number>,
   );
 
   const totalDeaths = deathInfos.length;
@@ -343,7 +343,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
           const killingBlowSourceName = resolveActorName(
             killingBlowSourceActor,
             info.killingBlow?.sourceID,
-            info.killingBlow?.sourceName
+            info.killingBlow?.sourceName,
           );
 
           return (
@@ -399,10 +399,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       background:
                         theme.palette.mode === 'dark'
                           ? roleColors.getPlayerColor(
-                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank'
+                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank',
                             )
                           : roleColors.getGradientColor(
-                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank'
+                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank',
                             ),
                       fontSize: '1rem',
                     }}
@@ -414,7 +414,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       variant="subtitle2"
                       sx={{
                         color: roleColors.getPlayerColor(
-                          playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank'
+                          playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank',
                         ),
                         fontWeight: 400,
                         fontFamily: '"Segoe UI", Tahoma, Geneva, Verdana, sans-serif',
@@ -684,12 +684,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         const attackSourceName = resolveActorName(
                           attackSourceActor,
                           attack.sourceID,
-                          attack.sourceName
+                          attack.sourceName,
                         );
                         const sourceId = attack.sourceID?.toString();
                         const sourceRole = sourceId ? playerMap.get(sourceId)?.role : undefined;
                         const sourceColor = roleColors.getPlayerColor(
-                          sourceRole as 'dps' | 'healer' | 'tank'
+                          sourceRole as 'dps' | 'healer' | 'tank',
                         );
 
                         return (

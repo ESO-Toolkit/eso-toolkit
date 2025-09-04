@@ -557,7 +557,7 @@ const FloatingIcon = styled(Box)<{ delay?: number; duration?: number; x?: string
         opacity: 0.15,
       },
     },
-  })
+  }),
 );
 
 const GeometricShape = styled(Box)<{ delay?: number; size?: string; x?: string; y?: string }>(
@@ -591,7 +591,7 @@ const GeometricShape = styled(Box)<{ delay?: number; size?: string; x?: string; 
         opacity: 0.6,
       },
     },
-  })
+  }),
 );
 
 export const LandingPage: React.FC = () => {
@@ -883,7 +883,7 @@ export const LandingPage: React.FC = () => {
                 window.open(
                   'https://github.com/bkrupa/eso-log-aggregator',
                   '_blank',
-                  'noopener,noreferrer'
+                  'noopener,noreferrer',
                 )
               }
             >

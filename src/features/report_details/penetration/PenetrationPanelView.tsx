@@ -15,7 +15,7 @@ export interface PenetrationPanelViewProps {
   readonly fight: Fight;
   readonly expandedPlayers: Record<number, boolean>;
   readonly onPlayerExpandChange: (
-    playerId: string
+    playerId: string,
   ) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
 }
 

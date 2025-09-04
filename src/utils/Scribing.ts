@@ -100,7 +100,7 @@ export const SCRIBING_BLACKLIST = new Set<string>([
 export function getAbilityDisplayName(
   ability: { name?: string; gameID?: number; type?: number | string },
   eventType: 'damage' | 'debuff' | 'buff' | 'resource',
-  hitType?: number | string
+  hitType?: number | string,
 ): string {
   let displayName = ability?.name || 'Unknown Ability';
 
@@ -252,7 +252,7 @@ export function analyzeScribingSkillEffects(
   allDamageEvents: DamageEvent[],
   allCastEvents: CastEvent[],
   allHealingEvents: HealEvent[],
-  playerId = 1
+  playerId = 1,
 ): ScribingSkillAnalysis | null {
   // Check if this ability is a scribing skill
   for (const grimoireType of getAllGrimoires()) {
@@ -262,7 +262,7 @@ export function analyzeScribingSkillEffects(
       const relatedAbilities = allReportAbilities
         .filter(
           (ability) =>
-            ability.name && pattern.test(ability.name) && !SCRIBING_BLACKLIST.has(ability.name)
+            ability.name && pattern.test(ability.name) && !SCRIBING_BLACKLIST.has(ability.name),
         )
         .map((ability) => ({
           name: ability.name || `Unknown Ability ${ability.gameID}`,
@@ -279,7 +279,7 @@ export function analyzeScribingSkillEffects(
 
       // Find all cast events for this scribing skill to get their castTrackIDs
       const scribingCastEvents = allCastEvents.filter(
-        (cast) => cast.sourceID === playerId && cast.abilityGameID === talent.guid
+        (cast) => cast.sourceID === playerId && cast.abilityGameID === talent.guid,
       );
 
       // Create a set of cast track IDs
@@ -304,7 +304,7 @@ export function analyzeScribingSkillEffects(
           const castEvent = scribingCastEvents.find(
             (cast) =>
               (cast as CastEvent & ExtendedEventProperties).castTrackID ===
-              (event as DamageEvent & ExtendedEventProperties).castTrackID
+              (event as DamageEvent & ExtendedEventProperties).castTrackID,
           );
 
           const isDirectMatch = event.abilityGameID === talent.guid;
@@ -327,7 +327,7 @@ export function analyzeScribingSkillEffects(
           (event) =>
             event.sourceID === playerId &&
             (event as DebuffEvent & ExtendedEventProperties).extraAbilityGameID === talent.guid &&
-            event.type === 'applydebuff'
+            event.type === 'applydebuff',
         )
         .map((event) => ({
           ...event,
@@ -340,7 +340,7 @@ export function analyzeScribingSkillEffects(
           (event) =>
             event.sourceID === playerId &&
             (event as BuffEvent & ExtendedEventProperties).extraAbilityGameID === talent.guid &&
-            event.type === 'applybuff'
+            event.type === 'applybuff',
         )
         .map((event) => ({
           ...event,
@@ -353,7 +353,7 @@ export function analyzeScribingSkillEffects(
           (event) =>
             event.sourceID === playerId &&
             (event as ResourceChangeEvent & ExtendedEventProperties).extraAbilityGameID ===
-              talent.guid
+              talent.guid,
         )
         .map((event) => ({
           ...event,
@@ -373,7 +373,7 @@ export function analyzeScribingSkillEffects(
           const castEvent = scribingCastEvents.find(
             (cast) =>
               (cast as CastEvent & ExtendedEventProperties).castTrackID ===
-              (event as HealEvent & ExtendedEventProperties).castTrackID
+              (event as HealEvent & ExtendedEventProperties).castTrackID,
           );
 
           const isDirectMatch = event.abilityGameID === talent.guid;
@@ -553,7 +553,7 @@ export function analyzeAllPlayersScribingSkills(
   allResourceEvents: ResourceChangeEvent[],
   allDamageEvents: DamageEvent[],
   allHealingEvents: HealEvent[],
-  allCastEvents: CastEvent[]
+  allCastEvents: CastEvent[],
 ): Record<number, ScribingSkillAnalysis[]> {
   const result: Record<number, ScribingSkillAnalysis[]> = {};
 
@@ -584,7 +584,7 @@ export function analyzeAllPlayersScribingSkills(
         allDamageEvents,
         allCastEvents,
         allHealingEvents,
-        playerId
+        playerId,
       );
 
       if (analysis) {

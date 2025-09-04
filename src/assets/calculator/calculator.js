@@ -1011,7 +1011,7 @@ function createItem(item, index, type) {
     // Remove accidental duplicated leading headings (e.g., <strong>Title</strong><br><strong>Title</strong>...)
     tooltipHTML = tooltipHTML.replace(
       /^<strong>([^<]+)<\/strong>\s*<br>\s*<strong>\1<\/strong>\s*(<br>|)/i,
-      '<strong>$1</strong><br>'
+      '<strong>$1</strong><br>',
     );
 
     // Append per-stack info if applicable
@@ -1074,7 +1074,7 @@ function mountPen() {
     }, 180);
   }
   const gb = document.querySelector(
-    '.calculator__list[data-calc="pen"][data-section="group-buffs"]'
+    '.calculator__list[data-calc="pen"][data-section="group-buffs"]',
   );
   if (gb) gb.innerHTML = html;
   html = '';
@@ -1088,7 +1088,7 @@ function mountPen() {
     html += createItem(item, penIndex++, 'pen');
   });
   const passives = document.querySelector(
-    '.calculator__list[data-calc="pen"][data-section="passives"]'
+    '.calculator__list[data-calc="pen"][data-section="passives"]',
   );
   if (passives) passives.innerHTML = html;
   html = '';
@@ -1115,7 +1115,7 @@ function mountCrit() {
     html += createItem(item, critIndex++, 'crit');
   });
   const gb = document.querySelector(
-    '.calculator__list[data-calc="crit"][data-section="group-buffs"]'
+    '.calculator__list[data-calc="crit"][data-section="group-buffs"]',
   );
   if (gb) gb.innerHTML = html;
   html = '';
@@ -1129,7 +1129,7 @@ function mountCrit() {
     html += createItem(item, critIndex++, 'crit');
   });
   const passives = document.querySelector(
-    '.calculator__list[data-calc="crit"][data-section="passives"]'
+    '.calculator__list[data-calc="crit"][data-section="passives"]',
   );
   if (passives) passives.innerHTML = html;
   html = '';
@@ -1270,7 +1270,7 @@ function toggleItem(type, index) {
   if (item && item.locked) {
     // Keep UI synced to locked state
     let cb = document.querySelector(
-      `.calculator__item[data-type="${type}"][data-index="${index}"] input[type="checkbox"]`
+      `.calculator__item[data-type="${type}"][data-index="${index}"] input[type="checkbox"]`,
     );
     if (cb) cb.checked = true;
     return;
@@ -1302,7 +1302,7 @@ function updateItemDisplay(type, index) {
   const items = getAllItems(type);
   const item = items[index];
   let itemEl = document.querySelector(
-    `.calculator__item[data-type="${type}"][data-index="${index}"]`
+    `.calculator__item[data-type="${type}"][data-index="${index}"]`,
   );
 
   if (!itemEl) return; // Skip if element doesn't exist
@@ -1369,7 +1369,7 @@ function toggleAllPen(checked) {
     if (item.locked) {
       item.enabled = true;
       let cb = document.querySelector(
-        `.calculator__item[data-type="pen"][data-index="${index}"] input[type="checkbox"]`
+        `.calculator__item[data-type="pen"][data-index="${index}"] input[type="checkbox"]`,
       );
       if (cb) cb.checked = true;
       updateItemDisplay('pen', index);
@@ -1377,7 +1377,7 @@ function toggleAllPen(checked) {
     }
     item.enabled = checked;
     let cb = document.querySelector(
-      `.calculator__item[data-type="pen"][data-index="${index}"] input[type="checkbox"]`
+      `.calculator__item[data-type="pen"][data-index="${index}"] input[type="checkbox"]`,
     );
     if (cb) cb.checked = checked;
     updateItemDisplay('pen', index);
@@ -1392,7 +1392,7 @@ function toggleAllCrit(checked) {
     if (item.locked) {
       item.enabled = true;
       let cb = document.querySelector(
-        `.calculator__item[data-type="crit"][data-index="${index}"] input[type="checkbox"]`
+        `.calculator__item[data-type="crit"][data-index="${index}"] input[type="checkbox"]`,
       );
       if (cb) cb.checked = true;
       updateItemDisplay('crit', index);
@@ -1400,7 +1400,7 @@ function toggleAllCrit(checked) {
     }
     item.enabled = checked;
     let cb = document.querySelector(
-      `.calculator__item[data-type="crit"][data-index="${index}"] input[type="checkbox"]`
+      `.calculator__item[data-type="crit"][data-index="${index}"] input[type="checkbox"]`,
     );
     if (cb) cb.checked = checked;
     updateItemDisplay('crit', index);
@@ -1626,7 +1626,7 @@ document.addEventListener(
     const type = calcEl && calcEl.getAttribute('data-calc');
     if (type === 'pen' || type === 'crit') clearBulkButtons(type);
   },
-  true
+  true,
 );
 
 function updateFixedTotalsFromActive() {
@@ -1668,7 +1668,7 @@ function updateFixedTotalsFromActive() {
     statusEl.classList.remove(c);
   });
   const appliedClass = classes.find(
-    (c) => srcStatus.classList.contains(c) || srcVal.classList.contains(c)
+    (c) => srcStatus.classList.contains(c) || srcVal.classList.contains(c),
   );
   if (appliedClass) {
     valueEl.classList.add(appliedClass);
@@ -1687,10 +1687,10 @@ function equalizeSections() {
   // Always clear first so mobile stacks naturally and measurements are fresh
   _sections.forEach((section) => {
     const left = document.querySelector(
-      `.calculator__list[data-calc="pen"][data-section="${section}"]`
+      `.calculator__list[data-calc="pen"][data-section="${section}"]`,
     );
     const right = document.querySelector(
-      `.calculator__list[data-calc="crit"][data-section="${section}"]`
+      `.calculator__list[data-calc="crit"][data-section="${section}"]`,
     );
     if (!left || !right) return;
     left.style.minHeight = '';
@@ -1702,10 +1702,10 @@ function equalizeSections() {
   // Equalize only on desktop
   _sections.forEach((section) => {
     const left = document.querySelector(
-      `.calculator__list[data-calc="pen"][data-section=\"${section}\"]`
+      `.calculator__list[data-calc="pen"][data-section=\"${section}\"]`,
     );
     const right = document.querySelector(
-      `.calculator__list[data-calc="crit"][data-section=\"${section}\"]`
+      `.calculator__list[data-calc="crit"][data-section=\"${section}\"]`,
     );
     if (!left || !right) return;
 
@@ -1742,7 +1742,7 @@ function setLite(on) {
       '[lite] setLite -> on:',
       !!on,
       'body.has(lite):',
-      document.body.classList.contains('lite')
+      document.body.classList.contains('lite'),
     );
   } catch {}
   setTimeout(equalizeSections, 0);
@@ -1770,7 +1770,7 @@ function initLiteMode() {
       '[lite] initLiteMode -> enabled:',
       enabled,
       'body.has(lite):',
-      document.body.classList.contains('lite')
+      document.body.classList.contains('lite'),
     );
   } catch {}
   // Bind buttons defensively
@@ -2379,7 +2379,7 @@ function recenterPinnedTooltip() {
   if (!_tooltipPinned || _tooltipEl.style.display !== 'block' || !_activeItemEl) return;
   positionTooltipToItem(
     _activeItemEl,
-    _lastAnchorEl || _activeItemEl.querySelector('.item-tooltip-indicator')
+    _lastAnchorEl || _activeItemEl.querySelector('.item-tooltip-indicator'),
   );
 }
 
@@ -2407,7 +2407,7 @@ window.addEventListener(
       _isScrolling = false;
     }, 250);
   },
-  { passive: true }
+  { passive: true },
 );
 window.addEventListener('resize', _scheduleTooltipRecenter);
 window.addEventListener('orientationchange', () => setTimeout(recenterPinnedTooltip, 200));
@@ -2479,7 +2479,7 @@ window.addEventListener(
     ];
     if (keys.includes(e.key)) _maybeCloseOnScroll();
   },
-  { capture: true }
+  { capture: true },
 );
 
 // Backdrop click closes tooltip (primarily for mobile)
@@ -2501,7 +2501,7 @@ document.addEventListener(
     // Otherwise, close
     closeTooltipAnimated();
   },
-  true
+  true,
 );
 
 // Click anywhere on an item row to toggle its checkbox (except on inner controls)

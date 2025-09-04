@@ -68,7 +68,7 @@ export function usePenetrationDataTask(): {
             friendlyBuffsLookup: buffLookupData,
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
             selectedTargetIds: Array.from(selectedTargetIds),
-          })
+          }),
         );
       }
     }
@@ -87,13 +87,13 @@ export function usePenetrationDataTask(): {
 
   const penetrationData = useSelector(selectPenetrationDataResult);
   const isPenetrationDataLoading = useSelector(
-    selectWorkerTaskLoading('calculatePenetrationData')
+    selectWorkerTaskLoading('calculatePenetrationData'),
   ) as boolean;
   const penetrationDataError = useSelector(selectWorkerTaskError('calculatePenetrationData')) as
     | string
     | null;
   const penetrationDataProgress = useSelector(
-    selectWorkerTaskProgress('calculatePenetrationData')
+    selectWorkerTaskProgress('calculatePenetrationData'),
   ) as number | null;
 
   return React.useMemo(
@@ -110,6 +110,6 @@ export function usePenetrationDataTask(): {
       penetrationDataError,
       penetrationDataProgress,
       selectedFight,
-    ]
+    ],
   );
 }

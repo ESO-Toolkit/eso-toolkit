@@ -61,7 +61,7 @@ export interface CriticalDamageCalculationResult {
 
 export function calculateCriticalDamageData(
   data: CriticalDamageCalculationTask,
-  onProgress?: OnProgressCallback
+  onProgress?: OnProgressCallback,
 ): CriticalDamageCalculationResult {
   const { fight, players, combatantInfoEvents, friendlyBuffsLookup, debuffsLookup } = data;
 
@@ -93,7 +93,7 @@ export function calculateCriticalDamageData(
       const allSources = getAllCriticalDamageSourcesWithActiveState(
         deserializedFriendlyBuffsLookup,
         deserializedDebuffsLookup,
-        combatantInfo
+        combatantInfo,
       );
 
       // Calculate static critical damage for this player
@@ -142,7 +142,7 @@ export function calculateCriticalDamageData(
         deserializedDebuffsLookup,
         combatantInfo,
         playerData.player,
-        timestamp
+        timestamp,
       );
 
       const totalCriticalDamage = playerData.staticCriticalDamage + dynamicCriticalDamage;

@@ -59,7 +59,7 @@ export function parseDamageTypeFlags(type: string | number | null | undefined): 
  * Helper function to get damage types from flags for breakdown analysis
  */
 export function getDamageTypesFromFlags(
-  flagValue: number
+  flagValue: number,
 ): { flag: DamageTypeFlags; name: string }[] {
   const result: { flag: DamageTypeFlags; name: string }[] = [];
 
@@ -699,7 +699,7 @@ export const RED_CHAMPION_POINTS = Object.freeze(
     KnownAbilities.JUGGERNAUT,
     KnownAbilities.SLIPPERY,
     KnownAbilities.SPRINTER,
-  ])
+  ]),
 );
 export const BLUE_CHAMPION_POINTS = Object.freeze(
   new Set<KnownAbilities>([
@@ -708,10 +708,10 @@ export const BLUE_CHAMPION_POINTS = Object.freeze(
     KnownAbilities.REAVING_BLOWS,
     KnownAbilities.ENLIVENING_OVERFLOW,
     KnownAbilities.FROM_THE_BRINK,
-  ])
+  ]),
 );
 export const GREEN_CHAMPION_POINTS = Object.freeze(
-  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS])
+  new Set<KnownAbilities>([KnownAbilities.GILDED_FINGERS]),
 );
 
 // Food Buffs

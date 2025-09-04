@@ -13,13 +13,13 @@ export const selectAbilitiesById = (state: RootState): RootState['masterData']['
 // Master data loading state
 export const selectMasterDataLoadingState = createSelector(
   [selectMasterData],
-  (masterData) => masterData.loading
+  (masterData) => masterData.loading,
 );
 
 // Master data error state
 export const selectMasterDataErrorState = createSelector(
   [selectMasterData],
-  (masterData) => masterData.error
+  (masterData) => masterData.error,
 );
 
 // Combined master data selector

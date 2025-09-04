@@ -18,7 +18,7 @@ import {
 describe('gearUtilities', () => {
   // Helper function to create a basic CombatantInfoEvent for testing
   const createMockCombatantInfo = (
-    gearOverrides: Partial<Record<number, PlayerGear>>
+    gearOverrides: Partial<Record<number, PlayerGear>>,
   ): CombatantInfoEvent => {
     // Create a default empty gear array with 14 slots (based on GearSlot enum)
     const defaultGear: PlayerGear[] = [];
@@ -58,7 +58,7 @@ describe('gearUtilities', () => {
   const createGearItem = (
     type: WeaponType,
     trait: GearTrait = GearTrait.SHARPENED,
-    slot = 0
+    slot = 0,
   ): PlayerGear => ({
     id: 12345,
     slot,
@@ -170,22 +170,22 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.DAGGER,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
           [GearSlot.BACKUP_OFF_HAND]: createGearItem(
             WeaponType.MACE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_OFF_HAND
+            GearSlot.BACKUP_OFF_HAND,
           ),
         });
 
@@ -197,12 +197,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.INFERNO_STAFF,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
         });
 
@@ -214,12 +214,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ), // Default trait is SHARPENED, need to test with a different one
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
         });
 
@@ -242,7 +242,7 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
         });
 
@@ -254,7 +254,7 @@ describe('gearUtilities', () => {
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_AXE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
         });
 
@@ -266,7 +266,7 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
         });
 
@@ -285,22 +285,22 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_AXE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
           [GearSlot.BACKUP_OFF_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_OFF_HAND
+            GearSlot.BACKUP_OFF_HAND,
           ),
         });
 
@@ -312,12 +312,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.DAGGER,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
         });
 
@@ -336,7 +336,7 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_AXE,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
         });
 
@@ -348,7 +348,7 @@ describe('gearUtilities', () => {
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_AXE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
         });
 
@@ -360,12 +360,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
         });
 
@@ -384,7 +384,7 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.MAUL,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
         });
 
@@ -396,7 +396,7 @@ describe('gearUtilities', () => {
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.MAUL,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
         });
 
@@ -408,7 +408,7 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
         });
 
@@ -427,22 +427,22 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.DAGGER,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
           [GearSlot.BACKUP_OFF_HAND]: createGearItem(
             WeaponType.MACE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_OFF_HAND
+            GearSlot.BACKUP_OFF_HAND,
           ),
         });
 
@@ -454,12 +454,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.TWO_HANDED_SWORD,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.INFERNO_STAFF,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
         });
 
@@ -478,22 +478,22 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.MACE,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.MACE,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
           [GearSlot.BACKUP_MAIN_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_MAIN_HAND
+            GearSlot.BACKUP_MAIN_HAND,
           ),
           [GearSlot.BACKUP_OFF_HAND]: createGearItem(
             WeaponType.MACE,
             GearTrait.SHARPENED,
-            GearSlot.BACKUP_OFF_HAND
+            GearSlot.BACKUP_OFF_HAND,
           ),
         });
 
@@ -505,12 +505,12 @@ describe('gearUtilities', () => {
           [GearSlot.MAIN_HAND]: createGearItem(
             WeaponType.AXE,
             GearTrait.SHARPENED,
-            GearSlot.MAIN_HAND
+            GearSlot.MAIN_HAND,
           ),
           [GearSlot.OFF_HAND]: createGearItem(
             WeaponType.DAGGER,
             GearTrait.SHARPENED,
-            GearSlot.OFF_HAND
+            GearSlot.OFF_HAND,
           ),
         });
 

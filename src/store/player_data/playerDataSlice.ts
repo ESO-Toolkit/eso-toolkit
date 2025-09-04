@@ -118,7 +118,7 @@ export const fetchPlayerData = createAsyncThunk<
       console.log('✅ Allowing player data thunk execution');
       return true;
     },
-  }
+  },
 );
 
 const playerDataSlice = createSlice({

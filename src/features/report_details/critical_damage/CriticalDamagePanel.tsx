@@ -39,7 +39,7 @@ export const CriticalDamagePanel: React.FC = () => {
         [playerId]: isExpanded,
       }));
     },
-    []
+    [],
   );
 
   // Show loading state while fetching data

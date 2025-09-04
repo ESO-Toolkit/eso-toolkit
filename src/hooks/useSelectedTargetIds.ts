@@ -35,7 +35,7 @@ export function useSelectedTargetIds(): Set<number> {
             const actor = reportMasterData?.actorsById?.[npc.id];
             return actor && actor.subType === 'Boss';
           })
-          .map((npc) => npc.id)
+          .map((npc) => npc.id),
       );
     }
 

@@ -33,7 +33,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
       client: isLoggedIn ? client : null,
       isReady: isLoggedIn && client !== null,
     }),
-    [client, isLoggedIn]
+    [client, isLoggedIn],
   );
 
   return (

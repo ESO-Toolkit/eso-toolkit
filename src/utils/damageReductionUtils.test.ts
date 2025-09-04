@@ -29,7 +29,7 @@ describe('damageReductionUtils', () => {
   // Mock data helpers
   const createMockCombatantInfo = (
     gear?: PlayerGear[],
-    auras?: CombatantAura[]
+    auras?: CombatantAura[],
   ): CombatantInfoEvent => ({
     sourceID: 1,
     timestamp: 0,
@@ -83,7 +83,7 @@ describe('damageReductionUtils', () => {
   });
 
   const createMockBuffLookup = (
-    abilities: Array<{ ability: KnownAbilities; intervals: Array<[number, number]> }>
+    abilities: Array<{ ability: KnownAbilities; intervals: Array<[number, number]> }>,
   ): BuffLookupData => {
     const buffIntervals: Record<
       string,
@@ -298,7 +298,7 @@ describe('damageReductionUtils', () => {
         buffLookup,
         debuffLookup,
         1000,
-        123
+        123,
       );
       expect(result).toBe(0);
     });
@@ -313,7 +313,7 @@ describe('damageReductionUtils', () => {
         buffLookup,
         debuffLookup,
         1000,
-        123
+        123,
       );
       expect(result).toBe(ResistanceValues.MAJOR_RESOLVE);
     });
@@ -329,7 +329,7 @@ describe('damageReductionUtils', () => {
         buffLookup,
         debuffLookup,
         1000,
-        123
+        123,
       );
       expect(result).toBe(ResistanceValues.MAJOR_RESOLVE + ResistanceValues.MINOR_RESOLVE);
     });
@@ -345,7 +345,7 @@ describe('damageReductionUtils', () => {
         buffLookup,
         debuffLookup,
         1000,
-        123
+        123,
       );
       expect(result).toBe(ResistanceValues.MINOR_RESOLVE);
     });
@@ -436,7 +436,7 @@ describe('damageReductionUtils', () => {
 
   describe('isComputedSourceActive', () => {
     const createComputedSource = (
-      key: ComputedDamageReductionSources
+      key: ComputedDamageReductionSources,
     ): DamageReductionComputedSource => ({
       name: `Test ${key}`,
       description: 'Test description',
@@ -531,7 +531,7 @@ describe('damageReductionUtils', () => {
 
   describe('getResistanceFromComputedSource', () => {
     const createComputedSource = (
-      key: ComputedDamageReductionSources
+      key: ComputedDamageReductionSources,
     ): DamageReductionComputedSource => ({
       name: `Test ${key}`,
       description: 'Test description',
@@ -594,7 +594,7 @@ describe('damageReductionUtils', () => {
       const blockSource = createNotImplementedSource();
 
       expect(getResistanceFromComputedSource(championPointsSource, combatantInfo, playerData)).toBe(
-        0
+        0,
       );
       expect(getResistanceFromComputedSource(racialSource, combatantInfo, playerData)).toBe(0);
       expect(getResistanceFromComputedSource(blockSource, combatantInfo, playerData)).toBe(0);

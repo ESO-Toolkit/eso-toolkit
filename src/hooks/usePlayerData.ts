@@ -35,7 +35,7 @@ export function usePlayerData(): {
           '📡 Dispatching fetchPlayerData for reportId:',
           reportId,
           'fightId:',
-          fightIdNumber
+          fightIdNumber,
         );
         dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
       }
@@ -56,6 +56,6 @@ export function usePlayerData(): {
 
   return React.useMemo(
     () => ({ playerData, isPlayerDataLoading }),
-    [playerData, isPlayerDataLoading]
+    [playerData, isPlayerDataLoading],
   );
 }

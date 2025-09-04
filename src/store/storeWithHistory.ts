@@ -146,7 +146,7 @@ const store = configureStore({
           throw new Error(
             `Unexpected non-serializable value detected${pathInfo}${keyInfo}. ` +
               `Value type: ${typeof value}, Constructor: ${value?.constructor?.name || 'unknown'}. ` +
-              `If this is intentional, add the path to ignoredPaths/ignoredActionPaths or update the serialization check.`
+              `If this is intentional, add the path to ignoredPaths/ignoredActionPaths or update the serialization check.`,
           );
         },
         // Remove the warning threshold since we're throwing errors now

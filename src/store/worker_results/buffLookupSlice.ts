@@ -9,7 +9,7 @@ const computeBuffLookupHash = memoizeOne((...args) => {
 
 // Create buff lookup slice
 export const buffLookupSlice = createWorkerTaskSlice('calculateBuffLookup', (input) =>
-  computeBuffLookupHash(input.buffEvents, input.fightEndTime)
+  computeBuffLookupHash(input.buffEvents, input.fightEndTime),
 );
 
 // Export actions, thunk, and reducer

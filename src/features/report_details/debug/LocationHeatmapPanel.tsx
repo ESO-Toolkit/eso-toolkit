@@ -265,7 +265,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ figh
       const phase = fightPhases.find((p) => p.id === selectedPhase);
       if (phase) {
         filtered = filtered.filter(
-          (point) => point.timestamp >= phase.startTime && point.timestamp <= phase.endTime
+          (point) => point.timestamp >= phase.startTime && point.timestamp <= phase.endTime,
         );
       }
     }
@@ -375,7 +375,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ figh
     // Get all tanks that have position data
     const tanksWithData = new Set(locationData.map((point) => point.playerId));
     const tankActors = playerActors.filter(
-      (player) => player.role === 'tank' && tanksWithData.has(player.id)
+      (player) => player.role === 'tank' && tanksWithData.has(player.id),
     );
 
     // Track time spent per tank per voxel
@@ -506,7 +506,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ figh
 
     // Get unique tank IDs to assign consistent colors
     const uniqueTankIds = Array.from(
-      new Set(elmsMarkers.map((marker) => marker.tankId).filter(Boolean))
+      new Set(elmsMarkers.map((marker) => marker.tankId).filter(Boolean)),
     );
 
     elmsMarkers.forEach((marker, index) => {

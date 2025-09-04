@@ -95,7 +95,7 @@ export const fetchResourceEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const resourceEventsSlice = createSlice({

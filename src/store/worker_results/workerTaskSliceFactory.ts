@@ -51,10 +51,10 @@ type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
   actions: {
     startTask: () => PayloadAction<void>;
     updateProgress: (
-      payload: WorkerTaskProgressPayload
+      payload: WorkerTaskProgressPayload,
     ) => PayloadAction<WorkerTaskProgressPayload>;
     completeTask: (
-      payload: WorkerTaskCompletedPayload<SharedWorkerResultType<T>>
+      payload: WorkerTaskCompletedPayload<SharedWorkerResultType<T>>,
     ) => PayloadAction<WorkerTaskCompletedPayload<SharedWorkerResultType<T>>>;
     failTask: (payload: WorkerTaskFailedPayload) => PayloadAction<WorkerTaskFailedPayload>;
     clearResult: () => PayloadAction<void>;
@@ -62,7 +62,7 @@ type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
   };
   reducer: (
     state: WorkerTaskState<SharedWorkerResultType<T>> | undefined,
-    action: { type: string; payload?: unknown }
+    action: { type: string; payload?: unknown },
   ) => WorkerTaskState<SharedWorkerResultType<T>>;
   executeTask: ReturnType<
     typeof createAsyncThunk<
@@ -76,7 +76,7 @@ type WorkerTaskSliceReturn<T extends SharedComputationWorkerTaskType> = {
 // Generic function to create a worker task slice
 export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>(
   taskName: T,
-  createInputHash: (input: SharedWorkerInputType<T>) => string
+  createInputHash: (input: SharedWorkerInputType<T>) => string,
 ): WorkerTaskSliceReturn<T> => {
   type ResultType = SharedWorkerResultType<T>;
   type InputType = SharedWorkerInputType<T>;
@@ -99,7 +99,7 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           // Progress callback will be handled by the slice's updateProgress action
           () => {
             // Progress updates are handled separately
-          }
+          },
         );
         return result as ResultType;
       } catch (error) {
@@ -136,7 +136,7 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
 
         return true; // Allow execution
       },
-    }
+    },
   );
 
   const slice = createSlice({

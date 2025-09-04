@@ -50,7 +50,7 @@ export function useStatusEffectUptimesTask(): {
           debuffsLookup: debuffLookupData,
           fightStartTime: selectedFight.startTime,
           fightEndTime: selectedFight?.endTime,
-        })
+        }),
       );
     }
   }, [
@@ -64,13 +64,13 @@ export function useStatusEffectUptimesTask(): {
 
   const statusEffectUptimesData = useSelector(selectStatusEffectUptimesResult);
   const isStatusEffectUptimesLoading = useSelector(
-    selectWorkerTaskLoading('calculateStatusEffectUptimes')
+    selectWorkerTaskLoading('calculateStatusEffectUptimes'),
   ) as boolean;
   const statusEffectUptimesError = useSelector(
-    selectWorkerTaskError('calculateStatusEffectUptimes')
+    selectWorkerTaskError('calculateStatusEffectUptimes'),
   ) as string | null;
   const statusEffectUptimesProgress = useSelector(
-    selectWorkerTaskProgress('calculateStatusEffectUptimes')
+    selectWorkerTaskProgress('calculateStatusEffectUptimes'),
   ) as number | null;
 
   return React.useMemo(
@@ -87,6 +87,6 @@ export function useStatusEffectUptimesTask(): {
       statusEffectUptimesError,
       statusEffectUptimesProgress,
       selectedFight,
-    ]
+    ],
   );
 }

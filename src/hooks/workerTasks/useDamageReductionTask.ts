@@ -56,7 +56,7 @@ export function useDamageReductionTask(): {
             combatantInfoRecord: combatantInfoRecord,
             friendlyBuffsLookup: buffLookupData,
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
-          })
+          }),
         );
       }
     }
@@ -74,13 +74,13 @@ export function useDamageReductionTask(): {
 
   const damageReductionData = useSelector(selectDamageReductionResult);
   const isDamageReductionLoading = useSelector(
-    selectWorkerTaskLoading('calculateDamageReductionData')
+    selectWorkerTaskLoading('calculateDamageReductionData'),
   ) as boolean;
   const damageReductionError = useSelector(
-    selectWorkerTaskError('calculateDamageReductionData')
+    selectWorkerTaskError('calculateDamageReductionData'),
   ) as string | null;
   const damageReductionProgress = useSelector(
-    selectWorkerTaskProgress('calculateDamageReductionData')
+    selectWorkerTaskProgress('calculateDamageReductionData'),
   ) as number | null;
 
   return React.useMemo(
@@ -97,6 +97,6 @@ export function useDamageReductionTask(): {
       damageReductionError,
       damageReductionProgress,
       selectedFight,
-    ]
+    ],
   );
 }

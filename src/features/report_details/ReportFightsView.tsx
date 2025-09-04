@@ -95,7 +95,7 @@ function isFalsePositiveWipe(fight: FightFragment): boolean {
 
 function getTrialNameFromBoss(
   bossName: string,
-  reportData: ReportFragment | null | undefined
+  reportData: ReportFragment | null | undefined,
 ): string {
   const zone = reportData?.zone;
   const zoneName = (zone?.name || '').toLowerCase();
@@ -113,7 +113,7 @@ function getTrialNameFromBoss(
   // Sanity's Edge bosses
   if (
     ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
-      cleanBossName.includes(name)
+      cleanBossName.includes(name),
     )
   ) {
     return "Sanity's Edge";
@@ -135,7 +135,7 @@ function getTrialNameFromBoss(
 
   if (
     ['lord felms', 'saint felms', 'saint llothis', 'saint olms'].some((name) =>
-      cleanBossName.includes(name)
+      cleanBossName.includes(name),
     )
   ) {
     return 'Asylum Sanctorium';
@@ -157,7 +157,7 @@ function getTrialNameFromBoss(
 
   if (
     ['oaxiltso', 'flame-herald bahsei', 'xalvakka', 'ash titan', 'basks-in-snakes', 'basks'].some(
-      (name) => cleanBossName.includes(name)
+      (name) => cleanBossName.includes(name),
     )
   ) {
     return 'Rockgrove';
@@ -189,7 +189,7 @@ function getTrialNameFromBoss(
 
   if (
     ["zhaj'hassa the forgotten", 'vashai', 'rakkhat', 'twins', "zhaj'hassa"].some((name) =>
-      cleanBossName.includes(name)
+      cleanBossName.includes(name),
     )
   ) {
     return 'Maw of Lorkhaj';
@@ -197,7 +197,7 @@ function getTrialNameFromBoss(
 
   if (
     ['possessed manticora', 'stonebreaker', 'ozara', 'serpent', 'manticora'].some((name) =>
-      cleanBossName.includes(name)
+      cleanBossName.includes(name),
     )
   ) {
     return 'Sanctum Ophidia';
@@ -205,7 +205,7 @@ function getTrialNameFromBoss(
 
   if (
     ['ra kotu', "yokeda rok'dun", 'yokedas', 'the warrior'].some((name) =>
-      cleanBossName.includes(name)
+      cleanBossName.includes(name),
     )
   ) {
     console.log('✅ BOSS MATCH: Hel Ra Citadel for', bossName);
@@ -304,7 +304,7 @@ function getDifficultyLabel(difficulty: number | null, trialName: string): strin
 
 function calculateTrialDifficulty(
   fights: FightFragment[],
-  trialName: string
+  trialName: string,
 ): { difficulty: number; label: string } {
   // Get HM type for this trial
   const hmType = getTrialHMType(trialName);
@@ -488,7 +488,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     (id: number) => {
       navigate(`/report/${reportId}/fight/${id}`);
     },
-    [navigate, reportId]
+    [navigate, reportId],
   );
 
   const encounters = React.useMemo(() => {
@@ -614,13 +614,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Find trash before this boss (after previous boss or from start)
       const prevBossEnd = i > 0 ? bossFights[i - 1].endTime : 0;
       const preTrash = trashFights.filter(
-        (trash) => trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime
+        (trash) => trash.startTime >= prevBossEnd && trash.startTime < currentBoss.startTime,
       );
 
       // Find trash after this boss (before next boss or until end)
       const nextBossStart = nextBoss ? nextBoss.startTime : Number.MAX_SAFE_INTEGER;
       const postTrash = trashFights.filter(
-        (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart
+        (trash) => trash.startTime > currentBoss.endTime && trash.startTime < nextBossStart,
       );
 
       // Ensure currentTrialRun is defined before proceeding
@@ -666,10 +666,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
     // Handle any remaining trash that doesn't fit near bosses
     const allCategorizedTrash = trialRuns.flatMap((run) =>
-      run.encounters.flatMap((enc) => [...enc.preTrash, ...enc.postTrash])
+      run.encounters.flatMap((enc) => [...enc.preTrash, ...enc.postTrash]),
     );
     const uncategorizedTrash = trashFights.filter(
-      (trash) => !allCategorizedTrash.some((cat) => cat.id === trash.id)
+      (trash) => !allCategorizedTrash.some((cat) => cat.id === trash.id),
     );
 
     if (uncategorizedTrash.length > 0) {
@@ -718,7 +718,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         'DIFF:',
         run.fights[0]?.difficulty,
         'CALCULATED:',
-        trialDifficulty.label
+        trialDifficulty.label,
       );
 
       return {
@@ -1320,13 +1320,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           {(() => {
                             // Get difficulty from the first boss fight
                             const bossFight = encounter.bossFights.find(
-                              (f) => f.difficulty != null
+                              (f) => f.difficulty != null,
                             );
                             if (bossFight && bossFight.difficulty != null) {
                               const trialName = trialRun.trialName || '';
                               const difficultyLabel = getDifficultyLabel(
                                 bossFight.difficulty,
-                                trialName
+                                trialName,
                               );
                               return (
                                 <Box

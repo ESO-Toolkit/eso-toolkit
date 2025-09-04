@@ -12,7 +12,7 @@ const NetworkRequestBlocker: React.FC<{ children: React.ReactNode }> = ({ childr
     window.fetch = (...args) => {
       console.error('🚫 Real network request blocked in Storybook:', args);
       return Promise.reject(
-        new Error('Network requests are not allowed in Storybook. Use MSW mocks instead.')
+        new Error('Network requests are not allowed in Storybook. Use MSW mocks instead.'),
       );
     };
 

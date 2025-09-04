@@ -47,7 +47,7 @@ describe('detectBuildIssues', () => {
 
     const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const enchantIssue = result.find((issue) =>
-      issue.message.includes('Enchantment quality')
+      issue.message.includes('Enchantment quality'),
     ) as EnchantQualityIssue;
 
     expect(enchantIssue).toBeDefined();
@@ -86,7 +86,7 @@ describe('detectBuildIssues', () => {
 
     const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const qualityIssue = result.find((issue) =>
-      issue.message.includes('Gear quality')
+      issue.message.includes('Gear quality'),
     ) as GearQualityIssue;
 
     expect(qualityIssue).toBeDefined();
@@ -130,7 +130,7 @@ describe('detectBuildIssues', () => {
       (issue) =>
         issue.message.includes('Enchantment quality') ||
         issue.message.includes('Gear quality') ||
-        issue.message.includes('CP level')
+        issue.message.includes('CP level'),
     );
 
     expect(gearIssues).toHaveLength(3);
@@ -141,7 +141,7 @@ describe('detectBuildIssues', () => {
     expect(
       gearIssues.every((issue) => {
         return 'gearName' in issue && issue.gearName === 'Unnamed Gear';
-      })
+      }),
     ).toBe(true);
   });
 
@@ -161,7 +161,7 @@ describe('detectBuildIssues', () => {
       (issue) =>
         issue.message.includes('Enchantment quality') ||
         issue.message.includes('Gear quality') ||
-        issue.message.includes('CP level')
+        issue.message.includes('CP level'),
     );
     expect(gearIssues).toHaveLength(0);
   });
@@ -176,7 +176,7 @@ describe('detectBuildIssues', () => {
       // Test DPS role - should NOT check for Minor Aegis
       const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps');
       const hasMinorAegisIssueDPS = dpsIssues.some((issue) =>
-        issue.message.includes('Minor Aegis')
+        issue.message.includes('Minor Aegis'),
       );
       expect(hasMinorAegisIssueDPS).toBe(false);
     });
@@ -190,7 +190,7 @@ describe('detectBuildIssues', () => {
       // Test tank role - should NOT check for Minor Slayer
       const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
       const hasMinorSlayerIssueTank = tankIssues.some((issue) =>
-        issue.message.includes('Minor Slayer')
+        issue.message.includes('Minor Slayer'),
       );
       expect(hasMinorSlayerIssueTank).toBe(false);
     });
@@ -203,7 +203,7 @@ describe('detectBuildIssues', () => {
           issue.message.includes('Major Sorcery') ||
           issue.message.includes('Major Prophecy') ||
           issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality')
+          issue.message.includes('Major Brutality'),
       );
       expect(hasMajorBuffIssues).toBe(true);
 
@@ -214,7 +214,7 @@ describe('detectBuildIssues', () => {
           issue.message.includes('Major Sorcery') ||
           issue.message.includes('Major Prophecy') ||
           issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality')
+          issue.message.includes('Major Brutality'),
       );
       expect(hasMajorBuffIssuesTank).toBe(false);
 
@@ -224,7 +224,7 @@ describe('detectBuildIssues', () => {
           issue.message.includes('Major Sorcery') ||
           issue.message.includes('Major Prophecy') ||
           issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality')
+          issue.message.includes('Major Brutality'),
       );
       expect(hasMajorBuffIssuesHealer).toBe(false);
     });

@@ -95,7 +95,7 @@ export const fetchHealingEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const healingEventsSlice = createSlice({

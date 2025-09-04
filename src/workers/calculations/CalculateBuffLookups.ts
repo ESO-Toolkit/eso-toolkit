@@ -14,7 +14,7 @@ const END_TYPES = new Set(['removebuff', 'removedebuff']);
 
 export function calculateBuffLookup(
   data: BuffCalculationTask,
-  onProgress?: OnProgressCallback
+  onProgress?: OnProgressCallback,
 ): BuffLookupData {
   const { buffEvents, fightEndTime } = data;
 
@@ -52,7 +52,7 @@ export function calculateBuffLookup(
           event.abilityGameID,
           startTime,
           event.timestamp,
-          event.targetID
+          event.targetID,
         );
         activeIntervals.delete(intervalKey);
       }
@@ -93,7 +93,7 @@ function addBuffInterval(
   abilityGameID: number,
   start: number,
   end: number,
-  targetID: number
+  targetID: number,
 ): void {
   if (!buffIntervals.has(abilityGameID)) {
     buffIntervals.set(abilityGameID, []);

@@ -11,13 +11,13 @@ export const selectPlayersById = (state: RootState): RootState['playerData']['pl
 // Player data loading state
 export const selectPlayerDataLoadingState = createSelector(
   [selectPlayerData],
-  (playerData) => playerData.loading
+  (playerData) => playerData.loading,
 );
 
 // Player data error state
 export const selectPlayerDataErrorState = createSelector(
   [selectPlayerData],
-  (playerData) => playerData.error
+  (playerData) => playerData.error,
 );
 
 // Combined player data selector
@@ -30,7 +30,7 @@ export const selectCombinedPlayerData = createSelector([selectPlayerData], (play
 
 // Get all players as an array
 export const selectPlayersArray = createSelector([selectPlayersById], (playersById) =>
-  Object.values(playersById)
+  Object.values(playersById),
 );
 
 // Get player by ID

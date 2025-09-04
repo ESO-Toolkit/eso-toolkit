@@ -44,7 +44,7 @@ export interface PenetrationCalculationTask {
 
 export function calculatePenetrationData(
   data: PenetrationCalculationTask,
-  onProgress?: OnProgressCallback
+  onProgress?: OnProgressCallback,
 ): Record<string, PlayerPenetrationData> {
   const {
     fight,
@@ -82,7 +82,7 @@ export function calculatePenetrationData(
         deserializedFriendlyBuffsLookup,
         deserializedDebuffsLookup,
         playerCombatantInfo,
-        player
+        player,
       );
 
       const playerBasePenetration = calculateStaticPenetration(playerCombatantInfo, player);
@@ -121,8 +121,8 @@ export function calculatePenetrationData(
           deserializedDebuffsLookup, // Check debuffs on the target
           voxelTimestamp,
           null, // No specific player needed for target debuffs
-          targetId // Target ID (for debuff checks)
-        )
+          targetId, // Target ID (for debuff checks)
+        ),
       );
       targetDebuffPenetration = Math.max(...targetPenetrations, 0);
     }
@@ -135,7 +135,7 @@ export function calculatePenetrationData(
         null, // No debuffs needed for player buffs
         voxelTimestamp,
         parseInt(playerData.playerId, 10), // Player ID (for buff checks)
-        null // No target needed for player buffs
+        null, // No target needed for player buffs
       );
 
       const totalDynamicPenetration = playerBuffPenetration + targetDebuffPenetration;

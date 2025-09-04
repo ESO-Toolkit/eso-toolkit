@@ -34,7 +34,7 @@ export const selectLocationHeatmapData = createSelector(
     debuffEvents,
     castEvents,
     deathEvents,
-    combatantInfoEvents
+    combatantInfoEvents,
   ) => {
     // Combine all events into a single array for the heatmap analysis
     const events = [
@@ -52,5 +52,5 @@ export const selectLocationHeatmapData = createSelector(
       actorsById,
       eventPlayers,
     };
-  }
+  },
 );

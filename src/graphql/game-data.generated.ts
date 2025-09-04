@@ -44,36 +44,36 @@ export const GetAbilitiesDocument = gql`
  * });
  */
 export function useGetAbilitiesQuery(
-  baseOptions?: Apollo.QueryHookOptions<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>
+  baseOptions?: Apollo.QueryHookOptions<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>(
     GetAbilitiesDocument,
-    options
+    options,
   );
 }
 export function useGetAbilitiesLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetAbilitiesQuery,
     Types.GetAbilitiesQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>(
     GetAbilitiesDocument,
-    options
+    options,
   );
 }
 export function useGetAbilitiesSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetAbilitiesQuery, Types.GetAbilitiesQueryVariables>(
     GetAbilitiesDocument,
-    options
+    options,
   );
 }
 export type GetAbilitiesQueryHookResult = ReturnType<typeof useGetAbilitiesQuery>;
@@ -113,33 +113,33 @@ export const GetAbilityDocument = gql`
  */
 export function useGetAbilityQuery(
   baseOptions: Apollo.QueryHookOptions<Types.GetAbilityQuery, Types.GetAbilityQueryVariables> &
-    ({ variables: Types.GetAbilityQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetAbilityQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>(
     GetAbilityDocument,
-    options
+    options,
   );
 }
 export function useGetAbilityLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>
+  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>(
     GetAbilityDocument,
-    options
+    options,
   );
 }
 export function useGetAbilitySuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetAbilityQuery, Types.GetAbilityQueryVariables>(
     GetAbilityDocument,
-    options
+    options,
   );
 }
 export type GetAbilityQueryHookResult = ReturnType<typeof useGetAbilityQuery>;
@@ -179,33 +179,33 @@ export const GetClassDocument = gql`
  */
 export function useGetClassQuery(
   baseOptions: Apollo.QueryHookOptions<Types.GetClassQuery, Types.GetClassQueryVariables> &
-    ({ variables: Types.GetClassQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetClassQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetClassQuery, Types.GetClassQueryVariables>(
     GetClassDocument,
-    options
+    options,
   );
 }
 export function useGetClassLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetClassQuery, Types.GetClassQueryVariables>
+  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetClassQuery, Types.GetClassQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetClassQuery, Types.GetClassQueryVariables>(
     GetClassDocument,
-    options
+    options,
   );
 }
 export function useGetClassSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetClassQuery, Types.GetClassQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetClassQuery, Types.GetClassQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetClassQuery, Types.GetClassQueryVariables>(
     GetClassDocument,
-    options
+    options,
   );
 }
 export type GetClassQueryHookResult = ReturnType<typeof useGetClassQuery>;
@@ -243,33 +243,33 @@ export const GetClassesDocument = gql`
  * });
  */
 export function useGetClassesQuery(
-  baseOptions?: Apollo.QueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>
+  baseOptions?: Apollo.QueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetClassesQuery, Types.GetClassesQueryVariables>(
     GetClassesDocument,
-    options
+    options,
   );
 }
 export function useGetClassesLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>
+  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetClassesQuery, Types.GetClassesQueryVariables>(
     GetClassesDocument,
-    options
+    options,
   );
 }
 export function useGetClassesSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetClassesQuery, Types.GetClassesQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetClassesQuery, Types.GetClassesQueryVariables>(
     GetClassesDocument,
-    options
+    options,
   );
 }
 export type GetClassesQueryHookResult = ReturnType<typeof useGetClassesQuery>;

@@ -80,7 +80,7 @@ export const performanceTestMockData: MockData = {
     createMockBuffEvent({
       timestamp: 1000000 + i * 3000, // Every 3 seconds
       abilityGameID: i % 2 === 0 ? KnownAbilities.MINOR_FORCE : KnownAbilities.PIERCING_SPEAR,
-    })
+    }),
   ),
   damageEvents: Array.from({ length: 500 }, (_, i) =>
     createMockDamageEvent({
@@ -88,13 +88,13 @@ export const performanceTestMockData: MockData = {
       amount: Math.floor(Math.random() * 2000) + 500,
       hitType: Math.random() > 0.7 ? 2 : 1, // 30% critical hits
       abilityGameID: Math.floor(Math.random() * 5) + 1,
-    })
+    }),
   ),
   combatantInfoEvents: [createMockCombatantInfoEvent()],
   debuffEvents: Array.from({ length: 50 }, (_, i) =>
     createMockDebuffEvent({
       timestamp: 1000000 + i * 6000, // Every 6 seconds
-    })
+    }),
   ),
 };
 

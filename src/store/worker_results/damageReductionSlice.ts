@@ -14,8 +14,8 @@ export const damageReductionSlice = createWorkerTaskSlice('calculateDamageReduct
     input.players,
     input.combatantInfoRecord,
     input.friendlyBuffsLookup,
-    input.debuffsLookup
-  )
+    input.debuffsLookup,
+  ),
 );
 
 // Export actions, thunk, and reducer

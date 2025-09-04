@@ -69,7 +69,7 @@ describe('OAuthRedirect Storybook Snapshot', () => {
         <AuthProvider>
           <OAuthRedirect />
         </AuthProvider>
-      </Provider>
+      </Provider>,
     );
     expect(container.firstChild).toMatchSnapshot();
   });

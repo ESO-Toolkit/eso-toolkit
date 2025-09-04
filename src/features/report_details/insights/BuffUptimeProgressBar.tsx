@@ -26,7 +26,7 @@ const createEsoLogsUrl = (
   abilityGameID: string,
   selectedTargetId: number | null,
   isDebuff: boolean,
-  hostility: 0 | 1
+  hostility: 0 | 1,
 ): string => {
   let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=${hostility}&ability=${abilityGameID}`;
 
@@ -59,7 +59,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       buff.abilityGameID,
       selectedTargetId,
       buff.isDebuff,
-      buff.hostilityType
+      buff.hostilityType,
     );
 
     window.open(url, '_blank');

@@ -21,7 +21,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
   // Helper function to create BuffLookupData from Map-like structure
   const createBuffLookupData = (
-    intervals: Record<number, Array<{ start: number; end: number; targetID: number }>>
+    intervals: Record<number, Array<{ start: number; end: number; targetID: number }>>,
   ): {
     buffIntervals: Record<string, Array<{ start: number; end: number; targetID: number }>>;
   } => ({
@@ -138,7 +138,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
 
     // Simulate what the component does - combine and sort by uptime percentage
     const combined = [...debuffResults, ...buffResults].sort(
-      (a, b) => b.uptimePercentage - a.uptimePercentage
+      (a, b) => b.uptimePercentage - a.uptimePercentage,
     );
 
     expect(combined).toHaveLength(2);
@@ -165,7 +165,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
         abilitiesById: mockAbilitiesById,
         isDebuff: true,
         hostilityType: 0,
-      })
+      }),
     ).toEqual([]);
 
     // Test with zero fight duration (component checks for this)
@@ -183,7 +183,7 @@ describe('StatusEffectUptimesPanel Integration with computeBuffUptimes', () => {
         abilitiesById: mockAbilitiesById,
         isDebuff: true,
         hostilityType: 0,
-      })
+      }),
     ).toEqual([]);
   });
 });

@@ -43,7 +43,7 @@ ChartJS.register(
   ChartTooltip,
   Legend,
   Filler,
-  annotationPlugin
+  annotationPlugin,
 );
 
 export interface DamageReductionDataPoint {
@@ -311,7 +311,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   </Typography>
                   <Typography variant="h5" color="secondary">
                     {resistanceToDamageReduction(staticResistance + maxDynamicResistance).toFixed(
-                      1
+                      1,
                     )}
                     %
                   </Typography>
@@ -325,7 +325,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                   </Typography>
                   <Typography variant="h5" color="info.main">
                     {resistanceToDamageReduction(
-                      averageDynamicResistance + staticResistance
+                      averageDynamicResistance + staticResistance,
                     ).toFixed(1)}
                     %
                   </Typography>

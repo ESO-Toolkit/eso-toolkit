@@ -45,7 +45,7 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
         [playerId]: isExpanded,
       }));
     },
-    []
+    [],
   );
 
   return (

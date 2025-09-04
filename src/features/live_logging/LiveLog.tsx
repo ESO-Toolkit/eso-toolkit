@@ -56,7 +56,7 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
       reportId: reportId,
       fightId: latestFightId,
     }),
-    [reportId, latestFightId]
+    [reportId, latestFightId],
   );
 
   if (!latestFightId) {

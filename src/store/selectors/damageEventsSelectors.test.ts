@@ -4,7 +4,7 @@ import { RootState } from '../storeWithHistory';
 
 // Mock state for testing
 const createMockState = (
-  damageEvents: DamageEvent[]
+  damageEvents: DamageEvent[],
 ): Pick<RootState, 'events' | 'masterData'> => ({
   masterData: {
     actorsById: {},

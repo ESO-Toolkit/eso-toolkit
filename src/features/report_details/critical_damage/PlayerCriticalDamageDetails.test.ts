@@ -95,7 +95,7 @@ describe('PlayerCriticalDamageDetails Integration', () => {
           emptyBuffLookup,
           mockCombatantInfo,
           mockPlayerData,
-          timestamp
+          timestamp,
         );
 
         const criticalDamage = staticCriticalDamage + dynamicCriticalDamage;
@@ -174,7 +174,7 @@ describe('PlayerCriticalDamageDetails Integration', () => {
           emptyBuffLookup,
           mockCombatantInfo,
           mockPlayerData,
-          timestamp
+          timestamp,
         );
 
         const criticalDamage = staticCriticalDamage + dynamicCriticalDamage;
@@ -212,7 +212,7 @@ describe('PlayerCriticalDamageDetails Integration', () => {
           emptyBuffLookup,
           mockCombatantInfo,
           mockPlayerData,
-          timestamp
+          timestamp,
         );
 
         const criticalDamage = staticCriticalDamage + dynamicCriticalDamage;

@@ -146,7 +146,7 @@ const largeDamageSet = generateMockArray(1000, (i) =>
     timestamp: createRandomTestData.timestamp(1000, 60000),
     amount: createRandomTestData.damage(500, 3000),
     hitType: createRandomTestData.isCritical(0.25) ? 2 : 1,
-  })
+  }),
 );
 ```
 

@@ -21,7 +21,7 @@ export function calculateDeathDurations(
   deathEvents: DeathEvent[],
   castEvents: UnifiedCastEvent[],
   fightStartTime: number,
-  fightEndTime: number
+  fightEndTime: number,
 ): DeathDuration[] {
   const deathDurations: DeathDuration[] = [];
 
@@ -33,7 +33,7 @@ export function calculateDeathDurations(
       event.targetID !== null &&
       event.targetID !== undefined &&
       event.timestamp >= fightStartTime &&
-      event.timestamp <= fightEndTime
+      event.timestamp <= fightEndTime,
   );
 
   // Process each death event
@@ -52,7 +52,7 @@ export function calculateDeathDurations(
 
     // Find the next resurrection cast event for this player after their death
     const resurrectionEvent = resurrectionCasts.find(
-      (castEvent) => castEvent.targetID === playerId && castEvent.timestamp > deathTime
+      (castEvent) => castEvent.targetID === playerId && castEvent.timestamp > deathTime,
     );
 
     let resurrectionTime: number | null = null;

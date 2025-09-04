@@ -39,7 +39,7 @@ export function useFriendlyBuffEvents(): {
           client,
           // Optional: you can customize the interval size
           // intervalSize: 60000, // 60 seconds
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -49,6 +49,6 @@ export function useFriendlyBuffEvents(): {
 
   return React.useMemo(
     () => ({ friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight }),
-    [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight]
+    [friendlyBuffEvents, isFriendlyBuffEventsLoading, selectedFight],
   );
 }

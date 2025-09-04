@@ -80,7 +80,7 @@ export const fetchReportData = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const reportSlice = createSlice({

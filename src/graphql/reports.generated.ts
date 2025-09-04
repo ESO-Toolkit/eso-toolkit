@@ -53,24 +53,24 @@ export function useGetReportByCodeQuery(
     Types.GetReportByCodeQuery,
     Types.GetReportByCodeQueryVariables
   > &
-    ({ variables: Types.GetReportByCodeQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetReportByCodeQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
     GetReportByCodeDocument,
-    options
+    options,
   );
 }
 export function useGetReportByCodeLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetReportByCodeQuery,
     Types.GetReportByCodeQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
     GetReportByCodeDocument,
-    options
+    options,
   );
 }
 export function useGetReportByCodeSuspenseQuery(
@@ -79,13 +79,13 @@ export function useGetReportByCodeSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetReportByCodeQuery,
         Types.GetReportByCodeQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetReportByCodeQuery, Types.GetReportByCodeQueryVariables>(
     GetReportByCodeDocument,
-    options
+    options,
   );
 }
 export type GetReportByCodeQueryHookResult = ReturnType<typeof useGetReportByCodeQuery>;

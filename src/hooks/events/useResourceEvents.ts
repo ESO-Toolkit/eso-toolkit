@@ -37,7 +37,7 @@ export function useResourceEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -47,6 +47,6 @@ export function useResourceEvents(): {
 
   return React.useMemo(
     () => ({ resourceEvents, isResourceEventsLoading, selectedFight }),
-    [resourceEvents, isResourceEventsLoading, selectedFight]
+    [resourceEvents, isResourceEventsLoading, selectedFight],
   );
 }

@@ -39,7 +39,7 @@ export function useDebuffEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -49,7 +49,7 @@ export function useDebuffEvents(): {
 
   return React.useMemo(
     () => ({ debuffEvents, isDebuffEventsLoading, selectedFight }),
-    [debuffEvents, isDebuffEventsLoading, selectedFight]
+    [debuffEvents, isDebuffEventsLoading, selectedFight],
   );
 }
 
@@ -85,6 +85,6 @@ export function useWorkerDebuffLookup(): {
       result: debuffLookupData as BuffLookupData,
       isLoading: isDebuffLookupLoading,
     }),
-    [debuffLookupData, isDebuffLookupLoading]
+    [debuffLookupData, isDebuffLookupLoading],
   );
 }

@@ -73,7 +73,7 @@ export const createMockCombatantAura = (overrides?: Partial<CombatantAura>): Com
   }) as CombatantAura;
 
 export const createMockCombatantInfoEvent = (
-  overrides?: Partial<CombatantInfoEvent>
+  overrides?: Partial<CombatantInfoEvent>,
 ): CombatantInfoEvent => ({
   timestamp: 1000000,
   type: 'combatantinfo',
@@ -125,7 +125,7 @@ export const createMockBuffEvent = (overrides?: Partial<ApplyBuffEvent>): ApplyB
 });
 
 export const createMockRemoveBuffEvent = (
-  overrides?: Partial<RemoveBuffEvent>
+  overrides?: Partial<RemoveBuffEvent>,
 ): RemoveBuffEvent => ({
   timestamp: 1000000,
   type: 'removebuff',
@@ -153,7 +153,7 @@ export const createMockDebuffEvent = (overrides?: Partial<ApplyDebuffEvent>): Ap
 });
 
 export const createMockRemoveDebuffEvent = (
-  overrides?: Partial<RemoveDebuffEvent>
+  overrides?: Partial<RemoveDebuffEvent>,
 ): RemoveDebuffEvent => ({
   timestamp: 1000000,
   type: 'removedebuff',

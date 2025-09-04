@@ -39,7 +39,7 @@ export function useHostileBuffEvents(): {
           client,
           // Optional: you can customize the interval size
           // intervalSize: 60000, // 60 seconds
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -49,7 +49,7 @@ export function useHostileBuffEvents(): {
 
   return React.useMemo(
     () => ({ hostileBuffEvents, isHostileBuffEventsLoading }),
-    [hostileBuffEvents, isHostileBuffEventsLoading]
+    [hostileBuffEvents, isHostileBuffEventsLoading],
   );
 }
 
@@ -83,6 +83,6 @@ export function useWorkerHostileBuffsLookup(): {
         ? { phase: 'Processing', percentage: buffLookupProgress }
         : undefined,
     }),
-    [buffLookupData, isHostileBuffEventsLoading, isBuffLookupLoading, buffLookupProgress]
+    [buffLookupData, isHostileBuffEventsLoading, isBuffLookupLoading, buffLookupProgress],
   );
 }

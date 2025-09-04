@@ -31,20 +31,20 @@ export function useHostileBuffLookupTask(): {
         executeHostileBuffLookupTask({
           buffEvents: hostileBuffEvents,
           fightEndTime: selectedFight.endTime,
-        })
+        }),
       );
     }
   }, [dispatch, selectedFight, hostileBuffEvents, isHostileBuffEventsLoading]);
 
   const hostileBuffLookupData = useSelector(selectHostileBuffLookupResult) as BuffLookupData | null;
   const isHostileBuffLookupLoading = useSelector(
-    selectWorkerTaskLoading('calculateHostileBuffLookup')
+    selectWorkerTaskLoading('calculateHostileBuffLookup'),
   ) as boolean;
   const hostileBuffLookupError = useSelector(
-    selectWorkerTaskError('calculateHostileBuffLookup')
+    selectWorkerTaskError('calculateHostileBuffLookup'),
   ) as string | null;
   const hostileBuffLookupProgress = useSelector(
-    selectWorkerTaskProgress('calculateHostileBuffLookup')
+    selectWorkerTaskProgress('calculateHostileBuffLookup'),
   ) as number | null;
 
   return React.useMemo(
@@ -61,6 +61,6 @@ export function useHostileBuffLookupTask(): {
       hostileBuffLookupError,
       hostileBuffLookupProgress,
       selectedFight,
-    ]
+    ],
   );
 }

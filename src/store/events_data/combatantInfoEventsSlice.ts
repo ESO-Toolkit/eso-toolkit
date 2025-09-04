@@ -73,7 +73,7 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
 
     // Filter to only combatant info events
     const combatantInfoEvents = allEvents.filter(
-      (event) => event.type === 'combatantinfo'
+      (event) => event.type === 'combatantinfo',
     ) as CombatantInfoEvent[];
     return combatantInfoEvents;
   },
@@ -101,7 +101,7 @@ export const fetchCombatantInfoEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const combatantInfoEventsSlice = createSlice({

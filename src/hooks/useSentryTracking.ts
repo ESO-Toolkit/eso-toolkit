@@ -75,7 +75,7 @@ export const useInteractionTracking = (): {
         ...data,
       });
     },
-    []
+    [],
   );
 
   const trackFeatureUsage = useCallback(
@@ -87,7 +87,7 @@ export const useInteractionTracking = (): {
         ...data,
       });
     },
-    []
+    [],
   );
 
   return {
@@ -105,59 +105,59 @@ export const usePerformanceTracking = (): {
   trackApiCall: <T>(
     apiName: string,
     apiCall: () => Promise<T>,
-    data?: Record<string, unknown>
+    data?: Record<string, unknown>,
   ) => Promise<T>;
   trackDataProcessing: <T>(
     processName: string,
     process: () => Promise<T> | T,
-    data?: Record<string, unknown>
+    data?: Record<string, unknown>,
   ) => Promise<T>;
   trackRender: <T>(
     componentName: string,
     renderFunc: () => Promise<T> | T,
-    data?: Record<string, unknown>
+    data?: Record<string, unknown>,
   ) => Promise<T>;
 } => {
   const trackApiCall = useCallback(
     async <T>(
       apiName: string,
       apiCall: () => Promise<T>,
-      data?: Record<string, unknown>
+      data?: Record<string, unknown>,
     ): Promise<T> => {
       return measurePerformance(`API call: ${apiName}`, apiCall, {
         api: apiName,
         ...data,
       });
     },
-    []
+    [],
   );
 
   const trackDataProcessing = useCallback(
     async <T>(
       processName: string,
       process: () => Promise<T> | T,
-      data?: Record<string, unknown>
+      data?: Record<string, unknown>,
     ): Promise<T> => {
       return measurePerformance(`Data processing: ${processName}`, process, {
         process: processName,
         ...data,
       });
     },
-    []
+    [],
   );
 
   const trackRender = useCallback(
     async <T>(
       componentName: string,
       renderFunc: () => Promise<T> | T,
-      data?: Record<string, unknown>
+      data?: Record<string, unknown>,
     ): Promise<T> => {
       return measurePerformance(`Component render: ${componentName}`, renderFunc, {
         component: componentName,
         ...data,
       });
     },
-    []
+    [],
   );
 
   return {

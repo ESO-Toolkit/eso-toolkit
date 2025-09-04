@@ -19,23 +19,23 @@ initializeSentry();
 
 // Code splitting for major features
 const LiveLog = React.lazy(() =>
-  import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog }))
+  import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog })),
 );
 const ReportFightDetails = React.lazy(() =>
   import('./features/report_details/ReportFightDetails').then((module) => ({
     default: module.ReportFightDetails,
-  }))
+  })),
 );
 const ReportFights = React.lazy(() =>
   import('./features/report_details/ReportFights').then((module) => ({
     default: module.ReportFights,
-  }))
+  })),
 );
 const OAuthRedirect = React.lazy(() =>
-  import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect }))
+  import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
 const Calculator = React.lazy(() =>
-  import('./components/Calculator').then((module) => ({ default: module.Calculator }))
+  import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
 
 // Loading fallback component - simple and fast

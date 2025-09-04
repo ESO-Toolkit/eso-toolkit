@@ -43,7 +43,7 @@ export class WorkerPool {
     // Set up periodic cleanup of idle workers
     this.cleanupInterval = window.setInterval(
       this.cleanupIdleWorkers.bind(this),
-      60000 // Check every minute
+      60000, // Check every minute
     );
   }
 
@@ -54,7 +54,7 @@ export class WorkerPool {
     taskType: SharedComputationWorkerTaskType,
     data: T,
     priority = 0,
-    onProgress?: OnProgressCallback
+    onProgress?: OnProgressCallback,
   ): Promise<R> {
     return new Promise<R>((resolve, reject) => {
       const taskId = this.generateTaskId();
@@ -198,7 +198,7 @@ export class WorkerPool {
    */
   private async executeTaskOnWorker(
     workerInfo: WorkerInfo,
-    task: WorkerTask<unknown, unknown>
+    task: WorkerTask<unknown, unknown>,
   ): Promise<void> {
     workerInfo.busy = true;
     workerInfo.currentTaskId = task.id;
@@ -221,43 +221,43 @@ export class WorkerPool {
         case 'calculateBuffLookup':
           result = await workerInfo.worker.calculateBuffLookup(
             task.data as BuffCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculateDebuffLookup':
           result = await workerInfo.worker.calculateDebuffLookup(
             task.data as BuffCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculateDamageReductionData':
           result = await workerInfo.worker.calculateDamageReductionData(
             task.data as DamageReductionCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculateCriticalDamageData':
           result = await workerInfo.worker.calculateCriticalDamageData(
             task.data as CriticalDamageCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculateHostileBuffLookup':
           result = await workerInfo.worker.calculateHostileBuffLookup(
             task.data as BuffCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculatePenetrationData':
           result = await workerInfo.worker.calculatePenetrationData(
             task.data as PenetrationCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         case 'calculateStatusEffectUptimes':
           result = await workerInfo.worker.calculateStatusEffectUptimes(
             task.data as StatusEffectUptimesCalculationTask,
-            onProgress
+            onProgress,
           );
           break;
         default:

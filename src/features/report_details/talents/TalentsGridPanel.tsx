@@ -178,7 +178,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         size: 120,
       }),
     ],
-    [columnHelper]
+    [columnHelper],
   );
 
   if (talentRows.length === 0) {

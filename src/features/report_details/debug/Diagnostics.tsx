@@ -60,7 +60,7 @@ export const Diagnostics: React.FC = () => {
       debuffEvents.length,
       castEvents.length,
       resourceEvents.length,
-    ]
+    ],
   );
 
   return (

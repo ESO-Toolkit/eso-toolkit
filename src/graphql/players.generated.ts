@@ -37,19 +37,19 @@ export function useGetPlayersForReportQuery(
     Types.GetPlayersForReportQuery,
     Types.GetPlayersForReportQueryVariables
   > &
-    ({ variables: Types.GetPlayersForReportQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetPlayersForReportQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>(
     GetPlayersForReportDocument,
-    options
+    options,
   );
 }
 export function useGetPlayersForReportLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetPlayersForReportQuery,
     Types.GetPlayersForReportQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<
@@ -63,7 +63,7 @@ export function useGetPlayersForReportSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetPlayersForReportQuery,
         Types.GetPlayersForReportQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };

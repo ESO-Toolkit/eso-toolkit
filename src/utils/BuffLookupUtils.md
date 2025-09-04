@@ -208,7 +208,7 @@ for (const source of criticalDamageSources) {
       buffLookup,
       source.ability,
       currentTimestamp,
-      currentPlayerId
+      currentPlayerId,
     );
 
     if (isActiveOnCurrentPlayer) {
@@ -257,7 +257,7 @@ const isBuffActive = buffEvents.some(
   (event) =>
     event.abilityGameID === targetAbility &&
     event.timestamp >= windowStart &&
-    event.timestamp < windowEnd
+    event.timestamp < windowEnd,
 );
 ```
 
@@ -362,7 +362,7 @@ const buffLookup = createBuffLookup(friendlyBuffEvents, fight.endTime);
 const timeSeriesData = [];
 for (let t = fight.startTime; t <= fight.endTime; t += 1000) {
   const activeBuffCount = buffAbilities.filter((ability) =>
-    buffLookup.isBuffActive(ability, t)
+    buffLookup.isBuffActive(ability, t),
   ).length;
 
   timeSeriesData.push({ timestamp: t, activeBuffs: activeBuffCount });

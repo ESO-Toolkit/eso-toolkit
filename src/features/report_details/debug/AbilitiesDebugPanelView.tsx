@@ -86,7 +86,7 @@ export const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = (
         },
       }),
     ],
-    [columnHelper]
+    [columnHelper],
   );
 
   if (isLoading) {

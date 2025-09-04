@@ -123,7 +123,7 @@ export const fetchReportMasterData = createAsyncThunk<
       console.log('✅ Allowing thunk execution');
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const masterDataSlice = createSlice({
@@ -177,7 +177,7 @@ const masterDataSlice = createSlice({
           state.cacheMetadata.lastFetchedTimestamp = Date.now();
           state.cacheMetadata.actorCount = action.payload.actors.length;
           state.cacheMetadata.abilityCount = action.payload.abilities.length;
-        }
+        },
       )
       .addCase(fetchReportMasterData.rejected, (state, action) => {
         console.error('❌ fetchReportMasterData.rejected - Error occurred', {

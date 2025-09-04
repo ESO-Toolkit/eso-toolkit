@@ -8,6 +8,7 @@
   "rules": {
     "import/no-default-export": "error",
     "deprecation/deprecation": "error",
+    "comma-dangle": ["error", "always-multiline"],
     "import/order": [
       "error",
       {

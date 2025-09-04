@@ -34,23 +34,23 @@ describe('DynamicMetaTags', () => {
         image="https://example.com/preview.png"
         url="https://example.com/report/1"
         type="article"
-      />
+      />,
     );
 
     expect(document.querySelector('meta[property="og:title"]')?.getAttribute('content')).toBe(
-      'Cloudrest +3'
+      'Cloudrest +3',
     );
     expect(document.querySelector('meta[property="og:description"]')?.getAttribute('content')).toBe(
-      'Amazing DPS performance'
+      'Amazing DPS performance',
     );
     expect(document.querySelector('meta[property="og:image"]')?.getAttribute('content')).toBe(
-      'https://example.com/preview.png'
+      'https://example.com/preview.png',
     );
     expect(document.querySelector('meta[property="og:url"]')?.getAttribute('content')).toBe(
-      'https://example.com/report/1'
+      'https://example.com/report/1',
     );
     expect(document.querySelector('meta[property="og:type"]')?.getAttribute('content')).toBe(
-      'article'
+      'article',
     );
   });
 
@@ -60,17 +60,17 @@ describe('DynamicMetaTags', () => {
         title="ESO Analysis"
         description="Combat log insights"
         image="https://example.com/card.png"
-      />
+      />,
     );
 
     expect(document.querySelector('meta[name="twitter:title"]')?.getAttribute('content')).toBe(
-      'ESO Analysis'
+      'ESO Analysis',
     );
     expect(
-      document.querySelector('meta[name="twitter:description"]')?.getAttribute('content')
+      document.querySelector('meta[name="twitter:description"]')?.getAttribute('content'),
     ).toBe('Combat log insights');
     expect(document.querySelector('meta[name="twitter:image"]')?.getAttribute('content')).toBe(
-      'https://example.com/card.png'
+      'https://example.com/card.png',
     );
   });
 });
@@ -100,7 +100,7 @@ describe('generatePlayerMetaTags', () => {
       'TestPlayer',
       'Dragonknight',
       85000,
-      'Sunspire'
+      'Sunspire',
     );
 
     expect(result.title).toBe("TestPlayer's Performance - ABC123");

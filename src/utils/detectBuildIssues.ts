@@ -51,7 +51,7 @@ const ROLE_SPECIFIC_BUFFS = {
  */
 function isBuffActiveInAuras(
   auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }> | undefined,
-  abilityId: number
+  abilityId: number,
 ): boolean {
   if (!auras) return false;
   return auras.some((aura) => {
@@ -78,7 +78,7 @@ export function detectBuildIssues(
   fightStartTime: number | undefined,
   fightEndTime: number | undefined,
   auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }>,
-  role: 'dps' | 'tank' | 'healer'
+  role: 'dps' | 'tank' | 'healer',
 ): BuildIssue[] {
   const issues: BuildIssue[] = [];
 

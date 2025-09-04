@@ -12,13 +12,13 @@ export const selectWorkerResults = (state: RootState): typeof state.workerResult
 
 // Generic selector for a specific worker task
 export const selectWorkerTask = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<
   typeof createSelector<[typeof selectWorkerResults], WorkerTaskState<SharedWorkerResultType<T>>>
 > =>
   createSelector(
     [selectWorkerResults],
-    (workerResults) => workerResults[taskName] as WorkerTaskState<SharedWorkerResultType<T>>
+    (workerResults) => workerResults[taskName] as WorkerTaskState<SharedWorkerResultType<T>>,
   );
 
 // Specific selectors for each worker task
@@ -32,28 +32,28 @@ export const selectHostileBuffLookupTask = selectWorkerTask('calculateHostileBuf
 
 // Selectors for specific task properties
 export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<
   typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], SharedWorkerResultType<T> | null>
 > => createSelector([selectWorkerTask(taskName)], (task) => task.result);
 
 export const selectWorkerTaskLoading = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], boolean>> =>
   createSelector([selectWorkerTask(taskName)], (task) => task.isLoading);
 
 export const selectWorkerTaskProgress = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> =>
   createSelector([selectWorkerTask(taskName)], (task) => task.progress);
 
 export const selectWorkerTaskError = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], string | null>> =>
   createSelector([selectWorkerTask(taskName)], (task) => task.error);
 
 export const selectWorkerTaskLastUpdated = <T extends SharedComputationWorkerTaskType>(
-  taskName: T
+  taskName: T,
 ): ReturnType<typeof createSelector<[ReturnType<typeof selectWorkerTask<T>>], number | null>> =>
   createSelector([selectWorkerTask(taskName)], (task) => task.lastUpdated);
 
@@ -62,7 +62,7 @@ export const selectBuffLookupResult = selectWorkerTaskResult('calculateBuffLooku
 export const selectCriticalDamageResult = selectWorkerTaskResult('calculateCriticalDamageData');
 export const selectPenetrationDataResult = selectWorkerTaskResult('calculatePenetrationData');
 export const selectStatusEffectUptimesResult = selectWorkerTaskResult(
-  'calculateStatusEffectUptimes'
+  'calculateStatusEffectUptimes',
 );
 export const selectDamageReductionResult = selectWorkerTaskResult('calculateDamageReductionData');
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
@@ -70,20 +70,20 @@ export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHo
 
 // Aggregate selectors
 export const selectAnyWorkerTaskLoading = createSelector([selectWorkerResults], (workerResults) =>
-  Object.values(workerResults).some((task) => task.isLoading)
+  Object.values(workerResults).some((task) => task.isLoading),
 );
 
 export const selectCompletedTasksCount = createSelector(
   [selectWorkerResults],
-  (workerResults) => Object.values(workerResults).filter((task) => task.result !== null).length
+  (workerResults) => Object.values(workerResults).filter((task) => task.result !== null).length,
 );
 
 export const selectFailedTasksCount = createSelector(
   [selectWorkerResults],
-  (workerResults) => Object.values(workerResults).filter((task) => task.error !== null).length
+  (workerResults) => Object.values(workerResults).filter((task) => task.error !== null).length,
 );
 
 export const selectLoadingTasksCount = createSelector(
   [selectWorkerResults],
-  (workerResults) => Object.values(workerResults).filter((task) => task.isLoading).length
+  (workerResults) => Object.values(workerResults).filter((task) => task.isLoading).length,
 );

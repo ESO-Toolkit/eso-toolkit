@@ -117,7 +117,7 @@ export function createBuffLookup(buffEvents: BuffEvent[], fightEndTime?: number)
 export function isBuffActive(
   buffLookup: BuffLookupData,
   abilityGameID: number,
-  timestamp?: number
+  timestamp?: number,
 ): boolean {
   const intervals = buffLookup.buffIntervals[abilityGameID.toString()];
   if (!intervals || intervals.length === 0) {
@@ -131,7 +131,7 @@ export function isBuffActive(
 
   // Check if any interval contains the timestamp (regardless of target)
   return intervals.some(
-    (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end
+    (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end,
   );
 }
 
@@ -151,7 +151,7 @@ export function isBuffActiveOnTarget(
   buffLookup: BuffLookupData,
   abilityGameID: number,
   timestamp?: number,
-  targetID?: number
+  targetID?: number,
 ): boolean {
   const intervals = buffLookup.buffIntervals[abilityGameID.toString()];
   if (!intervals || intervals.length === 0) {
@@ -171,7 +171,7 @@ export function isBuffActiveOnTarget(
   // If no target specified, check if buff is active on any target at the timestamp
   if (targetID === undefined) {
     return intervals.some(
-      (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end
+      (interval: BuffTimeInterval) => timestamp >= interval.start && timestamp <= interval.end,
     );
   }
 
@@ -229,7 +229,7 @@ export function isBuffActiveOnTarget(
  */
 export function createDebuffLookup(
   debuffEvents: DebuffEvent[],
-  fightEndTime?: number
+  fightEndTime?: number,
 ): BuffLookupData {
   // Map from abilityGameID to sorted array of active time intervals with target info
   const debuffIntervals = new Map<number, BuffTimeInterval[]>();
