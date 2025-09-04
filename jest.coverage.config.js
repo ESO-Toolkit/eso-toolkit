@@ -62,44 +62,44 @@ const baseCoverageConfig = {
   coverageProvider: 'v8',
 };
 
-// Development coverage configuration (more lenient)
+// Development coverage configuration (more lenient for development)
 const developmentConfig = {
   ...baseCoverageConfig,
   coverageThreshold: {
     global: {
-      branches: 2,
-      functions: 5,
-      lines: 14,
-      statements: 14,
+      branches: 4,  // Slightly lower than production for development
+      functions: 4, // Slightly lower than production for development
+      lines: 13,    // Slightly lower than production for development
+      statements: 13, // Slightly lower than production for development
     },
   },
 };
 
-// Production/CI coverage configuration (stricter)
+// Production/CI coverage configuration (adjusted to current levels with buffer)
 const productionConfig = {
   ...baseCoverageConfig,
   coverageThreshold: {
     global: {
-      branches: 2,
-      functions: 6,
-      lines: 14,
-      statements: 14,
+      branches: 6,   // Current: 8.43%, set to 6% for buffer
+      functions: 6,  // Current: 9.04%, set to 6% for buffer  
+      lines: 15,     // Current: 17.94%, set to 15% for buffer
+      statements: 15, // Current: 17.54%, set to 15% for buffer
     },
-    // Higher standards for utility functions
+    // Utility functions - keeping lower standards for now
     './src/utils/**/*.{ts,tsx}': {
       branches: 0,
       functions: 0,
       lines: 0,
       statements: 0,
     },
-    // Higher standards for hooks (critical business logic)
+    // Hooks - keeping lower standards for now
     './src/hooks/**/*.{ts,tsx}': {
       branches: 0,
       functions: 0,
       lines: 0,
       statements: 0,
     },
-    // Store/Redux logic should be well tested
+    // Store/Redux logic - keeping lower standards for now
     './src/store/**/*.{ts,tsx}': {
       branches: 0,
       functions: 0,
