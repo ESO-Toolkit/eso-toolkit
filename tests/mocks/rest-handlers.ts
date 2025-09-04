@@ -1,0 +1,69 @@
+import { http, HttpResponse } from 'msw';
+
+// Mock data for testing
+export const mockReport = {
+  code: 'TEST123',
+  startTime: 1630000000000,
+  endTime: 1630003600000,
+  title: 'Test Raid',
+  visibility: 'PUBLIC',
+  zone: {
+    name: 'Trials',
+  },
+  fights: [
+    {
+      id: 1,
+      name: 'Boss Fight 1',
+      difficulty: 3,
+      startTime: 0,
+      endTime: 300000,
+      friendlyPlayers: [],
+      enemyPlayers: [],
+      bossPercentage: 0,
+      friendlyNPCs: [],
+      enemyNPCs: [
+        {
+          gameID: 12345,
+          id: 1,
+          groupCount: 1,
+          instanceCount: 1,
+        },
+      ],
+    },
+  ],
+};
+
+// HTTP handlers for REST API mocking
+export const restHandlers = [
+  // Mock ESO Logs GraphQL endpoint
+  http.post('https://www.esologs.com/api/v2/client', async ({ request }) => {
+    const body = (await request.json()) as any;
+
+    if (body?.query?.includes('getReportByCode')) {
+      return HttpResponse.json({
+        data: {
+          reportData: {
+            report: {
+              ...mockReport,
+              code: body.variables?.code || 'TEST123',
+            },
+          },
+        },
+      });
+    }
+
+    // Default response for other GraphQL queries
+    return HttpResponse.json({
+      data: {},
+    });
+  }),
+
+  // Mock any other API endpoints
+  http.get('*/api/*', () => {
+    return HttpResponse.json({ success: true });
+  }),
+
+  http.post('*/api/*', () => {
+    return HttpResponse.json({ success: true });
+  }),
+];
