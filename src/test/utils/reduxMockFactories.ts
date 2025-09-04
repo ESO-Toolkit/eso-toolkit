@@ -143,4 +143,5 @@ export const createMockSelectorDebuffEvent = (
   targetIsFriendly: false,
   abilityGameID,
   fight: 1,
+  extraAbilityGameID: 0,
 });

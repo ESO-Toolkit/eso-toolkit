@@ -6,14 +6,14 @@ import * as Apollo from '@apollo/client';
 const defaultOptions = {} as const;
 
 export const GetPlayersForReportDocument = gql`
-    query getPlayersForReport($code: String!, $fightIDs: [Int]) {
-  reportData {
-    report(code: $code) {
-      playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
+  query getPlayersForReport($code: String!, $fightIDs: [Int]) {
+    reportData {
+      report(code: $code) {
+        playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
+      }
     }
   }
-}
-    `;
+`;
 
 /**
  * __useGetPlayersForReportQuery__
@@ -32,19 +32,54 @@ export const GetPlayersForReportDocument = gql`
  *   },
  * });
  */
-export function useGetPlayersForReportQuery(baseOptions: Apollo.QueryHookOptions<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables> & ({ variables: Types.GetPlayersForReportQueryVariables; skip?: boolean; } | { skip: boolean; }) ) {
-        const options = {...defaultOptions, ...baseOptions}
-        return Apollo.useQuery<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>(GetPlayersForReportDocument, options);
-      }
-export function useGetPlayersForReportLazyQuery(baseOptions?: Apollo.LazyQueryHookOptions<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>) {
-          const options = {...defaultOptions, ...baseOptions}
-          return Apollo.useLazyQuery<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>(GetPlayersForReportDocument, options);
-        }
-export function useGetPlayersForReportSuspenseQuery(baseOptions?: Apollo.SkipToken | Apollo.SuspenseQueryHookOptions<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>) {
-          const options = baseOptions === Apollo.skipToken ? baseOptions : {...defaultOptions, ...baseOptions}
-          return Apollo.useSuspenseQuery<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>(GetPlayersForReportDocument, options);
-        }
+export function useGetPlayersForReportQuery(
+  baseOptions: Apollo.QueryHookOptions<
+    Types.GetPlayersForReportQuery,
+    Types.GetPlayersForReportQueryVariables
+  > &
+    ({ variables: Types.GetPlayersForReportQueryVariables; skip?: boolean } | { skip: boolean })
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>(
+    GetPlayersForReportDocument,
+    options
+  );
+}
+export function useGetPlayersForReportLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    Types.GetPlayersForReportQuery,
+    Types.GetPlayersForReportQueryVariables
+  >
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<
+    Types.GetPlayersForReportQuery,
+    Types.GetPlayersForReportQueryVariables
+  >(GetPlayersForReportDocument, options);
+}
+export function useGetPlayersForReportSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetPlayersForReportQuery,
+        Types.GetPlayersForReportQueryVariables
+      >
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<
+    Types.GetPlayersForReportQuery,
+    Types.GetPlayersForReportQueryVariables
+  >(GetPlayersForReportDocument, options);
+}
 export type GetPlayersForReportQueryHookResult = ReturnType<typeof useGetPlayersForReportQuery>;
-export type GetPlayersForReportLazyQueryHookResult = ReturnType<typeof useGetPlayersForReportLazyQuery>;
-export type GetPlayersForReportSuspenseQueryHookResult = ReturnType<typeof useGetPlayersForReportSuspenseQuery>;
-export type GetPlayersForReportQueryResult = Apollo.QueryResult<Types.GetPlayersForReportQuery, Types.GetPlayersForReportQueryVariables>;
+export type GetPlayersForReportLazyQueryHookResult = ReturnType<
+  typeof useGetPlayersForReportLazyQuery
+>;
+export type GetPlayersForReportSuspenseQueryHookResult = ReturnType<
+  typeof useGetPlayersForReportSuspenseQuery
+>;
+export type GetPlayersForReportQueryResult = Apollo.QueryResult<
+  Types.GetPlayersForReportQuery,
+  Types.GetPlayersForReportQueryVariables
+>;

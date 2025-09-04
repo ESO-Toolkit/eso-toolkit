@@ -135,6 +135,7 @@ export const createMockRemoveBuffEvent = (
   targetID: 123,
   targetIsFriendly: true,
   abilityGameID: KnownAbilities.MINOR_FORCE,
+  extraAbilityGameID: 0,
   ...overrides,
 });
 
@@ -147,6 +148,7 @@ export const createMockDebuffEvent = (overrides?: Partial<ApplyDebuffEvent>): Ap
   targetID: 456,
   targetIsFriendly: false,
   abilityGameID: KnownAbilities.HEMORRHAGE,
+  extraAbilityGameID: 0,
   ...overrides,
 });
 
@@ -161,6 +163,7 @@ export const createMockRemoveDebuffEvent = (
   targetID: 456,
   targetIsFriendly: false,
   abilityGameID: KnownAbilities.HEMORRHAGE,
+  extraAbilityGameID: 0,
   ...overrides,
 });
 
