@@ -2724,6 +2724,12 @@ export type ReportFragment = {
       groupCount?: number | null;
       instanceCount?: number | null;
     } | null> | null;
+    maps?: Array<{
+      __typename?: 'ReportMap';
+      file?: string | null;
+      id: number;
+      name?: string | null;
+    } | null> | null;
   } | null> | null;
 };
 
@@ -2768,6 +2774,12 @@ export type GetReportByCodeQuery = {
           groupCount?: number | null;
           instanceCount?: number | null;
         } | null> | null;
+        maps?: Array<{
+          __typename?: 'ReportMap';
+          file?: string | null;
+          id: number;
+          name?: string | null;
+        } | null> | null;
       } | null> | null;
     } | null;
   } | null;
@@ -2797,6 +2809,12 @@ export type FightFragment = {
     id?: number | null;
     groupCount?: number | null;
     instanceCount?: number | null;
+  } | null> | null;
+  maps?: Array<{
+    __typename?: 'ReportMap';
+    file?: string | null;
+    id: number;
+    name?: string | null;
   } | null> | null;
 };
 
@@ -3018,6 +3036,18 @@ export const FightFragmentDoc = {
               ],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'maps' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
         ],
       },
     },
@@ -3096,6 +3126,18 @@ export const ReportFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'groupCount' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'instanceCount' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'maps' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
               ],
             },
           },
@@ -5692,6 +5734,18 @@ export const GetReportByCodeDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'groupCount' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'instanceCount' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'maps' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
               ],
             },
           },

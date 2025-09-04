@@ -25,6 +25,11 @@ export const FightFragmentDoc = gql`
       groupCount
       instanceCount
     }
+    maps {
+      file
+      id
+      name
+    }
   }
 `;
 export const CharacterFragmentDoc = gql`

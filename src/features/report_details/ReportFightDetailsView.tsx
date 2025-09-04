@@ -1,4 +1,5 @@
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
   Paper,
   Typography,
@@ -63,30 +64,49 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
 
   return (
     <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
-      <Tooltip title="View full report on ESO Logs">
-        <Button
-          component="a"
-          href={`https://www.esologs.com/reports/${reportId}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          variant="outlined"
-          size="small"
-          startIcon={<OpenInNewIcon />}
-          sx={{
-            position: 'absolute',
-            top: 16,
-            right: 16,
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
-            '&:hover': {
-              borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
-            },
-          }}
-        >
-          ESO Logs
-        </Button>
-      </Tooltip>
+      <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
+        <Tooltip title="Interactive Fight Replay">
+          <Button
+            onClick={() => navigate(`/report/${reportId}/fight/${fightId}/replay`)}
+            variant="outlined"
+            size="small"
+            startIcon={<PlayArrowIcon />}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.875rem',
+              borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.25)',
+              color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
+              '&:hover': {
+                borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.5)' : 'rgba(34, 197, 94, 0.4)',
+                backgroundColor: isDarkMode ? 'rgba(34, 197, 94, 0.05)' : 'rgba(34, 197, 94, 0.05)',
+              },
+            }}
+          >
+            Replay
+          </Button>
+        </Tooltip>
+        <Tooltip title="View full report on ESO Logs">
+          <Button
+            component="a"
+            href={`https://www.esologs.com/reports/${reportId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            variant="outlined"
+            size="small"
+            startIcon={<OpenInNewIcon />}
+            sx={{
+              textTransform: 'none',
+              fontSize: '0.875rem',
+              borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
+              '&:hover': {
+                borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
+              },
+            }}
+          >
+            ESO Logs
+          </Button>
+        </Tooltip>
+      </Box>
       <Box
         component="button"
         onClick={() => {

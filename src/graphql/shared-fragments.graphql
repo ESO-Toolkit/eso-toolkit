@@ -24,6 +24,11 @@ fragment Fight on ReportFight {
     groupCount
     instanceCount
   }
+  maps {
+    file
+    id
+    name
+  }
 }
 
 fragment Character on Character {
