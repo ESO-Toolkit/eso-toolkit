@@ -1,19 +1,10 @@
 # Player-specific queries
 # Used by: PlayersPanel.tsx, PlayerCriticalDamageDetails.tsx, PlayerPenetrationDetails.tsx
 
-query getCharactersForReport($code: String!) {
-  reportData {
-    report(code: $code) {
-      rankedCharacters {
-        ...Character
-      }
-    }
-  }
-}
-
 query getPlayersForReport($code: String!, $fightIDs: [Int]) {
   reportData {
     report(code: $code) {
+      # Returns JSON, so we can't type it strongly
       playerDetails(includeCombatantInfo: true, fightIDs: $fightIDs)
     }
   }
