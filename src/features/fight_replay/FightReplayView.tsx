@@ -6,7 +6,6 @@ import {
   Speed,
   Replay,
   Visibility,
-  Warning,
 } from '@mui/icons-material';
 import {
   Box,
@@ -24,15 +23,27 @@ import {
   LinearProgress,
   CircularProgress,
   Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
 } from '@mui/material';
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../../graphql/generated';
+import { useReportMasterData } from '../../hooks';
+import { useDamageEvents } from '../../hooks/events/useDamageEvents';
+import { useDeathEvents } from '../../hooks/events/useDeathEvents';
+import { useHealingEvents } from '../../hooks/events/useHealingEvents';
+import { useResourceEvents } from '../../hooks/events/useResourceEvents';
+import { RootState } from '../../store/types';
 import { DamageEvent, HealEvent, DeathEvent, LogEvent } from '../../types/combatlogEvents';
 
 import { CombatArena } from './components/CombatArena';
 import { useActorPositions } from './hooks/useActorPositions';
-import { useFightEvents } from './hooks/useFightEvents';
 
 // Local utility function for formatting duration
 const formatDuration = (ms: number): string => {
@@ -68,6 +79,9 @@ interface TimelineEvent {
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
+// Ultra-high refresh rate configuration for smooth rendering
+const RENDER_FRAME_INTERVAL = 4.17; // 240Hz rendering (4.17ms intervals)
+
 export const FightReplayView: React.FC<FightReplayViewProps> = ({
   fight,
   fightsLoading,
@@ -79,6 +93,25 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [speedIndex, setSpeedIndex] = useState(2); // Index for 1x speed
   const [selectedActorId, setSelectedActorId] = useState<number | undefined>();
+
+  // Use refs to avoid recreating animation loop on every currentTime change
+  const currentTimeRef = useRef(currentTime);
+  const isPlayingRef = useRef(isPlaying);
+  const playbackSpeedRef = useRef(playbackSpeed);
+
+  // Keep refs in sync
+  useEffect(() => {
+    currentTimeRef.current = currentTime;
+  }, [currentTime]);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+  }, [isPlaying]);
+
+  useEffect(() => {
+    playbackSpeedRef.current = playbackSpeed;
+  }, [playbackSpeed]);
+
   const [visibleEventTypes, setVisibleEventTypes] = useState({
     damage: true,
     heal: true,
@@ -88,14 +121,45 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     debuff: true,
   });
 
-  // Custom hook to fetch fight events
-  const { events, loading: eventsLoading, error } = useFightEvents(reportId, fight);
+  // Use standard event hooks that automatically load data into Redux
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
 
-  // Get actor positions for 3D visualization
+  // Combine events into the format expected by useActorPositions
+  const events = useMemo(() => {
+    return {
+      damage: damageEvents || [],
+      heal: healingEvents || [],
+      death: deathEvents || [],
+      resource: resourceEvents || [],
+    };
+  }, [damageEvents, healingEvents, deathEvents, resourceEvents]);
+
+  const eventsLoading =
+    isDamageEventsLoading ||
+    isHealingEventsLoading ||
+    isDeathEventsLoading ||
+    isResourceEventsLoading;
+
+  // Get player data for role colors
+  const playersById = useSelector((state: RootState) => state.playerData.playersById);
+  const { reportMasterData } = useReportMasterData();
+
+  // Throttle actor position updates to 60Hz for better performance (while keeping UI at 240Hz)
+  const throttledCurrentTime = useMemo(() => {
+    // Round to nearest ~16ms (60Hz) to reduce actor position recalculations
+    return Math.floor(currentTime / 16.67) * 16.67;
+  }, [currentTime]);
+
+  // Get actor positions for 3D visualization (now throttled to 60Hz)
   const actors = useActorPositions({
     fight,
     events,
-    currentTime,
+    currentTime: throttledCurrentTime,
+    playersById,
+    actorsById: reportMasterData.actorsById,
   });
 
   // Convert events to timeline format
@@ -141,7 +205,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     return convertedEvents.sort((a, b) => a.timestamp - b.timestamp);
   }, [events, fight]);
 
-  // Filter events based on visibility settings and current time
+  // Filter events based on visibility settings and current time (throttled)
   const visibleEvents = useMemo(() => {
     if (!fight) return [];
 
@@ -149,44 +213,58 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
       (event) =>
         visibleEventTypes[event.type] &&
         event.timestamp >= fight.startTime &&
-        event.timestamp <= fight.startTime + currentTime,
+        event.timestamp <= fight.startTime + throttledCurrentTime,
     );
-  }, [timelineEvents, visibleEventTypes, currentTime, fight]);
+  }, [timelineEvents, visibleEventTypes, throttledCurrentTime, fight]);
 
-  // Current events happening now (within a small time window)
+  const currentTimestamp = !fight ? 1000 : Math.ceil(fight.startTime + throttledCurrentTime);
+  const eventStartTimestamp = Math.floor(currentTimestamp - 1000);
+
+  // Current events happening now (within a small time window) - also throttled
   const currentEvents = useMemo(() => {
-    if (!fight) return [];
-
-    const currentTimestamp = fight.startTime + currentTime;
-    const timeWindow = 1000; // 1 second window
-
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
-        event.timestamp >= currentTimestamp - timeWindow &&
+        event.timestamp >= eventStartTimestamp &&
         event.timestamp <= currentTimestamp,
     );
-  }, [timelineEvents, visibleEventTypes, currentTime, fight]);
+  }, [timelineEvents, visibleEventTypes, currentTimestamp, eventStartTimestamp]);
 
   const fightDuration = fight ? fight.endTime - fight.startTime : 0;
 
-  // Playback control
+  // Playback control - 240Hz rendering with requestAnimationFrame (optimized)
   useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
+    let animationFrame: number | null = null;
+    let lastTime = performance.now();
 
-    if (isPlaying && currentTime < fightDuration) {
-      interval = setInterval(() => {
-        setCurrentTime((prev) => {
-          const next = prev + 100 * playbackSpeed; // 100ms increments
-          return next >= fightDuration ? fightDuration : next;
-        });
-      }, 100);
+    const animate = (currentPerformanceTime: number): void => {
+      // Use refs to avoid dependency issues and recreating animation loop
+      if (isPlayingRef.current && currentTimeRef.current < fightDuration) {
+        const deltaTime = currentPerformanceTime - lastTime;
+
+        // Update at ~240Hz (4.17ms intervals), accounting for playback speed
+        if (deltaTime >= RENDER_FRAME_INTERVAL) {
+          setCurrentTime((prev) => {
+            const next = prev + deltaTime * playbackSpeedRef.current;
+            return next >= fightDuration ? fightDuration : next;
+          });
+          lastTime = currentPerformanceTime;
+        }
+
+        animationFrame = requestAnimationFrame(animate);
+      }
+    };
+
+    // Start animation when playing
+    if (isPlaying && currentTimeRef.current < fightDuration) {
+      lastTime = performance.now(); // Reset timer when starting
+      animationFrame = requestAnimationFrame(animate);
     }
 
     return () => {
-      if (interval) clearInterval(interval);
+      if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [isPlaying, playbackSpeed, fightDuration, currentTime]);
+  }, [isPlaying, fightDuration]); // Include isPlaying to restart loop when play state changes
 
   // Auto-pause at end
   useEffect(() => {
@@ -254,17 +332,6 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
         <CircularProgress />
         <Typography variant="h6" sx={{ ml: 2 }}>
           Loading fight replay data...
-        </Typography>
-      </Box>
-    );
-  }
-
-  if (error) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-        <Warning color="error" sx={{ mr: 1 }} />
-        <Typography variant="h6" color="error">
-          Error loading fight data: {error}
         </Typography>
       </Box>
     );
@@ -374,7 +441,8 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
               actors={actors}
               selectedActorId={selectedActorId}
               onActorClick={handleActorClick}
-              arenaSize={25}
+              arenaSize={10}
+              mapFile={fight?.maps?.[0]?.file || undefined}
             />
           </Box>
         </Paper>
@@ -518,6 +586,86 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
               </CardContent>
             </Card>
           </Stack>
+        </Paper>
+
+        {/* Actor Positions Table */}
+        <Paper sx={{ p: 2 }}>
+          <Typography variant="h6" gutterBottom>
+            Actor Positions at Current Time
+          </Typography>
+
+          <TableContainer>
+            <Table size="small">
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>Type</TableCell>
+                  <TableCell>Position (X, Z)</TableCell>
+                  <TableCell>ESO Coordinates</TableCell>
+                  <TableCell>Facing (rad)</TableCell>
+                  <TableCell>Status</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {actors.map((actor) => {
+                  // Convert back to ESO coordinates for display
+                  const esoX = Math.round(actor.position[0] * 1000 + 5235);
+                  const esoY = Math.round(actor.position[2] * 1000 + 5410);
+
+                  return (
+                    <TableRow
+                      key={actor.id}
+                      selected={actor.id === selectedActorId}
+                      hover
+                      onClick={() => handleActorClick(actor.id)}
+                      sx={{ cursor: 'pointer' }}
+                    >
+                      <TableCell>{actor.id}</TableCell>
+                      <TableCell>{actor.name}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={actor.type}
+                          size="small"
+                          color={
+                            actor.type === 'boss'
+                              ? 'secondary'
+                              : actor.type === 'player'
+                                ? 'primary'
+                                : 'default'
+                          }
+                        />
+                      </TableCell>
+                      <TableCell>
+                        ({actor.position[0].toFixed(2)}, {actor.position[2].toFixed(2)})
+                      </TableCell>
+                      <TableCell>
+                        ({esoX}, {esoY})
+                      </TableCell>
+                      <TableCell>{actor.rotation.toFixed(3)}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={actor.isAlive ? 'Alive' : 'Dead'}
+                          size="small"
+                          color={actor.isAlive ? 'success' : 'error'}
+                          variant={actor.isAlive ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+                {actors.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={7} align="center">
+                      <Typography variant="body2" color="text.secondary">
+                        No actors found at current time
+                      </Typography>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </Paper>
       </Stack>
     </Box>

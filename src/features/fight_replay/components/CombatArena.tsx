@@ -4,19 +4,23 @@ import { Canvas } from '@react-three/fiber';
 import { Suspense } from 'react';
 
 import { ActorMarker } from './ActorMarker';
+import { MapTexture } from './MapTexture';
 
 interface Actor {
   id: number;
   name: string;
   type: 'player' | 'enemy' | 'boss';
+  role?: 'dps' | 'tank' | 'healer'; // Optional role for players
   position: [number, number, number];
   rotation: number;
+  isAlive: boolean;
 }
 
 interface CombatArenaProps {
   actors: Actor[];
   selectedActorId?: number;
   arenaSize?: number;
+  mapFile?: string;
   onActorClick?: (actorId: number) => void;
 }
 
@@ -37,16 +41,20 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
   actors,
   selectedActorId,
   arenaSize = 30,
+  mapFile,
   onActorClick,
 }) => {
   return (
     <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
       <Canvas
         camera={{
-          position: [20, 15, 20],
-          fov: 50,
+          position: [15, 12, 15], // Closer starting position (reduced from [20, 15, 20])
+          fov: 60, // Slightly wider field of view for better close-up viewing
         }}
         shadows
+        frameloop="always"
+        performance={{ min: 0.5 }}
+        dpr={[1, 2]}
       >
         <Suspense fallback={null}>
           {/* Lighting */}
@@ -63,11 +71,17 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
           {/* Environment */}
           <Environment preset="warehouse" />
 
-          {/* Arena floor */}
-          <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.1, 0]} receiveShadow>
-            <planeGeometry args={[arenaSize, arenaSize]} />
-            <meshPhongMaterial color="#2a2a2a" transparent opacity={0.8} />
-          </mesh>
+          {/* Arena floor with map texture - wrapped in Suspense for loading */}
+          <Suspense
+            fallback={
+              <mesh rotation={[-Math.PI / 2, 0, 0]} position={[0, -0.05, 0]} receiveShadow>
+                <planeGeometry args={[arenaSize, arenaSize]} />
+                <meshPhongMaterial color="#2a2a2a" transparent opacity={0.8} />
+              </mesh>
+            }
+          >
+            <MapTexture mapFile={mapFile} size={arenaSize} />
+          </Suspense>
 
           {/* Grid */}
           <Grid
@@ -106,7 +120,9 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
                 rotation={actor.rotation}
                 name={actor.name}
                 type={actor.type}
+                role={actor.role}
                 isSelected={actor.id === selectedActorId}
+                isAlive={actor.isAlive}
               />
             </group>
           ))}
@@ -116,10 +132,12 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
             enablePan={true}
             enableZoom={true}
             enableRotate={true}
-            minDistance={5}
+            minDistance={1} // Allow much closer zoom (reduced from 5)
             maxDistance={50}
             maxPolarAngle={Math.PI / 2.2}
             target={[0, 0, 0]}
+            zoomSpeed={1.2} // Faster zoom response
+            panSpeed={1.5} // Faster panning
           />
         </Suspense>
       </Canvas>
