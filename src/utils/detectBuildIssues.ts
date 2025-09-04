@@ -1,6 +1,7 @@
+import { CombatantAura } from '../types/combatlogEvents';
 import { PlayerGear } from '../types/playerDetails';
 
-import { PlayerGearSetRecord } from './gearUtilities';
+import { BuffLookupData, isBuffActive } from './BuffLookupUtils';
 
 interface BaseIssue {
   message: string;
@@ -21,15 +22,69 @@ export interface GearLevelIssue extends BaseIssue {
   gearLevel: number;
 }
 
-export type BuildIssue = EnchantQualityIssue | GearLevelIssue | GearQualityIssue;
+export interface MissingBuffIssue extends BaseIssue {
+  buffName: string;
+  abilityId: number;
+}
 
+export type BuildIssue = EnchantQualityIssue | GearLevelIssue | GearQualityIssue | MissingBuffIssue;
+
+// Role-specific minor buffs
+const ROLE_SPECIFIC_BUFFS = {
+  tank: [
+    { abilityId: 147225, name: 'Minor Aegis' }, // Defensive buff for tanks
+  ],
+  dps: [
+    { abilityId: 147226, name: 'Minor Slayer' }, // Damage buff for DPS
+    { abilityId: 61687, name: 'Major Sorcery' }, // Corrected from 28932 (was wrong ability)
+    { abilityId: 61689, name: 'Major Prophecy' }, // Corrected from 42435 (didn't exist)
+    { abilityId: 61667, name: 'Major Savagery' }, // Corrected from 68257 (didn't exist)
+    { abilityId: 183049, name: 'Major Brutality' }, // Corrected from 68253 (didn't exist)
+  ],
+  healer: [
+    // No specific minor buffs required for healers currently
+  ],
+} as const;
+
+/**
+ * Helper function to check if a buff is active in auras
+ */
+function isBuffActiveInAuras(
+  auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }> | undefined,
+  abilityId: number
+): boolean {
+  if (!auras) return false;
+  return auras.some((aura) => {
+    // Handle both CombatantAura and simplified aura formats
+    const auraId = 'ability' in aura ? aura.ability : aura.id;
+    return auraId === abilityId;
+  });
+}
+
+/**
+ * Detects various build issues for a player including gear problems and missing buffs.
+ *
+ * @param gear - Player's equipped gear
+ * @param buffLookup - Buff event data for checking temporary buffs
+ * @param fightStartTime - Fight start time for buff checking
+ * @param fightEndTime - Fight end time for buff checking
+ * @param auras - Aura data for checking passive buffs/abilities
+ * @param role - Player's role (tank, dps, healer) for role-specific buff checks
+ * @returns Array of detected build issues
+ */
 export function detectBuildIssues(
-  gear: PlayerGear[],
-  playerGearAnalysis: PlayerGearSetRecord[]
+  gear: PlayerGear[] | undefined,
+  buffLookup: BuffLookupData | undefined,
+  fightStartTime: number | undefined,
+  fightEndTime: number | undefined,
+  auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }>,
+  role: 'dps' | 'tank' | 'healer'
 ): BuildIssue[] {
-  if (!gear) return [];
   const issues: BuildIssue[] = [];
-  gear.forEach((g) => {
+
+  if (!gear) return [];
+
+  gear.forEach((g: PlayerGear) => {
     if (g.id === 0) {
       return;
     }
@@ -66,18 +121,29 @@ export function detectBuildIssues(
     }
   });
 
-  playerGearAnalysis.forEach((rec) => {
-    if (rec.count >= 5 && rec.data.hasPerfected && rec.data.hasRegular && rec.data.perfected < 5) {
-      const missing = 5 - rec.data.perfected;
-      if (missing > 0) {
+  // Check for missing required buffs based on role
+  if (buffLookup && fightStartTime && fightEndTime) {
+    const fightDuration = fightEndTime - fightStartTime;
+    const sampleTimestamp = fightStartTime + Math.floor(fightDuration * 0.5); // Check at 50% through fight
+
+    // Check role-specific minor buffs
+    const roleBuffs = ROLE_SPECIFIC_BUFFS[role];
+    roleBuffs.forEach((buff) => {
+      // Check both buff events and auras
+      const isActiveInBuffs = isBuffActive(buffLookup, buff.abilityId, sampleTimestamp);
+      const isActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
+
+      if (!isActiveInBuffs && !isActiveInAuras) {
+        const roleDescription =
+          role === 'tank' ? 'tanks' : role === 'dps' ? 'DPS players' : 'healers';
         issues.push({
-          gearName: rec.labelName,
-          enchantQuality: 5,
-          message: `Missing ${missing} Perfected piece(s) in ${rec.labelName} for the 5-piece bonus`,
+          buffName: buff.name,
+          abilityId: buff.abilityId,
+          message: `Missing ${buff.name} - this buff is important for ${roleDescription}`,
         });
       }
-    }
-  });
+    });
+  }
 
   return issues;
 }

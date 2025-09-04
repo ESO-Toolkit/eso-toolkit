@@ -10,13 +10,14 @@ import { BuffInterval } from '../../utils/buffUptimeCalculator';
 
 /**
  * Test constants for ability IDs - these are ESO Logs ability IDs
+ * Updated to match actual abilities.json data
  */
 export const MOCK_ABILITY_IDS = {
   MAJOR_FORCE: 61747,
-  MAJOR_BRUTALITY: 61687,
-  MAJOR_SORCERY: 61685,
+  MAJOR_BRUTALITY: 36894, // Corrected: was 61687 which is actually Major Sorcery
+  MAJOR_SORCERY: 61687, // Corrected: was 61685 which is actually Minor Sorcery
   EMPOWER: 61737,
-  MAJOR_SAVAGERY: 61686,
+  MAJOR_SAVAGERY: 61667, // Corrected: was 61686 which doesn't exist as major savagery
   MINOR_FORCE: 61749,
 } as const;
 

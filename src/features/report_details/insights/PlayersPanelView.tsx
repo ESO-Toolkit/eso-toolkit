@@ -34,7 +34,8 @@ import {
   INCREASE_MAX_HEALTH_AND_MAGICKA,
 } from '../../../types/abilities';
 import { ArmorType, PlayerGear } from '../../../types/playerDetails';
-import { detectBuildIssues } from '../../../utils/detectBuildIssues';
+import { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
   MONSTER_ONE_PIECE_HINTS,
@@ -446,6 +447,7 @@ interface PlayersPanelViewProps {
   >;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
+  buildIssuesByPlayer: Record<string, BuildIssue[]>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
@@ -455,6 +457,7 @@ interface PlayersPanelViewProps {
   playerGear: Record<number, PlayerGearSetRecord[]>;
   fightStartTime?: number;
   fightEndTime?: number;
+  friendlyBuffLookup?: BuffLookupData | null;
 }
 
 const CLASS_SUBLINES: Record<string, [string, string, string]> = {
@@ -580,6 +583,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   championPointsByPlayer,
   aurasByPlayer,
   scribingSkillsByPlayer,
+  buildIssuesByPlayer,
   deathsByPlayer,
   resurrectsByPlayer,
   cpmByPlayer,
@@ -589,6 +593,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   playerGear,
   fightStartTime,
   fightEndTime,
+  friendlyBuffLookup,
 }) => {
   const theme = useTheme();
   // Encoded pins filter provided by user for casts view
@@ -682,7 +687,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
             const talents = player?.combatantInfo?.talents ?? [];
             const gear = player?.combatantInfo?.gear ?? [];
             const armorWeights = getArmorWeightCounts(gear);
-            const buildIssues = detectBuildIssues(gear, playerGear[player.id] || []);
+            // Get build issues for this player from the smart component
+            const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
             return (
               <Box key={player.id} sx={{ minWidth: 0, display: 'flex' }}>
                 <Card
@@ -1516,8 +1522,24 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       •
                                     </span>
                                     <span>
-                                      <strong>{issue.gearName}</strong>:{' '}
-                                      {issue.message.replace(/^.*?:\s*/, '')}
+                                      {(() => {
+                                        if ('gearName' in issue) {
+                                          return (
+                                            <>
+                                              <strong>{issue.gearName}</strong>:{' '}
+                                              {issue.message.replace(/^.*?:\s*/, '')}
+                                            </>
+                                          );
+                                        } else if ('buffName' in issue) {
+                                          return (
+                                            <>
+                                              <strong>{issue.buffName}</strong>:{' '}
+                                              {issue.message.replace(/^.*?\s-\s*/, '')}
+                                            </>
+                                          );
+                                        }
+                                        return (issue as { message: string }).message;
+                                      })()}
                                     </span>
                                   </Typography>
                                 ))}
