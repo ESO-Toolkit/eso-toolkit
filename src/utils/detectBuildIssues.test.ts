@@ -1,18 +1,21 @@
 import { PlayerGear } from '../types/playerDetails';
 
+import { BuffLookupData } from './BuffLookupUtils';
 import {
   detectBuildIssues,
   EnchantQualityIssue,
   GearLevelIssue,
   GearQualityIssue,
 } from './detectBuildIssues';
-import { PlayerGearSetRecord } from './gearUtilities';
 
 describe('detectBuildIssues', () => {
-  const mockPlayerGearAnalysis: PlayerGearSetRecord[] = [];
+  // Mock empty BuffLookupData for tests that don't need buff checking
+  const mockBuffLookup: BuffLookupData = {
+    buffIntervals: {},
+  };
 
   it('should return empty array for null/undefined gear', () => {
-    const result = detectBuildIssues(undefined as never, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(undefined, undefined, undefined, undefined, [], 'dps');
     expect(result).toEqual([]);
   });
 
@@ -27,7 +30,7 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     expect(result).toEqual([]);
   });
 
@@ -42,7 +45,7 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const enchantIssue = result.find((issue) =>
       issue.message.includes('Enchantment quality')
     ) as EnchantQualityIssue;
@@ -64,7 +67,7 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const enchantIssues = result.filter((issue) => issue.message.includes('Enchantment quality'));
 
     expect(enchantIssues).toHaveLength(0);
@@ -81,7 +84,7 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const qualityIssue = result.find((issue) =>
       issue.message.includes('Gear quality')
     ) as GearQualityIssue;
@@ -103,7 +106,7 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
     const levelIssue = result.find((issue) => issue.message.includes('CP level')) as GearLevelIssue;
 
     expect(levelIssue).toBeDefined();
@@ -112,72 +115,37 @@ describe('detectBuildIssues', () => {
     expect(levelIssue.message).toBe('Low Level Boots: CP level is 150 (should be 160)');
   });
 
-  it('should handle unnamed gear gracefully', () => {
-    const gear: PlayerGear[] = [
-      {
-        id: 1,
-        name: '',
-        quality: 3,
-        enchantQuality: 2,
-        championPoints: 100,
-      } as PlayerGear,
-    ];
-
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
-
-    expect(result.every((issue) => issue.gearName === 'Unnamed Gear')).toBe(true);
-    expect(result.every((issue) => issue.message.includes('Unnamed Gear'))).toBe(true);
-  });
-
   it('should detect multiple issues for the same gear piece', () => {
     const gear: PlayerGear[] = [
       {
         id: 1,
-        name: 'Problematic Gear',
         quality: 3,
-        enchantQuality: 1,
-        championPoints: 100,
+        enchantQuality: 2,
+        championPoints: 140,
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
+    const gearIssues = result.filter(
+      (issue) =>
+        issue.message.includes('Enchantment quality') ||
+        issue.message.includes('Gear quality') ||
+        issue.message.includes('CP level')
+    );
 
-    expect(result).toHaveLength(3);
+    expect(gearIssues).toHaveLength(3);
     expect(result.some((issue) => issue.message.includes('Enchantment quality'))).toBe(true);
     expect(result.some((issue) => issue.message.includes('Gear quality'))).toBe(true);
     expect(result.some((issue) => issue.message.includes('CP level'))).toBe(true);
+
+    expect(
+      gearIssues.every((issue) => {
+        return 'gearName' in issue && issue.gearName === 'Unnamed Gear';
+      })
+    ).toBe(true);
   });
 
-  it('should detect perfected set issues', () => {
-    const gearAnalysis: PlayerGearSetRecord[] = [
-      {
-        key: 'test-set',
-        labelName: 'Test Set',
-        sortName: 'Test Set',
-        category: 1,
-        secondary: 0,
-        count: 5,
-        data: {
-          hasPerfected: true,
-          hasRegular: true,
-          perfected: 3,
-          total: 5,
-          baseDisplay: 'Test Set',
-        },
-      },
-    ];
-
-    const result = detectBuildIssues([], gearAnalysis);
-    const perfectedIssue = result.find((issue) => issue.message.includes('Perfected'));
-
-    expect(perfectedIssue).toBeDefined();
-    expect(perfectedIssue?.gearName).toBe('Test Set');
-    expect(perfectedIssue?.message).toBe(
-      'Missing 2 Perfected piece(s) in Test Set for the 5-piece bonus'
-    );
-  });
-
-  it('should handle perfect gear with no issues', () => {
+  it('should not detect issues for perfect gear', () => {
     const gear: PlayerGear[] = [
       {
         id: 1,
@@ -188,7 +156,77 @@ describe('detectBuildIssues', () => {
       } as PlayerGear,
     ];
 
-    const result = detectBuildIssues(gear, mockPlayerGearAnalysis);
-    expect(result).toHaveLength(0);
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
+    const gearIssues = result.filter(
+      (issue) =>
+        issue.message.includes('Enchantment quality') ||
+        issue.message.includes('Gear quality') ||
+        issue.message.includes('CP level')
+    );
+    expect(gearIssues).toHaveLength(0);
+  });
+
+  describe('role-based buff checking', () => {
+    it('should check for Minor Aegis only for tanks', () => {
+      // Test tank role - should check for Minor Aegis
+      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
+      const hasMinorAegisIssue = tankIssues.some((issue) => issue.message.includes('Minor Aegis'));
+      expect(hasMinorAegisIssue).toBe(true);
+
+      // Test DPS role - should NOT check for Minor Aegis
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps');
+      const hasMinorAegisIssueDPS = dpsIssues.some((issue) =>
+        issue.message.includes('Minor Aegis')
+      );
+      expect(hasMinorAegisIssueDPS).toBe(false);
+    });
+
+    it('should check for Minor Slayer only for DPS', () => {
+      // Test DPS role - should check for Minor Slayer
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps');
+      const hasMinorSlayerIssue = dpsIssues.some((issue) => issue.message.includes('Minor Slayer'));
+      expect(hasMinorSlayerIssue).toBe(true);
+
+      // Test tank role - should NOT check for Minor Slayer
+      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
+      const hasMinorSlayerIssueTank = tankIssues.some((issue) =>
+        issue.message.includes('Minor Slayer')
+      );
+      expect(hasMinorSlayerIssueTank).toBe(false);
+    });
+
+    it('should check major buffs for DPS role only', () => {
+      // Only DPS should check for major buffs in the current implementation
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps');
+      const hasMajorBuffIssues = dpsIssues.some(
+        (issue) =>
+          issue.message.includes('Major Sorcery') ||
+          issue.message.includes('Major Prophecy') ||
+          issue.message.includes('Major Savagery') ||
+          issue.message.includes('Major Brutality')
+      );
+      expect(hasMajorBuffIssues).toBe(true);
+
+      // Tank and healer should not check for major buffs
+      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
+      const hasMajorBuffIssuesTank = tankIssues.some(
+        (issue) =>
+          issue.message.includes('Major Sorcery') ||
+          issue.message.includes('Major Prophecy') ||
+          issue.message.includes('Major Savagery') ||
+          issue.message.includes('Major Brutality')
+      );
+      expect(hasMajorBuffIssuesTank).toBe(false);
+
+      const healerIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'healer');
+      const hasMajorBuffIssuesHealer = healerIssues.some(
+        (issue) =>
+          issue.message.includes('Major Sorcery') ||
+          issue.message.includes('Major Prophecy') ||
+          issue.message.includes('Major Savagery') ||
+          issue.message.includes('Major Brutality')
+      );
+      expect(hasMajorBuffIssuesHealer).toBe(false);
+    });
   });
 });

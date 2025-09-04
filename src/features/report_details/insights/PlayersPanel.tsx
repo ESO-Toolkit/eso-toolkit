@@ -14,6 +14,7 @@ import {
   useReportMasterData,
   useResourceEvents,
 } from '../../../hooks';
+import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import {
   KnownAbilities,
@@ -24,6 +25,8 @@ import {
 } from '../../../types/abilities';
 import { CastEvent, CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
+import { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { detectBuildIssues, BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
   isDoubleSetCount,
@@ -67,6 +70,9 @@ export const PlayersPanel: React.FC = () => {
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
   const fight = useCurrentFight();
 
+  // Get friendly buff lookup data for build issues detection
+  const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
+
   const { abilitiesById } = reportMasterData;
 
   // Calculate loading state
@@ -80,7 +86,8 @@ export const PlayersPanel: React.FC = () => {
     isDebuffEventsLoading ||
     isDamageEventsLoading ||
     isHealingEventsLoading ||
-    isResourceEventsLoading;
+    isResourceEventsLoading ||
+    isBuffLookupLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};
@@ -445,6 +452,42 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [playerData?.playersById]);
 
+  // Calculate build issues per player
+  const buildIssuesByPlayer = React.useMemo(() => {
+    const result: Record<string, BuildIssue[]> = {};
+
+    if (!playerData?.playersById || !friendlyBuffLookup || !fight?.startTime || !fight?.endTime) {
+      return result;
+    }
+
+    Object.values(playerData.playersById).forEach((player) => {
+      if (!player?.id) return;
+
+      const playerId = String(player.id);
+      const gear = player?.combatantInfo?.gear ?? [];
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
+
+      const buildIssues = detectBuildIssues(
+        gear,
+        friendlyBuffLookup || emptyBuffLookup,
+        fight.startTime,
+        fight.endTime,
+        aurasByPlayer[playerId] || [],
+        player.role
+      );
+
+      result[playerId] = buildIssues;
+    });
+
+    return result;
+  }, [
+    playerData?.playersById,
+    friendlyBuffLookup,
+    fight?.startTime,
+    fight?.endTime,
+    aurasByPlayer,
+  ]);
+
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {
     if (
@@ -623,12 +666,14 @@ export const PlayersPanel: React.FC = () => {
         championPointsByPlayer={{}}
         aurasByPlayer={{}}
         scribingSkillsByPlayer={{}}
+        buildIssuesByPlayer={{}}
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
         playerGear={playerGear}
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
+        friendlyBuffLookup={friendlyBuffLookup}
       />
     );
   }
@@ -640,6 +685,7 @@ export const PlayersPanel: React.FC = () => {
       championPointsByPlayer={championPointsByPlayer}
       aurasByPlayer={aurasByPlayer}
       scribingSkillsByPlayer={scribingSkillsByPlayer}
+      buildIssuesByPlayer={buildIssuesByPlayer}
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
       cpmByPlayer={cpmByPlayer}
@@ -649,6 +695,7 @@ export const PlayersPanel: React.FC = () => {
       playerGear={playerGear}
       fightStartTime={fight?.startTime}
       fightEndTime={fight?.endTime}
+      friendlyBuffLookup={friendlyBuffLookup}
     />
   );
 };
