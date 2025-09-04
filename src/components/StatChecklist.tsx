@@ -44,7 +44,7 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
 
   const visibleSources = React.useMemo(
     () => sources.filter((s) => s.wasActive || showUnchecked),
-    [sources, showUnchecked]
+    [sources, showUnchecked],
   );
 
   if (loading) {

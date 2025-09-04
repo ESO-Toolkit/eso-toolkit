@@ -33,7 +33,7 @@ export const TargetSelector: React.FC = () => {
       const value = event.target.value;
       dispatch(setSelectedTargetId(value === ALL_BOSSES_SENTINEL ? null : Number(value)));
     },
-    [dispatch]
+    [dispatch],
   );
 
   const targetsList = React.useMemo(() => {

@@ -93,7 +93,7 @@ export class EsoLogsClient {
 
   // Delegate Apollo Client methods
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
-    options: QueryOptions<TVariables, TData>
+    options: QueryOptions<TVariables, TData>,
   ): Promise<TData> {
     const result = await this.client.query(options);
 
@@ -107,19 +107,19 @@ export class EsoLogsClient {
   }
 
   public mutate<T = unknown, TVariables extends OperationVariables = OperationVariables>(
-    options: MutationOptions<T, TVariables>
+    options: MutationOptions<T, TVariables>,
   ): Promise<FetchResult<T>> {
     return this.client.mutate(options);
   }
 
   public watchQuery<T = unknown, TVariables extends OperationVariables = OperationVariables>(
-    options: WatchQueryOptions<TVariables, T>
+    options: WatchQueryOptions<TVariables, T>,
   ): ObservableQuery<T, TVariables> {
     return this.client.watchQuery(options);
   }
 
   public subscribe<T = unknown, TVariables extends OperationVariables = OperationVariables>(
-    options: SubscriptionOptions<TVariables, T>
+    options: SubscriptionOptions<TVariables, T>,
   ): Observable<FetchResult<T>> {
     return this.client.subscribe(options);
   }

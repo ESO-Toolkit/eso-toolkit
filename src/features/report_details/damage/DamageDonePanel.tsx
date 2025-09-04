@@ -43,7 +43,7 @@ export const DamageDonePanel: React.FC = () => {
   // Extract data from hooks with memoization
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
-    [reportMasterData]
+    [reportMasterData],
   );
 
   // Compute loading and error states

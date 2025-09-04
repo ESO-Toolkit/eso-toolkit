@@ -69,7 +69,7 @@ const MockReportFightProvider: React.FC<{
       reportId,
       fightId,
     }),
-    [reportId, fightId]
+    [reportId, fightId],
   );
 
   return <ReportFightContext.Provider value={contextValue}>{children}</ReportFightContext.Provider>;
@@ -95,7 +95,7 @@ const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       client: mockClient, // We provide Apollo client directly for Storybook
       isReady: true, // Always ready in Storybook
     }),
-    [mockClient]
+    [mockClient],
   );
 
   return (
@@ -140,7 +140,7 @@ export const withEsoLogDecorators = (mockData: MockData): Decorator => {
  */
 export const withEsoLogDecoratorsAndLocalStorage = (
   mockData: MockData,
-  localStorageValues: Record<string, string> = {}
+  localStorageValues: Record<string, string> = {},
 ): Decorator => {
   return (Story, context) => (
     <MockLocalStorageProvider localStorageValues={localStorageValues}>
@@ -210,7 +210,7 @@ export const withLocalStorage = (localStorageValues: Record<string, string>): De
  */
 export const withReportFightContext = (
   reportId = 'mock-report-123',
-  fightId = 'mock-fight-1'
+  fightId = 'mock-fight-1',
 ): Decorator => {
   return (Story) => (
     <MockReportFightProvider reportId={reportId} fightId={fightId}>

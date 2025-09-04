@@ -165,7 +165,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
                     {} as Record<
                       string,
                       { abilityName: string; types: string[]; abilityId: number }
-                    >
+                    >,
                   );
 
                   return Object.values(groupedEffects).map((effectGroup) => {
@@ -280,7 +280,7 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
                     }
                     return acc;
                   },
-                  {} as Record<string, { abilityName: string; types: string[]; abilityId: number }>
+                  {} as Record<string, { abilityName: string; types: string[]; abilityId: number }>,
                 );
 
                 return Object.values(groupedEffects).map((effectGroup) => {

@@ -160,7 +160,7 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         filterFn: (row: Row<AuraData>, columnId: string, value: string) => {
           const players = row.getValue(columnId) as string[];
           return players.some((player: string) =>
-            player.toLowerCase().includes(value.toLowerCase())
+            player.toLowerCase().includes(value.toLowerCase()),
           );
         },
       },
@@ -201,7 +201,7 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         ),
       },
     ],
-    []
+    [],
   );
 
   return (

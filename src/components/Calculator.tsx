@@ -265,16 +265,16 @@ const Calculator: React.FC = () => {
       });
       return total;
     },
-    [calculateItemValue]
+    [calculateItemValue],
   );
 
   const penTotal = useMemo(
     () => calculateTotalValue(penetrationData),
-    [penetrationData, calculateTotalValue]
+    [penetrationData, calculateTotalValue],
   );
   const critTotal = useMemo(
     () => calculateTotalValue(criticalData),
-    [criticalData, calculateTotalValue]
+    [criticalData, calculateTotalValue],
   );
 
   // Status calculation
@@ -309,11 +309,11 @@ const Calculator: React.FC = () => {
       setPenetrationData((prev: CalculatorData) => ({
         ...prev,
         [category]: prev[category].map((item: CalculatorItem, i: number) =>
-          i === index ? { ...item, ...updates } : item
+          i === index ? { ...item, ...updates } : item,
         ),
       }));
     },
-    []
+    [],
   );
 
   const updateCritItem = useCallback(
@@ -321,11 +321,11 @@ const Calculator: React.FC = () => {
       setCriticalData((prev: CalculatorData) => ({
         ...prev,
         [category]: prev[category].map((item: CalculatorItem, i: number) =>
-          i === index ? { ...item, ...updates } : item
+          i === index ? { ...item, ...updates } : item,
         ),
       }));
     },
-    []
+    [],
   );
 
   // Bulk toggle handlers
@@ -334,7 +334,7 @@ const Calculator: React.FC = () => {
       const newData = { ...prev };
       Object.keys(newData).forEach((category) => {
         newData[category as keyof CalculatorData] = newData[category as keyof CalculatorData].map(
-          (item: CalculatorItem) => (item.locked ? item : { ...item, enabled })
+          (item: CalculatorItem) => (item.locked ? item : { ...item, enabled }),
         );
       });
       return newData;
@@ -346,7 +346,7 @@ const Calculator: React.FC = () => {
       const newData = { ...prev };
       Object.keys(newData).forEach((category) => {
         newData[category as keyof CalculatorData] = newData[category as keyof CalculatorData].map(
-          (item: CalculatorItem) => (item.locked ? item : { ...item, enabled })
+          (item: CalculatorItem) => (item.locked ? item : { ...item, enabled }),
         );
       });
       return newData;
@@ -361,8 +361,8 @@ const Calculator: React.FC = () => {
     updateFunction: (
       category: keyof CalculatorData,
       index: number,
-      updates: Partial<CalculatorItem>
-    ) => void
+      updates: Partial<CalculatorItem>,
+    ) => void,
   ): React.JSX.Element => {
     const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
     let displayValue: number;
@@ -485,7 +485,7 @@ const Calculator: React.FC = () => {
               updateFunction(category, index, {
                 quantity: Math.max(
                   item.minQuantity || 0,
-                  Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0)
+                  Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
                 ),
               })
             }
@@ -619,8 +619,8 @@ const Calculator: React.FC = () => {
     updateFunction: (
       category: keyof CalculatorData,
       index: number,
-      updates: Partial<CalculatorItem>
-    ) => void
+      updates: Partial<CalculatorItem>,
+    ) => void,
   ): React.JSX.Element => {
     if (liteMode) {
       // Lite mode: flat list with minimal section divider
@@ -862,14 +862,14 @@ const Calculator: React.FC = () => {
                 'Group Buffs',
                 penetrationData.groupBuffs,
                 'groupBuffs',
-                updatePenItem
+                updatePenItem,
               )}
               {renderSection('Gear & Enchantments', penetrationData.gear, 'gear', updatePenItem)}
               {renderSection(
                 'Passives & Skills',
                 penetrationData.passives,
                 'passives',
-                updatePenItem
+                updatePenItem,
               )}
               {renderSection('Champion Points', penetrationData.cp, 'cp', updatePenItem)}
 
@@ -985,14 +985,14 @@ const Calculator: React.FC = () => {
                 'Base & Group Buffs',
                 criticalData.groupBuffs,
                 'groupBuffs',
-                updateCritItem
+                updateCritItem,
               )}
               {renderSection('Gear & Enchantments', criticalData.gear, 'gear', updateCritItem)}
               {renderSection(
                 'Passives & Skills',
                 criticalData.passives,
                 'passives',
-                updateCritItem
+                updateCritItem,
               )}
               {renderSection('Champion Points', criticalData.cp, 'cp', updateCritItem)}
 

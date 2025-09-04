@@ -62,7 +62,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         }
       }
     },
-    [playersById]
+    [playersById],
   );
 
   // Function to copy actorsById entry to clipboard
@@ -94,7 +94,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         }
       }
     },
-    [actorsById]
+    [actorsById],
   );
 
   // Function to copy combatant info events for a specific player
@@ -102,7 +102,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
     async (actorId: string | number) => {
       // Filter combatant info events for this specific actor
       const playerCombatantInfoEvents = combatantInfoEvents.filter(
-        (event) => String(event.sourceID) === String(actorId)
+        (event) => String(event.sourceID) === String(actorId),
       );
 
       if (playerCombatantInfoEvents.length === 0) {
@@ -113,7 +113,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       try {
         await navigator.clipboard.writeText(JSON.stringify(playerCombatantInfoEvents, null, 2));
         console.log(
-          `${playerCombatantInfoEvents.length} combatant info event(s) copied to clipboard`
+          `${playerCombatantInfoEvents.length} combatant info event(s) copied to clipboard`,
         );
       } catch (err) {
         console.error('Failed to copy combatant info events:', err);
@@ -131,7 +131,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         document.body.removeChild(textArea);
       }
     },
-    [combatantInfoEvents]
+    [combatantInfoEvents],
   );
 
   // Create column helper
@@ -239,7 +239,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
         cell: (info) => {
           const actorId = info.row.original.id;
           const playerCombatantInfoEvents = combatantInfoEvents.filter(
-            (event) => String(event.sourceID) === String(actorId)
+            (event) => String(event.sourceID) === String(actorId),
           );
 
           if (playerCombatantInfoEvents.length === 0) {
@@ -274,7 +274,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       copyActorData,
       combatantInfoEvents,
       copyCombatantInfoEvents,
-    ]
+    ],
   );
 
   return (

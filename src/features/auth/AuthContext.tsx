@@ -13,7 +13,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [accessToken, setAccessToken] = useState<string>(
-    () => localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || ''
+    () => localStorage.getItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY) || '',
   );
 
   // Re-bind access token from localStorage
@@ -47,7 +47,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   const contextValue = React.useMemo(
     () => ({ accessToken, isLoggedIn, setAccessToken, rebindAccessToken }),
-    [accessToken, isLoggedIn, rebindAccessToken]
+    [accessToken, isLoggedIn, rebindAccessToken],
   );
 
   return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;

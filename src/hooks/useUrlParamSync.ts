@@ -106,7 +106,7 @@ function buildUrlParams(params: Partial<UrlParams>): string {
  */
 function updateUrl(
   currentLocation: { pathname: string; search: string; hash: string },
-  newParams: Partial<UrlParams>
+  newParams: Partial<UrlParams>,
 ): string {
   // Extract current search params
   const hash = currentLocation.hash;
@@ -225,7 +225,7 @@ export function useUrlParamSync(): {
         // Execute all updates - React 18 will batch them automatically
         updates.forEach((update) => update());
       },
-      hasInitialSync ? 0 : 100
+      hasInitialSync ? 0 : 100,
     ); // Small delay only on first sync
 
     return () => clearTimeout(timeoutId);
@@ -241,7 +241,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedTargetId]
+    [dispatch, location, selectedTargetId],
   );
 
   const updateSelectedPlayerId = React.useCallback(
@@ -252,7 +252,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedPlayerId]
+    [dispatch, location, selectedPlayerId],
   );
 
   const updateSelectedTab = React.useCallback(
@@ -263,7 +263,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedTabId]
+    [dispatch, location, selectedTabId],
   );
 
   const updateShowExperimentalTabs = React.useCallback(
@@ -274,7 +274,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, showExperimentalTabs]
+    [dispatch, location, showExperimentalTabs],
   );
 
   // Bulk update function - most efficient for multiple changes
@@ -309,7 +309,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs]
+    [dispatch, location, selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs],
   );
 
   // Helper functions
@@ -318,7 +318,7 @@ export function useUrlParamSync(): {
   }, [location]);
   const buildCurrentUrlParams = React.useCallback(
     (params: Partial<UrlParams>) => buildUrlParams(params),
-    []
+    [],
   );
 
   return {
@@ -358,6 +358,6 @@ export function useUrlParams(): UrlParams {
       selectedTab: selectedTabId,
       showExperimentalTabs,
     }),
-    [selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs]
+    [selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs],
   );
 }

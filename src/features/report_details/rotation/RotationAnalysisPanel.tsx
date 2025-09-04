@@ -99,7 +99,7 @@ const analyzeSkillPriorities = (abilities: AbilityUsage[]): SkillPriority[] => {
 
       higherFreqAbility.timestamps.forEach((timestamp) => {
         const nearbyLowerCasts = lowerFreqAbility.timestamps.filter(
-          (t) => Math.abs(t - timestamp) < timeThreshold && t < timestamp
+          (t) => Math.abs(t - timestamp) < timeThreshold && t < timestamp,
         );
         interruptionCount += nearbyLowerCasts.length;
       });
@@ -175,7 +175,7 @@ const analyzeGeneralRotation = (
   abilities: AbilityUsage[],
   allCastEvents: UnifiedCastEvent[],
   playerId: string,
-  friendlyPlayerIds: Set<string>
+  friendlyPlayerIds: Set<string>,
 ): GeneralRotation => {
   // Filter cast events for this player and other friendly players, sorted by timestamp
   const playerCastEvents = allCastEvents
@@ -183,7 +183,7 @@ const analyzeGeneralRotation = (
       (event) =>
         String(event.sourceID) === playerId &&
         event.sourceIsFriendly &&
-        friendlyPlayerIds.has(String(event.sourceID))
+        friendlyPlayerIds.has(String(event.sourceID)),
     )
     .sort((a, b) => a.timestamp - b.timestamp);
 
@@ -221,12 +221,12 @@ const analyzeGeneralRotation = (
   const sortedAbilities = [...abilities].sort((a, b) => b.useCount - a.useCount);
   const mainRotationAbilities = sortedAbilities.slice(
     0,
-    Math.max(3, Math.floor(sortedAbilities.length * 0.6))
+    Math.max(3, Math.floor(sortedAbilities.length * 0.6)),
   );
   const fillerAbilities = sortedAbilities
     .slice(mainRotationAbilities.length)
     .filter(
-      (ability) => ability.averageTimeBetweenCasts > 0 && ability.averageTimeBetweenCasts < 15
+      (ability) => ability.averageTimeBetweenCasts > 0 && ability.averageTimeBetweenCasts < 15,
     ) // Short cooldowns
     .map((ability) => ability.abilityName)
     .slice(0, 3);
@@ -307,7 +307,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
     const friendlyPlayerIds = new Set(
       (fight.friendlyPlayers || [])
         .filter((id: number | null): id is number => id !== null && id !== undefined)
-        .map((id: number) => String(id))
+        .map((id: number) => String(id)),
     );
 
     // Process cast events for each player, filtering to only include friendly players
@@ -392,7 +392,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
         analysis.abilities,
         castEvents,
         analysis.playerId,
-        friendlyPlayerIds
+        friendlyPlayerIds,
       );
 
       // Calculate average time between casts for each ability
@@ -440,12 +440,12 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
         if (resourceEvent.targetResources) {
           if (resourceEvent.targetResources.magicka !== undefined) {
             resourceDataByPlayer[playerId].magickaLevels.push(
-              resourceEvent.targetResources.magicka
+              resourceEvent.targetResources.magicka,
             );
           }
           if (resourceEvent.targetResources.stamina !== undefined) {
             resourceDataByPlayer[playerId].staminaLevels.push(
-              resourceEvent.targetResources.stamina
+              resourceEvent.targetResources.stamina,
             );
           }
         }
@@ -478,7 +478,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           analysisMap[playerId].resourceEfficiency.magicka.averageLevel =
             data.magickaLevels.reduce((sum, level) => sum + level, 0) / data.magickaLevels.length;
           analysisMap[playerId].resourceEfficiency.magicka.lowestPoint = Math.min(
-            ...data.magickaLevels
+            ...data.magickaLevels,
           );
           analysisMap[playerId].resourceEfficiency.magicka.wastePercentage =
             (data.magickaWaste /
@@ -490,7 +490,7 @@ export const RotationAnalysisPanel: React.FC<RotationAnalysisPanelProps> = ({ fi
           analysisMap[playerId].resourceEfficiency.stamina.averageLevel =
             data.staminaLevels.reduce((sum, level) => sum + level, 0) / data.staminaLevels.length;
           analysisMap[playerId].resourceEfficiency.stamina.lowestPoint = Math.min(
-            ...data.staminaLevels
+            ...data.staminaLevels,
           );
           analysisMap[playerId].resourceEfficiency.stamina.wastePercentage =
             (data.staminaWaste /

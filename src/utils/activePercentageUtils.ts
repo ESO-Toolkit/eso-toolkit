@@ -22,7 +22,7 @@ export interface ActivePercentageResult {
  */
 export function calculateActivePercentages(
   fight: FightFragment,
-  damageEvents: Record<string, DamageEvent[]>
+  damageEvents: Record<string, DamageEvent[]>,
 ): Record<number, ActivePercentageResult> {
   if (fight.startTime == null || fight.endTime == null) {
     return {};
@@ -46,7 +46,7 @@ export function calculateActivePercentages(
       playerId,
       fightStartTime,
       fightEndTime,
-      damageEvents
+      damageEvents,
     );
 
     const activePercentage = totalFightDuration > 0 ? (activeTimeMs / totalFightDuration) * 100 : 0;
@@ -76,7 +76,7 @@ function calculatePlayerActiveTime(
   playerId: number,
   fightStartTime: number,
   fightEndTime: number,
-  damageEvents: DamageEvent[]
+  damageEvents: DamageEvent[],
 ): number {
   // Focus primarily on damage events as the indicator of player activity
   const playerDamageEvents = damageEvents
@@ -86,7 +86,7 @@ function calculatePlayerActiveTime(
         event.timestamp >= fightStartTime &&
         event.timestamp <= fightEndTime &&
         !event.targetIsFriendly &&
-        event.amount > 0
+        event.amount > 0,
     )
     .sort((a, b) => a.timestamp - b.timestamp);
 

@@ -28,13 +28,13 @@ export function useBuffLookupTask(): {
       executeBuffLookupTask({
         buffEvents: friendlyBuffEvents,
         fightEndTime: selectedFight?.endTime,
-      })
+      }),
     );
   }, [dispatch, selectedFight, friendlyBuffEvents]);
 
   const buffLookupData = useSelector(selectBuffLookupResult) as BuffLookupData | null;
   const isBuffLookupLoading = useSelector(
-    selectWorkerTaskLoading('calculateBuffLookup')
+    selectWorkerTaskLoading('calculateBuffLookup'),
   ) as boolean;
   const buffLookupError = useSelector(selectWorkerTaskError('calculateBuffLookup')) as
     | string
@@ -50,6 +50,6 @@ export function useBuffLookupTask(): {
       buffLookupError,
       buffLookupProgress,
     }),
-    [buffLookupData, isBuffLookupLoading, buffLookupError, buffLookupProgress]
+    [buffLookupData, isBuffLookupLoading, buffLookupError, buffLookupProgress],
   );
 }

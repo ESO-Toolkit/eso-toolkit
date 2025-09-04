@@ -20,7 +20,7 @@ export interface MetricPillProps {
 const intentStyles = (
   theme: Theme,
   intent: MetricIntent,
-  variant: NonNullable<MetricPillProps['variant']>
+  variant: NonNullable<MetricPillProps['variant']>,
 ): SystemStyleObject<Theme> => {
   // Match existing styling patterns from the codebase
   const palette = {

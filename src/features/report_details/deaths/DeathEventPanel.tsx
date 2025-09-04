@@ -58,7 +58,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
       deathEvents,
       castEvents,
       fight.startTime,
-      fight.endTime
+      fight.endTime,
     );
 
     // Create a map of death durations by player ID and timestamp for quick lookup

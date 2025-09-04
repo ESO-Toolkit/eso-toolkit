@@ -227,7 +227,7 @@ export function buildTooltipPropsFromAbilityId(abilityId: number): SkillTooltipP
 // Public helper: build rich SkillTooltipProps from class key and ability name
 export function buildTooltipPropsFromClassAndName(
   classKey: string,
-  abilityName: string
+  abilityName: string,
 ): SkillTooltipProps | null {
   // First try to find by name in skill lines
   const found = findSkillByName(abilityName);

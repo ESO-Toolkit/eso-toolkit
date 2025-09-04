@@ -50,7 +50,7 @@ export interface DamageReductionCalculationTask {
 
 export function calculateDamageReductionData(
   data: DamageReductionCalculationTask,
-  onProgress?: OnProgressCallback
+  onProgress?: OnProgressCallback,
 ): Record<number, PlayerDamageReductionData> {
   const { fight, players, combatantInfoRecord, friendlyBuffsLookup, debuffsLookup } = data;
 
@@ -130,7 +130,7 @@ export function calculateDamageReductionData(
           ...source,
           isActive,
         };
-      }
+      },
     );
 
     // Calculate damage reduction over time for this player using new methods
@@ -149,7 +149,7 @@ export function calculateDamageReductionData(
         deserializedFriendlyBuffsLookup,
         deserializedDebuffsLookup,
         timestamp,
-        player.id
+        player.id,
       );
 
       const totalResistance = staticResistances + dynamicResistance;

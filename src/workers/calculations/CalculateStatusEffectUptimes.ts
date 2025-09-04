@@ -10,12 +10,12 @@ const STATUS_EFFECT_BUFF_ABILITIES = Object.freeze(
     KnownAbilities.CONCUSSION,
     KnownAbilities.CHILL,
     KnownAbilities.DISEASED,
-  ])
+  ]),
 );
 
 // Define the specific status effect debuff abilities to track
 const STATUS_EFFECT_DEBUFF_ABILITIES = Object.freeze(
-  new Set([KnownAbilities.BURNING, KnownAbilities.POISONED, KnownAbilities.HEMMORRHAGING])
+  new Set([KnownAbilities.BURNING, KnownAbilities.POISONED, KnownAbilities.HEMMORRHAGING]),
 );
 
 export interface StatusEffectUptimesCalculationTask {
@@ -30,7 +30,7 @@ export interface StatusEffectUptimesCalculationTask {
  */
 export function calculateStatusEffectUptimes(
   data: StatusEffectUptimesCalculationTask,
-  onProgress?: OnProgressCallback
+  onProgress?: OnProgressCallback,
 ): Array<{
   abilityGameID: string;
   abilityName: string;

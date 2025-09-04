@@ -57,7 +57,7 @@ export function useCriticalDamageTask(): {
             combatantInfoEvents: combatantInfoRecord,
             friendlyBuffsLookup: buffLookupData,
             debuffsLookup: debuffLookupData || { buffIntervals: {} },
-          })
+          }),
         );
       }
     }
@@ -75,13 +75,13 @@ export function useCriticalDamageTask(): {
 
   const criticalDamageData = useSelector(selectCriticalDamageResult);
   const isCriticalDamageLoading = useSelector(
-    selectWorkerTaskLoading('calculateCriticalDamageData')
+    selectWorkerTaskLoading('calculateCriticalDamageData'),
   ) as boolean;
   const criticalDamageError = useSelector(selectWorkerTaskError('calculateCriticalDamageData')) as
     | string
     | null;
   const criticalDamageProgress = useSelector(
-    selectWorkerTaskProgress('calculateCriticalDamageData')
+    selectWorkerTaskProgress('calculateCriticalDamageData'),
   ) as number | null;
 
   return React.useMemo(
@@ -98,6 +98,6 @@ export function useCriticalDamageTask(): {
       criticalDamageError,
       criticalDamageProgress,
       selectedFight,
-    ]
+    ],
   );
 }

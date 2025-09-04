@@ -58,7 +58,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
       // Check for ultimate abilities using the KnownAbilities mappings
       Object.entries(ULTIMATE_ABILITY_MAPPINGS).forEach(([abilityId, knownAbility]) => {
         const talentFound = talents.some(
-          (talent: PlayerTalent) => talent.guid === Number(abilityId)
+          (talent: PlayerTalent) => talent.guid === Number(abilityId),
         );
         if (talentFound) {
           if (!result[knownAbility]) result[knownAbility] = [];
@@ -116,7 +116,7 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
 
     // Find the first damage event from a friendly player
     const firstDamageEvent = sortedDamageEvents.find(
-      (event) => event.sourceIsFriendly && fight.friendlyPlayers?.includes(event.sourceID)
+      (event) => event.sourceIsFriendly && fight.friendlyPlayers?.includes(event.sourceID),
     );
 
     if (!firstDamageEvent) {

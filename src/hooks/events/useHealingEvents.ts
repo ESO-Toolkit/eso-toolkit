@@ -34,7 +34,7 @@ export function useHealingEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -44,6 +44,6 @@ export function useHealingEvents(): {
 
   return React.useMemo(
     () => ({ healingEvents, isHealingEventsLoading, selectedFight }),
-    [healingEvents, isHealingEventsLoading, selectedFight]
+    [healingEvents, isHealingEventsLoading, selectedFight],
   );
 }

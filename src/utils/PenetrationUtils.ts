@@ -346,7 +346,7 @@ function isAuraActive(combatantInfo: CombatantInfoEvent | null, ability: KnownAb
 function isGearSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   setId: KnownSetIDs,
-  numberOfPieces: number
+  numberOfPieces: number,
 ): boolean {
   if (!combatantInfo || !combatantInfo.gear) return false;
   const setCount = getSetCount(combatantInfo.gear, setId);
@@ -356,7 +356,7 @@ function isGearSourceActive(
 function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   source: PenetrationComputedSource,
-  playerData?: PlayerDetailsWithRole
+  playerData?: PlayerDetailsWithRole,
 ): boolean {
   switch (source.key) {
     // ========================================
@@ -370,7 +370,7 @@ function isComputedSourceActive(
       if (!combatantInfo || !combatantInfo.gear) return false;
       const setsConfig = ARMOR_SET_PENETRATION_CONFIG[source.key];
       return setsConfig.some(
-        ({ setId, requiredPieces }) => getSetCount(combatantInfo.gear, setId) >= requiredPieces
+        ({ setId, requiredPieces }) => getSetCount(combatantInfo.gear, setId) >= requiredPieces,
       );
     // ========================================
     // INDIVIDUAL COMPUTED SOURCES
@@ -379,7 +379,7 @@ function isComputedSourceActive(
       if (!combatantInfo || !combatantInfo.auras || !combatantInfo.gear) return false;
       return combatantInfo.auras.some(
         (aura: CombatantAura) =>
-          aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration')
+          aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration'),
       );
     case PenetrationComputedSourceKey.SPLINTERED_SECRETS:
       if (!combatantInfo || !combatantInfo.auras || !playerData) return false;
@@ -387,7 +387,7 @@ function isComputedSourceActive(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.SPLINTERED_SECRETS ||
           aura.ability === 184885 || // Alternative Splintered Secrets ID
-          aura.name?.includes('Splintered Secrets')
+          aura.name?.includes('Splintered Secrets'),
       );
       return splinteredSecretsAuras.length > 0;
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
@@ -408,7 +408,7 @@ function isComputedSourceActive(
       return combatantInfo.auras.some(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.CRYSTAL_WEAPON_BUFF ||
-          aura.name?.includes('Crystal Weapon')
+          aura.name?.includes('Crystal Weapon'),
       );
     case PenetrationComputedSourceKey.BALORGH:
       if (!combatantInfo || !combatantInfo.gear) return false;
@@ -432,7 +432,7 @@ function isComputedSourceActive(
 function getPenetrationFromComputedSource(
   source: PenetrationComputedSource,
   combatantInfo: CombatantInfoEvent | null,
-  playerData?: PlayerDetailsWithRole
+  playerData?: PlayerDetailsWithRole,
 ): number {
   switch (source.key) {
     // ========================================
@@ -463,7 +463,7 @@ function getPenetrationFromComputedSource(
       if (!combatantInfo || !combatantInfo.auras || !combatantInfo.gear) return 0;
       const hasConcentration = combatantInfo.auras.some(
         (aura: CombatantAura) =>
-          aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration')
+          aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration'),
       );
       if (!hasConcentration) return 0;
       const lightArmorCount =
@@ -476,7 +476,7 @@ function getPenetrationFromComputedSource(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.SPLINTERED_SECRETS ||
           aura.ability === 184885 || // Alternative Splintered Secrets ID
-          aura.name?.includes('Splintered Secrets')
+          aura.name?.includes('Splintered Secrets'),
       );
       if (splinteredSecretsAuras.length === 0) return 0;
 
@@ -484,7 +484,7 @@ function getPenetrationFromComputedSource(
       const totalSplinteredSecretsStacks = 2;
       const talents = playerData?.combatantInfo?.talents ?? [];
       const slottedHeraldAbilities = talents.filter((talent: { guid: number }) =>
-        HERALD_ABILITIES.includes(talent.guid)
+        HERALD_ABILITIES.includes(talent.guid),
       ).length;
 
       return (
@@ -519,7 +519,7 @@ function getPenetrationFromComputedSource(
       const hasCrystalWeapon = combatantInfo.auras.some(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.CRYSTAL_WEAPON_BUFF ||
-          aura.name?.includes('Crystal Weapon')
+          aura.name?.includes('Crystal Weapon'),
       );
       return hasCrystalWeapon ? PenetrationValues.CRYSTAL_WEAPON : 0;
 
@@ -554,7 +554,7 @@ export function getAllPenetrationSourcesWithActiveState(
   buffLookup: BuffLookupData | null,
   debuffLookup: BuffLookupData | null,
   combatantInfo: CombatantInfoEvent | null,
-  playerData?: PlayerDetailsWithRole
+  playerData?: PlayerDetailsWithRole,
 ): PenetrationSourceWithActiveState[] {
   const result: PenetrationSourceWithActiveState[] = [];
 
@@ -598,7 +598,7 @@ export function getAllPenetrationSourcesWithActiveState(
 
 export function calculateStaticPenetration(
   combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole | undefined
+  playerData: PlayerDetailsWithRole | undefined,
 ): number {
   const basePenetration = 0; // Base penetration
 
@@ -628,7 +628,7 @@ export function calculateStaticPenetration(
           computedPenetration += getPenetrationFromComputedSource(
             source,
             combatantInfo,
-            playerData
+            playerData,
           );
         }
         break;
@@ -644,7 +644,7 @@ export function calculateDynamicPenetrationAtTimestamp(
   debuffLookup: BuffLookupData | null,
   timestamp: number,
   playerId: number | null, // For checking buffs applied to the player
-  targetId: number | null // For checking debuffs applied to the target
+  targetId: number | null, // For checking debuffs applied to the target
 ): number {
   let buffPenetration = 0;
   let debuffPenetration = 0;
@@ -689,7 +689,7 @@ export function calculatePenetrationAtTimestamp(
   playerData: PlayerDetailsWithRole | undefined,
   timestamp: number,
   playerId: number | null, // For checking buffs applied to the player
-  targetId: number | null // For checking debuffs applied to the target
+  targetId: number | null, // For checking debuffs applied to the target
 ): number {
   const staticPenetration = calculateStaticPenetration(combatantInfo, playerData);
   const dynamicPenetration = calculateDynamicPenetrationAtTimestamp(
@@ -697,7 +697,7 @@ export function calculatePenetrationAtTimestamp(
     debuffLookup,
     timestamp,
     playerId,
-    targetId
+    targetId,
   );
 
   return staticPenetration + dynamicPenetration;

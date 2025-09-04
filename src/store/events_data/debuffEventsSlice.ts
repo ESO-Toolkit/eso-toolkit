@@ -75,7 +75,7 @@ export const fetchDebuffEvents = createAsyncThunk<
         event.type === 'removedebuff' ||
         event.type === 'applydebuff' ||
         event.type === 'applydebuffstack' ||
-        event.type === 'removedebuffstack'
+        event.type === 'removedebuffstack',
     ) as DebuffEvent[];
     return debuffEvents;
   },
@@ -103,7 +103,7 @@ export const fetchDebuffEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const debuffEventsSlice = createSlice({

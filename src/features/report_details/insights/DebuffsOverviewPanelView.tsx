@@ -65,7 +65,7 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
       const value = event.target.value;
       onPlayerChange(value === 'ALL_PLAYERS' ? null : Number(value));
     },
-    [onPlayerChange]
+    [onPlayerChange],
   );
   // Column definitions for the DataGrid
   const columns = React.useMemo<ColumnDef<DebuffOverviewData>[]>(
@@ -213,7 +213,7 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
         },
       },
     ],
-    []
+    [],
   );
 
   return (

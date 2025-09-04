@@ -37,7 +37,7 @@ export function useSelectedTab(defaultTabId: number | null = null): {
       // Update both Redux state and URL parameter via the URL sync hook
       updateSelectedTab(tabId, true); // Use replace=true to avoid adding history entries
     },
-    [updateSelectedTab]
+    [updateSelectedTab],
   );
 
   return {

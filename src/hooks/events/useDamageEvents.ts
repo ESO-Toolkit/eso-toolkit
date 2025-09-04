@@ -48,21 +48,21 @@ export function useDamageEvents(): {
         '📡 Dispatching fetchDamageEvents for reportId:',
         reportId,
         'fightId:',
-        selectedFight.id
+        selectedFight.id,
       );
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client, fightId]);
 
   return React.useMemo(
     () => ({ damageEvents, isDamageEventsLoading, selectedFight }),
-    [damageEvents, isDamageEventsLoading, selectedFight]
+    [damageEvents, isDamageEventsLoading, selectedFight],
   );
 }
 
@@ -79,6 +79,6 @@ export function useDamageEventsLookup(): {
       damageEventsByPlayer,
       isDamageEventsLookupLoading: isDamageEventsLoading || isMasterDataLoading,
     }),
-    [damageEventsByPlayer, isDamageEventsLoading, isMasterDataLoading]
+    [damageEventsByPlayer, isDamageEventsLoading, isMasterDataLoading],
   );
 }

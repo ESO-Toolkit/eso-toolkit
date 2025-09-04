@@ -48,36 +48,36 @@ export const GetGuildByIdDocument = gql`
  */
 export function useGetGuildByIdQuery(
   baseOptions: Apollo.QueryHookOptions<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables> &
-    ({ variables: Types.GetGuildByIdQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetGuildByIdQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables>(
     GetGuildByIdDocument,
-    options
+    options,
   );
 }
 export function useGetGuildByIdLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetGuildByIdQuery,
     Types.GetGuildByIdQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables>(
     GetGuildByIdDocument,
-    options
+    options,
   );
 }
 export function useGetGuildByIdSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetGuildByIdQuery, Types.GetGuildByIdQueryVariables>(
     GetGuildByIdDocument,
-    options
+    options,
   );
 }
 export type GetGuildByIdQueryHookResult = ReturnType<typeof useGetGuildByIdQuery>;
@@ -149,33 +149,33 @@ export const GetGuildsDocument = gql`
  * });
  */
 export function useGetGuildsQuery(
-  baseOptions?: Apollo.QueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>
+  baseOptions?: Apollo.QueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>(
     GetGuildsDocument,
-    options
+    options,
   );
 }
 export function useGetGuildsLazyQuery(
-  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>
+  baseOptions?: Apollo.LazyQueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>(
     GetGuildsDocument,
-    options
+    options,
   );
 }
 export function useGetGuildsSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetGuildsQuery, Types.GetGuildsQueryVariables>(
     GetGuildsDocument,
-    options
+    options,
   );
 }
 export type GetGuildsQueryHookResult = ReturnType<typeof useGetGuildsQuery>;
@@ -233,36 +233,39 @@ export function useGetGuildByNameQuery(
     Types.GetGuildByNameQuery,
     Types.GetGuildByNameQueryVariables
   > &
-    ({ variables: Types.GetGuildByNameQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetGuildByNameQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetGuildByNameQuery, Types.GetGuildByNameQueryVariables>(
     GetGuildByNameDocument,
-    options
+    options,
   );
 }
 export function useGetGuildByNameLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetGuildByNameQuery,
     Types.GetGuildByNameQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetGuildByNameQuery, Types.GetGuildByNameQueryVariables>(
     GetGuildByNameDocument,
-    options
+    options,
   );
 }
 export function useGetGuildByNameSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetGuildByNameQuery, Types.GetGuildByNameQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetGuildByNameQuery,
+        Types.GetGuildByNameQueryVariables
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetGuildByNameQuery, Types.GetGuildByNameQueryVariables>(
     GetGuildByNameDocument,
-    options
+    options,
   );
 }
 export type GetGuildByNameQueryHookResult = ReturnType<typeof useGetGuildByNameQuery>;
@@ -329,24 +332,24 @@ export function useGetGuildAttendanceQuery(
     Types.GetGuildAttendanceQuery,
     Types.GetGuildAttendanceQueryVariables
   > &
-    ({ variables: Types.GetGuildAttendanceQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetGuildAttendanceQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetGuildAttendanceQuery, Types.GetGuildAttendanceQueryVariables>(
     GetGuildAttendanceDocument,
-    options
+    options,
   );
 }
 export function useGetGuildAttendanceLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetGuildAttendanceQuery,
     Types.GetGuildAttendanceQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetGuildAttendanceQuery, Types.GetGuildAttendanceQueryVariables>(
     GetGuildAttendanceDocument,
-    options
+    options,
   );
 }
 export function useGetGuildAttendanceSuspenseQuery(
@@ -355,7 +358,7 @@ export function useGetGuildAttendanceSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetGuildAttendanceQuery,
         Types.GetGuildAttendanceQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
@@ -424,24 +427,24 @@ export function useGetGuildMembersQuery(
     Types.GetGuildMembersQuery,
     Types.GetGuildMembersQueryVariables
   > &
-    ({ variables: Types.GetGuildMembersQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetGuildMembersQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetGuildMembersQuery, Types.GetGuildMembersQueryVariables>(
     GetGuildMembersDocument,
-    options
+    options,
   );
 }
 export function useGetGuildMembersLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetGuildMembersQuery,
     Types.GetGuildMembersQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetGuildMembersQuery, Types.GetGuildMembersQueryVariables>(
     GetGuildMembersDocument,
-    options
+    options,
   );
 }
 export function useGetGuildMembersSuspenseQuery(
@@ -450,13 +453,13 @@ export function useGetGuildMembersSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetGuildMembersQuery,
         Types.GetGuildMembersQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetGuildMembersQuery, Types.GetGuildMembersQueryVariables>(
     GetGuildMembersDocument,
-    options
+    options,
   );
 }
 export type GetGuildMembersQueryHookResult = ReturnType<typeof useGetGuildMembersQuery>;

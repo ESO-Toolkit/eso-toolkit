@@ -385,7 +385,7 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
 
                 const voxelDisplaySize = Math.max(
                   (50 / (mapBounds.maxX - mapBounds.minX)) * 400,
-                  20
+                  20,
                 );
 
                 const timeSeconds = voxel.timeSpent / 1000;
@@ -435,7 +435,7 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 let color = '#2196f3';
                 if (marker.role === 'tank' && marker.tankId) {
                   const uniqueTankIds = Array.from(
-                    new Set(elmsMarkers.map((m) => m.tankId).filter(Boolean))
+                    new Set(elmsMarkers.map((m) => m.tankId).filter(Boolean)),
                   );
                   const tankIndex = uniqueTankIds.indexOf(marker.tankId);
                   color = tankIndex === 0 ? '#f44336' : tankIndex === 1 ? '#ff9800' : '#f44336';
@@ -525,7 +525,7 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 </Typography>
                 {(() => {
                   const uniqueTankIds = Array.from(
-                    new Set(elmsMarkers.map((m) => m.tankId).filter(Boolean))
+                    new Set(elmsMarkers.map((m) => m.tankId).filter(Boolean)),
                   );
                   if (uniqueTankIds.length > 1) {
                     const redMarkers = elmsMarkers.filter((m) => {
@@ -614,7 +614,7 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
       {(() => {
         const tanksWithData = playerActors.filter(
           (player) =>
-            player.role === 'tank' && locationData.some((point) => point.playerId === player.id)
+            player.role === 'tank' && locationData.some((point) => point.playerId === player.id),
         );
 
         if (tanksWithData.length > 0) {

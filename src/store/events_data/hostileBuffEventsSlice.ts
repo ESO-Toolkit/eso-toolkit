@@ -46,7 +46,7 @@ const initialState: HostileBuffEventsState = {
 const createTimeIntervals = (
   startTime: number,
   endTime: number,
-  intervalSize = 60000
+  intervalSize = 60000,
 ): Array<{ startTime: number; endTime: number }> => {
   const intervals: Array<{ startTime: number; endTime: number }> = [];
   let currentStart = startTime;
@@ -66,7 +66,7 @@ const fetchEventsForInterval = async (
   reportCode: string,
   fight: FightFragment,
   intervalStart: number,
-  intervalEnd: number
+  intervalEnd: number,
 ): Promise<BuffEvent[]> => {
   let allEvents: LogEvent[] = [];
   let nextPageTimestamp: number | null = null;
@@ -111,7 +111,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
           reportCode,
           fight,
           interval.startTime,
-          interval.endTime
+          interval.endTime,
         );
 
         return {
@@ -163,7 +163,7 @@ export const fetchHostileBuffEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const hostileBuffEventsSlice = createSlice({

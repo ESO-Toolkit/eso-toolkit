@@ -5,7 +5,7 @@ import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
 
 export const getSkeletonForTab = (
   tabId: number,
-  includeHeaderAndTabs = false
+  includeHeaderAndTabs = false,
 ): React.ReactElement => {
   const getContentSkeleton = (): React.ReactElement => {
     switch (tabId) {

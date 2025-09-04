@@ -15,7 +15,7 @@ export function calculateDynamicDamageReductionAtTimestamp(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
   timestamp: number,
-  playerId: number
+  playerId: number,
 ): number {
   let buffResistance = 0;
   let debuffResistance = 0;
@@ -295,7 +295,7 @@ export function calculateArmorResistance(combatantInfo: CombatantInfoEvent | nul
         let itemResist = getBaseArmorResistance(armorPiece, slotIndex);
 
         itemResist = Math.floor(
-          itemResist / ARMOR_GOLD_QUALITY_BONUS_MULTIPLIER[armorPiece.quality]
+          itemResist / ARMOR_GOLD_QUALITY_BONUS_MULTIPLIER[armorPiece.quality],
         );
 
         if (armorPiece.trait === GearTrait.REINFORCED) {
@@ -387,7 +387,7 @@ function getBaseArmorResistance(armorPiece: PlayerGear, slot: GearSlot): number 
  */
 export function calculateStaticResistanceValue(
   combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole
+  playerData: PlayerDetailsWithRole,
 ): number {
   const baseResistance = 0; // Base resistance value
 
@@ -429,7 +429,7 @@ export function calculateStaticResistanceValue(
  */
 export function isAuraActive(
   combatantInfo: CombatantInfoEvent | null,
-  abilityId: KnownAbilities
+  abilityId: KnownAbilities,
 ): boolean {
   if (!combatantInfo || !combatantInfo.auras) return false;
   return combatantInfo.auras.some((aura) => aura.ability === abilityId);
@@ -441,7 +441,7 @@ export function isAuraActive(
 export function isGearSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   setId: KnownSetIDs,
-  numberOfPieces: number
+  numberOfPieces: number,
 ): boolean {
   if (!combatantInfo || !combatantInfo.gear) return false;
   // Count gear pieces with matching set ID
@@ -460,7 +460,7 @@ export function isGearSourceActive(
 export function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   source: DamageReductionComputedSource | DamageReductionNotImplementedSource,
-  playerData: PlayerDetailsWithRole
+  playerData: PlayerDetailsWithRole,
 ): boolean {
   if (source.source === 'not_implemented') {
     return false;
@@ -493,7 +493,7 @@ export function isComputedSourceActive(
 export function getResistanceFromComputedSource(
   source: DamageReductionComputedSource | DamageReductionNotImplementedSource,
   combatantInfo: CombatantInfoEvent | null,
-  playerData: PlayerDetailsWithRole
+  playerData: PlayerDetailsWithRole,
 ): number {
   if (source.source === 'not_implemented') {
     return 0;
@@ -561,7 +561,7 @@ function countWintersEmbraceAbilities(playerData: PlayerDetailsWithRole): number
       .flatMap((ability) => {
         return [ability, ...Object.values(ability.morphs ?? {})];
       })
-      .some((a) => a?.name === t.name)
+      .some((a) => a?.name === t.name),
   );
   return wardenAbilities.length;
 }

@@ -29,7 +29,7 @@ export const selectDamageEventsByPlayer = createSelector(
   [selectDamageEvents, selectActorsById],
   (damageEvents, actorsById): Record<string, DamageEvent[]> => {
     return getDamageEventsByPlayer(damageEvents, actorsById);
-  }
+  },
 );
 
 /**
@@ -45,7 +45,7 @@ export const selectDamageEventsForPlayer = createSelector(
   [selectDamageEventsByPlayer, (_state: RootState, playerId: string) => playerId],
   (damageEventsByPlayer, playerId): DamageEvent[] => {
     return damageEventsByPlayer[playerId] || [];
-  }
+  },
 );
 
 /**
@@ -68,7 +68,7 @@ export const selectTotalDamageByPlayer = createSelector(
     });
 
     return totalDamage;
-  }
+  },
 );
 
 /**
@@ -92,7 +92,7 @@ export const selectTotalDamageByPlayer = createSelector(
 export const selectDamageStatsByPlayer = createSelector(
   [selectDamageEventsByPlayer],
   (
-    damageEventsByPlayer
+    damageEventsByPlayer,
   ): Record<
     string,
     {
@@ -142,5 +142,5 @@ export const selectDamageStatsByPlayer = createSelector(
     });
 
     return stats;
-  }
+  },
 );

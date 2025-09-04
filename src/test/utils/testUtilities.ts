@@ -28,7 +28,7 @@ export const createBuffInterval = (
   start: number,
   end: number,
   targetID: number,
-  sourceID?: number
+  sourceID?: number,
 ): BuffInterval => ({
   start,
   end,
@@ -47,7 +47,7 @@ export const createBuffLookup = (intervals: { [key: string]: BuffInterval[] }): 
  * Creates a mock abilities lookup for testing
  */
 export const createMockAbilitiesById = (
-  abilityIds: number[]
+  abilityIds: number[],
 ): Record<number, { name: string; icon: string }> => {
   const abilities: Record<number, { name: string; icon: string }> = {};
   abilityIds.forEach((id, index) => {

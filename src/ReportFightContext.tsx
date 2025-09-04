@@ -16,7 +16,7 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       reportId,
       fightId,
     }),
-    [reportId, fightId]
+    [reportId, fightId],
   );
 
   return <ReportFightContext.Provider value={contextValue}>{children}</ReportFightContext.Provider>;

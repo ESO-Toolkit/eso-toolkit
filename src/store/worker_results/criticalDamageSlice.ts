@@ -14,8 +14,8 @@ export const criticalDamageSlice = createWorkerTaskSlice('calculateCriticalDamag
     input.players,
     input.combatantInfoEvents,
     input.friendlyBuffsLookup,
-    input.debuffsLookup
-  )
+    input.debuffsLookup,
+  ),
 );
 
 // Export actions, thunk, and reducer

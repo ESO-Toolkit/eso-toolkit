@@ -19,7 +19,7 @@ interface UseBrowserAwareDarkModeReturn {
  * - Provides actions for manual control
  */
 export const useBrowserAwareDarkMode = (
-  listenToSystemChanges = true
+  listenToSystemChanges = true,
 ): UseBrowserAwareDarkModeReturn => {
   const dispatch = useDispatch();
   const darkMode = useSelector((state: RootState) => state.ui.darkMode);

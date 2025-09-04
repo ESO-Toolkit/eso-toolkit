@@ -16,7 +16,7 @@ export const CHARGED_ATRONACH_GAME_ID = 32829;
  * ```
  */
 export function getChargedReportActors(
-  actorsById: Record<number, ReportActor>
+  actorsById: Record<number, ReportActor>,
 ): Record<number, number> {
   const chargedAtronachs: Record<number, number> = {};
 
@@ -62,7 +62,7 @@ export function getChargedReportActors(
  */
 export function getDamageEventsByPlayer(
   damageEvents: DamageEvent[],
-  actorsById: Record<string | number, ReportActor>
+  actorsById: Record<string | number, ReportActor>,
 ): Record<string, DamageEvent[]> {
   const damageEventsByPlayer: Record<string, DamageEvent[]> = {};
 

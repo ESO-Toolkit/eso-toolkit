@@ -352,7 +352,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
         },
       }),
-    [darkMode, tokens]
+    [darkMode, tokens],
   );
 
   return (

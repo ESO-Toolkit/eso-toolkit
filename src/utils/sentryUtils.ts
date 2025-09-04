@@ -62,7 +62,7 @@ export const initializeSentry = (): void => {
         // Add performance timing data if available using modern Navigation API
         if (performance && performance.getEntriesByType) {
           const navigationEntries = performance.getEntriesByType(
-            'navigation'
+            'navigation',
           ) as PerformanceNavigationTiming[];
           if (navigationEntries.length > 0) {
             const nav = navigationEntries[0];
@@ -159,7 +159,7 @@ export const captureApplicationContext = (store?: {
   // Add performance information using modern Navigation API
   if (performance && performance.getEntriesByType) {
     const navigationEntries = performance.getEntriesByType(
-      'navigation'
+      'navigation',
     ) as PerformanceNavigationTiming[];
     const paintEntries = performance.getEntriesByType('paint');
     if (navigationEntries.length > 0) {
@@ -183,7 +183,7 @@ export const captureApplicationContext = (store?: {
 export const reportError = (
   error: Error | string,
   context?: Record<string, unknown>,
-  store?: { getState: () => RootState }
+  store?: { getState: () => RootState },
 ): void => {
   // Only report errors to Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
@@ -225,7 +225,7 @@ export const reportError = (
  */
 export const submitManualBugReport = (
   bugReport: ManualBugReport,
-  store?: { getState: () => RootState }
+  store?: { getState: () => RootState },
 ): void => {
   // Only submit bug reports to Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
@@ -279,7 +279,7 @@ export const submitManualBugReport = (
     // Capture the bug report
     Sentry.captureMessage(
       `Manual Bug Report: ${bugReport.title}\n\n${bugReport.description}`,
-      level
+      level,
     );
   });
 };
@@ -304,7 +304,7 @@ export const setUserContext = (userId: string, email?: string, username?: string
 export const addBreadcrumb = (
   message: string,
   category: string,
-  data?: Record<string, unknown>
+  data?: Record<string, unknown>,
 ): void => {
   // Only add breadcrumbs in production builds
   if (process.env.NODE_ENV === 'production') {
@@ -323,7 +323,7 @@ export const addBreadcrumb = (
 export const measurePerformance = async <T>(
   name: string,
   operation: () => Promise<T> | T,
-  context?: Record<string, unknown>
+  context?: Record<string, unknown>,
 ): Promise<T> => {
   // Only use Sentry performance monitoring in production builds
   if (process.env.NODE_ENV === 'production') {

@@ -9,7 +9,7 @@ export const selectDarkMode = (state: RootState): RootState['ui']['darkMode'] =>
 export const selectSidebarOpen = (state: RootState): RootState['ui']['sidebarOpen'] =>
   state.ui.sidebarOpen;
 export const selectShowExperimentalTabs = (
-  state: RootState
+  state: RootState,
 ): RootState['ui']['showExperimentalTabs'] => state.ui.showExperimentalTabs;
 export const selectSelectedTargetId = (state: RootState): RootState['ui']['selectedTargetId'] =>
   state.ui.selectedTargetId;

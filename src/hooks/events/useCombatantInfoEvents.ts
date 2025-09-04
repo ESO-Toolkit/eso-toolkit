@@ -44,14 +44,14 @@ export function useCombatantInfoEvents(): {
         '📡 Dispatching fetchCombatantInfoEvents for reportId:',
         reportId,
         'fightId:',
-        selectedFight.id
+        selectedFight.id,
       );
       dispatch(
         fetchCombatantInfoEvents({
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -62,6 +62,6 @@ export function useCombatantInfoEvents(): {
       isCombatantInfoEventsLoading,
       selectedFight,
     }),
-    [combatantInfoEvents, isCombatantInfoEventsLoading, selectedFight]
+    [combatantInfoEvents, isCombatantInfoEventsLoading, selectedFight],
   );
 }

@@ -59,19 +59,19 @@ export function useGetReportMasterDataQuery(
     Types.GetReportMasterDataQuery,
     Types.GetReportMasterDataQueryVariables
   > &
-    ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetReportMasterDataQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetReportMasterDataQuery, Types.GetReportMasterDataQueryVariables>(
     GetReportMasterDataDocument,
-    options
+    options,
   );
 }
 export function useGetReportMasterDataLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetReportMasterDataQuery,
     Types.GetReportMasterDataQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<
@@ -85,7 +85,7 @@ export function useGetReportMasterDataSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetReportMasterDataQuery,
         Types.GetReportMasterDataQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };

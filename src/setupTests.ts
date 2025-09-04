@@ -55,7 +55,7 @@ global.fetch = jest.fn(() =>
     blob: () => Promise.resolve(new Blob()),
     formData: () => Promise.resolve(new FormData()),
     bytes: () => Promise.resolve(new Uint8Array()),
-  } as unknown as Response)
+  } as unknown as Response),
 );
 
 // JSDOM 26+ provides a working window.location by default

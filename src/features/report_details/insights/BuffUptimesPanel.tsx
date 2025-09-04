@@ -64,7 +64,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     }
 
     const friendlyPlayerIds = new Set(
-      fight.friendlyPlayers.filter((id): id is number => id !== null)
+      fight.friendlyPlayers.filter((id): id is number => id !== null),
     );
 
     if (friendlyPlayerIds.size === 0) {

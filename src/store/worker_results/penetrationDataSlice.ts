@@ -15,8 +15,8 @@ export const penetrationDataSlice = createWorkerTaskSlice('calculatePenetrationD
     input.combatantInfoEvents,
     input.friendlyBuffsLookup,
     input.debuffsLookup,
-    input.selectedTargetIds
-  )
+    input.selectedTargetIds,
+  ),
 );
 
 // Export actions, thunk, and reducer

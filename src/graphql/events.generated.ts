@@ -61,24 +61,24 @@ export function useGetDamageEventsQuery(
     Types.GetDamageEventsQuery,
     Types.GetDamageEventsQueryVariables
   > &
-    ({ variables: Types.GetDamageEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetDamageEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetDamageEventsQuery, Types.GetDamageEventsQueryVariables>(
     GetDamageEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDamageEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetDamageEventsQuery,
     Types.GetDamageEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetDamageEventsQuery, Types.GetDamageEventsQueryVariables>(
     GetDamageEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDamageEventsSuspenseQuery(
@@ -87,13 +87,13 @@ export function useGetDamageEventsSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetDamageEventsQuery,
         Types.GetDamageEventsQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetDamageEventsQuery, Types.GetDamageEventsQueryVariables>(
     GetDamageEventsDocument,
-    options
+    options,
   );
 }
 export type GetDamageEventsQueryHookResult = ReturnType<typeof useGetDamageEventsQuery>;
@@ -160,24 +160,24 @@ export function useGetHealingEventsQuery(
     Types.GetHealingEventsQuery,
     Types.GetHealingEventsQueryVariables
   > &
-    ({ variables: Types.GetHealingEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetHealingEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetHealingEventsQuery, Types.GetHealingEventsQueryVariables>(
     GetHealingEventsDocument,
-    options
+    options,
   );
 }
 export function useGetHealingEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetHealingEventsQuery,
     Types.GetHealingEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetHealingEventsQuery, Types.GetHealingEventsQueryVariables>(
     GetHealingEventsDocument,
-    options
+    options,
   );
 }
 export function useGetHealingEventsSuspenseQuery(
@@ -186,13 +186,13 @@ export function useGetHealingEventsSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetHealingEventsQuery,
         Types.GetHealingEventsQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetHealingEventsQuery, Types.GetHealingEventsQueryVariables>(
     GetHealingEventsDocument,
-    options
+    options,
   );
 }
 export type GetHealingEventsQueryHookResult = ReturnType<typeof useGetHealingEventsQuery>;
@@ -259,36 +259,36 @@ export function useGetBuffEventsQuery(
     Types.GetBuffEventsQuery,
     Types.GetBuffEventsQueryVariables
   > &
-    ({ variables: Types.GetBuffEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetBuffEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetBuffEventsQuery, Types.GetBuffEventsQueryVariables>(
     GetBuffEventsDocument,
-    options
+    options,
   );
 }
 export function useGetBuffEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetBuffEventsQuery,
     Types.GetBuffEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetBuffEventsQuery, Types.GetBuffEventsQueryVariables>(
     GetBuffEventsDocument,
-    options
+    options,
   );
 }
 export function useGetBuffEventsSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetBuffEventsQuery, Types.GetBuffEventsQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetBuffEventsQuery, Types.GetBuffEventsQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetBuffEventsQuery, Types.GetBuffEventsQueryVariables>(
     GetBuffEventsDocument,
-    options
+    options,
   );
 }
 export type GetBuffEventsQueryHookResult = ReturnType<typeof useGetBuffEventsQuery>;
@@ -353,36 +353,39 @@ export function useGetDeathEventsQuery(
     Types.GetDeathEventsQuery,
     Types.GetDeathEventsQueryVariables
   > &
-    ({ variables: Types.GetDeathEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetDeathEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetDeathEventsQuery, Types.GetDeathEventsQueryVariables>(
     GetDeathEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDeathEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetDeathEventsQuery,
     Types.GetDeathEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetDeathEventsQuery, Types.GetDeathEventsQueryVariables>(
     GetDeathEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDeathEventsSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetDeathEventsQuery, Types.GetDeathEventsQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetDeathEventsQuery,
+        Types.GetDeathEventsQueryVariables
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetDeathEventsQuery, Types.GetDeathEventsQueryVariables>(
     GetDeathEventsDocument,
-    options
+    options,
   );
 }
 export type GetDeathEventsQueryHookResult = ReturnType<typeof useGetDeathEventsQuery>;
@@ -449,7 +452,7 @@ export function useGetCombatantInfoEventsQuery(
     Types.GetCombatantInfoEventsQuery,
     Types.GetCombatantInfoEventsQueryVariables
   > &
-    ({ variables: Types.GetCombatantInfoEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetCombatantInfoEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<
@@ -461,7 +464,7 @@ export function useGetCombatantInfoEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetCombatantInfoEventsQuery,
     Types.GetCombatantInfoEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<
@@ -475,7 +478,7 @@ export function useGetCombatantInfoEventsSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetCombatantInfoEventsQuery,
         Types.GetCombatantInfoEventsQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
@@ -552,24 +555,24 @@ export function useGetDebuffEventsQuery(
     Types.GetDebuffEventsQuery,
     Types.GetDebuffEventsQueryVariables
   > &
-    ({ variables: Types.GetDebuffEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetDebuffEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetDebuffEventsQuery, Types.GetDebuffEventsQueryVariables>(
     GetDebuffEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDebuffEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetDebuffEventsQuery,
     Types.GetDebuffEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetDebuffEventsQuery, Types.GetDebuffEventsQueryVariables>(
     GetDebuffEventsDocument,
-    options
+    options,
   );
 }
 export function useGetDebuffEventsSuspenseQuery(
@@ -578,13 +581,13 @@ export function useGetDebuffEventsSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetDebuffEventsQuery,
         Types.GetDebuffEventsQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetDebuffEventsQuery, Types.GetDebuffEventsQueryVariables>(
     GetDebuffEventsDocument,
-    options
+    options,
   );
 }
 export type GetDebuffEventsQueryHookResult = ReturnType<typeof useGetDebuffEventsQuery>;
@@ -651,36 +654,36 @@ export function useGetCastEventsQuery(
     Types.GetCastEventsQuery,
     Types.GetCastEventsQueryVariables
   > &
-    ({ variables: Types.GetCastEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetCastEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetCastEventsQuery, Types.GetCastEventsQueryVariables>(
     GetCastEventsDocument,
-    options
+    options,
   );
 }
 export function useGetCastEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetCastEventsQuery,
     Types.GetCastEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetCastEventsQuery, Types.GetCastEventsQueryVariables>(
     GetCastEventsDocument,
-    options
+    options,
   );
 }
 export function useGetCastEventsSuspenseQuery(
   baseOptions?:
     | Apollo.SkipToken
-    | Apollo.SuspenseQueryHookOptions<Types.GetCastEventsQuery, Types.GetCastEventsQueryVariables>
+    | Apollo.SuspenseQueryHookOptions<Types.GetCastEventsQuery, Types.GetCastEventsQueryVariables>,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
   return Apollo.useSuspenseQuery<Types.GetCastEventsQuery, Types.GetCastEventsQueryVariables>(
     GetCastEventsDocument,
-    options
+    options,
   );
 }
 export type GetCastEventsQueryHookResult = ReturnType<typeof useGetCastEventsQuery>;
@@ -745,24 +748,24 @@ export function useGetResourceEventsQuery(
     Types.GetResourceEventsQuery,
     Types.GetResourceEventsQueryVariables
   > &
-    ({ variables: Types.GetResourceEventsQueryVariables; skip?: boolean } | { skip: boolean })
+    ({ variables: Types.GetResourceEventsQueryVariables; skip?: boolean } | { skip: boolean }),
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useQuery<Types.GetResourceEventsQuery, Types.GetResourceEventsQueryVariables>(
     GetResourceEventsDocument,
-    options
+    options,
   );
 }
 export function useGetResourceEventsLazyQuery(
   baseOptions?: Apollo.LazyQueryHookOptions<
     Types.GetResourceEventsQuery,
     Types.GetResourceEventsQueryVariables
-  >
+  >,
 ) {
   const options = { ...defaultOptions, ...baseOptions };
   return Apollo.useLazyQuery<Types.GetResourceEventsQuery, Types.GetResourceEventsQueryVariables>(
     GetResourceEventsDocument,
-    options
+    options,
   );
 }
 export function useGetResourceEventsSuspenseQuery(
@@ -771,7 +774,7 @@ export function useGetResourceEventsSuspenseQuery(
     | Apollo.SuspenseQueryHookOptions<
         Types.GetResourceEventsQuery,
         Types.GetResourceEventsQueryVariables
-      >
+      >,
 ) {
   const options =
     baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };

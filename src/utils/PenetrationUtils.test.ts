@@ -131,7 +131,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         null,
-        null
+        null,
       );
       expect(resultDuringDebuff).toBe(PenetrationValues.MAJOR_BREACH);
 
@@ -141,7 +141,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         100,
         null,
-        null
+        null,
       );
       expect(resultBeforeDebuff).toBe(0);
 
@@ -151,7 +151,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         2000,
         null,
-        null
+        null,
       );
       expect(resultAfterDebuff).toBe(0);
     });
@@ -198,7 +198,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         null,
-        null
+        null,
       );
       const totalResult = calculatePenetrationAtTimestamp(
         null,
@@ -207,7 +207,7 @@ describe('PenetrationUtils', () => {
         undefined,
         1000,
         null,
-        null
+        null,
       );
 
       expect(totalResult).toBe(staticResult + dynamicResult);
@@ -263,28 +263,28 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         null,
-        2
+        2,
       );
       const resultForTarget3 = calculateDynamicPenetrationAtTimestamp(
         null,
         debuffLookup,
         1000,
         null,
-        3
+        3,
       );
       const resultForTarget4 = calculateDynamicPenetrationAtTimestamp(
         null,
         debuffLookup,
         1000,
         null,
-        4
+        4,
       );
       const resultWithoutTarget = calculateDynamicPenetrationAtTimestamp(
         null,
         debuffLookup,
         1000,
         null,
-        null
+        null,
       );
 
       // Target 2 should have the debuff at timestamp 1000
@@ -305,14 +305,14 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         2000,
         null,
-        2
+        2,
       );
       const resultForTarget3After = calculateDynamicPenetrationAtTimestamp(
         null,
         debuffLookup,
         2000,
         null,
-        3
+        3,
       );
 
       // Target 2 should no longer have the debuff
@@ -356,7 +356,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         1,
-        10
+        10,
       );
 
       // Different target should not have the debuff
@@ -365,7 +365,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         1,
-        11
+        11,
       );
 
       // Same target with different player should still get the debuff (debuff is on the target, not dependent on player)
@@ -374,7 +374,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         1000,
         2,
-        10
+        10,
       );
 
       // Target 10 should have the debuff penetration
@@ -392,7 +392,7 @@ describe('PenetrationUtils', () => {
         debuffLookup,
         2000,
         1,
-        10
+        10,
       );
       expect(resultAfterExpiry).toBe(0);
     });

@@ -4,19 +4,19 @@ import React, { Suspense } from 'react';
 
 // Lazy load Chart.js and react-chartjs-2 components
 const LazyLine = React.lazy(() =>
-  import('react-chartjs-2').then((module) => ({ default: module.Line }))
+  import('react-chartjs-2').then((module) => ({ default: module.Line })),
 );
 
 const LazyBar = React.lazy(() =>
-  import('react-chartjs-2').then((module) => ({ default: module.Bar }))
+  import('react-chartjs-2').then((module) => ({ default: module.Bar })),
 );
 
 const LazyDoughnut = React.lazy(() =>
-  import('react-chartjs-2').then((module) => ({ default: module.Doughnut }))
+  import('react-chartjs-2').then((module) => ({ default: module.Doughnut })),
 );
 
 const LazyPie = React.lazy(() =>
-  import('react-chartjs-2').then((module) => ({ default: module.Pie }))
+  import('react-chartjs-2').then((module) => ({ default: module.Pie })),
 );
 
 // Chart loading fallback

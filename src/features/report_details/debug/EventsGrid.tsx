@@ -136,7 +136,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
         },
       }),
     ],
-    [columnHelper]
+    [columnHelper],
   );
 
   // Show target selection message if in target mode but no target is selected

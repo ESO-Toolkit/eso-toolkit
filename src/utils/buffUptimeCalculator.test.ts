@@ -23,7 +23,7 @@ describe('buffUptimeCalculator', () => {
     start: number,
     end: number,
     targetID: number,
-    sourceID?: number
+    sourceID?: number,
   ): BuffInterval => ({
     start,
     end,
@@ -200,13 +200,13 @@ describe('buffUptimeCalculator', () => {
               FIGHT_START + 1000,
               FIGHT_START + 6000,
               MOCK_TARGET_ID_1,
-              MOCK_SOURCE_ID_1
+              MOCK_SOURCE_ID_1,
             ), // Should be included
             createBuffInterval(
               FIGHT_START + 2000,
               FIGHT_START + 7000,
               MOCK_TARGET_ID_1,
-              MOCK_SOURCE_ID_2
+              MOCK_SOURCE_ID_2,
             ), // Should be excluded
           ],
         ],
@@ -345,28 +345,28 @@ describe('buffUptimeCalculator', () => {
               FIGHT_START + 1000,
               FIGHT_START + 3000,
               MOCK_TARGET_ID_1,
-              MOCK_SOURCE_ID_1
+              MOCK_SOURCE_ID_1,
             ),
             // Target 2, Source 1 - should be excluded (wrong target)
             createBuffInterval(
               FIGHT_START + 2000,
               FIGHT_START + 4000,
               MOCK_TARGET_ID_2,
-              MOCK_SOURCE_ID_1
+              MOCK_SOURCE_ID_1,
             ),
             // Target 1, Source 2 - should be excluded (wrong source)
             createBuffInterval(
               FIGHT_START + 5000,
               FIGHT_START + 7000,
               MOCK_TARGET_ID_1,
-              MOCK_SOURCE_ID_2
+              MOCK_SOURCE_ID_2,
             ),
             // Target 1, Source 1 - should be included
             createBuffInterval(
               FIGHT_START + 7000,
               FIGHT_START + 9000,
               MOCK_TARGET_ID_1,
-              MOCK_SOURCE_ID_1
+              MOCK_SOURCE_ID_1,
             ),
           ],
         ],

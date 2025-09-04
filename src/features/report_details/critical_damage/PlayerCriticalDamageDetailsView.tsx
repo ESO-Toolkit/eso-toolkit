@@ -44,7 +44,7 @@ ChartJS.register(
   ChartTooltip,
   Legend,
   Filler,
-  annotationPlugin
+  annotationPlugin,
 );
 
 // Chart callback functions - extracted to module level for performance
@@ -205,7 +205,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
   const maxCriticalDamage = Math.max(
     ...criticalDamageData.dataPoints.map((point) => point.criticalDamage),
-    0
+    0,
   );
 
   return (
@@ -461,7 +461,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
                 <Line
                   data={{
                     labels: criticalDamageData.dataPoints.map((point) =>
-                      point.relativeTime.toFixed(1)
+                      point.relativeTime.toFixed(1),
                     ),
                     datasets: [
                       {

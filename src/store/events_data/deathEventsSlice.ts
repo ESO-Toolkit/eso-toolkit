@@ -97,7 +97,7 @@ export const fetchDeathEvents = createAsyncThunk<
 
       return true; // Allow thunk execution
     },
-  }
+  },
 );
 
 const deathEventsSlice = createSlice({

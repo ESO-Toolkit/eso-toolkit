@@ -31,14 +31,14 @@ export function useDebuffLookupTask(): {
         executeDebuffLookupTask({
           buffEvents: debuffEvents,
           fightEndTime: selectedFight.endTime,
-        })
+        }),
       );
     }
   }, [dispatch, selectedFight, debuffEvents, isDebuffEventsLoading]);
 
   const debuffLookupData = useSelector(selectDebuffLookupResult) as BuffLookupData | null;
   const isDebuffLookupLoading = useSelector(
-    selectWorkerTaskLoading('calculateDebuffLookup')
+    selectWorkerTaskLoading('calculateDebuffLookup'),
   ) as boolean;
   const debuffLookupError = useSelector(selectWorkerTaskError('calculateDebuffLookup')) as
     | string
@@ -61,6 +61,6 @@ export function useDebuffLookupTask(): {
       debuffLookupError,
       debuffLookupProgress,
       selectedFight,
-    ]
+    ],
   );
 }

@@ -15,8 +15,8 @@ export const statusEffectUptimesSlice = createWorkerTaskSlice(
       input.debuffsLookup,
       input.hostileBuffsLookup,
       input.fightStartTime,
-      input.fightEndTime
-    )
+      input.fightEndTime,
+    ),
 );
 
 // Export actions, thunk, and reducer

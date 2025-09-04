@@ -75,7 +75,7 @@ export function useEventData(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -114,7 +114,7 @@ export function useEventData(): {
       isDebuffEventsLoading,
       isCastEventsLoading,
       isResourceEventsLoading,
-    ]
+    ],
   );
 
   return React.useMemo(
@@ -160,6 +160,6 @@ export function useEventData(): {
       isDebuffEventsLoading,
       isCastEventsLoading,
       isResourceEventsLoading,
-    ]
+    ],
   );
 }

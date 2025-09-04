@@ -73,7 +73,7 @@ export const selectCurrentFight = createSelector(
     if (!fightId || !fights) return null;
 
     return fights.find((fight) => String(fight?.id) === String(fightId)) || null;
-  }
+  },
 );
 
 // Player/combatant selectors
@@ -86,7 +86,7 @@ export const selectEventPlayers = createSelector(
       .filter((id): id is number => typeof id === 'number' && id !== null)
       .map((id) => actorsById[id])
       .filter(Boolean);
-  }
+  },
 );
 
 // Parameterized version for backward compatibility (when you need a specific fight)
@@ -109,7 +109,7 @@ export const selectAllEvents = createSelector(
     combatantInfoEvents,
     debuffEvents,
     castEvents,
-    resourceEvents
+    resourceEvents,
   ) => [
     ...damageEvents,
     ...healingEvents,
@@ -118,7 +118,7 @@ export const selectAllEvents = createSelector(
     ...debuffEvents,
     ...castEvents,
     ...resourceEvents,
-  ]
+  ],
 );
 
 // Loading state selectors
@@ -150,7 +150,7 @@ export const selectHostileBuffLookup = createSelector(
     const fightEndTime = fight?.endTime;
 
     return createBuffLookup(buffEvents, fightEndTime);
-  }
+  },
 );
 
 /**
@@ -173,5 +173,5 @@ export const selectDebuffLookup = createSelector(
     const fightEndTime = fight?.endTime;
 
     return createDebuffLookup(debuffEvents, fightEndTime);
-  }
+  },
 );

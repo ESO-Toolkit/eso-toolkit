@@ -212,7 +212,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
 
 export function isAuraActive(
   combatantInfo: CombatantInfoEvent | null,
-  abilityId: KnownAbilities
+  abilityId: KnownAbilities,
 ): boolean {
   if (!combatantInfo || !combatantInfo.auras) return false;
   return combatantInfo.auras.some((aura) => aura.ability === abilityId);
@@ -231,7 +231,7 @@ export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbi
 export function isBuffActiveAtTimestamp(
   buffLookup: BuffLookupData,
   abilityId: KnownAbilities,
-  timestamp: number
+  timestamp: number,
 ): boolean {
   return checkBuffActiveAtTimestamp(buffLookup, abilityId, timestamp);
 }
@@ -239,7 +239,7 @@ export function isBuffActiveAtTimestamp(
 export function isDebuffActiveAtTimestamp(
   debuffLookup: BuffLookupData,
   abilityId: KnownAbilities,
-  timestamp: number
+  timestamp: number,
 ): boolean {
   return checkBuffActiveAtTimestamp(debuffLookup, abilityId, timestamp);
 }
@@ -247,7 +247,7 @@ export function isDebuffActiveAtTimestamp(
 export function isGearSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   setId: KnownSetIDs,
-  numberOfPieces: number
+  numberOfPieces: number,
 ): boolean {
   if (!combatantInfo || !combatantInfo.gear) return false;
   const gearCount = getSetCount(combatantInfo.gear, setId);
@@ -258,7 +258,7 @@ export function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   source: CriticalDamageComputedSource,
   debuffLookup: BuffLookupData,
-  timestamp?: number
+  timestamp?: number,
 ): boolean {
   switch (source.key) {
     case ComputedCriticalDamageSources.FATED_FORTUNE:
@@ -292,7 +292,7 @@ export function isComputedSourceActive(
 export function getEnabledCriticalDamageSources(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
-  combatantInfo: CombatantInfoEvent | null
+  combatantInfo: CombatantInfoEvent | null,
 ): CriticalDamageSource[] {
   const result = [];
 
@@ -331,7 +331,7 @@ export function getEnabledCriticalDamageSources(
 export function getAllCriticalDamageSourcesWithActiveState(
   buffLookup: BuffLookupData,
   debuffLookup: BuffLookupData,
-  combatantInfo: CombatantInfoEvent | null
+  combatantInfo: CombatantInfoEvent | null,
 ): CriticalDamageSourceWithActiveState[] {
   const result: CriticalDamageSourceWithActiveState[] = [];
 
@@ -373,7 +373,7 @@ export function calculateCriticalDamageAtTimestamp(
   debuffLookup: BuffLookupData,
   combatantInfo: CombatantInfoEvent,
   playerData: PlayerDetailsWithRole,
-  timestamp: number
+  timestamp: number,
 ): number {
   const baseCriticalDamage = 50; // Base critical damage percentage
 
@@ -421,7 +421,7 @@ export function calculateCriticalDamageAtTimestamp(
             combatantInfo,
             buffLookup,
             debuffLookup,
-            timestamp
+            timestamp,
           );
         }
         break;
@@ -479,7 +479,7 @@ export function calculateDynamicCriticalDamageAtTimestamp(
   debuffLookup: BuffLookupData,
   combatantInfo: CombatantInfoEvent,
   playerData: PlayerDetailsWithRole,
-  timestamp: number
+  timestamp: number,
 ): number {
   let buffCriticalDamage = 0;
   let debuffCriticalDamage = 0;
@@ -511,7 +511,7 @@ export function calculateDynamicCriticalDamageAtTimestamp(
             combatantInfo,
             buffLookup,
             debuffLookup,
-            timestamp
+            timestamp,
           );
         }
       // Skip static sources - these are calculated once
@@ -527,7 +527,7 @@ export function getCritDamageFromComputedSource(
   combatantInfo: CombatantInfoEvent | null,
   buffLookup: BuffLookupData,
   debuffLookup?: BuffLookupData,
-  timestamp?: number
+  timestamp?: number,
 ): number {
   if (playerData === undefined || combatantInfo === null) {
     return 0;
@@ -540,7 +540,7 @@ export function getCritDamageFromComputedSource(
           buffLookup,
           KnownAbilities.FATED_FORTUNE_BUFF,
           timestamp,
-          playerData.id
+          playerData.id,
         )
       ) {
         // Apply Fated Fortune bonus
@@ -556,7 +556,7 @@ export function getCritDamageFromComputedSource(
       const hasFullMoraSet = isGearSourceActive(
         combatantInfo,
         KnownSetIDs.MORA_SCRIBE_THESIS_SET,
-        5
+        5,
       );
       return hasFullMoraSet ? CriticalDamageValues.MORA_SCRIBE_THESIS : 0;
     case ComputedCriticalDamageSources.HARPOONER_WADING_KILT:
@@ -571,7 +571,7 @@ export function getCritDamageFromComputedSource(
           .flatMap((ability) => {
             return [ability, ...Object.values(ability.morphs ?? {})];
           })
-          .some((a) => a?.name === t.name)
+          .some((a) => a?.name === t.name),
       );
       return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
     case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
@@ -607,7 +607,7 @@ export function getCritDamageFromComputedSource(
 
 export function getCritDamageFromAlwaysOnSource(
   source: CriticalDamageAlwaysOnSource,
-  combatantInfo: CombatantInfoEvent | null
+  combatantInfo: CombatantInfoEvent | null,
 ): number {
   switch (source.key) {
     case AlwaysOnCriticalDamageSources.DEXTERITY:

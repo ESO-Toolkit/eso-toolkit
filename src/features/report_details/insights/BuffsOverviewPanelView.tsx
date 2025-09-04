@@ -109,7 +109,7 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         ),
       },
     ],
-    []
+    [],
   );
 
   return (

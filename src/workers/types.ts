@@ -46,7 +46,7 @@ export interface WorkerInfo {
 
 export type TaskHandler<T = unknown, R = unknown> = (
   data: T,
-  onProgress?: (progress: unknown) => void
+  onProgress?: (progress: unknown) => void,
 ) => Promise<R> | R;
 
 export interface WorkerRegistry {

@@ -94,10 +94,10 @@ describe('CritDamageUtils with BuffLookup', () => {
       // Should find both Lucent Echoes (buff) and Minor Brittle (debuff) + always-on sources
       expect(sources).toHaveLength(4);
       expect(
-        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES)
+        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES),
       ).toBe(true);
       expect(
-        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.MINOR_BRITTLE)
+        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.MINOR_BRITTLE),
       ).toBe(true);
     });
   });
@@ -114,7 +114,7 @@ describe('CritDamageUtils with BuffLookup', () => {
         emptyDebuffLookup,
         mockCombatant,
         mockPlayerData,
-        1000
+        1000,
       );
 
       // Should include base + always-on sources only
@@ -133,7 +133,7 @@ describe('CritDamageUtils with BuffLookup', () => {
   describe('getCritDamageFromAlwaysOnSource', () => {
     it('should handle Fighting Finesse', () => {
       const fightingFinesse = CRITICAL_DAMAGE_SOURCES.find(
-        (s) => s.name === 'Fighting Finesse' && 'key' in s
+        (s) => s.name === 'Fighting Finesse' && 'key' in s,
       );
 
       if (fightingFinesse && 'key' in fightingFinesse && fightingFinesse.source === 'always_on') {
@@ -144,7 +144,7 @@ describe('CritDamageUtils with BuffLookup', () => {
 
     it('should handle Dexterity with medium armor', () => {
       const dexteritySource = CRITICAL_DAMAGE_SOURCES.find(
-        (s) => s.name === 'Dexterity' && 'key' in s
+        (s) => s.name === 'Dexterity' && 'key' in s,
       );
 
       if (dexteritySource && 'key' in dexteritySource && dexteritySource.source === 'always_on') {

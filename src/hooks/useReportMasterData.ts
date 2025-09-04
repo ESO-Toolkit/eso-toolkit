@@ -79,6 +79,6 @@ export function useReportMasterData(): {
 
   return React.useMemo(
     () => ({ reportMasterData, isMasterDataLoading }),
-    [reportMasterData, isMasterDataLoading]
+    [reportMasterData, isMasterDataLoading],
   );
 }

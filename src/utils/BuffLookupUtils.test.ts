@@ -12,7 +12,7 @@ describe('BuffLookupUtils', () => {
   const createApplyBuffEvent = (
     timestamp: number,
     abilityGameID: number,
-    targetID: number
+    targetID: number,
   ): BuffEvent => ({
     timestamp,
     type: 'applybuff',
@@ -28,7 +28,7 @@ describe('BuffLookupUtils', () => {
   const createRemoveBuffEvent = (
     timestamp: number,
     abilityGameID: number,
-    targetID: number
+    targetID: number,
   ): BuffEvent => ({
     timestamp,
     type: 'removebuff',
@@ -44,7 +44,7 @@ describe('BuffLookupUtils', () => {
   const createApplyDebuffEvent = (
     timestamp: number,
     abilityGameID: number,
-    targetID: number
+    targetID: number,
   ): DebuffEvent => ({
     timestamp,
     type: 'applydebuff',
@@ -59,7 +59,7 @@ describe('BuffLookupUtils', () => {
   const createRemoveDebuffEvent = (
     timestamp: number,
     abilityGameID: number,
-    targetID: number
+    targetID: number,
   ): DebuffEvent => ({
     timestamp,
     type: 'removedebuff',

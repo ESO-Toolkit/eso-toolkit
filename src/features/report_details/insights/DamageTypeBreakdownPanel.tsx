@@ -29,7 +29,7 @@ const MAGIC_DAMAGE_TYPES = Object.freeze(
     DamageTypeFlags.FIRE,
     DamageTypeFlags.FROST,
     DamageTypeFlags.SHOCK,
-  ])
+  ]),
 );
 
 // AOE Damage
@@ -116,7 +116,7 @@ const AOE_ABILITY_IDS = Object.freeze(
     KnownAbilities.HEALING_COMBUSTION, // 63471
     KnownAbilities.SCALDING_RUNE, // 40469
     KnownAbilities.VOLCANIC_RUNE, // 215779
-  ])
+  ]),
 );
 
 // Status Effects - ability.id IN (18084,95136,95134,178127,148801,178118,21929,178123)
@@ -130,7 +130,7 @@ const STATUS_EFFECT_ABILITY_IDS = Object.freeze(
     178118, // Status effect ability
     21929, // Status effect ability
     178123, // Status effect ability
-  ])
+  ]),
 );
 
 const MARTIAL_DAMAGE_TYPES = Object.freeze(
@@ -139,7 +139,7 @@ const MARTIAL_DAMAGE_TYPES = Object.freeze(
     DamageTypeFlags.BLEED,
     DamageTypeFlags.POISON,
     DamageTypeFlags.DISEASE,
-  ])
+  ]),
 );
 
 export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fight }) => {

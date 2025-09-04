@@ -26,7 +26,7 @@ const setMockSelectedTabId = (value: number | null): void => {
 
 // Create a mock store
 const createMockStore = (
-  initialState: { ui?: Partial<ReturnType<typeof uiSlice>> } = {}
+  initialState: { ui?: Partial<ReturnType<typeof uiSlice>> } = {},
 ): ReturnType<typeof createStore> => {
   const rootReducer = combineReducers({
     ui: uiSlice,

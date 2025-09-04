@@ -8,7 +8,7 @@ const DOUBLE_SET_TYPES = Object.freeze(
     WeaponType.LIGHTNING_STAFF,
     WeaponType.RESO_STAFF,
     WeaponType.TWO_HANDED_SWORD,
-  ])
+  ]),
 );
 
 export enum ItemQuality {
@@ -119,8 +119,8 @@ export const ARENA_SET_NAMES = Object.freeze(
       "Executioner's Blade",
       'Point-Blank Snipe',
       'Force Overflow',
-    ].map((n) => normalizeGearName(n))
-  )
+    ].map((n) => normalizeGearName(n)),
+  ),
 );
 
 export const MYTHIC_SET_NAMES = Object.freeze(
@@ -156,8 +156,8 @@ export const MYTHIC_SET_NAMES = Object.freeze(
       'Rourken Steamguards',
       "The Shadow Queen's Cowl",
       'The Saint and the Seducer',
-    ].map((n) => normalizeGearName(n))
-  )
+    ].map((n) => normalizeGearName(n)),
+  ),
 );
 
 // One-piece monster sets (purple); normalized substrings
@@ -217,8 +217,8 @@ export const MONSTER_ONE_PIECE_HINTS = Object.freeze(
       'Vykosa',
       'Zaan',
       'Symphony of Blades',
-    ].map((n) => normalizeGearName(n))
-  )
+    ].map((n) => normalizeGearName(n)),
+  ),
 );
 
 // ========================================

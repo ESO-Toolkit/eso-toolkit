@@ -18,7 +18,7 @@ import {
  * Used primarily in gear utility tests
  */
 export const createMockCombatantInfo = (
-  gearOverrides: Partial<Record<number, PlayerGear>> = {}
+  gearOverrides: Partial<Record<number, PlayerGear>> = {},
 ): CombatantInfoEvent => {
   // Create a default empty gear array with 14 slots (based on GearSlot enum)
   const defaultGear: PlayerGear[] = [];
@@ -59,7 +59,7 @@ export const createMockCombatantInfo = (
  * Creates a mock PlayerDetailsWithRole for testing critical damage calculations
  */
 export const createMockPlayerData = (
-  overrides: Partial<PlayerDetailsWithRole> = {}
+  overrides: Partial<PlayerDetailsWithRole> = {},
 ): PlayerDetailsWithRole => ({
   name: 'Test Player',
   id: 1,
@@ -87,7 +87,7 @@ export const createMockPlayerData = (
 export const createGearItem = (
   type: WeaponType | ArmorType,
   trait: GearTrait = GearTrait.SHARPENED,
-  slot = 0
+  slot = 0,
 ): PlayerGear => ({
   id: 12345,
   slot,
@@ -118,7 +118,7 @@ export const createMockPlayerTalent = (overrides: Partial<PlayerTalent> = {}): P
  * Creates a mock CombatantInfo structure (different from CombatantInfoEvent)
  */
 export const createMockCombatantInfoStructure = (
-  overrides: Partial<CombatantInfo> = {}
+  overrides: Partial<CombatantInfo> = {},
 ): CombatantInfo => ({
   stats: [100, 200, 300],
   talents: [],

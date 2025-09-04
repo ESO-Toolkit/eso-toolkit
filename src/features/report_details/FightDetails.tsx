@@ -31,7 +31,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
         return newParams;
       });
     },
-    [setSearchParams]
+    [setSearchParams],
   );
 
   // Calculate total number of available tabs
@@ -84,7 +84,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId
       targets
         .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
         .filter((t) => t.id && t.name),
-    [targets]
+    [targets],
   );
 
   // Only render content when master data is loaded

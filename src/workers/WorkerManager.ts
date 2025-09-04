@@ -58,7 +58,7 @@ class WorkerManager {
     taskType: SharedComputationWorkerTaskType,
     data: T,
     priority = 0,
-    onProgress?: (progress: unknown) => void
+    onProgress?: (progress: unknown) => void,
   ): Promise<R> {
     const pool = this.pools.get(poolName);
     if (!pool) {
@@ -74,7 +74,7 @@ class WorkerManager {
     taskType: T,
     data: SharedWorkerInputType<T>,
     onProgress?: OnProgressCallback,
-    poolName = 'default'
+    poolName = 'default',
   ): Promise<SharedWorkerResultType<T>> {
     // Create pool if it doesn't exist
     if (!this.pools.has(poolName)) {

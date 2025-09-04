@@ -173,11 +173,11 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ inst
                               <Skeleton variant="text" width={60} height={12} />
                             </Box>
                           </Box>
-                        )
+                        ),
                       )}
                     </Box>
                   </Box>
-                )
+                ),
               )}
             </AccordionDetails>
           </Accordion>

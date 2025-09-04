@@ -30,7 +30,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
-    [reportMasterData]
+    [reportMasterData],
   );
 
   // Compute loading state

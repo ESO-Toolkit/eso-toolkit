@@ -44,7 +44,7 @@ describe('DataGrid Theme Integration', () => {
           enableSorting={false}
           enablePagination={false}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     expect(screen.getByRole('table')).toBeInTheDocument();
   });
@@ -60,7 +60,7 @@ describe('DataGrid Theme Integration', () => {
           enableSorting={false}
           enablePagination={false}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
     const table = screen.getByRole('table');
     expect(table).toHaveClass('MuiTable-root');
@@ -77,7 +77,7 @@ describe('DataGrid Theme Integration', () => {
           enableSorting={false}
           enablePagination={false}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByRole('table')).toBeInTheDocument();
@@ -92,7 +92,7 @@ describe('DataGrid Theme Integration', () => {
           enableSorting={false}
           enablePagination={false}
         />
-      </ThemeProvider>
+      </ThemeProvider>,
     );
 
     expect(screen.getByRole('table')).toBeInTheDocument();

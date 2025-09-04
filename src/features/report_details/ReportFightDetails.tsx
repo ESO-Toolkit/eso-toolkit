@@ -28,7 +28,7 @@ export const ReportFightDetails: React.FC = () => {
         fight.name,
         undefined, // playerName - could be added later for player-specific views
         undefined, // dps - could be calculated from fight data
-        fight.endTime - fight.startTime
+        fight.endTime - fight.startTime,
       );
     }
     return null;

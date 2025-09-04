@@ -91,7 +91,7 @@ export const generateReportMetaTags = (
   fightName?: string,
   playerName?: string,
   dps?: number,
-  duration?: number
+  duration?: number,
 ): { title: string; description: string; url: string; type: 'article' } => {
   const baseTitle = `${reportCode} Analysis`;
   const title = fightName ? `${fightName} - ${baseTitle}` : baseTitle;
@@ -126,7 +126,7 @@ export const generatePlayerMetaTags = (
   playerName: string,
   className?: string,
   dps?: number,
-  fightName?: string
+  fightName?: string,
 ): { title: string; description: string; url: string; type: 'article' } => {
   const title = `${playerName}'s Performance - ${reportCode}`;
 

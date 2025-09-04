@@ -27,7 +27,7 @@ type Story = StoryObj<typeof meta>;
 
 // Helper function to create mock scenarios for different OAuth states
 const createOAuthMockScenario = (
-  scenario: 'success' | 'error' | 'loading' | 'state-mismatch'
+  scenario: 'success' | 'error' | 'loading' | 'state-mismatch',
 ): MockedResponse[] => {
   switch (scenario) {
     case 'success':

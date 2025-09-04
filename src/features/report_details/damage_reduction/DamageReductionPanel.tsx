@@ -34,7 +34,7 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
         [playerId]: isExpanded,
       }));
     },
-    []
+    [],
   );
 
   // Get all players for accordion

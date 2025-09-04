@@ -34,7 +34,7 @@ export function useDeathEvents(): {
           reportCode: reportId,
           fight: selectedFight,
           client,
-        })
+        }),
       );
     }
   }, [dispatch, reportId, selectedFight, client]);
@@ -44,6 +44,6 @@ export function useDeathEvents(): {
 
   return React.useMemo(
     () => ({ deathEvents, isDeathEventsLoading, selectedFight }),
-    [deathEvents, isDeathEventsLoading, selectedFight]
+    [deathEvents, isDeathEventsLoading, selectedFight],
   );
 }

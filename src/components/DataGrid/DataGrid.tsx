@@ -222,7 +222,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
         to{' '}
         {Math.min(
           (table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize,
-          table.getFilteredRowModel().rows.length
+          table.getFilteredRowModel().rows.length,
         )}{' '}
         of {table.getFilteredRowModel().rows.length} entries
       </Typography>
@@ -499,7 +499,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
         padding: theme.spacing(1, 2),
       },
     }),
-    [theme]
+    [theme],
   );
 
   // Table state
@@ -517,7 +517,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
         ...col,
         filterFn: (col as ColumnDef<T>).filterFn || smartFilter,
       })) as ColumnDef<T>[],
-    [columns]
+    [columns],
   );
 
   // Memoize table configuration
@@ -543,7 +543,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
         smartFilter,
       },
     }),
-    [data, memoizedColumns, sorting, columnFilters, pagination, enableSorting, enableFiltering]
+    [data, memoizedColumns, sorting, columnFilters, pagination, enableSorting, enableFiltering],
   );
 
   // Create table instance

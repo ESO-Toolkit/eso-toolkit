@@ -9,7 +9,7 @@ const computeDebuffLookupHash = memoizeOne((...args) => {
 
 // Create debuff lookup slice
 export const debuffLookupSlice = createWorkerTaskSlice('calculateDebuffLookup', (input) =>
-  computeDebuffLookupHash(input.buffEvents, input.fightEndTime)
+  computeDebuffLookupHash(input.buffEvents, input.fightEndTime),
 );
 
 // Export actions, thunk, and reducer
