@@ -59,6 +59,24 @@ npm run build
   npm run test:coverage
   ```
 
+- **End-to-End Tests (Playwright):**
+
+  ```powershell
+  npm run test:e2e
+  ```
+
+- **End-to-End Tests (Headed Mode):**
+
+  ```powershell
+  npm run test:e2e:headed
+  ```
+
+- **End-to-End Tests (Interactive UI):**
+
+  ```powershell
+  npm run test:e2e:ui
+  ```
+
 - **Coverage Analysis:**
 
   ```powershell
@@ -76,6 +94,24 @@ npm run build
   npm run coverage:full
   ```
 
+**Testing Features:**
+
+- **Unit Testing**: Jest with React Testing Library for component and utility testing
+- **E2E Testing**: Playwright with cross-browser support (Chromium, Firefox, WebKit)
+- **API Mocking**: Complete external service mocking for reliable tests
+- **Coverage Analysis**: Comprehensive reporting with actionable insights
+- **Visual Testing**: Playwright traces and screenshots for debugging
+
+**E2E Test Coverage:**
+
+- ✅ Home page loading and navigation
+- ✅ Report page with fight details
+- ✅ API mocking (ESO Logs, Sentry, CDN)
+- ✅ Error handling and edge cases
+- ✅ Cross-browser compatibility
+
+For detailed testing documentation, see [tests/README.md](tests/README.md).
+
 **Coverage System Features:**
 
 - **Comprehensive Reporting**: HTML, LCOV, JSON, and console output
@@ -87,12 +123,6 @@ npm run build
 **Coverage Badges:** ![Coverage](coverage/badges/coverage-overall.svg)
 
 For detailed coverage documentation, see [docs/COVERAGE.md](docs/COVERAGE.md).
-
-- **End-to-End Tests (Playwright):**
-  ```powershell
-  cd apps/testing/eso-log-aggregator-e2e
-  npx playwright test
-  ```
 
 ### Linting & Formatting
 
