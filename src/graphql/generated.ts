@@ -2644,27 +2644,6 @@ export type GetReportPlayersOnlyQuery = {
   } | null;
 };
 
-export type GetCharactersForReportQueryVariables = Exact<{
-  code: Scalars['String']['input'];
-}>;
-
-export type GetCharactersForReportQuery = {
-  __typename?: 'Query';
-  reportData?: {
-    __typename?: 'ReportData';
-    report?: {
-      __typename?: 'Report';
-      rankedCharacters?: Array<{
-        __typename?: 'Character';
-        id: number;
-        name: string;
-        displayName?: string | null;
-        classID: number;
-      } | null> | null;
-    } | null;
-  } | null;
-};
-
 export type GetPlayersForReportQueryVariables = Exact<{
   code: Scalars['String']['input'];
   fightIDs?: InputMaybe<
@@ -5520,80 +5499,6 @@ export const GetReportPlayersOnlyDocument = {
     },
   ],
 } as unknown as DocumentNode<GetReportPlayersOnlyQuery, GetReportPlayersOnlyQueryVariables>;
-export const GetCharactersForReportDocument = {
-  kind: 'Document',
-  definitions: [
-    {
-      kind: 'OperationDefinition',
-      operation: 'query',
-      name: { kind: 'Name', value: 'getCharactersForReport' },
-      variableDefinitions: [
-        {
-          kind: 'VariableDefinition',
-          variable: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
-          type: {
-            kind: 'NonNullType',
-            type: { kind: 'NamedType', name: { kind: 'Name', value: 'String' } },
-          },
-        },
-      ],
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          {
-            kind: 'Field',
-            name: { kind: 'Name', value: 'reportData' },
-            selectionSet: {
-              kind: 'SelectionSet',
-              selections: [
-                {
-                  kind: 'Field',
-                  name: { kind: 'Name', value: 'report' },
-                  arguments: [
-                    {
-                      kind: 'Argument',
-                      name: { kind: 'Name', value: 'code' },
-                      value: { kind: 'Variable', name: { kind: 'Name', value: 'code' } },
-                    },
-                  ],
-                  selectionSet: {
-                    kind: 'SelectionSet',
-                    selections: [
-                      {
-                        kind: 'Field',
-                        name: { kind: 'Name', value: 'rankedCharacters' },
-                        selectionSet: {
-                          kind: 'SelectionSet',
-                          selections: [
-                            { kind: 'FragmentSpread', name: { kind: 'Name', value: 'Character' } },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                },
-              ],
-            },
-          },
-        ],
-      },
-    },
-    {
-      kind: 'FragmentDefinition',
-      name: { kind: 'Name', value: 'Character' },
-      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Character' } },
-      selectionSet: {
-        kind: 'SelectionSet',
-        selections: [
-          { kind: 'Field', name: { kind: 'Name', value: 'id' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'name' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'displayName' } },
-          { kind: 'Field', name: { kind: 'Name', value: 'classID' } },
-        ],
-      },
-    },
-  ],
-} as unknown as DocumentNode<GetCharactersForReportQuery, GetCharactersForReportQueryVariables>;
 export const GetPlayersForReportDocument = {
   kind: 'Document',
   definitions: [

@@ -1,13 +1,18 @@
 import React from 'react';
 
+import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
   useCastEvents,
   useCombatantInfoEvents,
   useCurrentFight,
+  useDamageEvents,
   useDeathEvents,
+  useDebuffEvents,
   useFriendlyBuffEvents,
+  useHealingEvents,
   usePlayerData,
   useReportMasterData,
+  useResourceEvents,
 } from '../../../hooks';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import {
@@ -17,8 +22,8 @@ import {
   BLUE_CHAMPION_POINTS,
   GREEN_CHAMPION_POINTS,
 } from '../../../types/abilities';
-import { CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
-import { PlayerGear } from '../../../types/playerDetails';
+import { CastEvent, CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
+import { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
 import {
   ARENA_SET_NAMES,
   isDoubleSetCount,
@@ -29,6 +34,7 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
+import { analyzeAllPlayersScribingSkills } from '../../../utils/Scribing';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
@@ -55,6 +61,10 @@ export const PlayersPanel: React.FC = () => {
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { debuffEvents, isDebuffEventsLoading } = useDebuffEvents();
+  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
   const fight = useCurrentFight();
 
   const { abilitiesById } = reportMasterData;
@@ -66,7 +76,11 @@ export const PlayersPanel: React.FC = () => {
     isCombatantInfoEventsLoading ||
     isCastEventsLoading ||
     isDeathEventsLoading ||
-    isFriendlyBuffEventsLoading;
+    isFriendlyBuffEventsLoading ||
+    isDebuffEventsLoading ||
+    isDamageEventsLoading ||
+    isHealingEventsLoading ||
+    isResourceEventsLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};
@@ -431,6 +445,172 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [playerData?.playersById]);
 
+  // Calculate scribing skills per player using the utility function
+  const scribingSkillsByPlayer = React.useMemo(() => {
+    if (
+      !friendlyBuffEvents ||
+      !debuffEvents ||
+      !damageEvents ||
+      !resourceEvents ||
+      !castEvents ||
+      !abilitiesById ||
+      !playerData?.playersById
+    ) {
+      console.log('🔍 Missing data for scribing skills extraction:', {
+        friendlyBuffEvents: !!friendlyBuffEvents,
+        debuffEvents: !!debuffEvents,
+        damageEvents: !!damageEvents,
+        resourceEvents: !!resourceEvents,
+        castEvents: !!castEvents,
+        abilitiesById: !!abilitiesById,
+        playerData: !!playerData?.playersById,
+      });
+      return {};
+    }
+
+    console.log('🎯 Analyzing scribing skills using butility function');
+
+    // Create the player details structure expected by the utility function
+    const playerDetailsData = {
+      data: {
+        playerDetails: {
+          tanks: Object.values(playerData.playersById)
+            .filter((player) => player?.combatantInfo?.talents)
+            .map((player) => ({
+              id: player?.id ?? 0,
+              name: player?.name ?? 'Unknown Player',
+              combatantInfo: {
+                talents: player?.combatantInfo?.talents ?? [],
+              },
+            })),
+          dps: [] as Array<{
+            id: number;
+            name: string;
+            combatantInfo: { talents: PlayerTalent[] };
+          }>,
+          healers: [] as Array<{
+            id: number;
+            name: string;
+            combatantInfo: { talents: PlayerTalent[] };
+          }>,
+        },
+      },
+    };
+
+    // Create the master data structure expected by the utility function
+    const masterDataStructure = {
+      reportData: {
+        report: {
+          masterData: {
+            abilities: Object.values(abilitiesById),
+          },
+        },
+      },
+    };
+
+    // Use the utility function to analyze all players' scribing skills
+    const allPlayersScribingResults = analyzeAllPlayersScribingSkills(
+      playerDetailsData,
+      masterDataStructure,
+      debuffEvents,
+      friendlyBuffEvents,
+      resourceEvents,
+      damageEvents,
+      healingEvents,
+      castEvents.filter((e) => e.type === 'cast') as CastEvent[]
+    );
+
+    console.log('🪶 Raw scribing analysis results:', allPlayersScribingResults);
+
+    // Transform the results to match the expected GrimoireData structure
+    const result: Record<string, GrimoireData[]> = {};
+
+    Object.entries(allPlayersScribingResults).forEach(([playerIdStr, scribingSkills]) => {
+      const grimoireDataList: GrimoireData[] = [];
+
+      scribingSkills.forEach((skillAnalysis) => {
+        // Find existing grimoire or create new one
+        let grimoireData = grimoireDataList.find((g) => g.grimoireName === skillAnalysis.grimoire);
+        if (!grimoireData) {
+          grimoireData = {
+            grimoireName: skillAnalysis.grimoire,
+            skills: [],
+          };
+          grimoireDataList.push(grimoireData);
+        }
+
+        // Convert effects to the expected format
+        const skillEffects = skillAnalysis.effects.map((effect) => {
+          // Determine the type based on the events in this effect
+          let effectType: 'damage' | 'heal' | 'buff' | 'debuff' | 'aura' | 'resource' = 'buff';
+
+          if (effect.events.length > 0) {
+            const firstEvent = effect.events[0];
+            switch (firstEvent.type) {
+              case 'damage':
+                effectType = 'damage';
+                break;
+              case 'heal':
+                effectType = 'heal';
+                break;
+              case 'applybuff':
+              case 'applybuffstack':
+              case 'removebuff':
+              case 'removebuffstack':
+                effectType = 'buff';
+                break;
+              case 'applydebuff':
+              case 'applydebuffstack':
+              case 'removedebuff':
+              case 'removedebuffstack':
+                effectType = 'debuff';
+                break;
+              case 'resourcechange':
+                effectType = 'resource';
+                break;
+              default:
+                effectType = 'buff';
+            }
+          }
+
+          return {
+            abilityId: effect.abilityId,
+            abilityName: effect.abilityName,
+            type: effectType,
+            count: effect.events.length,
+          };
+        });
+
+        // Add this skill to the grimoire
+        // Find the original talent info for proper skill ID and name
+        const playerId = parseInt(playerIdStr);
+
+        // For now, we'll use a generic name since we're grouping by grimoire
+        // In the future, we could enhance this by tracking individual talent names
+        grimoireData.skills.push({
+          skillId: playerId, // Using player ID as a unique identifier
+          skillName: `${skillAnalysis.grimoire} Scribing Skill`,
+          effects: skillEffects,
+        });
+      });
+
+      result[playerIdStr] = grimoireDataList;
+    });
+
+    console.log('🪶 Scribing skills extraction result (transformed to GrimoireData):', result);
+
+    return result;
+  }, [
+    friendlyBuffEvents,
+    debuffEvents,
+    damageEvents,
+    healingEvents,
+    resourceEvents,
+    castEvents,
+    abilitiesById,
+    playerData?.playersById,
+  ]);
+
   // Show loading if any data is still loading
   if (isLoading) {
     return (
@@ -442,6 +622,7 @@ export const PlayersPanel: React.FC = () => {
         mundusBuffsByPlayer={{}}
         championPointsByPlayer={{}}
         aurasByPlayer={{}}
+        scribingSkillsByPlayer={{}}
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
@@ -458,6 +639,7 @@ export const PlayersPanel: React.FC = () => {
       mundusBuffsByPlayer={mundusBuffsByPlayer}
       championPointsByPlayer={championPointsByPlayer}
       aurasByPlayer={aurasByPlayer}
+      scribingSkillsByPlayer={scribingSkillsByPlayer}
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
       cpmByPlayer={cpmByPlayer}

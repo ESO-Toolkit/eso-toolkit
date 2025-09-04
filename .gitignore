@@ -30,5 +30,9 @@ storybook-static
 # fetch checkpoints
 data/abilities.fetch.checkpoint.json
 
+# Sample data for testing/debugging (downloaded by scripts/download-report-data.mts)
+sample-data/
+data-downloads/
+
 # nested repository folder
 eso-log-aggregator/

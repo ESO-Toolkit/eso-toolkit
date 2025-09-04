@@ -156,6 +156,7 @@ export interface ApplyBuffStackEvent {
   abilityGameID: number;
   fight: number;
   stack: number;
+  extraAbilityGameID: number;
 }
 
 export interface ApplyDebuffEvent {
@@ -167,6 +168,7 @@ export interface ApplyDebuffEvent {
   targetIsFriendly: boolean;
   abilityGameID: number;
   fight: number;
+  extraAbilityGameID: number;
 }
 
 export interface RemoveDebuffEvent {
@@ -178,6 +180,7 @@ export interface RemoveDebuffEvent {
   targetIsFriendly: boolean;
   abilityGameID: number;
   fight: number;
+  extraAbilityGameID: number;
 }
 
 export interface ApplyBuffEvent {
@@ -200,6 +203,7 @@ export interface RemoveBuffEvent {
   targetID: number;
   targetIsFriendly: boolean;
   abilityGameID: number;
+  extraAbilityGameID: number;
   fight: number;
 }
 
@@ -213,6 +217,7 @@ export interface ApplyDebuffStackEvent {
   abilityGameID: number;
   fight: number;
   stack: number;
+  extraAbilityGameID: number;
 }
 
 export interface RemoveBuffStackEvent {
@@ -225,6 +230,7 @@ export interface RemoveBuffStackEvent {
   abilityGameID: number;
   fight: number;
   stack: number;
+  extraAbilityGameID: number;
 }
 
 export interface RemoveDebuffStackEvent {

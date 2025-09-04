@@ -4,6 +4,8 @@ schema:
     headers:
       Authorization: 'Bearer ${ESOLOGS_TOKEN}'
 documents: src/graphql/**/*.graphql
+hooks:
+  afterOneFileWrite: 'prettier --write'
 generates:
   src/graphql/generated.ts:
     plugins:

@@ -18,19 +18,19 @@ interface DebuffUptimesPanelProps {
 
 // Define the specific status effect debuff abilities to track
 const IMPORTANT_DEBUFF_ABILITIES = new Set([
-  KnownAbilities.MINOR_BREACH,
-  KnownAbilities.RUNIC_SUNDER_DEBUFF,
-  KnownAbilities.MAJOR_BREACH,
-  KnownAbilities.ENGULFING_FLAMES_BUFF,
-  KnownAbilities.MINOR_VULNERABILITY,
-  KnownAbilities.MINOR_BRITTLE,
-
-  KnownAbilities.TOUCH_OF_ZEN,
-  KnownAbilities.MINOR_LIFESTEAL,
   KnownAbilities.CRUSHER,
+  KnownAbilities.ENGULFING_FLAMES_BUFF,
+  KnownAbilities.MAJOR_BREACH,
   KnownAbilities.MAJOR_COWARDICE,
   KnownAbilities.MAJOR_VULNERABILITY,
+  KnownAbilities.MINOR_BREACH,
+  KnownAbilities.MINOR_BRITTLE,
+  KnownAbilities.MINOR_LIFESTEAL,
+  KnownAbilities.MINOR_VULNERABILITY,
   KnownAbilities.OFF_BALANCE,
+  KnownAbilities.RUNIC_SUNDER_DEBUFF,
+  KnownAbilities.STAGGER,
+  KnownAbilities.TOUCH_OF_ZEN,
 ]);
 
 export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight }) => {

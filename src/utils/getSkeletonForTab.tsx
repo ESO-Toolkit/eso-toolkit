@@ -85,6 +85,8 @@ export const getSkeletonForTab = (
               showTable={false}
             />
           );
+        if (tabId === 17)
+          return <GenericTabSkeleton title="Debuffs Overview" showTable={true} tableRows={15} />;
         return <GenericTabSkeleton title="Loading..." />;
     }
   };

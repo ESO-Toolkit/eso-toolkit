@@ -42,6 +42,7 @@ import { TargetEventsPanel } from './debug/TargetEventsPanel';
 import { HealingDonePanel } from './healing/HealingDonePanel';
 import { AurasPanel } from './insights/AurasPanel';
 import { BuffsOverviewPanel } from './insights/BuffsOverviewPanel';
+import { DebuffsOverviewPanel } from './insights/DebuffsOverviewPanel';
 import { InsightsPanel } from './insights/InsightsPanel';
 import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
@@ -271,6 +272,20 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Tab icon={<FlareIcon />} />
             </Tooltip>
           )}
+          {showExperimentalTabs && (
+            <Tooltip title="Debuffs Overview">
+              <Tab
+                icon={
+                  <Icon
+                    baseClassName="material-symbols-outlined"
+                    sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                  >
+                    shield_with_heart
+                  </Icon>
+                }
+              />
+            </Tooltip>
+          )}
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -280,7 +295,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               <Box>Toggle experimental features</Box>
               <Box sx={{ fontSize: '0.8em', opacity: 0.8, mt: 0.5 }}>
                 Includes: Location Heatmap, Raw Events, Target Events, Diagnostics, Actors, Talents,
-                and Rotation Analysis
+                Rotation Analysis, Auras Overview, Buffs Overview, and Debuffs Overview
               </Box>
             </Box>
           }
@@ -376,6 +391,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         {showExperimentalTabs && (
           <Box sx={{ display: validSelectedTab === 16 ? 'block' : 'none' }}>
             <BuffsOverviewPanel />
+          </Box>
+        )}
+        {showExperimentalTabs && (
+          <Box sx={{ display: validSelectedTab === 17 ? 'block' : 'none' }}>
+            <DebuffsOverviewPanel />
           </Box>
         )}
       </Box>

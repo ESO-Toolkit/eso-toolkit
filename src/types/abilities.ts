@@ -169,8 +169,23 @@ export enum KnownAbilities {
   TWIN_BLADE_AND_BLUNT_PASSIVE = 45477, // Dual wield passive providing 1487 per mace
   CRYSTAL_WEAPON_BUFF = 126045, // Crystal Weapon buff providing 1000 penetration
 
-  // Scribed Skills
+  // Scribed Skills - Grimoires
+  BANNER_BEARER = 217699, // Banner Bearer
+  ELEMENTAL_EXPLOSION = 217228, // Elemental Explosion
+  MENDER_S_BOND = 217275, // Mender's Bond
+  SHIELD_THROW = 217061, // Shield Throw
+  SMASH = 217186, // Smash
+  SOUL_BURST = 217472, // Soul Burst
+  TORCHBEARER = 217646, // Torchbearer
+  TRAMPLE = 217667, // Trample
+  TRAVELING_KNIFE = 217342, // Traveling Knife
+  ULFSILD_S_CONTINGENCY = 217528, // Ulfsild's Contingency
+  VAULT = 216672, // Vault
+  WIELD_SOUL = 216803, // Wield Soul
+
+  // Legacy Scribed Skills (kept for compatibility)
   SHOCKING_BANNER = 217706,
+  SHATTERING_KNIFE = 217699,
 
   // Status Effects
   BURNING = 18084,
@@ -318,15 +333,16 @@ export enum KnownAbilities {
   WINTERS_REVENGE = 62912,
 
   // Specific Named Buffs and Debuffs
+  CRUSHER = 17906,
   EMPOWER = 61737,
+  ENGULFING_FLAMES_BUFF = 31104,
   ENLIVENING_OVERFLOW_BUFF = 156011,
   GRAND_REJUVENATION = 99781,
-  ENGULFING_FLAMES_BUFF = 31104,
+  OFF_BALANCE = 62988,
   PEARLESCENT_WARD = 172621,
   POWERFUL_ASSAULT = 61771,
+  STAGGER = 134336,
   TOUCH_OF_ZEN = 126597,
-  CRUSHER = 17906,
-  OFF_BALANCE = 62988,
 
   // Major Buffs and Debuffs
   MAJOR_BERSERK = 61745,

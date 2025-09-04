@@ -123,6 +123,31 @@ npm run storybook
 - For Jest: Use VS Code's Jest extension or run with `node --inspect-brk node_modules/.bin/jest`.
 - For Playwright: Use Playwright's debug mode (`npx playwright test --debug`).
 
+### Sample Data for Testing
+
+You can download real ESO logs data for testing and debugging using the report data downloader script. See [scripts/README.md](scripts/README.md) for detailed documentation.
+
+**Quick Start:**
+
+```powershell
+# Download all fights from a report
+npx ts-node --esm scripts/download-report-data.ts ABC123DEF
+
+# Download specific fight only
+npx ts-node --esm scripts/download-report-data.ts ABC123DEF 1
+
+# Analyze scribing skills in downloaded data
+npx ts-node --esm scripts/examples/analyze-scribing-skills.ts ABC123DEF
+```
+
+**Requirements:**
+
+- Set `OAUTH_CLIENT_ID` and `OAUTH_CLIENT_SECRET` environment variables with your ESO Logs API credentials
+- Data is saved to `./sample-data/<report-code>/` with organized folder structure
+- Perfect for reproducing issues with scribing skills, buff analysis, or other features
+
+The `sample-data/` folder is automatically ignored by Git to prevent accidental commits of large data files.
+
 ## CI/CD
 
 - GitHub Actions run build, lint, format, test, and deploy workflows on PRs and main branch.

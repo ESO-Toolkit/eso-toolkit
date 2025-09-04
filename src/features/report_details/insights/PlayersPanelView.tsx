@@ -21,6 +21,7 @@ import React from 'react';
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { PlayerIcon } from '../../../components/PlayerIcon';
+import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
@@ -444,6 +445,7 @@ interface PlayersPanelViewProps {
     Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
   >;
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
+  scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
@@ -577,6 +579,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   mundusBuffsByPlayer,
   championPointsByPlayer,
   aurasByPlayer,
+  scribingSkillsByPlayer,
   deathsByPlayer,
   resurrectsByPlayer,
   cpmByPlayer,
@@ -1141,6 +1144,9 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                           const hasChampionPoints = !!(
                             player.id && championPointsByPlayer[String(player.id)]?.length
                           );
+                          const hasScribingSkills = !!(
+                            player.id && scribingSkillsByPlayer[String(player.id)]?.length
+                          );
                           const deathsVal = player.id
                             ? (deathsByPlayer[String(player.id)] ?? 0)
                             : 0;
@@ -1413,6 +1419,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       )
                                     )}
                                   </Box>
+                                </Box>
+                              )}
+                              {hasScribingSkills && (
+                                <Box sx={{ mt: 1 }}>
+                                  <ScribingSkillsDisplay
+                                    grimoires={scribingSkillsByPlayer[String(player.id)] ?? []}
+                                  />
                                 </Box>
                               )}
                             </Box>
