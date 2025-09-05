@@ -695,6 +695,7 @@ export const PlayersPanel: React.FC = () => {
       result[playerId] = analysis;
     });
 
+    console.log({ classAnalysisByPlayer: result });
     return result;
   }, [
     abilitiesById,

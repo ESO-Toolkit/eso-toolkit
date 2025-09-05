@@ -26,6 +26,15 @@ import {
 } from '../types/combatlogEvents';
 import { PlayerTalent } from '../types/playerDetails';
 
+import { KnownAbilities } from '@/types/abilities';
+
+/**
+ * If a skill name is in this list, it must be the exact ability ID to count for that skill line
+ */
+const SKILL_NAME_ID_REQUIREMENTS = Object.freeze<Record<string, KnownAbilities>>({
+  Combustion: KnownAbilities.COMBUSTION,
+});
+
 // Collect all skillset data
 const allSkillsets = [
   arcanistData,
@@ -60,7 +69,16 @@ export interface ClassAnalysisResult {
     className: string;
     count: number;
   }>;
-  analysis: string;
+}
+
+function shouldSkipAbility(abilityName: string, abilityId: number): boolean {
+  const requirementKey = Object.keys(SKILL_NAME_ID_REQUIREMENTS).find(
+    (name) => name.toLowerCase() === abilityName.toLowerCase(),
+  );
+
+  // This handles the situation where multiple skills have the same name
+  // For example, the DK passive combustion shares a name with the undaunted orb synergy "combustion"
+  return requirementKey !== undefined && abilityId !== SKILL_NAME_ID_REQUIREMENTS[requirementKey];
 }
 
 /**
@@ -170,6 +188,12 @@ export function createSkillLineAbilityMapping(
 
     // Handle both GameAbility and ReportAbilityFragment types
     const abilityName = 'name' in ability && ability.name ? ability.name.toLowerCase() : '';
+
+    // This handles the situation where multiple skills have the same name
+    // For example, the DK passive combustion shares a name with the undaunted orb synergy "combustion"
+    if (shouldSkipAbility(abilityName, abilityId)) {
+      continue;
+    }
 
     if (!abilityName) continue;
 
@@ -321,7 +345,10 @@ export function analyzePlayerClassUsage(
   abilitiesData: AbilitiesData | ReportAbilitiesData,
   skillLineMapping?: Record<number, { className: string; skillLineName: string }>,
 ): ClassAnalysisResult {
-  const skillLineAbilityCounts: Record<string, { className: string; count: number }> = {};
+  const skillLineAbilityCounts: Record<
+    string,
+    { className: string; count: number; skillIds: Set<number> }
+  > = {};
 
   // Create skill line mapping if not provided
   if (!skillLineMapping) {
@@ -338,35 +365,32 @@ export function analyzePlayerClassUsage(
     if (skillLineInfo) {
       const { skillLineName, className } = skillLineInfo;
       if (!skillLineAbilityCounts[skillLineName]) {
-        skillLineAbilityCounts[skillLineName] = { className, count: 0 };
+        skillLineAbilityCounts[skillLineName] = {
+          className,
+          count: 0,
+          skillIds: new Set<number>(),
+        };
       }
       skillLineAbilityCounts[skillLineName].count++;
+      skillLineAbilityCounts[skillLineName].skillIds.add(abilityId);
     }
   }
 
   // Sort skill lines by ability count and create the array
   const skillLines = Object.entries(skillLineAbilityCounts)
-    .map(([skillLine, { className, count }]) => ({ skillLine, className, count }))
+    .map(([skillLine, { className, count, skillIds }]) => ({
+      skillLine,
+      className,
+      count,
+      skillIds,
+    }))
     .sort((a, b) => b.count - a.count);
 
   const primarySkillLine = skillLines.length > 0 ? skillLines[0].skillLine : null;
 
-  let analysis = '';
-  if (skillLines.length === 0) {
-    analysis = 'No skill line-specific abilities detected';
-  } else if (skillLines.length === 1) {
-    analysis = `Pure ${primarySkillLine} build with ${skillLines[0].count} abilities`;
-  } else {
-    const primaryCount = skillLines[0].count;
-    const secondaryCount = skillLines[1].count;
-    const ratio = Math.round((primaryCount / (primaryCount + secondaryCount)) * 100);
-    analysis = `Hybrid build: ${ratio}% ${primarySkillLine}, ${100 - ratio}% ${skillLines[1].skillLine}`;
-  }
-
   return {
     primary: primarySkillLine,
     skillLines,
-    analysis,
   };
 }
 
