@@ -3,7 +3,6 @@ import React from 'react';
 
 import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
-import { BuffLookupData } from '../../../utils/BuffLookupUtils';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
@@ -38,118 +37,148 @@ interface PlayersPanelViewProps {
   playerGear: Record<number, PlayerGearSetRecord[]>;
   fightStartTime?: number;
   fightEndTime?: number;
-  friendlyBuffLookup?: BuffLookupData | null;
 }
 
-export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
-  playerActors,
-  mundusBuffsByPlayer,
-  championPointsByPlayer,
-  aurasByPlayer,
-  scribingSkillsByPlayer,
-  buildIssuesByPlayer,
-  classAnalysisByPlayer,
-  deathsByPlayer,
-  resurrectsByPlayer,
-  cpmByPlayer,
-  reportId,
-  fightId,
-  isLoading,
-  playerGear,
-  fightStartTime,
-  fightEndTime,
-  friendlyBuffLookup,
-}) => {
-  if (isLoading) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>Loading players...</Typography>
-      </Box>
-    );
-  }
+export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
+  ({
+    playerActors,
+    mundusBuffsByPlayer,
+    championPointsByPlayer,
+    aurasByPlayer,
+    scribingSkillsByPlayer,
+    buildIssuesByPlayer,
+    classAnalysisByPlayer,
+    deathsByPlayer,
+    resurrectsByPlayer,
+    cpmByPlayer,
+    reportId,
+    fightId,
+    isLoading,
+    playerGear,
+    fightStartTime,
+    fightEndTime,
+  }) => {
+    // Memoize player data transformations to prevent recreating objects on each render
+    const playerCards = React.useMemo(() => {
+      if (!playerActors) return [];
 
-  if (!playerActors || Object.keys(playerActors).length === 0) {
-    return (
-      <Box sx={{ p: 3 }}>
-        <Typography>No player data available.</Typography>
-      </Box>
-    );
-  }
+      return Object.values(playerActors).map((player) => {
+        const playerDataSet = playerGear?.[Number(player.id)];
+        const mundusBuffs = mundusBuffsByPlayer?.[String(player.id)] ?? [];
+        const championPoints = championPointsByPlayer?.[String(player.id)] ?? [];
+        const auras = aurasByPlayer?.[String(player.id)] ?? [];
+        const scribingSkills = scribingSkillsByPlayer?.[String(player.id)] ?? [];
+        const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
+        const classAnalysis = classAnalysisByPlayer[String(player.id)];
+        const deaths = deathsByPlayer?.[String(player.id)] ?? 0;
+        const resurrects = resurrectsByPlayer?.[String(player.id)] ?? 0;
+        const cpm = Math.round(cpmByPlayer?.[String(player.id)] ?? 0);
+        const playerGearSets = (playerDataSet ?? [])
+          .sort((a, b) => b.count - a.count)
+          .filter((s) => s.count > 0);
 
-  return (
-    <Box sx={{ p: 2 }}>
-      <Box display="flex" alignItems="center" gap={1} mb={2}>
-        <Typography
-          variant="h6"
+        return {
+          key: player.id,
+          player,
+          mundusBuffs,
+          championPoints,
+          auras,
+          scribingSkills,
+          buildIssues,
+          classAnalysis,
+          deaths,
+          resurrects,
+          cpm,
+          playerGear: playerGearSets,
+        };
+      });
+    }, [
+      playerActors,
+      playerGear,
+      mundusBuffsByPlayer,
+      championPointsByPlayer,
+      aurasByPlayer,
+      scribingSkillsByPlayer,
+      buildIssuesByPlayer,
+      classAnalysisByPlayer,
+      deathsByPlayer,
+      resurrectsByPlayer,
+      cpmByPlayer,
+    ]);
+
+    if (isLoading) {
+      return (
+        <Box sx={{ p: 3 }}>
+          <Typography>Loading players...</Typography>
+        </Box>
+      );
+    }
+
+    if (!playerActors || Object.keys(playerActors).length === 0) {
+      return (
+        <Box sx={{ p: 3 }}>
+          <Typography>No player data available.</Typography>
+        </Box>
+      );
+    }
+
+    return (
+      <Box sx={{ p: 2 }}>
+        <Box display="flex" alignItems="center" gap={1} mb={2}>
+          <Typography
+            variant="h6"
+            sx={{
+              fontFamily: 'Space Grotesk, sans-serif',
+              fontWeight: 300,
+              letterSpacing: '0.05em',
+            }}
+          >
+            Players
+          </Typography>
+          {fightStartTime && fightEndTime && (
+            <Box display="flex" alignItems="center">
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{
+                  fontFamily: 'Space Grotesk, sans-serif',
+                  fontSize: '0.85rem',
+                  letterSpacing: '0.02em',
+                }}
+              >
+                {formatDuration(fightStartTime, fightEndTime)}
+              </Typography>
+            </Box>
+          )}
+        </Box>
+        <Box
           sx={{
-            fontFamily: 'Space Grotesk, sans-serif',
-            fontWeight: 300,
-            letterSpacing: '0.05em',
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+            gap: 2,
+            alignItems: 'stretch',
           }}
         >
-          Players
-        </Typography>
-        {fightStartTime && fightEndTime && (
-          <Box display="flex" alignItems="center">
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{
-                fontFamily: 'Space Grotesk, sans-serif',
-                fontSize: '0.85rem',
-                letterSpacing: '0.02em',
-              }}
-            >
-              {formatDuration(fightStartTime, fightEndTime)}
-            </Typography>
-          </Box>
-        )}
+          {playerCards.map((playerData) => (
+            <PlayerCard
+              key={playerData.key}
+              player={playerData.player}
+              mundusBuffs={playerData.mundusBuffs}
+              championPoints={playerData.championPoints}
+              auras={playerData.auras}
+              scribingSkills={playerData.scribingSkills}
+              buildIssues={playerData.buildIssues}
+              classAnalysis={playerData.classAnalysis}
+              deaths={playerData.deaths}
+              resurrects={playerData.resurrects}
+              cpm={playerData.cpm}
+              reportId={reportId}
+              fightId={fightId}
+              playerGear={playerData.playerGear}
+            />
+          ))}
+        </Box>
       </Box>
-      <Box
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-          gap: 2,
-          alignItems: 'stretch',
-        }}
-      >
-        {playerActors &&
-          Object.values(playerActors).map((player) => {
-            const playerDataSet = playerGear?.[Number(player.id)];
-            const mundusBuffs = mundusBuffsByPlayer?.[String(player.id)] ?? [];
-            const championPoints = championPointsByPlayer?.[String(player.id)] ?? [];
-            const auras = aurasByPlayer?.[String(player.id)] ?? [];
-            const scribingSkills = scribingSkillsByPlayer?.[String(player.id)] ?? [];
-            const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
-            const classAnalysis = classAnalysisByPlayer[String(player.id)];
-            const deaths = deathsByPlayer?.[String(player.id)] ?? 0;
-            const resurrects = resurrectsByPlayer?.[String(player.id)] ?? 0;
-            const cpm = Math.round(cpmByPlayer?.[String(player.id)] ?? 0);
-            const playerGearSets = (playerDataSet ?? [])
-              .sort((a, b) => b.count - a.count)
-              .filter((s) => s.count > 0);
-
-            return (
-              <PlayerCard
-                key={player.id}
-                player={player}
-                mundusBuffs={mundusBuffs}
-                championPoints={championPoints}
-                auras={auras}
-                scribingSkills={scribingSkills}
-                buildIssues={buildIssues}
-                classAnalysis={classAnalysis}
-                deaths={deaths}
-                resurrects={resurrects}
-                cpm={cpm}
-                reportId={reportId}
-                fightId={fightId}
-                playerGear={playerGearSets}
-                friendlyBuffLookup={friendlyBuffLookup}
-              />
-            );
-          })}
-      </Box>
-    </Box>
-  );
-};
+    );
+  },
+);

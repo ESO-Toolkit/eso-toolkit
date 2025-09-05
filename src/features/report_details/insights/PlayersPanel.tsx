@@ -711,7 +711,6 @@ export const PlayersPanel: React.FC = () => {
         playerGear={playerGear}
         fightStartTime={fight?.startTime}
         fightEndTime={fight?.endTime}
-        friendlyBuffLookup={friendlyBuffLookup}
       />
     );
   }
@@ -734,7 +733,6 @@ export const PlayersPanel: React.FC = () => {
       playerGear={playerGear}
       fightStartTime={fight?.startTime}
       fightEndTime={fight?.endTime}
-      friendlyBuffLookup={friendlyBuffLookup}
     />
   );
 };
