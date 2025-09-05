@@ -23,7 +23,9 @@ const LandingContainer = styled(Box)(({ theme }) => ({
   alignItems: 'center',
 }));
 
-const HeroSection = styled(Box)(({ theme }) => ({
+const HeroSection = styled(Box, {
+  shouldForwardProp: (prop) => prop !== 'showAnimations',
+})<{ showAnimations?: boolean }>(({ theme, showAnimations = false }) => ({
   minHeight: '80vh',
   display: 'flex',
   alignItems: 'flex-start',
@@ -44,33 +46,36 @@ const HeroSection = styled(Box)(({ theme }) => ({
     alignItems: 'flex-start',
     paddingTop: '3rem',
   },
-  '&::before': {
-    content: '""',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    width: '100vw',
-    height: '100vh',
-    background:
-      'radial-gradient(ellipse 120% 80% at 50% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 60%)',
-    pointerEvents: 'none',
-    zIndex: -1,
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: '20%',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '600px',
-    height: '300px',
-    background:
-      'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
-    borderRadius: '50%',
-    filter: 'blur(40px)',
-    zIndex: 0,
-    animation: 'pulse-bg 4s ease-in-out infinite alternate',
-  },
+  // Only apply expensive effects after initial load
+  ...(showAnimations && {
+    '&::before': {
+      content: '""',
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      background:
+        'radial-gradient(ellipse 120% 80% at 50% 20%, rgba(56, 189, 248, 0.04) 0%, transparent 60%)',
+      pointerEvents: 'none',
+      zIndex: -1,
+    },
+    '&::after': {
+      content: '""',
+      position: 'absolute',
+      top: '20%',
+      left: '50%',
+      transform: 'translateX(-50%)',
+      width: '600px',
+      height: '300px',
+      background:
+        'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
+      borderRadius: '50%',
+      filter: 'blur(40px)',
+      zIndex: 0,
+      animation: 'pulse-bg 4s ease-in-out infinite alternate',
+    },
+  }),
   '@keyframes rotate': {
     from: { transform: 'rotate(0deg)' },
     to: { transform: 'rotate(360deg)' },
@@ -101,7 +106,9 @@ const HeroContent = styled(Box)(({ theme }) => ({
   },
 }));
 
-const HeroTitle = styled(Typography)(({ theme }) => ({
+const HeroTitle = styled(Typography, {
+  shouldForwardProp: (prop) => prop !== 'showAnimations',
+})<{ showAnimations?: boolean }>(({ theme, showAnimations = false }) => ({
   fontWeight: 900,
   background:
     theme.palette.mode === 'dark'
@@ -112,18 +119,22 @@ const HeroTitle = styled(Typography)(({ theme }) => ({
   backgroundClip: 'text',
   letterSpacing: '-0.02em',
   lineHeight: 1.5,
-  textShadow:
-    theme.palette.mode === 'dark'
+  // Reduce complex shadows and animations during initial load
+  textShadow: showAnimations
+    ? theme.palette.mode === 'dark'
       ? `
-      0 0 20px rgba(56, 189, 248, 0.5),
-      0 0 40px rgba(56, 189, 248, 0.3),
-      0 0 60px rgba(0, 225, 255, 0.2),
-      0 4px 8px rgba(0, 0, 0, 0.3),
-      0 8px 16px rgba(0, 0, 0, 0.2),
-      0 16px 32px rgba(0, 0, 0, 0.1)
-    `
-      : '0 1px 2px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.05)',
-  animation: 'shimmer 3s ease-in-out infinite',
+        0 0 20px rgba(56, 189, 248, 0.5),
+        0 0 40px rgba(56, 189, 248, 0.3),
+        0 0 60px rgba(0, 225, 255, 0.2),
+        0 4px 8px rgba(0, 0, 0, 0.3),
+        0 8px 16px rgba(0, 0, 0, 0.2),
+        0 16px 32px rgba(0, 0, 0, 0.1)
+      `
+      : '0 1px 2px rgba(15, 23, 42, 0.1), 0 2px 4px rgba(15, 23, 42, 0.05)'
+    : theme.palette.mode === 'dark'
+      ? '0 2px 4px rgba(0, 0, 0, 0.3)'
+      : '0 1px 2px rgba(15, 23, 42, 0.1)',
+  animation: showAnimations ? 'shimmer 3s ease-in-out infinite' : 'none',
   margin: '0 auto 2rem auto',
   textAlign: 'center',
   width: '100%',
@@ -596,9 +607,19 @@ const GeometricShape = styled(Box)<{ delay?: number; size?: string; x?: string; 
 
 export const LandingPage: React.FC = () => {
   const [logUrl, setLogUrl] = useState('');
+  const [showAnimations, setShowAnimations] = useState(false);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const theme = useTheme();
+
+  // Defer complex animations until after initial render
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowAnimations(true);
+    }, 100); // Small delay to ensure initial content is rendered first
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleLogUrlChange = (e: React.ChangeEvent<HTMLInputElement>): void => {
     setLogUrl(e.target.value);
@@ -648,7 +669,7 @@ export const LandingPage: React.FC = () => {
 
   return (
     <LandingContainer>
-      <HeroSection id="home">
+      <HeroSection id="home" showAnimations={showAnimations}>
         <FloatingElementsDesktop>
           {/* ESO-themed floating runes in rainbow arch formation */}
           <FloatingIcon delay={0} duration={10} x="12%" y="40%">
@@ -682,7 +703,7 @@ export const LandingPage: React.FC = () => {
         </FloatingElementsDesktop>
 
         <HeroContent className="u-fade-in-up">
-          <HeroTitle variant="h1">
+          <HeroTitle variant="h1" showAnimations={showAnimations}>
             <span className="light-text">Essential Tools</span>
             <span className="gradient-text">
               For <span className="highlight-text">Your ESO Journey</span>

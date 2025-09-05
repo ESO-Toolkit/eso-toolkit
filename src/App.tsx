@@ -12,11 +12,11 @@ import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
+import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
-
 // Initialize Sentry before the app starts
 initializeSentry();
 
@@ -46,8 +46,15 @@ const FightReplay = React.lazy(() =>
 
 // Loading fallback component - simple and fast
 const LoadingFallback: React.FC = () => (
-  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
-    <CircularProgress />
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    height="400px"
+    role="status"
+    aria-label="Loading"
+  >
+    <CircularProgress size={40} />
   </Box>
 );
 
@@ -96,6 +103,14 @@ const AppRoutes: React.FC = () => {
   // Initialize worker manager with logger
   useWorkerManagerLogger();
 
+  // Check current path for abilities preloading and OAuth redirect
+  const publicUrl = process.env.PUBLIC_URL || '';
+  const currentPath = window.location.pathname.replace(publicUrl, '');
+
+  // Preload abilities data when navigating to report pages
+  const isReportPage = /\/report\//.test(currentPath);
+  useAbilitiesPreloader(isReportPage);
+
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
     // Add breadcrumb for page load
@@ -107,8 +122,6 @@ const AppRoutes: React.FC = () => {
 
   // Support non-hash OAuth redirect: /oauth-redirect?code=...
   // HashRouter won't match a path without a hash, so we short-circuit here.
-  const publicUrl = process.env.PUBLIC_URL || '';
-  const currentPath = window.location.pathname.replace(publicUrl, '');
   if (currentPath === '/oauth-redirect') {
     return (
       <ErrorBoundary>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="utf-8" />
@@ -9,32 +9,41 @@
       name="description"
       content="ESO Log Insights by NotaGuild — Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
     />
-    <meta name="keywords" content="ESO, Elder Scrolls Online, combat logs, DPS meter, raid analysis, MMO analytics, ESO Logs, damage meter, healing analysis" />
+    <meta
+      name="keywords"
+      content="ESO, Elder Scrolls Online, combat logs, DPS meter, raid analysis, MMO analytics, ESO Logs, damage meter, healing analysis"
+    />
     <meta name="author" content="NotaGuild" />
-    
+
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
     <meta property="og:url" content="https://bkrupa.github.io/eso-log-aggregator/" />
     <meta property="og:title" content="ESO Log Insights by NotaGuild" />
-    <meta property="og:description" content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns." />
+    <meta
+      property="og:description"
+      content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
+    />
     <meta property="og:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
     <meta property="og:image:width" content="512" />
     <meta property="og:image:height" content="512" />
     <meta property="og:image:alt" content="ESO Log Insights - Combat Log Analytics Tool" />
     <meta property="og:site_name" content="ESO Log Insights" />
     <meta property="og:locale" content="en_US" />
-    
+
     <!-- Twitter -->
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:url" content="https://bkrupa.github.io/eso-log-aggregator/" />
     <meta name="twitter:title" content="ESO Log Insights by NotaGuild" />
-    <meta name="twitter:description" content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns." />
+    <meta
+      name="twitter:description"
+      content="Advanced analytics and visualization tool for Elder Scrolls Online combat logs. Analyze damage, healing, buffs, and performance with beautiful charts and detailed breakdowns."
+    />
     <meta name="twitter:image" content="%PUBLIC_URL%/android-chrome-512x512.png" />
     <meta name="twitter:image:alt" content="ESO Log Insights - Combat Log Analytics Tool" />
-    
+
     <!-- Discord -->
     <meta name="theme-color" content="#7289da" />
-    
+
     <!-- Additional meta tags for better SEO -->
     <meta name="robots" content="index, follow" />
     <meta name="googlebot" content="index, follow" />
@@ -42,12 +51,25 @@
     <meta name="apple-mobile-web-app-title" content="ESO Log Insights" />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/apple-touch-icon.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+
+    <!-- Critical resource hints for performance -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://assets.rpglogs.com" />
+
+    <!-- Load critical fonts with font-display swap for better LCP -->
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap"
       rel="stylesheet"
+      media="print"
+      onload="this.media='all'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&family=Space+Grotesk:wght@300..700&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
     <title>ESO Log Insights by NotaGuild</title>
   </head>
   <body>
