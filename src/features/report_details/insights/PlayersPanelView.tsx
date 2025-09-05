@@ -35,6 +35,7 @@ import {
 } from '../../../types/abilities';
 import { ArmorType, PlayerGear } from '../../../types/playerDetails';
 import { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
@@ -448,6 +449,7 @@ interface PlayersPanelViewProps {
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   buildIssuesByPlayer: Record<string, BuildIssue[]>;
+  classAnalysisByPlayer: Record<string, ClassAnalysisResult>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
@@ -584,6 +586,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   aurasByPlayer,
   scribingSkillsByPlayer,
   buildIssuesByPlayer,
+  classAnalysisByPlayer,
   deathsByPlayer,
   resurrectsByPlayer,
   cpmByPlayer,
@@ -824,14 +827,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                         </Box>
                         <Box>
                           {(() => {
-                            const baseKey = toClassKey(player.type);
-                            const sublines = CLASS_SUBLINES[baseKey];
-                            const classes = parseClasses(player.type);
-                            const fallbackList = classes.length
-                              ? classes
-                              : ([player.type].filter(Boolean) as string[]);
-                            const list = sublines ? sublines : fallbackList.slice(0, 3);
-                            const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
+                            // Get dynamic skill lines from class analysis
+                            const playerAnalysis = classAnalysisByPlayer?.[player.id];
+                            const detectedSkillLines = playerAnalysis?.skillLines || [];
+
                             return (
                               <Box
                                 sx={{
@@ -853,50 +852,56 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       whiteSpace: 'nowrap',
                                     }}
                                   >
-                                    {displayList.map((name, idx) => (
-                                      <Tooltip
-                                        key={idx}
-                                        title={list[idx] || name}
-                                        enterTouchDelay={0}
-                                        leaveTouchDelay={3000}
-                                      >
-                                        <Box
-                                          sx={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 0.35,
-                                          }}
+                                    {detectedSkillLines.map((skill, idx) => {
+                                      const title = skill.skillLine;
+                                      const icon = toClassKey(skill.className);
+
+                                      return (
+                                        <Tooltip
+                                          key={idx}
+                                          title={title}
+                                          enterTouchDelay={0}
+                                          leaveTouchDelay={3000}
                                         >
-                                          {idx > 0 && (
+                                          <Box
+                                            sx={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: 0.35,
+                                            }}
+                                          >
+                                            {idx > 0 && (
+                                              <Typography
+                                                variant="caption"
+                                                sx={{ color: 'text.secondary', opacity: 0.7 }}
+                                              >
+                                                •
+                                              </Typography>
+                                            )}
+                                            <ClassIcon
+                                              className={icon}
+                                              size={12}
+                                              style={{ opacity: 0.8, flexShrink: 0 }}
+                                            />
                                             <Typography
                                               variant="caption"
-                                              sx={{ color: 'text.secondary', opacity: 0.7 }}
+                                              color="text.secondary"
+                                              noWrap
+                                              sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
                                             >
-                                              •
+                                              {skill.skillLine}
                                             </Typography>
-                                          )}
-                                          <ClassIcon
-                                            className={baseKey}
-                                            size={12}
-                                            style={{ opacity: 0.8, flexShrink: 0 }}
-                                          />
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            noWrap
-                                            sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
-                                          >
-                                            {name}
-                                          </Typography>
-                                        </Box>
-                                      </Tooltip>
-                                    ))}
+                                          </Box>
+                                        </Tooltip>
+                                      );
+                                    })}
                                   </Box>
                                 </OneLineAutoFit>
                               </Box>
                             );
                           })()}
                         </Box>
+
                         {/* Talents (title removed for cleaner UI) */}
                         {talents.length > 0 && (
                           <Box mb={1.5}>

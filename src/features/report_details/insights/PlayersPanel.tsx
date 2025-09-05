@@ -26,6 +26,11 @@ import {
 import { CastEvent, CombatantAura, CombatantInfoEvent } from '../../../types/combatlogEvents';
 import { PlayerGear, PlayerTalent } from '../../../types/playerDetails';
 import { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import {
+  createSkillLineAbilityMapping,
+  analyzePlayerClassFromEvents,
+  type ClassAnalysisResult,
+} from '../../../utils/classDetectionUtils';
 import { detectBuildIssues, BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
@@ -654,6 +659,53 @@ export const PlayersPanel: React.FC = () => {
     playerData?.playersById,
   ]);
 
+  // Calculate class analysis for each player
+  const classAnalysisByPlayer = React.useMemo(() => {
+    const result: Record<string, ClassAnalysisResult> = {};
+
+    if (!abilitiesById || !playerData?.playersById) {
+      return result;
+    }
+
+    // Create class mapping once from the abilitiesById data
+    const classMapping = createSkillLineAbilityMapping(abilitiesById);
+
+    // Analyze each player's class usage
+    Object.values(playerData.playersById).forEach((player) => {
+      if (!player?.id) return;
+
+      const playerId = String(player.id);
+
+      // Get player talents
+      const playerTalents = player?.combatantInfo?.talents;
+
+      // Use the new utility function that handles event extraction and analysis
+      const analysis = analyzePlayerClassFromEvents(
+        playerId,
+        abilitiesById,
+        combatantInfoEvents,
+        castEvents,
+        damageEvents,
+        friendlyBuffEvents,
+        debuffEvents,
+        playerTalents,
+        classMapping,
+      );
+
+      result[playerId] = analysis;
+    });
+
+    return result;
+  }, [
+    abilitiesById,
+    playerData?.playersById,
+    combatantInfoEvents,
+    castEvents,
+    damageEvents,
+    friendlyBuffEvents,
+    debuffEvents,
+  ]);
+
   // Show loading if any data is still loading
   if (isLoading) {
     return (
@@ -667,6 +719,7 @@ export const PlayersPanel: React.FC = () => {
         aurasByPlayer={{}}
         scribingSkillsByPlayer={{}}
         buildIssuesByPlayer={{}}
+        classAnalysisByPlayer={{}}
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
@@ -686,6 +739,7 @@ export const PlayersPanel: React.FC = () => {
       aurasByPlayer={aurasByPlayer}
       scribingSkillsByPlayer={scribingSkillsByPlayer}
       buildIssuesByPlayer={buildIssuesByPlayer}
+      classAnalysisByPlayer={classAnalysisByPlayer}
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
       cpmByPlayer={cpmByPlayer}
