@@ -195,7 +195,8 @@ export const reportError = (
   // Only report errors to Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
     // In development, just log to console
-    logger.error('Error (not sent to Sentry in development)', { error, context });
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Error (not sent to Sentry in development)', errorObj, { context });
     return;
   }
 

@@ -62,8 +62,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      logger.error('Error Boundary caught an error', {
-        error: error.message,
+      logger.error('Error Boundary caught an error', error, {
+        message: error.message,
         stack: error.stack,
         componentStack: errorInfo.componentStack,
       });
