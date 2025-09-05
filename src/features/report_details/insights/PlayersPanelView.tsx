@@ -462,37 +462,6 @@ interface PlayersPanelViewProps {
   friendlyBuffLookup?: BuffLookupData | null;
 }
 
-const CLASS_SUBLINES: Record<string, [string, string, string]> = {
-  arcanist: ['Herald of the Tome', 'Soldier of Apocrypha', 'Curative Runeforms'],
-  necromancer: ['Grave Lord', 'Bone Tyrant', 'Living Death'],
-  warden: ['Animal Companions', 'Green Balance', "Winter's Embrace"],
-  templar: ['Aedric Spear', "Dawn's Wrath", 'Restoring Light'],
-  nightblade: ['Assassination', 'Shadow', 'Siphoning'],
-  dragonknight: ['Ardent Flame', 'Draconic Power', 'Earthen Heart'],
-  sorcerer: ['Dark Magic', 'Daedric Summoning', 'Storm Calling'],
-};
-
-const CLASS_SUBLINES_SHORT: Record<string, [string, string, string]> = {
-  arcanist: ['Herald', 'Soldier', 'Curative'],
-  necromancer: ['Grave', 'Bone', 'Living'],
-  warden: ['Animal', 'Green', 'Winter'],
-  templar: ['Aedric', "Dawn's", 'Restoring'],
-  nightblade: ['Assassin', 'Shadow', 'Siphon'],
-  dragonknight: ['Flame', 'Draconic', 'Earthen'],
-  sorcerer: ['Dark', 'Daedric', 'Storm'],
-};
-
-function parseClasses(input?: string | null): string[] {
-  const raw = (input || '').trim();
-  if (!raw) return [];
-  // Split on common delimiters that may separate multiple classes
-  const parts = raw
-    .split(/[\\/|,•]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return (parts.length ? parts : [raw]).slice(0, 3);
-}
-
 const CLASS_ALIASES: Record<string, string> = {
   dragonknight: 'dragonknight',
   'dragon knight': 'dragonknight',
