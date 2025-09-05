@@ -8,6 +8,8 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { ModernFeedbackFab } from './components/BugReportDialog';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
+import { LoggerDebugButton } from './components/LoggerDebugButton';
+import { LoggerProvider } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { AppLayout } from './layouts/AppLayout';
@@ -63,17 +65,29 @@ const App: React.FC = () => {
   }, []);
 
   return (
-    <ReduxProvider store={store}>
-      <PersistGate loading={<LoadingFallback />} persistor={persistor}>
-        <AuthProvider>
-          <EsoLogsClientProvider>
-            <AppRoutes />
-            {/* Add floating bug report button in production */}
-            <ModernFeedbackFab />
-          </EsoLogsClientProvider>
-        </AuthProvider>
-      </PersistGate>
-    </ReduxProvider>
+    <LoggerProvider
+      config={{
+        level: process.env.NODE_ENV === 'development' ? 0 : 2, // DEBUG in dev, WARN in prod
+        enableConsole: true,
+        enableStorage: true,
+        maxStorageEntries: 1000,
+        contextPrefix: 'ESO-Logger',
+      }}
+    >
+      <ReduxProvider store={store}>
+        <PersistGate loading={<LoadingFallback />} persistor={persistor}>
+          <AuthProvider>
+            <EsoLogsClientProvider>
+              <AppRoutes />
+              {/* Add floating bug report button in production */}
+              <ModernFeedbackFab />
+              {/* Add logger debug button for development and debugging */}
+              <LoggerDebugButton position={{ bottom: 80, right: 16 }} developmentOnly={true} />
+            </EsoLogsClientProvider>
+          </AuthProvider>
+        </PersistGate>
+      </ReduxProvider>
+    </LoggerProvider>
   );
 };
 
