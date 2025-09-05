@@ -10,7 +10,7 @@ import { APPLICATION_NAME } from '@/Constants';
 
 export const ReportFightDetails: React.FC = () => {
   // Get current selected report and fight from context
-  const { reportId, fightId } = useSelectedReportAndFight();
+  const { reportId, fightId, tabId } = useSelectedReportAndFight();
 
   // OPTIMIZED: Single selector instead of multiple useSelector calls
   const { reportData, isReportLoading } = useReportData();
@@ -50,6 +50,7 @@ export const ReportFightDetails: React.FC = () => {
         fightsLoading={isReportLoading}
         reportId={reportId || undefined}
         fightId={fightId || undefined}
+        tabId={tabId || undefined}
       />
     </>
   );

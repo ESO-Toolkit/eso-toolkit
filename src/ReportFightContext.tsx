@@ -4,19 +4,21 @@ import { useParams } from 'react-router-dom';
 interface ReportFightContextType {
   reportId: string | undefined | null;
   fightId: string | undefined | null;
+  tabId: string | undefined | null;
 }
 
 export const ReportFightContext = createContext<ReportFightContextType | undefined>(undefined);
 
 export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { reportId, fightId } = useParams();
+  const { reportId, fightId, tabId } = useParams();
 
   const contextValue = React.useMemo(
     () => ({
       reportId,
       fightId,
+      tabId,
     }),
-    [reportId, fightId],
+    [reportId, fightId, tabId],
   );
 
   return <ReportFightContext.Provider value={contextValue}>{children}</ReportFightContext.Provider>;
@@ -33,10 +35,12 @@ export const useReportFightContext = (): ReportFightContextType => {
 export const useSelectedReportAndFight = (): {
   reportId: string | null;
   fightId: string | null;
+  tabId: string | null;
 } => {
-  const { reportId, fightId } = useReportFightContext();
+  const { reportId, fightId, tabId } = useReportFightContext();
   return {
     reportId: reportId || null,
     fightId: fightId || null,
+    tabId: tabId || null,
   };
 };

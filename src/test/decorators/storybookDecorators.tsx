@@ -68,6 +68,7 @@ const MockReportFightProvider: React.FC<{
     () => ({
       reportId,
       fightId,
+      tabId: null, // Mock doesn't have a specific tab
     }),
     [reportId, fightId],
   );

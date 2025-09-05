@@ -23,6 +23,7 @@ interface ReportFightDetailsViewProps {
   fightsLoading: boolean;
   reportId: string | undefined;
   fightId: string | undefined;
+  tabId: string | undefined;
 }
 
 export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
@@ -30,6 +31,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightsLoading,
   reportId,
   fightId,
+  tabId,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -178,7 +180,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         </Typography>
       </Stack>
 
-      <FightDetails fight={fight} />
+      <FightDetails fight={fight} reportId={reportId} fightId={fightId} tabId={tabId} />
     </Paper>
   );
 };

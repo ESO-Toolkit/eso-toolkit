@@ -28,7 +28,7 @@ import {
 import React from 'react';
 
 import { FightFragment } from '../../graphql/generated';
-import { getSkeletonForTab } from '../../utils/getSkeletonForTab';
+import { getSkeletonForTab, TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
 import { ActorsPanel } from './actors/ActorsPanel';
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
@@ -49,30 +49,6 @@ import { TargetSelector } from './insights/TargetSelector';
 import { PenetrationPanel } from './penetration/PenetrationPanel';
 import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
 import { TalentsGridPanel } from './talents/TalentsGridPanel';
-
-// Tab identifiers as strings
-export const TAB_IDS = {
-  INSIGHTS: 'insights',
-  PLAYERS: 'players',
-  DAMAGE_DONE: 'damage-done',
-  HEALING_DONE: 'healing-done',
-  DEATHS: 'deaths',
-  CRITICAL_DAMAGE: 'critical-damage',
-  PENETRATION: 'penetration',
-  DAMAGE_REDUCTION: 'damage-reduction',
-  LOCATION_HEATMAP: 'location-heatmap',
-  RAW_EVENTS: 'raw-events',
-  TARGET_EVENTS: 'target-events',
-  DIAGNOSTICS: 'diagnostics',
-  ACTORS: 'actors',
-  TALENTS: 'talents',
-  ROTATION_ANALYSIS: 'rotation-analysis',
-  AURAS_OVERVIEW: 'auras-overview',
-  BUFFS_OVERVIEW: 'buffs-overview',
-  DEBUFFS_OVERVIEW: 'debuffs-overview',
-} as const;
-
-export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS];
 
 interface FightDetailsViewProps {
   fight: FightFragment;

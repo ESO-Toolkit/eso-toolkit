@@ -637,7 +637,7 @@ export const LandingPage: React.FC = () => {
       dispatch(clearReport());
 
       if (result.fightId) {
-        navigate(`/report/${result.reportId}/fight/${result.fightId}`);
+        navigate(`/report/${result.reportId}/fight/${result.fightId}/insights`);
       } else {
         navigate(`/report/${result.reportId}`);
       }

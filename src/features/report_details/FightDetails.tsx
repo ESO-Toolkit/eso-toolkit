@@ -1,6 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
 import { selectMasterDataLoadingState } from '../../store/master_data/masterDataSelectors';
@@ -16,15 +16,20 @@ import {
   selectResourceEventsLoading,
 } from '../../store/selectors/eventsSelectors';
 import { RootState } from '../../store/storeWithHistory';
+import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
-import { FightDetailsView, TAB_IDS, TabId } from './FightDetailsView';
+import { FightDetailsView } from './FightDetailsView';
 
 interface FightDetailsProps {
   fight: FightFragment;
+  reportId: string | undefined;
+  fightId: string | undefined;
+  tabId: string | undefined;
 }
 
-export const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fightId, tabId }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   // Select all loading states to determine if any data is still loading
   const isLoading = useSelector((state: RootState) => {
@@ -42,12 +47,11 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
     );
   });
 
-  // Get the selected tab from URL params, defaulting to insights
-  const selectedTabParam = searchParams.get('selectedTabId');
+  // Get experimental tab setting from search params (this stays as a search param)
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
 
   // Convert URL param to valid tab ID (handle both old numeric and new string formats)
-  const getValidTabId = (param: string | null, experimental: boolean): TabId => {
+  const getValidTabId = (param: string | null | undefined, experimental: boolean): TabId => {
     if (!param) return TAB_IDS.INSIGHTS;
 
     // Define experimental tabs array
@@ -111,10 +115,10 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
     return TAB_IDS.INSIGHTS;
   };
 
-  const validSelectedTab = getValidTabId(selectedTabParam, showExperimentalTabs);
+  const validSelectedTab = getValidTabId(tabId, showExperimentalTabs);
 
   // Debug what's being passed
-  console.log('FightDetails - selectedTabParam:', selectedTabParam);
+  console.log('FightDetails - tabId:', tabId);
   console.log(
     'FightDetails - validSelectedTab:',
     validSelectedTab,
@@ -124,14 +128,24 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight }) => {
 
   const navigateToTab = React.useCallback(
     (tabId: TabId) => {
-      setSearchParams((prevParams) => {
-        const newParams = new URLSearchParams(prevParams);
-        newParams.set('selectedTabId', tabId);
-        return newParams;
-      });
+      if (!reportId || !fightId) return;
+
+      // Preserve experimental search param if it exists
+      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
+      navigate(`/report/${reportId}/fight/${fightId}/${tabId}${experimentalParam}`);
     },
-    [setSearchParams],
+    [navigate, reportId, fightId, showExperimentalTabs],
   );
+
+  // Redirect to default tab if no tabId is provided
+  React.useEffect(() => {
+    if (!tabId && reportId && fightId) {
+      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
+      navigate(`/report/${reportId}/fight/${fightId}/${TAB_IDS.INSIGHTS}${experimentalParam}`, {
+        replace: true,
+      });
+    }
+  }, [tabId, reportId, fightId, showExperimentalTabs, navigate]);
 
   // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
   React.useEffect(() => {

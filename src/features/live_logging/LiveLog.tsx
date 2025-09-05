@@ -55,6 +55,7 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     () => ({
       reportId: reportId,
       fightId: latestFightId,
+      tabId: null, // Live log doesn't have a specific tab
     }),
     [reportId, latestFightId],
   );
