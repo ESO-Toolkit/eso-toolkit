@@ -50,27 +50,66 @@ import { PenetrationPanel } from './penetration/PenetrationPanel';
 import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
 import { TalentsGridPanel } from './talents/TalentsGridPanel';
 
+// Tab identifiers as strings
+export const TAB_IDS = {
+  INSIGHTS: 'insights',
+  PLAYERS: 'players',
+  DAMAGE_DONE: 'damage-done',
+  HEALING_DONE: 'healing-done',
+  DEATHS: 'deaths',
+  CRITICAL_DAMAGE: 'critical-damage',
+  PENETRATION: 'penetration',
+  DAMAGE_REDUCTION: 'damage-reduction',
+  LOCATION_HEATMAP: 'location-heatmap',
+  RAW_EVENTS: 'raw-events',
+  TARGET_EVENTS: 'target-events',
+  DIAGNOSTICS: 'diagnostics',
+  ACTORS: 'actors',
+  TALENTS: 'talents',
+  ROTATION_ANALYSIS: 'rotation-analysis',
+  AURAS_OVERVIEW: 'auras-overview',
+  BUFFS_OVERVIEW: 'buffs-overview',
+  DEBUFFS_OVERVIEW: 'debuffs-overview',
+} as const;
+
+export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS];
+
 interface FightDetailsViewProps {
   fight: FightFragment;
-  selectedTabId?: number;
-  validSelectedTab: number;
+  selectedTabId?: TabId;
+  isLoading: boolean;
+  onTabChange: (tabId: TabId) => void;
   showExperimentalTabs: boolean;
-  targets: Array<{ id: string; name: string }>;
-  loading: boolean;
-  onNavigateToTab: (tabIdx: number) => void;
-  onToggleExperimentalTabs: () => void;
 }
 
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
-  validSelectedTab,
+  selectedTabId,
+  isLoading,
+  onTabChange,
   showExperimentalTabs,
-  loading,
-  onNavigateToTab,
-  onToggleExperimentalTabs,
 }) => {
+  // Ensure we always have a valid selectedTabId
+  const validSelectedTabId = selectedTabId || TAB_IDS.INSIGHTS;
+
+  // Debug the selectedTabId value
+  console.log(
+    'FightDetailsView render - selectedTabId:',
+    selectedTabId,
+    'type:',
+    typeof selectedTabId,
+  );
+  console.log(
+    'FightDetailsView render - validSelectedTabId:',
+    validSelectedTabId,
+    'type:',
+    typeof validSelectedTabId,
+  );
+  console.log('Expected TAB_IDS.INSIGHTS:', TAB_IDS.INSIGHTS);
+  console.log('Are they equal?', validSelectedTabId === TAB_IDS.INSIGHTS);
+
   // Only render content when events for the current fight are loaded
-  if (loading) {
+  if (isLoading) {
     return (
       <Box mt={2}>
         {/* Target Selection */}
@@ -108,7 +147,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         </Box>
 
         {/* Content area - show appropriate skeleton for each tab */}
-        {getSkeletonForTab(validSelectedTab, false)}
+        {getSkeletonForTab(selectedTabId, false)}
       </Box>
     );
   }
@@ -134,18 +173,16 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         }}
       >
         <Tabs
-          key={showExperimentalTabs ? 'experimental' : 'normal'}
-          value={validSelectedTab}
-          onChange={(_, v) => onNavigateToTab(v)}
+          value={validSelectedTabId}
+          onChange={(_, v) => {
+            console.log('Tab clicked, value:', v, 'type:', typeof v);
+            onTabChange(v as TabId);
+          }}
           sx={{
             minWidth: 'auto',
             flexGrow: 1,
             minHeight: 'auto',
             overflow: 'visible !important',
-            '& .MuiTabs-indicator': {
-              backgroundColor: '#406374',
-              transition: 'all 300ms cubic-bezier(0.4, 0, 0.2, 1) 0ms',
-            },
             '& .MuiTabs-flexContainer': {
               gap: '8px',
               justifyContent: 'flex-start',
@@ -184,107 +221,169 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           scrollButtons="auto"
           allowScrollButtonsMobile
         >
-          <Tooltip title="Insights">
-            <Tab icon={<InsightsIcon />} />
-          </Tooltip>
-          <Tooltip title="Players">
-            <Tab icon={<PeopleIcon />} />
-          </Tooltip>
-          <Tooltip title="Damage Done">
-            <Tab
-              icon={
+          <Tab
+            value={TAB_IDS.INSIGHTS}
+            icon={
+              <Tooltip title="Insights">
+                <InsightsIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.PLAYERS}
+            icon={
+              <Tooltip title="Players">
+                <PeopleIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.DAMAGE_DONE}
+            icon={
+              <Tooltip title="Damage Done">
                 <Icon
                   baseClassName="material-symbols-outlined"
                   sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
                 >
                   swords
                 </Icon>
-              }
-            />
-          </Tooltip>
-          <Tooltip title="Healing Done">
-            <Tab icon={<HealingIcon />} />
-          </Tooltip>
-          <Tooltip title="Deaths">
-            <Tab
-              icon={
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.HEALING_DONE}
+            icon={
+              <Tooltip title="Healing Done">
+                <HealingIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.DEATHS}
+            icon={
+              <Tooltip title="Deaths">
                 <Icon
                   baseClassName="material-symbols-outlined"
                   sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
                 >
                   skull
                 </Icon>
-              }
-            />
-          </Tooltip>
-          <Tooltip title="Critical Damage">
-            <Tab icon={<WhatshotIcon />} />
-          </Tooltip>
-          <Tooltip title="Penetration">
-            <Tab icon={<SecurityIcon />} />
-          </Tooltip>
-          <Tooltip title="Damage Reduction">
-            <Tab icon={<ShieldIcon />} />
-          </Tooltip>
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.CRITICAL_DAMAGE}
+            icon={
+              <Tooltip title="Critical Damage">
+                <WhatshotIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.PENETRATION}
+            icon={
+              <Tooltip title="Penetration">
+                <SecurityIcon />
+              </Tooltip>
+            }
+          />
+          <Tab
+            value={TAB_IDS.DAMAGE_REDUCTION}
+            icon={
+              <Tooltip title="Damage Reduction">
+                <ShieldIcon />
+              </Tooltip>
+            }
+          />
 
           {showExperimentalTabs && (
-            <Tooltip title="Location Heatmap">
-              <Tab icon={<MapIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Raw Events">
-              <Tab icon={<ListIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Target Events">
-              <Tab icon={<GpsFixedIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Diagnostics">
-              <Tab icon={<BugReportIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Actors">
-              <Tab icon={<Person />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Talents">
-              <Tab icon={<StarIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Rotation Analysis">
-              <Tab icon={<RepeatIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Auras Overview">
-              <Tab icon={<AutoAwesomeIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Buffs Overview">
-              <Tab icon={<FlareIcon />} />
-            </Tooltip>
-          )}
-          {showExperimentalTabs && (
-            <Tooltip title="Debuffs Overview">
+            <>
               <Tab
+                value={TAB_IDS.LOCATION_HEATMAP}
                 icon={
-                  <Icon
-                    baseClassName="material-symbols-outlined"
-                    sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
-                  >
-                    shield_with_heart
-                  </Icon>
+                  <Tooltip title="Location Heatmap">
+                    <MapIcon />
+                  </Tooltip>
                 }
               />
-            </Tooltip>
+              <Tab
+                value={TAB_IDS.RAW_EVENTS}
+                icon={
+                  <Tooltip title="Raw Events">
+                    <ListIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.TARGET_EVENTS}
+                icon={
+                  <Tooltip title="Target Events">
+                    <GpsFixedIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.DIAGNOSTICS}
+                icon={
+                  <Tooltip title="Diagnostics">
+                    <BugReportIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.ACTORS}
+                icon={
+                  <Tooltip title="Actors">
+                    <Person />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.TALENTS}
+                icon={
+                  <Tooltip title="Talents">
+                    <StarIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.ROTATION_ANALYSIS}
+                icon={
+                  <Tooltip title="Rotation Analysis">
+                    <RepeatIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.AURAS_OVERVIEW}
+                icon={
+                  <Tooltip title="Auras Overview">
+                    <AutoAwesomeIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.BUFFS_OVERVIEW}
+                icon={
+                  <Tooltip title="Buffs Overview">
+                    <FlareIcon />
+                  </Tooltip>
+                }
+              />
+              <Tab
+                value={TAB_IDS.DEBUFFS_OVERVIEW}
+                icon={
+                  <Tooltip title="Debuffs Overview">
+                    <Icon
+                      baseClassName="material-symbols-outlined"
+                      sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                    >
+                      shield_with_heart
+                    </Icon>
+                  </Tooltip>
+                }
+              />
+            </>
           )}
         </Tabs>
 
@@ -301,13 +400,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           }
         >
           <FormControlLabel
-            control={
-              <Switch
-                checked={showExperimentalTabs}
-                onChange={onToggleExperimentalTabs}
-                size="small"
-              />
-            }
+            control={<Switch checked={showExperimentalTabs} size="small" />}
             label={
               <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
                 🧪
@@ -324,77 +417,77 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
       {/* Tab Content */}
       <Box sx={{ mt: 2 }}>
-        <Box sx={{ display: validSelectedTab === 0 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.INSIGHTS ? 'block' : 'none' }}>
           <InsightsPanel fight={fight} />
         </Box>
-        <Box sx={{ display: validSelectedTab === 1 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.PLAYERS ? 'block' : 'none' }}>
           <PlayersPanel />
         </Box>
-        <Box sx={{ display: validSelectedTab === 2 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.DAMAGE_DONE ? 'block' : 'none' }}>
           <DamageDonePanel />
         </Box>
-        <Box sx={{ display: validSelectedTab === 3 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.HEALING_DONE ? 'block' : 'none' }}>
           <HealingDonePanel fight={fight} />
         </Box>
-        <Box sx={{ display: validSelectedTab === 4 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.DEATHS ? 'block' : 'none' }}>
           <DeathEventPanel fight={fight} />
         </Box>
-        <Box sx={{ display: validSelectedTab === 5 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.CRITICAL_DAMAGE ? 'block' : 'none' }}>
           <CriticalDamagePanel />
         </Box>
-        <Box sx={{ display: validSelectedTab === 6 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.PENETRATION ? 'block' : 'none' }}>
           <PenetrationPanel fight={fight} />
         </Box>
-        <Box sx={{ display: validSelectedTab === 7 ? 'block' : 'none' }}>
+        <Box sx={{ display: selectedTabId === TAB_IDS.DAMAGE_REDUCTION ? 'block' : 'none' }}>
           <DamageReductionPanel fight={fight} />
         </Box>
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 8 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.LOCATION_HEATMAP ? 'block' : 'none' }}>
             <LocationHeatmapPanel fight={fight} />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 9 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.RAW_EVENTS ? 'block' : 'none' }}>
             <EventsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 10 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.TARGET_EVENTS ? 'block' : 'none' }}>
             <TargetEventsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 11 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.DIAGNOSTICS ? 'block' : 'none' }}>
             <DiagnosticsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 12 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.ACTORS ? 'block' : 'none' }}>
             <ActorsPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 13 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.TALENTS ? 'block' : 'none' }}>
             <TalentsGridPanel fight={fight} />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 14 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.ROTATION_ANALYSIS ? 'block' : 'none' }}>
             <RotationAnalysisPanel fight={fight} />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 15 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.AURAS_OVERVIEW ? 'block' : 'none' }}>
             <AurasPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 16 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.BUFFS_OVERVIEW ? 'block' : 'none' }}>
             <BuffsOverviewPanel />
           </Box>
         )}
         {showExperimentalTabs && (
-          <Box sx={{ display: validSelectedTab === 17 ? 'block' : 'none' }}>
+          <Box sx={{ display: selectedTabId === TAB_IDS.DEBUFFS_OVERVIEW ? 'block' : 'none' }}>
             <DebuffsOverviewPanel />
           </Box>
         )}

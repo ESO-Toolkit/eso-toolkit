@@ -21,7 +21,6 @@ import { FightDetails } from './FightDetails';
 interface ReportFightDetailsViewProps {
   fight: FightFragment | undefined | null;
   fightsLoading: boolean;
-  selectedTabId?: number;
   reportId: string | undefined;
   fightId: string | undefined;
 }
@@ -29,7 +28,6 @@ interface ReportFightDetailsViewProps {
 export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fight,
   fightsLoading,
-  selectedTabId,
   reportId,
   fightId,
 }) => {
@@ -180,7 +178,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         </Typography>
       </Stack>
 
-      <FightDetails fight={fight} selectedTabId={selectedTabId} />
+      <FightDetails fight={fight} />
     </Paper>
   );
 };

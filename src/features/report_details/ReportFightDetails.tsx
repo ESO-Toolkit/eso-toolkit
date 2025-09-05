@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
-import { useReportData, useSelectedTabId } from '../../hooks';
+import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
@@ -42,16 +42,12 @@ export const ReportFightDetails: React.FC = () => {
     }
   }, [reportData?.title]);
 
-  // Get selectedTabId from UI state and URL query params
-  const selectedTabId = useSelectedTabId();
-
   return (
     <>
       {metaTags && <DynamicMetaTags {...metaTags} />}
       <ReportFightDetailsView
         fight={fight}
         fightsLoading={isReportLoading}
-        selectedTabId={selectedTabId ?? undefined}
         reportId={reportId || undefined}
         fightId={fightId || undefined}
       />
