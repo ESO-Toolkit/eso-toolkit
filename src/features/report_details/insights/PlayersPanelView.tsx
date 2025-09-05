@@ -312,7 +312,8 @@ const getGearChipProps = (setName: string, count: number, theme: Theme): Partial
 };
 
 // Detect common ESO food/drink buffs by aura name
-const FOOD_REGEXPS: RegExp[] = [
+// Named foods (specific food items)
+const NAMED_FOOD_REGEXPS: RegExp[] = [
   /Artaeum\s+Takeaway\s+Broth/i,
   /Bewitched\s+Sugar\s+Skulls/i,
   /Clockwork\s+Citrus\s+Filet/i,
@@ -321,13 +322,17 @@ const FOOD_REGEXPS: RegExp[] = [
   /Dubious\s+Camoran\s+Throne/i,
   /Eye\s+Scream/i,
   /Ghastly\s+Eye\s+Bowl/i,
-  /Increase\s+All\s+Primary\s+Stats/i,
-  /Increase\s+Max\s+Health\s+&\s+Magicka/i,
-  /Increase\s+Max\s+Health\s+&\s+Stamina/i,
   /Jewels\s+of\s+Misrule/i,
   /Lava\s+Foot\s+Soup.*Saltrice/i,
   /Smoked\s+Bear\s+Haunch/i,
   /Witchmother.?s\s+Potent\s+Brew/i,
+];
+
+// Generic effect auras (fallback when named foods not found)
+const FOOD_EFFECT_REGEXPS: RegExp[] = [
+  /Increase\s+All\s+Primary\s+Stats/i,
+  /Increase\s+Max\s+Health\s+&\s+Magicka/i,
+  /Increase\s+Max\s+Health\s+&\s+Stamina/i,
 ];
 
 function detectFoodFromAuras(
@@ -335,10 +340,18 @@ function detectFoodFromAuras(
 ): { name: string; id: number } | undefined {
   if (!auras || auras.length === 0) return undefined;
 
+  // First priority: Check for named foods using regex
+  for (const a of auras) {
+    const n = a?.name || '';
+    if (NAMED_FOOD_REGEXPS.some((rx) => rx.test(n))) {
+      return { name: n, id: a.id };
+    }
+  }
+
+  // Second priority: Check against the known food ID sets
   for (const a of auras) {
     const id = a.id;
 
-    // First check against the known food ID sets
     if (
       TRI_STAT_FOOD.has(id) ||
       HEALTH_AND_REGEN_FOOD.has(id) ||
@@ -352,10 +365,10 @@ function detectFoodFromAuras(
     }
   }
 
-  // Fallback to regex matching for foods not in the known sets
+  // Third priority: Fallback to generic effect auras
   for (const a of auras) {
     const n = a?.name || '';
-    if (FOOD_REGEXPS.some((rx) => rx.test(n))) {
+    if (FOOD_EFFECT_REGEXPS.some((rx) => rx.test(n))) {
       return { name: n, id: a.id };
     }
   }
