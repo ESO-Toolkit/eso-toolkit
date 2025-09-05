@@ -118,6 +118,16 @@ const AppRoutes: React.FC = () => {
           <Route element={<AppLayout />}>
             {/* Pass fights as prop via state, fallback to empty array if not present */}
             <Route
+              path="/report/:reportId/fight/:fightId/:tabId"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ReportFightDetails />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
               path="/report/:reportId/fight/:fightId"
               element={
                 <ErrorBoundary>

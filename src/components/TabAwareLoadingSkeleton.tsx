@@ -1,7 +1,7 @@
 import { Box, CircularProgress } from '@mui/material';
 import React from 'react';
 
-import { getSkeletonForTab } from '../utils/getSkeletonForTab';
+import { getSkeletonForTab, TAB_IDS, TabId } from '../utils/getSkeletonForTab';
 
 export const TabAwareLoadingSkeleton: React.FC = () => {
   // Check if we're on a fight details route
@@ -22,11 +22,26 @@ export const TabAwareLoadingSkeleton: React.FC = () => {
   }
 
   // Read from browser URL directly since useSearchParams isn't available during Suspense
-  const getSelectedTabFromURL = (): number => {
-    if (typeof window === 'undefined') return 0;
+  const getSelectedTabFromURL = (): TabId => {
+    if (typeof window === 'undefined') return TAB_IDS.INSIGHTS;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    return Number(urlParams.get('selectedTabId')) || 0;
+    // Parse the URL to get the tab from the path
+    const pathname = window.location.pathname;
+    const pathParts = pathname.split('/');
+
+    // URL structure: /report/:reportId/fight/:fightId/:tabId
+    // So tabId should be at index 5 if the structure is correct
+    if (pathParts.length >= 6 && pathParts[1] === 'report' && pathParts[3] === 'fight') {
+      const tabFromUrl = pathParts[5];
+
+      // Check if it's a valid tab ID
+      const allValidTabs = Object.values(TAB_IDS);
+      if (allValidTabs.includes(tabFromUrl as TabId)) {
+        return tabFromUrl as TabId;
+      }
+    }
+
+    return TAB_IDS.INSIGHTS;
   };
 
   const selectedTabId = getSelectedTabFromURL();

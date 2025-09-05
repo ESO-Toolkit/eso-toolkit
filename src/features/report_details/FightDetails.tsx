@@ -1,120 +1,193 @@
 import React from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSelector } from 'react-redux';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { FightFragment, ReportActorFragment } from '../../graphql/generated';
-import { useReportMasterData } from '../../hooks';
+import { FightFragment } from '../../graphql/generated';
+import { selectMasterDataLoadingState } from '../../store/master_data/masterDataSelectors';
+import {
+  selectDamageEventsLoading,
+  selectHealingEventsLoading,
+  selectFriendlyBuffEventsLoading,
+  selectHostileBuffEventsLoading,
+  selectDeathEventsLoading,
+  selectCombatantInfoEventsLoading,
+  selectDebuffEventsLoading,
+  selectCastEventsLoading,
+  selectResourceEventsLoading,
+} from '../../store/selectors/eventsSelectors';
+import { RootState } from '../../store/storeWithHistory';
+import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
 import { FightDetailsView } from './FightDetailsView';
 
 interface FightDetailsProps {
   fight: FightFragment;
-  selectedTabId?: number;
+  reportId: string | undefined;
+  fightId: string | undefined;
+  tabId: string | undefined;
 }
 
-export const FightDetails: React.FC<FightDetailsProps> = ({ fight, selectedTabId }) => {
-  const [searchParams, setSearchParams] = useSearchParams();
+export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fightId, tabId }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
-  // Use the new hooks for data fetching
+  // Select all loading states to determine if any data is still loading
+  const isLoading = useSelector((state: RootState) => {
+    return (
+      selectMasterDataLoadingState(state) ||
+      selectDamageEventsLoading(state) ||
+      selectHealingEventsLoading(state) ||
+      selectFriendlyBuffEventsLoading(state) ||
+      selectHostileBuffEventsLoading(state) ||
+      selectDeathEventsLoading(state) ||
+      selectCombatantInfoEventsLoading(state) ||
+      selectDebuffEventsLoading(state) ||
+      selectCastEventsLoading(state) ||
+      selectResourceEventsLoading(state)
+    );
+  });
 
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-
-  const isLoading = isMasterDataLoading;
-
-  const selectedTab = Number(searchParams.get('selectedTabId')) || 0;
+  // Get experimental tab setting from search params (this stays as a search param)
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
 
-  const navigateToTab = React.useCallback(
-    (tabIdx: number) => {
-      setSearchParams((prevParams) => {
-        const newParams = new URLSearchParams(prevParams);
-        newParams.set('selectedTabId', String(tabIdx));
-        return newParams;
-      });
-    },
-    [setSearchParams],
+  // Convert URL param to valid tab ID (handle both old numeric and new string formats)
+  const getValidTabId = (param: string | null | undefined, experimental: boolean): TabId => {
+    if (!param) return TAB_IDS.INSIGHTS;
+
+    // Define experimental tabs array
+    const experimentalTabs: TabId[] = [
+      TAB_IDS.LOCATION_HEATMAP,
+      TAB_IDS.RAW_EVENTS,
+      TAB_IDS.TARGET_EVENTS,
+      TAB_IDS.DIAGNOSTICS,
+      TAB_IDS.ACTORS,
+      TAB_IDS.TALENTS,
+      TAB_IDS.ROTATION_ANALYSIS,
+      TAB_IDS.AURAS_OVERVIEW,
+      TAB_IDS.BUFFS_OVERVIEW,
+      TAB_IDS.DEBUFFS_OVERVIEW,
+    ];
+
+    // Handle legacy numeric params
+    if (/^\d+$/.test(param)) {
+      const numericId = parseInt(param, 10);
+      const legacyMapping: Record<number, TabId> = {
+        0: TAB_IDS.INSIGHTS,
+        1: TAB_IDS.PLAYERS,
+        2: TAB_IDS.DAMAGE_DONE,
+        3: TAB_IDS.HEALING_DONE,
+        4: TAB_IDS.DEATHS,
+        5: TAB_IDS.CRITICAL_DAMAGE,
+        6: TAB_IDS.PENETRATION,
+        7: TAB_IDS.DAMAGE_REDUCTION,
+        8: TAB_IDS.LOCATION_HEATMAP,
+        9: TAB_IDS.RAW_EVENTS,
+        10: TAB_IDS.TARGET_EVENTS,
+        11: TAB_IDS.DIAGNOSTICS,
+        12: TAB_IDS.ACTORS,
+        13: TAB_IDS.TALENTS,
+        14: TAB_IDS.ROTATION_ANALYSIS,
+        15: TAB_IDS.AURAS_OVERVIEW,
+        16: TAB_IDS.BUFFS_OVERVIEW,
+        17: TAB_IDS.DEBUFFS_OVERVIEW,
+      };
+      const mappedTab = legacyMapping[numericId];
+      if (mappedTab) {
+        // Check if experimental tab is allowed
+        if (experimentalTabs.includes(mappedTab) && !experimental) {
+          return TAB_IDS.INSIGHTS;
+        }
+        return mappedTab;
+      }
+    }
+
+    // Handle string tab IDs
+    const allValidTabs = Object.values(TAB_IDS);
+    if (allValidTabs.includes(param as TabId)) {
+      const tabId = param as TabId;
+      // Check if experimental tab is allowed
+      if (experimentalTabs.includes(tabId) && !experimental) {
+        return TAB_IDS.INSIGHTS;
+      }
+      return tabId;
+    }
+
+    return TAB_IDS.INSIGHTS;
+  };
+
+  const validSelectedTab = getValidTabId(tabId, showExperimentalTabs);
+
+  // Debug what's being passed
+  console.log('FightDetails - tabId:', tabId);
+  console.log(
+    'FightDetails - validSelectedTab:',
+    validSelectedTab,
+    'type:',
+    typeof validSelectedTab,
   );
 
-  // Calculate total number of available tabs
-  const totalTabs = showExperimentalTabs ? 18 : 8;
+  const navigateToTab = React.useCallback(
+    (tabId: TabId) => {
+      if (!reportId || !fightId) return;
 
-  // Ensure selectedTab is valid for current tab count
-  const validSelectedTab = Math.min(selectedTab, totalTabs - 1);
+      // Preserve experimental search param if it exists
+      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
+      navigate(`/report/${reportId}/fight/${fightId}/${tabId}${experimentalParam}`);
+    },
+    [navigate, reportId, fightId, showExperimentalTabs],
+  );
+
+  // Redirect to default tab if no tabId is provided
+  React.useEffect(() => {
+    if (!tabId && reportId && fightId) {
+      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
+      navigate(`/report/${reportId}/fight/${fightId}/${TAB_IDS.INSIGHTS}${experimentalParam}`, {
+        replace: true,
+      });
+    }
+  }, [tabId, reportId, fightId, showExperimentalTabs, navigate]);
 
   // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
   React.useEffect(() => {
-    if (!showExperimentalTabs && selectedTab >= 8) {
-      navigateToTab(0);
-    }
-  }, [showExperimentalTabs, selectedTab, navigateToTab]);
-
-  // Get available targets (NPCs/Bosses that participated in this fight)
-  // OPTIMIZED: Only calculate when experimental tabs are enabled since that's when targets are used
-  const targets = React.useMemo(() => {
-    if (!fight.enemyNPCs) {
-      return [];
-    }
-
-    const rtn: ReportActorFragment[] = [];
-
-    for (const npc of Object.values(fight.enemyNPCs)) {
-      const actor = npc?.id ? reportMasterData.actorsById[npc.id] : undefined;
-
-      if (actor?.id && actor?.name) {
-        rtn.push(actor);
+    if (!showExperimentalTabs) {
+      const experimentalTabs: TabId[] = [
+        TAB_IDS.LOCATION_HEATMAP,
+        TAB_IDS.RAW_EVENTS,
+        TAB_IDS.TARGET_EVENTS,
+        TAB_IDS.DIAGNOSTICS,
+        TAB_IDS.ACTORS,
+        TAB_IDS.TALENTS,
+        TAB_IDS.ROTATION_ANALYSIS,
+        TAB_IDS.AURAS_OVERVIEW,
+        TAB_IDS.BUFFS_OVERVIEW,
+        TAB_IDS.DEBUFFS_OVERVIEW,
+      ];
+      if (experimentalTabs.includes(validSelectedTab)) {
+        navigateToTab(TAB_IDS.INSIGHTS);
       }
     }
-
-    return rtn;
-  }, [reportMasterData.actorsById, fight.enemyNPCs]);
-
-  const toggleExperimentalTabs = React.useCallback(() => {
-    setSearchParams((prevParams) => {
-      const newParams = new URLSearchParams(prevParams);
-      if (showExperimentalTabs) {
-        newParams.delete('experimental');
-      } else {
-        newParams.set('experimental', 'true');
-      }
-      return newParams;
-    });
-  }, [showExperimentalTabs, setSearchParams]);
-
-  const targetOptions = React.useMemo(
-    () =>
-      targets
-        .map((t) => ({ id: String(t.id || ''), name: t.name || '' }))
-        .filter((t) => t.id && t.name),
-    [targets],
-  );
+  }, [showExperimentalTabs, validSelectedTab, navigateToTab]);
 
   // Only render content when master data is loaded
   if (isLoading) {
     return (
       <FightDetailsView
         fight={fight}
-        selectedTabId={selectedTabId}
-        validSelectedTab={validSelectedTab}
+        selectedTabId={validSelectedTab}
+        isLoading={isLoading}
+        onTabChange={navigateToTab}
         showExperimentalTabs={showExperimentalTabs}
-        targets={targetOptions}
-        loading={isLoading}
-        onNavigateToTab={navigateToTab}
-        onToggleExperimentalTabs={toggleExperimentalTabs}
       />
     );
   }
 
-  // Get players and masterData actors at top level for hooks compliance
-
   return (
     <FightDetailsView
+      selectedTabId={validSelectedTab}
       fight={fight}
-      selectedTabId={selectedTabId}
-      validSelectedTab={validSelectedTab}
+      isLoading={isLoading}
+      onTabChange={navigateToTab}
       showExperimentalTabs={showExperimentalTabs}
-      targets={targetOptions}
-      loading={false}
-      onNavigateToTab={navigateToTab}
-      onToggleExperimentalTabs={toggleExperimentalTabs}
     />
   );
 };

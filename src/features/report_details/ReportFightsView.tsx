@@ -486,7 +486,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   const handleFightSelect = React.useCallback(
     (id: number) => {
-      navigate(`/report/${reportId}/fight/${id}`);
+      navigate(`/report/${reportId}/fight/${id}/insights`);
     },
     [navigate, reportId],
   );
