@@ -35,17 +35,7 @@ export function useCombatantInfoEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    console.log('🔍 useCombatantInfoEvents effect triggered', {
-      reportId,
-      hasSelectedFight: !!selectedFight,
-    });
     if (reportId && selectedFight) {
-      console.log(
-        '📡 Dispatching fetchCombatantInfoEvents for reportId:',
-        reportId,
-        'fightId:',
-        selectedFight.id,
-      );
       dispatch(
         fetchCombatantInfoEvents({
           reportCode: reportId,

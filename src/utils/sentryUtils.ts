@@ -1,7 +1,14 @@
 import * as Sentry from '@sentry/react';
 
 import { SENTRY_CONFIG, ManualBugReport } from '../config/sentryConfig';
+import { Logger, LogLevel } from '../contexts/LoggerContext';
 import { RootState } from '../store/storeWithHistory';
+
+// Create a logger instance for Sentry utilities
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'Sentry',
+});
 
 // Extended Navigator interface for connection info
 interface ExtendedNavigator extends Navigator {
@@ -27,7 +34,7 @@ interface ExtendedPerformance extends Performance {
 export const initializeSentry = (): void => {
   // Only initialize Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
-    console.log('Sentry disabled - not in production build');
+    logger.info('Sentry disabled - not in production build');
     return;
   }
 
@@ -188,10 +195,8 @@ export const reportError = (
   // Only report errors to Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
     // In development, just log to console
-    console.error('Error (not sent to Sentry in development):', error);
-    if (context) {
-      console.error('Context:', context);
-    }
+    const errorObj = error instanceof Error ? error : new Error(String(error));
+    logger.error('Error (not sent to Sentry in development)', errorObj, { context });
     return;
   }
 
@@ -230,7 +235,7 @@ export const submitManualBugReport = (
   // Only submit bug reports to Sentry in production builds
   if (process.env.NODE_ENV !== 'production') {
     // In development, just log to console
-    console.warn('Manual bug report (not sent to Sentry in development):', bugReport);
+    logger.warn('Manual bug report (not sent to Sentry in development)', { bugReport });
     return;
   }
 

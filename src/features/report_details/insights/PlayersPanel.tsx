@@ -504,19 +504,8 @@ export const PlayersPanel: React.FC = () => {
       !abilitiesById ||
       !playerData?.playersById
     ) {
-      console.log('🔍 Missing data for scribing skills extraction:', {
-        friendlyBuffEvents: !!friendlyBuffEvents,
-        debuffEvents: !!debuffEvents,
-        damageEvents: !!damageEvents,
-        resourceEvents: !!resourceEvents,
-        castEvents: !!castEvents,
-        abilitiesById: !!abilitiesById,
-        playerData: !!playerData?.playersById,
-      });
       return {};
     }
-
-    console.log('🎯 Analyzing scribing skills using butility function');
 
     // Create the player details structure expected by the utility function
     const playerDetailsData = {
@@ -567,8 +556,6 @@ export const PlayersPanel: React.FC = () => {
       healingEvents,
       castEvents.filter((e) => e.type === 'cast') as CastEvent[],
     );
-
-    console.log('🪶 Raw scribing analysis results:', allPlayersScribingResults);
 
     // Transform the results to match the expected GrimoireData structure
     const result: Record<string, GrimoireData[]> = {};
@@ -645,8 +632,6 @@ export const PlayersPanel: React.FC = () => {
       result[playerIdStr] = grimoireDataList;
     });
 
-    console.log('🪶 Scribing skills extraction result (transformed to GrimoireData):', result);
-
     return result;
   }, [
     friendlyBuffEvents,
@@ -695,7 +680,6 @@ export const PlayersPanel: React.FC = () => {
       result[playerId] = analysis;
     });
 
-    console.log({ classAnalysisByPlayer: result });
     return result;
   }, [
     abilitiesById,

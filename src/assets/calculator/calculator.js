@@ -1,3 +1,5 @@
+/* eslint-disable */
+// Legacy third-party calculator component - ESLint disabled to preserve original functionality
 // Data structure
 // Tooltip dictionary for non-gear buffs, passives & CP stars
 const TOOLTIP_DICT = {

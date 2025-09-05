@@ -27,8 +27,6 @@ export const CriticalDamagePanel: React.FC = () => {
       .sort((a, b) => a.role.localeCompare(b.role));
   }, [playerData?.playersById]);
 
-  console.log({ criticalDamageData });
-
   // Track which panels are expanded
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
 

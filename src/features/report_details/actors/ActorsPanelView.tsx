@@ -36,7 +36,6 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
   const copyPlayerData = React.useCallback(
     async (actorId: string | number) => {
       if (!playersById) {
-        console.log('No players data available');
         return;
       }
 
@@ -44,9 +43,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (playerData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(playerData, null, 2));
-          console.log('Player data copied to clipboard');
         } catch (err) {
-          console.error('Failed to copy player data:', err);
           // Fallback: create a temporary textarea element
           const textArea = document.createElement('textarea');
           textArea.value = JSON.stringify(playerData, null, 2);
@@ -56,7 +53,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
             // eslint-disable-next-line deprecation/deprecation
             document.execCommand('copy');
           } catch (err) {
-            console.warn('Copy command failed:', err);
+            // Copy command failed - fallback already created textarea
           }
           document.body.removeChild(textArea);
         }
@@ -76,9 +73,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (actorData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(actorData, null, 2));
-          console.log('Actor data copied to clipboard');
         } catch (err) {
-          console.error('Failed to copy actor data:', err);
           // Fallback: create a temporary textarea element
           const textArea = document.createElement('textarea');
           textArea.value = JSON.stringify(actorData, null, 2);
@@ -88,7 +83,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
             // eslint-disable-next-line deprecation/deprecation
             document.execCommand('copy');
           } catch (err) {
-            console.warn('Copy command failed:', err);
+            // Copy command failed - fallback already created textarea
           }
           document.body.removeChild(textArea);
         }
@@ -106,17 +101,12 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       );
 
       if (playerCombatantInfoEvents.length === 0) {
-        console.log('No combatant info events found for this player');
         return;
       }
 
       try {
         await navigator.clipboard.writeText(JSON.stringify(playerCombatantInfoEvents, null, 2));
-        console.log(
-          `${playerCombatantInfoEvents.length} combatant info event(s) copied to clipboard`,
-        );
       } catch (err) {
-        console.error('Failed to copy combatant info events:', err);
         // Fallback: create a temporary textarea element
         const textArea = document.createElement('textarea');
         textArea.value = JSON.stringify(playerCombatantInfoEvents, null, 2);
@@ -126,7 +116,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
           // eslint-disable-next-line deprecation/deprecation
           document.execCommand('copy');
         } catch (err) {
-          console.warn('Copy command failed:', err);
+          // Copy command failed - fallback already created textarea
         }
         document.body.removeChild(textArea);
       }

@@ -120,7 +120,6 @@ const combatantInfoEventsSlice = createSlice({
       };
     },
     resetCombatantInfoEventsLoading(state) {
-      console.log('🔄 Resetting stuck combatant info events loading state');
       state.loading = false;
       state.error = null;
     },

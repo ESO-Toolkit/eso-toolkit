@@ -6,6 +6,7 @@
     "createDefaultProgram": false
   },
   "rules": {
+    "no-console": "error",
     "import/no-default-export": "error",
     "deprecation/deprecation": "error",
     "comma-dangle": ["error", "always-multiline"],
@@ -59,6 +60,12 @@
       "files": ["**/*Slice.ts", "**/store/**/*.ts", "src/graphql.d.ts"],
       "rules": {
         "import/no-default-export": "off"
+      }
+    },
+    {
+      "files": ["src/contexts/LoggerContext.tsx"],
+      "rules": {
+        "no-console": "off"
       }
     },
     {

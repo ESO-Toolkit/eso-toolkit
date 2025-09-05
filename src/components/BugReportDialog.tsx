@@ -30,6 +30,7 @@ import type { SxProps } from '@mui/material/styles';
 import React, { useState, useCallback } from 'react';
 
 import { BUG_REPORT_CATEGORIES, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
+import { useLogger } from '../contexts/LoggerContext';
 import { submitManualBugReport, addBreadcrumb } from '../utils/sentryUtils';
 
 interface FeedbackDialogProps {
@@ -202,6 +203,7 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const logger = useLogger();
   const steps = initialType === 'bug' ? getBugSteps() : getFeedbackSteps();
   const isBugReport = initialType === 'bug';
 
@@ -330,7 +332,11 @@ export const FeedbackDialog: React.FC<FeedbackDialogProps> = ({
       setSubmitted(true);
       setActiveStep(steps.length); // Move to success step
     } catch (error) {
-      console.error('Error submitting bug report:', error);
+      if (error instanceof Error) {
+        logger.error('Error submitting bug report', error);
+      } else if (typeof error === 'string') {
+        logger.error('Error submitting bug report: ' + error);
+      }
       // Could add error handling UI here
     } finally {
       setIsSubmitting(false);

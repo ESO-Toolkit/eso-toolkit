@@ -531,9 +531,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ figh
   // Copy ELMS code to clipboard
   const copyELMSCode = React.useCallback(() => {
     const code = generateELMSCode();
-    navigator.clipboard.writeText(code).then(() => {
-      console.log('ELMS code copied to clipboard');
-    });
+    navigator.clipboard.writeText(code);
   }, [generateELMSCode]);
 
   return (

@@ -27,16 +27,9 @@ export function usePlayerData(): {
   const isPlayerDataLoading = useSelector(selectPlayerDataLoadingState);
 
   React.useEffect(() => {
-    console.log('🔍 usePlayerData effect triggered', { reportId, fightId, hasClient: !!client });
     if (reportId && fightId) {
       const fightIdNumber = parseInt(fightId, 10);
       if (!isNaN(fightIdNumber)) {
-        console.log(
-          '📡 Dispatching fetchPlayerData for reportId:',
-          reportId,
-          'fightId:',
-          fightIdNumber,
-        );
         dispatch(fetchPlayerData({ reportCode: reportId, fightId: fightIdNumber, client }));
       }
     }
@@ -46,7 +39,6 @@ export function usePlayerData(): {
   React.useEffect(() => {
     if (isPlayerDataLoading && reportId && fightId) {
       const timeout = setTimeout(() => {
-        console.warn('⚠️ Player data loading timeout detected - resetting loading state');
         dispatch(resetPlayerDataLoading());
       }, 10000); // 10 second timeout
 

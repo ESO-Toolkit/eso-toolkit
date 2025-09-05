@@ -3,7 +3,14 @@ import { Box, Button, Paper, Typography, Stack, Alert, Collapse } from '@mui/mat
 import * as Sentry from '@sentry/react';
 import React, { Component, ReactNode } from 'react';
 
+import { Logger, LogLevel } from '../contexts/LoggerContext';
 import { reportError, addBreadcrumb } from '../utils/sentryUtils';
+
+// Create a logger instance for ErrorBoundary
+const logger = new Logger({
+  level: LogLevel.ERROR,
+  contextPrefix: 'ErrorBoundary',
+});
 
 interface ErrorBoundaryState {
   hasError: boolean;
@@ -55,8 +62,11 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
 
     // Log to console in development
     if (process.env.NODE_ENV === 'development') {
-      console.error('Error Boundary caught an error:', error);
-      console.error('Component Stack:', errorInfo.componentStack);
+      logger.error('Error Boundary caught an error', error, {
+        message: error.message,
+        stack: error.stack,
+        componentStack: errorInfo.componentStack,
+      });
     }
 
     // Only report error to Sentry in production builds

@@ -96,14 +96,6 @@ export const fetchReportMasterData = createAsyncThunk<
     condition: ({ reportCode }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
 
-      console.log('🧪 Checking thunk condition for reportCode:', reportCode, {
-        lastFetchedReportId: state.masterData.cacheMetadata.lastFetchedReportId,
-        loaded: state.masterData.loaded,
-        loading: state.masterData.loading,
-        actorCount: Object.keys(state.masterData.actorsById).length,
-        abilityCount: Object.keys(state.masterData.abilitiesById).length,
-      });
-
       // Check if we already have master data for this report
       if (
         state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
@@ -111,16 +103,13 @@ export const fetchReportMasterData = createAsyncThunk<
         Object.keys(state.masterData.abilitiesById).length > 0 &&
         Object.keys(state.masterData.actorsById).length > 0
       ) {
-        console.log('✋ Preventing thunk execution - data is cached');
         return false; // Prevent thunk execution - data is cached
       }
 
       if (state.masterData.loading) {
-        console.log('✋ Preventing thunk execution - already loading');
         return false; // Prevent duplicate execution
       }
 
-      console.log('✅ Allowing thunk execution');
       return true; // Allow thunk execution
     },
   },
@@ -146,7 +135,6 @@ const masterDataSlice = createSlice({
     },
     // Add action to reset stuck loading state
     resetLoadingState(state) {
-      console.log('🔄 Resetting stuck loading state');
       state.loading = false;
       state.error = null;
     },
@@ -154,7 +142,6 @@ const masterDataSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchReportMasterData.pending, (state) => {
-        console.log('🔄 fetchReportMasterData.pending - Setting loading to true');
         state.loading = true;
         state.error = null;
         state.loaded = false;
@@ -162,11 +149,6 @@ const masterDataSlice = createSlice({
       .addCase(
         fetchReportMasterData.fulfilled,
         (state, action: PayloadAction<MasterDataPayload>) => {
-          console.log('✅ fetchReportMasterData.fulfilled - Loading complete', {
-            actors: action.payload.actors.length,
-            abilities: action.payload.abilities.length,
-            reportCode: action.payload.reportCode,
-          });
           state.abilitiesById = action.payload.abilitiesById;
           state.actorsById = action.payload.actorsById;
           state.loading = false;
@@ -180,9 +162,6 @@ const masterDataSlice = createSlice({
         },
       )
       .addCase(fetchReportMasterData.rejected, (state, action) => {
-        console.error('❌ fetchReportMasterData.rejected - Error occurred', {
-          error: action.payload || action.error?.message || 'Unknown error',
-        });
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch master data';
       });

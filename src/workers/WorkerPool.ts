@@ -1,5 +1,7 @@
 import { proxy, releaseProxy } from 'comlink';
 
+import { ILogger } from '../contexts/LoggerContext';
+
 import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
 import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
@@ -17,6 +19,7 @@ export class WorkerPool {
   private workers: Map<string, WorkerInfo> = new Map();
   private taskQueue: WorkerTask<unknown, unknown>[] = [];
   private pendingTasks: Map<string, WorkerTask<unknown, unknown>> = new Map();
+  private logger: ILogger | null = null;
   private stats: WorkerStats = {
     totalTasks: 0,
     completedTasks: 0,
@@ -39,6 +42,18 @@ export class WorkerPool {
       enableLogging: process.env.NODE_ENV === 'development',
       ...config,
     };
+
+    // Set the logger from config if provided
+    this.logger = config.logger || null;
+
+    // Log initialization
+    if (this.logger) {
+      this.logger.info('WorkerPool initialized', {
+        maxWorkers: this.config.maxWorkers,
+        idleTimeout: this.config.idleTimeout,
+        taskTimeout: this.config.taskTimeout,
+      });
+    }
 
     // Set up periodic cleanup of idle workers
     this.cleanupInterval = window.setInterval(
@@ -73,8 +88,8 @@ export class WorkerPool {
       this.taskQueue.push(task);
       this.updateStats();
 
-      if (this.config.enableLogging) {
-        console.log(`[WorkerPool] Queued task ${taskId} (${taskType})`);
+      if (this.config.enableLogging && this.logger) {
+        this.logger.debug(`Queued task ${taskId} (${taskType})`, { taskId, taskType, priority });
       }
 
       this.processNextTask();
@@ -119,8 +134,8 @@ export class WorkerPool {
     this.taskQueue.length = 0;
     this.pendingTasks.clear();
 
-    if (this.config.enableLogging) {
-      console.log('[WorkerPool] Worker pool destroyed');
+    if (this.config.enableLogging && this.logger) {
+      this.logger.info('Worker pool destroyed');
     }
   }
 
@@ -186,8 +201,11 @@ export class WorkerPool {
     this.workers.set(workerId, workerInfo);
     this.stats.activeWorkers = this.workers.size;
 
-    if (this.config.enableLogging) {
-      console.log(`[WorkerPool] Created worker ${workerId}`);
+    if (this.config.enableLogging && this.logger) {
+      this.logger.debug(`Created worker ${workerId}`, {
+        workerId,
+        totalWorkers: this.workers.size,
+      });
     }
 
     return workerInfo;
@@ -212,8 +230,12 @@ export class WorkerPool {
       this.handleTaskProgress(task.id, progress);
     });
 
-    if (this.config.enableLogging) {
-      console.log(`[WorkerPool] Started task ${task.id} (${task.type}) on ${workerInfo.id}`);
+    if (this.config.enableLogging && this.logger) {
+      this.logger.debug(`Started task ${task.id} (${task.type}) on ${workerInfo.id}`, {
+        taskId: task.id,
+        taskType: task.type,
+        workerId: workerInfo.id,
+      });
     }
 
     try {
@@ -300,8 +322,12 @@ export class WorkerPool {
 
     task.resolve(result);
 
-    if (this.config.enableLogging) {
-      console.log(`[WorkerPool] Task ${taskId} (${task.type}) completed in ${executionTime}ms`);
+    if (this.config.enableLogging && this.logger) {
+      this.logger.info(`Task ${task.type} completed in ${executionTime}ms`, {
+        taskId,
+        taskType: task.type,
+        executionTime,
+      });
     }
   }
 
@@ -318,8 +344,11 @@ export class WorkerPool {
 
     task.reject(error);
 
-    if (this.config.enableLogging) {
-      console.log(`[WorkerPool] Task ${taskId} (${task.type}) failed:`, error.message);
+    if (this.config.enableLogging && this.logger) {
+      this.logger.error(`Task ${taskId} (${task.type}) failed`, error, {
+        taskId,
+        taskType: task.type,
+      });
     }
   }
 
@@ -345,8 +374,12 @@ export class WorkerPool {
         workerInfo.worker[releaseProxy]();
         this.workers.delete(workerId);
 
-        if (this.config.enableLogging) {
-          console.log(`[WorkerPool] Cleaned up idle worker ${workerId}`);
+        if (this.config.enableLogging && this.logger) {
+          this.logger.debug(`Cleaned up idle worker ${workerId}`, {
+            workerId,
+            idleTime: now - workerInfo.lastUsed,
+            remainingWorkers: this.workers.size - 1,
+          });
         }
       }
     }
