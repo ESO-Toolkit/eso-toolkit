@@ -88,7 +88,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <Tooltip title="View full report on ESO Logs">
           <Button
             component="a"
-            href={`https://www.esologs.com/reports/${reportId}`}
+            href={`https://www.esologs.com/reports/${reportId}?fight=${fightId}`}
             target="_blank"
             rel="noopener noreferrer"
             variant="outlined"

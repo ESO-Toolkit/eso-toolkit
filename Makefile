@@ -88,7 +88,7 @@ pre-commit:
 	@echo "1/5 - Running ESLint with auto-fix..."
 	npm run lint:fix
 	@echo "2/5 - Running tests..."
-	npm run test
+	npm run test:coverage:ci
 	@echo "3/5 - Building project..."
 	npm run build
 	@echo "4/5 - Running type check..."

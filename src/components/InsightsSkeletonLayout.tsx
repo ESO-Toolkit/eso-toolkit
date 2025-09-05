@@ -332,19 +332,6 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             </Box>
           </Paper>
         </Box>
-
-        {/* Rotation Analysis - Full width */}
-        <Box sx={{ flex: '1 1 100%', minWidth: '300px' }}>
-          <Paper elevation={2} sx={{ p: 2, height: '100%' }}>
-            <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-              Rotation Analysis
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Analysis of ability rotation patterns
-            </Typography>
-            <Skeleton variant="rectangular" width="100%" height={200} sx={{ borderRadius: 1 }} />
-          </Paper>
-        </Box>
       </Box>
     </Box>
   );

@@ -35,6 +35,7 @@ import {
 } from '../../../types/abilities';
 import { ArmorType, PlayerGear } from '../../../types/playerDetails';
 import { BuffLookupData } from '../../../utils/BuffLookupUtils';
+import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import {
   ARENA_SET_NAMES,
@@ -448,6 +449,7 @@ interface PlayersPanelViewProps {
   aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   buildIssuesByPlayer: Record<string, BuildIssue[]>;
+  classAnalysisByPlayer: Record<string, ClassAnalysisResult>;
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
@@ -458,37 +460,6 @@ interface PlayersPanelViewProps {
   fightStartTime?: number;
   fightEndTime?: number;
   friendlyBuffLookup?: BuffLookupData | null;
-}
-
-const CLASS_SUBLINES: Record<string, [string, string, string]> = {
-  arcanist: ['Herald of the Tome', 'Soldier of Apocrypha', 'Curative Runeforms'],
-  necromancer: ['Grave Lord', 'Bone Tyrant', 'Living Death'],
-  warden: ['Animal Companions', 'Green Balance', "Winter's Embrace"],
-  templar: ['Aedric Spear', "Dawn's Wrath", 'Restoring Light'],
-  nightblade: ['Assassination', 'Shadow', 'Siphoning'],
-  dragonknight: ['Ardent Flame', 'Draconic Power', 'Earthen Heart'],
-  sorcerer: ['Dark Magic', 'Daedric Summoning', 'Storm Calling'],
-};
-
-const CLASS_SUBLINES_SHORT: Record<string, [string, string, string]> = {
-  arcanist: ['Herald', 'Soldier', 'Curative'],
-  necromancer: ['Grave', 'Bone', 'Living'],
-  warden: ['Animal', 'Green', 'Winter'],
-  templar: ['Aedric', "Dawn's", 'Restoring'],
-  nightblade: ['Assassin', 'Shadow', 'Siphon'],
-  dragonknight: ['Flame', 'Draconic', 'Earthen'],
-  sorcerer: ['Dark', 'Daedric', 'Storm'],
-};
-
-function parseClasses(input?: string | null): string[] {
-  const raw = (input || '').trim();
-  if (!raw) return [];
-  // Split on common delimiters that may separate multiple classes
-  const parts = raw
-    .split(/[\\/|,•]+/)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return (parts.length ? parts : [raw]).slice(0, 3);
 }
 
 const CLASS_ALIASES: Record<string, string> = {
@@ -584,6 +555,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
   aurasByPlayer,
   scribingSkillsByPlayer,
   buildIssuesByPlayer,
+  classAnalysisByPlayer,
   deathsByPlayer,
   resurrectsByPlayer,
   cpmByPlayer,
@@ -824,14 +796,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                         </Box>
                         <Box>
                           {(() => {
-                            const baseKey = toClassKey(player.type);
-                            const sublines = CLASS_SUBLINES[baseKey];
-                            const classes = parseClasses(player.type);
-                            const fallbackList = classes.length
-                              ? classes
-                              : ([player.type].filter(Boolean) as string[]);
-                            const list = sublines ? sublines : fallbackList.slice(0, 3);
-                            const displayList = CLASS_SUBLINES_SHORT[baseKey] ?? list;
+                            // Get dynamic skill lines from class analysis
+                            const playerAnalysis = classAnalysisByPlayer?.[player.id];
+                            const detectedSkillLines = playerAnalysis?.skillLines || [];
+
                             return (
                               <Box
                                 sx={{
@@ -853,50 +821,56 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = ({
                                       whiteSpace: 'nowrap',
                                     }}
                                   >
-                                    {displayList.map((name, idx) => (
-                                      <Tooltip
-                                        key={idx}
-                                        title={list[idx] || name}
-                                        enterTouchDelay={0}
-                                        leaveTouchDelay={3000}
-                                      >
-                                        <Box
-                                          sx={{
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: 0.35,
-                                          }}
+                                    {detectedSkillLines.map((skill, idx) => {
+                                      const title = skill.skillLine;
+                                      const icon = toClassKey(skill.className);
+
+                                      return (
+                                        <Tooltip
+                                          key={idx}
+                                          title={title}
+                                          enterTouchDelay={0}
+                                          leaveTouchDelay={3000}
                                         >
-                                          {idx > 0 && (
+                                          <Box
+                                            sx={{
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: 0.35,
+                                            }}
+                                          >
+                                            {idx > 0 && (
+                                              <Typography
+                                                variant="caption"
+                                                sx={{ color: 'text.secondary', opacity: 0.7 }}
+                                              >
+                                                •
+                                              </Typography>
+                                            )}
+                                            <ClassIcon
+                                              className={icon}
+                                              size={12}
+                                              style={{ opacity: 0.8, flexShrink: 0 }}
+                                            />
                                             <Typography
                                               variant="caption"
-                                              sx={{ color: 'text.secondary', opacity: 0.7 }}
+                                              color="text.secondary"
+                                              noWrap
+                                              sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
                                             >
-                                              •
+                                              {skill.skillLine}
                                             </Typography>
-                                          )}
-                                          <ClassIcon
-                                            className={baseKey}
-                                            size={12}
-                                            style={{ opacity: 0.8, flexShrink: 0 }}
-                                          />
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                            noWrap
-                                            sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
-                                          >
-                                            {name}
-                                          </Typography>
-                                        </Box>
-                                      </Tooltip>
-                                    ))}
+                                          </Box>
+                                        </Tooltip>
+                                      );
+                                    })}
                                   </Box>
                                 </OneLineAutoFit>
                               </Box>
                             );
                           })()}
                         </Box>
+
                         {/* Talents (title removed for cleaner UI) */}
                         {talents.length > 0 && (
                           <Box mb={1.5}>

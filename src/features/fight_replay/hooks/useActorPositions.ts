@@ -285,7 +285,7 @@ export const useActorPositions = ({
       const centerX = 5235;
       const centerY = 5410;
       const position: [number, number, number] = [
-        -(currentPosition.x - centerX) / 1000, // Negate x-axis to fix flipped positions
+        (currentPosition.x - centerX) / 1000, // Negate x-axis to fix flipped positions
         0,
         (currentPosition.y - centerY) / 1000,
       ];
