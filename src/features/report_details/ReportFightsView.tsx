@@ -208,7 +208,6 @@ function getTrialNameFromBoss(
       cleanBossName.includes(name),
     )
   ) {
-    console.log('✅ BOSS MATCH: Hel Ra Citadel for', bossName);
     return 'Hel Ra Citadel';
   }
 
@@ -244,7 +243,6 @@ function getTrialNameFromBoss(
   ].find((trial) => trial.names.some((name) => zoneName.includes(name)));
 
   if (trialFromZone) {
-    console.log('🏛️ ZONE FALLBACK MATCH:', { zoneName, matchedTrial: trialFromZone.id, bossName });
     return trialFromZone.id;
   }
 
@@ -556,12 +554,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       const currentRunTrialName = trialNamesByRun[currentRunNumber];
       if (currentRunTrialName && currentRunTrialName !== trialName) {
         shouldStartNewRun = true;
-        console.log('🔄 TRIAL SWITCH DETECTED:', {
-          currentRunTrialName,
-          newTrialName: trialName,
-          bossName,
-          startingNewRun: true,
-        });
       }
 
       if (shouldStartNewRun) {
@@ -625,8 +617,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       // Ensure currentTrialRun is defined before proceeding
       if (!currentTrialRun) {
-        console.error('No trial run found for boss:', currentBoss);
-        continue; // Skip to next boss if no trial run is available
+        // Skip to next boss if no trial run is available
+        continue;
       }
 
       // Group all attempts of the same boss into one encounter
@@ -710,17 +702,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       const baseName = run.name.replace(/#\d+/, '').trim(); // Remove run number for calculation
       const trialDifficulty = calculateTrialDifficulty(run.fights, baseName);
 
-      console.log(
-        '🏃 RUN:',
-        run.name,
-        'BOSS:',
-        run.fights[0]?.name,
-        'DIFF:',
-        run.fights[0]?.difficulty,
-        'CALCULATED:',
-        trialDifficulty.label,
-      );
-
       return {
         ...run,
         difficulty: trialDifficulty.difficulty,
@@ -799,19 +780,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   }
 
   const renderFightCard = (fight: FightFragment, idx: number): React.ReactNode => {
-    // Debug logging for Hall of Fleshcraft
-    if (fight.name && fight.name.includes('Hall of Fleshcraft')) {
-      console.log('Hall of Fleshcraft fight data:', {
-        name: fight.name,
-        bossPercentage: fight.bossPercentage,
-        difficulty: fight.difficulty,
-        startTime: fight.startTime,
-        endTime: fight.endTime,
-        isBoss: fight.difficulty != null,
-        isTrash: fight.difficulty == null,
-      });
-    }
-
     // Handle both boss fights and trash fights
     const isBossFight = fight.difficulty != null;
 
@@ -841,18 +809,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       // If boss was killed, show full green bar, otherwise show health percentage for wipes
       backgroundFillPercent = bossWasKilled ? 100 : isWipe ? bossHealthPercent : 100;
-
-      // Debug logging for Hall of Fleshcraft boss fight
-      if (fight.name && fight.name.includes('Hall of Fleshcraft')) {
-        console.log('Hall of Fleshcraft boss fight logic:', {
-          bossWasKilled,
-          rawIsWipe,
-          isFalsePositive,
-          isWipe,
-          bossHealthPercent,
-          backgroundFillPercent,
-        });
-      }
     } else {
       // Trash fight logic - assume successful completion
       bossWasKilled = false;
@@ -861,18 +817,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       isWipe = false;
       bossHealthPercent = 0;
       backgroundFillPercent = 100; // Always show as completed for trash
-
-      // Debug logging for Hall of Fleshcraft trash fight
-      if (fight.name && fight.name.includes('Hall of Fleshcraft')) {
-        console.log('Hall of Fleshcraft trash fight logic:', {
-          bossWasKilled,
-          rawIsWipe,
-          isFalsePositive,
-          isWipe,
-          bossHealthPercent,
-          backgroundFillPercent,
-        });
-      }
     }
 
     return (
@@ -1181,19 +1125,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                     // Determine expected total bosses based on zone name
                     const zoneName = trialRun.name.replace(/#\d+/, '').trim();
-
-                    // Debug logging for Ossein Cage
-                    if (zoneName.includes('Ossein Cage')) {
-                      console.log('Ossein Cage trial data:', {
-                        zoneName,
-                        encounteredBosses,
-                        killedBosses,
-                        encounters: trialRun.encounters.map((e) => ({
-                          name: e.name,
-                          bossFights: e.bossFights.length,
-                        })),
-                      });
-                    }
 
                     let expectedTotalBosses = encounteredBosses; // default fallback
 

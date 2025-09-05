@@ -4,6 +4,8 @@
 
 import { Remote } from 'comlink';
 
+import { ILogger } from '../contexts/LoggerContext';
+
 import { SharedComputationWorker, SharedComputationWorkerTaskType } from './SharedWorker';
 import { OnProgressCallback } from './Utils';
 
@@ -24,6 +26,7 @@ export interface WorkerPoolConfig {
   taskTimeout?: number; // milliseconds after which tasks time out
   retryAttempts?: number;
   enableLogging?: boolean;
+  logger?: ILogger; // Optional logger instance
 }
 
 export interface WorkerStats {

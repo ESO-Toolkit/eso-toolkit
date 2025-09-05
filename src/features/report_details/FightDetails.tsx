@@ -117,15 +117,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fig
 
   const validSelectedTab = getValidTabId(tabId, showExperimentalTabs);
 
-  // Debug what's being passed
-  console.log('FightDetails - tabId:', tabId);
-  console.log(
-    'FightDetails - validSelectedTab:',
-    validSelectedTab,
-    'type:',
-    typeof validSelectedTab,
-  );
-
   const navigateToTab = React.useCallback(
     (tabId: TabId) => {
       if (!reportId || !fightId) return;

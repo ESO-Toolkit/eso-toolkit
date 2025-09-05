@@ -93,29 +93,17 @@ export const fetchPlayerData = createAsyncThunk<
     condition: ({ reportCode, fightId }, { getState }) => {
       const state = getState() as { playerData: PlayerDataState };
 
-      console.log('🧪 Checking player data thunk condition', {
-        reportCode,
-        fightId,
-        loading: state.playerData.loading,
-        lastFetchedReportId: state.playerData.cacheMetadata.lastFetchedReportId,
-        lastFetchedFightId: state.playerData.cacheMetadata.lastFetchedFightId,
-        playerCount: Object.keys(state.playerData.playersById).length,
-      });
-
       if (
         state.playerData.cacheMetadata.lastFetchedReportId === reportCode &&
         state.playerData.cacheMetadata.lastFetchedFightId === fightId
       ) {
-        console.log('✋ Preventing player data thunk execution - data is cached');
         return false; // Prevent thunk execution - data is cached
       }
 
       if (state.playerData.loading) {
-        console.log('✋ Preventing player data thunk execution - already loading');
         return false;
       }
 
-      console.log('✅ Allowing player data thunk execution');
       return true;
     },
   },
@@ -138,7 +126,6 @@ const playerDataSlice = createSlice({
       };
     },
     resetPlayerDataLoading(state) {
-      console.log('🔄 Resetting stuck player data loading state');
       state.loading = false;
       state.error = null;
     },
@@ -146,17 +133,11 @@ const playerDataSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchPlayerData.pending, (state) => {
-        console.log('🔄 fetchPlayerData.pending - Setting loading to true');
         state.loading = true;
         state.error = null;
         state.loaded = false;
       })
       .addCase(fetchPlayerData.fulfilled, (state, action: PayloadAction<PlayerDataPayload>) => {
-        console.log('✅ fetchPlayerData.fulfilled - Loading complete', {
-          playerCount: Object.keys(action.payload.playersById).length,
-          reportCode: action.payload.reportCode,
-          fightId: action.payload.fightId,
-        });
         state.playersById = action.payload.playersById;
         state.loading = false;
         state.loaded = true;
@@ -166,9 +147,6 @@ const playerDataSlice = createSlice({
         state.cacheMetadata.lastFetchedTimestamp = Date.now();
       })
       .addCase(fetchPlayerData.rejected, (state, action) => {
-        console.error('❌ fetchPlayerData.rejected - Error occurred', {
-          error: action.payload || action.error?.message || 'Unknown error',
-        });
         state.loading = false;
         state.error = (action.payload as string) || 'Failed to fetch player data';
       });

@@ -17,6 +17,14 @@ import {
 import { setContext } from '@apollo/client/link/context';
 import { getOperationName } from '@apollo/client/utilities';
 
+import { Logger, LogLevel } from './contexts/LoggerContext';
+
+// Create a logger instance for GraphQL client
+const logger = new Logger({
+  level: LogLevel.ERROR,
+  contextPrefix: 'GraphQL',
+});
+
 export class EsoLogsClient {
   private static readonly CACHE = new InMemoryCache({
     typePolicies: {
@@ -99,7 +107,9 @@ export class EsoLogsClient {
 
     // Check for GraphQL errors and reject if they exist
     if (result.error) {
-      console.error({ error: result.error, query: getOperationName(options.query) });
+      logger.error('GraphQL query error', result.error, {
+        query: getOperationName(options.query),
+      });
       throw new Error(`GraphQL error: ${result.error.message}`);
     }
 

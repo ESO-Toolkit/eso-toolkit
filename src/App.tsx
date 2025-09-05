@@ -12,6 +12,7 @@ import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
+import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
@@ -92,6 +93,9 @@ const App: React.FC = () => {
 };
 
 const AppRoutes: React.FC = () => {
+  // Initialize worker manager with logger
+  useWorkerManagerLogger();
+
   React.useEffect(() => {
     document.title = 'ESO Log Insights by NotaGuild';
     // Add breadcrumb for page load

@@ -3,6 +3,7 @@ import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 
 import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { useLogger } from '../../../contexts/LoggerContext';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
 import { PlayerTalent } from '../../../types/playerDetails';
@@ -25,6 +26,7 @@ interface TalentRow {
 
 export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => {
   const { playerData } = usePlayerData();
+  const logger = useLogger('TalentsGridPanel');
 
   // Transform talent data for DataGrid
   const talentRows = useMemo((): TalentRow[] => {
@@ -152,7 +154,9 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
               const jsonString = JSON.stringify(info.row.original.rawTalentData, null, 2);
               await navigator.clipboard.writeText(jsonString);
             } catch (error) {
-              console.error('Failed to copy to clipboard:', error);
+              logger.error('Failed to copy talent data to clipboard', error as Error, {
+                talentGuid: info.row.original.guid,
+              });
               // Fallback: create a temporary textarea element
               const textarea = document.createElement('textarea');
               textarea.value = JSON.stringify(info.row.original.rawTalentData, null, 2);
@@ -178,7 +182,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         size: 120,
       }),
     ],
-    [columnHelper],
+    [columnHelper, logger],
   );
 
   if (talentRows.length === 0) {

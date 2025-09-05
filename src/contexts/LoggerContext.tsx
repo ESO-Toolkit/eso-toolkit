@@ -19,7 +19,7 @@ export interface LogEntry {
   message: string;
   timestamp: Date;
   context?: string;
-  data?: any;
+  data?: unknown;
   error?: Error;
 }
 
@@ -53,7 +53,7 @@ export interface ILogger {
  * Default logger configuration
  */
 const DEFAULT_CONFIG: LoggerConfig = {
-  level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.WARN,
+  level: process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.DEBUG,
   enableConsole: true,
   enableStorage: true,
   maxStorageEntries: 1000,
@@ -117,7 +117,7 @@ class Logger implements ILogger {
     }
   }
 
-  private logToConsole(level: LogLevel, message: string, data?: any, error?: Error): void {
+  private logToConsole(level: LogLevel, message: string, data?: unknown, error?: Error): void {
     if (!this.config.enableConsole) return;
 
     const consoleMethod = this.getConsoleMethod(level);
@@ -129,7 +129,7 @@ class Logger implements ILogger {
     }
   }
 
-  private getConsoleMethod(level: LogLevel): (...args: any[]) => void {
+  private getConsoleMethod(level: LogLevel): (...args: unknown[]) => void {
     switch (level) {
       case LogLevel.DEBUG:
         return console.debug.bind(console);
@@ -217,6 +217,9 @@ class Logger implements ILogger {
       .join('\n\n');
   }
 }
+
+// Export the Logger class for standalone usage
+export { Logger };
 
 /**
  * Logger context
@@ -307,7 +310,11 @@ export const useLogger = (context?: string): ILogger => {
 /**
  * Hook to get logger utilities
  */
-export const useLoggerUtils = () => {
+export const useLoggerUtils = (): {
+  downloadLogs: () => void;
+  getLogLevelName: (level: LogLevel) => string;
+  getLogLevelColor: (level: LogLevel) => string;
+} => {
   const logger = useLogger();
 
   const downloadLogs = React.useCallback(() => {

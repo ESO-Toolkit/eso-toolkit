@@ -38,18 +38,7 @@ export function useDamageEvents(): {
   }, [fightId, fights]);
 
   React.useEffect(() => {
-    console.log('🔍 useDamageEvents effect triggered', {
-      reportId,
-      fightId,
-      hasSelectedFight: !!selectedFight,
-    });
     if (reportId && selectedFight) {
-      console.log(
-        '📡 Dispatching fetchDamageEvents for reportId:',
-        reportId,
-        'fightId:',
-        selectedFight.id,
-      );
       dispatch(
         fetchDamageEvents({
           reportCode: reportId,

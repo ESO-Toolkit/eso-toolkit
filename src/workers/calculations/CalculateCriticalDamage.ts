@@ -85,7 +85,6 @@ export function calculateCriticalDamageData(
       const combatantInfo = combatantInfoEvents[player.id] || null;
 
       if (!combatantInfo) {
-        console.log('could not find player');
         return null;
       }
 

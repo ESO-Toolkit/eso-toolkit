@@ -1,15 +1,49 @@
-import { useLogger as useBaseLogger } from '../contexts/LoggerContext';
+import { useLogger as useBaseLogger, ILogger } from '../contexts/LoggerContext';
+
+/**
+ * Enhanced logger interface with additional utilities
+ */
+interface IEnhancedLogger extends ILogger {
+  logPerformance: (operation: string, duration: number, data?: Record<string, unknown>) => void;
+  logApiCall: (
+    method: string,
+    url: string,
+    status?: number,
+    duration?: number,
+    error?: Error,
+  ) => void;
+  logUserAction: (action: string, data?: Record<string, unknown>) => void;
+  logNavigation: (from: string, to: string, data?: Record<string, unknown>) => void;
+  logComponentLifecycle: (
+    component: string,
+    event: 'mount' | 'unmount' | 'update',
+    data?: Record<string, unknown>,
+  ) => void;
+  measureExecution: <T>(
+    operation: string,
+    fn: () => T | Promise<T>,
+    logLevel?: 'debug' | 'info',
+  ) => Promise<T>;
+  createTimer: (operation: string) => {
+    stop: (data?: Record<string, unknown>) => number;
+    lap: (description: string, data?: Record<string, unknown>) => number;
+  };
+}
 
 /**
  * Enhanced logger hook that provides additional utilities and automatic context detection
  */
-export const useLogger = (context?: string) => {
+export const useLogger = (context?: string): IEnhancedLogger => {
   const logger = useBaseLogger(context);
 
   /**
    * Log a performance measurement
    */
-  const logPerformance = (operation: string, duration: number, data?: any) => {
+  const logPerformance = (
+    operation: string,
+    duration: number,
+    data?: Record<string, unknown>,
+  ): void => {
     if (duration > 1000) {
       logger.warn(`Slow operation: ${operation}`, { duration, ...data });
     } else if (duration > 500) {
@@ -28,7 +62,7 @@ export const useLogger = (context?: string) => {
     status?: number,
     duration?: number,
     error?: Error,
-  ) => {
+  ): void => {
     const data = { method, url, status, duration };
 
     if (error) {
@@ -43,14 +77,14 @@ export const useLogger = (context?: string) => {
   /**
    * Log a user action
    */
-  const logUserAction = (action: string, data?: any) => {
+  const logUserAction = (action: string, data?: Record<string, unknown>): void => {
     logger.info(`User action: ${action}`, data);
   };
 
   /**
    * Log a navigation event
    */
-  const logNavigation = (from: string, to: string, data?: any) => {
+  const logNavigation = (from: string, to: string, data?: Record<string, unknown>): void => {
     logger.info(`Navigation: ${from} -> ${to}`, data);
   };
 
@@ -60,8 +94,8 @@ export const useLogger = (context?: string) => {
   const logComponentLifecycle = (
     component: string,
     event: 'mount' | 'unmount' | 'update',
-    data?: any,
-  ) => {
+    data?: Record<string, unknown>,
+  ): void => {
     logger.debug(`Component ${event}: ${component}`, data);
   };
 
@@ -99,16 +133,21 @@ export const useLogger = (context?: string) => {
   /**
    * Create a timer that can be stopped to log duration
    */
-  const createTimer = (operation: string) => {
+  const createTimer = (
+    operation: string,
+  ): {
+    stop: (data?: Record<string, unknown>) => number;
+    lap: (description: string, data?: Record<string, unknown>) => number;
+  } => {
     const start = performance.now();
 
     return {
-      stop: (data?: any) => {
+      stop: (data?: Record<string, unknown>): number => {
         const duration = performance.now() - start;
         logPerformance(operation, duration, data);
         return duration;
       },
-      lap: (description: string, data?: any) => {
+      lap: (description: string, data?: Record<string, unknown>): number => {
         const duration = performance.now() - start;
         logger.debug(`${operation} - ${description}`, { duration, ...data });
         return duration;

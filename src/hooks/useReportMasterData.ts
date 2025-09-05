@@ -24,7 +24,6 @@ export function useReportMasterData(): {
   const isMasterDataLoading = useSelector(selectMasterDataLoadingState);
 
   React.useEffect(() => {
-    console.log('🔍 useReportMasterData effect triggered', { reportId, hasClient: !!client });
     if (reportId) {
       // Check if we're stuck in loading state and reset it
       if (
@@ -32,11 +31,9 @@ export function useReportMasterData(): {
         !reportMasterData.loaded &&
         reportMasterData.cacheMetadata.lastFetchedReportId !== reportId
       ) {
-        console.warn('🔄 Detected stuck loading state for different report - resetting');
         dispatch(resetLoadingState());
       }
 
-      console.log('📡 Dispatching fetchReportMasterData for reportId:', reportId);
       dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
   }, [
@@ -52,30 +49,12 @@ export function useReportMasterData(): {
   React.useEffect(() => {
     if (isMasterDataLoading && reportId) {
       const timeout = setTimeout(() => {
-        console.warn('⚠️ Master data loading timeout detected - resetting loading state');
         dispatch(resetLoadingState());
       }, 10000); // 10 second timeout
 
       return () => clearTimeout(timeout);
     }
   }, [isMasterDataLoading, reportId, dispatch]);
-
-  // Debug logging for loading state changes
-  React.useEffect(() => {
-    console.log('🔄 Master data loading state changed:', {
-      loading: isMasterDataLoading,
-      loaded: reportMasterData.loaded,
-      error: reportMasterData.error,
-      actorCount: Object.keys(reportMasterData.actorsById).length,
-      abilityCount: Object.keys(reportMasterData.abilitiesById).length,
-    });
-  }, [
-    isMasterDataLoading,
-    reportMasterData.loaded,
-    reportMasterData.error,
-    reportMasterData.actorsById,
-    reportMasterData.abilitiesById,
-  ]);
 
   return React.useMemo(
     () => ({ reportMasterData, isMasterDataLoading }),

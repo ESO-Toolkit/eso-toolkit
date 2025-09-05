@@ -86,11 +86,11 @@ export const LoggerDebugPanel: React.FC<LoggerDebugPanelProps> = ({ open, onClos
     return Array.from(uniqueContexts).sort();
   }, [entries]);
 
-  const handleLevelChange = (newLevel: LogLevel) => {
+  const handleLevelChange = (newLevel: LogLevel): void => {
     logger.setLevel(newLevel);
   };
 
-  const handleClearLogs = () => {
+  const handleClearLogs = (): void => {
     logger.clearEntries();
   };
 

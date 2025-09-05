@@ -1,3 +1,5 @@
+import { ILogger } from '../contexts/LoggerContext';
+
 import {
   SharedComputationWorkerTaskType,
   SharedWorkerInputType,
@@ -14,6 +16,7 @@ import { WorkerPool } from './WorkerPool';
 class WorkerManager {
   private pools: Map<string, WorkerPool> = new Map();
   private static instance?: WorkerManager;
+  private logger: ILogger | null = null;
 
   private constructor() {
     // Private constructor for singleton
@@ -30,6 +33,14 @@ class WorkerManager {
   }
 
   /**
+   * Set the logger for the worker manager and all future worker pools
+   */
+  setLogger(logger: ILogger): void {
+    this.logger = logger;
+    logger.debug('WorkerManager logger configured');
+  }
+
+  /**
    * Create or get a worker pool for a specific worker type
    */
   createPool(poolName: string, config?: WorkerPoolConfig): WorkerPool {
@@ -38,8 +49,18 @@ class WorkerManager {
       return existingPool;
     }
 
-    const pool = new WorkerPool(config);
+    const poolConfig: WorkerPoolConfig = {
+      ...config,
+      logger: this.logger || undefined,
+    };
+
+    const pool = new WorkerPool(poolConfig);
     this.pools.set(poolName, pool);
+
+    if (this.logger) {
+      this.logger.debug(`Created worker pool: ${poolName}`, { poolName, config: poolConfig });
+    }
+
     return pool;
   }
 

@@ -3,6 +3,7 @@ import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { useLogger } from '../../../contexts/LoggerContext';
 import { LogEvent } from '../../../types/combatlogEvents';
 
 interface EventsGridProps {
@@ -39,6 +40,8 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
   hasTargetSelected = true,
   noTargetMessage = 'Please select a target to view events associated with that target.',
 }) => {
+  const logger = useLogger('EventsGrid');
+
   // Transform events data for the table
   const data: EventRowData[] = React.useMemo(() => {
     return events.map((event, index) => ({
@@ -111,7 +114,9 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
               const jsonString = JSON.stringify(props.row.original.originalEvent, null, 2);
               await navigator.clipboard.writeText(jsonString);
             } catch (error) {
-              console.error('Failed to copy to clipboard:', error);
+              logger.error('Failed to copy event to clipboard', error as Error, {
+                event: props.row.original.originalEvent.type,
+              });
               // Fallback: create a temporary textarea element
               const textarea = document.createElement('textarea');
               textarea.value = JSON.stringify(props.row.original.originalEvent, null, 2);
@@ -136,7 +141,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
         },
       }),
     ],
-    [columnHelper],
+    [columnHelper, logger],
   );
 
   // Show target selection message if in target mode but no target is selected

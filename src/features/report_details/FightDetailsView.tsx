@@ -68,22 +68,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // Ensure we always have a valid selectedTabId
   const validSelectedTabId = selectedTabId || TAB_IDS.INSIGHTS;
 
-  // Debug the selectedTabId value
-  console.log(
-    'FightDetailsView render - selectedTabId:',
-    selectedTabId,
-    'type:',
-    typeof selectedTabId,
-  );
-  console.log(
-    'FightDetailsView render - validSelectedTabId:',
-    validSelectedTabId,
-    'type:',
-    typeof validSelectedTabId,
-  );
-  console.log('Expected TAB_IDS.INSIGHTS:', TAB_IDS.INSIGHTS);
-  console.log('Are they equal?', validSelectedTabId === TAB_IDS.INSIGHTS);
-
   // Only render content when events for the current fight are loaded
   if (isLoading) {
     return (
@@ -151,7 +135,6 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         <Tabs
           value={validSelectedTabId}
           onChange={(_, v) => {
-            console.log('Tab clicked, value:', v, 'type:', typeof v);
             onTabChange(v as TabId);
           }}
           sx={{
