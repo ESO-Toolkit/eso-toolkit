@@ -3,13 +3,13 @@ import { useMemo } from 'react';
 import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import { KnownAbilities } from '../../../types/abilities';
 import {
   DamageEvent,
   HealEvent,
   DeathEvent,
   ResourceChangeEvent,
 } from '../../../types/combatlogEvents';
-import { KnownAbilities } from '../../../types/abilities';
 import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
