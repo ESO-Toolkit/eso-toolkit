@@ -1,4 +1,10 @@
-import { configureStore, combineReducers, ThunkAction, Action, ThunkDispatch } from '@reduxjs/toolkit';
+import {
+  configureStore,
+  combineReducers,
+  ThunkAction,
+  Action,
+  ThunkDispatch,
+} from '@reduxjs/toolkit';
 import { createBrowserHistory } from 'history';
 import { createReduxHistoryContext, LOCATION_CHANGE } from 'redux-first-history';
 import {
