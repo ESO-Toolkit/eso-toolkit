@@ -1,6 +1,7 @@
 import { Box, CircularProgress, Typography } from '@mui/material';
 import React from 'react';
 
+import { StableLoading } from '../../../components/StableLoading';
 import { useCriticalDamageTask, useCurrentFight, usePlayerData } from '../../../hooks';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
@@ -15,6 +16,10 @@ export const CriticalDamagePanel: React.FC = () => {
     useCriticalDamageTask();
 
   const isLoading = isCriticalDamageLoading || isPlayerDataLoading;
+
+  // Only show details when all loading is complete AND we have data
+  const hasCompleteData =
+    !isLoading && criticalDamageData?.playerDataMap && playerData?.playersById;
 
   // Get all players for accordion
   const players = React.useMemo(() => {
@@ -40,12 +45,11 @@ export const CriticalDamagePanel: React.FC = () => {
     [],
   );
 
-  // Show loading state while fetching data
-  if (isLoading) {
+  // Show loading state while fetching data OR if data is not complete
+  if (!hasCompleteData) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading critical damage data...</Typography>
+      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+        <StableLoading variant="panel" height={400} title="Loading critical damage data..." />
       </Box>
     );
   }
@@ -68,7 +72,7 @@ export const CriticalDamagePanel: React.FC = () => {
       expandedPanels={expandedPanels}
       onExpandChange={handleExpandChange}
       criticalDamageData={criticalDamageData?.playerDataMap || null}
-      isLoading={isLoading}
+      isLoading={false}
     />
   );
 };

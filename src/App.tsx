@@ -9,26 +9,26 @@ import { ModernFeedbackFab } from './components/BugReportDialog';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
 import { LoggerDebugButton } from './components/LoggerDebugButton';
-import { LoggerProvider } from './contexts/LoggerContext';
+import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
+// Import critical components directly (no lazy loading for LCP)
+import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
+import { ReduxThemeProvider } from './ReduxThemeProvider';
 import store, { persistor } from './store/storeWithHistory';
 import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
+
 // Initialize Sentry before the app starts
 initializeSentry();
 
-// Code splitting for major features
+// Code splitting for major features and components
 const LiveLog = React.lazy(() =>
   import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog })),
 );
-const ReportFightDetails = React.lazy(() =>
-  import('./features/report_details/ReportFightDetails').then((module) => ({
-    default: module.ReportFightDetails,
-  })),
-);
+// ReportFightDetails is imported directly above for LCP optimization
 const ReportFights = React.lazy(() =>
   import('./features/report_details/ReportFights').then((module) => ({
     default: module.ReportFights,
@@ -42,6 +42,10 @@ const Calculator = React.lazy(() =>
 );
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
+);
+// Lazy load the feedback FAB to improve initial page load performance
+const LazyModernFeedbackFab = React.lazy(() =>
+  import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
 // Loading fallback component - simple and fast
@@ -59,7 +63,11 @@ const LoadingFallback: React.FC = () => (
 );
 
 const MainApp: React.FC = () => {
-  return <LandingPage />;
+  return (
+    <ReduxThemeProvider>
+      <LandingPage />
+    </ReduxThemeProvider>
+  );
 };
 
 const App: React.FC = () => {
@@ -72,10 +80,13 @@ const App: React.FC = () => {
     });
   }, []);
 
+  // Check if we're on the landing page to conditionally load components
+  const isLandingPage = window.location.hash === '' || window.location.hash === '#/';
+
   return (
     <LoggerProvider
       config={{
-        level: process.env.NODE_ENV === 'development' ? 0 : 2, // DEBUG in dev, WARN in prod
+        level: process.env.NODE_ENV === 'development' ? LogLevel.INFO : LogLevel.ERROR, // DEBUG in dev, WARN in prod
         enableConsole: true,
         enableStorage: true,
         maxStorageEntries: 1000,
@@ -87,8 +98,12 @@ const App: React.FC = () => {
           <AuthProvider>
             <EsoLogsClientProvider>
               <AppRoutes />
-              {/* Add floating bug report button in production */}
-              <ModernFeedbackFab />
+              {/* Add floating bug report button - lazy loaded for non-landing pages */}
+              {!isLandingPage && (
+                <Suspense fallback={null}>
+                  <LazyModernFeedbackFab />
+                </Suspense>
+              )}
               {/* Add logger debug button for development and debugging */}
               <LoggerDebugButton position={{ bottom: 80, right: 16 }} developmentOnly={true} />
             </EsoLogsClientProvider>
@@ -146,6 +161,8 @@ const AppRoutes: React.FC = () => {
               </ErrorBoundary>
             }
           />
+          {/* Landing page without AppLayout for better performance */}
+          <Route path="/" element={<MainApp />} />
           <Route element={<AppLayout />}>
             {/* Pass fights as prop via state, fallback to empty array if not present */}
             <Route
@@ -210,7 +227,6 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-            <Route path="/*" element={<MainApp />} />
           </Route>
         </Routes>
       </ErrorBoundary>

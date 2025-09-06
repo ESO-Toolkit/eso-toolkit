@@ -1,8 +1,9 @@
+import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import { useSelector } from 'react-redux';
+import { useSearchParams } from 'react-router-dom';
 import { push } from 'redux-first-history';
 
 import {
@@ -10,25 +11,37 @@ import {
   CLIENT_ID,
   REDIRECT_URI,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
+  startPKCEAuth,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
-import { RootState } from './store/storeWithHistory';
 import { useAppDispatch } from './store/useAppDispatch';
 
 const OAUTH_TOKEN_URL = 'https://www.esologs.com/oauth/token'; // Adjust if needed
 export const OAuthRedirect: React.FC = () => {
   const dispatch = useAppDispatch();
-  const location = useSelector((state: RootState) => state.router.location);
   const [error, setError] = useState<string | null>(null);
   const { rebindAccessToken } = useAuth();
+  const [params] = useSearchParams();
 
   useEffect(() => {
-    const params = new URLSearchParams(location?.search || '');
+    // Parse parameters directly from window.location since OAuth redirects
+    // add query params to the full URL, not just the hash part
     const code = params.get('code');
+    const error = params.get('error');
     const verifier = getPkceCodeVerifier();
 
-    if (!code || !verifier) {
-      setError('Missing code or PKCE verifier.');
+    if (error) {
+      setError(`OAuth error: ${error}`);
+      return;
+    }
+
+    if (!code) {
+      setError('Missing authorization code in URL parameters.');
+      return;
+    }
+
+    if (!verifier) {
+      setError('Missing PKCE code verifier. Please restart the authentication process.');
       return;
     }
 
@@ -60,12 +73,26 @@ export const OAuthRedirect: React.FC = () => {
       }
     };
     fetchToken();
-  }, [location, dispatch, rebindAccessToken]);
+  }, [dispatch, rebindAccessToken]);
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
       {error ? (
-        <Typography color="error">{error}</Typography>
+        <>
+          <Typography color="error" gutterBottom>
+            {error}
+          </Typography>
+          {error.includes('PKCE code verifier') && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={() => startPKCEAuth()}
+              style={{ marginTop: '1rem' }}
+            >
+              Restart Authentication
+            </Button>
+          )}
+        </>
       ) : (
         <>
           <CircularProgress />

@@ -488,7 +488,12 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
           <Tooltip title="Total number of tank position updates from resource change events" arrow>
             <Card sx={{ minWidth: 160, flexGrow: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+                <Typography
+                  variant="h4"
+                  color="primary"
+                  fontWeight="bold"
+                  data-testid="tank-position-updates-count"
+                >
                   {locationData.length.toLocaleString()}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -504,7 +509,12 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
           >
             <Card sx={{ minWidth: 160, flexGrow: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+                <Typography
+                  variant="h4"
+                  color="primary"
+                  fontWeight="bold"
+                  data-testid="movement-hotspots-count"
+                >
                   {heatmapVoxels.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -517,7 +527,12 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
           <Tooltip title="Generated movement markers for frequently visited tank positions" arrow>
             <Card sx={{ minWidth: 160, flexGrow: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+                <Typography
+                  variant="h4"
+                  color="primary"
+                  fontWeight="bold"
+                  data-testid="movement-markers-count"
+                >
                   {elmsMarkers.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
@@ -572,7 +587,12 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
           <Tooltip title="Active combat phases detected in the fight" arrow>
             <Card sx={{ minWidth: 160, flexGrow: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary" fontWeight="bold">
+                <Typography
+                  variant="h4"
+                  color="primary"
+                  fontWeight="bold"
+                  data-testid="combat-phases-count"
+                >
                   {fightPhases.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -593,7 +613,12 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
                 }}
               >
                 <CardContent sx={{ textAlign: 'center' }}>
-                  <Typography variant="h4" color="primary" fontWeight="bold">
+                  <Typography
+                    variant="h4"
+                    color="primary"
+                    fontWeight="bold"
+                    data-testid="selected-phase-duration"
+                  >
                     {(() => {
                       const phase = fightPhases.find((p) => p.id === selectedPhase);
                       return phase ? Math.round((phase.endTime - phase.startTime) / 1000) : 0;

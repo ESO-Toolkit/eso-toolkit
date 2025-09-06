@@ -12,7 +12,7 @@ export interface AbilityData {
 class AbilityIdMapper {
   private nameToIdMap: Map<string, AbilityData>;
   private idToDataMap: Map<number, AbilityData>;
-  private isLoaded: boolean = false;
+  private isLoaded = false;
   private loadingPromise: Promise<void> | null = null;
 
   constructor() {

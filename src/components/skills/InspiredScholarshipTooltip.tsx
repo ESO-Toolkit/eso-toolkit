@@ -1,7 +1,7 @@
 import React from 'react';
 
 import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
-import { SkillTooltip } from '../SkillTooltip';
+import { LazySkillTooltip as SkillTooltip } from '../LazySkillTooltip';
 
 export const InspiredScholarshipTooltip: React.FC = () => {
   // Use the new ID-based system

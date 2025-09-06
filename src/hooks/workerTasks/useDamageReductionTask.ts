@@ -28,7 +28,7 @@ export function useDamageReductionTask(): {
   const { dispatch, selectedFight } = useWorkerTaskDependencies();
 
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
-  const { playerData } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
 
@@ -37,28 +37,30 @@ export function useDamageReductionTask(): {
     dispatch(damageReductionActions.clearResult());
   }, [dispatch, selectedFight, playerData, combatantInfoRecord, buffLookupData, debuffLookupData]);
 
+  // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
-    if (
+    // Check that all dependencies are completely loaded with data available
+    const allDependenciesReady =
       selectedFight &&
-      buffLookupData &&
-      !isBuffLookupLoading &&
+      !isPlayerDataLoading &&
       playerData?.playersById &&
-      !isCombatantInfoEventsLoading
-    ) {
-      // Only require debuff data if it's actually loading or available
-      const hasDebuffData = debuffLookupData != null || !isDebuffLookupLoading;
+      !isCombatantInfoEventsLoading &&
+      combatantInfoRecord !== null &&
+      !isBuffLookupLoading &&
+      buffLookupData !== null &&
+      !isDebuffLookupLoading &&
+      debuffLookupData !== null;
 
-      if (hasDebuffData) {
-        dispatch(
-          executeDamageReductionTask({
-            fight: selectedFight,
-            players: playerData.playersById,
-            combatantInfoRecord: combatantInfoRecord,
-            friendlyBuffsLookup: buffLookupData,
-            debuffsLookup: debuffLookupData || { buffIntervals: {} },
-          }),
-        );
-      }
+    if (allDependenciesReady) {
+      dispatch(
+        executeDamageReductionTask({
+          fight: selectedFight,
+          players: playerData.playersById,
+          combatantInfoRecord: combatantInfoRecord,
+          friendlyBuffsLookup: buffLookupData,
+          debuffsLookup: debuffLookupData,
+        }),
+      );
     }
   }, [
     dispatch,
@@ -70,10 +72,11 @@ export function useDamageReductionTask(): {
     isBuffLookupLoading,
     isDebuffLookupLoading,
     isCombatantInfoEventsLoading,
+    isPlayerDataLoading,
   ]);
 
   const damageReductionData = useSelector(selectDamageReductionResult);
-  const isDamageReductionLoading = useSelector(
+  const isDamageReductionTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateDamageReductionData'),
   ) as boolean;
   const damageReductionError = useSelector(
@@ -82,6 +85,14 @@ export function useDamageReductionTask(): {
   const damageReductionProgress = useSelector(
     selectWorkerTaskProgress('calculateDamageReductionData'),
   ) as number | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isDamageReductionLoading =
+    isDamageReductionTaskLoading ||
+    isPlayerDataLoading ||
+    isCombatantInfoEventsLoading ||
+    isBuffLookupLoading ||
+    isDebuffLookupLoading;
 
   return React.useMemo(
     () => ({

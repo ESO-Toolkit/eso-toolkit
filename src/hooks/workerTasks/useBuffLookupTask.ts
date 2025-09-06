@@ -1,7 +1,6 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { selectFriendlyBuffEvents } from '../../store/selectors/eventsSelectors';
 import {
   selectBuffLookupResult,
   selectWorkerTaskLoading,
@@ -10,6 +9,7 @@ import {
 } from '../../store/worker_results/selectors';
 import { executeBuffLookupTask } from '../../store/worker_results/taskSlices';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
+import { useFriendlyBuffEvents } from '../events';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
@@ -21,19 +21,21 @@ export function useBuffLookupTask(): {
   buffLookupProgress: number | null;
 } {
   const { dispatch, selectedFight } = useWorkerTaskDependencies();
-  const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
 
   React.useEffect(() => {
-    dispatch(
-      executeBuffLookupTask({
-        buffEvents: friendlyBuffEvents,
-        fightEndTime: selectedFight?.endTime,
-      }),
-    );
-  }, [dispatch, selectedFight, friendlyBuffEvents]);
+    if (friendlyBuffEvents && !isFriendlyBuffEventsLoading) {
+      dispatch(
+        executeBuffLookupTask({
+          buffEvents: friendlyBuffEvents,
+          fightEndTime: selectedFight?.endTime,
+        }),
+      );
+    }
+  }, [dispatch, selectedFight, friendlyBuffEvents, isFriendlyBuffEventsLoading]);
 
   const buffLookupData = useSelector(selectBuffLookupResult) as BuffLookupData | null;
-  const isBuffLookupLoading = useSelector(
+  const isBuffLookupTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateBuffLookup'),
   ) as boolean;
   const buffLookupError = useSelector(selectWorkerTaskError('calculateBuffLookup')) as
@@ -42,6 +44,9 @@ export function useBuffLookupTask(): {
   const buffLookupProgress = useSelector(selectWorkerTaskProgress('calculateBuffLookup')) as
     | number
     | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isBuffLookupLoading = isBuffLookupTaskLoading || isFriendlyBuffEventsLoading;
 
   return React.useMemo(
     () => ({

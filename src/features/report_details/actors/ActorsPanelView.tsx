@@ -3,7 +3,7 @@ import { IconButton, Tooltip, Typography } from '@mui/material';
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 import { ReportActorFragment } from '../../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '../../../types/combatlogEvents';

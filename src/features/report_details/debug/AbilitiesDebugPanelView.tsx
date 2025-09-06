@@ -1,9 +1,9 @@
-import { Box, Chip, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography, Chip, CircularProgress } from '@mui/material';
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
-import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 
 interface AbilityData {
   gameID: string | number;

@@ -99,7 +99,15 @@ export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps>
 
   return (
     <Box>
-      <Typography variant="h6" gutterBottom>
+      <Typography
+        variant="h5"
+        gutterBottom
+        sx={{
+          fontSize: { xs: '1.25rem', sm: '1.5rem' },
+          fontWeight: 500,
+          fontFamily: 'system-ui, -apple-system, sans-serif',
+        }}
+      >
         Rotation Analysis
       </Typography>
 

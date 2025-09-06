@@ -7,11 +7,7 @@ import {
   selectPlayerData,
   selectPlayerDataLoadingState,
 } from '../store/player_data/playerDataSelectors';
-import {
-  fetchPlayerData,
-  PlayerDataState,
-  resetPlayerDataLoading,
-} from '../store/player_data/playerDataSlice';
+import { fetchPlayerData, PlayerDataState } from '../store/player_data/playerDataSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export function usePlayerData(): {
@@ -34,17 +30,6 @@ export function usePlayerData(): {
       }
     }
   }, [dispatch, reportId, fightId, client]);
-
-  // Add timeout to detect stuck loading state
-  React.useEffect(() => {
-    if (isPlayerDataLoading && reportId && fightId) {
-      const timeout = setTimeout(() => {
-        dispatch(resetPlayerDataLoading());
-      }, 10000); // 10 second timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isPlayerDataLoading, reportId, fightId, dispatch]);
 
   return React.useMemo(
     () => ({ playerData, isPlayerDataLoading }),

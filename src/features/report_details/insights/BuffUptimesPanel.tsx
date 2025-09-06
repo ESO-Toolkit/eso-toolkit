@@ -54,12 +54,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
 
   // Calculate buff uptimes for friendly players using the utility function
   const allBuffUptimes = React.useMemo(() => {
-    if (
-      !friendlyBuffsLookup ||
-      !reportMasterData?.abilitiesById ||
-      !fight?.friendlyPlayers ||
-      !fightDuration
-    ) {
+    if (!friendlyBuffsLookup || !fight?.friendlyPlayers || !fightDuration) {
       return [];
     }
 
@@ -71,16 +66,42 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
       return [];
     }
 
-    // Get all buff ability IDs from the lookup that are type '2' (buffs)
+    // Get all buff ability IDs from the lookup
     const buffAbilityIds = new Set<number>();
-    Object.entries(friendlyBuffsLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
-      const abilityGameID = parseInt(abilityGameIDStr, 10);
-      const ability = reportMasterData.abilitiesById[abilityGameID];
-      // Only include buffs (type === '2')
-      if (ability?.type === '2') {
-        buffAbilityIds.add(abilityGameID);
+
+    // If we have master data, use it to filter by type
+    if (reportMasterData?.abilitiesById) {
+      Object.entries(friendlyBuffsLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
+        const abilityGameID = parseInt(abilityGameIDStr, 10);
+        const ability = reportMasterData.abilitiesById[abilityGameID];
+
+        // Be more permissive: include if it's type '2' OR if we don't have type data but it's in our known important buffs
+        if (
+          ability?.type === '2' ||
+          (!ability?.type && IMPORTANT_BUFF_ABILITIES.has(abilityGameID))
+        ) {
+          buffAbilityIds.add(abilityGameID);
+        }
+      });
+
+      // If no buffs found with type filtering, include all important buffs that exist in the data
+      if (buffAbilityIds.size === 0) {
+        Object.keys(friendlyBuffsLookup.buffIntervals).forEach((abilityGameIDStr) => {
+          const abilityGameID = parseInt(abilityGameIDStr, 10);
+          if (IMPORTANT_BUFF_ABILITIES.has(abilityGameID)) {
+            buffAbilityIds.add(abilityGameID);
+          }
+        });
       }
-    });
+    } else {
+      // Without master data, just include all abilities that are in our important list
+      Object.keys(friendlyBuffsLookup.buffIntervals).forEach((abilityGameIDStr) => {
+        const abilityGameID = parseInt(abilityGameIDStr, 10);
+        if (IMPORTANT_BUFF_ABILITIES.has(abilityGameID)) {
+          buffAbilityIds.add(abilityGameID);
+        }
+      });
+    }
 
     return computeBuffUptimes(friendlyBuffsLookup, {
       abilityIds: buffAbilityIds,
@@ -88,7 +109,7 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
       fightStartTime,
       fightEndTime,
       fightDuration,
-      abilitiesById: reportMasterData.abilitiesById,
+      abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: false,
       hostilityType: 0,
     });
@@ -114,7 +135,37 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
     });
   }, [allBuffUptimes, showAllBuffs]);
 
-  if (isMasterDataLoading || isFriendlyBuffEventsLoading) {
+  // Enhanced loading check: ensure ALL required data is available and processing is complete
+  const isDataLoading = React.useMemo(() => {
+    // Still loading if any of the core data sources are loading
+    if (isMasterDataLoading || isFriendlyBuffEventsLoading) {
+      return true;
+    }
+
+    // Still loading if buff lookup task hasn't completed yet
+    if (!friendlyBuffsLookup) {
+      return true;
+    }
+
+    // Still loading if fight data is not available
+    if (!fight?.friendlyPlayers || !fightDuration) {
+      return true;
+    }
+
+    // Don't require reportMasterData to be available - we can show data without ability names
+    // This allows the panel to work even if master data is slow to load
+
+    // Data is ready
+    return false;
+  }, [
+    isMasterDataLoading,
+    isFriendlyBuffEventsLoading,
+    friendlyBuffsLookup,
+    fight?.friendlyPlayers,
+    fightDuration,
+  ]);
+
+  if (isDataLoading) {
     return (
       <BuffUptimesView
         buffUptimes={[]}

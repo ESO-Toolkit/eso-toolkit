@@ -2,7 +2,7 @@ import { Button } from '@mui/material';
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
 import { LogEvent } from '../../../types/combatlogEvents';
 

@@ -166,7 +166,13 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
             <Stack spacing={3} alignItems="center">
               <ErrorOutline color="error" sx={{ fontSize: 64 }} />
 
-              <Typography variant="h4" component="h1" textAlign="center" color="error">
+              <Typography
+                variant="h4"
+                component="h1"
+                textAlign="center"
+                color="error"
+                data-testid="error-boundary-title"
+              >
                 Something went wrong
               </Typography>
 
@@ -342,7 +348,13 @@ export const SentryErrorBoundary = Sentry.withErrorBoundary(
         <Paper elevation={3} sx={{ maxWidth: 600, width: '100%', p: 4 }}>
           <Stack spacing={3} alignItems="center">
             <ErrorOutline color="error" sx={{ fontSize: 64 }} />
-            <Typography variant="h4" component="h1" textAlign="center" color="error">
+            <Typography
+              variant="h4"
+              component="h1"
+              textAlign="center"
+              color="error"
+              data-testid="app-error-title"
+            >
               Application Error
             </Typography>
             <Typography variant="body1" textAlign="center" color="text.secondary">

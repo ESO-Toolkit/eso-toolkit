@@ -31,22 +31,6 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fig
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
-  // Select all loading states to determine if any data is still loading
-  const isLoading = useSelector((state: RootState) => {
-    return (
-      selectMasterDataLoadingState(state) ||
-      selectDamageEventsLoading(state) ||
-      selectHealingEventsLoading(state) ||
-      selectFriendlyBuffEventsLoading(state) ||
-      selectHostileBuffEventsLoading(state) ||
-      selectDeathEventsLoading(state) ||
-      selectCombatantInfoEventsLoading(state) ||
-      selectDebuffEventsLoading(state) ||
-      selectCastEventsLoading(state) ||
-      selectResourceEventsLoading(state)
-    );
-  });
-
   // Get experimental tab setting from search params (this stays as a search param)
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
 
@@ -159,24 +143,10 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fig
     }
   }, [showExperimentalTabs, validSelectedTab, navigateToTab]);
 
-  // Only render content when master data is loaded
-  if (isLoading) {
-    return (
-      <FightDetailsView
-        fight={fight}
-        selectedTabId={validSelectedTab}
-        isLoading={isLoading}
-        onTabChange={navigateToTab}
-        showExperimentalTabs={showExperimentalTabs}
-      />
-    );
-  }
-
   return (
     <FightDetailsView
       selectedTabId={validSelectedTab}
       fight={fight}
-      isLoading={isLoading}
       onTabChange={navigateToTab}
       showExperimentalTabs={showExperimentalTabs}
     />

@@ -6,8 +6,9 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
+import { getSkeletonForTab, TAB_IDS } from '../../../utils/getSkeletonForTab';
 
-import { PlayerCard } from './PlayerCard';
+import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
 function formatDuration(startTime: number, endTime: number): string {
   const durationMs = endTime - startTime;
@@ -107,11 +108,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     ]);
 
     if (isLoading) {
-      return (
-        <Box sx={{ p: 3 }}>
-          <Typography>Loading players...</Typography>
-        </Box>
-      );
+      return getSkeletonForTab(TAB_IDS.PLAYERS, false);
     }
 
     if (!playerActors || Object.keys(playerActors).length === 0) {
@@ -157,6 +154,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
             gap: 2,
             alignItems: 'stretch',
+            minHeight: '400px', // Prevent CLS when cards load
           }}
         >
           {playerCards.map((playerData) => (

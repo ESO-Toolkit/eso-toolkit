@@ -37,19 +37,68 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
-  // Show loading panel if fights are loading or missing
-  if (fightsLoading) {
+  // Ref for immediate title rendering
+  const titleRef = React.useRef<HTMLElement>(null);
+
+  // AGGRESSIVE LCP OPTIMIZATION: Paint content before React hydration
+  React.useLayoutEffect(() => {
+    if (titleRef.current && fightId) {
+      // Bypass React and directly manipulate DOM for immediate paint
+      const titleElement = titleRef.current;
+
+      // Set immediate static content
+      titleElement.textContent = `Fight ${fightId}`;
+
+      // Force immediate browser paint
+      titleElement.style.transform = 'translateZ(0)'; // Force layer creation
+      titleElement.getBoundingClientRect(); // Force layout
+
+      // Upgrade to real content when available
+      if (fight) {
+        titleElement.textContent = `${fight.name} (${fight.id})`;
+      }
+    }
+  }, [fight, fightId]);
+
+  // Force immediate render on mount
+  React.useLayoutEffect(() => {
+    if (titleRef.current && fightId && !fight) {
+      // Ensure content is visible immediately, even before fight data loads
+      titleRef.current.textContent = `Fight ${fightId}`;
+      titleRef.current.style.visibility = 'visible';
+      titleRef.current.style.opacity = '1';
+    }
+  }, [fightId, fight]);
+
+  // Immediate render strategy: show layout immediately for better LCP
+  // Only show full loading state if we don't have a fightId yet
+  if (fightsLoading && !fightId) {
     return (
       <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
-        <Box sx={{ position: 'absolute', top: 16, right: 16 }}>
+        <Box sx={{ position: 'absolute', top: 16, right: 16, display: 'flex', gap: 1 }}>
           <Skeleton variant="rounded" width={96} height={32} />
+          <Skeleton variant="rounded" width={120} height={32} />
         </Box>
-        <Skeleton variant="rounded" width={180} height={36} sx={{ mb: 2 }} />
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-          <Skeleton variant="text" width={140} height={28} />
+
+        {/* Back to Fight List skeleton */}
+        <Skeleton variant="text" width={140} height={24} sx={{ mb: 2 }} />
+
+        {/* Fight title skeleton with exact dimensions */}
+        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
+          <Skeleton
+            variant="text"
+            width={{ xs: '250px', sm: '350px', md: '450px' }}
+            height={{ xs: '1.8rem', sm: '2.4rem', md: '2.7rem' }}
+            sx={{
+              // Match the exact dimensions of the real title
+              minHeight: { xs: '1.8rem', sm: '2.4rem', md: '2.7rem' },
+              // Use same font properties for consistent sizing
+              fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
+            }}
+          />
         </Stack>
-        <Skeleton variant="text" width={200} />
-        <Box sx={{ mt: 2 }}>
+
+        <Box sx={{ mt: 2, minHeight: '600px' }}>
           <Box display="flex" justifyContent="center" alignItems="center" height="300px">
             <CircularProgress />
           </Box>
@@ -58,9 +107,14 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
     );
   }
 
-  if (!fight) {
+  // Render immediately if we have a fightId, even without fight data
+  // This improves LCP by showing the layout and title immediately
+  if (!fight && !fightsLoading && fightId) {
     return <Typography variant="h6">Fight ({fightId}) not found.</Typography>;
   }
+
+  // Render the main layout - this will show even while fight data is loading
+  // if we have a fightId, improving LCP performance
 
   return (
     <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
@@ -175,12 +229,51 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
       </Box>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
-        <Typography variant="h6" gutterBottom={false} sx={{ fontSize: '2.25rem' }}>
-          {fight.name} ({fight.id})
+        <Typography
+          ref={titleRef}
+          variant="h4"
+          gutterBottom={false}
+          data-testid="fight-title"
+          sx={{
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },
+            fontWeight: 500,
+            lineHeight: 1.2,
+            // Use system fonts for fastest rendering - most aggressive stack
+            fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, sans-serif',
+            // Pre-allocate space to prevent layout shift
+            minHeight: { xs: '1.8rem', sm: '2.4rem', md: '2.7rem' },
+            // AGGRESSIVE LCP optimizations
+            willChange: 'contents', // Hint that content will change
+            contain: 'layout style', // Contain layout calculations
+            // Force immediate visibility and prioritize painting
+            opacity: 1,
+            visibility: 'visible',
+            // Critical rendering hints
+            '&': {
+              // Ensure this element gets prioritized in paint order
+              zIndex: 1,
+              position: 'relative',
+            },
+            // Remove any transitions that could delay initial paint
+            transition: 'none',
+            // Optimize text rendering for speed over quality initially
+            textRendering: 'optimizeSpeed',
+          }}
+        >
+          {/* Fallback content for SSR/initial render */}
+          {fightId ? `Fight ${fightId}` : 'Loading...'}
         </Typography>
       </Stack>
 
-      <FightDetails fight={fight} reportId={reportId} fightId={fightId} tabId={tabId} />
+      {fight ? (
+        <FightDetails fight={fight} reportId={reportId} fightId={fightId} tabId={tabId} />
+      ) : (
+        <Box sx={{ mt: 2, minHeight: '600px' }}>
+          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
+            <CircularProgress />
+          </Box>
+        </Box>
+      )}
     </Paper>
   );
 };

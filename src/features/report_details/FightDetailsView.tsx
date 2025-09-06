@@ -25,30 +25,84 @@ import {
   Skeleton,
   Icon,
 } from '@mui/material';
-import React from 'react';
+import React, { Suspense } from 'react';
 
 import { FightFragment } from '../../graphql/generated';
 import { getSkeletonForTab, TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
-import { ActorsPanel } from './actors/ActorsPanel';
-import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
-import { DamageDonePanel } from './damage/DamageDonePanel';
-import { DamageReductionPanel } from './damage_reduction/DamageReductionPanel';
-import { DeathEventPanel } from './deaths/DeathEventPanel';
-import { DiagnosticsPanel } from './debug/DiagnosticsPanel';
-import { EventsPanel } from './debug/EventsPanel';
-import { LocationHeatmapPanel } from './debug/LocationHeatmapPanel';
-import { TargetEventsPanel } from './debug/TargetEventsPanel';
-import { HealingDonePanel } from './healing/HealingDonePanel';
-import { AurasPanel } from './insights/AurasPanel';
-import { BuffsOverviewPanel } from './insights/BuffsOverviewPanel';
-import { DebuffsOverviewPanel } from './insights/DebuffsOverviewPanel';
-import { InsightsPanel } from './insights/InsightsPanel';
-import { PlayersPanel } from './insights/PlayersPanel';
 import { TargetSelector } from './insights/TargetSelector';
-import { PenetrationPanel } from './penetration/PenetrationPanel';
-import { RotationAnalysisPanel } from './rotation/RotationAnalysisPanel';
-import { TalentsGridPanel } from './talents/TalentsGridPanel';
+
+// Lazy load heavy panel components for better initial page load performance
+const ActorsPanel = React.lazy(() =>
+  import('./actors/ActorsPanel').then((module) => ({ default: module.ActorsPanel })),
+);
+const CriticalDamagePanel = React.lazy(() =>
+  import('./critical_damage/CriticalDamagePanel').then((module) => ({
+    default: module.CriticalDamagePanel,
+  })),
+);
+const DamageDonePanel = React.lazy(() =>
+  import('./damage/DamageDonePanel').then((module) => ({ default: module.DamageDonePanel })),
+);
+const DamageReductionPanel = React.lazy(() =>
+  import('./damage_reduction/DamageReductionPanel').then((module) => ({
+    default: module.DamageReductionPanel,
+  })),
+);
+const DeathEventPanel = React.lazy(() =>
+  import('./deaths/DeathEventPanel').then((module) => ({ default: module.DeathEventPanel })),
+);
+const DiagnosticsPanel = React.lazy(() =>
+  import('./debug/DiagnosticsPanel').then((module) => ({ default: module.DiagnosticsPanel })),
+);
+const EventsPanel = React.lazy(() =>
+  import('./debug/EventsPanel').then((module) => ({ default: module.EventsPanel })),
+);
+const LocationHeatmapPanel = React.lazy(() =>
+  import('./debug/LocationHeatmapPanel').then((module) => ({
+    default: module.LocationHeatmapPanel,
+  })),
+);
+const TargetEventsPanel = React.lazy(() =>
+  import('./debug/TargetEventsPanel').then((module) => ({ default: module.TargetEventsPanel })),
+);
+const HealingDonePanel = React.lazy(() =>
+  import('./healing/HealingDonePanel').then((module) => ({ default: module.HealingDonePanel })),
+);
+const AurasPanel = React.lazy(() =>
+  import('./insights/AurasPanel').then((module) => ({ default: module.AurasPanel })),
+);
+const BuffsOverviewPanel = React.lazy(() =>
+  import('./insights/BuffsOverviewPanel').then((module) => ({
+    default: module.BuffsOverviewPanel,
+  })),
+);
+const DebuffsOverviewPanel = React.lazy(() =>
+  import('./insights/DebuffsOverviewPanel').then((module) => ({
+    default: module.DebuffsOverviewPanel,
+  })),
+);
+const InsightsPanel = React.lazy(() =>
+  import('./insights/InsightsPanel').then((module) => ({ default: module.InsightsPanel })),
+);
+const PlayersPanel = React.lazy(() =>
+  import('./insights/PlayersPanel').then((module) => ({ default: module.PlayersPanel })),
+);
+const PenetrationPanel = React.lazy(() =>
+  import('./penetration/PenetrationPanel').then((module) => ({ default: module.PenetrationPanel })),
+);
+const RotationAnalysisPanel = React.lazy(() =>
+  import('./rotation/RotationAnalysisPanel').then((module) => ({
+    default: module.RotationAnalysisPanel,
+  })),
+);
+const TalentsGridPanel = React.lazy(() =>
+  import('./talents/TalentsGridPanel').then((module) => ({ default: module.TalentsGridPanel })),
+);
+
+// Panel loading fallback component - uses tab-specific skeleton
+const PanelLoadingFallback: React.FC<{ tabId: TabId }> = ({ tabId }) =>
+  getSkeletonForTab(tabId, false);
 
 interface FightDetailsViewProps {
   fight: FightFragment;
@@ -61,56 +115,11 @@ interface FightDetailsViewProps {
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   fight,
   selectedTabId,
-  isLoading,
   onTabChange,
   showExperimentalTabs,
 }) => {
   // Ensure we always have a valid selectedTabId
   const validSelectedTabId = selectedTabId || TAB_IDS.INSIGHTS;
-
-  // Only render content when events for the current fight are loaded
-  if (isLoading) {
-    return (
-      <Box mt={2}>
-        {/* Target Selection */}
-        <Box sx={{ mb: 2 }}>
-          <FormControl sx={{ minWidth: 200, overflow: 'visible' }}>
-            <Skeleton variant="rounded" width={200} height={56} />
-          </FormControl>
-        </Box>
-
-        {/* Tabs */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            mb: 1,
-            width: '100%',
-            minWidth: 0,
-            overflow: 'hidden',
-          }}
-        >
-          <Box
-            sx={{
-              display: 'flex',
-              gap: 1,
-              flexGrow: 1,
-              minWidth: 'auto',
-              '& > *': { flexShrink: 0 },
-            }}
-          >
-            {Array.from({ length: 8 }).map((_, i) => (
-              <Skeleton key={i} variant="circular" width={36} height={36} />
-            ))}
-          </Box>
-          <Skeleton variant="rounded" width={140} height={32} sx={{ ml: 1 }} />
-        </Box>
-
-        {/* Content area - show appropriate skeleton for each tab */}
-        {getSkeletonForTab(selectedTabId, false)}
-      </Box>
-    );
-  }
 
   return (
     <React.Fragment>
@@ -375,80 +384,96 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       </Box>
 
       {/* Tab Content */}
-      <Box sx={{ mt: 2 }}>
-        <Box sx={{ display: selectedTabId === TAB_IDS.INSIGHTS ? 'block' : 'none' }}>
-          <InsightsPanel fight={fight} />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.PLAYERS ? 'block' : 'none' }}>
-          <PlayersPanel />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.DAMAGE_DONE ? 'block' : 'none' }}>
-          <DamageDonePanel />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.HEALING_DONE ? 'block' : 'none' }}>
-          <HealingDonePanel fight={fight} />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.DEATHS ? 'block' : 'none' }}>
-          <DeathEventPanel fight={fight} />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.CRITICAL_DAMAGE ? 'block' : 'none' }}>
-          <CriticalDamagePanel />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.PENETRATION ? 'block' : 'none' }}>
-          <PenetrationPanel fight={fight} />
-        </Box>
-        <Box sx={{ display: selectedTabId === TAB_IDS.DAMAGE_REDUCTION ? 'block' : 'none' }}>
-          <DamageReductionPanel fight={fight} />
-        </Box>
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.LOCATION_HEATMAP ? 'block' : 'none' }}>
+      <Box sx={{ mt: 2, minHeight: '600px' }}>
+        {validSelectedTabId === TAB_IDS.INSIGHTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.INSIGHTS} />}>
+            <InsightsPanel fight={fight} />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.PLAYERS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.PLAYERS} />}>
+            <PlayersPanel />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.DAMAGE_DONE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DAMAGE_DONE} />}>
+            <DamageDonePanel />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.HEALING_DONE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.HEALING_DONE} />}>
+            <HealingDonePanel fight={fight} />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.DEATHS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DEATHS} />}>
+            <DeathEventPanel fight={fight} />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.CRITICAL_DAMAGE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.CRITICAL_DAMAGE} />}>
+            <CriticalDamagePanel />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.PENETRATION && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.PENETRATION} />}>
+            <PenetrationPanel fight={fight} />
+          </Suspense>
+        )}
+        {validSelectedTabId === TAB_IDS.DAMAGE_REDUCTION && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DAMAGE_REDUCTION} />}>
+            <DamageReductionPanel fight={fight} />
+          </Suspense>
+        )}
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.LOCATION_HEATMAP && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.LOCATION_HEATMAP} />}>
             <LocationHeatmapPanel fight={fight} />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.RAW_EVENTS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.RAW_EVENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.RAW_EVENTS} />}>
             <EventsPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.TARGET_EVENTS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.TARGET_EVENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.TARGET_EVENTS} />}>
             <TargetEventsPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.DIAGNOSTICS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.DIAGNOSTICS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DIAGNOSTICS} />}>
             <DiagnosticsPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.ACTORS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.ACTORS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.ACTORS} />}>
             <ActorsPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.TALENTS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.TALENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.TALENTS} />}>
             <TalentsGridPanel fight={fight} />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.ROTATION_ANALYSIS ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.ROTATION_ANALYSIS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.ROTATION_ANALYSIS} />}>
             <RotationAnalysisPanel fight={fight} />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.AURAS_OVERVIEW ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.AURAS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.AURAS_OVERVIEW} />}>
             <AurasPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.BUFFS_OVERVIEW ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.BUFFS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.BUFFS_OVERVIEW} />}>
             <BuffsOverviewPanel />
-          </Box>
+          </Suspense>
         )}
-        {showExperimentalTabs && (
-          <Box sx={{ display: selectedTabId === TAB_IDS.DEBUFFS_OVERVIEW ? 'block' : 'none' }}>
+        {showExperimentalTabs && validSelectedTabId === TAB_IDS.DEBUFFS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DEBUFFS_OVERVIEW} />}>
             <DebuffsOverviewPanel />
-          </Box>
+          </Suspense>
         )}
       </Box>
     </React.Fragment>

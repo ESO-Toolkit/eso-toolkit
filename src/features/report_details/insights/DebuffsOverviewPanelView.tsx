@@ -11,7 +11,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 import { useReportMasterData } from '../../../hooks';
 
 import { DebuffOverviewData } from './DebuffsOverviewPanel';

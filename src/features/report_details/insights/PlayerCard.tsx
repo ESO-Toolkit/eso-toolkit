@@ -18,10 +18,10 @@ import React from 'react';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
+import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
-import { SkillTooltip } from '../../../components/SkillTooltip';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';

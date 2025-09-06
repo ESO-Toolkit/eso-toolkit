@@ -35,15 +35,17 @@ export function useStatusEffectUptimesTask(): {
     dispatch(statusEffectUptimesActions.clearResult());
   }, [dispatch, selectedFight, hostileBuffLookupData, debuffLookupData]);
 
+  // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
-    // Only trigger when we have data and both lookups are complete
-    if (
+    // Check that all dependencies are completely loaded with data available
+    const allDependenciesReady =
       selectedFight &&
-      hostileBuffLookupData &&
-      debuffLookupData &&
       !isHostileBuffLookupLoading &&
-      !isDebuffLookupLoading
-    ) {
+      hostileBuffLookupData !== null &&
+      !isDebuffLookupLoading &&
+      debuffLookupData !== null;
+
+    if (allDependenciesReady) {
       dispatch(
         executeStatusEffectUptimesTask({
           hostileBuffsLookup: hostileBuffLookupData,
@@ -63,7 +65,7 @@ export function useStatusEffectUptimesTask(): {
   ]);
 
   const statusEffectUptimesData = useSelector(selectStatusEffectUptimesResult);
-  const isStatusEffectUptimesLoading = useSelector(
+  const isStatusEffectUptimesTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateStatusEffectUptimes'),
   ) as boolean;
   const statusEffectUptimesError = useSelector(
@@ -72,6 +74,10 @@ export function useStatusEffectUptimesTask(): {
   const statusEffectUptimesProgress = useSelector(
     selectWorkerTaskProgress('calculateStatusEffectUptimes'),
   ) as number | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isStatusEffectUptimesLoading =
+    isStatusEffectUptimesTaskLoading || isHostileBuffLookupLoading || isDebuffLookupLoading;
 
   return React.useMemo(
     () => ({

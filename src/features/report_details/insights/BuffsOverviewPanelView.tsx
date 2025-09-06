@@ -2,7 +2,7 @@ import { Avatar, Box, Typography } from '@mui/material';
 import { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 
 import { BuffOverviewData } from './BuffsOverviewPanel';
 
