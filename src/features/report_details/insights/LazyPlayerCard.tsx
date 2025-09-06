@@ -119,6 +119,7 @@ export interface PlayerCardProps {
   deaths: number;
   resurrects: number;
   cpm: number;
+  maxHealth: number;
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];

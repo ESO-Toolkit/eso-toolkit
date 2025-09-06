@@ -691,6 +691,107 @@ export const PlayersPanel: React.FC = () => {
     debuffEvents,
   ]);
 
+  // Calculate max health per player using all resource events throughout the fight
+  const maxHealthByPlayer = React.useMemo(() => {
+    const result: Record<string, number> = {};
+
+    if (!playerData?.playersById || !fight) return result;
+
+    // Initialize with 0 for each player
+    Object.values(playerData.playersById).forEach((player) => {
+      if (player?.id) {
+        result[String(player.id)] = 0;
+      }
+    });
+
+    // Look for max health across all resource events within the fight timeframe
+    if (resourceEvents) {
+      resourceEvents.forEach((event) => {
+        if (event.type === 'resourcechange') {
+          // Only consider events within the current fight timeframe
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources
+            if (event.sourceID && event.sourceResources?.maxHitPoints) {
+              const playerId = String(event.sourceID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.sourceResources.maxHitPoints);
+              }
+            }
+
+            // Check target resources
+            if (event.targetID && event.targetResources?.maxHitPoints) {
+              const playerId = String(event.targetID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.targetResources.maxHitPoints);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Also check damage and healing events for additional resource data
+    if (damageEvents) {
+      damageEvents.forEach((event) => {
+        if (event.type === 'damage') {
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources in damage events
+            if (event.sourceID && event.sourceResources?.maxHitPoints) {
+              const playerId = String(event.sourceID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.sourceResources.maxHitPoints);
+              }
+            }
+
+            // Check target resources in damage events
+            if (event.targetID && event.targetResources?.maxHitPoints) {
+              const playerId = String(event.targetID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.targetResources.maxHitPoints);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    // Also check healing events for additional resource data
+    if (healingEvents) {
+      healingEvents.forEach((event) => {
+        if (event.type === 'heal') {
+          const isInFightTimeframe =
+            event.timestamp >= fight.startTime && event.timestamp <= fight.endTime;
+
+          if (isInFightTimeframe) {
+            // Check source resources in healing events
+            if (event.sourceID && event.sourceResources?.maxHitPoints) {
+              const playerId = String(event.sourceID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.sourceResources.maxHitPoints);
+              }
+            }
+
+            // Check target resources in healing events
+            if (event.targetID && event.targetResources?.maxHitPoints) {
+              const playerId = String(event.targetID);
+              if (result[playerId] !== undefined) {
+                result[playerId] = Math.max(result[playerId], event.targetResources.maxHitPoints);
+              }
+            }
+          }
+        }
+      });
+    }
+
+    return result;
+  }, [playerData?.playersById, resourceEvents, damageEvents, healingEvents, fight]);
+
   // Show loading if any data is still loading
   if (isLoading) {
     return (
@@ -705,6 +806,7 @@ export const PlayersPanel: React.FC = () => {
         scribingSkillsByPlayer={{}}
         buildIssuesByPlayer={{}}
         classAnalysisByPlayer={{}}
+        maxHealthByPlayer={{}}
         isLoading={true}
         reportId={reportId}
         fightId={fightId}
@@ -727,6 +829,7 @@ export const PlayersPanel: React.FC = () => {
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
       cpmByPlayer={cpmByPlayer}
+      maxHealthByPlayer={maxHealthByPlayer}
       reportId={reportId}
       fightId={fightId}
       isLoading={false}

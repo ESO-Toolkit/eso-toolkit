@@ -45,6 +45,7 @@ interface PlayerCardProps {
   deaths: number;
   resurrects: number;
   cpm: number;
+  maxHealth: number;
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
@@ -62,6 +63,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     deaths,
     resurrects,
     cpm,
+    maxHealth,
     reportId,
     fightId,
     playerGear,
@@ -725,6 +727,61 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       </Tooltip>
                     </Typography>
                   </Box>
+
+                  {maxHealth > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark' ? theme.palette.text.primary : '#1e293b',
+                          fontWeight: 200,
+                          display: 'block',
+                          mb: 0.5,
+                          fontSize: '0.85rem',
+                          textShadow:
+                            theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none',
+                        }}
+                      >
+                        ❤️ Max Health
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'block',
+                          width: '100%',
+                          px: 1.5,
+                          py: 0.25,
+                          borderRadius: '8px',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%)'
+                              : 'linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(252, 165, 165, 0.9) 100%)',
+                          border:
+                            theme.palette.mode === 'dark'
+                              ? '1px solid rgba(239, 68, 68, 0.3)'
+                              : '1px solid rgba(185, 28, 28, 0.2)',
+                          backdropFilter: 'blur(8px)',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 2px 8px rgba(239, 68, 68, 0.15)'
+                              : '0 1px 4px rgba(185, 28, 28, 0.1)',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: theme.palette.mode === 'dark' ? 'white' : 'black',
+                            fontSize: '0.8rem',
+                            fontWeight: 500,
+                            display: 'block',
+                            textAlign: 'center',
+                          }}
+                        >
+                          {maxHealth.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
 
                   {auras.length > 0 && (
                     <Box sx={{}}>
