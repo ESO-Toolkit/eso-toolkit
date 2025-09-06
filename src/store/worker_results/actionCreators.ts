@@ -1,4 +1,5 @@
 import {
+  actorPositionsActions,
   buffLookupActions,
   criticalDamageActions,
   penetrationDataActions,
@@ -7,6 +8,7 @@ import {
   debuffLookupActions,
   hostileBuffLookupActions,
   // Import thunk actions
+  executeActorPositionsTask,
   executeBuffLookupTask,
   executeCriticalDamageTask,
   executePenetrationDataTask,
@@ -20,6 +22,7 @@ import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/worker
 
 // Map task names to their corresponding actions
 const taskActionsMap = {
+  calculateActorPositions: actorPositionsActions,
   calculateBuffLookup: buffLookupActions,
   calculateCriticalDamageData: criticalDamageActions,
   calculatePenetrationData: penetrationDataActions,
@@ -31,6 +34,7 @@ const taskActionsMap = {
 
 // Map task names to their corresponding thunk actions
 const taskThunkMap = {
+  calculateActorPositions: executeActorPositionsTask,
   calculateBuffLookup: executeBuffLookupTask,
   calculateCriticalDamageData: executeCriticalDamageTask,
   calculatePenetrationData: executePenetrationDataTask,

@@ -22,6 +22,7 @@ export const selectWorkerTask = <T extends SharedComputationWorkerTaskType>(
   );
 
 // Specific selectors for each worker task
+export const selectActorPositionsTask = selectWorkerTask('calculateActorPositions');
 export const selectBuffLookupTask = selectWorkerTask('calculateBuffLookup');
 export const selectCriticalDamageTask = selectWorkerTask('calculateCriticalDamageData');
 export const selectPenetrationDataTask = selectWorkerTask('calculatePenetrationData');
@@ -58,6 +59,7 @@ export const selectWorkerTaskLastUpdated = <T extends SharedComputationWorkerTas
   createSelector([selectWorkerTask(taskName)], (task) => task.lastUpdated);
 
 // Convenience selectors for specific results
+export const selectActorPositionsResult = selectWorkerTaskResult('calculateActorPositions');
 export const selectBuffLookupResult = selectWorkerTaskResult('calculateBuffLookup');
 export const selectCriticalDamageResult = selectWorkerTaskResult('calculateCriticalDamageData');
 export const selectPenetrationDataResult = selectWorkerTaskResult('calculatePenetrationData');

@@ -1,6 +1,7 @@
 import { combineReducers } from '@reduxjs/toolkit';
 
 import {
+  actorPositionsReducer,
   buffLookupReducer,
   criticalDamageReducer,
   penetrationDataReducer,
@@ -12,6 +13,7 @@ import {
 
 // Combine all worker task reducers
 const workerResultsReducer = combineReducers({
+  calculateActorPositions: actorPositionsReducer,
   calculateBuffLookup: buffLookupReducer,
   calculateCriticalDamageData: criticalDamageReducer,
   calculatePenetrationData: penetrationDataReducer,
@@ -25,6 +27,7 @@ export default workerResultsReducer;
 
 // Export all actions for convenience
 export {
+  actorPositionsActions,
   buffLookupActions,
   criticalDamageActions,
   penetrationDataActions,
@@ -33,6 +36,7 @@ export {
   debuffLookupActions,
   hostileBuffLookupActions,
   // Export thunk actions
+  executeActorPositionsTask,
   executeBuffLookupTask,
   executeCriticalDamageTask,
   executePenetrationDataTask,

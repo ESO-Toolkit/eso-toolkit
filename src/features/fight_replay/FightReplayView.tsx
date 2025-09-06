@@ -40,6 +40,11 @@ import { replace } from 'redux-first-history';
 
 import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
+import { useDamageEvents } from '../../hooks/events/useDamageEvents';
+import { useDeathEvents } from '../../hooks/events/useDeathEvents';
+import { useHealingEvents } from '../../hooks/events/useHealingEvents';
+import { useCurrentFight } from '../../hooks/useCurrentFight';
+import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { RootState } from '../../store/storeWithHistory';
 import { useAppDispatch } from '../../store/useAppDispatch';
@@ -51,8 +56,6 @@ import {
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
 import { fightTimeToTimestamp, timestampToFightTime } from '../../utils/fightTimeUtils';
-
-import { useActorPositions } from './hooks/useActorPositions';
 
 // Local utility function for formatting duration
 const formatDuration = (ms: number): string => {
@@ -99,7 +102,7 @@ const getStatusIcon = (isAlive: boolean): React.ReactElement => {
 interface FightReplayViewProps {
   fight?: FightFragment;
   fightsLoading: boolean;
-  events: {
+  events?: {
     damage: DamageEvent[];
     heal: HealEvent[];
     death: DeathEvent[];
@@ -107,7 +110,7 @@ interface FightReplayViewProps {
   };
   eventsLoading: boolean;
   playersById?: Record<string | number, PlayerDetailsWithRole>;
-  reportMasterData: RootState['masterData'];
+  reportMasterData?: RootState['masterData'];
 }
 
 interface TimelineEvent {
@@ -133,6 +136,28 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
 }) => {
   const dispatch = useAppDispatch();
   const location = useSelector((state: RootState) => state.router?.location);
+
+  // Get data from hooks (fallback if not provided as props)
+  const fightFromHook = useCurrentFight();
+  const { damageEvents } = useDamageEvents();
+  const { healingEvents } = useHealingEvents();
+  const { deathEvents } = useDeathEvents();
+
+  // Use props if provided, otherwise use data from hooks
+  const activeFight = fight || fightFromHook;
+  const activeEvents = useMemo(() => {
+    return (
+      events ||
+      (damageEvents && healingEvents && deathEvents
+        ? {
+            damage: damageEvents,
+            heal: healingEvents,
+            death: deathEvents,
+            resource: [], // We could add useResourceEvents if needed for timeline
+          }
+        : null)
+    );
+  }, [events, damageEvents, healingEvents, deathEvents]);
 
   // Parse URL parameters for initial state
   const urlParams = useMemo(() => {
@@ -250,12 +275,8 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   }, [currentTime]);
 
   // Get actor positions for 3D visualization (now throttled to 60Hz)
-  const { actors, isLoading: isActorPositionsLoading } = useActorPositions({
-    fight,
-    events,
+  const { actors, isActorPositionsLoading } = useActorPositionsTask({
     currentTime: throttledCurrentTime,
-    playersById,
-    actorsById: reportMasterData.actorsById,
   });
 
   // Filter visible actors for 3D rendering
@@ -278,12 +299,12 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
 
   // Convert events to timeline format
   const timelineEvents = useMemo((): TimelineEvent[] => {
-    if (!events || !fight) return [];
+    if (!activeEvents || !activeFight) return [];
 
     const convertedEvents: TimelineEvent[] = [];
 
     // Process damage events
-    events.damage?.forEach((event: DamageEvent) => {
+    activeEvents.damage?.forEach((event: DamageEvent) => {
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'damage',
@@ -294,7 +315,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     });
 
     // Process heal events
-    events.heal?.forEach((event: HealEvent) => {
+    activeEvents.heal?.forEach((event: HealEvent) => {
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'heal',
@@ -305,7 +326,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     });
 
     // Process death events
-    events.death?.forEach((event: DeathEvent) => {
+    activeEvents.death?.forEach((event: DeathEvent) => {
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'death',
@@ -317,21 +338,23 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
 
     // Sort by timestamp
     return convertedEvents.sort((a, b) => a.timestamp - b.timestamp);
-  }, [events, fight]);
+  }, [activeEvents, activeFight]);
 
   // Filter events based on visibility settings and current time (throttled)
   const visibleEvents = useMemo(() => {
-    if (!fight) return [];
+    if (!activeFight) return [];
 
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
-        event.timestamp >= fight.startTime &&
-        event.timestamp <= fight.startTime + throttledCurrentTime,
+        event.timestamp >= activeFight.startTime &&
+        event.timestamp <= activeFight.startTime + throttledCurrentTime,
     );
-  }, [timelineEvents, visibleEventTypes, throttledCurrentTime, fight]);
+  }, [timelineEvents, visibleEventTypes, throttledCurrentTime, activeFight]);
 
-  const currentTimestamp = !fight ? 1000 : Math.ceil(fight.startTime + throttledCurrentTime);
+  const currentTimestamp = !activeFight
+    ? 1000
+    : Math.ceil(activeFight.startTime + throttledCurrentTime);
   const eventStartTimestamp = Math.floor(currentTimestamp - 1000);
 
   // Current events happening now (within a small time window) - also throttled
@@ -344,7 +367,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     );
   }, [timelineEvents, visibleEventTypes, currentTimestamp, eventStartTimestamp]);
 
-  const fightDuration = fight ? fight.endTime - fight.startTime : 0;
+  const fightDuration = activeFight ? activeFight.endTime - activeFight.startTime : 0;
 
   // Playback control - 240Hz rendering with requestAnimationFrame (optimized)
   useEffect(() => {
@@ -470,11 +493,12 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
       >
         {/* Header */}
         <Typography variant="h4" gutterBottom data-testid="fight-replay-title">
-          {fight.name} - Interactive Replay
+          {activeFight?.name} - Interactive Replay
         </Typography>
 
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Duration: {formatDuration(fightDuration)} | Boss: {fight.bossPercentage?.toFixed(1)}%
+          Duration: {formatDuration(fightDuration)} | Boss:{' '}
+          {activeFight?.bossPercentage?.toFixed(1)}%
         </Typography>
 
         <Stack spacing={3}>
@@ -905,7 +929,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                         />
                         <ListItemText
                           primary={event.description}
-                          secondary={`${formatDuration(event.timestamp - fight.startTime)}`}
+                          secondary={`${formatDuration(event.timestamp - (activeFight?.startTime || 0))}`}
                         />
                       </ListItem>
                     ))}

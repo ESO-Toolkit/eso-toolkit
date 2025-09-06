@@ -4,6 +4,7 @@
 
 import { expose } from 'comlink';
 
+import { calculateActorPositions } from './calculations/CalculateActorPositions';
 import { calculateBuffLookup } from './calculations/CalculateBuffLookups';
 import { calculateCriticalDamageData } from './calculations/CalculateCriticalDamage';
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
@@ -18,6 +19,7 @@ const SHARED_WORKER = {
   calculateDamageReductionData,
   calculatePenetrationData,
   calculateStatusEffectUptimes,
+  calculateActorPositions,
 };
 
 expose(SHARED_WORKER);
