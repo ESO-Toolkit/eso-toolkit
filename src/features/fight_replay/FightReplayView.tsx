@@ -35,11 +35,14 @@ import {
   Stack,
 } from '@mui/material';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useSelector } from 'react-redux';
+import { replace } from 'redux-first-history';
 
 import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { RootState } from '../../store/storeWithHistory';
+import { useAppDispatch } from '../../store/useAppDispatch';
 import {
   DamageEvent,
   HealEvent,
@@ -47,6 +50,7 @@ import {
   LogEvent,
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
+import { fightTimeToTimestamp, timestampToFightTime } from '../../utils/fightTimeUtils';
 
 import { useActorPositions } from './hooks/useActorPositions';
 
@@ -127,11 +131,37 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   playersById,
   reportMasterData,
 }) => {
+  const dispatch = useAppDispatch();
+  const location = useSelector((state: RootState) => state.router?.location);
+
+  // Parse URL parameters for initial state
+  const urlParams = useMemo(() => {
+    if (!location?.search) {
+      return { actorId: undefined, time: 0 };
+    }
+
+    const searchParams = new URLSearchParams(location.search);
+
+    const actorIdStr = searchParams.get('actorId');
+    const actorId = actorIdStr ? parseInt(actorIdStr, 10) : undefined;
+
+    const timestampStr = searchParams.get('time');
+    const timestamp = timestampStr ? parseInt(timestampStr, 10) : undefined;
+
+    // Convert timestamp (report time) to fight time (frame time) if available
+    const time = timestamp && fight ? timestampToFightTime(timestamp, fight) : 0;
+
+    return {
+      actorId,
+      time,
+    };
+  }, [location?.search, fight]);
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTime, setCurrentTime] = useState(urlParams.time);
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [speedIndex, setSpeedIndex] = useState(2); // Index for 1x speed
-  const [selectedActorId, setSelectedActorId] = useState<number | undefined>();
+  const [selectedActorId, setSelectedActorId] = useState<number | undefined>(urlParams.actorId);
   const [isActorPanelExpanded, setIsActorPanelExpanded] = useState(false);
   const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
   const [showActorNames, setShowActorNames] = useState(true);
@@ -153,6 +183,52 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
   }, [playbackSpeed]);
+
+  // Update URL when key state changes (debounced to avoid excessive updates)
+  const updateUrlTimeoutRef = useRef<NodeJS.Timeout>();
+  useEffect(() => {
+    // Clear previous timeout
+    if (updateUrlTimeoutRef.current) {
+      clearTimeout(updateUrlTimeoutRef.current);
+    }
+
+    // Debounce URL updates to avoid too many history entries
+    updateUrlTimeoutRef.current = setTimeout(() => {
+      if (!fight || !location) return; // Can't convert times without fight data or location
+
+      const searchParams = new URLSearchParams(location.search);
+
+      // Update query parameters
+      if (selectedActorId !== undefined) {
+        searchParams.set('actorId', selectedActorId.toString());
+      } else {
+        searchParams.delete('actorId');
+      }
+
+      // Convert frame time to report time (absolute timestamp) for URL
+      // Only update time if it's not at the beginning (to keep URLs clean)
+      if (currentTime > 0) {
+        const reportTimestamp = fightTimeToTimestamp(currentTime, fight);
+        searchParams.set('time', Math.round(reportTimestamp).toString());
+      } else {
+        searchParams.delete('time');
+      }
+
+      // Update URL without adding to history (replace current entry)
+      const newSearch = searchParams.toString();
+      const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
+
+      if (newUrl !== `${location.pathname}${location.search}`) {
+        dispatch(replace(newUrl));
+      }
+    }, 500); // 500ms debounce
+
+    return () => {
+      if (updateUrlTimeoutRef.current) {
+        clearTimeout(updateUrlTimeoutRef.current);
+      }
+    };
+  }, [selectedActorId, currentTime, fight, location, dispatch]);
 
   const [visibleEventTypes, setVisibleEventTypes] = useState({
     damage: true,
