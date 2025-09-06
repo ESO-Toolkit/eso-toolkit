@@ -22,10 +22,6 @@ export interface ActorPosition {
   isTaunted?: boolean;
 }
 
-export interface TimestampedActorPosition extends ActorPosition {
-  timestamp: number;
-}
-
 export interface ActorTimeline {
   id: number;
   name: string;
