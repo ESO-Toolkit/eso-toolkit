@@ -85,7 +85,7 @@ const App: React.FC = () => {
   return (
     <LoggerProvider
       config={{
-        level: process.env.NODE_ENV === 'development' ? LogLevel.INFO : LogLevel.ERROR, // DEBUG in dev, WARN in prod
+        level: process.env.NODE_ENV === 'development' ? LogLevel.DEBUG : LogLevel.ERROR, // DEBUG in dev, WARN in prod
         enableConsole: true,
         enableStorage: true,
         maxStorageEntries: 1000,
