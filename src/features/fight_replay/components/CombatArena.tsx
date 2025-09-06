@@ -1,10 +1,11 @@
 import { Box, CircularProgress } from '@mui/material';
-import { OrbitControls, Grid, Environment } from '@react-three/drei';
+import { Grid, Environment } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { Suspense, useRef, useEffect } from 'react';
+import { Suspense, useRef, useEffect, useState } from 'react';
 import { Vector3 } from 'three';
 
 import { ActorMarker } from './ActorMarker';
+import { CustomCameraControls } from './CustomCameraControls';
 import { MapTexture } from './MapTexture';
 
 interface Actor {
@@ -48,23 +49,16 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
   onActorClick,
   showActorNames = true,
 }) => {
-  const orbitControlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [cameraTarget, setCameraTarget] = useState<Vector3>(new Vector3(0, 0, 0));
   const hasInitialized = useRef(false);
 
   // Initialize camera to boss position once when actors are first available
   useEffect(() => {
-    if (!hasInitialized.current && actors.length > 0 && orbitControlsRef.current) {
+    if (!hasInitialized.current && actors.length > 0) {
       const boss = actors.find((actor) => actor.type === 'boss');
       if (boss) {
         const bossPosition = new Vector3(boss.position[0], 0, boss.position[2]);
-        const cameraOffset = new Vector3(1, 1.5, 1);
-        const cameraPosition = bossPosition.clone().add(cameraOffset);
-
-        // Set initial camera position and target
-        orbitControlsRef.current.object.position.copy(cameraPosition);
-        orbitControlsRef.current.target.copy(bossPosition);
-        orbitControlsRef.current.update();
-
+        setCameraTarget(bossPosition);
         hasInitialized.current = true;
       }
     }
@@ -155,21 +149,14 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
             </group>
           ))}
 
-          {/* Camera controls with dynamic target that moves when panning */}
-          <OrbitControls
-            ref={orbitControlsRef}
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
+          {/* Custom camera controls with orbit and pan functionality */}
+          <CustomCameraControls
+            target={cameraTarget}
             minDistance={0.2}
-            maxDistance={20} // Increased from 5 to allow more freedom
+            maxDistance={20}
             maxPolarAngle={Math.PI / 2.2}
-            zoomSpeed={1} // Reduced from 2 for more controlled zooming
-            panSpeed={1} // Reduced from 2.5 for more consistent panning
-            rotateSpeed={1} // Added explicit rotate speed control
-            enableDamping={true}
-            dampingFactor={0.05} // Reduced from 0.1 for more responsive movement
-            screenSpacePanning={true} // Use screen-space panning for more intuitive movement
+            dampingFactor={0.05}
+            onTargetChange={setCameraTarget}
           />
         </Suspense>
       </Canvas>

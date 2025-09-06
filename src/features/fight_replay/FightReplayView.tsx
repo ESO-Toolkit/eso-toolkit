@@ -6,15 +6,8 @@ import {
   Speed,
   Replay,
   Visibility,
-  VisibilityOff,
   ExpandLess,
   ExpandMore,
-  Person,
-  SmartToy,
-  Shield,
-  Groups,
-  FavoriteRounded,
-  HeartBroken,
   TextFields,
 } from '@mui/icons-material';
 import {
@@ -36,7 +29,6 @@ import {
 } from '@mui/material';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
-import { replace } from 'redux-first-history';
 
 import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
@@ -47,7 +39,6 @@ import { useCurrentFight } from '../../hooks/useCurrentFight';
 import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { RootState } from '../../store/storeWithHistory';
-import { useAppDispatch } from '../../store/useAppDispatch';
 import {
   DamageEvent,
   HealEvent,
@@ -55,7 +46,9 @@ import {
   LogEvent,
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
-import { fightTimeToTimestamp, timestampToFightTime } from '../../utils/fightTimeUtils';
+import { timestampToFightTime } from '../../utils/fightTimeUtils';
+
+import { ActorCard } from './components/ActorCard';
 
 // Local utility function for formatting duration
 const formatDuration = (ms: number): string => {
@@ -72,31 +65,6 @@ const formatDuration = (ms: number): string => {
     return `${minutes}m ${seconds}s`;
   }
   return `${seconds}s`;
-};
-
-// Helper function to get actor type icon
-const getActorTypeIcon = (type: string): React.ReactElement => {
-  switch (type) {
-    case 'player':
-      return <Person fontSize="small" />;
-    case 'boss':
-      return <Shield fontSize="small" />;
-    case 'enemy':
-      return <SmartToy fontSize="small" />;
-    case 'friendly_npc':
-      return <Groups fontSize="small" />;
-    default:
-      return <Person fontSize="small" />;
-  }
-};
-
-// Helper function to get alive/dead status icon
-const getStatusIcon = (isAlive: boolean): React.ReactElement => {
-  return isAlive ? (
-    <FavoriteRounded fontSize="small" color="success" />
-  ) : (
-    <HeartBroken fontSize="small" color="error" />
-  );
 };
 
 interface FightReplayViewProps {
@@ -123,8 +91,8 @@ interface TimelineEvent {
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
-// Ultra-high refresh rate configuration for smooth rendering
-const RENDER_FRAME_INTERVAL = 4.17; // 240Hz rendering (4.17ms intervals)
+// Optimized refresh rate configuration for smooth rendering
+const RENDER_FRAME_INTERVAL = 16.67; // 60Hz rendering (16.67ms intervals) - much more reasonable
 
 export const FightReplayView: React.FC<FightReplayViewProps> = ({
   fight,
@@ -134,7 +102,6 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   playersById,
   reportMasterData,
 }) => {
-  const dispatch = useAppDispatch();
   const location = useSelector((state: RootState) => state.router?.location);
 
   // Get data from hooks (fallback if not provided as props)
@@ -209,52 +176,6 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     playbackSpeedRef.current = playbackSpeed;
   }, [playbackSpeed]);
 
-  // Update URL when key state changes (debounced to avoid excessive updates)
-  const updateUrlTimeoutRef = useRef<NodeJS.Timeout>();
-  useEffect(() => {
-    // Clear previous timeout
-    if (updateUrlTimeoutRef.current) {
-      clearTimeout(updateUrlTimeoutRef.current);
-    }
-
-    // Debounce URL updates to avoid too many history entries
-    updateUrlTimeoutRef.current = setTimeout(() => {
-      if (!fight || !location) return; // Can't convert times without fight data or location
-
-      const searchParams = new URLSearchParams(location.search);
-
-      // Update query parameters
-      if (selectedActorId !== undefined) {
-        searchParams.set('actorId', selectedActorId.toString());
-      } else {
-        searchParams.delete('actorId');
-      }
-
-      // Convert frame time to report time (absolute timestamp) for URL
-      // Only update time if it's not at the beginning (to keep URLs clean)
-      if (currentTime > 0) {
-        const reportTimestamp = fightTimeToTimestamp(currentTime, fight);
-        searchParams.set('time', Math.round(reportTimestamp).toString());
-      } else {
-        searchParams.delete('time');
-      }
-
-      // Update URL without adding to history (replace current entry)
-      const newSearch = searchParams.toString();
-      const newUrl = `${location.pathname}${newSearch ? `?${newSearch}` : ''}`;
-
-      if (newUrl !== `${location.pathname}${location.search}`) {
-        dispatch(replace(newUrl));
-      }
-    }, 500); // 500ms debounce
-
-    return () => {
-      if (updateUrlTimeoutRef.current) {
-        clearTimeout(updateUrlTimeoutRef.current);
-      }
-    };
-  }, [selectedActorId, currentTime, fight, location, dispatch]);
-
   const [visibleEventTypes, setVisibleEventTypes] = useState({
     damage: true,
     heal: true,
@@ -268,10 +189,11 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   // Note: These are now loaded in the parent FightReplay component
 
   // Combine events into the format expected by useActorPositions
-  // Note: Events are now passed as props from parent component  // Throttle actor position updates to 60Hz for better performance (while keeping UI at 240Hz)
+  // Note: Events are now passed as props from parent component
+  // Throttle actor position updates to match UI refresh rate (60Hz)
   const throttledCurrentTime = useMemo(() => {
-    // Round to nearest ~16ms (60Hz) to reduce actor position recalculations
-    return Math.floor(currentTime / 16.67) * 16.67;
+    // Round to nearest ~16.67ms (60Hz) to match UI refresh rate
+    return Math.floor(currentTime / RENDER_FRAME_INTERVAL) * RENDER_FRAME_INTERVAL;
   }, [currentTime]);
 
   // Get actor positions for 3D visualization (now throttled to 60Hz)
@@ -369,7 +291,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
 
   const fightDuration = activeFight ? activeFight.endTime - activeFight.startTime : 0;
 
-  // Playback control - 240Hz rendering with requestAnimationFrame (optimized)
+  // Playback control - 60Hz rendering with requestAnimationFrame (optimized)
   useEffect(() => {
     let animationFrame: number | null = null;
     let lastTime = performance.now();
@@ -379,7 +301,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
       if (isPlayingRef.current && currentTimeRef.current < fightDuration) {
         const deltaTime = currentPerformanceTime - lastTime;
 
-        // Update at ~240Hz (4.17ms intervals), accounting for playback speed
+        // Update at ~60Hz (16.67ms intervals), accounting for playback speed
         if (deltaTime >= RENDER_FRAME_INTERVAL) {
           setCurrentTime((prev) => {
             const next = prev + deltaTime * playbackSpeedRef.current;
@@ -702,130 +624,16 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                     </Box>
 
                     <Stack spacing={1}>
-                      {actors.map((actor) => {
-                        const esoX = Math.round(actor.position[0] * 1000 + 5235);
-                        const esoY = Math.round(actor.position[2] * 1000 + 5410);
-
-                        return (
-                          <Card
-                            key={actor.id}
-                            variant="outlined"
-                            sx={(theme) => ({
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease-in-out',
-                              border: actor.id === selectedActorId ? '2px solid' : '1px solid',
-                              borderColor:
-                                actor.id === selectedActorId
-                                  ? theme.palette.primary.main
-                                  : theme.palette.divider,
-                              backgroundColor:
-                                actor.id === selectedActorId
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(56, 189, 248, 0.15)'
-                                    : 'rgba(25, 118, 210, 0.08)'
-                                  : 'transparent',
-                              opacity: hiddenActorIds.has(actor.id) ? 0.6 : 1,
-                              '&:hover': {
-                                boxShadow:
-                                  theme.palette.mode === 'dark'
-                                    ? '0 4px 12px rgba(0, 0, 0, 0.25)'
-                                    : '0 2px 8px rgba(15, 23, 42, 0.1)',
-                                borderColor: theme.palette.primary.main,
-                                transform: 'translateY(-1px)',
-                                opacity: hiddenActorIds.has(actor.id) ? 0.8 : 1,
-                              },
-                            })}
-                            onClick={() => handleActorClick(actor.id)}
-                          >
-                            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                mb={0.5}
-                              >
-                                <Typography
-                                  variant="body2"
-                                  fontWeight="medium"
-                                  noWrap
-                                  sx={{
-                                    flex: 1,
-                                    mr: 1,
-                                    opacity: hiddenActorIds.has(actor.id) ? 0.5 : 1,
-                                    textDecoration: hiddenActorIds.has(actor.id)
-                                      ? 'line-through'
-                                      : 'none',
-                                  }}
-                                >
-                                  {actor.name}
-                                </Typography>
-                                <Box display="flex" gap={0.5} alignItems="center">
-                                  <Tooltip
-                                    title={
-                                      hiddenActorIds.has(actor.id)
-                                        ? 'Show actor in 3D view'
-                                        : 'Hide actor from 3D view'
-                                    }
-                                    placement="top"
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleActorVisibility(actor.id);
-                                      }}
-                                      sx={{
-                                        p: 0.25,
-                                        minWidth: 'auto',
-                                        color: hiddenActorIds.has(actor.id)
-                                          ? 'text.disabled'
-                                          : 'text.secondary',
-                                        '& .MuiSvgIcon-root': {
-                                          fontSize: '1rem',
-                                        },
-                                        '&:hover': {
-                                          color: hiddenActorIds.has(actor.id)
-                                            ? 'text.secondary'
-                                            : 'primary.main',
-                                        },
-                                      }}
-                                    >
-                                      {hiddenActorIds.has(actor.id) ? (
-                                        <VisibilityOff />
-                                      ) : (
-                                        <Visibility />
-                                      )}
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title={`Type: ${actor.type}`}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                      {getActorTypeIcon(actor.type)}
-                                    </Box>
-                                  </Tooltip>
-                                  <Tooltip title={actor.isAlive ? 'Alive' : 'Dead'}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                      {getStatusIcon(actor.isAlive)}
-                                    </Box>
-                                  </Tooltip>
-                                </Box>
-                              </Box>
-
-                              <Box
-                                display="flex"
-                                justifyContent="space-between"
-                                alignItems="center"
-                              >
-                                <Typography variant="caption" color="text.secondary">
-                                  ({actor.position[0].toFixed(1)}, {actor.position[2].toFixed(1)})
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  ESO: ({esoX}, {esoY})
-                                </Typography>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                      {actors.map((actor) => (
+                        <ActorCard
+                          key={actor.id}
+                          actor={actor}
+                          isSelected={actor.id === selectedActorId}
+                          isHidden={hiddenActorIds.has(actor.id)}
+                          onActorClick={handleActorClick}
+                          onToggleVisibility={toggleActorVisibility}
+                        />
+                      ))}
 
                       {actors.length === 0 && (
                         <Card variant="outlined">

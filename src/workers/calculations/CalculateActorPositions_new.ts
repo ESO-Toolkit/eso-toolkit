@@ -22,6 +22,10 @@ export interface ActorPosition {
   isTaunted?: boolean;
 }
 
+export interface TimestampedActorPosition extends ActorPosition {
+  timestamp: number;
+}
+
 export interface ActorTimeline {
   id: number;
   name: string;
@@ -37,8 +41,8 @@ export interface ActorTimeline {
 }
 
 export interface ActorPositionsTimeline {
-  /** Record of actorId to their timeline of positions */
-  actorTimelines: Record<number, ActorTimeline>;
+  /** Map of actorId to their timeline of positions */
+  actorTimelines: Map<number, ActorTimeline>;
   /** Sorted array of all unique timestamps */
   timestamps: number[];
   /** Fight duration for bounds checking */
@@ -60,6 +64,8 @@ export interface ActorPositionsCalculationTask {
   playersById?: Record<string | number, PlayerDetailsWithRole>;
   actorsById?: Record<string | number, ReportActorFragment>;
   debuffLookupData?: BuffLookupData;
+  /** Sample interval in milliseconds (default: 100ms for 10Hz) */
+  sampleInterval?: number;
 }
 
 export interface ActorPositionsCalculationResult {
@@ -75,15 +81,14 @@ export function calculateActorPositions(
   data: ActorPositionsCalculationTask,
   onProgress?: OnProgressCallback,
 ): ActorPositionsCalculationResult {
-  const { fight, events, playersById, actorsById, debuffLookupData } = data;
-  const sampleInterval = 4.7; // 240Hz sampling rate (better performance vs quality balance)
+  const { fight, events, playersById, actorsById, debuffLookupData, sampleInterval = 100 } = data;
 
   onProgress?.(0);
 
   if (!fight || !events) {
     return {
       timeline: {
-        actorTimelines: {},
+        actorTimelines: new Map(),
         timestamps: [],
         fightDuration: 0,
         fightStartTime: 0,
@@ -223,10 +228,7 @@ export function calculateActorPositions(
 
   // Generate sample timestamps at regular intervals
   const timestamps: number[] = [];
-  const maxTimestamps = 3600; // Cap at 1 minute worth of 60Hz data to prevent excessive computation
-  const adjustedInterval = Math.max(sampleInterval, fightDuration / maxTimestamps);
-
-  for (let time = 0; time <= fightDuration; time += adjustedInterval) {
+  for (let time = 0; time <= fightDuration; time += sampleInterval) {
     timestamps.push(time);
   }
   // Ensure we include the end time
@@ -256,7 +258,7 @@ export function calculateActorPositions(
   };
 
   // Build actor timelines
-  const actorTimelines: Record<number, ActorTimeline> = {};
+  const actorTimelines = new Map<number, ActorTimeline>();
   const allActorIds = new Set([...actorPositionHistory.keys(), ...actorFirstAppearance.keys()]);
 
   let processedActors = 0;
@@ -303,26 +305,18 @@ export function calculateActorPositions(
       if (history.length === 1) {
         currentPosition = history[0];
       } else if (history.length > 1) {
-        // Binary search for better performance with large datasets
-        let left = 0;
-        let right = history.length - 1;
+        // Use traditional for loop since findLast isn't available in all TypeScript targets
         let beforePos: (typeof history)[0] | undefined;
         let afterPos: (typeof history)[0] | undefined;
 
-        // Find the last position <= currentTimestamp
-        while (left <= right) {
-          const mid = Math.floor((left + right) / 2);
-          if (history[mid].timestamp <= currentTimestamp) {
-            beforePos = history[mid];
-            left = mid + 1;
-          } else {
-            right = mid - 1;
+        for (let i = 0; i < history.length; i++) {
+          if (history[i].timestamp <= currentTimestamp) {
+            beforePos = history[i];
           }
-        }
-
-        // Find the first position > currentTimestamp
-        if (left < history.length) {
-          afterPos = history[left];
+          if (history[i].timestamp > currentTimestamp && !afterPos) {
+            afterPos = history[i];
+            break;
+          }
         }
 
         if (beforePos && afterPos) {
@@ -408,13 +402,13 @@ export function calculateActorPositions(
     }
 
     if (positions.length > 0) {
-      actorTimelines[actorId] = {
+      actorTimelines.set(actorId, {
         id: actorId,
         name: actorName,
         type,
         role,
         positions,
-      };
+      });
     }
 
     processedActors++;

@@ -9,7 +9,10 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { executeActorPositionsTask } from '../../store/worker_results/taskSlices';
-import { ActorPosition, ActorPositionsTimeline } from '../../workers/calculations/CalculateActorPositions';
+import {
+  ActorPosition,
+  ActorPositionsTimeline,
+} from '../../workers/calculations/CalculateActorPositions';
 import { useDamageEvents } from '../events/useDamageEvents';
 import { useDeathEvents } from '../events/useDeathEvents';
 import { useHealingEvents } from '../events/useHealingEvents';
@@ -88,15 +91,7 @@ export function useActorPositionsTask({
         }),
       );
     }
-  }, [
-    dispatch,
-    fight,
-    events,
-    playersById,
-    actorsById,
-    debuffLookupData,
-    isAnyDataLoading,
-  ]);
+  }, [dispatch, fight, events, playersById, actorsById, debuffLookupData, isAnyDataLoading]);
 
   const actorPositionsResult = useSelector(selectActorPositionsResult);
   const isActorPositionsTaskLoading = useSelector(
@@ -124,7 +119,11 @@ export function useActorPositionsTask({
     }
 
     const timeline = actorPositionsResult.timeline as ActorPositionsTimeline;
-    if (!timeline.actorTimelines || !timeline.timestamps || Object.keys(timeline.actorTimelines).length === 0) {
+    if (
+      !timeline.actorTimelines ||
+      !timeline.timestamps ||
+      Object.keys(timeline.actorTimelines).length === 0
+    ) {
       return [];
     }
 

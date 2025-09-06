@@ -74,10 +74,10 @@ export const FightReplay: React.FC = () => {
   return (
     <>
       {metaTags && <DynamicMetaTags {...metaTags} />}
-      <FightReplayView 
+      <FightReplayView
         fight={fight || undefined}
-        fightsLoading={overallLoading} 
-        eventsLoading={eventsLoading} 
+        fightsLoading={overallLoading}
+        eventsLoading={eventsLoading}
       />
     </>
   );
