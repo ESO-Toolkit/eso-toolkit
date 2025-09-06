@@ -155,7 +155,6 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
             minDistance={0.2}
             maxDistance={20}
             maxPolarAngle={Math.PI / 2.2}
-            dampingFactor={0.05}
             onTargetChange={setCameraTarget}
           />
         </Suspense>

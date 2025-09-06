@@ -8,7 +8,6 @@ interface CustomCameraControlsProps {
   maxDistance?: number;
   maxPolarAngle?: number;
   enabled?: boolean;
-  dampingFactor?: number;
   onTargetChange?: (target: Vector3) => void;
 }
 
@@ -18,7 +17,6 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   maxDistance = 20,
   maxPolarAngle = Math.PI / 2.2,
   enabled = true,
-  dampingFactor = 0.05,
   onTargetChange,
 }) => {
   const { camera, gl } = useThree();
@@ -83,7 +81,7 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
         state.current.sphericalDelta.phi -= deltaY * rotateSpeed;
       } else if (state.current.isPanning) {
         // Pan the target point along the floor plane
-        const panSpeed = 0.008; // Increased from 0.002 for faster panning
+        const panSpeed = 0.003; // Reduced from 0.008 for less sensitive panning
 
         // Get camera's right and up vectors relative to the current view
         const cameraRight = new Vector3();
@@ -139,8 +137,14 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
         minDistance,
         Math.min(maxDistance, state.current.spherical.radius),
       );
+
+      // Apply zoom immediately by updating camera position
+      const offset = new Vector3();
+      offset.setFromSpherical(state.current.spherical);
+      camera.position.copy(state.current.target).add(offset);
+      camera.lookAt(state.current.target);
     },
-    [enabled, minDistance, maxDistance],
+    [enabled, minDistance, maxDistance, camera],
   );
 
   const handleContextMenu = useCallback((event: Event) => {
@@ -170,9 +174,14 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   useFrame(() => {
     if (!enabled) return;
 
-    // Apply spherical delta with damping
-    state.current.spherical.theta += state.current.sphericalDelta.theta * dampingFactor;
-    state.current.spherical.phi += state.current.sphericalDelta.phi * dampingFactor;
+    // Only update camera position when user is actively interacting
+    const isUserInteracting = state.current.isRotating || state.current.isPanning;
+    
+    if (!isUserInteracting) return;
+
+    // Apply spherical changes directly (no damping)
+    state.current.spherical.theta += state.current.sphericalDelta.theta;
+    state.current.spherical.phi += state.current.sphericalDelta.phi;
 
     // Clamp phi (vertical angle)
     state.current.spherical.phi = Math.max(
@@ -180,18 +189,17 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
       Math.min(maxPolarAngle, state.current.spherical.phi),
     );
 
-    // Apply pan offset with damping
-    state.current.target.add(state.current.panOffset.clone().multiplyScalar(dampingFactor));
+    // Apply pan offset directly (no damping)
+    state.current.target.add(state.current.panOffset);
 
     // Notify parent of target changes
-    if (state.current.panOffset.length() > 0.001 && onTargetChange) {
+    if (state.current.panOffset.length() > 0 && onTargetChange) {
       onTargetChange(state.current.target.clone());
     }
 
-    // Apply damping to deltas
-    state.current.sphericalDelta.theta *= 1 - dampingFactor;
-    state.current.sphericalDelta.phi *= 1 - dampingFactor;
-    state.current.panOffset.multiplyScalar(1 - dampingFactor);
+    // Clear deltas after applying them
+    state.current.sphericalDelta.set(0, 0, 0);
+    state.current.panOffset.set(0, 0, 0);
 
     // Update camera position from spherical coordinates
     const offset = new Vector3();
@@ -200,9 +208,9 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
     camera.lookAt(state.current.target);
   });
 
-  // Update target when prop changes
+  // Update target when prop changes, but not during user interaction
   useEffect(() => {
-    if (initialTarget) {
+    if (initialTarget && !state.current.isRotating && !state.current.isPanning) {
       state.current.target.copy(initialTarget);
     }
   }, [initialTarget]);

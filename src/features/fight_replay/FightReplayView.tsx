@@ -9,6 +9,7 @@ import {
   ExpandLess,
   ExpandMore,
   TextFields,
+  Share,
 } from '@mui/icons-material';
 import {
   Box,
@@ -26,9 +27,11 @@ import {
   LinearProgress,
   CircularProgress,
   Stack,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import { useSelector } from 'react-redux';
+import { useParams, useLocation } from 'react-router-dom';
 
 import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
@@ -46,7 +49,7 @@ import {
   LogEvent,
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
-import { timestampToFightTime } from '../../utils/fightTimeUtils';
+import { fightTimeToTimestamp, timestampToFightTime } from '../../utils/fightTimeUtils';
 
 import { ActorCard } from './components/ActorCard';
 
@@ -102,7 +105,8 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   playersById,
   reportMasterData,
 }) => {
-  const location = useSelector((state: RootState) => state.router?.location);
+  const location = useLocation();
+  const params = useParams();
 
   // Get data from hooks (fallback if not provided as props)
   const fightFromHook = useCurrentFight();
@@ -157,6 +161,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const [isActorPanelExpanded, setIsActorPanelExpanded] = useState(false);
   const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
   const [showActorNames, setShowActorNames] = useState(true);
+  const [showShareSnackbar, setShowShareSnackbar] = useState(false);
 
   // Use refs to avoid recreating animation loop on every currentTime change
   const currentTimeRef = useRef(currentTime);
@@ -366,6 +371,79 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     [selectedActorId],
   );
 
+  const handleShareUrl = useCallback(async () => {
+    if (!activeFight || !params.reportId || !params.fightId) return;
+
+    // Build the shareable URL using React Router params
+    const baseUrl = `${window.location.origin}/report/${params.reportId}/fight/${params.fightId}`;
+    const searchParams = new URLSearchParams(location.search);
+
+    // Add/update the time and actor parameters
+    if (selectedActorId !== undefined) {
+      searchParams.set('actorId', selectedActorId.toString());
+    } else {
+      searchParams.delete('actorId');
+    }
+
+    if (currentTime >= 0) {
+      const reportTimestamp = fightTimeToTimestamp(currentTime, activeFight);
+      searchParams.set('time', Math.round(reportTimestamp).toString());
+    } else {
+      searchParams.delete('time');
+    }
+
+    // Build the final URL
+    const shareUrl = `${baseUrl}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+    try {
+      // Try to use the Web Share API if available
+      if (navigator.share) {
+        await navigator.share({
+          title: 'ESO Fight Replay',
+          text: `Fight replay at ${formatDuration(currentTime)}`,
+          url: shareUrl,
+        });
+        return; // Success, no need for snackbar
+      }
+      
+      // Check if clipboard API is available and we're in a secure context
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowShareSnackbar(true);
+      } else {
+        // Fallback for non-secure contexts or unsupported browsers
+        // Create a temporary input element and use the legacy approach
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        
+        try {
+          // Try the modern approach first
+          await navigator.clipboard.writeText(shareUrl);
+          setShowShareSnackbar(true);
+        } catch {
+          // Last resort - let user manually copy
+          textArea.style.position = 'static';
+          textArea.style.left = 'auto';
+          textArea.style.top = 'auto';
+          textArea.select();
+          setShowShareSnackbar(true);
+        }
+        
+        document.body.removeChild(textArea);
+      }
+    } catch (error) {
+      console.error('Failed to share URL:', error);
+      // Show the URL in an alert as a final fallback
+      alert(`Please copy this URL manually: ${shareUrl}`);
+    }
+  }, [activeFight, params.reportId, params.fightId, selectedActorId, currentTime, location.search]);
+
   const getEventColor = (event: TimelineEvent): string => {
     switch (event.type) {
       case 'damage':
@@ -492,6 +570,12 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                   <Typography variant="caption" sx={{ ml: 0.5 }}>
                     {playbackSpeed}x
                   </Typography>
+                </IconButton>
+              </Tooltip>
+
+              <Tooltip title="Share current time URL">
+                <IconButton onClick={handleShareUrl} color="secondary">
+                  <Share />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -793,6 +877,18 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
           </Paper>
         </Stack>
       </Box>
+
+      {/* Share URL Success Snackbar */}
+      <Snackbar
+        open={showShareSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowShareSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert onClose={() => setShowShareSnackbar(false)} severity="success" sx={{ width: '100%' }}>
+          Shareable URL copied to clipboard!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
