@@ -14,7 +14,7 @@ export const StableLoading: React.FC<StableLoadingProps> = ({
   variant = 'panel',
   title = 'Loading...',
 }) => {
-  const getContent = () => {
+  const getContent = (): React.ReactElement => {
     switch (variant) {
       case 'chart':
         return (

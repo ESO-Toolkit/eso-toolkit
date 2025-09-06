@@ -1,5 +1,5 @@
 // src/components/LazyDialogs.tsx
-import { Dialog, DialogContent, CircularProgress, Box } from '@mui/material';
+import { CircularProgress, Box } from '@mui/material';
 import React, { Suspense } from 'react';
 
 // Lazy load heavy dialog components

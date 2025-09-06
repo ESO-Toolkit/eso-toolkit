@@ -22,7 +22,6 @@ import {
   FormControl,
   FormControlLabel,
   Switch,
-  Skeleton,
   Icon,
 } from '@mui/material';
 import React, { Suspense } from 'react';

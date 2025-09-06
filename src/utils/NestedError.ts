@@ -183,6 +183,7 @@ export class NestedError extends Error {
             ? 'warn'
             : 'log';
 
+    // eslint-disable-next-line no-console
     console[logMethod]('NestedError occurred:', {
       message: this.message,
       code: this.code,

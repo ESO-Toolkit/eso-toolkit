@@ -5,7 +5,6 @@ import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
-import { ModernFeedbackFab } from './components/BugReportDialog';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
 import { LoggerDebugButton } from './components/LoggerDebugButton';

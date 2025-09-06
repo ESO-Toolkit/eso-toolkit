@@ -40,8 +40,8 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
 
   // Add hooks for all data that child components depend on
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-  const { isStatusEffectUptimesLoading } = useStatusEffectUptimesTask();
+  useReportMasterData();
+  useStatusEffectUptimesTask();
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};

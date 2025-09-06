@@ -73,7 +73,7 @@ export const OAuthRedirect: React.FC = () => {
       }
     };
     fetchToken();
-  }, [dispatch, rebindAccessToken]);
+  }, [dispatch, rebindAccessToken, params]);
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>

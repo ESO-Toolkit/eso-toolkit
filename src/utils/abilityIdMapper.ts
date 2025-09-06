@@ -92,6 +92,7 @@ class AbilityIdMapper {
       });
 
       // Log success statistics
+      // eslint-disable-next-line no-console
       console.log(
         `AbilityIdMapper: Successfully processed ${processedCount} abilities, skipped ${skippedCount} invalid entries`,
       );
@@ -143,6 +144,7 @@ class AbilityIdMapper {
   getAbilityByName(name: string): AbilityData | null {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
+      // eslint-disable-next-line no-console
       this.ensureLoaded().catch(console.error);
       return null;
     }
@@ -158,12 +160,14 @@ class AbilityIdMapper {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
       this.ensureLoaded().catch((error) => {
+        // eslint-disable-next-line no-console
         console.error('Background ability data loading failed:', error);
       });
       return null;
     }
 
     if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
+      // eslint-disable-next-line no-console
       console.warn(`Invalid ability ID provided: ${id}`, {
         type: typeof id,
         isInteger: Number.isInteger(id),
@@ -212,6 +216,7 @@ class AbilityIdMapper {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
       this.ensureLoaded().catch((error) => {
+        // eslint-disable-next-line no-console
         console.error('Background ability data loading failed:', error);
       });
       return [];
@@ -219,6 +224,7 @@ class AbilityIdMapper {
 
     try {
       if (typeof partialName !== 'string' || partialName.trim().length === 0) {
+        // eslint-disable-next-line no-console
         console.warn('Invalid search term provided to searchAbilities:', {
           partialName,
           type: typeof partialName,
@@ -227,6 +233,7 @@ class AbilityIdMapper {
       }
 
       if (typeof limit !== 'number' || limit <= 0 || limit > 100) {
+        // eslint-disable-next-line no-console
         console.warn('Invalid limit provided to searchAbilities, using default:', {
           limit,
           defaultLimit: 10,

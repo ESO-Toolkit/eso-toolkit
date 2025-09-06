@@ -1,21 +1,7 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
-import { selectMasterDataLoadingState } from '../../store/master_data/masterDataSelectors';
-import {
-  selectDamageEventsLoading,
-  selectHealingEventsLoading,
-  selectFriendlyBuffEventsLoading,
-  selectHostileBuffEventsLoading,
-  selectDeathEventsLoading,
-  selectCombatantInfoEventsLoading,
-  selectDebuffEventsLoading,
-  selectCastEventsLoading,
-  selectResourceEventsLoading,
-} from '../../store/selectors/eventsSelectors';
-import { RootState } from '../../store/storeWithHistory';
 import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
 import { FightDetailsView } from './FightDetailsView';
@@ -149,6 +135,7 @@ export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fig
       fight={fight}
       onTabChange={navigateToTab}
       showExperimentalTabs={showExperimentalTabs}
+      isLoading={false}
     />
   );
 };
