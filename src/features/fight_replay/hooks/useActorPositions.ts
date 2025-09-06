@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 
 import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
+import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import {
   DamageEvent,
@@ -8,16 +9,20 @@ import {
   DeathEvent,
   ResourceChangeEvent,
 } from '../../../types/combatlogEvents';
+import { KnownAbilities } from '../../../types/abilities';
+import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
+import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 interface Actor {
   id: number;
   name: string;
-  type: 'player' | 'enemy' | 'boss';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
   role?: 'dps' | 'tank' | 'healer';
   position: [number, number, number];
   rotation: number;
   isAlive: boolean;
+  isTaunted?: boolean; // New property for taunt status
 }
 
 interface FightEvents {
@@ -25,6 +30,11 @@ interface FightEvents {
   heal: HealEvent[];
   death: DeathEvent[];
   resource: ResourceChangeEvent[];
+}
+
+interface UseActorPositionsResult {
+  actors: Actor[];
+  isLoading: boolean;
 }
 
 interface UseActorPositionsParams {
@@ -41,7 +51,9 @@ export const useActorPositions = ({
   currentTime,
   playersById,
   actorsById,
-}: UseActorPositionsParams): Actor[] => {
+}: UseActorPositionsParams): UseActorPositionsResult => {
+  // Get debuff lookup for taunt detection
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   // Pre-compute static data that doesn't change with currentTime (PERFORMANCE CRITICAL)
   const staticActorData = useMemo(() => {
     if (!fight || !events) {
@@ -176,7 +188,7 @@ export const useActorPositions = ({
   // Fast position lookup for current time (lightweight, runs at 60Hz)
   return useMemo(() => {
     if (!fight || !events) {
-      return [];
+      return { actors: [], isLoading: isDebuffLookupLoading };
     }
 
     const currentTimestamp = fight.startTime + currentTime;
@@ -226,13 +238,26 @@ export const useActorPositions = ({
           }
         }
 
+        // Check if there's a death event between beforePos and afterPos
+        const deaths = actorDeathEvents.get(actorId) || [];
+        let hasDeathBetween = false;
+
         if (beforePos && afterPos && beforePos !== afterPos) {
+          hasDeathBetween = deaths.some(
+            (deathTime: number) =>
+              deathTime > beforePos.timestamp && deathTime <= afterPos.timestamp,
+          );
+        }
+
+        if (beforePos && afterPos && beforePos !== afterPos && !hasDeathBetween) {
+          // Only interpolate if there's no death event between the two positions
           const interpolated = interpolate(beforePos, afterPos, currentTimestamp);
           currentPosition = {
             ...interpolated,
             timestamp: currentTimestamp,
           };
         } else {
+          // Don't interpolate across death events - use the exact position
           currentPosition = beforePos || afterPos || history[0];
         }
       }
@@ -240,14 +265,28 @@ export const useActorPositions = ({
       // Determine actor type
       const isPlayer = fight.friendlyPlayers?.includes(actorId) ?? false;
       const isBoss = fight.enemyNPCs?.some((npc) => npc?.id === actorId) ?? false;
+      const isFriendlyNPC = fight.friendlyNPCs?.some((npc) => npc?.id === actorId) ?? false;
+      const isEnemyNPC = fight.enemyNPCs?.some((npc) => npc?.id === actorId && !isBoss) ?? false;
 
-      let type: 'player' | 'enemy' | 'boss' = 'enemy';
+      let type: 'player' | 'enemy' | 'boss' | 'friendly_npc' = 'friendly_npc';
       if (isPlayer) type = 'player';
       else if (isBoss) type = 'boss';
+      else if (isEnemyNPC || (!isFriendlyNPC && !isPlayer)) {
+        // If it's explicitly in enemyNPCs (but not a boss) OR if it's not in any friendly list, treat as enemy
+        type = 'enemy';
+      } else if (isFriendlyNPC) type = 'friendly_npc';
 
       // Get role for players
       const playerData = isPlayer && playersById ? playersById[actorId] : undefined;
       const role = playerData?.role;
+
+      // Player role extraction
+      if (isPlayer) {
+        // Role data extraction for future debugging if needed
+        if (!playerData) {
+          // Player data not found in Redux, may need investigation
+        }
+      }
 
       // New resurrection logic: any event after death means the actor is alive again
       const deaths = actorDeathEvents.get(actorId) || [];
@@ -300,18 +339,39 @@ export const useActorPositions = ({
         const actorData = actorsById?.[actorId];
         const actorName = resolveActorName(actorData, actorId, `Actor ${actorId}`);
 
+        // Check if actor is taunted (only for enemies and bosses)
+        const isTaunted =
+          (type === 'enemy' || type === 'boss') && debuffLookupData && fight
+            ? isBuffActiveOnTarget(
+                debuffLookupData,
+                KnownAbilities.TAUNT,
+                fightTimeToTimestamp(currentTime, fight),
+                actorId,
+              )
+            : false;
+
         actors.push({
           id: actorId,
           name: actorName,
           type,
           role,
           position,
-          rotation: currentPosition.facing,
+          rotation: currentPosition.facing / 100 + Math.PI / 2, // Convert centiradians to radians and adjust for coordinate system
           isAlive,
+          isTaunted,
         });
       }
     }
 
-    return actors;
-  }, [staticActorData, currentTime, fight, playersById, actorsById, events]); // dependencies properly listed
+    return { actors, isLoading: isDebuffLookupLoading };
+  }, [
+    staticActorData,
+    currentTime,
+    fight,
+    playersById,
+    actorsById,
+    events,
+    debuffLookupData,
+    isDebuffLookupLoading,
+  ]); // dependencies properly listed
 };
