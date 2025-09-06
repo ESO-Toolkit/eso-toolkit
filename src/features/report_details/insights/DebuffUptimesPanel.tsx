@@ -94,7 +94,42 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     });
   }, [allDebuffUptimes, showAllDebuffs]);
 
-  if (isMasterDataLoading || isDebuffEventsLoading) {
+  // Enhanced loading check: ensure ALL required data is available and processing is complete
+  const isDataLoading = React.useMemo(() => {
+    // Still loading if any of the core data sources are loading
+    if (isMasterDataLoading || isDebuffEventsLoading) {
+      return true;
+    }
+
+    // Still loading if we don't have master data (though it's optional for debuffs)
+    // Still loading if debuff lookup task hasn't completed yet
+    if (!debuffsLookup) {
+      return true;
+    }
+
+    // Still loading if fight data is not available
+    if (!fightDuration || !fightStartTime || !fightEndTime) {
+      return true;
+    }
+
+    // Still loading if target data is not available
+    if (realTargetIds.size === 0) {
+      return true;
+    }
+
+    // Data is ready
+    return false;
+  }, [
+    isMasterDataLoading,
+    isDebuffEventsLoading,
+    debuffsLookup,
+    fightDuration,
+    fightStartTime,
+    fightEndTime,
+    realTargetIds,
+  ]);
+
+  if (isDataLoading) {
     return (
       <DebuffUptimesView
         selectedTargetId={selectedTargetId}

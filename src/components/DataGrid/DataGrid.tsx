@@ -77,7 +77,7 @@ const smartFilter: FilterFn<unknown> = (row, columnId, value) => {
 };
 
 // Generic DataGrid props
-export interface DataGridProps<T = unknown> {
+export interface DataGridProps<T = Record<string, unknown>> {
   data: T[];
   columns: ColumnDef<T>[];
   title?: string;

@@ -11,7 +11,7 @@ import {
 import { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 import { useReportMasterData } from '../../../hooks';
 
 import { DebuffOverviewData } from './DebuffsOverviewPanel';
@@ -267,9 +267,9 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
         </Box>
       )}
 
-      <DataGrid<DebuffOverviewData>
+      <DataGrid
         data={debuffOverviewData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Debuffs (${debuffOverviewData.length} unique)`}
         height={600}
         initialPageSize={25}

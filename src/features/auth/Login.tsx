@@ -65,7 +65,13 @@ export const Login: React.FC = () => {
               </Box>
 
               {/* Title */}
-              <Typography variant="h4" component="h1" gutterBottom sx={{ fontWeight: 600, mb: 1 }}>
+              <Typography
+                variant="h4"
+                component="h1"
+                gutterBottom
+                data-testid="login-title"
+                sx={{ fontWeight: 600, mb: 1 }}
+              >
                 ESO Log Aggregator
               </Typography>
               <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>

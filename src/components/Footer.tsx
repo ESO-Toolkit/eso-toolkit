@@ -3,8 +3,46 @@ import React from 'react';
 
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 
-export const Footer: React.FC = () => {
+export const Footer: React.FC = React.memo(() => {
   const theme = useTheme();
+
+  // Memoize tool links to prevent recreation
+  const toolLinks = React.useMemo(
+    () => [
+      { name: 'Text Editor', href: 'https://esohelper.tools/text-editor' },
+      { name: 'Build Calculator', href: 'https://esohelper.tools/calculator' },
+      { name: 'Log Analyzer', href: '#' },
+    ],
+    [],
+  );
+
+  // Memoize link styles to prevent recreation
+  const linkStyles = React.useMemo(
+    () => ({
+      color: theme.palette.text.secondary,
+      textDecoration: 'none',
+      fontSize: '0.95rem',
+      fontWeight: 500,
+      transition: 'all 0.2s ease',
+      display: 'inline-block',
+      position: 'relative' as const,
+    }),
+    [theme.palette.text.secondary],
+  );
+
+  // Memoize event handlers
+  const handleMouseEnter = React.useCallback((e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.currentTarget.style.color = '#38bdf8';
+    e.currentTarget.style.transform = 'translateX(4px)';
+  }, []);
+
+  const handleMouseLeave = React.useCallback(
+    (e: React.MouseEvent<HTMLAnchorElement>) => {
+      e.currentTarget.style.color = theme.palette.text.secondary;
+      e.currentTarget.style.transform = 'translateX(0)';
+    },
+    [theme.palette.text.secondary],
+  );
 
   return (
     <Box
@@ -129,33 +167,15 @@ export const Footer: React.FC = () => {
               Tools
             </Typography>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-              {[
-                { name: 'Text Editor', href: 'https://esohelper.tools/text-editor' },
-                { name: 'Build Calculator', href: 'https://esohelper.tools/calculator' },
-                { name: 'Log Analyzer', href: '#' },
-              ].map((tool) => (
+              {toolLinks.map((tool) => (
                 <Box key={tool.name}>
                   <a
                     href={tool.href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    style={{
-                      color: theme.palette.text.secondary,
-                      textDecoration: 'none',
-                      fontSize: '0.95rem',
-                      fontWeight: 500,
-                      transition: 'all 0.2s ease',
-                      display: 'inline-block',
-                      position: 'relative',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.color = '#38bdf8';
-                      e.currentTarget.style.transform = 'translateX(4px)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.color = theme.palette.text.secondary;
-                      e.currentTarget.style.transform = 'translateX(0)';
-                    }}
+                    style={linkStyles}
+                    onMouseEnter={handleMouseEnter}
+                    onMouseLeave={handleMouseLeave}
                   >
                     {tool.name}
                   </a>
@@ -281,4 +301,4 @@ export const Footer: React.FC = () => {
       </Container>
     </Box>
   );
-};
+});

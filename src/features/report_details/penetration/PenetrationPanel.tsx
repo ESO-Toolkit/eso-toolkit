@@ -1,5 +1,7 @@
+import { Box } from '@mui/material';
 import React from 'react';
 
+import { StableLoading } from '../../../components/StableLoading';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData, useSelectedTargetIds } from '../../../hooks';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
@@ -16,12 +18,17 @@ interface PenetrationPanelProps {
  */
 export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => {
   // Use hooks to get data
-  const { playerData } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const selectedTargetIds = useSelectedTargetIds();
 
   // Use the worker-based penetration calculation
-  const { penetrationData: allPlayersPenetrationData, isPenetrationDataLoading: isLoading } =
+  const { penetrationData: allPlayersPenetrationData, isPenetrationDataLoading } =
     usePenetrationDataTask();
+
+  const isLoading = isPenetrationDataLoading || isPlayerDataLoading;
+
+  // Only show details when all loading is complete AND we have data
+  const hasCompleteData = !isLoading && allPlayersPenetrationData && playerData?.playersById;
 
   // State to manage which accordion panels are expanded
   const [expandedPlayers, setExpandedPlayers] = React.useState<Record<string, boolean>>({});
@@ -48,6 +55,15 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
     [],
   );
 
+  // Show loading state while fetching data OR if data is not complete
+  if (!hasCompleteData) {
+    return (
+      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+        <StableLoading variant="panel" height={400} title="Loading penetration data..." />
+      </Box>
+    );
+  }
+
   return (
     <PenetrationPanelView
       players={players}
@@ -56,7 +72,7 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
       expandedPlayers={expandedPlayers}
       onPlayerExpandChange={handlePlayerExpandChange}
       penetrationData={allPlayersPenetrationData as Record<string, PlayerPenetrationData> | null}
-      isLoading={isLoading}
+      isLoading={false}
     />
   );
 };

@@ -37,7 +37,7 @@ export function useDebuffLookupTask(): {
   }, [dispatch, selectedFight, debuffEvents, isDebuffEventsLoading]);
 
   const debuffLookupData = useSelector(selectDebuffLookupResult) as BuffLookupData | null;
-  const isDebuffLookupLoading = useSelector(
+  const isDebuffLookupTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateDebuffLookup'),
   ) as boolean;
   const debuffLookupError = useSelector(selectWorkerTaskError('calculateDebuffLookup')) as
@@ -46,6 +46,9 @@ export function useDebuffLookupTask(): {
   const debuffLookupProgress = useSelector(selectWorkerTaskProgress('calculateDebuffLookup')) as
     | number
     | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isDebuffLookupLoading = isDebuffLookupTaskLoading || isDebuffEventsLoading;
 
   return React.useMemo(
     () => ({

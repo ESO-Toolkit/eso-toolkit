@@ -11,7 +11,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
   showTabs = false,
 }) => {
   return (
-    <Box>
+    <Box sx={{ minHeight: '800px' }}>
       {/* Target Selection Skeleton */}
       {showHeader && (
         <Box sx={{ mb: 2 }}>

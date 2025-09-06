@@ -53,7 +53,7 @@ export interface ILogger {
  * Default logger configuration
  */
 const DEFAULT_CONFIG: LoggerConfig = {
-  level: process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.DEBUG,
+  level: process.env.NODE_ENV === 'production' ? LogLevel.ERROR : LogLevel.ERROR,
   enableConsole: true,
   enableStorage: true,
   maxStorageEntries: 1000,

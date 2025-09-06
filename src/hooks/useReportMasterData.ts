@@ -7,7 +7,7 @@ import {
   selectMasterData,
   selectMasterDataLoadingState,
 } from '../store/master_data/masterDataSelectors';
-import { fetchReportMasterData, resetLoadingState } from '../store/master_data/masterDataSlice';
+import { fetchReportMasterData } from '../store/master_data/masterDataSlice';
 import { RootState } from '../store/storeWithHistory';
 import { useAppDispatch } from '../store/useAppDispatch';
 
@@ -25,36 +25,9 @@ export function useReportMasterData(): {
 
   React.useEffect(() => {
     if (reportId) {
-      // Check if we're stuck in loading state and reset it
-      if (
-        reportMasterData.loading &&
-        !reportMasterData.loaded &&
-        reportMasterData.cacheMetadata.lastFetchedReportId !== reportId
-      ) {
-        dispatch(resetLoadingState());
-      }
-
       dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
-  }, [
-    dispatch,
-    reportId,
-    client,
-    reportMasterData.loading,
-    reportMasterData.loaded,
-    reportMasterData.cacheMetadata.lastFetchedReportId,
-  ]);
-
-  // Add timeout to detect stuck loading state
-  React.useEffect(() => {
-    if (isMasterDataLoading && reportId) {
-      const timeout = setTimeout(() => {
-        dispatch(resetLoadingState());
-      }, 10000); // 10 second timeout
-
-      return () => clearTimeout(timeout);
-    }
-  }, [isMasterDataLoading, reportId, dispatch]);
+  }, [dispatch, reportId, client]);
 
   return React.useMemo(
     () => ({ reportMasterData, isMasterDataLoading }),

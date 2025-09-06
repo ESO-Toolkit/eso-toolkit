@@ -1,7 +1,13 @@
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
-import { useDamageEvents, usePlayerData, useCombatantInfoEvents } from '../../../hooks';
+import {
+  useDamageEvents,
+  usePlayerData,
+  useCombatantInfoEvents,
+  useReportMasterData,
+  useStatusEffectUptimesTask,
+} from '../../../hooks';
 import { KnownAbilities } from '../../../types/abilities';
 import { PlayerTalent } from '../../../types/playerDetails';
 
@@ -32,6 +38,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { combatantInfoEvents, isCombatantInfoEventsLoading } = useCombatantInfoEvents();
+
+  // Add hooks for all data that child components depend on
+  useReportMasterData();
+  useStatusEffectUptimesTask();
 
   const abilityEquipped = React.useMemo(() => {
     const result: Partial<Record<KnownAbilities, string[]>> = {};

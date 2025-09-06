@@ -1,6 +1,7 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box } from '@mui/material';
 import React from 'react';
 
+import { StableLoading } from '../../../components/StableLoading';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
@@ -16,13 +17,16 @@ interface DamageReductionPanelProps {
  * Smart component that handles data processing and state management for damage reduction panel
  */
 export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ fight }) => {
-  const { playerData } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
 
   // Use the worker-based damage reduction calculation
-  const {
-    damageReductionData: allPlayersDamageReductionData,
-    isDamageReductionLoading: isLoading,
-  } = useDamageReductionTask();
+  const { damageReductionData: allPlayersDamageReductionData, isDamageReductionLoading } =
+    useDamageReductionTask();
+
+  const isLoading = isDamageReductionLoading || isPlayerDataLoading;
+
+  // Only show details when all loading is complete AND we have data
+  const hasCompleteData = !isLoading && allPlayersDamageReductionData && playerData?.playersById;
 
   // Track which panels are expanded
   const [expandedPanels, setExpandedPanels] = React.useState<Record<string, boolean>>({});
@@ -48,12 +52,11 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
       .sort((a, b) => a.role.localeCompare(b.role));
   }, [playerData?.playersById]);
 
-  // Show loading state while fetching data
-  if (isLoading) {
+  // Show loading state while fetching data OR if data is not complete
+  if (!hasCompleteData) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 200 }}>
-        <CircularProgress />
-        <Typography sx={{ ml: 2 }}>Loading damage reduction data...</Typography>
+      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+        <StableLoading variant="panel" height={400} title="Loading damage reduction data..." />
       </Box>
     );
   }
@@ -67,7 +70,7 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
       damageReductionData={
         allPlayersDamageReductionData as Record<number, PlayerDamageReductionData> | null
       }
-      isLoading={isLoading}
+      isLoading={false}
     />
   );
 };

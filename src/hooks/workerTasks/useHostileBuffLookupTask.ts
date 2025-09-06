@@ -37,7 +37,7 @@ export function useHostileBuffLookupTask(): {
   }, [dispatch, selectedFight, hostileBuffEvents, isHostileBuffEventsLoading]);
 
   const hostileBuffLookupData = useSelector(selectHostileBuffLookupResult) as BuffLookupData | null;
-  const isHostileBuffLookupLoading = useSelector(
+  const isHostileBuffLookupTaskLoading = useSelector(
     selectWorkerTaskLoading('calculateHostileBuffLookup'),
   ) as boolean;
   const hostileBuffLookupError = useSelector(
@@ -46,6 +46,9 @@ export function useHostileBuffLookupTask(): {
   const hostileBuffLookupProgress = useSelector(
     selectWorkerTaskProgress('calculateHostileBuffLookup'),
   ) as number | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isHostileBuffLookupLoading = isHostileBuffLookupTaskLoading || isHostileBuffEventsLoading;
 
   return React.useMemo(
     () => ({

@@ -2,7 +2,7 @@ import { Avatar, Box, Typography } from '@mui/material';
 import { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 
 import { BuffOverviewData } from './BuffsOverviewPanel';
 
@@ -130,9 +130,9 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         consumables, gear effects, and environmental buffs.
       </Typography>
 
-      <DataGrid<BuffOverviewData>
+      <DataGrid
         data={buffOverviewData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Buffs (${buffOverviewData.length} unique)`}
         height={600}
         initialPageSize={25}

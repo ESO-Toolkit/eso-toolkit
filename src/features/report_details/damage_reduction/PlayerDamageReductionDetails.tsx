@@ -24,8 +24,8 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 
+import { LineChart } from '../../../components/LazyCharts';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { useRoleColors } from '../../../hooks';
@@ -95,6 +95,29 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   const theme = useTheme();
   const roleColors = useRoleColors();
 
+  // Memoize expensive chart data transformations to prevent recalculation on every render
+  const chartLabels = React.useMemo(() => {
+    return damageReductionData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
+  }, [damageReductionData?.dataPoints]);
+
+  const chartDataPoints = React.useMemo(() => {
+    return (
+      damageReductionData?.dataPoints.map((point) => ({
+        x: point.relativeTime,
+        y: point.damageReduction,
+      })) || []
+    );
+  }, [damageReductionData?.dataPoints]);
+
+  const staticDataPoints = React.useMemo(() => {
+    if (!damageReductionData?.dataPoints) return [];
+    const staticDR = resistanceToDamageReduction(damageReductionData.staticResistance);
+    return damageReductionData.dataPoints.map((point) => ({
+      x: point.relativeTime,
+      y: staticDR,
+    }));
+  }, [damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
+
   if (isLoading || !damageReductionData) {
     return (
       <Accordion
@@ -132,7 +155,6 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   }
 
   const {
-    dataPoints,
     damageReductionSources,
     maxDynamicResistance,
     staticResistance,
@@ -516,16 +538,13 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                 Damage Reduction Over Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
-                <Line
+                <LineChart
                   data={{
-                    labels: dataPoints.map((point) => point.relativeTime.toFixed(1)),
+                    labels: chartLabels,
                     datasets: [
                       {
                         label: 'Damage Reduction %',
-                        data: dataPoints.map((point) => ({
-                          x: point.relativeTime,
-                          y: point.damageReduction,
-                        })),
+                        data: chartDataPoints,
                         borderColor: '#2196f3',
                         backgroundColor: 'rgba(33, 150, 243, 0.1)',
                         borderWidth: 2,
@@ -537,10 +556,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                       },
                       {
                         label: 'Static Reduction',
-                        data: dataPoints.map((point) => ({
-                          x: point.relativeTime,
-                          y: staticDamageReduction,
-                        })),
+                        data: staticDataPoints,
                         borderColor: '#ff9800',
                         backgroundColor: 'rgba(255, 152, 0, 0.1)',
                         borderWidth: 1,

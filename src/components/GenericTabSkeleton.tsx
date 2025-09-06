@@ -17,8 +17,8 @@ export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
   tableRows = 8,
 }) => {
   return (
-    <Box sx={{ mt: 2 }}>
-      <Paper elevation={2} sx={{ p: 2 }}>
+    <Box sx={{ mt: 2, minHeight: '500px' }}>
+      <Paper elevation={2} sx={{ p: 2, minHeight: '100%' }}>
         <Skeleton variant="text" width="200px" height={28} sx={{ mb: 2 }} />
 
         {showChart && (

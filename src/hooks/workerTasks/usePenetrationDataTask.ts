@@ -29,7 +29,7 @@ export function usePenetrationDataTask(): {
 } {
   const dispatch = useAppDispatch();
   const selectedFight = useCurrentFight();
-  const { playerData } = usePlayerData();
+  const { playerData, isPlayerDataLoading } = usePlayerData();
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
@@ -48,29 +48,31 @@ export function usePenetrationDataTask(): {
     selectedTargetIds,
   ]);
 
+  // Execute task only when ALL dependencies are completely ready
   React.useEffect(() => {
-    if (
+    // Check that all dependencies are completely loaded with data available
+    const allDependenciesReady =
       selectedFight &&
-      !isBuffLookupLoading &&
-      buffLookupData &&
+      !isPlayerDataLoading &&
       playerData?.playersById &&
-      !isCombatantInfoEventsLoading
-    ) {
-      // Only require debuff data if it's actually loading or available
-      const hasDebuffData = debuffLookupData || !isDebuffLookupLoading;
+      !isCombatantInfoEventsLoading &&
+      combatantInfoRecord !== null &&
+      !isBuffLookupLoading &&
+      buffLookupData !== null &&
+      !isDebuffLookupLoading &&
+      debuffLookupData !== null;
 
-      if (hasDebuffData) {
-        dispatch(
-          executePenetrationDataTask({
-            fight: selectedFight,
-            players: playerData.playersById,
-            combatantInfoEvents: combatantInfoRecord,
-            friendlyBuffsLookup: buffLookupData,
-            debuffsLookup: debuffLookupData || { buffIntervals: {} },
-            selectedTargetIds: Array.from(selectedTargetIds),
-          }),
-        );
-      }
+    if (allDependenciesReady) {
+      dispatch(
+        executePenetrationDataTask({
+          fight: selectedFight,
+          players: playerData.playersById,
+          combatantInfoEvents: combatantInfoRecord,
+          friendlyBuffsLookup: buffLookupData,
+          debuffsLookup: debuffLookupData,
+          selectedTargetIds: Array.from(selectedTargetIds),
+        }),
+      );
     }
   }, [
     dispatch,
@@ -83,10 +85,11 @@ export function usePenetrationDataTask(): {
     selectedTargetIds,
     isDebuffLookupLoading,
     isBuffLookupLoading,
+    isPlayerDataLoading,
   ]);
 
   const penetrationData = useSelector(selectPenetrationDataResult);
-  const isPenetrationDataLoading = useSelector(
+  const isPenetrationDataTaskLoading = useSelector(
     selectWorkerTaskLoading('calculatePenetrationData'),
   ) as boolean;
   const penetrationDataError = useSelector(selectWorkerTaskError('calculatePenetrationData')) as
@@ -95,6 +98,14 @@ export function usePenetrationDataTask(): {
   const penetrationDataProgress = useSelector(
     selectWorkerTaskProgress('calculatePenetrationData'),
   ) as number | null;
+
+  // Include all dependency loading states in the overall loading state
+  const isPenetrationDataLoading =
+    isPenetrationDataTaskLoading ||
+    isPlayerDataLoading ||
+    isCombatantInfoEventsLoading ||
+    isBuffLookupLoading ||
+    isDebuffLookupLoading;
 
   return React.useMemo(
     () => ({

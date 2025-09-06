@@ -20,6 +20,8 @@ export interface WorkerTaskState<T> {
     lastInputHash: string | null;
     lastExecutedTimestamp: number | null;
   };
+  // Track the latest request ID to prevent race conditions
+  latestRequestId: string | null;
 }
 
 export interface WorkerTaskProgressPayload {
@@ -44,6 +46,7 @@ const createInitialTaskState = <T>(): WorkerTaskState<T> => ({
     lastInputHash: null,
     lastExecutedTimestamp: null,
   },
+  latestRequestId: null,
 });
 
 // Define the return type separately to avoid circular reference
@@ -176,9 +179,11 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
       resetTask(state) {
         const lastUpdated = state.lastUpdated;
         const cacheMetadata = state.cacheMetadata;
+        const latestRequestId = state.latestRequestId;
         Object.assign(state, createInitialTaskState<ResultType>());
         state.lastUpdated = lastUpdated;
         state.cacheMetadata = cacheMetadata;
+        state.latestRequestId = latestRequestId;
       },
     },
     extraReducers: (builder) => {
@@ -187,22 +192,31 @@ export const createWorkerTaskSlice = <T extends SharedComputationWorkerTaskType>
           state.isLoading = true;
           state.progress = null;
           state.error = null;
+          // Track this as the latest request to handle race conditions
+          state.latestRequestId = action.meta.requestId;
           // Update cache metadata with input hash
           state.cacheMetadata.lastInputHash = createInputHash(action.meta.arg);
         })
         .addCase(executeTask.fulfilled, (state, action) => {
-          state.result = action.payload as typeof state.result;
-          state.isLoading = false;
-          state.progress = null;
-          state.error = null;
-          state.lastUpdated = Date.now();
-          state.cacheMetadata.lastExecutedTimestamp = Date.now();
+          // Only update state if this is the latest request (prevent race conditions)
+          if (action.meta.requestId === state.latestRequestId) {
+            state.result = action.payload as typeof state.result;
+            state.isLoading = false;
+            state.progress = null;
+            state.error = null;
+            state.lastUpdated = Date.now();
+            state.cacheMetadata.lastExecutedTimestamp = Date.now();
+          }
+          // If this is not the latest request, ignore the result to prevent stale data overwrites
         })
         .addCase(executeTask.rejected, (state, action) => {
-          state.isLoading = false;
-          state.progress = null;
-          state.error = action.payload || action.error.message || 'Unknown error';
-          // Don't clear cache metadata on error - might want to retry with same input
+          // Only update error state if this is the latest request
+          if (action.meta.requestId === state.latestRequestId) {
+            state.isLoading = false;
+            state.progress = null;
+            state.error = action.payload || action.error.message || 'Unknown error';
+            // Don't clear cache metadata on error - might want to retry with same input
+          }
         });
     },
   });

@@ -33,6 +33,7 @@ import {
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useSelector } from 'react-redux';
 
+import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
 import { useReportMasterData } from '../../hooks';
 import { useDamageEvents } from '../../hooks/events/useDamageEvents';
@@ -42,7 +43,6 @@ import { useResourceEvents } from '../../hooks/events/useResourceEvents';
 import { RootState } from '../../store/types';
 import { DamageEvent, HealEvent, DeathEvent, LogEvent } from '../../types/combatlogEvents';
 
-import { CombatArena } from './components/CombatArena';
 import { useActorPositions } from './hooks/useActorPositions';
 
 // Local utility function for formatting duration
@@ -348,7 +348,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   return (
     <Box sx={{ p: 3 }}>
       {/* Header */}
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" gutterBottom data-testid="fight-replay-title">
         {fight.name} - Interactive Replay
       </Typography>
 

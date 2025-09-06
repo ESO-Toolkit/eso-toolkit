@@ -20,8 +20,8 @@ import {
 } from 'chart.js';
 import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
-import { Line } from 'react-chartjs-2';
 
+import { LineChart } from '../../../components/LazyCharts';
 import { MetricPill } from '../../../components/MetricPill';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { StatChecklist } from '../../../components/StatChecklist';
@@ -107,6 +107,21 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
       // They rely on description text detection for unimplemented sources
     }));
   }, [penetrationSources]);
+
+  // Memoize expensive chart data transformations to prevent recalculation on every render
+  const chartLabels = React.useMemo(() => {
+    return penetrationData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
+  }, [penetrationData?.dataPoints]);
+
+  const chartDataPoints = React.useMemo(() => {
+    return (
+      penetrationData?.dataPoints.map((point) => ({
+        x: point.relativeTime,
+        y: point.penetration,
+      })) || []
+    );
+  }, [penetrationData?.dataPoints]);
+
   if (!penetrationData) {
     return (
       <Accordion
@@ -317,18 +332,13 @@ export const PlayerPenetrationDetailsView: React.FC<PlayerPenetrationDetailsView
                 Penetration vs Time
               </Typography>
               <Box sx={{ width: '100%', height: 300 }}>
-                <Line
+                <LineChart
                   data={{
-                    labels: penetrationData.dataPoints.map((point) =>
-                      point.relativeTime.toFixed(1),
-                    ),
+                    labels: chartLabels,
                     datasets: [
                       {
                         label: 'Penetration',
-                        data: penetrationData.dataPoints.map((point) => ({
-                          x: point.relativeTime,
-                          y: point.penetration,
-                        })),
+                        data: chartDataPoints,
                         borderColor: '#1976d2',
                         backgroundColor: 'rgba(25, 118, 210, 0.1)',
                         borderWidth: 2,

@@ -147,6 +147,21 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
           : undefined,
     }));
   }, [criticalDamageSources]);
+
+  // Memoize expensive chart data transformations to prevent recalculation on every render
+  const chartLabels = React.useMemo(() => {
+    return criticalDamageData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
+  }, [criticalDamageData?.dataPoints]);
+
+  const chartDataPoints = React.useMemo(() => {
+    return (
+      criticalDamageData?.dataPoints.map((point) => ({
+        x: point.relativeTime,
+        y: point.criticalDamage,
+      })) || []
+    );
+  }, [criticalDamageData?.dataPoints]);
+
   if (!criticalDamageData) {
     return (
       <Accordion
@@ -460,16 +475,11 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               <Box sx={{ width: '100%', height: 300 }}>
                 <Line
                   data={{
-                    labels: criticalDamageData.dataPoints.map((point) =>
-                      point.relativeTime.toFixed(1),
-                    ),
+                    labels: chartLabels,
                     datasets: [
                       {
                         label: 'Critical Damage %',
-                        data: criticalDamageData.dataPoints.map((point) => ({
-                          x: point.relativeTime,
-                          y: point.criticalDamage,
-                        })),
+                        data: chartDataPoints,
                         borderColor: '#d32f2f',
                         backgroundColor: 'rgba(211, 47, 47, 0.1)',
                         borderWidth: 2,

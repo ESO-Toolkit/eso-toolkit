@@ -2,7 +2,7 @@ import { Box, Typography, Avatar, Chip, Card, CardContent, Stack, Button } from 
 import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
 import React, { useMemo } from 'react';
 
-import { DataGrid } from '../../../components/DataGrid/DataGrid';
+import { DataGrid } from '../../../components/LazyDataGrid';
 import { useLogger } from '../../../contexts/LoggerContext';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
@@ -210,7 +210,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
             <Card variant="outlined" sx={{ flex: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="primary">
+                <Typography variant="h4" color="primary" data-testid="unique-talents-count">
                   {talentRows.length}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
@@ -220,7 +220,7 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
             </Card>
             <Card variant="outlined" sx={{ flex: 1 }}>
               <CardContent sx={{ textAlign: 'center' }}>
-                <Typography variant="h4" color="secondary">
+                <Typography variant="h4" color="secondary" data-testid="players-in-fight-count">
                   {fight.friendlyPlayers?.length || 0}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">

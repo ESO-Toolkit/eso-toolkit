@@ -29,12 +29,16 @@ export default defineConfig(({ command, mode }) => {
       }),
       react(),
       // Disable ESLint during build to reduce memory usage
-      ...(command === 'serve' ? [eslint({
-        include: ['src/**/*.{ts,tsx}'],
-        exclude: ['node_modules', 'build'],
-        emitWarning: true,
-        emitError: false,
-      })] : []),
+      ...(command === 'serve'
+        ? [
+            eslint({
+              include: ['src/**/*.{ts,tsx}'],
+              exclude: ['node_modules', 'build'],
+              emitWarning: true,
+              emitError: false,
+            }),
+          ]
+        : []),
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
@@ -83,6 +87,24 @@ export default defineConfig(({ command, mode }) => {
             router: ['react-router-dom', 'history'],
             charts: ['chart.js', 'react-chartjs-2', 'chartjs-plugin-annotation'],
           },
+          chunkFileNames: (chunkInfo) => {
+            // Create a separate chunk for the large abilities.json data
+            if (
+              chunkInfo.name === 'abilities-data' ||
+              (chunkInfo.moduleIds &&
+                chunkInfo.moduleIds.some((id) => id.includes('abilities.json')))
+            ) {
+              return 'assets/abilities-data-[hash].js';
+            }
+            return 'assets/[name]-[hash].js';
+          },
+          assetFileNames: (assetInfo) => {
+            // Optimize asset naming for better caching
+            if (assetInfo.name && assetInfo.name.endsWith('.png')) {
+              return 'assets/images/[name]-[hash][extname]';
+            }
+            return 'assets/[name]-[hash][extname]';
+          },
         },
         // Reduce memory usage during bundling
         maxParallelFileOps: 2,
@@ -113,6 +135,10 @@ export default defineConfig(({ command, mode }) => {
         '@mui/icons-material',
         'chart.js',
         'react-chartjs-2',
+      ],
+      exclude: [
+        // Exclude the large abilities.json from being pre-bundled
+        './data/abilities.json',
       ],
     },
 

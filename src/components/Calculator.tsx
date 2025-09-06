@@ -226,7 +226,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
-const Calculator: React.FC = () => {
+const Calculator: React.FC = React.memo(() => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [selectedTab, setSelectedTab] = useState(0);
@@ -353,263 +353,275 @@ const Calculator: React.FC = () => {
     });
   }, []);
 
+  // Memoize expensive calculations and styles
+  // Memoize calculator item styles to prevent recreation on every render
+  const getCalculatorItemStyles = React.useCallback(
+    (item: CalculatorItem, hasQuantity: boolean) => ({
+      display: 'grid',
+      gridTemplateColumns: hasQuantity
+        ? liteMode
+          ? 'auto 50px 1fr auto'
+          : isMobile
+            ? 'auto 60px 1fr auto'
+            : 'auto 80px 1fr auto auto'
+        : liteMode
+          ? 'auto 1fr auto'
+          : isMobile
+            ? 'auto 1fr auto'
+            : 'auto 1fr auto',
+      alignItems: 'center',
+      gap: liteMode ? 0.75 : 2,
+      p: liteMode ? 0.5 : 1.5,
+      background: item.enabled
+        ? theme.palette.mode === 'dark'
+          ? 'rgba(56, 189, 248, 0.12)'
+          : 'rgba(59, 130, 246, 0.05)'
+        : theme.palette.mode === 'dark'
+          ? 'rgba(2,6,23,0.45)'
+          : 'rgba(248, 250, 252, 0.8)',
+      border: item.enabled
+        ? theme.palette.mode === 'dark'
+          ? '1px solid rgba(56, 189, 248, 0.4)'
+          : '1px solid rgba(59, 130, 246, 0.3)'
+        : theme.palette.mode === 'dark'
+          ? '1px solid rgba(255, 255, 255, 0.1)'
+          : '1px solid rgba(203, 213, 225, 0.3)',
+      borderRadius: liteMode ? 0.5 : 2,
+      mb: liteMode ? 0 : 1,
+      cursor: item.locked ? 'not-allowed' : 'pointer',
+      opacity: item.locked ? 0.8 : 1,
+      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+      position: 'relative',
+      '&:hover': !item.locked
+        ? {
+            backgroundColor: item.enabled
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.18)'
+                : 'rgba(59, 130, 246, 0.08)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(2,6,23,0.6)'
+                : 'rgba(248, 250, 252, 0.95)',
+            borderColor: item.enabled
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.6)'
+                : 'rgba(59, 130, 246, 0.5)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'rgba(203, 213, 225, 0.5)',
+            transform: liteMode ? 'none' : 'translateY(-1px)',
+            boxShadow: !liteMode
+              ? item.enabled
+                ? theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(56, 189, 248, 0.15)'
+                  : '0 4px 12px rgba(59, 130, 246, 0.1)'
+                : theme.palette.mode === 'dark'
+                  ? '0 4px 8px rgba(0, 0, 0, 0.15)'
+                  : '0 2px 6px rgba(0, 0, 0, 0.08)'
+              : 'none',
+          }
+        : {},
+      // Accent border for enabled items
+      ...(item.enabled &&
+        !liteMode && {
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            left: 0,
+            top: 0,
+            bottom: 0,
+            width: '3px',
+            backgroundColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6',
+            borderRadius: '2px 0 0 2px',
+          },
+        }),
+    }),
+    [theme.palette.mode, liteMode, isMobile],
+  );
+
   // Render item component
-  const renderItem = (
-    item: CalculatorItem,
-    index: number,
-    category: keyof CalculatorData,
-    updateFunction: (
-      category: keyof CalculatorData,
+  const renderItem = React.useCallback(
+    (
+      item: CalculatorItem,
       index: number,
-      updates: Partial<CalculatorItem>,
-    ) => void,
-  ): React.JSX.Element => {
-    const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
-    let displayValue: number;
-    let perDisplay = '';
+      category: keyof CalculatorData,
+      updateFunction: (
+        category: keyof CalculatorData,
+        index: number,
+        updates: Partial<CalculatorItem>,
+      ) => void,
+    ): React.JSX.Element => {
+      const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
+      let displayValue: number;
+      let perDisplay = '';
 
-    if (item.name === 'Anthelmir') {
-      const wd = parseFloat(item.quantity.toString()) || 0;
-      displayValue = Math.round(wd / 2.5);
-    } else if (item.name === 'Balorgh') {
-      const ult = parseFloat(item.quantity.toString()) || 0;
-      displayValue = Math.round(ult * 23);
-    } else if (item.isFlat) {
-      displayValue = item.value || 0;
-    } else {
-      displayValue = item.quantity * (item.per || 0);
-      perDisplay = (item.per || 0) + (item.isPercent ? '%' : '');
-    }
+      if (item.name === 'Anthelmir') {
+        const wd = parseFloat(item.quantity.toString()) || 0;
+        displayValue = Math.round(wd / 2.5);
+      } else if (item.name === 'Balorgh') {
+        const ult = parseFloat(item.quantity.toString()) || 0;
+        displayValue = Math.round(ult * 23);
+      } else if (item.isFlat) {
+        displayValue = item.value || 0;
+      } else {
+        displayValue = item.quantity * (item.per || 0);
+        perDisplay = (item.per || 0) + (item.isPercent ? '%' : '');
+      }
 
-    return (
-      <ListItem
-        key={index}
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: hasQuantity
-            ? liteMode
-              ? 'auto 50px 1fr auto'
-              : isMobile
-                ? 'auto 60px 1fr auto'
-                : 'auto 80px 1fr auto auto'
-            : liteMode
-              ? 'auto 1fr auto'
-              : isMobile
-                ? 'auto 1fr auto'
-                : 'auto 1fr auto',
-          alignItems: 'center',
-          gap: liteMode ? 0.75 : 2,
-          p: liteMode ? 0.5 : 1.5,
-          background: item.enabled
-            ? theme.palette.mode === 'dark'
-              ? 'rgba(56, 189, 248, 0.12)'
-              : 'rgba(59, 130, 246, 0.05)'
-            : theme.palette.mode === 'dark'
-              ? 'rgba(2,6,23,0.45)'
-              : 'rgba(248, 250, 252, 0.8)',
-          border: item.enabled
-            ? theme.palette.mode === 'dark'
-              ? '1px solid rgba(56, 189, 248, 0.4)'
-              : '1px solid rgba(59, 130, 246, 0.3)'
-            : theme.palette.mode === 'dark'
-              ? '1px solid rgba(255, 255, 255, 0.1)'
-              : '1px solid rgba(203, 213, 225, 0.3)',
-          borderRadius: liteMode ? 0.5 : 2,
-          mb: liteMode ? 0 : 1,
-          cursor: item.locked ? 'not-allowed' : 'pointer',
-          opacity: item.locked ? 0.8 : 1,
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          position: 'relative',
-          '&:hover': !item.locked
-            ? {
-                backgroundColor: item.enabled
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.18)'
-                    : 'rgba(59, 130, 246, 0.08)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(2,6,23,0.6)'
-                    : 'rgba(248, 250, 252, 0.95)',
-                borderColor: item.enabled
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.6)'
-                    : 'rgba(59, 130, 246, 0.5)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.2)'
-                    : 'rgba(203, 213, 225, 0.5)',
-                transform: liteMode ? 'none' : 'translateY(-1px)',
-                boxShadow: !liteMode
-                  ? item.enabled
-                    ? theme.palette.mode === 'dark'
-                      ? '0 4px 12px rgba(56, 189, 248, 0.15)'
-                      : '0 4px 12px rgba(59, 130, 246, 0.1)'
-                    : theme.palette.mode === 'dark'
-                      ? '0 4px 8px rgba(0, 0, 0, 0.15)'
-                      : '0 2px 6px rgba(0, 0, 0, 0.08)'
-                  : 'none',
+      return (
+        <ListItem
+          key={index}
+          sx={getCalculatorItemStyles(item, Boolean(hasQuantity))}
+          onClick={() =>
+            !item.locked && updateFunction(category, index, { enabled: !item.enabled })
+          }
+        >
+          <ListItemIcon sx={{ minWidth: 'auto' }}>
+            <Checkbox
+              checked={item.enabled}
+              disabled={item.locked}
+              size="small"
+              color="primary"
+              onClick={(e) => e.stopPropagation()}
+              onChange={(e) => updateFunction(category, index, { enabled: e.target.checked })}
+            />
+          </ListItemIcon>
+
+          {hasQuantity && (
+            <TextField
+              size="small"
+              type="number"
+              value={item.quantity}
+              onChange={(e) =>
+                updateFunction(category, index, {
+                  quantity: Math.max(
+                    item.minQuantity || 0,
+                    Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
+                  ),
+                })
               }
-            : {},
-          // Accent border for enabled items
-          ...(item.enabled &&
-            !liteMode && {
-              '&::before': {
-                content: '""',
-                position: 'absolute',
-                left: 0,
-                top: 0,
-                bottom: 0,
-                width: '3px',
-                backgroundColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6',
-                borderRadius: '2px 0 0 2px',
-              },
-            }),
-        }}
-        onClick={() => !item.locked && updateFunction(category, index, { enabled: !item.enabled })}
-      >
-        <ListItemIcon sx={{ minWidth: 'auto' }}>
-          <Checkbox
-            checked={item.enabled}
-            disabled={item.locked}
-            size="small"
-            color="primary"
-            onClick={(e) => e.stopPropagation()}
-            onChange={(e) => updateFunction(category, index, { enabled: e.target.checked })}
-          />
-        </ListItemIcon>
+              onClick={(e) => e.stopPropagation()}
+              disabled={item.locked}
+              placeholder={item.quantityTitle || undefined}
+              inputProps={{
+                min: item.minQuantity || 0,
+                max: item.maxQuantity || 100,
+                step: item.step || 1,
+              }}
+              sx={{
+                width: liteMode ? 50 : isMobile ? 60 : 80,
+                '& .MuiInputBase-root': {
+                  fontSize: liteMode ? '0.75rem' : isMobile ? '0.8rem' : '0.875rem',
+                },
+              }}
+            />
+          )}
 
-        {hasQuantity && (
-          <TextField
-            size="small"
-            type="number"
-            value={item.quantity}
-            onChange={(e) =>
-              updateFunction(category, index, {
-                quantity: Math.max(
-                  item.minQuantity || 0,
-                  Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
-                ),
-              })
-            }
-            onClick={(e) => e.stopPropagation()}
-            disabled={item.locked}
-            placeholder={item.quantityTitle || undefined}
-            inputProps={{
-              min: item.minQuantity || 0,
-              max: item.maxQuantity || 100,
-              step: item.step || 1,
-            }}
-            sx={{
-              width: liteMode ? 50 : isMobile ? 60 : 80,
-              '& .MuiInputBase-root': {
-                fontSize: liteMode ? '0.75rem' : isMobile ? '0.8rem' : '0.875rem',
-              },
-            }}
-          />
-        )}
-
-        <ListItemText
-          primary={
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    color: item.enabled ? 'text.primary' : 'text.disabled',
-                    textDecoration: item.enabled ? 'none' : 'line-through',
-                    fontSize: liteMode ? '0.8rem' : isMobile ? '0.875rem' : '0.9rem',
-                    lineHeight: 1.3,
-                  }}
-                >
-                  {item.name}
-                </Typography>
-                {item.tooltip && !item.hideTooltip && (
-                  <Tooltip
-                    title={<CalculatorTooltip title={item.name} content={item.tooltip} />}
-                    enterTouchDelay={0}
-                    leaveTouchDelay={3000}
-                    placement="top-start"
-                    enterDelay={0}
-                    arrow
-                    slotProps={{
-                      popper: {
-                        modifiers: [
-                          {
-                            name: 'preventOverflow',
-                            options: { padding: 8, rootBoundary: 'viewport' },
-                          },
-                          {
-                            name: 'flip',
-                            options: {
-                              fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-                            },
-                          },
-                          { name: 'offset', options: { offset: [0, 8] } },
-                        ],
-                      },
-                      tooltip: { sx: { p: 0 } },
+          <ListItemText
+            primary={
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flex: 1 }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color: item.enabled ? 'text.primary' : 'text.disabled',
+                      textDecoration: item.enabled ? 'none' : 'line-through',
+                      fontSize: liteMode ? '0.8rem' : isMobile ? '0.875rem' : '0.9rem',
+                      lineHeight: 1.3,
                     }}
                   >
-                    <IconButton
-                      size="small"
-                      sx={{
-                        p: 0.25,
-                        minWidth: 'auto',
-                        color: 'text.secondary',
-                        '&:hover': {
-                          color: 'primary.main',
+                    {item.name}
+                  </Typography>
+                  {item.tooltip && !item.hideTooltip && (
+                    <Tooltip
+                      title={<CalculatorTooltip title={item.name} content={item.tooltip} />}
+                      enterTouchDelay={0}
+                      leaveTouchDelay={3000}
+                      placement="top-start"
+                      enterDelay={0}
+                      arrow
+                      slotProps={{
+                        popper: {
+                          modifiers: [
+                            {
+                              name: 'preventOverflow',
+                              options: { padding: 8, rootBoundary: 'viewport' },
+                            },
+                            {
+                              name: 'flip',
+                              options: {
+                                fallbackPlacements: ['top', 'bottom', 'left', 'right'],
+                              },
+                            },
+                            { name: 'offset', options: { offset: [0, 8] } },
+                          ],
                         },
+                        tooltip: { sx: { p: 0 } },
                       }}
                     >
-                      <InfoIcon sx={{ fontSize: liteMode ? 12 : isMobile ? 14 : 16 }} />
-                    </IconButton>
-                  </Tooltip>
+                      <IconButton
+                        size="small"
+                        sx={{
+                          p: 0.25,
+                          minWidth: 'auto',
+                          color: 'text.secondary',
+                          '&:hover': {
+                            color: 'primary.main',
+                          },
+                        }}
+                      >
+                        <InfoIcon sx={{ fontSize: liteMode ? 12 : isMobile ? 14 : 16 }} />
+                      </IconButton>
+                    </Tooltip>
+                  )}
+                </Box>
+                {item.locked && (
+                  <Chip
+                    label="🔒"
+                    size="small"
+                    sx={{
+                      height: liteMode ? 16 : isMobile ? 18 : 20,
+                      fontSize: liteMode ? '0.6rem' : '0.65rem',
+                      backgroundColor: 'rgba(25, 118, 210, 0.1)',
+                    }}
+                  />
                 )}
               </Box>
-              {item.locked && (
-                <Chip
-                  label="🔒"
-                  size="small"
-                  sx={{
-                    height: liteMode ? 16 : isMobile ? 18 : 20,
-                    fontSize: liteMode ? '0.6rem' : '0.65rem',
-                    backgroundColor: 'rgba(25, 118, 210, 0.1)',
-                  }}
-                />
-              )}
-            </Box>
-          }
-        />
+            }
+          />
 
-        {perDisplay && !liteMode && (
+          {perDisplay && !liteMode && (
+            <Typography
+              variant="caption"
+              sx={{
+                color: theme.palette.text.secondary,
+                fontStyle: 'italic',
+                fontSize: isMobile ? '0.7rem' : '0.75rem',
+              }}
+            >
+              {perDisplay}
+            </Typography>
+          )}
+
           <Typography
-            variant="caption"
+            variant="body2"
             sx={{
-              color: theme.palette.text.secondary,
-              fontStyle: 'italic',
-              fontSize: isMobile ? '0.7rem' : '0.75rem',
+              color: '#38bdf8',
+              fontWeight: 700,
+              fontFamily: 'monospace',
+              textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(59,130,246,0.25)' : 'none',
+              minWidth: liteMode ? '2.5ch' : isMobile ? '3ch' : '4ch',
+              textAlign: 'right',
+              fontSize: liteMode ? '0.75rem' : isMobile ? '0.8rem' : '0.875rem',
             }}
           >
-            {perDisplay}
+            {displayValue.toLocaleString()}
+            {item.isPercent ? '%' : ''}
           </Typography>
-        )}
-
-        <Typography
-          variant="body2"
-          sx={{
-            color: '#38bdf8',
-            fontWeight: 700,
-            fontFamily: 'monospace',
-            textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(59,130,246,0.25)' : 'none',
-            minWidth: liteMode ? '2.5ch' : isMobile ? '3ch' : '4ch',
-            textAlign: 'right',
-            fontSize: liteMode ? '0.75rem' : isMobile ? '0.8rem' : '0.875rem',
-          }}
-        >
-          {displayValue.toLocaleString()}
-          {item.isPercent ? '%' : ''}
-        </Typography>
-      </ListItem>
-    );
-  };
+        </ListItem>
+      );
+    },
+    [getCalculatorItemStyles, liteMode, isMobile, theme.palette.mode, theme.palette.text.secondary],
+  );
 
   // Render section
   const renderSection = (
@@ -1098,6 +1110,6 @@ const Calculator: React.FC = () => {
       </Container>
     </CalculatorContainer>
   );
-};
+});
 
 export { Calculator };

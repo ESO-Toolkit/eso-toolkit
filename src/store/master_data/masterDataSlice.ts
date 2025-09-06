@@ -106,8 +106,12 @@ export const fetchReportMasterData = createAsyncThunk<
         return false; // Prevent thunk execution - data is cached
       }
 
-      if (state.masterData.loading) {
-        return false; // Prevent duplicate execution
+      // Only prevent duplicate execution if we're loading the SAME report
+      if (
+        state.masterData.loading &&
+        state.masterData.cacheMetadata.lastFetchedReportId === reportCode
+      ) {
+        return false; // Prevent duplicate execution for same report
       }
 
       return true; // Allow thunk execution
@@ -133,7 +137,6 @@ const masterDataSlice = createSlice({
         abilityCount: 0,
       };
     },
-    // Add action to reset stuck loading state
     resetLoadingState(state) {
       state.loading = false;
       state.error = null;

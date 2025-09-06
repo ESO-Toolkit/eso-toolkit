@@ -2,8 +2,8 @@ import { Avatar, Box, Chip, Popover, Typography } from '@mui/material';
 import { ColumnDef, Row } from '@tanstack/react-table';
 import React from 'react';
 
-import { DataGrid } from '../../../components/DataGrid';
-import { SkillTooltip } from '../../../components/SkillTooltip';
+import { DataGrid } from '../../../components/LazyDataGrid';
+import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 
 import { AuraData } from './AurasPanel';
 
@@ -232,9 +232,9 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         abilities, gear effects, and environmental buffs.
       </Typography>
 
-      <DataGrid<AuraData>
+      <DataGrid
         data={aurasData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Auras (${aurasData.length} unique)`}
         height={600}
         initialPageSize={25}
