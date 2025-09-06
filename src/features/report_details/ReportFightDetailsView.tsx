@@ -87,10 +87,12 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
           <Skeleton
             variant="text"
-            width={{ xs: '250px', sm: '350px', md: '450px' }}
-            height={{ xs: '1.8rem', sm: '2.4rem', md: '2.7rem' }}
+            width="450px"
+            height="2.7rem"
             sx={{
-              // Match the exact dimensions of the real title
+              // Responsive width and height overrides
+              width: { xs: '250px', sm: '350px', md: '450px' },
+              height: { xs: '1.8rem', sm: '2.4rem', md: '2.7rem' },
               minHeight: { xs: '1.8rem', sm: '2.4rem', md: '2.7rem' },
               // Use same font properties for consistent sizing
               fontSize: { xs: '1.5rem', sm: '2rem', md: '2.25rem' },

@@ -2,6 +2,7 @@ import { Store } from '@reduxjs/toolkit';
 import { render } from '@testing-library/react';
 import React from 'react';
 import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 
 import { AuthProvider } from './features/auth/AuthContext';
 import { OAuthRedirect } from './OAuthRedirect';
@@ -25,13 +26,6 @@ jest.mock('react-redux', () => ({
       report: { selectedReport: null },
       events: { hostileBuffs: { data: [], loading: false } },
       workerResults: {},
-      router: {
-        location: {
-          pathname: '/oauth-redirect',
-          search: '?code=test-code&state=test-state',
-          hash: '',
-        },
-      },
     };
     return selector(mockState);
   }),
@@ -44,13 +38,6 @@ const mockStore = {
     report: { selectedReport: null },
     events: { hostileBuffs: { data: [], loading: false } },
     workerResults: {},
-    router: {
-      location: {
-        pathname: '/oauth-redirect',
-        search: '?code=test-code&state=test-state',
-        hash: '',
-      },
-    },
   })),
   subscribe: jest.fn(() => jest.fn()),
   dispatch: jest.fn(),
@@ -65,11 +52,13 @@ jest.mock('./store/storeWithHistory', () => ({
 describe('OAuthRedirect Storybook Snapshot', () => {
   it('matches the default story snapshot', () => {
     const { container } = render(
-      <Provider store={mockStore}>
-        <AuthProvider>
-          <OAuthRedirect />
-        </AuthProvider>
-      </Provider>,
+      <MemoryRouter initialEntries={['/oauth-redirect?code=test-code&state=test-state']}>
+        <Provider store={mockStore}>
+          <AuthProvider>
+            <OAuthRedirect />
+          </AuthProvider>
+        </Provider>
+      </MemoryRouter>,
     );
     expect(container.firstChild).toMatchSnapshot();
   });

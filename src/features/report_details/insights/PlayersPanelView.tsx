@@ -159,7 +159,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         >
           {playerCards.map((playerData) => (
             <PlayerCard
-              key={playerData.key}
+              key={String(playerData.key)}
               player={playerData.player}
               mundusBuffs={playerData.mundusBuffs}
               championPoints={playerData.championPoints}

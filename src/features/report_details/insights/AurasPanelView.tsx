@@ -232,9 +232,9 @@ export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
         abilities, gear effects, and environmental buffs.
       </Typography>
 
-      <DataGrid<AuraData>
+      <DataGrid
         data={aurasData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Auras (${aurasData.length} unique)`}
         height={600}
         initialPageSize={25}

@@ -267,9 +267,9 @@ export const DebuffsOverviewPanelView: React.FC<DebuffsOverviewPanelViewProps> =
         </Box>
       )}
 
-      <DataGrid<DebuffOverviewData>
+            <DataGrid
         data={debuffOverviewData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Debuffs (${debuffOverviewData.length} unique)`}
         height={600}
         initialPageSize={25}

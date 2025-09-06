@@ -1,4 +1,4 @@
-import { configureStore, combineReducers } from '@reduxjs/toolkit';
+import { configureStore, combineReducers, ThunkAction, Action, ThunkDispatch } from '@reduxjs/toolkit';
 import { createBrowserHistory } from 'history';
 import { createReduxHistoryContext, LOCATION_CHANGE } from 'redux-first-history';
 import {
@@ -53,8 +53,23 @@ export interface ThunkExtraArgument {
   esoLogsClient: EsoLogsClient;
 }
 
+// Define RootState type from the root reducer
+export type RootState = ReturnType<typeof rootReducer>;
+
+// Define store type
+type AppStore = ReturnType<typeof configureStore>;
+export type AppDispatch = ThunkDispatch<RootState, ThunkExtraArgument, Action<string>>;
+
+// Define AppThunk type for typed thunk actions
+export type AppThunk<ReturnType = void> = ThunkAction<
+  ReturnType,
+  RootState,
+  ThunkExtraArgument,
+  Action<string>
+>;
+
 // Configure store with thunk extra argument
-const createStoreWithClient = (esoLogsClient: EsoLogsClient): ReturnType<typeof configureStore> => {
+const createStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
   return configureStore({
     reducer: persistedReducer,
     middleware: (getDefaultMiddleware) =>
@@ -83,18 +98,13 @@ const createStoreWithClient = (esoLogsClient: EsoLogsClient): ReturnType<typeof 
 let store = createStoreWithClient({} as EsoLogsClient);
 
 // Function to initialize store with actual client
-export const initializeStoreWithClient = (
-  esoLogsClient: EsoLogsClient,
-): ReturnType<typeof configureStore> => {
+export const initializeStoreWithClient = (esoLogsClient: EsoLogsClient): AppStore => {
   store = createStoreWithClient(esoLogsClient);
   return store;
 };
 
 // Export store getter to always return current store instance
-export const getStore = (): ReturnType<typeof configureStore> => store;
-
-export type RootState = ReturnType<typeof store.getState>;
-export type AppDispatch = typeof store.dispatch;
+export const getStore = (): AppStore => store;
 
 export const persistor = persistStore(store);
 

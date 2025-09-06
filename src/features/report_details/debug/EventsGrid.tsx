@@ -1,5 +1,5 @@
 import { Button } from '@mui/material';
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
@@ -149,7 +149,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
     return (
       <DataGrid
         data={[]}
-        columns={columns as ColumnDef<EventRowData>[]}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={title}
         height={height}
         initialPageSize={25}
@@ -165,7 +165,7 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
   return (
     <DataGrid
       data={data}
-      columns={columns as ColumnDef<EventRowData>[]}
+      columns={columns as ColumnDef<Record<string, unknown>>[]}
       title={`${title} (${events.length.toLocaleString()} total)`}
       height={height}
       initialPageSize={25}

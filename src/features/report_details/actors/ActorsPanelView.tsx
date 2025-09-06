@@ -1,6 +1,6 @@
 import { ContentCopy } from '@mui/icons-material';
 import { IconButton, Tooltip, Typography } from '@mui/material';
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { DataGrid } from '../../../components/LazyDataGrid';
@@ -270,7 +270,7 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
   return (
     <DataGrid
       data={actors}
-      columns={columns as ColumnDef<Actor>[]}
+      columns={columns as ColumnDef<Record<string, unknown>>[]}
       title={`All Actors in Report (${actors.length} total)`}
       height={600}
       initialPageSize={25}

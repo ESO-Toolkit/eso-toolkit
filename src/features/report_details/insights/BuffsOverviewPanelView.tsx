@@ -130,9 +130,9 @@ export const BuffsOverviewPanelView: React.FC<BuffsOverviewPanelViewProps> = ({
         consumables, gear effects, and environmental buffs.
       </Typography>
 
-      <DataGrid<BuffOverviewData>
+            <DataGrid
         data={buffOverviewData}
-        columns={columns}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title={`Buffs (${buffOverviewData.length} unique)`}
         height={600}
         initialPageSize={25}

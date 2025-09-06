@@ -1,5 +1,5 @@
 import { Box, Typography, Chip, CircularProgress } from '@mui/material';
-import { createColumnHelper, type ColumnDef } from '@tanstack/react-table';
+import { createColumnHelper, ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { AbilityIcon } from '../../../components/AbilityIcon';
@@ -113,7 +113,7 @@ export const AbilitiesDebugPanelView: React.FC<AbilitiesDebugPanelViewProps> = (
 
       <DataGrid
         data={abilities}
-        columns={columns as ColumnDef<AbilityData>[]}
+        columns={columns as ColumnDef<Record<string, unknown>>[]}
         title="Abilities Data"
         height={600}
         initialPageSize={25}
