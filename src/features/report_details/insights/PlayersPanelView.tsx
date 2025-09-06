@@ -32,6 +32,7 @@ interface PlayersPanelViewProps {
   deathsByPlayer: Record<string, number>;
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
+  maxHealthByPlayer: Record<string, number>;
   reportId?: string | null;
   fightId?: string | null;
   isLoading: boolean;
@@ -52,6 +53,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     deathsByPlayer,
     resurrectsByPlayer,
     cpmByPlayer,
+    maxHealthByPlayer,
     reportId,
     fightId,
     isLoading,
@@ -74,6 +76,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const deaths = deathsByPlayer?.[String(player.id)] ?? 0;
         const resurrects = resurrectsByPlayer?.[String(player.id)] ?? 0;
         const cpm = Math.round(cpmByPlayer?.[String(player.id)] ?? 0);
+        const maxHealth = maxHealthByPlayer?.[String(player.id)] ?? 0;
         const playerGearSets = (playerDataSet ?? [])
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
@@ -90,6 +93,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           deaths,
           resurrects,
           cpm,
+          maxHealth,
           playerGear: playerGearSets,
         };
       });
@@ -105,6 +109,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       deathsByPlayer,
       resurrectsByPlayer,
       cpmByPlayer,
+      maxHealthByPlayer,
     ]);
 
     if (isLoading) {
@@ -170,6 +175,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               deaths={playerData.deaths}
               resurrects={playerData.resurrects}
               cpm={playerData.cpm}
+              maxHealth={playerData.maxHealth}
               reportId={reportId}
               fightId={fightId}
               playerGear={playerData.playerGear}
