@@ -35,6 +35,27 @@ export const mockReport = {
 
 // HTTP handlers for REST API mocking
 export const restHandlers = [
+  // Mock ESO Logs OAuth token endpoint
+  http.post('https://www.esologs.com/oauth/token', async () => {
+    return HttpResponse.json({
+      access_token: 'mock_access_token_12345',
+      token_type: 'Bearer',
+      expires_in: 3600,
+      refresh_token: 'mock_refresh_token',
+      scope: 'view-user-profile view-private-reports',
+    });
+  }),
+
+  // Mock ESO Logs OAuth authorize endpoint
+  http.get('https://www.esologs.com/oauth/authorize', async () => {
+    return new HttpResponse(null, {
+      status: 302,
+      headers: {
+        Location: `${process.env.PUBLIC_URL || ''}/#/oauth-redirect?code=mock_auth_code&state=mock_state`,
+      },
+    });
+  }),
+
   // Mock ESO Logs GraphQL endpoint
   http.post('https://www.esologs.com/api/v2/client', async ({ request }) => {
     const body = (await request.json()) as any;
@@ -56,6 +77,22 @@ export const restHandlers = [
     return HttpResponse.json({
       data: {},
     });
+  }),
+
+  // Mock rpglogs.com assets (ability icons)
+  http.get('https://assets.rpglogs.com/img/eso/abilities/*', () => {
+    // Return a small transparent PNG
+    const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+    return new HttpResponse(transparentPng, {
+      headers: {
+        'Content-Type': 'image/png',
+      },
+    });
+  }),
+
+  // Mock Sentry
+  http.post('https://*.sentry.io/*', () => {
+    return HttpResponse.json({ success: true });
   }),
 
   // Mock any other API endpoints

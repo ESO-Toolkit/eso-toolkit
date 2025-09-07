@@ -8,15 +8,26 @@ The test suite includes:
 
 - **Home Page Tests** (`home.spec.ts`): Verifies that the landing page loads correctly
 - **Report Page Tests** (`report.spec.ts`): Tests loading and displaying individual reports and fight details
+- **Authentication Tests** (`auth.spec.ts`): Tests OAuth flow and authentication states
+- **External Service Mocking Tests** (`external-mocking.spec.ts`): Verifies that all external services are properly mocked
 
 ## Key Features
 
-### ✅ **Complete API Mocking**
+### ✅ **Complete External Service Mocking**
 
 - All external services are mocked using Playwright's route interception
 - ESO Logs GraphQL API calls are intercepted and return mock data
+- OAuth endpoints (authorize & token) are fully mocked
+- Asset requests (ability icons from rpglogs.com) are mocked
+- Analytics services (Sentry, Google Analytics) are mocked
 - No actual network requests are made to external services
-- Sentry and CDN requests are also mocked
+
+### ✅ **Comprehensive OAuth Testing**
+
+- OAuth authorization flow is mocked
+- Token exchange endpoint is mocked
+- Authentication state changes are tested
+- Error handling for OAuth failures is tested
 
 ### ✅ **Cross-Browser Testing**
 
@@ -25,26 +36,55 @@ The test suite includes:
 
 ### ✅ **Realistic Test Scenarios**
 
-- Home page loading and navigation
+- Home page loading with/without authentication
 - Report page with mock fight data
 - Invalid report handling
 - Route navigation testing
+- OAuth redirect handling
 
 ## Test Structure
 
 ```
 tests/
-├── home.spec.ts          # Home page tests
-├── report.spec.ts        # Report page tests
-└── utils/
-    └── api-mocking.ts    # Shared API mocking utilities
+├── home.spec.ts              # Home page tests
+├── report.spec.ts            # Report page tests
+├── auth.spec.ts              # Authentication flow tests
+├── external-mocking.spec.ts  # External service mocking verification
+├── setup.ts                  # Test setup with MSW fallback
+├── utils/
+│   └── api-mocking.ts        # Shared API mocking utilities
+└── mocks/
+    ├── handlers.ts           # MSW GraphQL handlers
+    └── rest-handlers.ts      # MSW REST API handlers
 ```
 
 ## API Mocking Strategy
 
-The tests use Playwright's `page.route()` to intercept network requests:
+The tests use a dual-layer mocking approach for maximum reliability:
+
+### Primary: Playwright Route Interception
 
 ```typescript
+// Mock ESO Logs OAuth endpoints
+await page.route('**/oauth/authorize**', async (route) => {
+  await route.fulfill({
+    status: 302,
+    headers: { Location: '/#/oauth-redirect?code=mock_code' },
+  });
+});
+
+await page.route('**/oauth/token**', async (route) => {
+  await route.fulfill({
+    status: 200,
+    contentType: 'application/json',
+    body: JSON.stringify({
+      access_token: 'mock_access_token',
+      token_type: 'Bearer',
+      expires_in: 3600,
+    }),
+  });
+});
+
 // Mock ESO Logs GraphQL API
 await page.route('**/api/v2/client**', async (route) => {
   // Return mock GraphQL responses
