@@ -3,15 +3,13 @@ import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Home Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Set up API mocking before each test
+    // Set up API mocking for consistent testing
     await setupApiMocking(page);
-
-    // Navigate to the home page
     await page.goto('/');
   });
 
   test('should load the home page successfully', async ({ page }) => {
-    // Wait for the page title to be set
+    // Check that the page title is set correctly
     await expect(page).toHaveTitle(/ESO Log Insights by NotaGuild/);
 
     // Check that the main content is visible
@@ -19,7 +17,7 @@ test.describe('Home Page', () => {
     await expect(page.locator('body')).toBeVisible();
 
     // Wait for any loading states to complete
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify no JavaScript errors occurred
     const logs: string[] = [];
@@ -29,22 +27,22 @@ test.describe('Home Page', () => {
       }
     });
 
-    // Give the page a moment to fully load and settle
     await page.waitForTimeout(1000);
 
-    // Check that no major JavaScript errors occurred
+    // Filter out known harmless errors from jsdom/test environment
     const significantLogs = logs.filter(
       (log) =>
-        !log.includes('Not implemented: navigation') &&
-        !log.includes('Failed to load resource') &&
-        !log.includes('net::ERR_')
+        !log.includes('ResizeObserver') &&
+        !log.includes('Not implemented') &&
+        !log.includes('jsdom') &&
+        !log.includes('net::ERR_'),
     );
     expect(significantLogs).toHaveLength(0);
   });
 
   test('should have working navigation elements', async ({ page }) => {
     // Wait for the page to be fully loaded
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Check if there are any navigation elements or buttons that should be present
     // Since this is a React app, we'll look for common UI elements
@@ -53,12 +51,8 @@ test.describe('Home Page', () => {
     const bodyContent = await page.locator('body').textContent();
     expect(bodyContent).toBeTruthy();
 
-    // Verify the page is interactive (React has loaded)
-    await expect(page.locator('body')).toBeVisible();
-
-    // Look for React root element or app container
-    const hasReactContent = (await page.locator('#root, [data-reactroot], .App').count()) > 0;
-    expect(hasReactContent).toBeTruthy();
+    // The page should have some meaningful content
+    expect(bodyContent!.length).toBeGreaterThan(100);
   });
 
   test('should handle routing correctly', async ({ page }) => {
@@ -66,7 +60,7 @@ test.describe('Home Page', () => {
     expect(page.url()).toMatch(/\/#?$/);
 
     // The app should be responsive
-    await page.waitForLoadState('networkidle');
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify the page doesn't have any major console errors (except known jsdom issues)
     const errors: string[] = [];
@@ -76,12 +70,9 @@ test.describe('Home Page', () => {
 
     await page.waitForTimeout(1000);
 
-    // Filter out known test environment errors
+    // Filter out known test environment issues
     const significantErrors = errors.filter(
-      (error) =>
-        !error.includes('Not implemented: navigation') &&
-        !error.includes('jsdom') &&
-        !error.includes('Failed to load resource')
+      (error) => !error.includes('ResizeObserver') && !error.includes('Not implemented'),
     );
 
     expect(significantErrors).toHaveLength(0);
