@@ -37,6 +37,7 @@ interface DeathInfo {
   wasBlocking: boolean | null;
   deathDurationMs: number | null;
   resurrectionTime: number | null;
+  killerWasTaunted?: boolean | null;
 }
 
 interface PlayerData {
@@ -663,6 +664,28 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             </span>
                           </>
                         )}
+                      </Typography>
+
+                      {/* Taunt indicator */}
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          display: 'block',
+                          mt: 0.5,
+                          fontSize: '0.7rem',
+                          fontWeight: 600,
+                          color: info.killerWasTaunted
+                            ? theme.palette.mode === 'dark'
+                              ? '#4ade80'
+                              : '#059669'
+                            : theme.palette.mode === 'dark'
+                              ? '#94a3b8'
+                              : '#64748b',
+                        }}
+                      >
+                        {info.killerWasTaunted
+                          ? '🛡️ Killer was taunted'
+                          : '⚡ Killer was NOT taunted'}
                       </Typography>
                     </Box>
                   ) : (
