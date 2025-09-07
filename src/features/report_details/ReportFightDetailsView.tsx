@@ -1,3 +1,5 @@
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import {
@@ -10,11 +12,14 @@ import {
   Skeleton,
   CircularProgress,
   useTheme,
+  IconButton,
 } from '@mui/material';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { FightFragment } from '../../graphql/generated';
+import { useReportData } from '../../hooks';
+import { cleanArray } from '../../utils/cleanArray';
 
 import { FightDetails } from './FightDetails';
 
@@ -37,8 +42,53 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
 
+  // Get report data to access the fights list for navigation
+  const { reportData } = useReportData();
+
   // Ref for immediate title rendering
   const titleRef = React.useRef<HTMLElement>(null);
+
+  // Get all fights sorted by start time for navigation
+  const sortedFights = React.useMemo<FightFragment[]>(() => {
+    if (!reportData?.fights) return [];
+
+    return cleanArray(reportData.fights.filter(Boolean))
+      .filter((fight) => fight.startTime && fight.endTime && fight.endTime > fight.startTime)
+      .sort((a, b) => a.startTime - b.startTime);
+  }, [reportData?.fights]);
+
+  // Find current fight index and navigation fights
+  const { currentIndex, previousFight, nextFight } = React.useMemo(() => {
+    if (!fightId || sortedFights.length === 0) {
+      return { currentIndex: -1, previousFight: null, nextFight: null };
+    }
+
+    const fightIdNumber = parseInt(fightId, 10);
+    const currentIndex = sortedFights.findIndex((f) => f.id === fightIdNumber);
+
+    if (currentIndex === -1) {
+      return { currentIndex: -1, previousFight: null, nextFight: null };
+    }
+
+    const previousFight = currentIndex > 0 ? sortedFights[currentIndex - 1] : null;
+    const nextFight =
+      currentIndex < sortedFights.length - 1 ? sortedFights[currentIndex + 1] : null;
+
+    return { currentIndex, previousFight, nextFight };
+  }, [fightId, sortedFights]);
+
+  // Navigation functions
+  const navigateToPreviousFight = React.useCallback(() => {
+    if (previousFight && reportId) {
+      navigate(`/report/${reportId}/fight/${previousFight.id}/insights`);
+    }
+  }, [previousFight, reportId, navigate]);
+
+  const navigateToNextFight = React.useCallback(() => {
+    if (nextFight && reportId) {
+      navigate(`/report/${reportId}/fight/${nextFight.id}/insights`);
+    }
+  }, [nextFight, reportId, navigate]);
 
   // AGGRESSIVE LCP OPTIMIZATION: Paint content before React hydration
   React.useLayoutEffect(() => {
@@ -266,6 +316,72 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
           {fightId ? `Fight ${fightId}` : 'Loading...'}
         </Typography>
       </Stack>
+
+      {/* Fight Navigation */}
+      <Box sx={{ mb: 2, display: 'flex', justifyContent: 'center', gap: 1 }}>
+        <Tooltip title={previousFight ? `Previous: ${previousFight.name}` : 'No previous fight'}>
+          <span>
+            <IconButton
+              onClick={navigateToPreviousFight}
+              disabled={!previousFight}
+              size="small"
+              sx={{
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                border: 1,
+                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                },
+                '&:disabled': {
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+                  borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+                },
+              }}
+            >
+              <ArrowBackIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+
+        <Typography
+          variant="body2"
+          sx={{
+            alignSelf: 'center',
+            color: 'text.secondary',
+            fontWeight: 500,
+            minWidth: '120px',
+            textAlign: 'center',
+          }}
+        >
+          {currentIndex >= 0 && sortedFights.length > 0
+            ? `${currentIndex + 1} of ${sortedFights.length}`
+            : 'Loading...'}
+        </Typography>
+
+        <Tooltip title={nextFight ? `Next: ${nextFight.name}` : 'No next fight'}>
+          <span>
+            <IconButton
+              onClick={navigateToNextFight}
+              disabled={!nextFight}
+              size="small"
+              sx={{
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
+                border: 1,
+                borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+                '&:hover': {
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+                },
+                '&:disabled': {
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
+                  borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.06)',
+                },
+              }}
+            >
+              <ArrowForwardIcon fontSize="small" />
+            </IconButton>
+          </span>
+        </Tooltip>
+      </Box>
 
       {fight ? (
         <FightDetails fight={fight} reportId={reportId} fightId={fightId} tabId={tabId} />
