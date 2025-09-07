@@ -186,8 +186,17 @@ jobs:
           echo "Blocked external services in /etc/hosts:"
           cat /etc/hosts | grep "127.0.0.1"
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: |
+          echo "Running Playwright tests with optimizations..."
+          echo "Node memory: $NODE_OPTIONS"
+          echo "Playwright config: CI mode with single worker"
+          npm run test:e2e
         env:
+          # Node.js memory optimization - increased heap size
+          NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024 --gc-interval=100'
+          # CI environment flags
+          CI: 'true'
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
           # Prevent external network requests during testing
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
@@ -197,6 +206,8 @@ jobs:
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
           SENTRY_DSN: ''
+          # Playwright memory optimization
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()

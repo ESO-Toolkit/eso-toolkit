@@ -6,11 +6,11 @@ import { defineConfig, devices } from '@playwright/test';
 export default defineConfig({
   testDir: './tests',
   /* Run tests in files in parallel */
-  fullyParallel: true,
+  fullyParallel: !process.env.CI, // Disable parallel in CI to reduce memory usage
   /* Fail the build on CI if you accidentally left test.only in the source code. */
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
-  retries: process.env.CI ? 2 : 0,
+  retries: process.env.CI ? 1 : 0, // Reduce retries to save memory
   /* Opt out of parallel tests on CI. */
   workers: process.env.CI ? 1 : undefined,
   /* Timeout settings */
@@ -19,7 +19,7 @@ export default defineConfig({
     timeout: process.env.CI ? 10000 : 5000, // 10s in CI, 5s locally
   },
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
-  reporter: 'html',
+  reporter: process.env.CI ? [['html'], ['github']] : 'html',
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -46,17 +46,41 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'] },
+      use: { 
+        ...devices['Desktop Chrome'],
+        launchOptions: {
+          args: process.env.CI ? [
+            '--memory-pressure-off',
+            '--max_old_space_size=2048',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--no-sandbox'
+          ] : ['--memory-pressure-off']
+        }
+      },
     },
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
+      use: { 
+        ...devices['Desktop Firefox'],
+        launchOptions: {
+          firefoxUserPrefs: process.env.CI ? {
+            'memory.max': 2147483648, // 2GB limit
+            'dom.max_script_run_time': 30,
+          } : {}
+        }
+      },
     },
 
     {
       name: 'webkit',
-      use: { ...devices['Desktop Safari'] },
+      use: { 
+        ...devices['Desktop Safari'],
+        launchOptions: {
+          args: process.env.CI ? ['--memory-pressure-off'] : []
+        }
+      },
     },
 
     /* Test against mobile viewports. */
