@@ -945,7 +945,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                       key={type}
                       label={type.charAt(0).toUpperCase() + type.slice(1)}
                       color={visible ? 'primary' : 'default'}
-                      variant={visible ? 'filled' : 'outlined'}
+                      variant="outlined"
                       onClick={() => toggleEventType(type as keyof typeof visibleEventTypes)}
                       icon={<Visibility />}
                       sx={{
