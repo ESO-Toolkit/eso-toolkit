@@ -3,7 +3,7 @@
  * Consolidates weapon type checking logic used across the application
  */
 
-import { WeaponType, GearType, ArmorType } from '../types/playerDetails';
+import { WeaponType } from '../types/playerDetails';
 
 // Weapon type sets for efficient lookups
 const ONE_HANDED_WEAPONS = Object.freeze(
@@ -86,25 +86,10 @@ export function canDualWield(weaponType: WeaponType): boolean {
   return isOneHandedWeapon(weaponType);
 }
 
-// ========================================
-// ARMOR TYPE CLASSIFICATION UTILITIES
-// ========================================
-
-/**
- * Determines if a gear type is armor
- */
-export function isArmor(gearType: GearType): boolean {
-  return (
-    gearType === ArmorType.HEAVY || gearType === ArmorType.MEDIUM || gearType === ArmorType.LIGHT
-  );
-}
-
-/**
- * Determines if a gear type is a weapon
- */
-export function isWeapon(gearType: GearType): boolean {
-  return Object.values(WeaponType).includes(gearType as WeaponType);
-}
-
 // Export the sets for other utilities that might need them
-export { ONE_HANDED_WEAPONS, TWO_HANDED_WEAPONS, STAFF_WEAPONS, DOUBLE_SET_TYPES };
+export { 
+  ONE_HANDED_WEAPONS,
+  TWO_HANDED_WEAPONS, 
+  STAFF_WEAPONS,
+  DOUBLE_SET_TYPES,
+};

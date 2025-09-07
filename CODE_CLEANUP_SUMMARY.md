@@ -44,7 +44,7 @@ Consolidates all weapon type checking logic:
 - `isDoubleSetWeapon()`
 - `isMace()`
 - `canDualWield()`
-- `isArmor()` and `isWeapon()`
+- `isArmor()` and `isWeapon()` (removed - had enum overlap issues)
 
 ### Updated Files
 
