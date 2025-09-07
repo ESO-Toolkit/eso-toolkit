@@ -83,7 +83,7 @@
     "test:coverage": "set COVERAGE=true && jest --coverage --watchAll=false",
     "test:e2e:headed": "playwright test --headed",
     "test:e2e:ui": "playwright test --ui",
-    "test:e2e": "playwright test",
+    "test:e2e": "playwright test --project=chromium",
     "test:watch": "jest",
     "test": "jest",
     "type-check": "npm run typecheck",

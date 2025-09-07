@@ -5,48 +5,6 @@ import { Page } from '@playwright/test';
  * This avoids the need for MSW service workers in the test environment
  */
 export async function setupApiMocking(page: Page) {
-  // In CI, be more aggressive about blocking external requests
-  const isCI = process.env.CI === 'true';
-  
-  if (isCI) {
-    // Block ALL external requests in CI and log them
-    await page.route('**/*', async (route) => {
-      const url = route.request().url();
-      
-      // Allow localhost requests (our dev server and mocked responses)
-      if (url.includes('localhost') || url.includes('127.0.0.1')) {
-        route.continue();
-        return;
-      }
-      
-      // Block and log any external requests
-      const blockedDomains = [
-        'esologs.com', 'rpglogs.com', 'sentry.io', 'googleapis.com', 
-        'gstatic.com', 'discord.gg', 'github.com', 'gravatar.com',
-        'analytics.google.com', 'googletagmanager.com'
-      ];
-      
-      const isBlocked = blockedDomains.some(domain => url.includes(domain));
-      
-      if (isBlocked) {
-        console.error(`🚫 BLOCKED EXTERNAL REQUEST IN CI: ${route.request().method()} ${url}`);
-        // Return a generic error response
-        await route.fulfill({
-          status: 503,
-          contentType: 'application/json',
-          body: JSON.stringify({ 
-            error: 'External requests blocked in CI',
-            url,
-            blocked: true 
-          }),
-        });
-        return;
-      }
-      
-      // Continue with other requests
-      route.continue();
-    });
-  }
   // Mock ESO Logs OAuth endpoints
   await page.route('**/oauth/authorize**', async (route) => {
     // Mock OAuth authorization endpoint - should redirect back with code
@@ -319,5 +277,34 @@ export async function setupApiMocking(page: Page) {
         body: '<html><body>ESO Helper Tools Mock</body></html>',
       });
     }
+  });
+
+  // Block specific external services that we know about
+  // ESO Logs API
+  await page.route('**/esologs.com/**', async (route) => {
+    const url = route.request().url();
+    console.log(`🚫 Blocked ESO Logs request: ${url}`);
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'ESO Logs blocked in tests', url }),
+    });
+  });
+
+  // Other external services
+  await page.route('**/rpglogs.com/**', async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'RPG Logs blocked in tests' }),
+    });
+  });
+
+  await page.route('**/sentry.io/**', async (route) => {
+    await route.fulfill({
+      status: 503,
+      contentType: 'application/json',
+      body: JSON.stringify({ error: 'Sentry blocked in tests' }),
+    });
   });
 }
