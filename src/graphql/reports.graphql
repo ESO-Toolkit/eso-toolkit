@@ -1,5 +1,5 @@
 # Reports and Fights queries
-# Used by: ReportFights.tsx, ReportFightDetails.tsx
+# Used by: ReportFights.tsx, ReportFightDetails.tsx, UserReports.tsx
 
 fragment Report on Report {
   code
@@ -15,10 +15,50 @@ fragment Report on Report {
   }
 }
 
+fragment UserReportSummary on Report {
+  code
+  startTime
+  endTime
+  title
+  visibility
+  zone {
+    name
+  }
+  owner {
+    name
+  }
+}
+
 query getReportByCode($code: String!) {
   reportData {
     report(code: $code) {
       ...Report
+    }
+  }
+}
+
+query getCurrentUser {
+  userData {
+    currentUser {
+      id
+      name
+      naDisplayName
+      euDisplayName
+    }
+  }
+}
+
+query getUserReports($limit: Int, $page: Int, $userID: Int) {
+  reportData {
+    reports(limit: $limit, page: $page, userID: $userID) {
+      data {
+        ...UserReportSummary
+      }
+      total
+      current_page
+      per_page
+      last_page
+      has_more_pages
     }
   }
 }

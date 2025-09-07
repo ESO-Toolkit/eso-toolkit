@@ -1,45 +1,58 @@
 import { ApolloProvider } from '@apollo/client';
-import React, { createContext, useContext, useMemo, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useMemo, ReactNode, useState, useCallback } from 'react';
 
 import { useLogger } from './contexts/LoggerContext';
 import { EsoLogsClient } from './esologsClient';
-import { useAuth } from './features/auth/AuthContext';
 
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
   isReady: boolean;
+  setAuthToken: (token: string) => void;
+  clearAuthToken: () => void;
 }
 
 export const EsoLogsClientContext = createContext<EsoLogsClientContextType | undefined>(undefined);
 
 export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const { accessToken, isLoggedIn } = useAuth();
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(false);
   const logger = useLogger('EsoLogsClient');
 
-  // We want a singleton here
+  // We want a singleton here - create client once and update token via methods
   // eslint-disable-next-line react-hooks/exhaustive-deps
   const client = useMemo(() => {
-    logger.info('Creating new EsoLogsClient instance', { hasToken: !!accessToken });
-    return new EsoLogsClient(accessToken);
-  }, [logger, accessToken]);
+    logger.info('Creating new EsoLogsClient instance');
+    return new EsoLogsClient(''); // Start with empty token
+  }, [logger]);
 
-  // Update the client's access token when it changes
-  useEffect(() => {
-    if (accessToken && isLoggedIn) {
-      // Only update if the token has actually changed
-      if (client.getAccessToken() !== accessToken) {
-        logger.info('Updating EsoLogsClient access token');
-        client.updateAccessToken(accessToken);
+  // Method to set auth token from AuthContext
+  const setAuthToken = useCallback(
+    (token: string) => {
+      setIsLoggedIn(!!token);
+
+      if (token) {
+        // Only update if the token has actually changed
+        if (client.getAccessToken() !== token) {
+          logger.info('Updating EsoLogsClient access token');
+          client.updateAccessToken(token);
+        }
       }
-    } else if (!isLoggedIn) {
-      logger.info('User logged out, clearing client access');
-    }
-  }, [client, accessToken, isLoggedIn, logger]);
+    },
+    [client, logger],
+  );
+
+  // Method to clear auth token
+  const clearAuthToken = useCallback(() => {
+    logger.info('Clearing EsoLogsClient access token');
+    setIsLoggedIn(false);
+    client.updateAccessToken('');
+  }, [client, logger]);
 
   const contextValue = useMemo(() => {
     const value = {
       client: isLoggedIn ? client : null,
       isReady: isLoggedIn && client !== null,
+      setAuthToken,
+      clearAuthToken,
     };
 
     logger.debug('EsoLogsClient context value updated', {
@@ -49,7 +62,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     });
 
     return value;
-  }, [client, isLoggedIn, logger]);
+  }, [client, isLoggedIn, logger, setAuthToken, clearAuthToken]);
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>

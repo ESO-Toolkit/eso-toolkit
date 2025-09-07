@@ -240,7 +240,7 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       }
 
       // Add to poison damage category if damage type is poison (type == 8 or type == 256)
-      if (ability.type === DamageTypeFlags.POISON || ability.type === DamageTypeFlags.DISEASE) {
+      if (ability?.type === DamageTypeFlags.POISON || ability?.type === DamageTypeFlags.DISEASE) {
         poisonDamageData.totalDamage += event.amount;
         poisonDamageData.hitCount += 1;
         poisonDamageData.criticalHits += fullCritHitCount;
@@ -272,7 +272,7 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       }
 
       // Add to fire damage category if it's a fire ability (ability.type == 4)
-      if (ability.type === '4') {
+      if (ability?.type === '4') {
         fireDamageData.totalDamage += event.amount;
         fireDamageData.hitCount += 1;
         fireDamageData.criticalHits += fullCritHitCount;
@@ -280,14 +280,14 @@ export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> =
       }
 
       // Directly consolidate into appropriate categories
-      if (ability.type && MAGIC_DAMAGE_TYPES.has(ability.type)) {
+      if (ability?.type && MAGIC_DAMAGE_TYPES.has(ability.type)) {
         magicDamageData.totalDamage += event.amount;
         magicDamageData.hitCount += 1;
         magicDamageData.criticalHits += fullCritHitCount;
         magicDamageData.events.push(event);
       }
 
-      if (ability.type && MARTIAL_DAMAGE_TYPES.has(ability.type)) {
+      if (ability?.type && MARTIAL_DAMAGE_TYPES.has(ability.type)) {
         martialDamageData.totalDamage += event.amount;
         martialDamageData.hitCount += 1;
         martialDamageData.criticalHits += fullCritHitCount;

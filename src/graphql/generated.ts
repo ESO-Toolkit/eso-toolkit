@@ -120,6 +120,7 @@ export type ArchonViewModelsCharacterPageContentArgs = {
   categorySlug: Scalars['String']['input'];
   characterSlug: Scalars['String']['input'];
   gameSlug: Scalars['String']['input'];
+  sectionComponentNames: Array<Scalars['String']['input']>;
   userId?: InputMaybe<Scalars['Int']['input']>;
   zoneSlug?: InputMaybe<Scalars['String']['input']>;
 };
@@ -2733,6 +2734,17 @@ export type ReportFragment = {
   } | null> | null;
 };
 
+export type UserReportSummaryFragment = {
+  __typename?: 'Report';
+  code: string;
+  startTime: number;
+  endTime: number;
+  title: string;
+  visibility: string;
+  zone?: { __typename?: 'Zone'; name: string } | null;
+  owner?: { __typename?: 'User'; name: string } | null;
+};
+
 export type GetReportByCodeQueryVariables = Exact<{
   code: Scalars['String']['input'];
 }>;
@@ -2780,6 +2792,53 @@ export type GetReportByCodeQuery = {
           id: number;
           name?: string | null;
         } | null> | null;
+      } | null> | null;
+    } | null;
+  } | null;
+};
+
+export type GetCurrentUserQueryVariables = Exact<{ [key: string]: never }>;
+
+export type GetCurrentUserQuery = {
+  __typename?: 'Query';
+  userData?: {
+    __typename?: 'UserData';
+    currentUser?: {
+      __typename?: 'User';
+      id: number;
+      name: string;
+      naDisplayName?: string | null;
+      euDisplayName?: string | null;
+    } | null;
+  } | null;
+};
+
+export type GetUserReportsQueryVariables = Exact<{
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+  userID?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+export type GetUserReportsQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    reports?: {
+      __typename?: 'ReportPagination';
+      total: number;
+      current_page: number;
+      per_page: number;
+      last_page: number;
+      has_more_pages: boolean;
+      data?: Array<{
+        __typename?: 'Report';
+        code: string;
+        startTime: number;
+        endTime: number;
+        title: string;
+        visibility: string;
+        zone?: { __typename?: 'Zone'; name: string } | null;
+        owner?: { __typename?: 'User'; name: string } | null;
       } | null> | null;
     } | null;
   } | null;
@@ -3146,6 +3205,42 @@ export const ReportFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<ReportFragment, unknown>;
+export const UserReportSummaryFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserReportSummary' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Report' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owner' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<UserReportSummaryFragment, unknown>;
 export const CharacterFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -5754,3 +5849,156 @@ export const GetReportByCodeDocument = {
     },
   ],
 } as unknown as DocumentNode<GetReportByCodeQuery, GetReportByCodeQueryVariables>;
+export const GetCurrentUserDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getCurrentUser' },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'userData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'currentUser' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'naDisplayName' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'euDisplayName' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetCurrentUserQuery, GetCurrentUserQueryVariables>;
+export const GetUserReportsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getUserReports' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'userID' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reports' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'limit' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'page' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'userID' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'userID' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'data' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'UserReportSummary' },
+                            },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'total' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'last_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserReportSummary' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Report' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owner' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetUserReportsQuery, GetUserReportsQueryVariables>;

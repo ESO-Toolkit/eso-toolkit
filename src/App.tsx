@@ -12,8 +12,8 @@ import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
 import { Login } from './features/auth/Login';
-// Import critical components directly (no lazy loading for LCP)
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
+import { UserReports } from './features/user_reports/UserReports';
 import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
 import { useWorkerManagerLogger } from './hooks/useWorkerManagerLogger';
 import { AppLayout } from './layouts/AppLayout';
@@ -95,8 +95,8 @@ const App: React.FC = () => {
     >
       <ReduxProvider store={store}>
         <PersistGate loading={<LoadingFallback />} persistor={persistor}>
-          <AuthProvider>
-            <EsoLogsClientProvider>
+          <EsoLogsClientProvider>
+            <AuthProvider>
               <AppRoutes />
               {/* Add floating bug report button - lazy loaded for non-landing pages */}
               {!isLandingPage && (
@@ -106,8 +106,8 @@ const App: React.FC = () => {
               )}
               {/* Add logger debug button for development and debugging */}
               <LoggerDebugButton position={{ bottom: 80, right: 16 }} developmentOnly={true} />
-            </EsoLogsClientProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </EsoLogsClientProvider>
         </PersistGate>
       </ReduxProvider>
     </LoggerProvider>
@@ -234,6 +234,16 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <Calculator />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/my-reports"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <UserReports />
                   </Suspense>
                 </ErrorBoundary>
               }

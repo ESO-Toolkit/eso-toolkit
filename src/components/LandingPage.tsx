@@ -1,3 +1,4 @@
+import AssignmentIcon from '@mui/icons-material/Assignment';
 import LinkIcon from '@mui/icons-material/Link';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
 import { Box, Button, Container, TextField, Typography, useTheme } from '@mui/material';
@@ -723,80 +724,81 @@ export const LandingPage: React.FC = () => {
           </HeroSubtitle>
 
           {isLoggedIn ? (
-            <LogInputContainer>
-              <TextField
-                label="ESOLogs.com Log URL"
-                variant="outlined"
-                value={logUrl}
-                onChange={handleLogUrlChange}
-                sx={{
-                  flex: 1,
-                  '& .MuiOutlinedInput-root': {
-                    backgroundColor: 'transparent',
-                    borderRadius: { xs: '8px 8px 0 0', sm: '16px 0 0 16px' },
-                    height: { xs: '56px', sm: '64px' },
-                    padding: '0 1.5rem',
-                    border: 'none',
-                    '& fieldset': {
+            <Box>
+              <LogInputContainer>
+                <TextField
+                  label="ESOLogs.com Log URL"
+                  variant="outlined"
+                  value={logUrl}
+                  onChange={handleLogUrlChange}
+                  sx={{
+                    flex: 1,
+                    '& .MuiOutlinedInput-root': {
+                      backgroundColor: 'transparent',
+                      borderRadius: { xs: '8px 8px 0 0', sm: '16px 0 0 16px' },
+                      height: { xs: '56px', sm: '64px' },
+                      padding: '0 1.5rem',
                       border: 'none',
-                    },
-                    '&:hover fieldset': {
-                      border: 'none',
-                    },
-                    '&.Mui-focused fieldset': {
-                      border: 'none',
-                    },
-                  },
-                  '& .MuiInputLabel-root': {
-                    color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
-                    left: '3.5rem',
-                    top: { xs: '2px', sm: '4px' },
-                    fontSize: { xs: '0.85rem', sm: '0.95rem' },
-                    '&.Mui-focused': {
-                      color: '#38bdf8',
-                    },
-                    '&.MuiInputLabel-shrink': {
-                      transform: {
-                        xs: 'translate(3.5rem, -12px) scale(0.75)',
-                        sm: 'translate(3.5rem, -10px) scale(0.75)',
+                      '& fieldset': {
+                        border: 'none',
                       },
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(15, 23, 42, 0.9)'
-                          : 'rgba(248, 250, 252, 0.95)',
-                      padding: '2px 8px',
-                      borderRadius: '4px',
+                      '&:hover fieldset': {
+                        border: 'none',
+                      },
+                      '&.Mui-focused fieldset': {
+                        border: 'none',
+                      },
                     },
-                  },
-                  '& .MuiInputBase-input': {
-                    padding: { xs: '16px 0', sm: '18px 0' },
-                    color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
-                    fontSize: { xs: '0.9rem', sm: '1rem' },
-                  },
-                }}
-                InputProps={{
-                  startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
-                }}
-              />
-              <Button
-                variant="contained"
-                color="secondary"
-                sx={{
-                  minWidth: 200,
-                  height: 64,
-                  background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
-                  color: '#ffffff',
-                  fontWeight: 700,
-                  fontSize: { xs: '1rem', sm: '1.1rem' },
-                  borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
-                  border: 'none',
-                  boxShadow: 'none',
-                  position: 'relative',
-                  overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  textShadow: `
+                    '& .MuiInputLabel-root': {
+                      color: theme.palette.mode === 'dark' ? '#94a3b8' : '#64748b',
+                      left: '3.5rem',
+                      top: { xs: '2px', sm: '4px' },
+                      fontSize: { xs: '0.85rem', sm: '0.95rem' },
+                      '&.Mui-focused': {
+                        color: '#38bdf8',
+                      },
+                      '&.MuiInputLabel-shrink': {
+                        transform: {
+                          xs: 'translate(3.5rem, -12px) scale(0.75)',
+                          sm: 'translate(3.5rem, -10px) scale(0.75)',
+                        },
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(15, 23, 42, 0.9)'
+                            : 'rgba(248, 250, 252, 0.95)',
+                        padding: '2px 8px',
+                        borderRadius: '4px',
+                      },
+                    },
+                    '& .MuiInputBase-input': {
+                      padding: { xs: '16px 0', sm: '18px 0' },
+                      color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#1e293b',
+                      fontSize: { xs: '0.9rem', sm: '1rem' },
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: <LinkIcon sx={{ mr: 1, color: '#38bdf8', ml: 0 }} />,
+                  }}
+                />
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  sx={{
+                    minWidth: 200,
+                    height: 64,
+                    background: 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 50%, #0ea5e9 100%)',
+                    color: '#ffffff',
+                    fontWeight: 700,
+                    fontSize: { xs: '1rem', sm: '1.1rem' },
+                    borderRadius: { xs: '0 0 8px 8px', sm: '0 16px 16px 0' },
+                    border: 'none',
+                    boxShadow: 'none',
+                    position: 'relative',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px',
+                    textShadow: `
                     0 2px 4px rgba(0, 0, 0, 0),
                     0 4px 8px rgba(0, 0, 0, 0.7),
                     0 8px 16px rgba(0, 0, 0, 0.5),
@@ -804,48 +806,96 @@ export const LandingPage: React.FC = () => {
                     0 0 30px rgba(56, 189, 248, 0.4),
                     0 1px 0 rgba(255, 255, 255, 0.2)
                   `,
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
-                    opacity: 0,
-                    transition: 'opacity 0.3s ease',
-                  },
-                  '&::after': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: '-100%',
-                    width: '100%',
-                    height: '100%',
-                    background:
-                      'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
-                    transition: 'left 0.6s ease',
-                  },
-                  '&:hover': {
-                    background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #00e1ff 100%)',
-                    transform: { xs: 'none', sm: 'scale(1.02)' },
                     '&::before': {
-                      opacity: 1,
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background:
+                        'linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 50%)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s ease',
                     },
                     '&::after': {
-                      left: '100%',
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: '-100%',
+                      width: '100%',
+                      height: '100%',
+                      background:
+                        'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent)',
+                      transition: 'left 0.6s ease',
                     },
-                  },
-                  '&:active': {
-                    transform: { xs: 'none', sm: 'scale(1.01)' },
-                  },
-                }}
-                onClick={handleLoadLog}
-              >
-                Analyze Log
-              </Button>
-            </LogInputContainer>
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 50%, #00e1ff 100%)',
+                      transform: { xs: 'none', sm: 'scale(1.02)' },
+                      '&::before': {
+                        opacity: 1,
+                      },
+                      '&::after': {
+                        left: '100%',
+                      },
+                    },
+                    '&:active': {
+                      transform: { xs: 'none', sm: 'scale(1.01)' },
+                    },
+                  }}
+                  onClick={handleLoadLog}
+                >
+                  Analyze Log
+                </Button>
+              </LogInputContainer>
+              <Box sx={{ textAlign: 'center', mt: 3 }}>
+                <Button
+                  variant="outlined"
+                  size="large"
+                  onClick={() => navigate('/my-reports')}
+                  startIcon={<AssignmentIcon />}
+                  sx={{
+                    py: 1.5,
+                    px: 4,
+                    borderRadius: '12px',
+                    fontSize: '1rem',
+                    fontWeight: 600,
+                    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
+                    borderColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
+                    backgroundColor: 'transparent',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    textTransform: 'none',
+                    letterSpacing: '0.5px',
+                    '&:hover': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.1)'
+                          : 'rgba(14, 165, 233, 0.1)',
+                      borderColor: theme.palette.mode === 'dark' ? '#00e1ff' : '#38bdf8',
+                      color: theme.palette.mode === 'dark' ? '#00e1ff' : '#38bdf8',
+                      transform: 'translateY(-2px)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 8px 25px rgba(56, 189, 248, 0.2)'
+                          : '0 8px 25px rgba(14, 165, 233, 0.2)',
+                    },
+                    '&:active': {
+                      transform: 'translateY(-1px)',
+                    },
+                    [theme.breakpoints.down('sm')]: {
+                      py: 1.25,
+                      px: 3,
+                      fontSize: '0.9rem',
+                      '&:hover': {
+                        transform: 'none',
+                      },
+                    },
+                  }}
+                >
+                  View My Reports
+                </Button>
+              </Box>
+            </Box>
           ) : (
             <Box sx={{ textAlign: 'center' }}>
               <Button

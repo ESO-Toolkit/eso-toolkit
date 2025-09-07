@@ -1,7 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useDebuffEvents, usePlayerData, useReportMasterData } from '../../../hooks';
+import { usePlayerData, useReportMasterData } from '../../../hooks';
+import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 

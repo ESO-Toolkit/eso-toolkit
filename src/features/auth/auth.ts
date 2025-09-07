@@ -46,11 +46,19 @@ const generateCodeChallenge = async (verifier: string): Promise<string> => {
   return base64UrlEncode(digest);
 };
 
+export async function buildAuthUrl(verifier: string): Promise<string> {
+  const challenge = await generateCodeChallenge(verifier);
+
+  // Use the documented scope for user profile access
+  const scope = 'view-user-profile';
+
+  return `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(getRedirectUri())}&scope=${encodeURIComponent(scope)}`;
+}
+
 export async function startPKCEAuth(): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
-  const challenge = await generateCodeChallenge(verifier);
-  const redirectUri = getRedirectUri();
-  const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(redirectUri)}`;
+
+  const authUrl = await buildAuthUrl(verifier);
   window.location.href = authUrl;
 }
