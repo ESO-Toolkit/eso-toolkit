@@ -118,12 +118,12 @@ function hasRecentEvent(
   // If we have a recent event, check minimum visibility and gap behavior
   if (mostRecentEvent !== null) {
     const timeSinceEvent = currentTimestamp - mostRecentEvent;
-    
+
     // Always show for minimum visibility period (1 second)
     if (timeSinceEvent <= minVisibilityMs) {
       return true;
     }
-    
+
     // If there's a next event and the gap is less than 5 seconds, show positions throughout
     if (nextEvent !== null) {
       const gap = nextEvent - mostRecentEvent;
@@ -404,7 +404,7 @@ export function calculateActorPositions(
             // Check if we should interpolate based on gap size
             const gap = afterPos.timestamp - beforePos.timestamp;
             const windowMs = 5000; // 5 second gap threshold
-            
+
             if (gap < windowMs) {
               // Small gap: interpolate between positions
               const interpolated = interpolate(beforePos, afterPos, currentTimestamp);

@@ -644,21 +644,21 @@ describe('calculateActorPositions', () => {
       // 3. Show at second event (17s) and for 1 second after (until 18s)
       const gapTolerance = 50; // 50ms tolerance for floating point precision and sample intervals
       const minVisibilityMs = 1000; // 1 second minimum visibility
-      
+
       // Should have positions for 1 second after first event (3s to 4s)
       const positionsAfterFirstEvent = petTimeline.positions.filter(
         (position) => position.timestamp >= 3000 && position.timestamp <= 3000 + minVisibilityMs,
       );
       expect(positionsAfterFirstEvent.length).toBeGreaterThan(0); // Should have positions for 1 second after first event
-      
+
       // Should have NO positions during the large gap (after 1s minimum visibility ends until second event)
       const positionsDuringLargeGap = petTimeline.positions.filter(
         (position) =>
-          position.timestamp > 3000 + minVisibilityMs + gapTolerance && 
+          position.timestamp > 3000 + minVisibilityMs + gapTolerance &&
           position.timestamp < 17000 - gapTolerance,
       );
       expect(positionsDuringLargeGap).toEqual([]); // No positions during the large gap (after minimum visibility)
-      
+
       // Should have positions for 1 second after second event (17s to 18s)
       const positionsAfterSecondEvent = petTimeline.positions.filter(
         (position) => position.timestamp >= 17000 && position.timestamp <= 17000 + minVisibilityMs,
@@ -827,11 +827,11 @@ describe('calculateActorPositions', () => {
       // All positions during the minimum visibility window should be at the same location
       // (the position from the 5s event), NOT interpolating toward the 15s event
       const expectedPosition = [0, 0, 0]; // Position from first event (5235 - 5235 = 0, 5410 - 5410 = 0)
-      
+
       for (const position of positionsDuringMinVisibility) {
         // All positions should be at the same location (no interpolation toward distant event)
         expect(position.position[0]).toBeCloseTo(expectedPosition[0], 5); // X coordinate
-        expect(position.position[1]).toBeCloseTo(expectedPosition[1], 5); // Y coordinate  
+        expect(position.position[1]).toBeCloseTo(expectedPosition[1], 5); // Y coordinate
         expect(position.position[2]).toBeCloseTo(expectedPosition[2], 5); // Z coordinate
       }
 
@@ -846,7 +846,7 @@ describe('calculateActorPositions', () => {
         (position) => Math.abs(position.timestamp - 15000) <= 10,
       );
       expect(positionsAtSecondEvent.length).toBeGreaterThan(0);
-      
+
       // Second event should be at a different position
       const secondEventPosition = [0.1, 0, 0.1]; // Position from second event (5335 - 5235 = 100, 5510 - 5410 = 100)
       const actualSecondPosition = positionsAtSecondEvent[0];
