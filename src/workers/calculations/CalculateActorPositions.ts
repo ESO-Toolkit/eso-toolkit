@@ -68,7 +68,121 @@ export interface ActorPositionsCalculationResult {
   timeline: ActorPositionsTimeline;
 }
 
+// Constants for coordinate conversion and thresholds
+const COORDINATE_CENTER_X = 5235;
+const COORDINATE_CENTER_Y = 5410;
+const COORDINATE_SCALE = 1000;
+const ROTATION_SCALE = 100;
+const ROTATION_OFFSET = Math.PI / 2;
+const GAP_THRESHOLD_MS = 5000;
+const INTERPOLATION_TOLERANCE_MS = 1;
+const MIN_VISIBILITY_MS = 1000;
+const SAMPLE_INTERVAL_MS = 4.7; // 240Hz sampling rate (better performance vs quality balance)
+const MAX_TIMESTAMPS = 3600; // Cap at 1 minute worth of 60Hz data to prevent excessive computation
+
 type OnProgressCallback = (progress: number) => void;
+
+// Helper functions to eliminate code duplication
+function convertCoordinates(x: number, y: number): [number, number, number] {
+  return [
+    (x - COORDINATE_CENTER_X) / COORDINATE_SCALE,
+    0,
+    (y - COORDINATE_CENTER_Y) / COORDINATE_SCALE,
+  ];
+}
+
+function convertRotation(facing: number): number {
+  return facing / ROTATION_SCALE + ROTATION_OFFSET;
+}
+
+function checkTauntStatus(
+  type: string,
+  debuffLookupData: BuffLookupData | undefined,
+  fight: FightFragment,
+  relativeTime: number,
+  actorId: number,
+): boolean {
+  return (type === 'enemy' || type === 'boss') && debuffLookupData && fight
+    ? isBuffActiveOnTarget(
+        debuffLookupData,
+        KnownAbilities.TAUNT,
+        fightTimeToTimestamp(relativeTime, fight),
+        actorId,
+      )
+    : false;
+}
+
+function trackActorEvent(
+  actorId: number,
+  timestamp: number,
+  actorFirstEventTime: Map<number, number>,
+  actorEventTimes: Map<number, number[]>,
+  actorLastEventTime: Map<number, number>,
+  actorDeathTime: Map<number, number | undefined>,
+  isDeathEvent = false,
+): void {
+  // Track first event time
+  if (!actorFirstEventTime.has(actorId)) {
+    actorFirstEventTime.set(actorId, timestamp);
+  }
+
+  // Track all event times
+  if (!actorEventTimes.has(actorId)) {
+    actorEventTimes.set(actorId, []);
+  }
+  const eventTimes = actorEventTimes.get(actorId);
+  if (eventTimes) {
+    eventTimes.push(timestamp);
+  }
+
+  // Update last event time and check resurrection
+  actorLastEventTime.set(actorId, timestamp);
+  const deathTime = actorDeathTime.get(actorId);
+  if (deathTime !== undefined && timestamp > deathTime && !isDeathEvent) {
+    // Actor has a non-death event after death - they are no longer dead
+    actorDeathTime.set(actorId, undefined);
+  }
+}
+
+// Helper interfaces for events with position data
+interface ResourcesWithPosition {
+  x: number;
+  y: number;
+  facing: number;
+}
+
+interface EventWithResources {
+  sourceResources?: ResourcesWithPosition;
+  targetResources?: ResourcesWithPosition;
+  timestamp: number;
+}
+
+function extractPositionData(
+  event: DamageEvent | HealEvent | DeathEvent | ResourceChangeEvent,
+  actorId: number,
+  resourceKey: 'sourceResources' | 'targetResources',
+  actorPositionHistory: Map<
+    number,
+    Array<{ x: number; y: number; facing: number; timestamp: number }>
+  >,
+): void {
+  const eventWithResources = event as EventWithResources;
+  const resources = eventWithResources[resourceKey];
+  if (resources?.x !== undefined && resources?.y !== undefined && resources?.facing !== undefined) {
+    if (!actorPositionHistory.has(actorId)) {
+      actorPositionHistory.set(actorId, []);
+    }
+    const history = actorPositionHistory.get(actorId);
+    if (history) {
+      history.push({
+        x: resources.x,
+        y: resources.y,
+        facing: resources.facing,
+        timestamp: event.timestamp,
+      });
+    }
+  }
+}
 
 /**
  * Check if an actor should be visible at the current timestamp.
@@ -79,14 +193,14 @@ function hasRecentEvent(
   actorId: number,
   currentTimestamp: number,
   eventTimes: number[],
-  windowMs = 5000,
+  windowMs = GAP_THRESHOLD_MS,
 ): boolean {
   if (!eventTimes || eventTimes.length === 0) {
     return false;
   }
 
-  const tolerance = 1; // 1ms tolerance for exact event matching
-  const minVisibilityMs = 1000; // Minimum 1 second visibility after an event
+  const tolerance = INTERPOLATION_TOLERANCE_MS;
+  const minVisibilityMs = MIN_VISIBILITY_MS;
 
   // Check if there's an event exactly at this timestamp (within tolerance)
   for (const eventTime of eventTimes) {
@@ -146,7 +260,7 @@ export function calculateActorPositions(
   onProgress?: OnProgressCallback,
 ): ActorPositionsCalculationResult {
   const { fight, events, playersById, actorsById, debuffLookupData } = data;
-  const sampleInterval = 4.7; // 240Hz sampling rate (better performance vs quality balance)
+  const sampleInterval = SAMPLE_INTERVAL_MS;
 
   onProgress?.(0);
 
@@ -196,94 +310,33 @@ export function calculateActorPositions(
     // Track death and resurrection status
     if (event.type === 'death') {
       const deathEvent = event as DeathEvent;
-      // Mark the target as dead
       actorDeathTime.set(deathEvent.targetID, deathEvent.timestamp);
     }
 
-    // Track first event time for actors
+    // Process source and target actors
+    const actorsToProcess: Array<{ id: number; isTarget: boolean }> = [];
     if ('sourceID' in event) {
-      if (!actorFirstEventTime.has(event.sourceID)) {
-        actorFirstEventTime.set(event.sourceID, event.timestamp);
-      }
-      // Track all event times for recent event checking
-      if (!actorEventTimes.has(event.sourceID)) {
-        actorEventTimes.set(event.sourceID, []);
-      }
-      const sourceEvents = actorEventTimes.get(event.sourceID);
-      if (sourceEvents) {
-        sourceEvents.push(event.timestamp);
-      }
-      
-      // Update last event time and check if this resurrects the actor
-      actorLastEventTime.set(event.sourceID, event.timestamp);
-      const deathTime = actorDeathTime.get(event.sourceID);
-      if (deathTime !== undefined && event.timestamp > deathTime) {
-        // Actor has an event after death - they are no longer dead
-        actorDeathTime.set(event.sourceID, undefined);
-      }
+      actorsToProcess.push({ id: event.sourceID, isTarget: false });
     }
     if ('targetID' in event) {
-      if (!actorFirstEventTime.has(event.targetID)) {
-        actorFirstEventTime.set(event.targetID, event.timestamp);
-      }
-      // Track all event times for recent event checking
-      if (!actorEventTimes.has(event.targetID)) {
-        actorEventTimes.set(event.targetID, []);
-      }
-      const targetEvents = actorEventTimes.get(event.targetID);
-      if (targetEvents) {
-        targetEvents.push(event.timestamp);
-      }
-      
-      // Update last event time and check if this resurrects the actor
-      actorLastEventTime.set(event.targetID, event.timestamp);
-      const deathTime = actorDeathTime.get(event.targetID);
-      if (deathTime !== undefined && event.timestamp > deathTime && event.type !== 'death') {
-        // Actor has a non-death event after death - they are no longer dead
-        actorDeathTime.set(event.targetID, undefined);
-      }
+      actorsToProcess.push({ id: event.targetID, isTarget: true });
     }
 
-    if ('sourceID' in event && 'sourceResources' in event) {
-      const resources = event.sourceResources;
-      if (
-        resources?.x !== undefined &&
-        resources?.y !== undefined &&
-        resources?.facing !== undefined
-      ) {
-        if (!actorPositionHistory.has(event.sourceID)) {
-          actorPositionHistory.set(event.sourceID, []);
-        }
-        const history = actorPositionHistory.get(event.sourceID);
-        if (history) {
-          history.push({
-            x: resources.x,
-            y: resources.y,
-            facing: resources.facing,
-            timestamp: event.timestamp,
-          });
-        }
-      }
-    }
-    if ('targetID' in event && 'targetResources' in event) {
-      const resources = event.targetResources;
-      if (
-        resources?.x !== undefined &&
-        resources?.y !== undefined &&
-        resources?.facing !== undefined
-      ) {
-        if (!actorPositionHistory.has(event.targetID)) {
-          actorPositionHistory.set(event.targetID, []);
-        }
-        const history = actorPositionHistory.get(event.targetID);
-        if (history) {
-          history.push({
-            x: resources.x,
-            y: resources.y,
-            facing: resources.facing,
-            timestamp: event.timestamp,
-          });
-        }
+    for (const { id: actorId, isTarget } of actorsToProcess) {
+      trackActorEvent(
+        actorId,
+        event.timestamp,
+        actorFirstEventTime,
+        actorEventTimes,
+        actorLastEventTime,
+        actorDeathTime,
+        isTarget && event.type === 'death',
+      );
+
+      // Extract position data
+      const resourceKey = isTarget ? 'targetResources' : 'sourceResources';
+      if (resourceKey in event) {
+        extractPositionData(event, actorId, resourceKey, actorPositionHistory);
       }
     }
   }
@@ -297,8 +350,7 @@ export function calculateActorPositions(
 
   // Generate sample timestamps at regular intervals
   const timestamps: number[] = [];
-  const maxTimestamps = 3600; // Cap at 1 minute worth of 60Hz data to prevent excessive computation
-  const adjustedInterval = Math.max(sampleInterval, fightDuration / maxTimestamps);
+  const adjustedInterval = Math.max(sampleInterval, fightDuration / MAX_TIMESTAMPS);
 
   for (let time = 0; time <= fightDuration; time += adjustedInterval) {
     timestamps.push(time);
@@ -392,35 +444,20 @@ export function calculateActorPositions(
       // Check if actor is dead at this timestamp
       const deathTime = actorDeathTime.get(actorId);
       const isDead = deathTime !== undefined && currentTimestamp >= deathTime;
-      
+
       // If actor is dead, don't interpolate - use their last known position before death
       if (isDead) {
         // Find the last position before or at death time
-        const lastPositionBeforeDeath = history.find(pos => pos.timestamp <= deathTime);
+        const lastPositionBeforeDeath = history.find((pos) => pos.timestamp <= deathTime);
         if (lastPositionBeforeDeath) {
-          const centerX = 5235;
-          const centerY = 5410;
-          const position: [number, number, number] = [
-            (lastPositionBeforeDeath.x - centerX) / 1000,
-            0,
-            (lastPositionBeforeDeath.y - centerY) / 1000,
-          ];
-
-          // Check if actor is taunted (only for enemies and bosses)
-          const isTaunted =
-            (type === 'enemy' || type === 'boss') && debuffLookupData && fight
-              ? isBuffActiveOnTarget(
-                  debuffLookupData,
-                  KnownAbilities.TAUNT,
-                  fightTimeToTimestamp(relativeTime, fight),
-                  actorId,
-                )
-              : false;
+          const position = convertCoordinates(lastPositionBeforeDeath.x, lastPositionBeforeDeath.y);
+          const rotation = convertRotation(lastPositionBeforeDeath.facing);
+          const isTaunted = checkTauntStatus(type, debuffLookupData, fight, relativeTime, actorId);
 
           positions.push({
             timestamp: relativeTime,
             position,
-            rotation: lastPositionBeforeDeath.facing / 100 + Math.PI / 2,
+            rotation,
             isAlive: false,
             isDead: true,
             isTaunted,
@@ -465,16 +502,14 @@ export function calculateActorPositions(
 
         if (beforePos && afterPos) {
           // Check if we're exactly at the afterPos timestamp (or very close)
-          const tolerance = 1; // 1ms tolerance
-          if (Math.abs(currentTimestamp - afterPos.timestamp) <= tolerance) {
+          if (Math.abs(currentTimestamp - afterPos.timestamp) <= INTERPOLATION_TOLERANCE_MS) {
             // We're at the exact timestamp of the afterPos event, use it directly
             currentPosition = afterPos;
           } else {
             // Check if we should interpolate based on gap size
             const gap = afterPos.timestamp - beforePos.timestamp;
-            const windowMs = 5000; // 5 second gap threshold
 
-            if (gap < windowMs) {
+            if (gap < GAP_THRESHOLD_MS) {
               // Small gap: interpolate between positions
               const interpolated = interpolate(beforePos, afterPos, currentTimestamp);
               currentPosition = {
@@ -497,30 +532,16 @@ export function calculateActorPositions(
       }
 
       // Check if actor is taunted (only for enemies and bosses)
-      const isTaunted =
-        (type === 'enemy' || type === 'boss') && debuffLookupData && fight
-          ? isBuffActiveOnTarget(
-              debuffLookupData,
-              KnownAbilities.TAUNT,
-              fightTimeToTimestamp(relativeTime, fight),
-              actorId,
-            )
-          : false;
+      const isTaunted = checkTauntStatus(type, debuffLookupData, fight, relativeTime, actorId);
 
       // Convert coordinates
-      const centerX = 5235;
-      const centerY = 5410;
-      const position: [number, number, number] = [
-        (currentPosition.x - centerX) / 1000,
-        0,
-        (currentPosition.y - centerY) / 1000,
-      ];
+      const position = convertCoordinates(currentPosition.x, currentPosition.y);
 
       // Show all actors regardless of alive/appearance status
       positions.push({
         timestamp: relativeTime,
         position,
-        rotation: currentPosition.facing / 100 + Math.PI / 2,
+        rotation: convertRotation(currentPosition.facing),
         isAlive: true, // Show all actors as alive
         isDead: false, // Not dead in normal case
         isTaunted,
