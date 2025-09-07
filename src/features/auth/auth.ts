@@ -1,7 +1,9 @@
+import { getBaseUrl } from '../../utils/envUtils';
+
 // Compose redirect URI using Vite's BASE_URL
 export const getRedirectUri = (): string => {
-  // import.meta.env.BASE_URL is Vite's equivalent of PUBLIC_URL and is properly set at build time
-  const baseUrl = import.meta.env.BASE_URL || '/';
+  const baseUrl = getBaseUrl();
+
   // Remove trailing slash if it exists, then add our hash route
   const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
   return `${window.location.origin}${cleanBaseUrl}/#/oauth-redirect`;
