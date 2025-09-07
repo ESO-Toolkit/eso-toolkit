@@ -19,6 +19,7 @@ export interface ActorPosition {
   position: [number, number, number];
   rotation: number;
   isAlive: boolean;
+  isDead: boolean;
   isTaunted?: boolean;
 }
 
@@ -32,6 +33,7 @@ export interface ActorTimeline {
     position: [number, number, number];
     rotation: number;
     isAlive: boolean;
+    isDead: boolean;
     isTaunted?: boolean;
   }>;
 }
@@ -177,6 +179,10 @@ export function calculateActorPositions(
   const actorFirstEventTime = new Map<number, number>();
   // Track all event timestamps for each actor (for 5-second recent event check)
   const actorEventTimes = new Map<number, number[]>();
+  // Track death status for each actor - maps actor ID to death timestamp (undefined if alive)
+  const actorDeathTime = new Map<number, number | undefined>();
+  // Track last event timestamp for each actor (to determine if they're still dead)
+  const actorLastEventTime = new Map<number, number>();
 
   // Combine all events and sort by timestamp
   const allEvents = [...events.damage, ...events.heal, ...events.death, ...events.resource].sort(
@@ -187,6 +193,13 @@ export function calculateActorPositions(
 
   // Collect position data from events
   for (const event of allEvents) {
+    // Track death and resurrection status
+    if (event.type === 'death') {
+      const deathEvent = event as DeathEvent;
+      // Mark the target as dead
+      actorDeathTime.set(deathEvent.targetID, deathEvent.timestamp);
+    }
+
     // Track first event time for actors
     if ('sourceID' in event) {
       if (!actorFirstEventTime.has(event.sourceID)) {
@@ -200,6 +213,14 @@ export function calculateActorPositions(
       if (sourceEvents) {
         sourceEvents.push(event.timestamp);
       }
+      
+      // Update last event time and check if this resurrects the actor
+      actorLastEventTime.set(event.sourceID, event.timestamp);
+      const deathTime = actorDeathTime.get(event.sourceID);
+      if (deathTime !== undefined && event.timestamp > deathTime) {
+        // Actor has an event after death - they are no longer dead
+        actorDeathTime.set(event.sourceID, undefined);
+      }
     }
     if ('targetID' in event) {
       if (!actorFirstEventTime.has(event.targetID)) {
@@ -212,6 +233,14 @@ export function calculateActorPositions(
       const targetEvents = actorEventTimes.get(event.targetID);
       if (targetEvents) {
         targetEvents.push(event.timestamp);
+      }
+      
+      // Update last event time and check if this resurrects the actor
+      actorLastEventTime.set(event.targetID, event.timestamp);
+      const deathTime = actorDeathTime.get(event.targetID);
+      if (deathTime !== undefined && event.timestamp > deathTime && event.type !== 'death') {
+        // Actor has a non-death event after death - they are no longer dead
+        actorDeathTime.set(event.targetID, undefined);
       }
     }
 
@@ -360,6 +389,46 @@ export function calculateActorPositions(
         continue;
       }
 
+      // Check if actor is dead at this timestamp
+      const deathTime = actorDeathTime.get(actorId);
+      const isDead = deathTime !== undefined && currentTimestamp >= deathTime;
+      
+      // If actor is dead, don't interpolate - use their last known position before death
+      if (isDead) {
+        // Find the last position before or at death time
+        const lastPositionBeforeDeath = history.find(pos => pos.timestamp <= deathTime);
+        if (lastPositionBeforeDeath) {
+          const centerX = 5235;
+          const centerY = 5410;
+          const position: [number, number, number] = [
+            (lastPositionBeforeDeath.x - centerX) / 1000,
+            0,
+            (lastPositionBeforeDeath.y - centerY) / 1000,
+          ];
+
+          // Check if actor is taunted (only for enemies and bosses)
+          const isTaunted =
+            (type === 'enemy' || type === 'boss') && debuffLookupData && fight
+              ? isBuffActiveOnTarget(
+                  debuffLookupData,
+                  KnownAbilities.TAUNT,
+                  fightTimeToTimestamp(relativeTime, fight),
+                  actorId,
+                )
+              : false;
+
+          positions.push({
+            timestamp: relativeTime,
+            position,
+            rotation: lastPositionBeforeDeath.facing / 100 + Math.PI / 2,
+            isAlive: false,
+            isDead: true,
+            isTaunted,
+          });
+        }
+        continue;
+      }
+
       // For NPCs (including pets), skip positions if no recent event within 5 seconds
       if (isNPC && !hasRecentEvent(actorId, currentTimestamp, eventTimes)) {
         continue;
@@ -453,6 +522,7 @@ export function calculateActorPositions(
         position,
         rotation: currentPosition.facing / 100 + Math.PI / 2,
         isAlive: true, // Show all actors as alive
+        isDead: false, // Not dead in normal case
         isTaunted,
       });
     }

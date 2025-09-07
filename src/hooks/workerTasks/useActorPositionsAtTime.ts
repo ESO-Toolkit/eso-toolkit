@@ -70,6 +70,7 @@ export function useActorPositionsAtTime({
         position: positionEntry.position,
         rotation: positionEntry.rotation,
         isAlive: positionEntry.isAlive,
+        isDead: positionEntry.isDead,
         isTaunted: positionEntry.isTaunted,
       });
     }

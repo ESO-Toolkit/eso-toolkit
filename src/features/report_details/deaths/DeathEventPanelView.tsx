@@ -7,8 +7,10 @@ import {
   Skeleton,
   Avatar,
   useTheme,
+  Link as MuiLink,
 } from '@mui/material';
 import React from 'react';
+import { Link } from 'react-router-dom';
 
 import { ReportActorFragment } from '../../../graphql/generated';
 import { useRoleColors } from '../../../hooks';
@@ -81,6 +83,12 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
     const minutes = Math.floor(totalSeconds / 60);
     const seconds = (totalSeconds % 60).toFixed(1);
     return `${minutes}:${seconds.padStart(4, '0')}`;
+  };
+
+  // Helper function to generate replay URL with death timestamp and player ID
+  const generateReplayUrl = (timestamp: number, playerId: string): string => {
+    if (!reportId || !fightId) return '#';
+    return `/report/${reportId}/fight/${fightId}/replay?time=${Math.round(timestamp)}&actorId=${playerId}`;
   };
 
   // Calculate skills summary for killing blows
@@ -429,16 +437,24 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     >
                       {playerName}
                     </Typography>
-                    <Typography
+                    <MuiLink
+                      component={Link}
+                      to={generateReplayUrl(info.timestamp, info.playerId)}
                       variant="caption"
                       sx={{
-                        color: theme.palette.text.primary,
-                        opacity: 0.8,
+                        color: theme.palette.primary.main,
+                        opacity: 0.9,
                         fontSize: '0.75rem',
+                        textDecoration: 'none',
+                        '&:hover': {
+                          textDecoration: 'underline',
+                          opacity: 1,
+                        },
                       }}
+                      title="View in replay at this time"
                     >
-                      {formatTimeFromFightStart(info.timestamp)}
-                    </Typography>
+                      {formatTimeFromFightStart(info.timestamp)} ▶
+                    </MuiLink>
                   </Box>
                 </Box>
 

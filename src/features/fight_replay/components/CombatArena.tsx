@@ -16,6 +16,7 @@ interface Actor {
   position: [number, number, number];
   rotation: number;
   isAlive: boolean;
+  isDead: boolean;
   isTaunted?: boolean; // Whether the actor is taunted
 }
 
@@ -204,6 +205,7 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
                 role={actor.role}
                 isSelected={actor.id === selectedActorId}
                 isAlive={actor.isAlive}
+                isDead={actor.isDead}
                 isTaunted={actor.isTaunted}
                 showName={showActorNames}
               />

@@ -13,6 +13,7 @@ interface ActorMarkerProps {
   role?: 'dps' | 'tank' | 'healer'; // Optional role for players
   isSelected?: boolean;
   isAlive: boolean;
+  isDead?: boolean;
   isTaunted?: boolean; // Whether the actor is taunted
   scale?: number;
   showName?: boolean; // Whether to show the actor name
@@ -26,6 +27,7 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
   role,
   isSelected = false,
   isAlive,
+  isDead = false,
   isTaunted = false,
   scale = 1,
   showName = true,
@@ -78,9 +80,9 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
     return screenScale * 0.16; // Increased from 0.032 to 0.16 (5x larger)
   };
 
-  // Color based on actor type and alive state
+  // Color based on actor type and dead state
   const getColor = (): string => {
-    if (!isAlive && type === 'player') {
+    if (isDead && type === 'player') {
       return '#666666'; // Gray for dead players
     }
 
@@ -139,14 +141,14 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
   const getOutlineColor = (textColor: string): string => {
     // For dark colors (like dead player gray #666666), use white outline
     // For bright colors, use black outline
-    if (textColor === '#666666') return '#ffffff'; // White outline for dead players
+    if (isDead && type === 'player') return '#ffffff'; // White outline for dead players
     return '#000000'; // Black outline for everything else
   };
 
   return (
     <group position={position}>
       {/* Main actor representation */}
-      {!isAlive && type === 'player' ? (
+      {isDead && type === 'player' ? (
         // Dead player - skull representation
         <mesh ref={meshRef}>
           {/* Skull base (sphere) */}
@@ -182,7 +184,7 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
       )}
 
       {/* Skull features for dead players */}
-      {!isAlive && type === 'player' && (
+      {isDead && type === 'player' && (
         <>
           {/* Eye sockets */}
           <mesh position={[-size * 0.3, size * 0.2, size * 0.5]}>
@@ -202,7 +204,7 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
       )}
 
       {/* Direction indicator - vision cone on ground for alive actors */}
-      {isAlive && (
+      {!isDead && (
         <mesh
           ref={directionRef}
           position={[0, -0.001, 0]}
