@@ -166,6 +166,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const [isActorPanelExpanded, setIsActorPanelExpanded] = useState(false);
   const [showActorNames, setShowActorNames] = useState(true);
   const [showShareSnackbar, setShowShareSnackbar] = useState(false);
+  const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
 
   // Use refs to avoid recreating animation loop on every currentTimestamp change
   const currentTimestampRef = useRef(currentTimestamp);
@@ -235,6 +236,11 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     timeline,
     currentTime: throttledCurrentTime,
   });
+
+  // Filter actors for 3D display (exclude hidden actors)
+  const visibleActors = useMemo(() => {
+    return actors.filter((actor) => !hiddenActorIds.has(actor.id));
+  }, [actors, hiddenActorIds]);
 
   // No filtering - display all actors who have positions at the current timestamp
   // The useActorPositionsTask already filters to only include actors with positions
@@ -309,13 +315,25 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const visibleEvents = useMemo(() => {
     if (!activeFight) return [];
 
+    // Helper function to check if an event involves any hidden actors
+    const isEventFromHiddenActor = (event: LogEvent): boolean => {
+      const sourceId = 'sourceID' in event ? event.sourceID : null;
+      const targetId = 'targetID' in event ? event.targetID : null;
+
+      return (
+        (sourceId !== null && hiddenActorIds.has(sourceId)) ||
+        (targetId !== null && hiddenActorIds.has(targetId))
+      );
+    };
+
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
         event.timestamp >= activeFight.startTime &&
-        event.timestamp <= throttledCurrentTimestamp,
+        event.timestamp <= throttledCurrentTimestamp &&
+        !isEventFromHiddenActor(event.event),
     );
-  }, [timelineEvents, visibleEventTypes, throttledCurrentTimestamp, activeFight]);
+  }, [timelineEvents, visibleEventTypes, throttledCurrentTimestamp, activeFight, hiddenActorIds]);
 
   const eventStartTimestamp = Math.floor(throttledCurrentTimestamp - 5000); // Show events from previous 5 seconds
 
@@ -329,15 +347,34 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
       );
     };
 
+    // Helper function to check if an event involves any hidden actors
+    const isEventFromHiddenActor = (event: LogEvent): boolean => {
+      const sourceId = 'sourceID' in event ? event.sourceID : null;
+      const targetId = 'targetID' in event ? event.targetID : null;
+
+      return (
+        (sourceId !== null && hiddenActorIds.has(sourceId)) ||
+        (targetId !== null && hiddenActorIds.has(targetId))
+      );
+    };
+
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
         event.timestamp >= eventStartTimestamp &&
         event.timestamp <= currentTimestamp &&
+        !isEventFromHiddenActor(event.event) &&
         // Show events where the selected actor is either the source OR target
         (selectedActorId === undefined || isActorInvolved(event.event, selectedActorId)),
     );
-  }, [timelineEvents, visibleEventTypes, currentTimestamp, eventStartTimestamp, selectedActorId]);
+  }, [
+    timelineEvents,
+    visibleEventTypes,
+    currentTimestamp,
+    eventStartTimestamp,
+    selectedActorId,
+    hiddenActorIds,
+  ]);
 
   const fightDuration = activeFight ? activeFight.endTime - activeFight.startTime : 0;
   const fightEndTimestamp = activeFight ? activeFight.endTime : 0; // Absolute timestamp for fight end
@@ -423,6 +460,18 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     },
     [selectedActorId],
   );
+
+  const handleToggleActorVisibility = useCallback((actorId: number) => {
+    setHiddenActorIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(actorId)) {
+        newSet.delete(actorId);
+      } else {
+        newSet.add(actorId);
+      }
+      return newSet;
+    });
+  }, []);
 
   const handleShareUrl = useCallback(async () => {
     if (!activeFight || !params.reportId || !params.fightId) return;
@@ -693,7 +742,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
 
             <Box sx={{ height: 'calc(100% - 40px)', width: '100%', position: 'relative' }}>
               <CombatArena
-                actors={actors}
+                actors={visibleActors}
                 selectedActorId={selectedActorId}
                 onActorClick={handleActorClick}
                 arenaSize={13}
@@ -817,7 +866,9 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                           key={actor.id}
                           actor={actor}
                           isSelected={actor.id === selectedActorId}
+                          isHidden={hiddenActorIds.has(actor.id)}
                           onActorClick={handleActorClick}
+                          onToggleVisibility={handleToggleActorVisibility}
                         />
                       ))}
 

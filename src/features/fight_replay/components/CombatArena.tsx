@@ -56,15 +56,15 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
   useEffect(() => {
     if (!hasInitialized.current && actors.length > 0) {
       // Check if actors have valid positions (not default [0,0,0])
-      const hasValidPositions = actors.some((actor) => 
-        actor.position[0] !== 0 || actor.position[2] !== 0,
+      const hasValidPositions = actors.some(
+        (actor) => actor.position[0] !== 0 || actor.position[2] !== 0,
       );
-      
+
       if (!hasValidPositions) {
         // Actors don't have real positions yet, wait for worker to finish
         return;
       }
-      
+
       // Find the best target for initial camera positioning
       const boss = actors.find((actor) => actor.type === 'boss');
       const firstEnemy = actors.find((actor) => actor.type === 'enemy');

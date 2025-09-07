@@ -212,7 +212,7 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   useEffect(() => {
     if (initialTarget && !state.current.isRotating && !state.current.isPanning) {
       state.current.target.copy(initialTarget);
-      
+
       // Update camera position to look at the new target
       const offset = new Vector3();
       offset.setFromSpherical(state.current.spherical);
