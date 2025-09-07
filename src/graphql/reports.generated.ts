@@ -21,6 +21,21 @@ export const ReportFragmentDoc = gql`
   }
   ${FightFragmentDoc}
 `;
+export const UserReportSummaryFragmentDoc = gql`
+  fragment UserReportSummary on Report {
+    code
+    startTime
+    endTime
+    title
+    visibility
+    zone {
+      name
+    }
+    owner {
+      name
+    }
+  }
+`;
 export const GetReportByCodeDocument = gql`
   query getReportByCode($code: String!) {
     reportData {
@@ -96,4 +111,164 @@ export type GetReportByCodeSuspenseQueryHookResult = ReturnType<
 export type GetReportByCodeQueryResult = Apollo.QueryResult<
   Types.GetReportByCodeQuery,
   Types.GetReportByCodeQueryVariables
+>;
+export const GetCurrentUserDocument = gql`
+  query getCurrentUser {
+    userData {
+      currentUser {
+        id
+        name
+        naDisplayName
+        euDisplayName
+      }
+    }
+  }
+`;
+
+/**
+ * __useGetCurrentUserQuery__
+ *
+ * To run a query within a React component, call `useGetCurrentUserQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetCurrentUserQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetCurrentUserQuery({
+ *   variables: {
+ *   },
+ * });
+ */
+export function useGetCurrentUserQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    Types.GetCurrentUserQuery,
+    Types.GetCurrentUserQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<Types.GetCurrentUserQuery, Types.GetCurrentUserQueryVariables>(
+    GetCurrentUserDocument,
+    options,
+  );
+}
+export function useGetCurrentUserLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    Types.GetCurrentUserQuery,
+    Types.GetCurrentUserQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<Types.GetCurrentUserQuery, Types.GetCurrentUserQueryVariables>(
+    GetCurrentUserDocument,
+    options,
+  );
+}
+export function useGetCurrentUserSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetCurrentUserQuery,
+        Types.GetCurrentUserQueryVariables
+      >,
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<Types.GetCurrentUserQuery, Types.GetCurrentUserQueryVariables>(
+    GetCurrentUserDocument,
+    options,
+  );
+}
+export type GetCurrentUserQueryHookResult = ReturnType<typeof useGetCurrentUserQuery>;
+export type GetCurrentUserLazyQueryHookResult = ReturnType<typeof useGetCurrentUserLazyQuery>;
+export type GetCurrentUserSuspenseQueryHookResult = ReturnType<
+  typeof useGetCurrentUserSuspenseQuery
+>;
+export type GetCurrentUserQueryResult = Apollo.QueryResult<
+  Types.GetCurrentUserQuery,
+  Types.GetCurrentUserQueryVariables
+>;
+export const GetUserReportsDocument = gql`
+  query getUserReports($limit: Int, $page: Int, $userID: Int) {
+    reportData {
+      reports(limit: $limit, page: $page, userID: $userID) {
+        data {
+          ...UserReportSummary
+        }
+        total
+        current_page
+        per_page
+        last_page
+        has_more_pages
+      }
+    }
+  }
+  ${UserReportSummaryFragmentDoc}
+`;
+
+/**
+ * __useGetUserReportsQuery__
+ *
+ * To run a query within a React component, call `useGetUserReportsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetUserReportsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetUserReportsQuery({
+ *   variables: {
+ *      limit: // value for 'limit'
+ *      page: // value for 'page'
+ *      userID: // value for 'userID'
+ *   },
+ * });
+ */
+export function useGetUserReportsQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    Types.GetUserReportsQuery,
+    Types.GetUserReportsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<Types.GetUserReportsQuery, Types.GetUserReportsQueryVariables>(
+    GetUserReportsDocument,
+    options,
+  );
+}
+export function useGetUserReportsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    Types.GetUserReportsQuery,
+    Types.GetUserReportsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<Types.GetUserReportsQuery, Types.GetUserReportsQueryVariables>(
+    GetUserReportsDocument,
+    options,
+  );
+}
+export function useGetUserReportsSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetUserReportsQuery,
+        Types.GetUserReportsQueryVariables
+      >,
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<Types.GetUserReportsQuery, Types.GetUserReportsQueryVariables>(
+    GetUserReportsDocument,
+    options,
+  );
+}
+export type GetUserReportsQueryHookResult = ReturnType<typeof useGetUserReportsQuery>;
+export type GetUserReportsLazyQueryHookResult = ReturnType<typeof useGetUserReportsLazyQuery>;
+export type GetUserReportsSuspenseQueryHookResult = ReturnType<
+  typeof useGetUserReportsSuspenseQuery
+>;
+export type GetUserReportsQueryResult = Apollo.QueryResult<
+  Types.GetUserReportsQuery,
+  Types.GetUserReportsQueryVariables
 >;

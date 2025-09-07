@@ -6,6 +6,25 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { AuthProvider } from './features/auth/AuthContext';
 import { OAuthRedirect } from './OAuthRedirect';
+import { EsoLogsClientProvider } from './EsoLogsClientContext';
+import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
+
+// Mock the ESO Logs client for tests
+const mockClient = {
+  query: jest.fn(),
+  getAccessToken: jest.fn(),
+  updateAccessToken: jest.fn(),
+};
+
+jest.mock('./EsoLogsClientContext', () => ({
+  ...jest.requireActual('./EsoLogsClientContext'),
+  useEsoLogsClientContext: () => ({
+    client: mockClient,
+    isReady: true,
+    setAuthToken: jest.fn(),
+    clearAuthToken: jest.fn(),
+  }),
+}));
 
 // Mock the worker factory to avoid import.meta issues in Jest
 jest.mock('./workers/workerFactories', () => ({
@@ -54,9 +73,21 @@ describe('OAuthRedirect Storybook Snapshot', () => {
     const { container } = render(
       <MemoryRouter initialEntries={['/oauth-redirect?code=test-code&state=test-state']}>
         <Provider store={mockStore}>
-          <AuthProvider>
-            <OAuthRedirect />
-          </AuthProvider>
+          <LoggerProvider
+            config={{
+              level: LogLevel.ERROR,
+              enableConsole: false,
+              enableStorage: false,
+              maxStorageEntries: 0,
+              contextPrefix: 'Test',
+            }}
+          >
+            <EsoLogsClientProvider>
+              <AuthProvider>
+                <OAuthRedirect />
+              </AuthProvider>
+            </EsoLogsClientProvider>
+          </LoggerProvider>
         </Provider>
       </MemoryRouter>,
     );

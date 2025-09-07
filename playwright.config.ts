@@ -46,40 +46,44 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { 
+      use: {
         ...devices['Desktop Chrome'],
         launchOptions: {
-          args: process.env.CI ? [
-            '--memory-pressure-off',
-            '--max_old_space_size=2048',
-            '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--no-sandbox'
-          ] : ['--memory-pressure-off']
-        }
+          args: process.env.CI
+            ? [
+                '--memory-pressure-off',
+                '--max_old_space_size=2048',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-sandbox',
+              ]
+            : ['--memory-pressure-off'],
+        },
       },
     },
 
     {
       name: 'firefox',
-      use: { 
+      use: {
         ...devices['Desktop Firefox'],
         launchOptions: {
-          firefoxUserPrefs: process.env.CI ? {
-            'memory.max': 2147483648, // 2GB limit
-            'dom.max_script_run_time': 30,
-          } : {}
-        }
+          firefoxUserPrefs: process.env.CI
+            ? {
+                'memory.max': 2147483648, // 2GB limit
+                'dom.max_script_run_time': 30,
+              }
+            : {},
+        },
       },
     },
 
     {
       name: 'webkit',
-      use: { 
+      use: {
         ...devices['Desktop Safari'],
         launchOptions: {
-          args: process.env.CI ? ['--memory-pressure-off'] : []
-        }
+          args: process.env.CI ? ['--memory-pressure-off'] : [],
+        },
       },
     },
 

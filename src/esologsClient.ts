@@ -49,11 +49,45 @@ export class EsoLogsClient {
     this.client = this.createApolloClient(accessToken);
   }
 
+  /**
+   * Determines if an operation requires the user API endpoint
+   *
+   * ESO Logs has two API endpoints:
+   * - /api/v2/client: Public data, better performance, higher rate limits
+   * - /api/v2/user: Private user data, requires authentication, lower rate limits
+   *
+   * We want to use /client for most operations and only use /user when necessary
+   */
+  private isUserSpecificOperation(operationName?: string): boolean {
+    if (!operationName) return false;
+
+    // Operations that require user authentication and the /user endpoint
+    const userOperations = [
+      'getCurrentUser',
+      'getUserReports',
+      'getUserCharacters',
+      'getUserGuilds',
+      // Add more user-specific operations as needed
+      // Examples: getUserPrivateReports, updateUserProfile, etc.
+    ];
+
+    return userOperations.includes(operationName);
+  }
+
   private createApolloClient(accessToken: string): ApolloClient<NormalizedCacheObject> {
     // Custom link to append query name to URL
     const customHttpLink = createHttpLink({
       uri: (operation) => {
-        const baseUrl = 'https://www.esologs.com/api/v2/client';
+        // Determine which endpoint to use based on the operation
+        const isUserOperation = this.isUserSpecificOperation(operation.operationName);
+        const baseUrl =
+          isUserOperation && accessToken
+            ? 'https://www.esologs.com/api/v2/user'
+            : 'https://www.esologs.com/api/v2/client';
+
+        // Log which endpoint is being used for debugging
+        logger.debug(`Operation ${operation.operationName} using endpoint: ${baseUrl}`);
+
         const queryName = operation.operationName;
         if (queryName) {
           return `${baseUrl}?query=${encodeURIComponent(queryName)}`;

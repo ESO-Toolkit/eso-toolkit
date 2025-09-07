@@ -7,13 +7,13 @@ import {
   useCurrentFight,
   useDamageEvents,
   useDeathEvents,
-  useDebuffEvents,
   useFriendlyBuffEvents,
   useHealingEvents,
   usePlayerData,
   useReportMasterData,
   useResourceEvents,
 } from '../../../hooks';
+import { useDebuffEvents } from '../../../hooks/events/useDebuffEvents';
 import { useBuffLookupTask } from '../../../hooks/workerTasks/useBuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import {

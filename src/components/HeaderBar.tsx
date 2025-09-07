@@ -390,42 +390,80 @@ export const HeaderBar: React.FC = () => {
               ))}
               <ThemeToggle />
               {isLoggedIn ? (
-                <Button
-                  color="inherit"
-                  onClick={handleLogout}
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'transparent',
-                    border: '1px solid transparent',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(239, 68, 68, 0.08)'
-                          : 'rgba(220, 38, 38, 0.06)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(239, 68, 68, 0.2)'
-                          : 'rgba(220, 38, 38, 0.15)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                          : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                  }}
-                >
-                  Log out
-                </Button>
+                <>
+                  <Button
+                    color="inherit"
+                    onClick={() => navigate('/my-reports')}
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(59, 130, 246, 0.08)'
+                            : 'rgba(37, 99, 235, 0.06)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(59, 130, 246, 0.2)'
+                            : 'rgba(37, 99, 235, 0.15)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 4px 20px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                            : '0 4px 20px rgba(37, 99, 235, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                      },
+                      '&:active': {
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    My Reports
+                  </Button>
+                  <Button
+                    color="inherit"
+                    onClick={handleLogout}
+                    sx={{
+                      px: 2,
+                      py: 1,
+                      borderRadius: 2,
+                      textTransform: 'none',
+                      fontWeight: 500,
+                      position: 'relative',
+                      overflow: 'hidden',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      background: 'transparent',
+                      border: '1px solid transparent',
+                      '&:hover': {
+                        transform: 'translateY(-1px)',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(239, 68, 68, 0.08)'
+                            : 'rgba(220, 38, 38, 0.06)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(239, 68, 68, 0.2)'
+                            : 'rgba(220, 38, 38, 0.15)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                            : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                      },
+                      '&:active': {
+                        transform: 'translateY(0)',
+                      },
+                    }}
+                  >
+                    Log out
+                  </Button>
+                </>
               ) : (
                 <Button
                   color="inherit"

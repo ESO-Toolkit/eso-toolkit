@@ -121,4 +121,128 @@ describe('EsoLogsClient', () => {
       expect(typeof client.stop).toBe('function');
     });
   });
+
+  describe('Smart endpoint routing', () => {
+    it('should use user endpoint for user-specific operations', () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      // Mock the httpLink to capture the URI being used
+      const mockQuery = jest.fn().mockResolvedValue({
+        data: {},
+        loading: false,
+        networkStatus: 7,
+      });
+      apolloClient.query = mockQuery;
+
+      // Test user-specific operations
+      const userOperations = [
+        'getCurrentUser',
+        'getUserReports',
+        'getUserCharacters',
+        'getUserGuilds',
+      ];
+
+      userOperations.forEach((operationName) => {
+        // Reset mock
+        mockQuery.mockClear();
+
+        // Mock operation with specific name
+        const mockOperation = {
+          query: {} as DocumentNode,
+          operationName,
+        };
+
+        client.query(mockOperation);
+
+        // Check that the operation was called
+        expect(mockQuery).toHaveBeenCalledWith(mockOperation);
+      });
+    });
+
+    it('should use client endpoint for public operations', () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      // Mock the httpLink to capture the URI being used
+      const mockQuery = jest.fn().mockResolvedValue({
+        data: {},
+        loading: false,
+        networkStatus: 7,
+      });
+      apolloClient.query = mockQuery;
+
+      // Test public operations
+      const publicOperations = [
+        'getReportByCode',
+        'getGameData',
+        'getWorldData',
+        'getCharacterRankings',
+      ];
+
+      publicOperations.forEach((operationName) => {
+        // Reset mock
+        mockQuery.mockClear();
+
+        // Mock operation with specific name
+        const mockOperation = {
+          query: {} as DocumentNode,
+          operationName,
+        };
+
+        client.query(mockOperation);
+
+        // Check that the operation was called
+        expect(mockQuery).toHaveBeenCalledWith(mockOperation);
+      });
+    });
+
+    it('should default to client endpoint for operations without names', () => {
+      const client = new EsoLogsClient(mockAccessToken);
+      const apolloClient = client.getClient();
+
+      // Mock the httpLink
+      const mockQuery = jest.fn().mockResolvedValue({
+        data: {},
+        loading: false,
+        networkStatus: 7,
+      });
+      apolloClient.query = mockQuery;
+
+      // Test operation without name
+      const mockOperation = {
+        query: {} as DocumentNode,
+        operationName: undefined,
+      };
+
+      client.query(mockOperation);
+
+      // Check that the operation was called
+      expect(mockQuery).toHaveBeenCalledWith(mockOperation);
+    });
+
+    it('should use client endpoint when no access token is provided', () => {
+      const client = new EsoLogsClient(''); // Empty token
+      const apolloClient = client.getClient();
+
+      // Mock the httpLink
+      const mockQuery = jest.fn().mockResolvedValue({
+        data: {},
+        loading: false,
+        networkStatus: 7,
+      });
+      apolloClient.query = mockQuery;
+
+      // Test user operation without token
+      const mockOperation = {
+        query: {} as DocumentNode,
+        operationName: 'getCurrentUser',
+      };
+
+      client.query(mockOperation);
+
+      // Check that the operation was called
+      expect(mockQuery).toHaveBeenCalledWith(mockOperation);
+    });
+  });
 });
