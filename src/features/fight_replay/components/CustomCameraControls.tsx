@@ -212,8 +212,14 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   useEffect(() => {
     if (initialTarget && !state.current.isRotating && !state.current.isPanning) {
       state.current.target.copy(initialTarget);
+      
+      // Update camera position to look at the new target
+      const offset = new Vector3();
+      offset.setFromSpherical(state.current.spherical);
+      camera.position.copy(state.current.target).add(offset);
+      camera.lookAt(state.current.target);
     }
-  }, [initialTarget]);
+  }, [initialTarget, camera]);
 
   return null; // This component doesn't render anything
 };

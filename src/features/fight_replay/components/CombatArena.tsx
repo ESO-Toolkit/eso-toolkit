@@ -55,10 +55,42 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
   // Initialize camera to boss position once when actors are first available
   useEffect(() => {
     if (!hasInitialized.current && actors.length > 0) {
+      // Check if actors have valid positions (not default [0,0,0])
+      const hasValidPositions = actors.some((actor) => 
+        actor.position[0] !== 0 || actor.position[2] !== 0,
+      );
+      
+      if (!hasValidPositions) {
+        // Actors don't have real positions yet, wait for worker to finish
+        return;
+      }
+      
+      // Find the best target for initial camera positioning
       const boss = actors.find((actor) => actor.type === 'boss');
-      if (boss) {
-        const bossPosition = new Vector3(boss.position[0], 0, boss.position[2]);
-        setCameraTarget(bossPosition);
+      const firstEnemy = actors.find((actor) => actor.type === 'enemy');
+      const firstActor = actors[0];
+
+      // Prioritize boss, then any enemy, then first actor, then center
+      const targetActor = boss || firstEnemy || firstActor;
+
+      if (targetActor) {
+        const targetPosition = new Vector3(targetActor.position[0], 0, targetActor.position[2]);
+        setCameraTarget(targetPosition);
+        hasInitialized.current = true;
+
+        // Debug logging for camera initialization
+        if (window.location.search.includes('debug=camera')) {
+          // eslint-disable-next-line no-console
+          console.log('Camera initialized to:', {
+            actorType: targetActor.type,
+            actorName: targetActor.name,
+            position: targetActor.position,
+            targetPosition: targetPosition,
+          });
+        }
+      } else {
+        // Fallback to center if no actors found
+        setCameraTarget(new Vector3(0, 0, 0));
         hasInitialized.current = true;
       }
     }
@@ -68,8 +100,8 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
     <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
       <Canvas
         camera={{
-          position: [1, 1.5, 1], // Extremely close starting position (was [3, 4, 3])
-          fov: 35, // Even narrower field of view for tight zoom (was 45)
+          position: [3, 6, 3], // Better elevated position for overview (was [1, 1.5, 1])
+          fov: 45, // Wider field of view for better overview (was 35)
         }}
         shadows
         frameloop="always"
