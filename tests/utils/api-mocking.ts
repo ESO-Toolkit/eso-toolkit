@@ -139,7 +139,7 @@ export async function setupApiMocking(page: Page) {
   // Mock ESO Logs main domain requests (any other API calls)
   await page.route('**/esologs.com/**', async (route) => {
     const url = route.request().url();
-    
+
     // If it's not already handled by specific routes above
     if (!url.includes('/oauth/') && !url.includes('/api/v2/client')) {
       await route.fulfill({
@@ -153,13 +153,16 @@ export async function setupApiMocking(page: Page) {
   // Mock rpglogs.com (alternative domain and assets)
   await page.route('**/rpglogs.com/**', async (route) => {
     const url = route.request().url();
-    
+
     if (url.includes('/img/eso/abilities/')) {
       // Mock ability icons with a 1x1 transparent PNG
       await route.fulfill({
         status: 200,
         contentType: 'image/png',
-        body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'),
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          'base64',
+        ),
       });
     } else {
       await route.fulfill({
@@ -176,7 +179,10 @@ export async function setupApiMocking(page: Page) {
     await route.fulfill({
       status: 200,
       contentType: 'image/png',
-      body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'),
+      body: Buffer.from(
+        'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+        'base64',
+      ),
     });
   });
 
@@ -262,13 +268,16 @@ export async function setupApiMocking(page: Page) {
   // Mock any external helper tool domains
   await page.route('**/esohelper.tools/**', async (route) => {
     const url = route.request().url();
-    
+
     if (url.includes('.svg') || url.includes('.png') || url.includes('.jpg')) {
       // Mock images with a small transparent PNG
       await route.fulfill({
         status: 200,
         contentType: 'image/png',
-        body: Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64'),
+        body: Buffer.from(
+          'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+          'base64',
+        ),
       });
     } else {
       await route.fulfill({

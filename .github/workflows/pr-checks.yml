@@ -77,14 +77,14 @@ jobs:
         run: npm run test:coverage:ci
         env:
           # Prevent external network requests during testing
-          NO_PROXY: "*"
-          HTTP_PROXY: "http://127.0.0.1:9999"
-          HTTPS_PROXY: "http://127.0.0.1:9999"
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
           # Block known external services
-          BLOCK_EXTERNAL_REQUESTS: "true"
+          BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
-          ESOLOGS_API_URL: "http://localhost:3000/mock-api"
-          SENTRY_DSN: ""
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
 
   typecheck:
     runs-on: ubuntu-latest
@@ -109,8 +109,29 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/setup-node-with-cache
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: echo "PLAYWRIGHT_VERSION=$(npm ls @playwright/test --depth=0 | grep @playwright | sed 's/.*@//')" >> $GITHUB_OUTPUT
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+            /home/runner/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
+
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
+
+      - name: Install Playwright Browser Dependencies (if cached)
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
       - name: Block external network access
         run: |
           # Block access to known external services during testing
@@ -127,14 +148,14 @@ jobs:
         run: npm run test:e2e
         env:
           # Prevent external network requests during testing
-          NO_PROXY: "*"
-          HTTP_PROXY: "http://127.0.0.1:9999"
-          HTTPS_PROXY: "http://127.0.0.1:9999"
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
           # Block known external services
-          BLOCK_EXTERNAL_REQUESTS: "true"
+          BLOCK_EXTERNAL_REQUESTS: 'true'
           # Override external service URLs to localhost (will fail if not mocked)
-          ESOLOGS_API_URL: "http://localhost:3000/mock-api"
-          SENTRY_DSN: ""
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()

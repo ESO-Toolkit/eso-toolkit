@@ -9,7 +9,7 @@ test.describe('Report Page', () => {
 
   test('should load a single report page successfully', async ({ page }) => {
     const testReportId = 'TEST123';
-    
+
     // Navigate to the report page
     await page.goto(`/#/report/${testReportId}`);
 
@@ -36,9 +36,8 @@ test.describe('Report Page', () => {
 
     await page.waitForTimeout(1000);
 
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented')
+    const significantErrors = errors.filter(
+      (error) => !error.includes('ResizeObserver') && !error.includes('Not implemented'),
     );
     expect(significantErrors).toHaveLength(0);
   });
@@ -71,7 +70,7 @@ test.describe('Report Page', () => {
 
     // Basic checks
     await expect(page.locator('body')).toBeVisible();
-    
+
     // Verify route
     expect(page.url()).toContain(`/report/${testReportId}`);
 
@@ -86,9 +85,8 @@ test.describe('Report Page', () => {
 
     await page.waitForTimeout(1000);
 
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented')
+    const significantErrors = errors.filter(
+      (error) => !error.includes('ResizeObserver') && !error.includes('Not implemented'),
     );
     expect(significantErrors).toHaveLength(0);
   });

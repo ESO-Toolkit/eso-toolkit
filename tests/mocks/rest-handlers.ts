@@ -82,7 +82,10 @@ export const restHandlers = [
   // Mock rpglogs.com assets (ability icons)
   http.get('https://assets.rpglogs.com/img/eso/abilities/*', () => {
     // Return a small transparent PNG
-    const transparentPng = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==', 'base64');
+    const transparentPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==',
+      'base64',
+    );
     return new HttpResponse(transparentPng, {
       headers: {
         'Content-Type': 'image/png',

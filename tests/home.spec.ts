@@ -30,11 +30,12 @@ test.describe('Home Page', () => {
     await page.waitForTimeout(1000);
 
     // Filter out known harmless errors from jsdom/test environment
-    const significantLogs = logs.filter(log => 
-      !log.includes('ResizeObserver') && 
-      !log.includes('Not implemented') &&
-      !log.includes('jsdom') &&
-        !log.includes('net::ERR_')
+    const significantLogs = logs.filter(
+      (log) =>
+        !log.includes('ResizeObserver') &&
+        !log.includes('Not implemented') &&
+        !log.includes('jsdom') &&
+        !log.includes('net::ERR_'),
     );
     expect(significantLogs).toHaveLength(0);
   });
@@ -70,9 +71,8 @@ test.describe('Home Page', () => {
     await page.waitForTimeout(1000);
 
     // Filter out known test environment issues
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented')
+    const significantErrors = errors.filter(
+      (error) => !error.includes('ResizeObserver') && !error.includes('Not implemented'),
     );
 
     expect(significantErrors).toHaveLength(0);

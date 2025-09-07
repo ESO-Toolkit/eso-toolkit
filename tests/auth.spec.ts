@@ -30,17 +30,20 @@ test.describe('Authentication Flow', () => {
     await page.waitForTimeout(1000);
 
     // Filter out known jsdom/test environment errors
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented') &&
-      !error.includes('jsdom')
+    const significantErrors = errors.filter(
+      (error) =>
+        !error.includes('ResizeObserver') &&
+        !error.includes('Not implemented') &&
+        !error.includes('jsdom'),
     );
     expect(significantErrors).toHaveLength(0);
   });
 
   test('should handle OAuth errors gracefully', async ({ page }) => {
     // Navigate to OAuth redirect with error parameter
-    await page.goto('/#/oauth-redirect?error=access_denied&error_description=User%20denied%20access');
+    await page.goto(
+      '/#/oauth-redirect?error=access_denied&error_description=User%20denied%20access',
+    );
 
     // Wait for the page to load
     await page.waitForLoadState('domcontentloaded');
@@ -79,10 +82,11 @@ test.describe('Authentication Flow', () => {
 
     await page.waitForTimeout(1000);
 
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented') &&
-      !error.includes('jsdom')
+    const significantErrors = errors.filter(
+      (error) =>
+        !error.includes('ResizeObserver') &&
+        !error.includes('Not implemented') &&
+        !error.includes('jsdom'),
     );
     expect(significantErrors).toHaveLength(0);
   });
@@ -113,10 +117,11 @@ test.describe('Authentication Flow', () => {
 
     await page.waitForTimeout(1000);
 
-    const significantErrors = errors.filter(error => 
-      !error.includes('ResizeObserver') && 
-      !error.includes('Not implemented') &&
-      !error.includes('jsdom')
+    const significantErrors = errors.filter(
+      (error) =>
+        !error.includes('ResizeObserver') &&
+        !error.includes('Not implemented') &&
+        !error.includes('jsdom'),
     );
     expect(significantErrors).toHaveLength(0);
   });
