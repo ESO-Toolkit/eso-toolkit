@@ -95,6 +95,14 @@ const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     () => ({
       client: mockClient, // We provide Apollo client directly for Storybook
       isReady: true, // Always ready in Storybook
+      setAuthToken: (token: string) => {
+        // Mock implementation - no-op for Storybook
+        console.log('Mock setAuthToken called with:', token);
+      },
+      clearAuthToken: () => {
+        // Mock implementation - no-op for Storybook
+        console.log('Mock clearAuthToken called');
+      },
     }),
     [mockClient],
   );
