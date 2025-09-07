@@ -11,6 +11,7 @@ import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
+import { Login } from './features/auth/Login';
 // Import critical components directly (no lazy loading for LCP)
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { useAbilitiesPreloader } from './hooks/useAbilitiesPreloader';
@@ -162,6 +163,17 @@ const AppRoutes: React.FC = () => {
           />
           {/* Landing page without AppLayout for better performance */}
           <Route path="/" element={<MainApp />} />
+          {/* Login page */}
+          <Route
+            path="/login"
+            element={
+              <ErrorBoundary>
+                <Suspense fallback={<LoadingFallback />}>
+                  <Login />
+                </Suspense>
+              </ErrorBoundary>
+            }
+          />
           <Route element={<AppLayout />}>
             {/* Pass fights as prop via state, fallback to empty array if not present */}
             <Route

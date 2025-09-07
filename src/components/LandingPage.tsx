@@ -940,6 +940,31 @@ export const LandingPage: React.FC = () => {
               >
                 Connect your ESO Logs account to analyze combat logs
               </Typography>
+              <Typography
+                variant="body2"
+                sx={{
+                  mt: 1,
+                  color: theme.palette.text.secondary,
+                  opacity: 0.7,
+                  fontSize: '0.875rem',
+                }}
+              >
+                Want to learn more about privacy and data security?{' '}
+                <Box
+                  component="span"
+                  onClick={() => navigate('/login')}
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textDecoration: 'underline',
+                    cursor: 'pointer',
+                    '&:hover': {
+                      color: theme.palette.primary.dark,
+                    },
+                  }}
+                >
+                  Visit our login page
+                </Box>
+              </Typography>
             </Box>
           )}
         </HeroContent>
