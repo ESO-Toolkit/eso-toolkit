@@ -222,5 +222,6 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
       state.current.target.copy(initialTarget);
       // Don't immediately update camera position - let the useFrame loop handle smooth interpolation
     }
-  }, [initialTarget]);  return null; // This component doesn't render anything
+  }, [initialTarget]);
+  return null; // This component doesn't render anything
 };

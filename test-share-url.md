@@ -21,7 +21,7 @@
 3. Move the timeline to a specific time
 4. Click the Share button (📤 icon)
 5. The generated URL should:
-   - Include the hash (`#`) 
+   - Include the hash (`#`)
    - Include `/replay` at the end
    - Include `?actorId=XXX&time=YYY` parameters
 

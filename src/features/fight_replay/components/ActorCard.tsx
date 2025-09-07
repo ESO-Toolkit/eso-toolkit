@@ -56,13 +56,13 @@ const getStatusIcon = (isAlive: boolean): React.ReactElement => {
 };
 
 export const ActorCard = memo<ActorCardProps>(
-  ({ 
-    actor, 
-    isSelected, 
-    isHidden = false, 
-    isCameraLocked = false, 
-    onActorClick, 
-    onToggleVisibility, 
+  ({
+    actor,
+    isSelected,
+    isHidden = false,
+    isCameraLocked = false,
+    onActorClick,
+    onToggleVisibility,
     onToggleCameraLock,
   }) => {
     // Pre-calculate expensive values
@@ -142,7 +142,9 @@ export const ActorCard = memo<ActorCardProps>(
               )}
               {onToggleCameraLock && (
                 <Tooltip
-                  title={isCameraLocked ? 'Unlock camera from actor' : 'Lock camera to follow actor'}
+                  title={
+                    isCameraLocked ? 'Unlock camera from actor' : 'Lock camera to follow actor'
+                  }
                   placement="top"
                 >
                   <IconButton

@@ -73,7 +73,10 @@ const formatTimestamp = (timestamp: number): string => {
     minute: '2-digit',
     second: '2-digit',
   });
-  const ms = (timestamp % 1000).toString().padStart(3, '0');
+  // Round timestamp to avoid floating point precision issues
+  const ms = Math.round(timestamp % 1000)
+    .toString()
+    .padStart(3, '0');
   return `${timeStr}.${ms}`;
 };
 
@@ -786,7 +789,8 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                 >
                   <CenterFocusStrong color="primary" fontSize="small" />
                   <Typography variant="caption" color="primary.main" fontWeight="medium">
-                    Camera Locked: {actors.find(a => a.id === cameraLockedActorId)?.name || 'Unknown'}
+                    Camera Locked:{' '}
+                    {actors.find((a) => a.id === cameraLockedActorId)?.name || 'Unknown'}
                   </Typography>
                 </Box>
               )}

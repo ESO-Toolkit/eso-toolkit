@@ -69,7 +69,7 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
 
       // Find the best target for initial camera positioning
       // Prioritize selected actor from URL, then boss, then any enemy, then first actor
-      const selectedActor = selectedActorId 
+      const selectedActor = selectedActorId
         ? actors.find((actor) => actor.id === selectedActorId)
         : null;
       const boss = actors.find((actor) => actor.type === 'boss');
