@@ -3,17 +3,14 @@
  * Comprehensive test coverage for test constants and values
  */
 
-import { 
-  TEST_CONSTANTS, 
-  TEST_ABILITY_IDS 
-} from './testConstants';
+import { TEST_CONSTANTS, TEST_ABILITY_IDS } from './testConstants';
 
 describe('testConstants', () => {
   describe('TEST_CONSTANTS', () => {
     it('should provide valid timestamps', () => {
       expect(typeof TEST_CONSTANTS.FIGHT_START_TIME).toBe('number');
       expect(typeof TEST_CONSTANTS.FIGHT_END_TIME).toBe('number');
-      
+
       expect(TEST_CONSTANTS.FIGHT_START_TIME).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.FIGHT_END_TIME).toBeGreaterThan(TEST_CONSTANTS.FIGHT_START_TIME);
     });
@@ -23,12 +20,12 @@ describe('testConstants', () => {
       expect(typeof TEST_CONSTANTS.TARGET_ID).toBe('number');
       expect(typeof TEST_CONSTANTS.SOURCE_ID).toBe('number');
       expect(typeof TEST_CONSTANTS.FIGHT_ID).toBe('number');
-      
+
       expect(TEST_CONSTANTS.PLAYER_ID).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.TARGET_ID).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.SOURCE_ID).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.FIGHT_ID).toBeGreaterThan(0);
-      
+
       // IDs should be unique
       const ids = [
         TEST_CONSTANTS.PLAYER_ID,
@@ -43,7 +40,7 @@ describe('testConstants', () => {
     it('should provide valid damage and heal amounts', () => {
       expect(typeof TEST_CONSTANTS.DAMAGE_AMOUNT).toBe('number');
       expect(typeof TEST_CONSTANTS.HEAL_AMOUNT).toBe('number');
-      
+
       expect(TEST_CONSTANTS.DAMAGE_AMOUNT).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.HEAL_AMOUNT).toBeGreaterThan(0);
     });
@@ -52,7 +49,7 @@ describe('testConstants', () => {
       expect(typeof TEST_CONSTANTS.DEFAULT_X).toBe('number');
       expect(typeof TEST_CONSTANTS.DEFAULT_Y).toBe('number');
       expect(typeof TEST_CONSTANTS.DEFAULT_FACING).toBe('number');
-      
+
       // Coordinates should be within reasonable ranges
       expect(TEST_CONSTANTS.DEFAULT_X).toBeGreaterThanOrEqual(-1000000);
       expect(TEST_CONSTANTS.DEFAULT_X).toBeLessThanOrEqual(1000000);
@@ -91,7 +88,7 @@ describe('testConstants', () => {
       expect(typeof TEST_ABILITY_IDS.EMPOWER).toBe('number');
       expect(typeof TEST_ABILITY_IDS.MAJOR_SAVAGERY).toBe('number');
       expect(typeof TEST_ABILITY_IDS.MINOR_FORCE).toBe('number');
-      
+
       expect(TEST_ABILITY_IDS.MAJOR_FORCE).toBeGreaterThan(0);
       expect(TEST_ABILITY_IDS.MAJOR_BRUTALITY).toBeGreaterThan(0);
       expect(TEST_ABILITY_IDS.MAJOR_SORCERY).toBeGreaterThan(0);
@@ -117,9 +114,9 @@ describe('testConstants', () => {
 
     it('should follow ESO ability ID conventions', () => {
       const abilityIds = Object.values(TEST_ABILITY_IDS);
-      
+
       // ESO ability IDs are typically 5-6 digit numbers
-      abilityIds.forEach(id => {
+      abilityIds.forEach((id) => {
         expect(id).toBeGreaterThanOrEqual(10000);
         expect(id).toBeLessThanOrEqual(999999);
       });
@@ -128,7 +125,7 @@ describe('testConstants', () => {
     it('should distinguish between major and minor buffs', () => {
       // Major Force should be different from Minor Force
       expect(TEST_ABILITY_IDS.MAJOR_FORCE).not.toBe(TEST_ABILITY_IDS.MINOR_FORCE);
-      
+
       // Different major buffs should have different IDs
       expect(TEST_ABILITY_IDS.MAJOR_FORCE).not.toBe(TEST_ABILITY_IDS.MAJOR_BRUTALITY);
       expect(TEST_ABILITY_IDS.MAJOR_BRUTALITY).not.toBe(TEST_ABILITY_IDS.MAJOR_SORCERY);
@@ -141,11 +138,11 @@ describe('testConstants', () => {
       const playerId1 = TEST_CONSTANTS.PLAYER_ID;
       const playerId2 = TEST_CONSTANTS.PLAYER_ID;
       expect(playerId1).toBe(playerId2);
-      
+
       const startTime1 = TEST_CONSTANTS.FIGHT_START_TIME;
       const startTime2 = TEST_CONSTANTS.FIGHT_START_TIME;
       expect(startTime1).toBe(startTime2);
-      
+
       const abilityId1 = TEST_ABILITY_IDS.MAJOR_FORCE;
       const abilityId2 = TEST_ABILITY_IDS.MAJOR_FORCE;
       expect(abilityId1).toBe(abilityId2);
@@ -156,7 +153,7 @@ describe('testConstants', () => {
       const originalPlayerId = TEST_CONSTANTS.PLAYER_ID;
       const originalStartTime = TEST_CONSTANTS.FIGHT_START_TIME;
       const originalAbilityId = TEST_ABILITY_IDS.MAJOR_FORCE;
-      
+
       // Access them multiple times
       for (let i = 0; i < 5; i++) {
         expect(TEST_CONSTANTS.PLAYER_ID).toBe(originalPlayerId);
@@ -168,11 +165,11 @@ describe('testConstants', () => {
     it('should have logical relationships between values', () => {
       // Fight end should be after start
       expect(TEST_CONSTANTS.FIGHT_END_TIME).toBeGreaterThan(TEST_CONSTANTS.FIGHT_START_TIME);
-      
+
       // Heal amount and damage amount should both be positive
       expect(TEST_CONSTANTS.DAMAGE_AMOUNT).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.HEAL_AMOUNT).toBeGreaterThan(0);
-      
+
       // All IDs should be different from each other
       const allIds = [
         TEST_CONSTANTS.PLAYER_ID,
@@ -190,7 +187,7 @@ describe('testConstants', () => {
       // IDs should be suitable for combat log entries
       expect(TEST_CONSTANTS.PLAYER_ID).toBeGreaterThan(0);
       expect(TEST_CONSTANTS.TARGET_ID).toBeGreaterThan(0);
-      
+
       // Timestamps should be suitable for timing calculations
       const duration = TEST_CONSTANTS.FIGHT_END_TIME - TEST_CONSTANTS.FIGHT_START_TIME;
       expect(duration).toBeGreaterThan(1000); // At least 1 second
@@ -203,7 +200,7 @@ describe('testConstants', () => {
       expect(TEST_CONSTANTS.DEFAULT_X).toBeLessThan(100000);
       expect(TEST_CONSTANTS.DEFAULT_Y).toBeGreaterThan(-10000);
       expect(TEST_CONSTANTS.DEFAULT_Y).toBeLessThan(100000);
-      
+
       // Facing should be within compass range
       expect(TEST_CONSTANTS.DEFAULT_FACING).toBeGreaterThanOrEqual(0);
       expect(TEST_CONSTANTS.DEFAULT_FACING).toBeLessThan(360);

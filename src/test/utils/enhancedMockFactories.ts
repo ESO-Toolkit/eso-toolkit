@@ -6,7 +6,6 @@
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { Resources, DamageEvent } from '../../types/combatlogEvents';
-
 import { TEST_CONSTANTS } from '../constants/testConstants';
 
 /**

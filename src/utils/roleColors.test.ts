@@ -3,7 +3,7 @@
  * Tests role color functions and constants for dark/light mode theming
  */
 
-import { 
+import {
   DARK_ROLE_COLORS,
   LIGHT_ROLE_COLORS,
   LIGHT_ROLE_COLORS_SOLID,
@@ -18,7 +18,7 @@ describe('roleColors', () => {
       expect(DARK_ROLE_COLORS).toHaveProperty('dps');
       expect(DARK_ROLE_COLORS).toHaveProperty('healer');
       expect(DARK_ROLE_COLORS).toHaveProperty('tank');
-      
+
       expect(typeof DARK_ROLE_COLORS.dps).toBe('string');
       expect(typeof DARK_ROLE_COLORS.healer).toBe('string');
       expect(typeof DARK_ROLE_COLORS.tank).toBe('string');
@@ -28,7 +28,7 @@ describe('roleColors', () => {
       expect(LIGHT_ROLE_COLORS).toHaveProperty('dps');
       expect(LIGHT_ROLE_COLORS).toHaveProperty('healer');
       expect(LIGHT_ROLE_COLORS).toHaveProperty('tank');
-      
+
       expect(typeof LIGHT_ROLE_COLORS.dps).toBe('string');
       expect(typeof LIGHT_ROLE_COLORS.healer).toBe('string');
       expect(typeof LIGHT_ROLE_COLORS.tank).toBe('string');
@@ -38,7 +38,7 @@ describe('roleColors', () => {
       expect(LIGHT_ROLE_COLORS_SOLID).toHaveProperty('dps');
       expect(LIGHT_ROLE_COLORS_SOLID).toHaveProperty('healer');
       expect(LIGHT_ROLE_COLORS_SOLID).toHaveProperty('tank');
-      
+
       expect(typeof LIGHT_ROLE_COLORS_SOLID.dps).toBe('string');
       expect(typeof LIGHT_ROLE_COLORS_SOLID.healer).toBe('string');
       expect(typeof LIGHT_ROLE_COLORS_SOLID.tank).toBe('string');
@@ -52,7 +52,7 @@ describe('roleColors', () => {
       const dpsColor = DARK_ROLE_COLORS.dps;
       const healerColor = DARK_ROLE_COLORS.healer;
       const tankColor = DARK_ROLE_COLORS.tank;
-      
+
       expect(dpsColor).not.toBe(healerColor);
       expect(dpsColor).not.toBe(tankColor);
       expect(healerColor).not.toBe(tankColor);
@@ -62,7 +62,7 @@ describe('roleColors', () => {
       const dpsColor = LIGHT_ROLE_COLORS_SOLID.dps;
       const healerColor = LIGHT_ROLE_COLORS_SOLID.healer;
       const tankColor = LIGHT_ROLE_COLORS_SOLID.tank;
-      
+
       expect(dpsColor).not.toBe(healerColor);
       expect(dpsColor).not.toBe(tankColor);
       expect(healerColor).not.toBe(tankColor);

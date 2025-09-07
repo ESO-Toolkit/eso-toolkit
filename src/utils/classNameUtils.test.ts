@@ -10,15 +10,15 @@ describe('classNameUtils', () => {
     it('should contain all expected ESO classes', () => {
       const expectedClasses = [
         'dragonknight',
-        'templar', 
+        'templar',
         'warden',
         'nightblade',
         'sorcerer',
         'necromancer',
-        'arcanist'
+        'arcanist',
       ];
 
-      expectedClasses.forEach(className => {
+      expectedClasses.forEach((className) => {
         expect(CLASS_ALIASES).toHaveProperty(className);
         expect(CLASS_ALIASES[className]).toBe(className);
       });

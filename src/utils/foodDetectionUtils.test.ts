@@ -53,12 +53,15 @@ describe('foodDetectionUtils', () => {
         expect(result).toEqual({ name: 'Dubious Camoran Throne', id: 9995 });
       });
 
-      it('should detect Witchmother\'s Potent Brew variations', () => {
+      it("should detect Witchmother's Potent Brew variations", () => {
         const auras1 = [{ name: "Witchmother's Potent Brew", id: 9994 }];
-        const auras2 = [{ name: "Witchmothers Potent Brew", id: 9993 }];
-        
-        expect(detectFoodFromAuras(auras1)).toEqual({ name: "Witchmother's Potent Brew", id: 9994 });
-        expect(detectFoodFromAuras(auras2)).toEqual({ name: "Witchmothers Potent Brew", id: 9993 });
+        const auras2 = [{ name: 'Witchmothers Potent Brew', id: 9993 }];
+
+        expect(detectFoodFromAuras(auras1)).toEqual({
+          name: "Witchmother's Potent Brew",
+          id: 9994,
+        });
+        expect(detectFoodFromAuras(auras2)).toEqual({ name: 'Witchmothers Potent Brew', id: 9993 });
       });
 
       it('should be case insensitive for named foods', () => {
@@ -322,11 +325,11 @@ describe('foodDetectionUtils', () => {
 
       const detected = detectFoodFromAuras(auras);
       expect(detected).toBeDefined();
-      
+
       if (detected) {
         const abbreviated = abbreviateFood(detected.name);
         const color = getFoodColor(detected.id);
-        
+
         expect(detected.name).toBe('Artaeum Takeaway Broth');
         expect(detected.id).toBe(1001);
         expect(abbreviated).toBe('ARTAEU'); // Truncated unknown name
@@ -336,10 +339,10 @@ describe('foodDetectionUtils', () => {
 
     it('should handle edge case where no food is detected', () => {
       const auras = [{ name: 'Some Random Buff', id: 9999 }];
-      
+
       const detected = detectFoodFromAuras(auras);
       expect(detected).toBeUndefined();
-      
+
       // Test default behaviors when no food detected
       expect(abbreviateFood('Unknown')).toBe('UNKNOW');
       expect(getFoodColor(undefined)).toBe('#888');

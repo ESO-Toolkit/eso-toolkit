@@ -87,9 +87,4 @@ export function canDualWield(weaponType: WeaponType): boolean {
 }
 
 // Export the sets for other utilities that might need them
-export { 
-  ONE_HANDED_WEAPONS,
-  TWO_HANDED_WEAPONS, 
-  STAFF_WEAPONS,
-  DOUBLE_SET_TYPES,
-};
+export { ONE_HANDED_WEAPONS, TWO_HANDED_WEAPONS, STAFF_WEAPONS, DOUBLE_SET_TYPES };

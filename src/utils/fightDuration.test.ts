@@ -121,7 +121,7 @@ describe('fightDuration', () => {
         const fightStart = 1693920000000; // Example Unix timestamp
         const thirtySecondsLater = fightStart + 30000;
         const twoMinutesLater = fightStart + 120000;
-        
+
         expect(formatTimestamp(thirtySecondsLater, fightStart)).toBe('30s');
         expect(formatTimestamp(twoMinutesLater, fightStart)).toBe('2m 0s');
       });
@@ -129,7 +129,7 @@ describe('fightDuration', () => {
       it('should handle large timestamp differences', () => {
         const fightStart = 1693920000000;
         const oneHourLater = fightStart + 3600000;
-        
+
         expect(formatTimestamp(oneHourLater, fightStart)).toBe('1h 0m');
       });
     });
@@ -156,15 +156,15 @@ describe('fightDuration', () => {
         const fightStart = 1000000;
         const timestamp = 1090000; // 90 seconds later
         const difference = timestamp - fightStart;
-        
+
         expect(formatTimestamp(timestamp, fightStart)).toBe(formatDuration(difference));
       });
 
       it('should handle various durations consistently', () => {
         const fightStart = 5000000;
         const testDurations = [1000, 30000, 60000, 90000, 3600000];
-        
-        testDurations.forEach(duration => {
+
+        testDurations.forEach((duration) => {
           const timestamp = fightStart + duration;
           expect(formatTimestamp(timestamp, fightStart)).toBe(formatDuration(duration));
         });

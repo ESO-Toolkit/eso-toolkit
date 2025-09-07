@@ -3,11 +3,7 @@
  * Comprehensive test coverage for calculation and data processing types
  */
 
-import { 
-  BaseDataPoint,
-  BaseCalculationTask,
-  BaseCalculationResult 
-} from './calculations';
+import { BaseDataPoint, BaseCalculationTask, BaseCalculationResult } from './calculations';
 
 describe('calculations types', () => {
   describe('BaseDataPoint interface', () => {
@@ -337,7 +333,7 @@ describe('calculations types', () => {
             },
             healingByAbility: {
               'Healing Springs': 15000,
-              'Regeneration': 10000,
+              Regeneration: 10000,
             },
           },
           metrics: {
@@ -387,8 +383,7 @@ describe('calculations types', () => {
         options: { aggregationType: 'sum' },
       };
 
-      const sum = task.data.dataPoints
-        .reduce((total, dp) => total + dp.value, 0);
+      const sum = task.data.dataPoints.reduce((total, dp) => total + dp.value, 0);
 
       const result: BaseCalculationResult<{ total: number; average: number; count: number }> = {
         success: true,
@@ -408,7 +403,7 @@ describe('calculations types', () => {
     it('should support generic typing patterns', () => {
       function processTask<TInput, TOutput>(
         task: BaseCalculationTask<TInput>,
-        processor: (data: TInput) => TOutput
+        processor: (data: TInput) => TOutput,
       ): BaseCalculationResult<TOutput> {
         const startTime = Date.now();
         try {
@@ -431,9 +426,7 @@ describe('calculations types', () => {
         data: [1, 2, 3, 4, 5],
       };
 
-      const result = processTask(testTask, (numbers) => 
-        numbers.reduce((sum, n) => sum + n, 0)
-      );
+      const result = processTask(testTask, (numbers) => numbers.reduce((sum, n) => sum + n, 0));
 
       expect(result.success).toBe(true);
       expect(result.data).toBe(15);
@@ -464,12 +457,13 @@ describe('calculations types', () => {
         targetId: number;
       }
 
-      interface DamageCalculationTask extends BaseCalculationTask<{
-        playerId: number;
-        startTime: number;
-        endTime: number;
-        dataPoints: DamageDataPoint[];
-      }> {
+      interface DamageCalculationTask
+        extends BaseCalculationTask<{
+          playerId: number;
+          startTime: number;
+          endTime: number;
+          dataPoints: DamageDataPoint[];
+        }> {
         options?: {
           includeCrits?: boolean;
           excludeDoTs?: boolean;
@@ -540,8 +534,7 @@ describe('calculations types', () => {
         },
       };
 
-      const totalDamage = damageTask.data.dataPoints
-        .reduce((sum, dp) => sum + dp.value, 0);
+      const totalDamage = damageTask.data.dataPoints.reduce((sum, dp) => sum + dp.value, 0);
 
       const damageResult: BaseCalculationResult<{
         totalDamage: number;

@@ -9,9 +9,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { EsoLogsClient } from '../../esologsClient';
 import { EsoLogsClientContext } from '../../EsoLogsClientContext';
 import { ReportFightContext } from '../../ReportFightContext';
-import { MockData } from '../utils/mockDataSets';
 import { storybookDarkTheme } from '../themes/storybookThemes';
 import { createMockStore } from '../utils/createMockStore';
+import { MockData } from '../utils/mockDataSets';
 
 // Mock data provider component
 const MockDataProvider: React.FC<{ children: React.ReactNode; mockData: MockData }> = ({

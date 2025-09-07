@@ -3,7 +3,11 @@
  * Tests damage event processing, charged atronach attribution, and event grouping
  */
 
-import { getChargedReportActors, getDamageEventsByPlayer, CHARGED_ATRONACH_GAME_ID } from './damageEventUtils';
+import {
+  getChargedReportActors,
+  getDamageEventsByPlayer,
+  CHARGED_ATRONACH_GAME_ID,
+} from './damageEventUtils';
 import { ReportActor } from '../graphql/generated';
 import { DamageEvent } from '../types/combatlogEvents';
 
@@ -12,7 +16,7 @@ const createMockActor = (
   id: number,
   gameID?: number,
   type?: string,
-  petOwner?: number
+  petOwner?: number,
 ): ReportActor => ({
   id,
   gameID,
@@ -28,7 +32,7 @@ const createMockDamageEvent = (
   sourceID: number,
   targetID: number = 999,
   amount: number = 1000,
-  castTrackID: number = 12345
+  castTrackID: number = 12345,
 ): DamageEvent => ({
   timestamp: Date.now(),
   type: 'damage',
@@ -204,15 +208,15 @@ describe('damageEventUtils', () => {
 
         const damageEvents = [
           createMockDamageEvent(123, 999, 1000), // Direct player damage
-          createMockDamageEvent(789, 999, 500),  // Atronach damage
+          createMockDamageEvent(789, 999, 500), // Atronach damage
         ];
 
         const result = getDamageEventsByPlayer(damageEvents, actorsById);
 
         expect(result).toHaveProperty('123');
         expect(result['123']).toHaveLength(2); // Both events attributed to player 123
-        expect(result['123'].find(e => e.amount === 1000)).toBeDefined();
-        expect(result['123'].find(e => e.amount === 500)).toBeDefined();
+        expect(result['123'].find((e) => e.amount === 1000)).toBeDefined();
+        expect(result['123'].find((e) => e.amount === 500)).toBeDefined();
       });
 
       it('should handle multiple atronachs with different owners', () => {
@@ -243,7 +247,7 @@ describe('damageEventUtils', () => {
 
         const damageEvents = [
           createMockDamageEvent(456, 999, 1000), // Regular player damage
-          createMockDamageEvent(789, 999, 500),  // Atronach damage
+          createMockDamageEvent(789, 999, 500), // Atronach damage
         ];
 
         const result = getDamageEventsByPlayer(damageEvents, actorsById);
@@ -302,10 +306,10 @@ describe('damageEventUtils', () => {
 
         const damageEvents = [
           createMockDamageEvent(123, 999, 1000), // Player 123 direct
-          createMockDamageEvent(789, 999, 250),  // Player 123's atronach
-          createMockDamageEvent(456, 999, 800),  // Player 456 direct  
-          createMockDamageEvent(890, 999, 400),  // Player 456's atronach
-          createMockDamageEvent(999, 999, 300),  // Unknown player
+          createMockDamageEvent(789, 999, 250), // Player 123's atronach
+          createMockDamageEvent(456, 999, 800), // Player 456 direct
+          createMockDamageEvent(890, 999, 400), // Player 456's atronach
+          createMockDamageEvent(999, 999, 300), // Unknown player
         ];
 
         const result = getDamageEventsByPlayer(damageEvents, actorsById);

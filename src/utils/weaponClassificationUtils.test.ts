@@ -39,8 +39,6 @@ describe('weaponClassificationUtils', () => {
       expect(isOneHandedWeapon(WeaponType.LIGHTNING_STAFF)).toBe(false);
       expect(isOneHandedWeapon(WeaponType.RESO_STAFF)).toBe(false);
     });
-
-
   });
 
   describe('isTwoHandedWeapon', () => {
@@ -63,8 +61,6 @@ describe('weaponClassificationUtils', () => {
       expect(isTwoHandedWeapon(WeaponType.LIGHTNING_STAFF)).toBe(false);
       expect(isTwoHandedWeapon(WeaponType.RESO_STAFF)).toBe(false);
     });
-
-
   });
 
   describe('isStaff', () => {
@@ -87,8 +83,6 @@ describe('weaponClassificationUtils', () => {
       expect(isStaff(WeaponType.TWO_HANDED_AXE)).toBe(false);
       expect(isStaff(WeaponType.MAUL)).toBe(false);
     });
-
-
   });
 
   describe('isAnyTwoHandedWeapon', () => {
@@ -111,8 +105,6 @@ describe('weaponClassificationUtils', () => {
       expect(isAnyTwoHandedWeapon(WeaponType.DAGGER)).toBe(false);
       expect(isAnyTwoHandedWeapon(WeaponType.MACE)).toBe(false);
     });
-
-
   });
 
   describe('isDoubleSetWeapon', () => {
@@ -138,8 +130,6 @@ describe('weaponClassificationUtils', () => {
       expect(isDoubleSetWeapon(WeaponType.DAGGER)).toBe(false);
       expect(isDoubleSetWeapon(WeaponType.MACE)).toBe(false);
     });
-
-
   });
 
   describe('isMace', () => {
@@ -178,8 +168,6 @@ describe('weaponClassificationUtils', () => {
       expect(canDualWield(WeaponType.LIGHTNING_STAFF)).toBe(false);
       expect(canDualWield(WeaponType.RESO_STAFF)).toBe(false);
     });
-
-
   });
 
   describe('exported sets', () => {
@@ -231,10 +219,10 @@ describe('weaponClassificationUtils', () => {
           const isOneHanded = isOneHandedWeapon(weaponType);
           const isTwoHanded = isTwoHandedWeapon(weaponType);
           const isStaffType = isStaff(weaponType);
-          
+
           // A weapon can't be both one-handed and two-handed
           expect(isOneHanded && isTwoHanded).toBe(false);
-          
+
           // A weapon can't be both one-handed and a staff
           expect(isOneHanded && isStaffType).toBe(false);
         }
@@ -247,7 +235,7 @@ describe('weaponClassificationUtils', () => {
           const isTwoHanded = isTwoHandedWeapon(weaponType);
           const isStaffType = isStaff(weaponType);
           const isAnyTwoHanded = isAnyTwoHandedWeapon(weaponType);
-          
+
           if (isTwoHanded || isStaffType) {
             expect(isAnyTwoHanded).toBe(true);
           }

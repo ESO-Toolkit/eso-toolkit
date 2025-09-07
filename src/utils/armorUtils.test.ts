@@ -31,7 +31,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(3);
       expect(result.medium).toBe(0);
       expect(result.light).toBe(0);
@@ -46,7 +46,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(4);
       expect(result.light).toBe(0);
@@ -59,7 +59,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(0);
       expect(result.light).toBe(2);
@@ -79,7 +79,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(2);
       expect(result.medium).toBe(3);
       expect(result.light).toBe(4);
@@ -94,7 +94,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(1);
       expect(result.light).toBe(1);
@@ -109,7 +109,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(1);
       expect(result.light).toBe(1);
@@ -119,7 +119,7 @@ describe('armorUtils', () => {
       const gear: PlayerGear[] = [];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(0);
       expect(result.light).toBe(0);
@@ -135,7 +135,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result.heavy).toBe(1);
       expect(result.medium).toBe(1);
       expect(result.light).toBe(1);
@@ -154,7 +154,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(fiveOneOneSetup);
-      
+
       expect(result.heavy).toBe(1);
       expect(result.medium).toBe(1);
       expect(result.light).toBe(5);
@@ -173,7 +173,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(allHeavySetup);
-      
+
       expect(result.heavy).toBe(7);
       expect(result.medium).toBe(0);
       expect(result.light).toBe(0);
@@ -197,7 +197,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(fullGearSetup);
-      
+
       expect(result.heavy).toBe(1);
       expect(result.medium).toBe(1);
       expect(result.light).toBe(5);
@@ -214,7 +214,7 @@ describe('armorUtils', () => {
       ];
 
       const result = getArmorWeightCounts(weaponsAndJewelryOnly);
-      
+
       expect(result.heavy).toBe(0);
       expect(result.medium).toBe(0);
       expect(result.light).toBe(0);
@@ -223,12 +223,12 @@ describe('armorUtils', () => {
     it('should maintain correct structure of return object', () => {
       const gear: PlayerGear[] = [createMockGear(ArmorType.HEAVY, 1)];
       const result = getArmorWeightCounts(gear);
-      
+
       expect(result).toHaveProperty('heavy');
       expect(result).toHaveProperty('medium');
       expect(result).toHaveProperty('light');
       expect(Object.keys(result)).toHaveLength(3);
-      
+
       expect(typeof result.heavy).toBe('number');
       expect(typeof result.medium).toBe('number');
       expect(typeof result.light).toBe('number');

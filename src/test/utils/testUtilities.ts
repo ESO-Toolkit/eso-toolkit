@@ -1,6 +1,5 @@
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
 import { BuffInterval } from '../../utils/buffUptimeCalculator';
-
 import { TEST_CONSTANTS, TEST_ABILITY_IDS } from '../constants/testConstants';
 
 /**

@@ -96,10 +96,10 @@ describe('fightTimeUtils', () => {
     it('should be inverse of fightTimeToTimestamp', () => {
       const fight = createMockFight(1500000, 1800000);
       const originalFightTime = 120000;
-      
+
       const timestamp = fightTimeToTimestamp(originalFightTime, fight);
       const backToFightTime = timestampToFightTime(timestamp, fight);
-      
+
       expect(backToFightTime).toBe(originalFightTime);
     });
 
@@ -241,7 +241,7 @@ describe('fightTimeUtils', () => {
       // Convert to timestamp and back
       const timestamp = fightTimeToTimestamp(fightTime, fight);
       const backToFightTime = timestampToFightTime(timestamp, fight);
-      
+
       expect(backToFightTime).toBe(fightTime);
       expect(isTimestampInFight(timestamp, fight)).toBe(true);
       expect(clampFightTime(fightTime, fight)).toBe(fightTime);
@@ -249,17 +249,17 @@ describe('fightTimeUtils', () => {
 
     it('should handle boundary conditions correctly', () => {
       const fight = createMockFight(1000000, 1120000); // 2 minute fight
-      
+
       // Test start boundary
       expect(timestampToFightTime(1000000, fight)).toBe(0);
       expect(fightTimeToTimestamp(0, fight)).toBe(1000000);
       expect(isTimestampInFight(1000000, fight)).toBe(true);
-      
+
       // Test end boundary
       expect(timestampToFightTime(1120000, fight)).toBe(120000);
       expect(fightTimeToTimestamp(120000, fight)).toBe(1120000);
       expect(isTimestampInFight(1120000, fight)).toBe(true);
-      
+
       // Test clamping
       expect(clampFightTime(120000, fight)).toBe(120000);
       expect(clampFightTime(150000, fight)).toBe(120000);
@@ -273,7 +273,7 @@ describe('fightTimeUtils', () => {
 
       const midFightTime = 240000; // 4 minutes
       const timestamp = fightTimeToTimestamp(midFightTime, fight);
-      
+
       expect(timestamp).toBe(startTime + 240000);
       expect(timestampToFightTime(timestamp, fight)).toBe(midFightTime);
       expect(isTimestampInFight(timestamp, fight)).toBe(true);

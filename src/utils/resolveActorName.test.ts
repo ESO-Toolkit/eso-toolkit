@@ -8,8 +8,8 @@ import { ReportActor, ReportActorFragment } from '../graphql/generated';
 
 // Create mock actors for testing
 const createMockActor = (
-  displayName?: string, 
-  name?: string
+  displayName?: string,
+  name?: string,
 ): Partial<ReportActor | ReportActorFragment> => ({
   displayName,
   name,
