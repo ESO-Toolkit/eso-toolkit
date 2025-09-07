@@ -68,12 +68,16 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
       }
 
       // Find the best target for initial camera positioning
+      // Prioritize selected actor from URL, then boss, then any enemy, then first actor
+      const selectedActor = selectedActorId 
+        ? actors.find((actor) => actor.id === selectedActorId)
+        : null;
       const boss = actors.find((actor) => actor.type === 'boss');
       const firstEnemy = actors.find((actor) => actor.type === 'enemy');
       const firstActor = actors[0];
 
-      // Prioritize boss, then any enemy, then first actor, then center
-      const targetActor = boss || firstEnemy || firstActor;
+      // Prioritize selected actor, then boss, then any enemy, then first actor, then center
+      const targetActor = selectedActor || boss || firstEnemy || firstActor;
 
       if (targetActor) {
         const targetPosition = new Vector3(targetActor.position[0], 0, targetActor.position[2]);
@@ -84,7 +88,8 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
         if (window.location.search.includes('debug=camera')) {
           // eslint-disable-next-line no-console
           console.log('Camera initialized to:', {
-            actorType: targetActor.type,
+            selectedActorId,
+            targetActorType: selectedActor ? 'selected' : targetActor.type,
             actorName: targetActor.name,
             position: targetActor.position,
             targetPosition: targetPosition,
@@ -96,7 +101,7 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
         hasInitialized.current = true;
       }
     }
-  }, [actors]);
+  }, [actors, selectedActorId]);
 
   // Update camera target to follow locked actor
   useEffect(() => {

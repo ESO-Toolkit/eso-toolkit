@@ -482,8 +482,8 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const handleShareUrl = useCallback(async () => {
     if (!activeFight || !params.reportId || !params.fightId) return;
 
-    // Build the shareable URL using React Router params
-    const baseUrl = `${window.location.origin}/report/${params.reportId}/fight/${params.fightId}`;
+    // Build the shareable URL using React Router params with hash routing and /replay slug
+    const baseUrl = `${window.location.origin}/#/report/${params.reportId}/fight/${params.fightId}/replay`;
     const searchParams = new URLSearchParams(location.search);
 
     // Add/update the time and actor parameters using absolute timestamps
