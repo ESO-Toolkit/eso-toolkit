@@ -112,7 +112,15 @@ jobs:
 
       - name: Get Playwright version
         id: playwright-version
-        run: echo "PLAYWRIGHT_VERSION=$(npm ls @playwright/test --depth=0 | grep @playwright | sed 's/.*@//')" >> $GITHUB_OUTPUT
+        run: |
+          # Get Playwright version from package-lock.json for more accuracy
+          if [ -f package-lock.json ]; then
+            PLAYWRIGHT_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          else
+            PLAYWRIGHT_VERSION=$(node -p "require('./package.json').devDependencies['@playwright/test']" | tr -d '^~')
+          fi
+          echo "PLAYWRIGHT_VERSION=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Playwright version: ${PLAYWRIGHT_VERSION}"
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4
@@ -120,18 +128,51 @@ jobs:
         with:
           path: |
             ~/.cache/ms-playwright
-            /home/runner/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
           restore-keys: |
-            ${{ runner.os }}-playwright-
+            playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            playwright-${{ runner.os }}-
+
+      - name: Cache status and verification
+        run: |
+          echo "Cache hit: ${{ steps.playwright-cache.outputs.cache-hit }}"
+          echo "Cache key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}"
+
+          # Check if cache directory exists and show contents
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Playwright cache directory exists"
+            echo "Cache contents:"
+            find ~/.cache/ms-playwright -maxdepth 2 -type d 2>/dev/null || echo "No browser directories found"
+          else
+            echo "❌ Playwright cache directory does not exist"
+          fi
 
       - name: Install Playwright Browsers
         if: steps.playwright-cache.outputs.cache-hit != 'true'
-        run: npx playwright install --with-deps
+        run: |
+          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
+          npx playwright install --with-deps
 
-      - name: Install Playwright Browser Dependencies (if cached)
+      - name: Install Playwright Dependencies Only
         if: steps.playwright-cache.outputs.cache-hit == 'true'
-        run: npx playwright install-deps
+        run: |
+          echo "⚡ Cache hit - installing only system dependencies..."
+          npx playwright install-deps
+
+      - name: Verify Playwright Installation
+        run: |
+          echo "🔍 Verifying Playwright installation..."
+          npx playwright --version
+
+          # Verify browsers are available
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Browser cache directory exists"
+            echo "Installed browsers:"
+            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
+          else
+            echo "❌ No browser cache found"
+            exit 1
+          fi
       - name: Block external network access
         run: |
           # Block access to known external services during testing
@@ -145,8 +186,17 @@ jobs:
           echo "Blocked external services in /etc/hosts:"
           cat /etc/hosts | grep "127.0.0.1"
       - name: Run Playwright tests
-        run: npm run test:e2e
+        run: |
+          echo "Running Playwright tests with optimizations..."
+          echo "Node memory: $NODE_OPTIONS"
+          echo "Playwright config: CI mode with single worker"
+          npm run test:e2e
         env:
+          # Node.js memory optimization - increased heap size
+          NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
+          # CI environment flags
+          CI: 'true'
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
           # Prevent external network requests during testing
           NO_PROXY: '*'
           HTTP_PROXY: 'http://127.0.0.1:9999'
@@ -156,6 +206,8 @@ jobs:
           # Override external service URLs to localhost (will fail if not mocked)
           ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
           SENTRY_DSN: ''
+          # Playwright memory optimization
+          PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4
         if: always()
