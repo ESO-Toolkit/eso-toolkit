@@ -1,15 +1,11 @@
 import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { GearSlot, GearTrait, PlayerGear, WeaponType } from '../types/playerDetails';
 
-const DOUBLE_SET_TYPES = Object.freeze(
-  new Set([
-    WeaponType.FROST_STAFF,
-    WeaponType.INFERNO_STAFF,
-    WeaponType.LIGHTNING_STAFF,
-    WeaponType.RESO_STAFF,
-    WeaponType.TWO_HANDED_SWORD,
-  ]),
-);
+import {
+  isOneHandedWeapon,
+  isTwoHandedWeapon,
+  DOUBLE_SET_TYPES,
+} from './weaponClassificationUtils';
 
 export enum ItemQuality {
   LEGENDARY = 5,
@@ -220,46 +216,6 @@ export const MONSTER_ONE_PIECE_HINTS = Object.freeze(
     ].map((n) => normalizeGearName(n)),
   ),
 );
-
-// ========================================
-// WEAPON TYPE CLASSIFICATION UTILITIES
-// ========================================
-
-/**
- * Helper function to determine if a weapon type is 1-handed
- */
-export function isOneHandedWeapon(weaponType: WeaponType): boolean {
-  const oneHandedTypes = [WeaponType.AXE, WeaponType.SWORD, WeaponType.DAGGER, WeaponType.MACE];
-  return oneHandedTypes.includes(weaponType);
-}
-
-/**
- * Helper function to determine if a weapon type is 2-handed (excluding staves)
- */
-export function isTwoHandedWeapon(weaponType: WeaponType): boolean {
-  const twoHandedTypes = [WeaponType.TWO_HANDED_SWORD, WeaponType.TWO_HANDED_AXE, WeaponType.MAUL];
-  return twoHandedTypes.includes(weaponType);
-}
-
-/**
- * Helper function to determine if a weapon type is a staff (2-handed magical weapon)
- */
-export function isStaff(weaponType: WeaponType): boolean {
-  const staffTypes = [
-    WeaponType.INFERNO_STAFF,
-    WeaponType.FROST_STAFF,
-    WeaponType.LIGHTNING_STAFF,
-    WeaponType.RESO_STAFF,
-  ];
-  return staffTypes.includes(weaponType);
-}
-
-/**
- * Helper function to determine if a weapon type is any 2-handed weapon (including staves)
- */
-export function isAnyTwoHandedWeapon(weaponType: WeaponType): boolean {
-  return isTwoHandedWeapon(weaponType) || isStaff(weaponType);
-}
 
 // ========================================
 // GEAR ANALYSIS UTILITIES
