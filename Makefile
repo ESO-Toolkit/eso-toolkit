@@ -1,7 +1,7 @@
 # ESO Log Aggregator Makefile
 # This Makefile provides convenient commands for common development tasks
 
-.PHONY: help install build test lint lint-fix format clean dev codegen fetch-abilities all
+.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all
 
 # Default target
 help:
@@ -14,6 +14,7 @@ help:
 	@echo "  lint          - Run ESLint to check code quality"
 	@echo "  lint-fix      - Run ESLint and automatically fix issues"
 	@echo "  format        - Format code with Prettier"
+	@echo "  fmt           - Alias for format"
 	@echo "  dev           - Start development server"
 	@echo "  clean         - Clean build artifacts"
 	@echo "  codegen       - Generate GraphQL types"
@@ -55,6 +56,9 @@ lint-fix:
 format:
 	@echo "Formatting code with Prettier..."
 	npm run format
+
+# Alias for format
+fmt: format
 
 # Start development server
 dev:
