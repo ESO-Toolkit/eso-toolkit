@@ -1,6 +1,13 @@
 import { FightFragment, ReportActorFragment } from '../../graphql/generated';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { DamageEvent, Resources } from '../../types/combatlogEvents';
+import {
+  createEnhancedMockFight,
+  createEnhancedMockResources,
+  createMockPositionalDamageEvent,
+  createMockPlayersById,
+  createMockActorsById,
+} from '../../test/utils/enhancedMockFactories';
 
 import {
   calculateActorPositions,
@@ -9,120 +16,12 @@ import {
 } from './CalculateActorPositions';
 
 describe('calculateActorPositions', () => {
-  // Mock fight data
-  const createMockFight = (overrides: Partial<FightFragment> = {}): FightFragment =>
-    ({
-      id: 1,
-      startTime: 1000,
-      endTime: 5000,
-      fightPercentage: 100,
-      kill: null,
-      friendlyPlayers: [101, 102],
-      enemyNPCs: [
-        { id: 201, gameID: 1 }, // Boss
-        { id: 202, gameID: 0 }, // Regular enemy
-      ],
-      friendlyNPCs: [{ id: 301 }],
-      ...overrides,
-    }) as FightFragment;
-
-  // Helper to create resources
-  const createResources = (x: number, y: number, facing: number): Resources => ({
-    hitPoints: 100,
-    maxHitPoints: 100,
-    magicka: 100,
-    maxMagicka: 100,
-    stamina: 100,
-    maxStamina: 100,
-    ultimate: 100,
-    maxUltimate: 100,
-    werewolf: 0,
-    maxWerewolf: 0,
-    absorb: 0,
-    championPoints: 810,
-    x,
-    y,
-    facing,
-  });
-
-  // Mock events
-  const createDamageEvent = (
-    timestamp: number,
-    sourceID: number,
-    targetID: number,
-    sourceResources?: Resources,
-    targetResources?: Resources,
-  ): DamageEvent => ({
-    timestamp,
-    type: 'damage',
-    sourceID,
-    sourceIsFriendly: true,
-    targetID,
-    targetIsFriendly: false,
-    abilityGameID: 12345,
-    amount: 1000,
-    hitType: 1,
-    castTrackID: 1,
-    sourceResources: sourceResources || createResources(5235, 5410, 100),
-    targetResources: targetResources || createResources(5240, 5415, 200),
-    fight: 1,
-  });
-
+  // Mock events helper
   const createMockEvents = (): FightEvents => ({
     damage: [],
     heal: [],
     death: [],
     resource: [],
-  });
-
-  const createMockPlayersById = (): Record<number, PlayerDetailsWithRole> => ({
-    101: {
-      id: 101,
-      name: 'Player1',
-      guid: 123456,
-      type: 'Tank',
-      role: 'tank',
-      server: 'TestServer',
-      displayName: 'Player1Display',
-      anonymous: false,
-      icon: 'icon1.png',
-      specs: [],
-      potionUse: 0,
-      healthstoneUse: 0,
-      combatantInfo: {
-        stats: [],
-        talents: [],
-        gear: [],
-      },
-    },
-    102: {
-      id: 102,
-      name: 'Player2',
-      guid: 123457,
-      type: 'DPS',
-      role: 'dps',
-      server: 'TestServer',
-      displayName: 'Player2Display',
-      anonymous: false,
-      icon: 'icon2.png',
-      specs: [],
-      potionUse: 0,
-      healthstoneUse: 0,
-      combatantInfo: {
-        stats: [],
-        talents: [],
-        gear: [],
-      },
-    },
-  });
-
-  const createMockActorsById = (): Record<number, ReportActorFragment> => ({
-    101: { id: 101, name: 'Player1', type: 'Player' },
-    102: { id: 102, name: 'Player2', type: 'Player' },
-    201: { id: 201, name: 'Boss Enemy', type: 'NPC', subType: 'Boss' },
-    202: { id: 202, name: 'Regular Enemy', type: 'NPC', subType: 'NPC' },
-    301: { id: 301, name: 'Friendly NPC', type: 'NPC', subType: 'NPC' },
-    401: { id: 401, name: 'Player Pet', type: 'Pet', subType: 'Pet' },
   });
 
   describe('basic functionality', () => {
@@ -142,7 +41,7 @@ describe('calculateActorPositions', () => {
 
     it('should return empty timeline when no events are provided', () => {
       const task: ActorPositionsCalculationTask = {
-        fight: createMockFight(),
+        fight: createEnhancedMockFight(),
         events: null as any,
       };
 
@@ -155,7 +54,7 @@ describe('calculateActorPositions', () => {
     });
 
     it('should calculate correct fight duration and start time', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 5000 });
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 5000 });
       const task: ActorPositionsCalculationTask = {
         fight,
         events: createMockEvents(),
@@ -170,12 +69,18 @@ describe('calculateActorPositions', () => {
 
   describe('NPC first event filtering', () => {
     it('should include positions for NPCs only after their first event', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 2000 });
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 2000 });
       const events = createMockEvents();
 
       // NPC first appears at timestamp 1500
       events.damage = [
-        createDamageEvent(1500, 101, 202, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          202,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -198,11 +103,18 @@ describe('calculateActorPositions', () => {
     });
 
     it('should include all positions for players regardless of first event time', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 2000 });
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 2000 });
       const events = createMockEvents();
 
       // Player first appears at timestamp 1500
-      events.damage = [createDamageEvent(1500, 101, 202, createResources(5235, 5410, 100))];
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
 
       const task: ActorPositionsCalculationTask = {
         fight,
@@ -222,12 +134,18 @@ describe('calculateActorPositions', () => {
     });
 
     it('should include all positions for bosses regardless of first event time', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 2000 });
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 2000 });
       const events = createMockEvents();
 
       // Boss first appears at timestamp 1500
       events.damage = [
-        createDamageEvent(1500, 101, 201, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          201,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -250,9 +168,16 @@ describe('calculateActorPositions', () => {
 
   describe('actor type classification', () => {
     it('should correctly classify players', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
-      events.damage = [createDamageEvent(1500, 101, 201, createResources(5235, 5410, 100))];
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          201,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
 
       const task: ActorPositionsCalculationTask = {
         fight,
@@ -269,10 +194,16 @@ describe('calculateActorPositions', () => {
     });
 
     it('should correctly classify bosses', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 101, 201, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          201,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -290,10 +221,16 @@ describe('calculateActorPositions', () => {
     });
 
     it('should mark actors as bosses when they have subType "Boss" and type "NPC"', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 101, 201, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          201,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       // Create custom actors data with explicit boss formatting
@@ -319,14 +256,20 @@ describe('calculateActorPositions', () => {
     });
 
     it('should not mark actors as bosses when they have subType "Boss" but type is not "NPC"', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 101, 203, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          203,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       // Create custom fight and actors data with incorrect boss formatting
-      const customFight = createMockFight({
+      const customFight = createEnhancedMockFight({
         enemyNPCs: [{ id: 203, gameID: 0 }], // Add actor 203 as enemy
       });
 
@@ -350,10 +293,16 @@ describe('calculateActorPositions', () => {
     });
 
     it('should correctly classify enemy NPCs', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 101, 202, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          202,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -370,10 +319,16 @@ describe('calculateActorPositions', () => {
     });
 
     it('should correctly classify pets', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 401, 202, createResources(5235, 5410, 100), undefined),
+        createMockPositionalDamageEvent(
+          1500,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -393,10 +348,16 @@ describe('calculateActorPositions', () => {
     });
 
     it('should mark actors as pets when they have subType "Pet" and type "Pet"', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 401, 202, createResources(5235, 5410, 100), undefined),
+        createMockPositionalDamageEvent(
+          1500,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ),
       ];
 
       // Create custom actors data with explicit pet formatting
@@ -422,14 +383,20 @@ describe('calculateActorPositions', () => {
     });
 
     it('should not mark actors as pets when they have subType "Pet" but type is not "Pet"', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents();
       events.damage = [
-        createDamageEvent(1500, 101, 403, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          403,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       // Create custom fight and actors data with incorrect pet formatting
-      const customFight = createMockFight({
+      const customFight = createEnhancedMockFight({
         enemyNPCs: [{ id: 403, gameID: 0 }], // Add actor 403 as enemy
       });
 
@@ -456,7 +423,7 @@ describe('calculateActorPositions', () => {
 
   describe('actor positioning requirements', () => {
     it('should register no positions for non-player actor with no events', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents(); // Empty events
 
       const task: ActorPositionsCalculationTask = {
@@ -475,7 +442,7 @@ describe('calculateActorPositions', () => {
     });
 
     it('should always have positions for player actor regardless of events', () => {
-      const fight = createMockFight();
+      const fight = createEnhancedMockFight();
       const events = createMockEvents(); // Empty events - no position data for anyone
 
       const task: ActorPositionsCalculationTask = {
@@ -493,7 +460,14 @@ describe('calculateActorPositions', () => {
       expect(result.timeline.actorTimelines[102]).toBeUndefined();
 
       // But if we add an event with position data for a player, they should get positions
-      events.damage = [createDamageEvent(1500, 101, 202, createResources(5235, 5410, 100))];
+      events.damage = [
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
 
       const resultWithEvent = calculateActorPositions(task);
 
@@ -509,12 +483,18 @@ describe('calculateActorPositions', () => {
     });
 
     it('should have no positions for non-player actor with no events in the next 5 seconds', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 6000 }); // 5 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 6000 }); // 5 second fight
       const events = createMockEvents();
 
       // Add an event for the NPC at the very end (5.5 seconds after fight start)
       events.damage = [
-        createDamageEvent(6500, 101, 202, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          6500,
+          101,
+          202,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -534,12 +514,18 @@ describe('calculateActorPositions', () => {
     });
 
     it('should have no positions prior to first event for non-player actor', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 3000 }); // 2 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 3000 }); // 2 second fight
       const events = createMockEvents();
 
       // NPC first appears at 1500ms (500ms into the fight)
       events.damage = [
-        createDamageEvent(1500, 101, 202, undefined, createResources(5235, 5410, 100)),
+        createMockPositionalDamageEvent(
+          1500,
+          101,
+          202,
+          undefined,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -566,12 +552,19 @@ describe('calculateActorPositions', () => {
     });
 
     it('should start position breakdown at fight beginning for player actors, not at first event', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 3000 }); // 2 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 3000 }); // 2 second fight
       const events = createMockEvents();
 
       // Player first appears in an event at 2000ms (1 second into the fight)
       // But their position timeline should start from fight beginning (1000ms)
-      events.damage = [createDamageEvent(2000, 101, 202, createResources(5235, 5410, 100))];
+      events.damage = [
+        createMockPositionalDamageEvent(
+          2000,
+          101,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+        ),
+      ];
 
       const task: ActorPositionsCalculationTask = {
         fight,
@@ -612,14 +605,26 @@ describe('calculateActorPositions', () => {
     });
 
     it('should have no positions for pet actor with no events in the next 5 seconds', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
       const events = createMockEvents();
 
       // Add pet events at 3 seconds (4000ms absolute) and 17 seconds (18000ms absolute)
       // This creates a 14-second gap between events (3s to 17s = 14s gap, which is > 5s)
       events.damage = [
-        createDamageEvent(4000, 401, 202, createResources(5235, 5410, 100), undefined), // Pet event at 3 seconds
-        createDamageEvent(18000, 401, 202, createResources(5240, 5415, 200), undefined), // Pet event at 17 seconds
+        createMockPositionalDamageEvent(
+          4000,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ), // Pet event at 3 seconds
+        createMockPositionalDamageEvent(
+          18000,
+          401,
+          202,
+          createEnhancedMockResources(5240, 5415, 200),
+          undefined,
+        ), // Pet event at 17 seconds
       ];
 
       const task: ActorPositionsCalculationTask = {
@@ -679,21 +684,39 @@ describe('calculateActorPositions', () => {
     });
 
     it('should have continuous positions for pet actor with frequent events after initial gap', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
       const events = createMockEvents();
 
       // Pet has events at 4s, 8s, then every second from 9s to 20s
       // Gap between 4s and 8s is 4 seconds (< 5 seconds), so should have continuous positions
       // From 8s onwards, frequent events should maintain continuous positions
       const petEvents = [
-        createDamageEvent(5000, 401, 202, createResources(5235, 5410, 100), undefined), // 4 seconds relative
-        createDamageEvent(9000, 401, 202, createResources(5240, 5415, 200), undefined), // 8 seconds relative
+        createMockPositionalDamageEvent(
+          5000,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ), // 4 seconds relative
+        createMockPositionalDamageEvent(
+          9000,
+          401,
+          202,
+          createEnhancedMockResources(5240, 5415, 200),
+          undefined,
+        ), // 8 seconds relative
       ];
 
       // Add events every second from 9s to 20s
       for (let i = 9; i <= 20; i++) {
         petEvents.push(
-          createDamageEvent(1000 + i * 1000, 401, 202, createResources(5240, 5415, 200), undefined),
+          createMockPositionalDamageEvent(
+            1000 + i * 1000,
+            401,
+            202,
+            createEnhancedMockResources(5240, 5415, 200),
+            undefined,
+          ),
         );
       }
 
@@ -738,12 +761,18 @@ describe('calculateActorPositions', () => {
     });
 
     it('should ensure actors remain visible for at least 1 second after an event', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 11000 }); // 10 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 11000 }); // 10 second fight
       const events = createMockEvents();
 
       // Pet has a single event at 5 seconds, should remain visible until at least 6 seconds
       const petEvents = [
-        createDamageEvent(6000, 401, 202, createResources(5235, 5410, 100), undefined), // 5 seconds relative
+        createMockPositionalDamageEvent(
+          6000,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ), // 5 seconds relative
       ];
 
       events.damage = petEvents;
@@ -790,15 +819,27 @@ describe('calculateActorPositions', () => {
     });
 
     it('should not interpolate positions during minimum visibility window when next event is in a large gap', () => {
-      const fight = createMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
+      const fight = createEnhancedMockFight({ startTime: 1000, endTime: 21000 }); // 20 second fight
       const events = createMockEvents();
 
       // Pet has events at 5s and 15s (10-second gap > 5 seconds)
       // During the 1-second visibility window after the first event (5s to 6s),
       // positions should NOT interpolate toward the distant event at 15s
       const petEvents = [
-        createDamageEvent(6000, 401, 202, createResources(5235, 5410, 100), undefined), // 5 seconds relative, position (0, 0, 0)
-        createDamageEvent(16000, 401, 202, createResources(5335, 5510, 200), undefined), // 15 seconds relative, position (0.1, 0, 0.1)
+        createMockPositionalDamageEvent(
+          6000,
+          401,
+          202,
+          createEnhancedMockResources(5235, 5410, 100),
+          undefined,
+        ), // 5 seconds relative, position (0, 0, 0)
+        createMockPositionalDamageEvent(
+          16000,
+          401,
+          202,
+          createEnhancedMockResources(5335, 5510, 200),
+          undefined,
+        ), // 15 seconds relative, position (0.1, 0, 0.1)
       ];
 
       events.damage = petEvents;

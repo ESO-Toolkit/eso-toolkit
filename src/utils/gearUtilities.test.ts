@@ -2,10 +2,6 @@ import { CombatantInfoEvent } from '../types/combatlogEvents';
 import { WeaponType, GearSlot, GearTrait, PlayerGear } from '../types/playerDetails';
 
 import {
-  isOneHandedWeapon,
-  isTwoHandedWeapon,
-  isStaff,
-  isAnyTwoHandedWeapon,
   countOneHandedSharpenedWeapons,
   hasTwoHandedSharpenedWeapon,
   countAxesInWeaponSlots,
@@ -14,6 +10,12 @@ import {
   countDualWieldWeapons,
   countMacesInWeaponSlots,
 } from './gearUtilities';
+import {
+  isOneHandedWeapon,
+  isTwoHandedWeapon,
+  isStaff,
+  isAnyTwoHandedWeapon,
+} from './weaponClassificationUtils';
 
 describe('gearUtilities', () => {
   // Helper function to create a basic CombatantInfoEvent for testing

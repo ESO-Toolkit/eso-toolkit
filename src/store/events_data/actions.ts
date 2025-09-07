@@ -1,16 +1,7 @@
-import { PlayerGear, PlayerTalent } from '../../types/playerDetails';
+import { ExtendedPlayerInfo } from '../../types/playerTypes';
 
-// Shared types from the old events slice
-export interface PlayerInfo {
-  id: string | number;
-  name: string;
-  combatantInfo: {
-    talents?: PlayerTalent[];
-    gear?: PlayerGear[];
-  };
-  displayName: string;
-  [key: string]: string | number | boolean | null | undefined | object;
-}
+// Re-export the consolidated type for backward compatibility
+export type PlayerInfo = ExtendedPlayerInfo;
 
 // Re-export all actions and types from individual event slices
 export { fetchDamageEvents, clearDamageEvents, type DamageEventsState } from './damageEventsSlice';

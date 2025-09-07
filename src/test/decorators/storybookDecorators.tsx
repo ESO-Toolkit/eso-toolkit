@@ -9,7 +9,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { EsoLogsClient } from '../../esologsClient';
 import { EsoLogsClientContext } from '../../EsoLogsClientContext';
 import { ReportFightContext } from '../../ReportFightContext';
-import { MockData } from '../mocks/combatLogMocks';
+import { MockData } from '../utils/mockDataSets';
 import { storybookDarkTheme } from '../themes/storybookThemes';
 import { createMockStore } from '../utils/createMockStore';
 
