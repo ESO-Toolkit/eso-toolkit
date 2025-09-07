@@ -6,7 +6,7 @@ export const getRedirectUri = (): string => {
 
   // Remove trailing slash if it exists, then add our hash route
   const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  return `${window.location.origin}${cleanBaseUrl}/#/oauth-redirect`;
+  return `${cleanBaseUrl}/#/oauth-redirect`;
 };
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
