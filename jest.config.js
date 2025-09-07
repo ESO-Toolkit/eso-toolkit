@@ -71,9 +71,9 @@ module.exports = {
 
   coverageThreshold: {
     global: {
-      branches: 2,   // Current actual: 2.38%, set to 2% for buffer
-      functions: 5,  // Current actual: 5.47%, set to 5% for buffer  
-      lines: 13,     // Current actual: 13.75%, set to 13% for buffer
+      branches: 2, // Current actual: 2.38%, set to 2% for buffer
+      functions: 5, // Current actual: 5.47%, set to 5% for buffer
+      lines: 13, // Current actual: 13.75%, set to 13% for buffer
       statements: 13, // Current actual: 13.49%, set to 13% for buffer
     },
     './src/utils/**/*.{ts,tsx}': {

@@ -9,7 +9,7 @@ import { push } from 'redux-first-history';
 import {
   getPkceCodeVerifier,
   CLIENT_ID,
-  REDIRECT_URI,
+  getRedirectUri,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
   startPKCEAuth,
 } from './features/auth/auth';
@@ -47,12 +47,13 @@ export const OAuthRedirect: React.FC = () => {
 
     const fetchToken = async (): Promise<void> => {
       try {
+        const redirectUri = getRedirectUri();
         const body = new URLSearchParams({
           grant_type: 'authorization_code',
           code,
           client_id: CLIENT_ID,
           code_verifier: verifier,
-          redirect_uri: REDIRECT_URI,
+          redirect_uri: redirectUri,
         });
         const response = await fetch(OAUTH_TOKEN_URL, {
           method: 'POST',

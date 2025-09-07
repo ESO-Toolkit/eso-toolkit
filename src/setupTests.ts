@@ -6,6 +6,9 @@ import { TextEncoder, TextDecoder } from 'util';
 
 import '@testing-library/jest-dom';
 
+// Mock environment utilities to avoid import.meta issues in Jest
+jest.mock('./utils/envUtils');
+
 // Polyfill for TextEncoder and TextDecoder (required for MUI X DataGrid and other components)
 
 if (typeof global.TextEncoder === 'undefined') {

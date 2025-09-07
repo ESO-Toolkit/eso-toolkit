@@ -1,5 +1,13 @@
-// Compose redirect URI using PUBLIC_URL at build time
-export const REDIRECT_URI = `${window.location.origin}${process.env.PUBLIC_URL || ''}/#/oauth-redirect`;
+import { getBaseUrl } from '../../utils/envUtils';
+
+// Compose redirect URI using Vite's BASE_URL
+export const getRedirectUri = (): string => {
+  const baseUrl = getBaseUrl();
+
+  // Remove trailing slash if it exists, then add our hash route
+  const cleanBaseUrl = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  return `${window.location.origin}${cleanBaseUrl}/#/oauth-redirect`;
+};
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
@@ -42,6 +50,7 @@ export async function startPKCEAuth(): Promise<void> {
   const verifier = generateCodeVerifier();
   setPkceCodeVerifier(verifier);
   const challenge = await generateCodeChallenge(verifier);
-  const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(REDIRECT_URI)}`;
+  const redirectUri = getRedirectUri();
+  const authUrl = `https://www.esologs.com/oauth/authorize?response_type=code&client_id=${CLIENT_ID}&code_challenge=${challenge}&code_challenge_method=S256&redirect_uri=${encodeURIComponent(redirectUri)}`;
   window.location.href = authUrl;
 }

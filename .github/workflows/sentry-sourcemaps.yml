@@ -36,7 +36,7 @@ jobs:
           # Build the project
           if [ "${{ github.ref }}" = "refs/heads/master" ] || [ "${{ github.ref }}" = "refs/heads/main" ]; then
             REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
-            PUBLIC_URL="/$REPO_NAME/" npm run build
+            VITE_BASE_URL="/$REPO_NAME/" npm run build
           else
             npm run build
           fi
