@@ -176,7 +176,7 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
 
     // Only update camera position when user is actively interacting
     const isUserInteracting = state.current.isRotating || state.current.isPanning;
-    
+
     if (!isUserInteracting) return;
 
     // Apply spherical changes directly (no damping)

@@ -1,7 +1,7 @@
-import { ReportActor } from '../graphql/generated';
+import { ReportActor, ReportActorFragment } from '../graphql/generated';
 
 export function resolveActorName(
-  actor: ReportActor | undefined,
+  actor: ReportActor | ReportActorFragment | undefined,
   fallbackId?: string | number | null,
   fallbackName?: string | null,
 ): string {

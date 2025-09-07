@@ -9,7 +9,7 @@ interface ActorMarkerProps {
   position: [number, number, number];
   rotation: number; // Direction in radians
   name: string;
-  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet';
   role?: 'dps' | 'tank' | 'healer'; // Optional role for players
   isSelected?: boolean;
   isAlive: boolean;
@@ -104,6 +104,8 @@ export const ActorMarker: React.FC<ActorMarkerProps> = ({
         return '#9c27b0'; // Purple for bosses
       case 'friendly_npc':
         return '#2196f3'; // Blue for friendly NPCs
+      case 'pet':
+        return '#ff9800'; // Orange for pets
       default:
         return '#9e9e9e';
     }

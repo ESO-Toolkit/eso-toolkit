@@ -11,7 +11,7 @@ import { MapTexture } from './MapTexture';
 interface Actor {
   id: number;
   name: string;
-  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet';
   role?: 'dps' | 'tank' | 'healer'; // Optional role for players
   position: [number, number, number];
   rotation: number;

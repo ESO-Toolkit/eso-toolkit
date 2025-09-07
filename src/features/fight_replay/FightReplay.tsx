@@ -6,6 +6,7 @@ import { useDamageEvents } from '../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../hooks/events/useDeathEvents';
 import { useHealingEvents } from '../../hooks/events/useHealingEvents';
 import { useResourceEvents } from '../../hooks/events/useResourceEvents';
+import { useReportMasterData } from '../../hooks/useReportMasterData';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightReplayView } from './FightReplayView';
@@ -18,6 +19,7 @@ export const FightReplay: React.FC = () => {
 
   // Get report data
   const { reportData, isReportLoading } = useReportData();
+  const { reportMasterData } = useReportMasterData();
 
   // Load event data to check loading states
   const { isDamageEventsLoading } = useDamageEvents();
@@ -78,6 +80,7 @@ export const FightReplay: React.FC = () => {
         fight={fight || undefined}
         fightsLoading={overallLoading}
         eventsLoading={eventsLoading}
+        reportMasterData={reportMasterData}
       />
     </>
   );

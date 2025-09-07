@@ -14,7 +14,7 @@ import { resolveActorName } from '../../utils/resolveActorName';
 export interface ActorPosition {
   id: number;
   name: string;
-  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet';
   role?: 'dps' | 'tank' | 'healer';
   position: [number, number, number];
   rotation: number;
@@ -25,7 +25,7 @@ export interface ActorPosition {
 export interface ActorTimeline {
   id: number;
   name: string;
-  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet';
   role?: 'dps' | 'tank' | 'healer';
   positions: Array<{
     timestamp: number;
@@ -69,6 +69,74 @@ export interface ActorPositionsCalculationResult {
 type OnProgressCallback = (progress: number) => void;
 
 /**
+ * Check if an actor should be visible at the current timestamp.
+ * Actors are visible at exact event times, remain visible for at least 1 second after their last event,
+ * and show continuous positions during gaps shorter than 5 seconds.
+ */
+function hasRecentEvent(
+  actorId: number,
+  currentTimestamp: number,
+  eventTimes: number[],
+  windowMs = 5000,
+): boolean {
+  if (!eventTimes || eventTimes.length === 0) {
+    return false;
+  }
+
+  const tolerance = 1; // 1ms tolerance for exact event matching
+  const minVisibilityMs = 1000; // Minimum 1 second visibility after an event
+
+  // Check if there's an event exactly at this timestamp (within tolerance)
+  for (const eventTime of eventTimes) {
+    if (Math.abs(eventTime - currentTimestamp) <= tolerance) {
+      return true;
+    }
+  }
+
+  // Sort event times for gap analysis
+  const sortedEventTimes = [...eventTimes].sort((a, b) => a - b);
+
+  // Find the most recent event before the current timestamp
+  let mostRecentEvent: number | null = null;
+  let nextEvent: number | null = null;
+
+  for (let i = 0; i < sortedEventTimes.length; i++) {
+    const eventTime = sortedEventTimes[i];
+    if (eventTime <= currentTimestamp) {
+      mostRecentEvent = eventTime;
+      if (i + 1 < sortedEventTimes.length) {
+        nextEvent = sortedEventTimes[i + 1];
+      }
+    } else {
+      if (mostRecentEvent === null) {
+        nextEvent = eventTime;
+      }
+      break;
+    }
+  }
+
+  // If we have a recent event, check minimum visibility and gap behavior
+  if (mostRecentEvent !== null) {
+    const timeSinceEvent = currentTimestamp - mostRecentEvent;
+    
+    // Always show for minimum visibility period (1 second)
+    if (timeSinceEvent <= minVisibilityMs) {
+      return true;
+    }
+    
+    // If there's a next event and the gap is less than 5 seconds, show positions throughout
+    if (nextEvent !== null) {
+      const gap = nextEvent - mostRecentEvent;
+      if (gap < windowMs && currentTimestamp <= nextEvent) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
+/**
  * Calculate actor positions timeline for efficient lookup at any timestamp
  */
 export function calculateActorPositions(
@@ -105,10 +173,10 @@ export function calculateActorPositions(
     }>
   >();
 
-  // Store death events and all actor events (for resurrection detection)
-  const actorDeathEvents = new Map<number, number[]>();
-  const actorAllEvents = new Map<number, number[]>();
-  const actorFirstAppearance = new Map<number, number>();
+  // Track first event timestamp for each actor
+  const actorFirstEventTime = new Map<number, number>();
+  // Track all event timestamps for each actor (for 5-second recent event check)
+  const actorEventTimes = new Map<number, number[]>();
 
   // Combine all events and sort by timestamp
   const allEvents = [...events.damage, ...events.heal, ...events.death, ...events.resource].sort(
@@ -117,104 +185,81 @@ export function calculateActorPositions(
 
   onProgress?.(0.1);
 
-  // First pass: collect death events and track all events for each actor
-  for (let i = 0; i < allEvents.length; i++) {
-    const event = allEvents[i];
-
-    // Track death events
-    if (event.type === 'death' && 'targetID' in event) {
-      if (!actorDeathEvents.has(event.targetID)) {
-        actorDeathEvents.set(event.targetID, []);
+  // Collect position data from events
+  for (const event of allEvents) {
+    // Track first event time for actors
+    if ('sourceID' in event) {
+      if (!actorFirstEventTime.has(event.sourceID)) {
+        actorFirstEventTime.set(event.sourceID, event.timestamp);
       }
-      const deaths = actorDeathEvents.get(event.targetID);
-      if (deaths) {
-        deaths.push(event.timestamp);
+      // Track all event times for recent event checking
+      if (!actorEventTimes.has(event.sourceID)) {
+        actorEventTimes.set(event.sourceID, []);
       }
-
-      if (!actorFirstAppearance.has(event.targetID)) {
-        actorFirstAppearance.set(event.targetID, event.timestamp);
+      const sourceEvents = actorEventTimes.get(event.sourceID);
+      if (sourceEvents) {
+        sourceEvents.push(event.timestamp);
+      }
+    }
+    if ('targetID' in event) {
+      if (!actorFirstEventTime.has(event.targetID)) {
+        actorFirstEventTime.set(event.targetID, event.timestamp);
+      }
+      // Track all event times for recent event checking
+      if (!actorEventTimes.has(event.targetID)) {
+        actorEventTimes.set(event.targetID, []);
+      }
+      const targetEvents = actorEventTimes.get(event.targetID);
+      if (targetEvents) {
+        targetEvents.push(event.timestamp);
       }
     }
 
-    // Track all events for each actor (for resurrection detection)
-    const actorIds = [];
-    if ('sourceID' in event) actorIds.push(event.sourceID);
-    if ('targetID' in event) actorIds.push(event.targetID);
-
-    for (const actorId of actorIds) {
-      if (!actorAllEvents.has(actorId)) {
-        actorAllEvents.set(actorId, []);
-      }
-      const events = actorAllEvents.get(actorId);
-      if (events && !events.includes(event.timestamp)) {
-        events.push(event.timestamp);
-      }
-
-      // Track first appearance
-      if (!actorFirstAppearance.has(actorId)) {
-        actorFirstAppearance.set(actorId, event.timestamp);
+    if ('sourceID' in event && 'sourceResources' in event) {
+      const resources = event.sourceResources;
+      if (
+        resources?.x !== undefined &&
+        resources?.y !== undefined &&
+        resources?.facing !== undefined
+      ) {
+        if (!actorPositionHistory.has(event.sourceID)) {
+          actorPositionHistory.set(event.sourceID, []);
+        }
+        const history = actorPositionHistory.get(event.sourceID);
+        if (history) {
+          history.push({
+            x: resources.x,
+            y: resources.y,
+            facing: resources.facing,
+            timestamp: event.timestamp,
+          });
+        }
       }
     }
-
-    // Report progress every 1000 events
-    if (i % 1000 === 0) {
-      onProgress?.(0.1 + (i / allEvents.length) * 0.2);
+    if ('targetID' in event && 'targetResources' in event) {
+      const resources = event.targetResources;
+      if (
+        resources?.x !== undefined &&
+        resources?.y !== undefined &&
+        resources?.facing !== undefined
+      ) {
+        if (!actorPositionHistory.has(event.targetID)) {
+          actorPositionHistory.set(event.targetID, []);
+        }
+        const history = actorPositionHistory.get(event.targetID);
+        if (history) {
+          history.push({
+            x: resources.x,
+            y: resources.y,
+            facing: resources.facing,
+            timestamp: event.timestamp,
+          });
+        }
+      }
     }
   }
 
   onProgress?.(0.3);
-
-  // Helper to add position data
-  const addPosition = (
-    actorId: number,
-    resources: { x?: number; y?: number; facing?: number } | undefined,
-    timestamp: number,
-  ): void => {
-    if (
-      resources?.x !== undefined &&
-      resources?.y !== undefined &&
-      resources?.facing !== undefined
-    ) {
-      // Track first appearance
-      if (!actorFirstAppearance.has(actorId)) {
-        actorFirstAppearance.set(actorId, timestamp);
-      }
-
-      if (!actorPositionHistory.has(actorId)) {
-        actorPositionHistory.set(actorId, []);
-      }
-
-      const history = actorPositionHistory.get(actorId);
-      if (history) {
-        history.push({
-          x: resources.x,
-          y: resources.y,
-          facing: resources.facing,
-          timestamp,
-        });
-      }
-    }
-  };
-
-  // Second pass: collect position data
-  for (const event of allEvents) {
-    if ('sourceID' in event && 'sourceResources' in event) {
-      addPosition(event.sourceID, event.sourceResources, event.timestamp);
-    }
-    if ('targetID' in event && 'targetResources' in event) {
-      addPosition(event.targetID, event.targetResources, event.timestamp);
-    }
-
-    // Track first appearance for all actors in any event
-    if ('sourceID' in event && !actorFirstAppearance.has(event.sourceID)) {
-      actorFirstAppearance.set(event.sourceID, event.timestamp);
-    }
-    if ('targetID' in event && !actorFirstAppearance.has(event.targetID)) {
-      actorFirstAppearance.set(event.targetID, event.timestamp);
-    }
-  }
-
-  onProgress?.(0.5);
 
   // Sort position histories
   for (const history of actorPositionHistory.values()) {
@@ -257,7 +302,7 @@ export function calculateActorPositions(
 
   // Build actor timelines
   const actorTimelines: Record<number, ActorTimeline> = {};
-  const allActorIds = new Set([...actorPositionHistory.keys(), ...actorFirstAppearance.keys()]);
+  const allActorIds = new Set([...actorPositionHistory.keys()]);
 
   let processedActors = 0;
   const totalActors = allActorIds.size;
@@ -271,13 +316,23 @@ export function calculateActorPositions(
 
     // Determine actor type and role
     const isPlayer = fight.friendlyPlayers?.includes(actorId) ?? false;
-    const isBoss = fight.enemyNPCs?.some((npc) => npc?.id === actorId) ?? false;
-    const isFriendlyNPC = fight.friendlyNPCs?.some((npc) => npc?.id === actorId) ?? false;
-    const isEnemyNPC = fight.enemyNPCs?.some((npc) => npc?.id === actorId && !isBoss) ?? false;
 
-    let type: 'player' | 'enemy' | 'boss' | 'friendly_npc' = 'friendly_npc';
+    // Get actor data early for boss and pet detection and name resolution
+    const actorData = actorsById?.[actorId];
+
+    // Check if actor is a boss by looking at actorsById data
+    const isBoss = actorData?.subType === 'Boss' && actorData?.type === 'NPC';
+
+    // Check if actor is a pet by looking at actorsById data
+    const isPet = actorData?.subType === 'Pet' && actorData?.type === 'Pet';
+
+    const isFriendlyNPC = fight.friendlyNPCs?.some((npc) => npc?.id === actorId) ?? false;
+    const isEnemyNPC = fight.enemyNPCs?.some((npc) => npc?.id === actorId) ?? false;
+
+    let type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet' = 'friendly_npc';
     if (isPlayer) type = 'player';
     else if (isBoss) type = 'boss';
+    else if (isPet) type = 'pet';
     else if (isEnemyNPC || (!isFriendlyNPC && !isPlayer)) {
       type = 'enemy';
     } else if (isFriendlyNPC) type = 'friendly_npc';
@@ -286,15 +341,29 @@ export function calculateActorPositions(
     const playerData = isPlayer && playersById ? playersById[actorId] : undefined;
     const role = playerData?.role;
 
-    // Get actor name
-    const actorData = actorsById?.[actorId];
+    // Get actor name (reusing actorData from above)
     const actorName = resolveActorName(actorData, actorId, `Actor ${actorId}`);
 
     // Calculate positions for each timestamp
     const positions: ActorTimeline['positions'] = [];
 
+    // Get first event time for this actor
+    const firstEventTime = actorFirstEventTime.get(actorId);
+    const isNPC = type !== 'player' && type !== 'boss'; // Includes pets, enemies, and friendly NPCs
+    const eventTimes = actorEventTimes.get(actorId) || [];
+
     for (const relativeTime of timestamps) {
       const currentTimestamp = fightStartTime + relativeTime;
+
+      // For NPCs (including pets), skip positions before their first event
+      if (isNPC && firstEventTime && currentTimestamp < firstEventTime) {
+        continue;
+      }
+
+      // For NPCs (including pets), skip positions if no recent event within 5 seconds
+      if (isNPC && !hasRecentEvent(actorId, currentTimestamp, eventTimes)) {
+        continue;
+      }
 
       // Find appropriate position data
       let currentPosition: { x: number; y: number; facing: number; timestamp: number } | null =
@@ -326,20 +395,28 @@ export function calculateActorPositions(
         }
 
         if (beforePos && afterPos) {
-          // Check if there's a death between these positions
-          const deaths = actorDeathEvents.get(actorId) || [];
-          const deathBetween = deaths.some(
-            (deathTime) => deathTime > beforePos.timestamp && deathTime <= currentTimestamp,
-          );
-
-          if (!deathBetween) {
-            const interpolated = interpolate(beforePos, afterPos, currentTimestamp);
-            currentPosition = {
-              ...interpolated,
-              timestamp: currentTimestamp,
-            };
+          // Check if we're exactly at the afterPos timestamp (or very close)
+          const tolerance = 1; // 1ms tolerance
+          if (Math.abs(currentTimestamp - afterPos.timestamp) <= tolerance) {
+            // We're at the exact timestamp of the afterPos event, use it directly
+            currentPosition = afterPos;
           } else {
-            currentPosition = beforePos;
+            // Check if we should interpolate based on gap size
+            const gap = afterPos.timestamp - beforePos.timestamp;
+            const windowMs = 5000; // 5 second gap threshold
+            
+            if (gap < windowMs) {
+              // Small gap: interpolate between positions
+              const interpolated = interpolate(beforePos, afterPos, currentTimestamp);
+              currentPosition = {
+                ...interpolated,
+                timestamp: currentTimestamp,
+              };
+            } else {
+              // Large gap: don't interpolate, just use the most recent position
+              // This prevents unwanted movement during minimum visibility periods
+              currentPosition = beforePos;
+            }
           }
         } else {
           currentPosition = beforePos || afterPos || history[0];
@@ -348,30 +425,6 @@ export function calculateActorPositions(
 
       if (!currentPosition) {
         continue;
-      }
-
-      // Check if actor should be visible at this time
-      const firstAppearance = actorFirstAppearance.get(actorId);
-      const hasAppeared = firstAppearance !== undefined && currentTimestamp >= firstAppearance;
-
-      if (!hasAppeared) {
-        continue;
-      }
-
-      // Calculate if actor is alive
-      const deaths = actorDeathEvents.get(actorId) || [];
-      const allActorEvents = actorAllEvents?.get(actorId) || [];
-      let isAlive = true;
-
-      if (deaths.length > 0) {
-        const relevantDeaths = deaths.filter((d: number) => d <= currentTimestamp);
-        if (relevantDeaths.length > 0) {
-          const latestDeath = Math.max(...relevantDeaths);
-          const eventsAfterDeath = allActorEvents.filter(
-            (eventTime: number) => eventTime > latestDeath && eventTime <= currentTimestamp,
-          );
-          isAlive = eventsAfterDeath.length > 0;
-        }
       }
 
       // Check if actor is taunted (only for enemies and bosses)
@@ -394,28 +447,24 @@ export function calculateActorPositions(
         (currentPosition.y - centerY) / 1000,
       ];
 
-      // Only show actors that should be visible
-      const showActor = hasAppeared && (isAlive || type === 'player');
-      if (showActor) {
-        positions.push({
-          timestamp: relativeTime,
-          position,
-          rotation: currentPosition.facing / 100 + Math.PI / 2,
-          isAlive,
-          isTaunted,
-        });
-      }
+      // Show all actors regardless of alive/appearance status
+      positions.push({
+        timestamp: relativeTime,
+        position,
+        rotation: currentPosition.facing / 100 + Math.PI / 2,
+        isAlive: true, // Show all actors as alive
+        isTaunted,
+      });
     }
 
-    if (positions.length > 0) {
-      actorTimelines[actorId] = {
-        id: actorId,
-        name: actorName,
-        type,
-        role,
-        positions,
-      };
-    }
+    // Always create timeline for all actors
+    actorTimelines[actorId] = {
+      id: actorId,
+      name: actorName,
+      type,
+      role,
+      positions,
+    };
 
     processedActors++;
     if (processedActors % 10 === 0) {

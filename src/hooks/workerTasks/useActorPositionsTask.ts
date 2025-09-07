@@ -9,10 +9,7 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { executeActorPositionsTask } from '../../store/worker_results/taskSlices';
-import {
-  ActorPosition,
-  ActorPositionsTimeline,
-} from '../../workers/calculations/CalculateActorPositions';
+import { ActorPositionsTimeline } from '../../workers/calculations/CalculateActorPositions';
 import { useDamageEvents } from '../events/useDamageEvents';
 import { useDeathEvents } from '../events/useDeathEvents';
 import { useHealingEvents } from '../events/useHealingEvents';
@@ -24,12 +21,8 @@ import { useReportMasterData } from '../useReportMasterData';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
-interface UseActorPositionsTaskParams {
-  currentTime: number;
-}
-
 interface UseActorPositionsTaskResult {
-  actors: ActorPosition[];
+  timeline: ActorPositionsTimeline | null;
   isActorPositionsLoading: boolean;
   actorPositionsError: string | null;
   actorPositionsProgress: number | null;
@@ -37,9 +30,7 @@ interface UseActorPositionsTaskResult {
 }
 
 // Hook for actor positions calculation
-export function useActorPositionsTask({
-  currentTime,
-}: UseActorPositionsTaskParams): UseActorPositionsTaskResult {
+export function useActorPositionsTask(): UseActorPositionsTaskResult {
   const { dispatch } = useWorkerTaskDependencies();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
 
@@ -107,78 +98,28 @@ export function useActorPositionsTask({
   // Include all dependency loading states in the overall loading state
   const isActorPositionsLoading = isActorPositionsTaskLoading || isAnyDataLoading;
 
-  // Extract actors from the timeline result for the current time
-  const actors = React.useMemo(() => {
+  // Return the timeline directly, let consumers extract positions for specific times
+  const timeline = React.useMemo(() => {
     if (!actorPositionsResult || typeof actorPositionsResult !== 'object') {
-      return [];
+      return null;
     }
 
     // The result should have a 'timeline' property
     if (!('timeline' in actorPositionsResult)) {
-      return [];
+      return null;
     }
 
-    const timeline = actorPositionsResult.timeline as ActorPositionsTimeline;
-    if (
-      !timeline.actorTimelines ||
-      !timeline.timestamps ||
-      Object.keys(timeline.actorTimelines).length === 0
-    ) {
-      return [];
-    }
-
-    // Find the closest timestamp to currentTime
-    const relativeTime = currentTime; // currentTime is already relative to fight start
-    let closestTimestampIndex = 0;
-    let minDiff = Math.abs(timeline.timestamps[0] - relativeTime);
-
-    for (let i = 1; i < timeline.timestamps.length; i++) {
-      const diff = Math.abs(timeline.timestamps[i] - relativeTime);
-      if (diff < minDiff) {
-        minDiff = diff;
-        closestTimestampIndex = i;
-      } else {
-        // Since timestamps are sorted, we can break early
-        break;
-      }
-    }
-
-    const targetTimestamp = timeline.timestamps[closestTimestampIndex];
-    const actors: ActorPosition[] = [];
-
-    // Extract positions for each actor at the target timestamp
-    for (const [actorIdStr, actorTimeline] of Object.entries(timeline.actorTimelines)) {
-      const actorId = Number(actorIdStr);
-      // Find the position entry for the target timestamp
-      const positionEntry = actorTimeline.positions.find(
-        (pos) => pos.timestamp === targetTimestamp,
-      );
-
-      if (positionEntry) {
-        actors.push({
-          id: actorId,
-          name: actorTimeline.name,
-          type: actorTimeline.type,
-          role: actorTimeline.role,
-          position: positionEntry.position,
-          rotation: positionEntry.rotation,
-          isAlive: positionEntry.isAlive,
-          isTaunted: positionEntry.isTaunted,
-        });
-      }
-    }
-
-    return actors;
-  }, [actorPositionsResult, currentTime]);
+    return actorPositionsResult.timeline as ActorPositionsTimeline;
+  }, [actorPositionsResult]);
 
   return React.useMemo(
     () => ({
-      actors,
+      timeline,
       isActorPositionsLoading,
       actorPositionsError,
       actorPositionsProgress,
       selectedFight: fight || null,
     }),
-    [actors, isActorPositionsLoading, actorPositionsError, actorPositionsProgress, fight],
+    [timeline, isActorPositionsLoading, actorPositionsError, actorPositionsProgress, fight],
   );
 }
