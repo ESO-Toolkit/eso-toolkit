@@ -1,5 +1,3 @@
-import React, { memo } from 'react';
-import { Card, CardContent, Box, Typography, IconButton, Tooltip } from '@mui/material';
 import {
   Visibility,
   VisibilityOff,
@@ -9,7 +7,11 @@ import {
   Groups,
   FavoriteRounded,
   HeartBroken,
+  CenterFocusWeak,
+  CenterFocusStrong,
 } from '@mui/icons-material';
+import { Card, CardContent, Box, Typography, IconButton, Tooltip } from '@mui/material';
+import React, { memo } from 'react';
 
 interface ActorCardProps {
   actor: {
@@ -22,8 +24,10 @@ interface ActorCardProps {
   };
   isSelected: boolean;
   isHidden?: boolean;
+  isCameraLocked?: boolean;
   onActorClick: (actorId: number) => void;
   onToggleVisibility?: (actorId: number) => void;
+  onToggleCameraLock?: (actorId: number) => void;
 }
 
 const getActorTypeIcon = (type: string): React.ReactElement => {
@@ -52,7 +56,15 @@ const getStatusIcon = (isAlive: boolean): React.ReactElement => {
 };
 
 export const ActorCard = memo<ActorCardProps>(
-  ({ actor, isSelected, isHidden = false, onActorClick, onToggleVisibility }) => {
+  ({ 
+    actor, 
+    isSelected, 
+    isHidden = false, 
+    isCameraLocked = false, 
+    onActorClick, 
+    onToggleVisibility, 
+    onToggleCameraLock,
+  }) => {
     // Pre-calculate expensive values
     const esoX = Math.round(actor.position[0] * 1000 + 5235);
     const esoY = Math.round(actor.position[2] * 1000 + 5410);
@@ -125,6 +137,33 @@ export const ActorCard = memo<ActorCardProps>(
                     }}
                   >
                     {isHidden ? <VisibilityOff /> : <Visibility />}
+                  </IconButton>
+                </Tooltip>
+              )}
+              {onToggleCameraLock && (
+                <Tooltip
+                  title={isCameraLocked ? 'Unlock camera from actor' : 'Lock camera to follow actor'}
+                  placement="top"
+                >
+                  <IconButton
+                    size="small"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onToggleCameraLock(actor.id);
+                    }}
+                    sx={{
+                      p: 0.25,
+                      minWidth: 'auto',
+                      color: isCameraLocked ? 'primary.main' : 'text.secondary',
+                      '& .MuiSvgIcon-root': {
+                        fontSize: '1rem',
+                      },
+                      '&:hover': {
+                        color: isCameraLocked ? 'primary.dark' : 'primary.main',
+                      },
+                    }}
+                  >
+                    {isCameraLocked ? <CenterFocusStrong /> : <CenterFocusWeak />}
                   </IconButton>
                 </Tooltip>
               )}

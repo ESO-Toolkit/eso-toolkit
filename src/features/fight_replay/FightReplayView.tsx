@@ -10,6 +10,7 @@ import {
   ExpandMore,
   TextFields,
   Share,
+  CenterFocusStrong,
 } from '@mui/icons-material';
 import {
   Box,
@@ -167,6 +168,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   const [showActorNames, setShowActorNames] = useState(true);
   const [showShareSnackbar, setShowShareSnackbar] = useState(false);
   const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
+  const [cameraLockedActorId, setCameraLockedActorId] = useState<number | undefined>();
 
   // Use refs to avoid recreating animation loop on every currentTimestamp change
   const currentTimestampRef = useRef(currentTimestamp);
@@ -473,6 +475,10 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     });
   }, []);
 
+  const handleToggleCameraLock = useCallback((actorId: number) => {
+    setCameraLockedActorId((prev) => (prev === actorId ? undefined : actorId));
+  }, []);
+
   const handleShareUrl = useCallback(async () => {
     if (!activeFight || !params.reportId || !params.fightId) return;
 
@@ -744,11 +750,46 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
               <CombatArena
                 actors={visibleActors}
                 selectedActorId={selectedActorId}
+                cameraLockedActorId={cameraLockedActorId}
                 onActorClick={handleActorClick}
                 arenaSize={13}
                 mapFile={fight?.maps?.[0]?.file || undefined}
                 showActorNames={showActorNames}
               />
+
+              {/* Camera Lock Indicator */}
+              {cameraLockedActorId && (
+                <Box
+                  sx={(theme) => ({
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.95)'
+                        : 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: theme.palette.primary.main,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.1)'
+                        : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    px: 1.5,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  })}
+                >
+                  <CenterFocusStrong color="primary" fontSize="small" />
+                  <Typography variant="caption" color="primary.main" fontWeight="medium">
+                    Camera Locked: {actors.find(a => a.id === cameraLockedActorId)?.name || 'Unknown'}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Floating Actor Cards Overlay */}
               <Box
@@ -867,8 +908,10 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                           actor={actor}
                           isSelected={actor.id === selectedActorId}
                           isHidden={hiddenActorIds.has(actor.id)}
+                          isCameraLocked={cameraLockedActorId === actor.id}
                           onActorClick={handleActorClick}
                           onToggleVisibility={handleToggleActorVisibility}
+                          onToggleCameraLock={handleToggleCameraLock}
                         />
                       ))}
 

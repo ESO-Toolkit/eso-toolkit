@@ -22,6 +22,7 @@ interface Actor {
 interface CombatArenaProps {
   actors: Actor[];
   selectedActorId?: number;
+  cameraLockedActorId?: number;
   arenaSize?: number;
   mapFile?: string;
   onActorClick?: (actorId: number) => void;
@@ -44,6 +45,7 @@ const LoadingFallback = (): React.JSX.Element => (
 export const CombatArena: React.FC<CombatArenaProps> = ({
   actors,
   selectedActorId,
+  cameraLockedActorId,
   arenaSize = 30,
   mapFile,
   onActorClick,
@@ -95,6 +97,28 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
       }
     }
   }, [actors]);
+
+  // Update camera target to follow locked actor
+  useEffect(() => {
+    if (cameraLockedActorId) {
+      const lockedActor = actors.find((actor) => actor.id === cameraLockedActorId);
+      if (lockedActor) {
+        const targetPosition = new Vector3(lockedActor.position[0], 0, lockedActor.position[2]);
+        setCameraTarget(targetPosition);
+
+        // Debug logging for camera lock
+        if (window.location.search.includes('debug=camera')) {
+          // eslint-disable-next-line no-console
+          console.log('Camera following locked actor:', {
+            actorId: lockedActor.id,
+            actorName: lockedActor.name,
+            position: lockedActor.position,
+            targetPosition: targetPosition,
+          });
+        }
+      }
+    }
+  }, [actors, cameraLockedActorId]);
 
   return (
     <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
@@ -187,6 +211,8 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
             minDistance={0.2}
             maxDistance={20}
             maxPolarAngle={Math.PI / 2.2}
+            enabled={!cameraLockedActorId} // Disable controls when camera is locked
+            smoothing={cameraLockedActorId ? 0.05 : 0.1} // Slower smoothing when following actor
             onTargetChange={setCameraTarget}
           />
         </Suspense>

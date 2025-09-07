@@ -8,6 +8,7 @@ interface CustomCameraControlsProps {
   maxDistance?: number;
   maxPolarAngle?: number;
   enabled?: boolean;
+  smoothing?: number; // Smoothing factor (0 = no smoothing, 1 = instant, default 0.1)
   onTargetChange?: (target: Vector3) => void;
 }
 
@@ -17,6 +18,7 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   maxDistance = 20,
   maxPolarAngle = Math.PI / 2.2,
   enabled = true,
+  smoothing = 0.1,
   onTargetChange,
 }) => {
   const { camera, gl } = useThree();
@@ -24,6 +26,7 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
   // Camera state
   const state = useRef({
     target: initialTarget?.clone() || new Vector3(0, 0, 0),
+    targetSmooth: initialTarget?.clone() || new Vector3(0, 0, 0), // Smoothed target for interpolation
     spherical: new Spherical(),
     sphericalDelta: new Spherical(),
     panOffset: new Vector3(),
@@ -39,6 +42,8 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
     const offset = new Vector3();
     offset.copy(camera.position).sub(state.current.target);
     state.current.spherical.setFromVector3(offset);
+    // Initialize smooth target to current target
+    state.current.targetSmooth.copy(state.current.target);
   }, [camera]);
 
   // Mouse event handlers
@@ -172,54 +177,50 @@ export const CustomCameraControls: React.FC<CustomCameraControlsProps> = ({
 
   // Update camera every frame
   useFrame(() => {
-    if (!enabled) return;
+    // Smooth interpolation towards target (always active for smooth following)
+    state.current.targetSmooth.lerp(state.current.target, smoothing);
 
-    // Only update camera position when user is actively interacting
-    const isUserInteracting = state.current.isRotating || state.current.isPanning;
+    // Handle user interactions only when enabled
+    if (enabled) {
+      const isUserInteracting = state.current.isRotating || state.current.isPanning;
 
-    if (!isUserInteracting) return;
+      if (isUserInteracting) {
+        // Apply spherical changes directly (no damping)
+        state.current.spherical.theta += state.current.sphericalDelta.theta;
+        state.current.spherical.phi += state.current.sphericalDelta.phi;
 
-    // Apply spherical changes directly (no damping)
-    state.current.spherical.theta += state.current.sphericalDelta.theta;
-    state.current.spherical.phi += state.current.sphericalDelta.phi;
+        // Clamp phi (vertical angle)
+        state.current.spherical.phi = Math.max(
+          0.1,
+          Math.min(maxPolarAngle, state.current.spherical.phi),
+        );
 
-    // Clamp phi (vertical angle)
-    state.current.spherical.phi = Math.max(
-      0.1,
-      Math.min(maxPolarAngle, state.current.spherical.phi),
-    );
+        // Apply pan offset directly to target (no damping)
+        state.current.target.add(state.current.panOffset);
 
-    // Apply pan offset directly (no damping)
-    state.current.target.add(state.current.panOffset);
+        // Notify parent of target changes
+        if (state.current.panOffset.length() > 0 && onTargetChange) {
+          onTargetChange(state.current.target.clone());
+        }
 
-    // Notify parent of target changes
-    if (state.current.panOffset.length() > 0 && onTargetChange) {
-      onTargetChange(state.current.target.clone());
+        // Clear deltas after applying them
+        state.current.sphericalDelta.set(0, 0, 0);
+        state.current.panOffset.set(0, 0, 0);
+      }
     }
 
-    // Clear deltas after applying them
-    state.current.sphericalDelta.set(0, 0, 0);
-    state.current.panOffset.set(0, 0, 0);
-
-    // Update camera position from spherical coordinates
+    // Always update camera position using the smoothed target
     const offset = new Vector3();
     offset.setFromSpherical(state.current.spherical);
-    camera.position.copy(state.current.target).add(offset);
-    camera.lookAt(state.current.target);
+    camera.position.copy(state.current.targetSmooth).add(offset);
+    camera.lookAt(state.current.targetSmooth);
   });
 
   // Update target when prop changes, but not during user interaction
   useEffect(() => {
     if (initialTarget && !state.current.isRotating && !state.current.isPanning) {
       state.current.target.copy(initialTarget);
-
-      // Update camera position to look at the new target
-      const offset = new Vector3();
-      offset.setFromSpherical(state.current.spherical);
-      camera.position.copy(state.current.target).add(offset);
-      camera.lookAt(state.current.target);
+      // Don't immediately update camera position - let the useFrame loop handle smooth interpolation
     }
-  }, [initialTarget, camera]);
-
-  return null; // This component doesn't render anything
+  }, [initialTarget]);  return null; // This component doesn't render anything
 };
