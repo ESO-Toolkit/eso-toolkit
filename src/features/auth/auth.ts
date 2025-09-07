@@ -1,7 +1,7 @@
 // Compose redirect URI using PUBLIC_URL at build time
 export const REDIRECT_URI = `${window.location.origin}${process.env.PUBLIC_URL || ''}/#/oauth-redirect`;
 // Replace with your actual ESO Logs client ID
-export const CLIENT_ID = '9fcf46ff-db45-4be9-92ea-9cc05fe45d49';
+export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
 
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
