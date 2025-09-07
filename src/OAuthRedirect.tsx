@@ -3,8 +3,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import React, { useEffect, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
-import { push } from 'redux-first-history';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   getPkceCodeVerifier,
@@ -22,6 +21,7 @@ export const OAuthRedirect: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const { rebindAccessToken } = useAuth();
   const [params] = useSearchParams();
+  const navigate = useNavigate();
 
   useEffect(() => {
     // Parse parameters directly from window.location since OAuth redirects
@@ -64,7 +64,7 @@ export const OAuthRedirect: React.FC = () => {
         const data = await response.json();
         localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
         rebindAccessToken();
-        dispatch(push('/'));
+        navigate('/');
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
@@ -74,7 +74,7 @@ export const OAuthRedirect: React.FC = () => {
       }
     };
     fetchToken();
-  }, [dispatch, rebindAccessToken, params]);
+  }, [dispatch, rebindAccessToken, params, navigate]);
 
   return (
     <Container maxWidth="sm" style={{ textAlign: 'center', marginTop: '4rem' }}>
