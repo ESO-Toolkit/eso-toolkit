@@ -7,8 +7,11 @@ import {
   usePlayerData,
   useCastEvents,
 } from '../../../hooks';
+import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
+import { KnownAbilities } from '../../../types/abilities';
 import { DeathEvent } from '../../../types/combatlogEvents';
+import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
@@ -37,6 +40,7 @@ interface DeathInfo {
   wasBlocking: boolean | null;
   deathDurationMs: number | null;
   resurrectionTime: number | null;
+  killerWasTaunted?: boolean | null;
 }
 
 export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
@@ -47,6 +51,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
+  const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData } = usePlayerData();
 
@@ -200,6 +205,18 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
         const playerDurations = deathDurationMap.get(playerId);
         const deathDurationData = playerDurations?.get(deathEvent.timestamp ?? 0);
 
+        // Check if the killer was taunted at the time of death
+        let killerWasTaunted: boolean | null = null;
+        if (killingBlow?.sourceID && debuffLookupData) {
+          // Use the pre-computed debuff lookup data
+          killerWasTaunted = isBuffActiveOnTarget(
+            debuffLookupData,
+            KnownAbilities.TAUNT,
+            deathEvent.timestamp || 0,
+            killingBlow.sourceID,
+          );
+        }
+
         deaths.push({
           playerId,
           timestamp: deathEvent.timestamp ?? 0,
@@ -210,6 +227,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           wasBlocking: false,
           deathDurationMs: deathDurationData?.deathDurationMs ?? null,
           resurrectionTime: deathDurationData?.resurrectionTime ?? null,
+          killerWasTaunted,
         });
 
         lastDeathTimestamp = deathEvent.timestamp;
@@ -224,13 +242,18 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     deathEvents,
     damageEvents,
     castEvents,
+    debuffLookupData,
     reportMasterData.actorsById,
     reportMasterData.abilitiesById,
   ]);
 
   // Calculate combined loading state
   const isLoading =
-    isDeathEventsLoading || isDamageEventsLoading || isCastEventsLoading || isMasterDataLoading;
+    isDeathEventsLoading ||
+    isDamageEventsLoading ||
+    isCastEventsLoading ||
+    isDebuffLookupLoading ||
+    isMasterDataLoading;
 
   if (isLoading) {
     return (
