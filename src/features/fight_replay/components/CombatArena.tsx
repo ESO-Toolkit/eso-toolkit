@@ -1,26 +1,29 @@
 import { Box, CircularProgress } from '@mui/material';
-import { OrbitControls, Grid, Environment } from '@react-three/drei';
+import { Grid, Environment } from '@react-three/drei';
 import { Canvas } from '@react-three/fiber';
-import { Suspense, useRef, useEffect } from 'react';
+import { Suspense, useRef, useEffect, useState } from 'react';
 import { Vector3 } from 'three';
 
 import { ActorMarker } from './ActorMarker';
+import { CustomCameraControls } from './CustomCameraControls';
 import { MapTexture } from './MapTexture';
 
 interface Actor {
   id: number;
   name: string;
-  type: 'player' | 'enemy' | 'boss' | 'friendly_npc';
+  type: 'player' | 'enemy' | 'boss' | 'friendly_npc' | 'pet';
   role?: 'dps' | 'tank' | 'healer'; // Optional role for players
   position: [number, number, number];
   rotation: number;
   isAlive: boolean;
+  isDead: boolean;
   isTaunted?: boolean; // Whether the actor is taunted
 }
 
 interface CombatArenaProps {
   actors: Actor[];
   selectedActorId?: number;
+  cameraLockedActorId?: number;
   arenaSize?: number;
   mapFile?: string;
   onActorClick?: (actorId: number) => void;
@@ -43,39 +46,92 @@ const LoadingFallback = (): React.JSX.Element => (
 export const CombatArena: React.FC<CombatArenaProps> = ({
   actors,
   selectedActorId,
+  cameraLockedActorId,
   arenaSize = 30,
   mapFile,
   onActorClick,
   showActorNames = true,
 }) => {
-  const orbitControlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+  const [cameraTarget, setCameraTarget] = useState<Vector3>(new Vector3(0, 0, 0));
   const hasInitialized = useRef(false);
 
   // Initialize camera to boss position once when actors are first available
   useEffect(() => {
-    if (!hasInitialized.current && actors.length > 0 && orbitControlsRef.current) {
+    if (!hasInitialized.current && actors.length > 0) {
+      // Check if actors have valid positions (not default [0,0,0])
+      const hasValidPositions = actors.some(
+        (actor) => actor.position[0] !== 0 || actor.position[2] !== 0,
+      );
+
+      if (!hasValidPositions) {
+        // Actors don't have real positions yet, wait for worker to finish
+        return;
+      }
+
+      // Find the best target for initial camera positioning
+      // Prioritize selected actor from URL, then boss, then any enemy, then first actor
+      const selectedActor = selectedActorId
+        ? actors.find((actor) => actor.id === selectedActorId)
+        : null;
       const boss = actors.find((actor) => actor.type === 'boss');
-      if (boss) {
-        const bossPosition = new Vector3(boss.position[0], 0, boss.position[2]);
-        const cameraOffset = new Vector3(1, 1.5, 1);
-        const cameraPosition = bossPosition.clone().add(cameraOffset);
+      const firstEnemy = actors.find((actor) => actor.type === 'enemy');
+      const firstActor = actors[0];
 
-        // Set initial camera position and target
-        orbitControlsRef.current.object.position.copy(cameraPosition);
-        orbitControlsRef.current.target.copy(bossPosition);
-        orbitControlsRef.current.update();
+      // Prioritize selected actor, then boss, then any enemy, then first actor, then center
+      const targetActor = selectedActor || boss || firstEnemy || firstActor;
 
+      if (targetActor) {
+        const targetPosition = new Vector3(targetActor.position[0], 0, targetActor.position[2]);
+        setCameraTarget(targetPosition);
+        hasInitialized.current = true;
+
+        // Debug logging for camera initialization
+        if (window.location.search.includes('debug=camera')) {
+          // eslint-disable-next-line no-console
+          console.log('Camera initialized to:', {
+            selectedActorId,
+            targetActorType: selectedActor ? 'selected' : targetActor.type,
+            actorName: targetActor.name,
+            position: targetActor.position,
+            targetPosition: targetPosition,
+          });
+        }
+      } else {
+        // Fallback to center if no actors found
+        setCameraTarget(new Vector3(0, 0, 0));
         hasInitialized.current = true;
       }
     }
-  }, [actors]);
+  }, [actors, selectedActorId]);
+
+  // Update camera target to follow locked actor
+  useEffect(() => {
+    if (cameraLockedActorId) {
+      const lockedActor = actors.find((actor) => actor.id === cameraLockedActorId);
+      if (lockedActor) {
+        const targetPosition = new Vector3(lockedActor.position[0], 0, lockedActor.position[2]);
+        setCameraTarget(targetPosition);
+
+        // Debug logging for camera lock
+        if (window.location.search.includes('debug=camera')) {
+          // eslint-disable-next-line no-console
+          console.log('Camera following locked actor:', {
+            actorId: lockedActor.id,
+            actorName: lockedActor.name,
+            position: lockedActor.position,
+            targetPosition: targetPosition,
+          });
+        }
+      }
+    }
+  }, [actors, cameraLockedActorId]);
 
   return (
     <Box sx={{ height: '100%', width: '100%', position: 'relative' }}>
       <Canvas
         camera={{
-          position: [1, 1.5, 1], // Extremely close starting position (was [3, 4, 3])
-          fov: 35, // Even narrower field of view for tight zoom (was 45)
+          position: [3, 6, 3], // Better elevated position for overview (was [1, 1.5, 1])
+          fov: 45, // Wider field of view for better overview (was 35)
         }}
         shadows
         frameloop="always"
@@ -149,27 +205,22 @@ export const CombatArena: React.FC<CombatArenaProps> = ({
                 role={actor.role}
                 isSelected={actor.id === selectedActorId}
                 isAlive={actor.isAlive}
+                isDead={actor.isDead}
                 isTaunted={actor.isTaunted}
                 showName={showActorNames}
               />
             </group>
           ))}
 
-          {/* Camera controls with dynamic target that moves when panning */}
-          <OrbitControls
-            ref={orbitControlsRef}
-            enablePan={true}
-            enableZoom={true}
-            enableRotate={true}
+          {/* Custom camera controls with orbit and pan functionality */}
+          <CustomCameraControls
+            target={cameraTarget}
             minDistance={0.2}
-            maxDistance={20} // Increased from 5 to allow more freedom
+            maxDistance={20}
             maxPolarAngle={Math.PI / 2.2}
-            zoomSpeed={1} // Reduced from 2 for more controlled zooming
-            panSpeed={1} // Reduced from 2.5 for more consistent panning
-            rotateSpeed={1} // Added explicit rotate speed control
-            enableDamping={true}
-            dampingFactor={0.05} // Reduced from 0.1 for more responsive movement
-            screenSpacePanning={true} // Use screen-space panning for more intuitive movement
+            enabled={!cameraLockedActorId} // Disable controls when camera is locked
+            smoothing={cameraLockedActorId ? 0.05 : 0.1} // Slower smoothing when following actor
+            onTargetChange={setCameraTarget}
           />
         </Suspense>
       </Canvas>

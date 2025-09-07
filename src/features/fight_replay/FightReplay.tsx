@@ -1,11 +1,12 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
-import { useReportData, useReportMasterData, usePlayerData } from '../../hooks';
+import { useReportData } from '../../hooks';
 import { useDamageEvents } from '../../hooks/events/useDamageEvents';
 import { useDeathEvents } from '../../hooks/events/useDeathEvents';
 import { useHealingEvents } from '../../hooks/events/useHealingEvents';
 import { useResourceEvents } from '../../hooks/events/useResourceEvents';
+import { useReportMasterData } from '../../hooks/useReportMasterData';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightReplayView } from './FightReplayView';
@@ -18,34 +19,18 @@ export const FightReplay: React.FC = () => {
 
   // Get report data
   const { reportData, isReportLoading } = useReportData();
+  const { reportMasterData } = useReportMasterData();
 
-  // Get player data for role colors
-  const { playerData, isPlayerDataLoading } = usePlayerData();
-  const playersById = playerData?.playersById;
-
-  // Get master data
-  const { reportMasterData, isMasterDataLoading } = useReportMasterData();
-
-  // Load all event data
-  const { damageEvents, isDamageEventsLoading } = useDamageEvents();
-  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
-  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
-  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
+  // Load event data to check loading states
+  const { isDamageEventsLoading } = useDamageEvents();
+  const { isHealingEventsLoading } = useHealingEvents();
+  const { isDeathEventsLoading } = useDeathEvents();
+  const { isResourceEventsLoading } = useResourceEvents();
 
   // Find the specific fight
   const fight = React.useMemo(() => {
     return reportData?.fights?.find((f) => String(f?.id) === String(fightId));
   }, [reportData?.fights, fightId]);
-
-  // Combine events into the format expected by useActorPositions
-  const events = useMemo(() => {
-    return {
-      damage: damageEvents || [],
-      heal: healingEvents || [],
-      death: deathEvents || [],
-      resource: resourceEvents || [],
-    };
-  }, [damageEvents, healingEvents, deathEvents, resourceEvents]);
 
   // Calculate loading states
   const eventsLoading =
@@ -54,9 +39,8 @@ export const FightReplay: React.FC = () => {
     isDeathEventsLoading ||
     isResourceEventsLoading;
 
-  // Calculate overall loading state including all data dependencies
-  const overallLoading =
-    isReportLoading || isPlayerDataLoading || isMasterDataLoading || eventsLoading;
+  // Calculate overall loading state
+  const overallLoading = isReportLoading || eventsLoading;
 
   // Generate dynamic meta tags for social sharing
   const metaTags = React.useMemo(() => {
@@ -95,9 +79,7 @@ export const FightReplay: React.FC = () => {
       <FightReplayView
         fight={fight || undefined}
         fightsLoading={overallLoading}
-        events={events}
         eventsLoading={eventsLoading}
-        playersById={playersById}
         reportMasterData={reportMasterData}
       />
     </>

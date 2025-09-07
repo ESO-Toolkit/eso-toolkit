@@ -2,6 +2,7 @@ import { proxy, releaseProxy } from 'comlink';
 
 import { ILogger } from '../contexts/LoggerContext';
 
+import { ActorPositionsCalculationTask } from './calculations/CalculateActorPositions';
 import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
 import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
@@ -279,6 +280,12 @@ export class WorkerPool {
         case 'calculateStatusEffectUptimes':
           result = await workerInfo.worker.calculateStatusEffectUptimes(
             task.data as StatusEffectUptimesCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculateActorPositions':
+          result = await workerInfo.worker.calculateActorPositions(
+            task.data as ActorPositionsCalculationTask,
             onProgress,
           );
           break;

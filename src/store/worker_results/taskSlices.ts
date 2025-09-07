@@ -1,5 +1,12 @@
 // Re-export all task slices for convenience
 export {
+  actorPositionsSlice,
+  actorPositionsActions,
+  executeActorPositionsTask,
+  actorPositionsReducer,
+} from './actorPositionsSlice';
+
+export {
   buffLookupSlice,
   buffLookupActions,
   executeBuffLookupTask,

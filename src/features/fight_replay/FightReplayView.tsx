@@ -6,16 +6,11 @@ import {
   Speed,
   Replay,
   Visibility,
-  VisibilityOff,
   ExpandLess,
   ExpandMore,
-  Person,
-  SmartToy,
-  Shield,
-  Groups,
-  FavoriteRounded,
-  HeartBroken,
   TextFields,
+  Share,
+  CenterFocusStrong,
 } from '@mui/icons-material';
 import {
   Box,
@@ -33,11 +28,20 @@ import {
   LinearProgress,
   CircularProgress,
   Stack,
+  Snackbar,
+  Alert,
 } from '@mui/material';
 import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
 
 import { CombatArena } from '../../components/LazyCombatArena';
 import { FightFragment } from '../../graphql/generated';
+import { useDamageEvents } from '../../hooks/events/useDamageEvents';
+import { useDeathEvents } from '../../hooks/events/useDeathEvents';
+import { useHealingEvents } from '../../hooks/events/useHealingEvents';
+import { useCurrentFight } from '../../hooks/useCurrentFight';
+import { useActorPositionsAtTime } from '../../hooks/workerTasks/useActorPositionsAtTime';
+import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 import { PlayerDetailsWithRole } from '../../store/player_data/playerDataSlice';
 import { RootState } from '../../store/storeWithHistory';
 import {
@@ -47,55 +51,39 @@ import {
   LogEvent,
   ResourceChangeEvent,
 } from '../../types/combatlogEvents';
+import { resolveActorName } from '../../utils/resolveActorName';
 
-import { useActorPositions } from './hooks/useActorPositions';
+import { ActorCard } from './components/ActorCard';
 
 // Local utility function for formatting duration
 const formatDuration = (ms: number): string => {
-  if (ms < 0) return '0s';
-
-  const seconds = Math.floor(ms / 1000) % 60;
-  const minutes = Math.floor(ms / 60000) % 60;
-  const hours = Math.floor(ms / 3600000);
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${seconds}s`;
-  }
-  if (minutes > 0) {
-    return `${minutes}m ${seconds}s`;
-  }
-  return `${seconds}s`;
+  const totalSeconds = Math.floor(ms / 1000);
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
 };
 
-// Helper function to get actor type icon
-const getActorTypeIcon = (type: string): React.ReactElement => {
-  switch (type) {
-    case 'player':
-      return <Person fontSize="small" />;
-    case 'boss':
-      return <Shield fontSize="small" />;
-    case 'enemy':
-      return <SmartToy fontSize="small" />;
-    case 'friendly_npc':
-      return <Groups fontSize="small" />;
-    default:
-      return <Person fontSize="small" />;
-  }
-};
-
-// Helper function to get alive/dead status icon
-const getStatusIcon = (isAlive: boolean): React.ReactElement => {
-  return isAlive ? (
-    <FavoriteRounded fontSize="small" color="success" />
-  ) : (
-    <HeartBroken fontSize="small" color="error" />
-  );
+// Local utility function for formatting absolute timestamp
+const formatTimestamp = (timestamp: number): string => {
+  const date = new Date(timestamp);
+  // Use milliseconds formatting for better precision
+  const timeStr = date.toLocaleTimeString('en-US', {
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+  });
+  // Round timestamp to avoid floating point precision issues
+  const ms = Math.round(timestamp % 1000)
+    .toString()
+    .padStart(3, '0');
+  return `${timeStr}.${ms}`;
 };
 
 interface FightReplayViewProps {
   fight?: FightFragment;
   fightsLoading: boolean;
-  events: {
+  events?: {
     damage: DamageEvent[];
     heal: HealEvent[];
     death: DeathEvent[];
@@ -103,7 +91,7 @@ interface FightReplayViewProps {
   };
   eventsLoading: boolean;
   playersById?: Record<string | number, PlayerDetailsWithRole>;
-  reportMasterData: RootState['masterData'];
+  reportMasterData?: RootState['masterData'];
 }
 
 interface TimelineEvent {
@@ -116,8 +104,8 @@ interface TimelineEvent {
 
 const PLAYBACK_SPEEDS = [0.25, 0.5, 1, 2, 4, 8];
 
-// Ultra-high refresh rate configuration for smooth rendering
-const RENDER_FRAME_INTERVAL = 4.17; // 240Hz rendering (4.17ms intervals)
+// Optimized refresh rate configuration for smooth rendering
+const RENDER_FRAME_INTERVAL = 16.67; // 60Hz rendering (16.67ms intervals) - much more reasonable
 
 export const FightReplayView: React.FC<FightReplayViewProps> = ({
   fight,
@@ -127,24 +115,73 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   playersById,
   reportMasterData,
 }) => {
+  const location = useLocation();
+  const params = useParams();
+
+  // Get data from hooks (fallback if not provided as props)
+  const fightFromHook = useCurrentFight();
+  const { damageEvents } = useDamageEvents();
+  const { healingEvents } = useHealingEvents();
+  const { deathEvents } = useDeathEvents();
+
+  // Use props if provided, otherwise use data from hooks
+  const activeFight = fight || fightFromHook;
+  const activeEvents = useMemo(() => {
+    return (
+      events ||
+      (damageEvents && healingEvents && deathEvents
+        ? {
+            damage: damageEvents,
+            heal: healingEvents,
+            death: deathEvents,
+            resource: [], // We could add useResourceEvents if needed for timeline
+          }
+        : null)
+    );
+  }, [events, damageEvents, healingEvents, deathEvents]);
+
+  // Parse URL parameters for initial state
+  const urlParams = useMemo(() => {
+    if (!location?.search) {
+      return { actorId: undefined, timestamp: undefined };
+    }
+
+    const searchParams = new URLSearchParams(location.search);
+
+    const actorIdStr = searchParams.get('actorId');
+    const actorId = actorIdStr ? parseInt(actorIdStr, 10) : undefined;
+
+    const timestampStr = searchParams.get('time');
+    const timestamp = timestampStr ? parseInt(timestampStr, 10) : undefined;
+
+    return {
+      actorId,
+      timestamp,
+    };
+  }, [location?.search]);
+
   const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
+  const [currentTimestamp, setCurrentTimestamp] = useState(
+    urlParams.timestamp || (activeFight ? activeFight.startTime : 0),
+  );
   const [playbackSpeed, setPlaybackSpeed] = useState(1);
   const [speedIndex, setSpeedIndex] = useState(2); // Index for 1x speed
-  const [selectedActorId, setSelectedActorId] = useState<number | undefined>();
+  const [selectedActorId, setSelectedActorId] = useState<number | undefined>(urlParams.actorId);
   const [isActorPanelExpanded, setIsActorPanelExpanded] = useState(false);
-  const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
   const [showActorNames, setShowActorNames] = useState(true);
+  const [showShareSnackbar, setShowShareSnackbar] = useState(false);
+  const [hiddenActorIds, setHiddenActorIds] = useState<Set<number>>(new Set());
+  const [cameraLockedActorId, setCameraLockedActorId] = useState<number | undefined>();
 
-  // Use refs to avoid recreating animation loop on every currentTime change
-  const currentTimeRef = useRef(currentTime);
+  // Use refs to avoid recreating animation loop on every currentTimestamp change
+  const currentTimestampRef = useRef(currentTimestamp);
   const isPlayingRef = useRef(isPlaying);
   const playbackSpeedRef = useRef(playbackSpeed);
 
   // Keep refs in sync
   useEffect(() => {
-    currentTimeRef.current = currentTime;
-  }, [currentTime]);
+    currentTimestampRef.current = currentTimestamp;
+  }, [currentTimestamp]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
@@ -153,6 +190,23 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   useEffect(() => {
     playbackSpeedRef.current = playbackSpeed;
   }, [playbackSpeed]);
+
+  // Update currentTimestamp when activeFight changes to prevent invalid calculations
+  useEffect(() => {
+    if (activeFight) {
+      // If we have a URL timestamp and it's within the fight range, use it
+      if (
+        urlParams.timestamp &&
+        urlParams.timestamp >= activeFight.startTime &&
+        urlParams.timestamp <= activeFight.endTime
+      ) {
+        setCurrentTimestamp(urlParams.timestamp);
+      } else {
+        // Otherwise, start at the beginning of the fight
+        setCurrentTimestamp(activeFight.startTime);
+      }
+    }
+  }, [activeFight, urlParams.timestamp]);
 
   const [visibleEventTypes, setVisibleEventTypes] = useState({
     damage: true,
@@ -167,124 +221,184 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
   // Note: These are now loaded in the parent FightReplay component
 
   // Combine events into the format expected by useActorPositions
-  // Note: Events are now passed as props from parent component  // Throttle actor position updates to 60Hz for better performance (while keeping UI at 240Hz)
-  const throttledCurrentTime = useMemo(() => {
-    // Round to nearest ~16ms (60Hz) to reduce actor position recalculations
-    return Math.floor(currentTime / 16.67) * 16.67;
-  }, [currentTime]);
+  // Note: Events are now passed as props from parent component
+  // Throttle actor position updates to match UI refresh rate (60Hz)
+  const throttledCurrentTimestamp = useMemo(() => {
+    // Round to nearest ~16.67ms (60Hz) to match UI refresh rate
+    return Math.floor(currentTimestamp / RENDER_FRAME_INTERVAL) * RENDER_FRAME_INTERVAL;
+  }, [currentTimestamp]);
 
-  // Get actor positions for 3D visualization (now throttled to 60Hz)
-  const { actors, isLoading: isActorPositionsLoading } = useActorPositions({
-    fight,
-    events,
+  // Convert throttled timestamp to fight-relative time for the actor positions hook
+  const throttledCurrentTime = useMemo(() => {
+    return activeFight ? throttledCurrentTimestamp - activeFight.startTime : 0;
+  }, [throttledCurrentTimestamp, activeFight]);
+
+  // Get actor positions timeline
+  const { timeline, isActorPositionsLoading } = useActorPositionsTask();
+
+  // Extract actors at the current time from the timeline
+  const { actors } = useActorPositionsAtTime({
+    timeline,
     currentTime: throttledCurrentTime,
-    playersById,
-    actorsById: reportMasterData.actorsById,
   });
 
-  // Filter visible actors for 3D rendering
+  // Filter actors for 3D display (exclude hidden actors)
   const visibleActors = useMemo(() => {
     return actors.filter((actor) => !hiddenActorIds.has(actor.id));
   }, [actors, hiddenActorIds]);
 
-  // Function to toggle actor visibility
-  const toggleActorVisibility = useCallback((actorId: number) => {
-    setHiddenActorIds((prev) => {
-      const newSet = new Set(prev);
-      if (newSet.has(actorId)) {
-        newSet.delete(actorId);
-      } else {
-        newSet.add(actorId);
-      }
-      return newSet;
-    });
-  }, []);
+  // No filtering - display all actors who have positions at the current timestamp
+  // The useActorPositionsTask already filters to only include actors with positions
 
-  // Convert events to timeline format
   const timelineEvents = useMemo((): TimelineEvent[] => {
-    if (!events || !fight) return [];
+    if (!activeEvents || !activeFight) return [];
+
+    // Helper function to get actor name by ID
+    const getActorName = (actorId: number): string => {
+      // Check players first
+      const player = playersById?.[actorId];
+      if (player) {
+        return player.name || `Player ${actorId}`;
+      }
+
+      // Check actors (NPCs, bosses, etc.) using the proper utility
+      const actor = reportMasterData?.actorsById?.[actorId];
+
+      // Debug what data we have
+      if (!actor) {
+        return `Actor ${actorId}`;
+      }
+
+      const resolvedName = resolveActorName(actor, actorId, `Actor ${actorId}`);
+
+      return resolvedName;
+    };
 
     const convertedEvents: TimelineEvent[] = [];
 
     // Process damage events
-    events.damage?.forEach((event: DamageEvent) => {
+    activeEvents.damage?.forEach((event: DamageEvent) => {
+      const sourceName = getActorName(event.sourceID);
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'damage',
         event,
-        description: `${event.amount} damage`,
+        description: `${sourceName}: ${event.amount} damage`,
         severity: event.amount > 10000 ? 'high' : event.amount > 5000 ? 'medium' : 'low',
       });
     });
 
     // Process heal events
-    events.heal?.forEach((event: HealEvent) => {
+    activeEvents.heal?.forEach((event: HealEvent) => {
+      const sourceName = getActorName(event.sourceID);
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'heal',
         event,
-        description: `${event.amount} healing`,
+        description: `${sourceName}: ${event.amount} healing`,
         severity: event.amount > 10000 ? 'high' : event.amount > 5000 ? 'medium' : 'low',
       });
     });
 
     // Process death events
-    events.death?.forEach((event: DeathEvent) => {
+    activeEvents.death?.forEach((event: DeathEvent) => {
+      const targetName = getActorName(event.targetID);
       convertedEvents.push({
         timestamp: event.timestamp,
         type: 'death',
         event,
-        description: 'Player death',
+        description: `${targetName} died`,
         severity: 'critical',
       });
     });
 
     // Sort by timestamp
     return convertedEvents.sort((a, b) => a.timestamp - b.timestamp);
-  }, [events, fight]);
+  }, [activeEvents, activeFight, playersById, reportMasterData]);
 
-  // Filter events based on visibility settings and current time (throttled)
+  // Filter events based on visibility settings and current timestamp (throttled)
   const visibleEvents = useMemo(() => {
-    if (!fight) return [];
+    if (!activeFight) return [];
+
+    // Helper function to check if an event involves any hidden actors
+    const isEventFromHiddenActor = (event: LogEvent): boolean => {
+      const sourceId = 'sourceID' in event ? event.sourceID : null;
+      const targetId = 'targetID' in event ? event.targetID : null;
+
+      return (
+        (sourceId !== null && hiddenActorIds.has(sourceId)) ||
+        (targetId !== null && hiddenActorIds.has(targetId))
+      );
+    };
 
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
-        event.timestamp >= fight.startTime &&
-        event.timestamp <= fight.startTime + throttledCurrentTime,
+        event.timestamp >= activeFight.startTime &&
+        event.timestamp <= throttledCurrentTimestamp &&
+        !isEventFromHiddenActor(event.event),
     );
-  }, [timelineEvents, visibleEventTypes, throttledCurrentTime, fight]);
+  }, [timelineEvents, visibleEventTypes, throttledCurrentTimestamp, activeFight, hiddenActorIds]);
 
-  const currentTimestamp = !fight ? 1000 : Math.ceil(fight.startTime + throttledCurrentTime);
-  const eventStartTimestamp = Math.floor(currentTimestamp - 1000);
+  const eventStartTimestamp = Math.floor(throttledCurrentTimestamp - 5000); // Show events from previous 5 seconds
 
-  // Current events happening now (within a small time window) - also throttled
+  // Current events happening in the last 5 seconds - also throttled
   const currentEvents = useMemo(() => {
+    // Helper function to check if an actor is involved in an event (as source or target)
+    const isActorInvolved = (event: LogEvent, actorId: number): boolean => {
+      return (
+        ('sourceID' in event && event.sourceID === actorId) ||
+        ('targetID' in event && event.targetID === actorId)
+      );
+    };
+
+    // Helper function to check if an event involves any hidden actors
+    const isEventFromHiddenActor = (event: LogEvent): boolean => {
+      const sourceId = 'sourceID' in event ? event.sourceID : null;
+      const targetId = 'targetID' in event ? event.targetID : null;
+
+      return (
+        (sourceId !== null && hiddenActorIds.has(sourceId)) ||
+        (targetId !== null && hiddenActorIds.has(targetId))
+      );
+    };
+
     return timelineEvents.filter(
       (event) =>
         visibleEventTypes[event.type] &&
         event.timestamp >= eventStartTimestamp &&
-        event.timestamp <= currentTimestamp,
+        event.timestamp <= currentTimestamp &&
+        !isEventFromHiddenActor(event.event) &&
+        // Show events where the selected actor is either the source OR target
+        (selectedActorId === undefined || isActorInvolved(event.event, selectedActorId)),
     );
-  }, [timelineEvents, visibleEventTypes, currentTimestamp, eventStartTimestamp]);
+  }, [
+    timelineEvents,
+    visibleEventTypes,
+    currentTimestamp,
+    eventStartTimestamp,
+    selectedActorId,
+    hiddenActorIds,
+  ]);
 
-  const fightDuration = fight ? fight.endTime - fight.startTime : 0;
+  const fightDuration = activeFight ? activeFight.endTime - activeFight.startTime : 0;
+  const fightEndTimestamp = activeFight ? activeFight.endTime : 0; // Absolute timestamp for fight end
 
-  // Playback control - 240Hz rendering with requestAnimationFrame (optimized)
+  // Playback control - 60Hz rendering with requestAnimationFrame (optimized)
   useEffect(() => {
     let animationFrame: number | null = null;
     let lastTime = performance.now();
 
     const animate = (currentPerformanceTime: number): void => {
       // Use refs to avoid dependency issues and recreating animation loop
-      if (isPlayingRef.current && currentTimeRef.current < fightDuration) {
+      if (isPlayingRef.current && currentTimestampRef.current < fightEndTimestamp) {
         const deltaTime = currentPerformanceTime - lastTime;
 
-        // Update at ~240Hz (4.17ms intervals), accounting for playback speed
+        // Update at ~60Hz (16.67ms intervals), accounting for playback speed
         if (deltaTime >= RENDER_FRAME_INTERVAL) {
-          setCurrentTime((prev) => {
+          setCurrentTimestamp((prev) => {
             const next = prev + deltaTime * playbackSpeedRef.current;
-            return next >= fightDuration ? fightDuration : next;
+            return next >= fightEndTimestamp ? fightEndTimestamp : next;
           });
           lastTime = currentPerformanceTime;
         }
@@ -294,7 +408,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     };
 
     // Start animation when playing
-    if (isPlaying && currentTimeRef.current < fightDuration) {
+    if (isPlaying && currentTimestampRef.current < fightEndTimestamp) {
       lastTime = performance.now(); // Reset timer when starting
       animationFrame = requestAnimationFrame(animate);
     }
@@ -302,14 +416,14 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     return () => {
       if (animationFrame) cancelAnimationFrame(animationFrame);
     };
-  }, [isPlaying, fightDuration]); // Include isPlaying to restart loop when play state changes
+  }, [isPlaying, fightEndTimestamp]); // Include isPlaying to restart loop when play state changes
 
   // Auto-pause at end
   useEffect(() => {
-    if (currentTime >= fightDuration) {
+    if (currentTimestamp >= fightEndTimestamp) {
       setIsPlaying(false);
     }
-  }, [currentTime, fightDuration]);
+  }, [currentTimestamp, fightEndTimestamp]);
 
   const handlePlayPause = useCallback(() => {
     setIsPlaying((prev) => !prev);
@@ -321,15 +435,22 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     setPlaybackSpeed(PLAYBACK_SPEEDS[nextIndex]);
   }, [speedIndex]);
 
-  const handleTimeChange = useCallback((_: Event, value: number | number[]) => {
-    const newTime = Array.isArray(value) ? value[0] : value;
-    setCurrentTime(newTime);
-  }, []);
+  const handleTimeChange = useCallback(
+    (_: Event, value: number | number[]) => {
+      const newTime = Array.isArray(value) ? value[0] : value;
+      // Slider uses fight-relative time for UI, convert to absolute timestamp for internal state
+      const newTimestamp = activeFight ? activeFight.startTime + newTime : newTime;
+      setCurrentTimestamp(newTimestamp);
+    },
+    [activeFight],
+  );
 
   const handleRestart = useCallback(() => {
-    setCurrentTime(0);
+    // Reset to fight start using absolute timestamp
+    const startTimestamp = activeFight ? activeFight.startTime : 0;
+    setCurrentTimestamp(startTimestamp);
     setIsPlaying(false);
-  }, []);
+  }, [activeFight]);
 
   const toggleEventType = useCallback((eventType: keyof typeof visibleEventTypes) => {
     setVisibleEventTypes((prev) => ({
@@ -344,6 +465,102 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
     },
     [selectedActorId],
   );
+
+  const handleToggleActorVisibility = useCallback((actorId: number) => {
+    setHiddenActorIds((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(actorId)) {
+        newSet.delete(actorId);
+      } else {
+        newSet.add(actorId);
+      }
+      return newSet;
+    });
+  }, []);
+
+  const handleToggleCameraLock = useCallback((actorId: number) => {
+    setCameraLockedActorId((prev) => (prev === actorId ? undefined : actorId));
+  }, []);
+
+  const handleShareUrl = useCallback(async () => {
+    if (!activeFight || !params.reportId || !params.fightId) return;
+
+    // Build the shareable URL using React Router params with hash routing and /replay slug
+    const baseUrl = `${window.location.origin}/#/report/${params.reportId}/fight/${params.fightId}/replay`;
+    const searchParams = new URLSearchParams(location.search);
+
+    // Add/update the time and actor parameters using absolute timestamps
+    if (selectedActorId !== undefined) {
+      searchParams.set('actorId', selectedActorId.toString());
+    } else {
+      searchParams.delete('actorId');
+    }
+
+    // Store absolute timestamp in URL for deep linking
+    if (currentTimestamp >= 0) {
+      searchParams.set('time', Math.round(currentTimestamp).toString());
+    } else {
+      searchParams.delete('time');
+    }
+
+    // Build the final URL
+    const shareUrl = `${baseUrl}${searchParams.toString() ? `?${searchParams.toString()}` : ''}`;
+
+    try {
+      // Try to use the Web Share API if available
+      if (navigator.share) {
+        const fightTime = activeFight ? currentTimestamp - activeFight.startTime : 0;
+        await navigator.share({
+          title: 'ESO Fight Replay',
+          text: `Fight replay at ${formatDuration(fightTime)}`,
+          url: shareUrl,
+        });
+        return; // Success, no need for snackbar
+      }
+
+      // Check if clipboard API is available and we're in a secure context
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(shareUrl);
+        setShowShareSnackbar(true);
+      } else {
+        // Fallback for non-secure contexts or unsupported browsers
+        // Create a temporary input element and use the legacy approach
+        const textArea = document.createElement('textarea');
+        textArea.value = shareUrl;
+        textArea.style.position = 'fixed';
+        textArea.style.left = '-9999px';
+        textArea.style.top = '-9999px';
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          // Try the modern approach first
+          await navigator.clipboard.writeText(shareUrl);
+          setShowShareSnackbar(true);
+        } catch {
+          // Last resort - let user manually copy
+          textArea.style.position = 'static';
+          textArea.style.left = 'auto';
+          textArea.style.top = 'auto';
+          textArea.select();
+          setShowShareSnackbar(true);
+        }
+
+        document.body.removeChild(textArea);
+      }
+    } catch (error) {
+      // Show the URL in an alert as a final fallback
+      alert(`Please copy this URL manually: ${shareUrl}`);
+    }
+  }, [
+    activeFight,
+    params.reportId,
+    params.fightId,
+    selectedActorId,
+    currentTimestamp,
+    location.search,
+  ]);
 
   const getEventColor = (event: TimelineEvent): string => {
     switch (event.type) {
@@ -394,11 +611,17 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
       >
         {/* Header */}
         <Typography variant="h4" gutterBottom data-testid="fight-replay-title">
-          {fight.name} - Interactive Replay
+          {activeFight?.name} - Interactive Replay
         </Typography>
 
         <Typography variant="body1" color="text.secondary" gutterBottom>
-          Duration: {formatDuration(fightDuration)} | Boss: {fight.bossPercentage?.toFixed(1)}%
+          Duration: {activeFight ? formatDuration(fightDuration) : 'Loading...'} | Boss:{' '}
+          {activeFight?.bossPercentage?.toFixed(1) ?? '0.0'}%
+        </Typography>
+
+        <Typography variant="body2" color="text.secondary" gutterBottom>
+          Fight Time: {activeFight ? formatTimestamp(activeFight.startTime) : 'Loading...'} -{' '}
+          {activeFight ? formatTimestamp(activeFight.endTime) : 'Loading...'}
         </Typography>
 
         <Stack spacing={3}>
@@ -408,32 +631,71 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
               Timeline Controls
             </Typography>
 
-            {/* Time slider */}
+            {/* Time slider - uses fight-relative time for UI but maintains absolute timestamps internally */}
             <Box sx={{ px: 2, py: 1 }}>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Current Time: {activeFight ? formatTimestamp(currentTimestamp) : 'Loading...'}{' '}
+                (Absolute)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Fight Progress:{' '}
+                {activeFight && fightDuration > 0
+                  ? formatDuration(Math.max(0, currentTimestamp - activeFight.startTime))
+                  : '0:00'}{' '}
+                / {activeFight ? formatDuration(fightDuration) : '0:00'}
+              </Typography>
               <Slider
-                value={currentTime}
+                value={
+                  activeFight && fightDuration > 0
+                    ? Math.max(0, currentTimestamp - activeFight.startTime)
+                    : 0
+                }
                 min={0}
-                max={fightDuration}
+                max={Math.max(1, fightDuration)} // Prevent max=0 which breaks slider
                 step={100}
                 onChange={handleTimeChange}
                 valueLabelDisplay="auto"
                 valueLabelFormat={(value: number) => formatDuration(value)}
                 sx={{ mb: 2 }}
+                disabled={!activeFight || fightDuration <= 0}
               />
 
-              {/* Progress indicator */}
+              {/* Progress indicator - shows fight progress while maintaining absolute timestamps */}
               <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
                 <Typography variant="body2">
-                  {formatDuration(currentTime)} / {formatDuration(fightDuration)}
+                  Progress:{' '}
+                  {activeFight && fightDuration > 0
+                    ? formatDuration(Math.max(0, currentTimestamp - activeFight.startTime))
+                    : '0:00'}{' '}
+                  / {activeFight ? formatDuration(fightDuration) : '0:00'}
                 </Typography>
                 <Typography variant="body2">
-                  {((currentTime / fightDuration) * 100).toFixed(1)}%
+                  {activeFight && fightDuration > 0
+                    ? Math.max(
+                        0,
+                        Math.min(
+                          100,
+                          ((currentTimestamp - activeFight.startTime) / fightDuration) * 100,
+                        ),
+                      ).toFixed(1)
+                    : '0.0'}
+                  % Complete
                 </Typography>
               </Box>
 
               <LinearProgress
                 variant="determinate"
-                value={(currentTime / fightDuration) * 100}
+                value={
+                  activeFight && fightDuration > 0
+                    ? Math.max(
+                        0,
+                        Math.min(
+                          100,
+                          ((currentTimestamp - activeFight.startTime) / fightDuration) * 100,
+                        ),
+                      )
+                    : 0
+                }
                 sx={{ height: 8, borderRadius: 4 }}
               />
             </Box>
@@ -472,6 +734,12 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                   </Typography>
                 </IconButton>
               </Tooltip>
+
+              <Tooltip title="Share current time URL">
+                <IconButton onClick={handleShareUrl} color="secondary">
+                  <Share />
+                </IconButton>
+              </Tooltip>
             </Box>
           </Paper>
 
@@ -485,11 +753,47 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
               <CombatArena
                 actors={visibleActors}
                 selectedActorId={selectedActorId}
+                cameraLockedActorId={cameraLockedActorId}
                 onActorClick={handleActorClick}
                 arenaSize={13}
                 mapFile={fight?.maps?.[0]?.file || undefined}
                 showActorNames={showActorNames}
               />
+
+              {/* Camera Lock Indicator */}
+              {cameraLockedActorId && (
+                <Box
+                  sx={(theme) => ({
+                    position: 'absolute',
+                    top: 8,
+                    right: 8,
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.95)'
+                        : 'rgba(255, 255, 255, 0.95)',
+                    backdropFilter: 'blur(10px)',
+                    WebkitBackdropFilter: 'blur(10px)',
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: theme.palette.primary.main,
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 12px rgba(0, 0, 0, 0.3), 0 0 20px rgba(56, 189, 248, 0.1)'
+                        : '0 2px 8px rgba(0, 0, 0, 0.15)',
+                    px: 1.5,
+                    py: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1,
+                  })}
+                >
+                  <CenterFocusStrong color="primary" fontSize="small" />
+                  <Typography variant="caption" color="primary.main" fontWeight="medium">
+                    Camera Locked:{' '}
+                    {actors.find((a) => a.id === cameraLockedActorId)?.name || 'Unknown'}
+                  </Typography>
+                </Box>
+              )}
 
               {/* Floating Actor Cards Overlay */}
               <Box
@@ -537,7 +841,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                     fontWeight="bold"
                     sx={{ color: 'text.primary', userSelect: 'none' }}
                   >
-                    Actors ({visibleActors.length}/{actors.length})
+                    Actors ({actors.length})
                   </Typography>
                   <IconButton
                     size="small"
@@ -557,7 +861,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                     sx={(theme) => ({
                       px: 1.5,
                       pb: 1.5,
-                      maxHeight: 'calc(100vh - 120px)',
+                      maxHeight: 'calc(560px - 100px)', // Match 3D view height (600px) minus header/padding
                       overflowY: 'auto',
                       // Custom scrollbar styling
                       '&::-webkit-scrollbar': {
@@ -602,130 +906,18 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                     </Box>
 
                     <Stack spacing={1}>
-                      {actors.map((actor) => {
-                        const esoX = Math.round(actor.position[0] * 1000 + 5235);
-                        const esoY = Math.round(actor.position[2] * 1000 + 5410);
-
-                        return (
-                          <Card
-                            key={actor.id}
-                            variant="outlined"
-                            sx={(theme) => ({
-                              cursor: 'pointer',
-                              transition: 'all 0.2s ease-in-out',
-                              border: actor.id === selectedActorId ? '2px solid' : '1px solid',
-                              borderColor:
-                                actor.id === selectedActorId
-                                  ? theme.palette.primary.main
-                                  : theme.palette.divider,
-                              backgroundColor:
-                                actor.id === selectedActorId
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(56, 189, 248, 0.15)'
-                                    : 'rgba(25, 118, 210, 0.08)'
-                                  : 'transparent',
-                              opacity: hiddenActorIds.has(actor.id) ? 0.6 : 1,
-                              '&:hover': {
-                                boxShadow:
-                                  theme.palette.mode === 'dark'
-                                    ? '0 4px 12px rgba(0, 0, 0, 0.25)'
-                                    : '0 2px 8px rgba(15, 23, 42, 0.1)',
-                                borderColor: theme.palette.primary.main,
-                                transform: 'translateY(-1px)',
-                                opacity: hiddenActorIds.has(actor.id) ? 0.8 : 1,
-                              },
-                            })}
-                            onClick={() => handleActorClick(actor.id)}
-                          >
-                            <CardContent sx={{ p: 1.5, '&:last-child': { pb: 1.5 } }}>
-                              <Box
-                                display="flex"
-                                alignItems="center"
-                                justifyContent="space-between"
-                                mb={0.5}
-                              >
-                                <Typography
-                                  variant="body2"
-                                  fontWeight="medium"
-                                  noWrap
-                                  sx={{
-                                    flex: 1,
-                                    mr: 1,
-                                    opacity: hiddenActorIds.has(actor.id) ? 0.5 : 1,
-                                    textDecoration: hiddenActorIds.has(actor.id)
-                                      ? 'line-through'
-                                      : 'none',
-                                  }}
-                                >
-                                  {actor.name}
-                                </Typography>
-                                <Box display="flex" gap={0.5} alignItems="center">
-                                  <Tooltip
-                                    title={
-                                      hiddenActorIds.has(actor.id)
-                                        ? 'Show actor in 3D view'
-                                        : 'Hide actor from 3D view'
-                                    }
-                                    placement="top"
-                                  >
-                                    <IconButton
-                                      size="small"
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        toggleActorVisibility(actor.id);
-                                      }}
-                                      sx={{
-                                        p: 0.25,
-                                        minWidth: 'auto',
-                                        color: hiddenActorIds.has(actor.id)
-                                          ? 'text.disabled'
-                                          : 'text.secondary',
-                                        '& .MuiSvgIcon-root': {
-                                          fontSize: '1rem',
-                                        },
-                                        '&:hover': {
-                                          color: hiddenActorIds.has(actor.id)
-                                            ? 'text.secondary'
-                                            : 'primary.main',
-                                        },
-                                      }}
-                                    >
-                                      {hiddenActorIds.has(actor.id) ? (
-                                        <VisibilityOff />
-                                      ) : (
-                                        <Visibility />
-                                      )}
-                                    </IconButton>
-                                  </Tooltip>
-                                  <Tooltip title={`Type: ${actor.type}`}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                      {getActorTypeIcon(actor.type)}
-                                    </Box>
-                                  </Tooltip>
-                                  <Tooltip title={actor.isAlive ? 'Alive' : 'Dead'}>
-                                    <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                                      {getStatusIcon(actor.isAlive)}
-                                    </Box>
-                                  </Tooltip>
-                                </Box>
-                              </Box>
-
-                              <Box
-                                display="flex"
-                                justifyContent="space-between"
-                                alignItems="center"
-                              >
-                                <Typography variant="caption" color="text.secondary">
-                                  ({actor.position[0].toFixed(1)}, {actor.position[2].toFixed(1)})
-                                </Typography>
-                                <Typography variant="caption" color="text.secondary">
-                                  ESO: ({esoX}, {esoY})
-                                </Typography>
-                              </Box>
-                            </CardContent>
-                          </Card>
-                        );
-                      })}
+                      {actors.map((actor) => (
+                        <ActorCard
+                          key={actor.id}
+                          actor={actor}
+                          isSelected={actor.id === selectedActorId}
+                          isHidden={hiddenActorIds.has(actor.id)}
+                          isCameraLocked={cameraLockedActorId === actor.id}
+                          onActorClick={handleActorClick}
+                          onToggleVisibility={handleToggleActorVisibility}
+                          onToggleCameraLock={handleToggleCameraLock}
+                        />
+                      ))}
 
                       {actors.length === 0 && (
                         <Card variant="outlined">
@@ -757,7 +949,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                       key={type}
                       label={type.charAt(0).toUpperCase() + type.slice(1)}
                       color={visible ? 'primary' : 'default'}
-                      variant={visible ? 'filled' : 'outlined'}
+                      variant="outlined"
                       onClick={() => toggleEventType(type as keyof typeof visibleEventTypes)}
                       icon={<Visibility />}
                       sx={{
@@ -829,7 +1021,7 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
                         />
                         <ListItemText
                           primary={event.description}
-                          secondary={`${formatDuration(event.timestamp - fight.startTime)}`}
+                          secondary={`${formatDuration(event.timestamp - (activeFight?.startTime || 0))}`}
                         />
                       </ListItem>
                     ))}
@@ -885,6 +1077,22 @@ export const FightReplayView: React.FC<FightReplayViewProps> = ({
           </Paper>
         </Stack>
       </Box>
+
+      {/* Share URL Success Snackbar */}
+      <Snackbar
+        open={showShareSnackbar}
+        autoHideDuration={3000}
+        onClose={() => setShowShareSnackbar(false)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert
+          onClose={() => setShowShareSnackbar(false)}
+          severity="success"
+          sx={{ width: '100%' }}
+        >
+          Shareable URL copied to clipboard!
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };
