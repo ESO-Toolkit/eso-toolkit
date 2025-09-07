@@ -137,7 +137,7 @@ jobs:
         run: |
           echo "Cache hit: ${{ steps.playwright-cache.outputs.cache-hit }}"
           echo "Cache key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}"
-          
+
           # Check if cache directory exists and show contents
           if [ -d ~/.cache/ms-playwright ]; then
             echo "✅ Playwright cache directory exists"
@@ -163,7 +163,7 @@ jobs:
         run: |
           echo "🔍 Verifying Playwright installation..."
           npx playwright --version
-          
+
           # Verify browsers are available
           if [ -d ~/.cache/ms-playwright ]; then
             echo "✅ Browser cache directory exists"
