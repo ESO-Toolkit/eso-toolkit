@@ -8,7 +8,6 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
-import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
@@ -106,8 +105,6 @@ const App: React.FC = () => {
                   <LazyModernFeedbackFab />
                 </Suspense>
               )}
-              {/* Add logger debug button for development and debugging */}
-              <LoggerDebugButton position={{ bottom: 80, right: 16 }} developmentOnly={true} />
             </AuthProvider>
           </EsoLogsClientProvider>
         </PersistGate>
