@@ -2,10 +2,35 @@
 // This file can be easily mocked in tests
 
 /**
- * Get the base URL set by Vite's build configuration
+ * Get the base URL from Vite configuration
+ * If BASE_URL is already a full URL (includes origin), return it as-is
+ * If BASE_URL is just a path, combine it with current origin
  */
 export const getBaseUrl = (): string => {
-  return import.meta.env.BASE_URL;
+  // Get the base URL from Vite configuration
+  const baseUrl = import.meta.env.BASE_URL || '/';
+
+  // If BASE_URL is already a full URL (starts with http/https), return it as-is
+  if (baseUrl.startsWith('http://') || baseUrl.startsWith('https://')) {
+    return baseUrl.endsWith('/') ? baseUrl : baseUrl + '/';
+  }
+
+  // Otherwise, it's a relative path, so we need to combine with origin
+  let normalizedPath = baseUrl;
+  if (!normalizedPath.startsWith('/')) {
+    normalizedPath = '/' + normalizedPath;
+  }
+  if (!normalizedPath.endsWith('/')) {
+    normalizedPath = normalizedPath + '/';
+  }
+
+  // If we're in SSR context (no window), return just the path
+  if (typeof window === 'undefined') {
+    return normalizedPath;
+  }
+
+  // Combine origin with the path
+  return window.location.origin + normalizedPath;
 };
 
 /**

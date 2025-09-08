@@ -17,7 +17,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: process.env.VITE_BASE_URL,
+    base: process.env.VITE_BASE_URL || '/',
     plugins: [
       svgr({
         svgrOptions: {
