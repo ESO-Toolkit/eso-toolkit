@@ -558,73 +558,75 @@ const ParticleContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const FloatingParticle = styled(Box)<{ 
-  delay?: number; 
-  duration?: number; 
-  x?: string; 
+const FloatingParticle = styled(Box)<{
+  delay?: number;
+  duration?: number;
+  x?: string;
   y?: string;
   size?: string;
   color?: string;
-}>(({ delay = 0, duration = 12, x = '50%', y = '50%', size = '4px', color = '#3b82f6', theme }) => ({
-  position: 'absolute',
-  left: x,
-  top: y,
-  width: size,
-  height: size,
-  borderRadius: '50%',
-  background: `radial-gradient(circle, ${color}60, ${color}30, transparent)`,
-  boxShadow: `0 0 ${parseInt(size) * 3}px ${color}40`,
-  animation: `floatParticle-${delay % 3} ${duration}s ease-in-out ${delay}s infinite`,
-  opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
-  '@keyframes floatParticle-0': {
-    '0%': {
-      transform: 'translate(0, 0) scale(0.5)',
-      opacity: 0,
+}>(
+  ({ delay = 0, duration = 12, x = '50%', y = '50%', size = '4px', color = '#3b82f6', theme }) => ({
+    position: 'absolute',
+    left: x,
+    top: y,
+    width: size,
+    height: size,
+    borderRadius: '50%',
+    background: `radial-gradient(circle, ${color}60, ${color}30, transparent)`,
+    boxShadow: `0 0 ${parseInt(size) * 3}px ${color}40`,
+    animation: `floatParticle-${delay % 3} ${duration}s ease-in-out ${delay}s infinite`,
+    opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+    '@keyframes floatParticle-0': {
+      '0%': {
+        transform: 'translate(0, 0) scale(0.5)',
+        opacity: 0,
+      },
+      '10%': {
+        opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+      },
+      '90%': {
+        opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+      },
+      '100%': {
+        transform: 'translate(40px, -120px) scale(1.5)',
+        opacity: 0,
+      },
     },
-    '10%': {
-      opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+    '@keyframes floatParticle-1': {
+      '0%': {
+        transform: 'translate(0, 0) scale(0.8)',
+        opacity: 0,
+      },
+      '15%': {
+        opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
+      },
+      '85%': {
+        opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
+      },
+      '100%': {
+        transform: 'translate(-30px, -100px) scale(1.2)',
+        opacity: 0,
+      },
     },
-    '90%': {
-      opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+    '@keyframes floatParticle-2': {
+      '0%': {
+        transform: 'translate(0, 0) scale(0.6)',
+        opacity: 0,
+      },
+      '12%': {
+        opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
+      },
+      '88%': {
+        opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
+      },
+      '100%': {
+        transform: 'translate(25px, -110px) scale(1)',
+        opacity: 0,
+      },
     },
-    '100%': {
-      transform: 'translate(40px, -120px) scale(1.5)',
-      opacity: 0,
-    },
-  },
-  '@keyframes floatParticle-1': {
-    '0%': {
-      transform: 'translate(0, 0) scale(0.8)',
-      opacity: 0,
-    },
-    '15%': {
-      opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
-    },
-    '85%': {
-      opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
-    },
-    '100%': {
-      transform: 'translate(-30px, -100px) scale(1.2)',
-      opacity: 0,
-    },
-  },
-  '@keyframes floatParticle-2': {
-    '0%': {
-      transform: 'translate(0, 0) scale(0.6)',
-      opacity: 0,
-    },
-    '12%': {
-      opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
-    },
-    '88%': {
-      opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
-    },
-    '100%': {
-      transform: 'translate(25px, -110px) scale(1)',
-      opacity: 0,
-    },
-  },
-}));
+  }),
+);
 
 const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
   ({ delay = 0, x = '20%', y = '20%', theme }) => ({
@@ -640,9 +642,10 @@ const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
       position: 'absolute',
       fontSize: '32px',
       color: theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6',
-      textShadow: theme.palette.mode === 'dark' 
-        ? '0 0 12px #60a5fa50, 0 0 24px #3b82f630'
-        : '0 0 6px #3b82f640',
+      textShadow:
+        theme.palette.mode === 'dark'
+          ? '0 0 12px #60a5fa50, 0 0 24px #3b82f630'
+          : '0 0 6px #3b82f640',
       transform: 'rotate(0deg)',
     },
     '@keyframes runeGlow': {
@@ -748,13 +751,13 @@ export const LandingPage: React.FC = () => {
           <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
           <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
           <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
-          
+
           {/* Second layer of particles */}
           <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
           <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
           <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
           <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
-          
+
           {/* ESO runes for magical atmosphere */}
           <ESORune delay={0} x="18%" y="25%" />
           <ESORune delay={3} x="82%" y="30%" />
