@@ -36,7 +36,6 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightsLoading,
   reportId,
   fightId,
-  tabId,
 }) => {
   const navigate = useNavigate();
   const theme = useTheme();
@@ -384,7 +383,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
       </Box>
 
       {fight ? (
-        <FightDetails fight={fight} reportId={reportId} fightId={fightId} tabId={tabId} />
+        <FightDetails />
       ) : (
         <Box sx={{ mt: 2, minHeight: '600px' }}>
           <Box display="flex" justifyContent="center" alignItems="center" height="300px">

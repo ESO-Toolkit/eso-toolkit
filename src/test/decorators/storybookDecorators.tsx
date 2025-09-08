@@ -13,6 +13,8 @@ import { storybookDarkTheme } from '../themes/storybookThemes';
 import { createMockStore } from '../utils/createMockStore';
 import { MockData } from '../utils/mockDataSets';
 
+import { TabId } from '@/utils/getSkeletonForTab';
+
 // Mock data provider component
 const MockDataProvider: React.FC<{ children: React.ReactNode; mockData: MockData }> = ({
   children,
@@ -69,6 +71,14 @@ const MockReportFightProvider: React.FC<{
       reportId,
       fightId,
       tabId: null, // Mock doesn't have a specific tab
+      selectedTabId: TabId.INSIGHTS, // Default to 'overview' tab
+      showExperimentalTabs: false,
+      setSelectedTab: () => {
+        // No-op for mock
+      },
+      setShowExperimentalTabs: () => {
+        // No-op for mock
+      },
     }),
     [reportId, fightId],
   );
