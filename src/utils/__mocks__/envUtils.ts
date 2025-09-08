@@ -1,11 +1,11 @@
 // Mock for envUtils.ts to handle import.meta in Jest environment
 
 /**
- * Get the base URL set by Vite's build configuration
- * Mocked to return '/' for tests
+ * Get the base URL from Vite configuration
+ * Mocked to return a full URL for tests (simulating production behavior)
  */
 export const getBaseUrl = (): string => {
-  return '/';
+  return 'https://example.com/eso-log-aggregator/';
 };
 
 /**
