@@ -1,139 +1,37 @@
 import React from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
 
-import { FightFragment } from '../../graphql/generated';
-import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
+import { useCurrentFight } from '../../hooks';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { FightDetailsView } from './FightDetailsView';
 
-interface FightDetailsProps {
-  fight: FightFragment;
-  reportId: string | undefined;
-  fightId: string | undefined;
-  tabId: string | undefined;
-}
+export const FightDetails: React.FC = () => {
+  const { selectedTabId, showExperimentalTabs, setSelectedTab } = useSelectedReportAndFight();
+  const fight = useCurrentFight();
 
-export const FightDetails: React.FC<FightDetailsProps> = ({ fight, reportId, fightId, tabId }) => {
-  const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-
-  // Get experimental tab setting from search params (this stays as a search param)
-  const showExperimentalTabs = searchParams.get('experimental') === 'true';
-
-  // Convert URL param to valid tab ID (handle both old numeric and new string formats)
-  const getValidTabId = (param: string | null | undefined, experimental: boolean): TabId => {
-    if (!param) return TAB_IDS.INSIGHTS;
-
-    // Define experimental tabs array
-    const experimentalTabs: TabId[] = [
-      TAB_IDS.LOCATION_HEATMAP,
-      TAB_IDS.RAW_EVENTS,
-      TAB_IDS.TARGET_EVENTS,
-      TAB_IDS.DIAGNOSTICS,
-      TAB_IDS.ACTORS,
-      TAB_IDS.TALENTS,
-      TAB_IDS.ROTATION_ANALYSIS,
-      TAB_IDS.AURAS_OVERVIEW,
-      TAB_IDS.BUFFS_OVERVIEW,
-      TAB_IDS.DEBUFFS_OVERVIEW,
-    ];
-
-    // Handle legacy numeric params
-    if (/^\d+$/.test(param)) {
-      const numericId = parseInt(param, 10);
-      const legacyMapping: Record<number, TabId> = {
-        0: TAB_IDS.INSIGHTS,
-        1: TAB_IDS.PLAYERS,
-        2: TAB_IDS.DAMAGE_DONE,
-        3: TAB_IDS.HEALING_DONE,
-        4: TAB_IDS.DEATHS,
-        5: TAB_IDS.CRITICAL_DAMAGE,
-        6: TAB_IDS.PENETRATION,
-        7: TAB_IDS.DAMAGE_REDUCTION,
-        8: TAB_IDS.LOCATION_HEATMAP,
-        9: TAB_IDS.RAW_EVENTS,
-        10: TAB_IDS.TARGET_EVENTS,
-        11: TAB_IDS.DIAGNOSTICS,
-        12: TAB_IDS.ACTORS,
-        13: TAB_IDS.TALENTS,
-        14: TAB_IDS.ROTATION_ANALYSIS,
-        15: TAB_IDS.AURAS_OVERVIEW,
-        16: TAB_IDS.BUFFS_OVERVIEW,
-        17: TAB_IDS.DEBUFFS_OVERVIEW,
-      };
-      const mappedTab = legacyMapping[numericId];
-      if (mappedTab) {
-        // Check if experimental tab is allowed
-        if (experimentalTabs.includes(mappedTab) && !experimental) {
-          return TAB_IDS.INSIGHTS;
-        }
-        return mappedTab;
-      }
-    }
-
-    // Handle string tab IDs
-    const allValidTabs = Object.values(TAB_IDS);
-    if (allValidTabs.includes(param as TabId)) {
-      const tabId = param as TabId;
-      // Check if experimental tab is allowed
-      if (experimentalTabs.includes(tabId) && !experimental) {
-        return TAB_IDS.INSIGHTS;
-      }
-      return tabId;
-    }
-
-    return TAB_IDS.INSIGHTS;
-  };
-
-  const validSelectedTab = getValidTabId(tabId, showExperimentalTabs);
-
-  const navigateToTab = React.useCallback(
-    (tabId: TabId) => {
-      if (!reportId || !fightId) return;
-
-      // Preserve experimental search param if it exists
-      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
-      navigate(`/report/${reportId}/fight/${fightId}/${tabId}${experimentalParam}`);
-    },
-    [navigate, reportId, fightId, showExperimentalTabs],
-  );
-
-  // Redirect to default tab if no tabId is provided
-  React.useEffect(() => {
-    if (!tabId && reportId && fightId) {
-      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
-      navigate(`/report/${reportId}/fight/${fightId}/${TAB_IDS.INSIGHTS}${experimentalParam}`, {
-        replace: true,
-      });
-    }
-  }, [tabId, reportId, fightId, showExperimentalTabs, navigate]);
-
-  // Handle experimental tabs toggle - if user is on experimental tab and turns off toggle, go to first tab
-  React.useEffect(() => {
-    if (!showExperimentalTabs) {
-      const experimentalTabs: TabId[] = [
-        TAB_IDS.LOCATION_HEATMAP,
-        TAB_IDS.RAW_EVENTS,
-        TAB_IDS.TARGET_EVENTS,
-        TAB_IDS.DIAGNOSTICS,
-        TAB_IDS.ACTORS,
-        TAB_IDS.TALENTS,
-        TAB_IDS.ROTATION_ANALYSIS,
-        TAB_IDS.AURAS_OVERVIEW,
-        TAB_IDS.BUFFS_OVERVIEW,
-        TAB_IDS.DEBUFFS_OVERVIEW,
-      ];
-      if (experimentalTabs.includes(validSelectedTab)) {
-        navigateToTab(TAB_IDS.INSIGHTS);
-      }
-    }
-  }, [showExperimentalTabs, validSelectedTab, navigateToTab]);
+  // Show "Fight not found" if fight is undefined
+  if (!fight) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '200px',
+          fontSize: '18px',
+          color: '#666',
+        }}
+      >
+        Fight not found
+      </div>
+    );
+  }
 
   return (
     <FightDetailsView
-      selectedTabId={validSelectedTab}
+      selectedTabId={selectedTabId}
       fight={fight}
-      onTabChange={navigateToTab}
+      onTabChange={setSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
       isLoading={false}
     />

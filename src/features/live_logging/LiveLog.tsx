@@ -1,28 +1,35 @@
 import { Typography } from '@mui/material';
 import React from 'react';
 import { useDispatch } from 'react-redux';
+import { useParams } from 'react-router-dom';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/generated';
-import { useReportFightParams } from '../../hooks';
 import { ReportFightContext } from '../../ReportFightContext';
+import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
 
-import { setReportData } from '@/store/report/reportSlice';
+import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
 
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 
 export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
-  const { reportId, fightId } = useReportFightParams();
+  const { reportId, fightId } = useParams();
   const client = useEsoLogsClientInstance();
   const dispatch = useDispatch();
 
   // Initialize to the fight id from the url
   const [latestFightId, setFightId] = React.useState<string | null | undefined>(fightId);
 
+  // Local state for tab selection and experimental flag (not URL-driven for live log)
+  const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TAB_IDS.INSIGHTS);
+  const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
+
   const fetchLatestFightId = React.useCallback(async (): Promise<void> => {
     if (!reportId) {
       return;
     }
+
+    dispatch(setReportId(reportId));
 
     const response = await client.query({
       query: GetReportByCodeDocument,
@@ -37,8 +44,14 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
 
     if (lastFight && lastFight.id.toString() !== latestFightId) {
       setFightId(lastFight.id.toString());
-      dispatch(setReportData(response.reportData?.report || null));
     }
+
+    // Always update report data and cache metadata for live logging
+    // Set the report ID first to ensure proper cache metadata association
+
+    // Then set the report data, which will automatically update cache metadata
+    dispatch(setReportData(response.reportData?.report || null));
+    dispatch(setReportCacheMetadata({ lastFetchedReportId: reportId }));
   }, [reportId, client, latestFightId, dispatch]);
 
   React.useEffect(() => {
@@ -55,9 +68,13 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
     () => ({
       reportId: reportId,
       fightId: latestFightId,
-      tabId: null, // Live log doesn't have a specific tab
+      tabId: null, // Live log doesn't use URL tab params
+      selectedTabId,
+      showExperimentalTabs,
+      setSelectedTab: setSelectedTabId,
+      setShowExperimentalTabs,
     }),
-    [reportId, latestFightId],
+    [reportId, latestFightId, selectedTabId, showExperimentalTabs],
   );
 
   if (!latestFightId) {

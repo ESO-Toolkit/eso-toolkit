@@ -97,6 +97,15 @@ const reportSlice = createSlice({
         lastFetchedTimestamp: Date.now(),
       };
     },
+    setReportCacheMetadata(state, action: PayloadAction<{ lastFetchedReportId: string }>) {
+      state.loading = false;
+      state.error = null;
+      // Update cache metadata
+      state.cacheMetadata = {
+        lastFetchedReportId: action.payload.lastFetchedReportId,
+        lastFetchedTimestamp: Date.now(),
+      };
+    },
     clearReport(state) {
       state.reportId = '';
       state.data = null;
@@ -139,5 +148,6 @@ const reportSlice = createSlice({
   },
 });
 
-export const { setReportId, clearReport, setReportData } = reportSlice.actions;
+export const { setReportId, clearReport, setReportData, setReportCacheMetadata } =
+  reportSlice.actions;
 export default reportSlice.reducer;
