@@ -388,66 +388,127 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
 
 const ToolsGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
-  gap: '2rem',
+  gap: '1.5rem',
   marginTop: '3rem',
-  // Default: 2 columns for larger screens
-  gridTemplateColumns: 'repeat(2, 1fr)',
-  [theme.breakpoints.down('sm')]: {
-    // 1 column for small screens
-    gridTemplateColumns: '1fr',
-  },
+  gridTemplateColumns: '1fr',
+  maxWidth: '800px',
+  margin: '3rem auto 0 auto',
 }));
 
 const ToolCard = styled(Box)(({ theme }) => ({
-  background:
-    theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-      : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(248, 250, 252, 0.9) 100%)',
+  background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+  backdropFilter: 'blur(12px)',
   border:
-    theme.palette.mode === 'dark' ? '1px solid #1f2937' : '1px solid rgba(203, 213, 225, 0.5)',
-  borderRadius: '14px',
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.1)'
+      : '1px solid rgba(30, 41, 59, 0.1)',
+  borderRadius: '16px',
   padding: '2rem',
-  transition: 'all 0.3s ease',
+  transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
   display: 'flex',
   flexDirection: 'column',
   height: '100%',
+  minHeight: '320px',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+      : '0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
   '&::before': {
     content: '""',
     position: 'absolute',
     top: 0,
     left: 0,
     right: 0,
-    height: '2px',
-    background: 'linear-gradient(90deg, transparent, #38bdf8, transparent)',
-    transform: 'translateX(-100%)',
-    transition: 'transform 0.6s ease',
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)',
+    opacity: 0,
+    transition: 'opacity 0.4s ease',
   },
-  '&:hover::before': {
-    transform: 'translateX(100%)',
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(56, 189, 248, 0.06), transparent 40%)'
+        : 'radial-gradient(800px circle at var(--mouse-x) var(--mouse-y), rgba(56, 189, 248, 0.04), transparent 40%)',
+    opacity: 0,
+    transition: 'opacity 0.4s ease',
+    pointerEvents: 'none',
   },
   '&:hover': {
-    transform: 'translateY(-5px)',
+    transform: 'translateY(-8px)',
+    borderColor: 'rgba(56, 189, 248, 0.3)',
     boxShadow:
       theme.palette.mode === 'dark'
-        ? '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 60px rgba(56, 189, 248, 0.1)'
-        : '0 10px 30px rgba(15, 23, 42, 0.1), 0 0 30px rgba(56, 189, 248, 0.08)',
-    borderColor: 'rgba(56, 189, 248, 0.3)',
+        ? '0 20px 60px rgba(0, 0, 0, 0.4), 0 0 60px rgba(56, 189, 248, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+        : '0 20px 60px rgba(15, 23, 42, 0.12), 0 0 40px rgba(56, 189, 248, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+    '&::before': {
+      opacity: 1,
+    },
+    '&::after': {
+      opacity: 1,
+    },
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '1.5rem',
+    minHeight: '280px',
+    '&:hover': {
+      transform: 'translateY(-4px)',
+    },
   },
 }));
 
-const ToolIcon = styled(Box)({
-  width: '60px',
-  height: '60px',
-  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(0, 225, 255, 0.2))',
-  borderRadius: '12px',
+const ToolIcon = styled(Box)(({ theme }) => ({
+  width: '64px',
+  height: '64px',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1))'
+      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(0, 225, 255, 0.05))',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.2)'
+      : '1px solid rgba(56, 189, 248, 0.15)',
+  borderRadius: '16px',
   display: 'flex',
   alignItems: 'center',
   justifyContent: 'center',
-  fontSize: '1.8rem',
+  fontSize: '2rem',
   marginBottom: '1.5rem',
-});
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+      : '0 4px 20px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+  transition: 'all 0.3s ease',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background:
+      theme.palette.mode === 'dark'
+        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1), transparent)'
+        : 'linear-gradient(135deg, rgba(56, 189, 248, 0.05), transparent)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+  },
+  '&:hover': {
+    transform: 'scale(1.05) rotate(5deg)',
+    '&::before': {
+      opacity: 1,
+    },
+  },
+}));
 
 const ToolFeatures = styled('ul')(({ theme }) => ({
   listStyle: 'none',
@@ -459,6 +520,7 @@ const ToolFeatures = styled('ul')(({ theme }) => ({
     padding: '0.5rem 0',
     paddingLeft: '1.5rem',
     position: 'relative',
+    fontWeight: 500,
     '&::before': {
       content: '"✓"',
       position: 'absolute',
@@ -471,25 +533,58 @@ const ToolFeatures = styled('ul')(({ theme }) => ({
 
 const ToolAction = styled(Button)(({ theme }) => ({
   width: '100%',
-  padding: '0.8rem 1.5rem',
+  padding: '0.875rem 1.5rem',
   background:
     theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.05))'
-      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(56, 189, 248, 0.03))',
-  color: theme.palette.mode === 'dark' ? '#e9fbff' : '#0c4a6e',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.3)'
-      : '1px solid rgba(56, 189, 248, 0.25)',
-  borderRadius: '8px',
-  transition: 'all 0.3s ease',
+      ? 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)'
+      : 'linear-gradient(135deg, #38bdf8 0%, #0ea5e9 100%)',
+  color: '#ffffff',
+  border: 'none',
+  borderRadius: '12px',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   fontWeight: 600,
+  fontSize: '0.95rem',
+  textTransform: 'none',
+  letterSpacing: '0.5px',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+      : '0 4px 20px rgba(15, 23, 42, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: '-100%',
+    width: '100%',
+    height: '100%',
+    background: 'linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent)',
+    transition: 'left 0.5s ease',
+  },
   '&:hover': {
-    background:
+    background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+    transform: 'translateY(-2px)',
+    boxShadow:
       theme.palette.mode === 'dark'
-        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25), rgba(56, 189, 248, 0.15))'
-        : 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(56, 189, 248, 0.08))',
-    boxShadow: '0 4px 15px rgba(56, 189, 248, 0.2)',
+        ? '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.2)'
+        : '0 8px 30px rgba(15, 23, 42, 0.15), 0 0 20px rgba(56, 189, 248, 0.15)',
+    '&::before': {
+      left: '100%',
+    },
+  },
+  '&:active': {
+    transform: 'translateY(0px)',
+  },
+  '&:disabled': {
+    background: theme.palette.mode === 'dark' ? '#374151' : '#9ca3af',
+    color: theme.palette.mode === 'dark' ? '#6b7280' : '#ffffff',
+    cursor: 'not-allowed',
+    opacity: 0.6,
+    '&:hover': {
+      transform: 'none',
+      boxShadow: 'none',
+    },
   },
 }));
 
@@ -1110,10 +1205,12 @@ export const LandingPage: React.FC = () => {
         <ToolsGrid>
           <ToolCard>
             <ToolIcon>📝</ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Text Editor
             </Typography>
-            <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
+            <Typography
+              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+            >
               Create eye-catching MOTD and group finder posts with our visual editor. Design
               messages that stand out with custom styles and formatting.
             </Typography>
@@ -1128,16 +1225,22 @@ export const LandingPage: React.FC = () => {
 
           <ToolCard>
             <ToolIcon>🧮</ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Build Calculator
             </Typography>
-            <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
+            <Typography
+              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+            >
               Optimize your character's stats with our comprehensive calculator. Track penetration,
               critical damage, and armor to hit those crucial caps.
             </Typography>
             <ToolFeatures>
-              <li>Penetration optimizer (18,200 cap)</li>
-              <li>Critical damage calculator (125% cap)</li>
+              <li>
+                Penetration optimizer <span style={{ fontWeight: 300 }}>(18,200 cap)</span>
+              </li>
+              <li>
+                Critical damage calculator <span style={{ fontWeight: 300 }}>(125% cap)</span>
+              </li>
               <li>Armor resistance planner</li>
               <li>Real-time cap status indicators</li>
             </ToolFeatures>
@@ -1146,10 +1249,12 @@ export const LandingPage: React.FC = () => {
 
           <ToolCard>
             <ToolIcon>📊</ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               ESO Log Analyzer
             </Typography>
-            <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
+            <Typography
+              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+            >
               Deep dive into your ESO combat logs with advanced analytics. Analyze player
               performance, damage patterns, and raid insights with detailed breakdowns.
             </Typography>
@@ -1175,10 +1280,12 @@ export const LandingPage: React.FC = () => {
           <ToolCard>
             <ComingSoonBadge>Coming Soon</ComingSoonBadge>
             <ToolIcon>🤖</ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary' }}>
+            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Discord Roster Bot
             </Typography>
-            <Typography sx={{ color: 'text.secondary', mb: 2, flex: 1 }}>
+            <Typography
+              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+            >
               Manage your guild roster effortlessly with our Discord bot. Track members, roles, and
               raid signups all in one place.
             </Typography>
@@ -1188,9 +1295,7 @@ export const LandingPage: React.FC = () => {
               <li>Role assignment system</li>
               <li>Activity monitoring</li>
             </ToolFeatures>
-            <ToolAction disabled sx={{ cursor: 'not-allowed', opacity: 0.6 }}>
-              Coming Soon
-            </ToolAction>
+            <ToolAction disabled>Coming Soon</ToolAction>
           </ToolCard>
         </ToolsGrid>
       </ToolsSection>
