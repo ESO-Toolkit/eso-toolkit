@@ -1,4 +1,10 @@
-import { BugReport, Send, Feedback, ChatBubbleOutline } from '@mui/icons-material';
+import {
+  BugReport,
+  Send,
+  Feedback,
+  ChatBubbleOutline,
+  BugReport as BugReportIcon,
+} from '@mui/icons-material';
 import {
   Dialog,
   DialogTitle,
@@ -32,6 +38,8 @@ import React, { useState, useCallback } from 'react';
 import { BUG_REPORT_CATEGORIES, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
 import { useLogger } from '../contexts/LoggerContext';
 import { submitManualBugReport, addBreadcrumb } from '../utils/sentryUtils';
+
+import { LoggerDebugPanel } from './LoggerDebugPanel';
 
 interface FeedbackDialogProps {
   open: boolean;
@@ -1444,6 +1452,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
   const [dialogOpen, setDialogOpen] = useState(false);
   const [feedbackType, setFeedbackType] = useState<'bug' | 'feedback'>('bug');
   const [isExpanded, setIsExpanded] = useState(false);
+  const [loggerPanelOpen, setLoggerPanelOpen] = useState(false);
 
   const handleBugReportClick = (): void => {
     addBreadcrumb('Modern feedback FAB clicked - Bug Report', 'ui');
@@ -1456,6 +1465,12 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
     addBreadcrumb('Modern feedback FAB clicked - General Feedback', 'ui');
     setFeedbackType('feedback');
     setDialogOpen(true);
+    setIsExpanded(false);
+  };
+
+  const handleLoggerDebugClick = (): void => {
+    addBreadcrumb('Modern feedback FAB clicked - Logger Debug', 'ui');
+    setLoggerPanelOpen(true);
     setIsExpanded(false);
   };
 
@@ -1485,7 +1500,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
         }}
       >
         {/* Expanded Action Buttons */}
-        <Zoom in={isExpanded && !dialogOpen}>
+        <Zoom in={isExpanded && !dialogOpen && !loggerPanelOpen}>
           <Box
             sx={{
               display: 'flex',
@@ -1532,6 +1547,42 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
 
             <Fab
               size="small"
+              onClick={handleLoggerDebugClick}
+              sx={{
+                // Green gradient for logger debug button
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                border: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(16, 185, 129, 0.3)'
+                    : '1px solid rgba(5, 150, 105, 0.3)',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 4px 16px rgba(16, 185, 129, 0.2)'
+                    : '0 4px 16px rgba(16, 185, 129, 0.15)',
+                color: '#ffffff',
+                transition: 'all 0.2s ease-out',
+                borderRadius: '50%',
+                overflow: 'hidden',
+                '&:hover': {
+                  transform: 'translateY(-1px) scale(1.03)',
+                  // Lighter green gradient on hover
+                  background: 'linear-gradient(135deg, #34d399 0%, #10b981 100%)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 6px 20px rgba(16, 185, 129, 0.3)'
+                      : '0 6px 20px rgba(16, 185, 129, 0.25)',
+                  borderColor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(52, 211, 153, 0.5)'
+                      : 'rgba(16, 185, 129, 0.5)',
+                },
+              }}
+            >
+              <BugReportIcon />
+            </Fab>
+
+            <Fab
+              size="small"
               onClick={handleBugReportClick}
               sx={{
                 // Red gradient for bug report button
@@ -1569,7 +1620,7 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
         </Zoom>
 
         {/* Main Floating Action Button */}
-        <Zoom in={!dialogOpen}>
+        <Zoom in={!dialogOpen && !loggerPanelOpen}>
           <Fab
             onClick={toggleExpanded}
             sx={{
@@ -1639,6 +1690,8 @@ export const ModernFeedbackFab: React.FC<ModernFeedbackFabProps> = ({
         onClose={() => setDialogOpen(false)}
         initialType={feedbackType}
       />
+
+      <LoggerDebugPanel open={loggerPanelOpen} onClose={() => setLoggerPanelOpen(false)} />
     </>
   );
 };
