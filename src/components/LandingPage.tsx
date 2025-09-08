@@ -893,11 +893,17 @@ export const LandingPage: React.FC = () => {
                     textTransform: 'none',
                     fontWeight: 400,
                     letterSpacing: '0.2px',
-                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(51, 65, 85, 0.7)',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.7)'
+                        : 'rgba(51, 65, 85, 0.7)',
                     '&:hover': {
                       textDecoration: 'underline',
                       backgroundColor: 'transparent',
-                      color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(51, 65, 85, 0.9)',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.9)'
+                          : 'rgba(51, 65, 85, 0.9)',
                     },
                   }}
                 >
@@ -907,9 +913,10 @@ export const LandingPage: React.FC = () => {
                   sx={{
                     flex: 1,
                     height: '6px',
-                    background: theme.palette.mode === 'dark' 
-                      ? 'rgba(56, 189, 248, 0.2)' 
-                      : 'rgba(14, 165, 233, 0.2)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.2)'
+                        : 'rgba(14, 165, 233, 0.2)',
                     borderRadius: '3px',
                     [theme.breakpoints.down('sm')]: {
                       display: 'none',

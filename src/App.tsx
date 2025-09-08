@@ -6,8 +6,8 @@ import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { LandingPage } from './components/LandingPage';
 import { HeaderBar } from './components/HeaderBar';
+import { LandingPage } from './components/LandingPage';
 import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
