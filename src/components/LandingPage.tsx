@@ -37,22 +37,69 @@ const HeroSection = styled(Box, {
   justifyContent: 'center',
   padding: '0rem 2rem 0rem',
   position: 'relative',
-  paddingTop: '6rem', // Increased padding for desktop
-  overflow: 'visible',
+  paddingTop: '6rem',
+  overflow: 'hidden',
   width: '100%',
   maxWidth: '100vw',
+  background: theme.palette.mode === 'dark' 
+    ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
+    : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: theme.palette.mode === 'dark'
+      ? `
+        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
+        radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)
+      `
+      : `
+        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
+        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
+        radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%)
+      `,
+    animation: 'gradientShift 20s ease-in-out infinite alternate',
+    pointerEvents: 'none',
+  },
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: theme.palette.mode === 'dark'
+      ? 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.02"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
+      : 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.015"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
+    opacity: 0.3,
+    pointerEvents: 'none',
+  },
+  '@keyframes gradientShift': {
+    '0%': {
+      transform: 'scale(1) rotate(0deg)',
+    },
+    '50%': {
+      transform: 'scale(1.05) rotate(1deg)',
+    },
+    '100%': {
+      transform: 'scale(1.02) rotate(-0.5deg)',
+    },
+  },
   [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
     padding: '2rem 1rem 0rem',
-    paddingTop: '3rem', // Medium screens get moderate padding
+    paddingTop: '3rem',
   },
   [theme.breakpoints.down('sm')]: {
     minHeight: '60vh',
     padding: '1rem 1rem 0rem',
     alignItems: 'flex-start',
-    paddingTop: '3rem', // Mobile keeps original padding
+    paddingTop: '3rem',
   },
-  // Only apply expensive effects after initial load
   ...(showAnimations && {
     '&::before': {
       content: '""',
@@ -545,76 +592,126 @@ const BadgeContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const FloatingElements = styled(Box)({
-  position: 'fixed',
+const ParticleContainer = styled(Box)(({ theme }) => ({
+  position: 'absolute',
   top: 0,
   left: 0,
-  width: '100vw',
-  height: '100vh',
+  right: 0,
+  bottom: 0,
   pointerEvents: 'none',
-  zIndex: 0,
-  overflow: 'visible',
-});
-
-const FloatingElementsDesktop = styled(FloatingElements)(({ theme }) => ({
-  display: 'block',
-  [theme.breakpoints.down('sm')]: { display: 'none' },
+  zIndex: 1,
+  overflow: 'hidden',
+  [theme.breakpoints.down('sm')]: {
+    display: 'none',
+  },
 }));
 
-const FloatingIcon = styled(Box)<{ delay?: number; duration?: number; x?: string; y?: string }>(
-  ({ delay = 0, duration = 8, x = '20%', y = '20%' }) => ({
+const FloatingParticle = styled(Box)<{ 
+  delay?: number; 
+  duration?: number; 
+  x?: string; 
+  y?: string;
+  size?: string;
+  color?: string;
+}>(({ delay = 0, duration = 12, x = '50%', y = '50%', size = '4px', color = '#3b82f6', theme }) => ({
+  position: 'absolute',
+  left: x,
+  top: y,
+  width: size,
+  height: size,
+  borderRadius: '50%',
+  background: `radial-gradient(circle, ${color}60, ${color}30, transparent)`,
+  boxShadow: `0 0 ${parseInt(size) * 3}px ${color}40`,
+  animation: `floatParticle-${delay % 3} ${duration}s ease-in-out ${delay}s infinite`,
+  opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+  '@keyframes floatParticle-0': {
+    '0%': {
+      transform: 'translate(0, 0) scale(0.5)',
+      opacity: 0,
+    },
+    '10%': {
+      opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+    },
+    '90%': {
+      opacity: theme.palette.mode === 'dark' ? 0.7 : 0.5,
+    },
+    '100%': {
+      transform: 'translate(40px, -120px) scale(1.5)',
+      opacity: 0,
+    },
+  },
+  '@keyframes floatParticle-1': {
+    '0%': {
+      transform: 'translate(0, 0) scale(0.8)',
+      opacity: 0,
+    },
+    '15%': {
+      opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
+    },
+    '85%': {
+      opacity: theme.palette.mode === 'dark' ? 0.8 : 0.6,
+    },
+    '100%': {
+      transform: 'translate(-30px, -100px) scale(1.2)',
+      opacity: 0,
+    },
+  },
+  '@keyframes floatParticle-2': {
+    '0%': {
+      transform: 'translate(0, 0) scale(0.6)',
+      opacity: 0,
+    },
+    '12%': {
+      opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
+    },
+    '88%': {
+      opacity: theme.palette.mode === 'dark' ? 0.6 : 0.4,
+    },
+    '100%': {
+      transform: 'translate(25px, -110px) scale(1)',
+      opacity: 0,
+    },
+  },
+}));
+
+const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
+  ({ delay = 0, x = '20%', y = '20%', theme }) => ({
     position: 'absolute',
     left: x,
     top: y,
-    fontSize: '2rem',
-    opacity: 0.15,
-    color: '#38bdf8',
-    animation: `floatingIcon ${duration}s ease-in-out ${delay}s infinite alternate`,
-    '@keyframes floatingIcon': {
+    width: '32px',
+    height: '32px',
+    opacity: theme.palette.mode === 'dark' ? 0.2 : 0.12,
+    animation: `runeGlow ${10 + delay}s ease-in-out ${delay}s infinite alternate`,
+    '&::before': {
+      content: '"⟐"',
+      position: 'absolute',
+      fontSize: '32px',
+      color: theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6',
+      textShadow: theme.palette.mode === 'dark' 
+        ? '0 0 12px #60a5fa50, 0 0 24px #3b82f630'
+        : '0 0 6px #3b82f640',
+      transform: 'rotate(0deg)',
+    },
+    '@keyframes runeGlow': {
       '0%': {
-        transform: 'translateY(0px) rotate(0deg)',
-        opacity: 0.1,
+        transform: 'rotate(0deg) scale(1)',
+        opacity: theme.palette.mode === 'dark' ? 0.15 : 0.08,
       },
       '50%': {
-        opacity: 0.2,
+        transform: 'rotate(180deg) scale(1.05)',
+        opacity: theme.palette.mode === 'dark' ? 0.3 : 0.18,
       },
       '100%': {
-        transform: 'translateY(-20px) rotate(5deg)',
-        opacity: 0.15,
+        transform: 'rotate(360deg) scale(1)',
+        opacity: theme.palette.mode === 'dark' ? 0.2 : 0.12,
       },
     },
-  }),
-);
-
-const GeometricShape = styled(Box)<{ delay?: number; size?: string; x?: string; y?: string }>(
-  ({ delay = 0, size = '40px', x = '10%', y = '30%' }) => ({
-    position: 'absolute',
-    left: x,
-    top: y,
-    width: size,
-    height: size,
-    border: '1px solid rgba(56, 189, 248, 0.2)',
-    borderRadius: '50%',
-    animation: `geometricPulse ${6 + delay}s ease-in-out infinite`,
-    '&::before': {
-      content: '""',
-      position: 'absolute',
-      top: '50%',
-      left: '50%',
-      transform: 'translate(-50%, -50%)',
-      width: '60%',
-      height: '60%',
-      background: 'radial-gradient(circle, rgba(56, 189, 248, 0.1) 0%, transparent 70%)',
-      borderRadius: '50%',
-    },
-    '@keyframes geometricPulse': {
-      '0%, 100%': {
-        transform: 'scale(1) rotate(0deg)',
-        opacity: 0.3,
-      },
-      '50%': {
-        transform: 'scale(1.1) rotate(180deg)',
-        opacity: 0.6,
+    [theme.breakpoints.down('md')]: {
+      width: '24px',
+      height: '24px',
+      '&::before': {
+        fontSize: '24px',
       },
     },
   }),
@@ -690,37 +787,29 @@ export const LandingPage: React.FC = () => {
   return (
     <LandingContainer>
       <HeroSection id="home" showAnimations={showAnimations}>
-        <FloatingElementsDesktop>
-          {/* ESO-themed floating runes in rainbow arch formation */}
-          <FloatingIcon delay={0} duration={10} x="12%" y="40%">
-            ⚡
-          </FloatingIcon>
-          <FloatingIcon delay={2} duration={12} x="26%" y="22%">
-            🔥
-          </FloatingIcon>
-          <FloatingIcon delay={2} duration={12} x="16%" y="29%">
-            🏹
-          </FloatingIcon>
-          <FloatingIcon delay={4} duration={9} x="45%" y="17%">
-            ❄️
-          </FloatingIcon>
-          <FloatingIcon delay={1} duration={11} x="74%" y="24%">
-            🌟
-          </FloatingIcon>
-          <FloatingIcon delay={3} duration={8} x="85%" y="40%">
-            ⚔️
-          </FloatingIcon>
-          <FloatingIcon delay={5} duration={13} x="60%" y="19%">
-            🛡️
-          </FloatingIcon>
-
-          {/* Geometric shapes complementing the arch */}
-          <GeometricShape delay={0} size="25px" x="20%" y="22%" />
-          <GeometricShape delay={2} size="30px" x="33%" y="19%" />
-          <GeometricShape delay={4} size="28px" x="60%" y="19%" />
-          <GeometricShape delay={1} size="25px" x="80%" y="35%" />
-          <GeometricShape delay={3} size="22px" x="45%" y="19%" />
-        </FloatingElementsDesktop>
+        <ParticleContainer>
+          {/* Floating particles with magical glow */}
+          <FloatingParticle delay={0} duration={8} x="15%" y="80%" size="6px" color="#60a5fa" />
+          <FloatingParticle delay={2} duration={12} x="25%" y="75%" size="4px" color="#a78bfa" />
+          <FloatingParticle delay={4} duration={10} x="35%" y="85%" size="5px" color="#34d399" />
+          <FloatingParticle delay={1} duration={9} x="50%" y="90%" size="3px" color="#fbbf24" />
+          <FloatingParticle delay={3} duration={11} x="65%" y="80%" size="6px" color="#f472b6" />
+          <FloatingParticle delay={5} duration={13} x="75%" y="75%" size="4px" color="#06b6d4" />
+          <FloatingParticle delay={6} duration={14} x="85%" y="85%" size="5px" color="#8b5cf6" />
+          
+          {/* Second layer of particles */}
+          <FloatingParticle delay={7} duration={15} x="20%" y="70%" size="3px" color="#3b82f6" />
+          <FloatingParticle delay={8} duration={10} x="40%" y="78%" size="4px" color="#10b981" />
+          <FloatingParticle delay={9} duration={12} x="60%" y="88%" size="5px" color="#f59e0b" />
+          <FloatingParticle delay={10} duration={11} x="80%" y="70%" size="3px" color="#ec4899" />
+          
+          {/* ESO runes for magical atmosphere */}
+          <ESORune delay={0} x="18%" y="25%" />
+          <ESORune delay={3} x="82%" y="30%" />
+          <ESORune delay={6} x="50%" y="15%" />
+          <ESORune delay={9} x="25%" y="50%" />
+          <ESORune delay={12} x="75%" y="55%" />
+        </ParticleContainer>
 
         <HeroContent className="u-fade-in-up">
           <HeroTitle variant="h1" showAnimations={showAnimations}>
