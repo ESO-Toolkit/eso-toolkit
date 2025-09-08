@@ -7,6 +7,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { LandingPage } from './components/LandingPage';
+import { HeaderBar } from './components/HeaderBar';
 import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
@@ -65,6 +66,7 @@ const LoadingFallback: React.FC = () => (
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
+      <HeaderBar />
       <LandingPage />
     </ReduxThemeProvider>
   );
