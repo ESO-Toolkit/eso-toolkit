@@ -411,9 +411,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       return {
         // Dark mode fight card colors
         killGradient:
-          'linear-gradient(90deg, rgba(76, 217, 99, 0.88) 0%, rgba(94, 234, 255, 0.85) 100%)',
+          'linear-gradient(90deg, rgb(169 255 183 / 88%) 0%, rgb(139 240 255 / 85%) 100%)',
         killShadow: '0 0 6px rgba(76, 217, 100, 0.45)',
-        trashGradient: 'linear-gradient(90deg, rgb(23 43 48 / 30%) 0%, rgb(0 0 0 / 85%) 100%)',
+        trashGradient: 'linear-gradient(90deg, rgb(0 52 65 / 30%) 0%, rgb(19 21 32 / 85%) 100%)',
         trashShadow: '0 0 6px rgba(189, 195, 199, 0.35)',
         falsePositiveGradient:
           'linear-gradient(90deg, rgb(221 158 35 / 65%) 0%, rgb(255 126 0 / 62%) 100%)',
@@ -445,10 +445,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       return {
         // Light mode fight card colors - much darker gradients for visibility
         killGradient:
-          'linear-gradient(90deg, rgba(5, 150, 105, 0.95) 0%, rgba(6, 78, 59, 0.9) 100%)',
+          'linear-gradient(90deg, rgb(173 255 229 / 95%) 0%, rgb(136 255 224 / 90%) 100%)',
         killShadow: '0 0 6px rgba(5, 150, 105, 0.4)',
         trashGradient:
-          'linear-gradient(90deg, rgba(148, 163, 184, 0.8) 0%, rgba(100, 116, 139, 0.85) 100%)',
+          'linear-gradient(90deg, rgb(248 255 253 / 55%) 0%, rgb(213 255 253 / 42%) 100%)',
         trashShadow: '0 0 6px rgba(100, 116, 139, 0.4)',
         falsePositiveGradient:
           'linear-gradient(90deg, rgba(217, 119, 6, 0.9) 0%, rgba(180, 83, 9, 0.85) 100%)',
@@ -820,7 +820,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     }
 
     return (
-      <ListItem key={fight.id} sx={{ p: 0 }}>
+      <ListItem key={fight.id} sx={{ p: 0, overflow: 'visible' }}>
         <ListItemButton
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
@@ -839,6 +839,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             px: 1,
             position: 'relative',
             backgroundColor: 'transparent',
+            overflow: 'visible',
             transition:
               'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
             '&:hover': {
@@ -847,8 +848,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             '&:active': {
               transform: 'translateY(0.5px)',
             },
-            '&::after': {
-              content: '""',
+          }}
+        >
+          {/* Progress gradient background */}
+          <Box
+            sx={{
               position: 'absolute',
               top: 0,
               left: 0,
@@ -879,12 +883,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 : fight.difficulty == null
                   ? getThemeColors.trashShadow
                   : getThemeColors.killShadow,
-              borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
+              borderRadius: 1,
               opacity: 0.4,
               zIndex: 0,
-            },
-          }}
-        >
+            }}
+          />
           {/* Wipe badge */}
           <Box
             sx={{
@@ -928,7 +931,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           <Typography
             variant="caption"
             sx={{
-              color: 'text.secondary',
+              color: darkMode ? '#d9e9ff' : 'text.secondary',
               fontSize: '0.66rem',
               lineHeight: 1.1,
               whiteSpace: 'nowrap',
@@ -972,6 +975,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           backgroundColor: 'background.paper',
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
+          overflow: 'visible',
         }}
       >
         <Typography
@@ -1001,6 +1005,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               mb: expandedEncounters.has(trialRun.id) ? 3 : 2,
               '&.Mui-expanded': {
                 marginBottom: 3,
+                background: darkMode
+                  ? 'linear-gradient(135deg, rgb(0 0 0 / 25%) 0%, rgb(80 73 104 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+                  : 'linear-gradient(135deg, rgb(224 239 255 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
                 '& + .MuiAccordion-root': {
                   marginTop: 2,
                 },
@@ -1213,7 +1220,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 </Box>
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails sx={{ overflow: 'visible' }}>
               {trialRun.encounters.map((encounter) => {
                 return (
                   <Box
@@ -1224,6 +1231,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       borderRadius: 2,
                       border: '1px solid rgba(255, 255, 255, 0.0)',
                       transition: 'all 0.2s ease-in-out',
+                      overflow: 'visible',
                       '&:hover': {
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         background: 'rgba(255, 255, 255, 0.04)',
@@ -1268,7 +1276,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                       difficultyLabel === 'Veteran HM'
                                         ? getThemeColors.hmColor
                                         : darkMode
-                                          ? '#94a3b8'
+                                          ? '#d2e5ff'
                                           : '#64748b',
                                   }}
                                 >
@@ -1293,6 +1301,17 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                                 toggleTrashForEncounter(encounter.id);
                               }}
                               size="small"
+                              sx={{
+                                '& .MuiSwitch-switchBase.Mui-checked': {
+                                  color: '#38bdf8',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                                  },
+                                },
+                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                  backgroundColor: '#38bdf8',
+                                },
+                              }}
                             />
                           }
                           label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
@@ -1318,6 +1337,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                             gap: 1,
+                            overflow: 'visible',
                           }}
                         >
                           {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
@@ -1331,6 +1351,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                         gap: 1,
+                        overflow: 'visible',
                       }}
                     >
                       {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
@@ -1352,6 +1373,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                             gap: 1,
+                            overflow: 'visible',
                           }}
                         >
                           {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
