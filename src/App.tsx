@@ -6,6 +6,7 @@ import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { LoggerDebugButton } from './components/LoggerDebugButton';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
@@ -65,6 +66,7 @@ const LoadingFallback: React.FC = () => (
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
+      <HeaderBar />
       <LandingPage />
     </ReduxThemeProvider>
   );

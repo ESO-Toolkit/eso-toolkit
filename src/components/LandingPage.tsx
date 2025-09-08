@@ -322,6 +322,8 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
     margin: '1rem 0 2.5rem 0',
     alignItems: 'stretch',
     minWidth: '100%',
+    maxWidth: '100%',
+    width: '100%',
     borderRadius: '8px',
     '&:hover': {
       transform: 'none',
@@ -329,6 +331,8 @@ const LogInputContainer = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.down(480)]: {
     minWidth: '100%',
+    maxWidth: '100%',
+    width: '100%',
     margin: '1rem 0 1.5rem 0',
   },
 }));
@@ -530,7 +534,7 @@ const BadgeContainer = styled(Box)(({ theme }) => ({
   marginTop: '2rem',
   [theme.breakpoints.down('sm')]: {
     marginBottom: '2rem',
-    marginTop: '1rem',
+    marginTop: '2rem',
   },
 }));
 
@@ -724,8 +728,21 @@ export const LandingPage: React.FC = () => {
           </HeroSubtitle>
 
           {isLoggedIn ? (
-            <Box>
-              <LogInputContainer>
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'stretch',
+                gap: 1,
+                maxWidth: '600px',
+                width: '100%',
+                mx: 'auto',
+                [theme.breakpoints.down('sm')]: {
+                  maxWidth: '100%',
+                },
+              }}
+            >
+              <LogInputContainer sx={{ m: 0 }}>
                 <TextField
                   label="ESOLogs.com Log URL"
                   variant="outlined"
@@ -848,52 +865,64 @@ export const LandingPage: React.FC = () => {
                   Analyze Log
                 </Button>
               </LogInputContainer>
-              <Box sx={{ textAlign: 'center', mt: 3 }}>
+              <Box
+                sx={{
+                  maxWidth: 600,
+                  width: '100%',
+                  mx: 'auto',
+                  display: 'flex',
+                  alignItems: 'center',
+                  mt: 0.5,
+                  gap: 2,
+                  [theme.breakpoints.down('sm')]: {
+                    maxWidth: '100%',
+                    justifyContent: 'center',
+                    gap: 0,
+                    mt: -0.5,
+                  },
+                }}
+              >
                 <Button
-                  variant="outlined"
-                  size="large"
+                  variant="text"
+                  size="small"
                   onClick={() => navigate('/my-reports')}
-                  startIcon={<AssignmentIcon />}
+                  startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
                   sx={{
-                    py: 1.5,
-                    px: 4,
-                    borderRadius: '12px',
-                    fontSize: '1rem',
-                    fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
-                    borderColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
-                    backgroundColor: 'transparent',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    px: 0,
+                    minWidth: 'auto',
                     textTransform: 'none',
-                    letterSpacing: '0.5px',
+                    fontWeight: 400,
+                    letterSpacing: '0.2px',
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.7)'
+                        : 'rgba(51, 65, 85, 0.7)',
                     '&:hover': {
-                      backgroundColor:
+                      textDecoration: 'underline',
+                      backgroundColor: 'transparent',
+                      color:
                         theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.1)'
-                          : 'rgba(14, 165, 233, 0.1)',
-                      borderColor: theme.palette.mode === 'dark' ? '#00e1ff' : '#38bdf8',
-                      color: theme.palette.mode === 'dark' ? '#00e1ff' : '#38bdf8',
-                      transform: 'translateY(-2px)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 8px 25px rgba(56, 189, 248, 0.2)'
-                          : '0 8px 25px rgba(14, 165, 233, 0.2)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(-1px)',
-                    },
-                    [theme.breakpoints.down('sm')]: {
-                      py: 1.25,
-                      px: 3,
-                      fontSize: '0.9rem',
-                      '&:hover': {
-                        transform: 'none',
-                      },
+                          ? 'rgba(255, 255, 255, 0.9)'
+                          : 'rgba(51, 65, 85, 0.9)',
                     },
                   }}
                 >
-                  View My Reports
+                  View my reports
                 </Button>
+                <Box
+                  sx={{
+                    flex: 1,
+                    height: '6px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.2)'
+                        : 'rgba(14, 165, 233, 0.2)',
+                    borderRadius: '3px',
+                    [theme.breakpoints.down('sm')]: {
+                      display: 'none',
+                    },
+                  }}
+                />
               </Box>
             </Box>
           ) : (

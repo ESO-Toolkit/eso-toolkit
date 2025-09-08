@@ -20,7 +20,8 @@
       "Bash(node:*)",
       "Bash(find:*)",
       "Bash(git push:*)",
-      "Bash(git commit:*)"
+      "Bash(git commit:*)",
+      "Bash(git checkout:*)"
     ],
     "deny": [],
     "ask": []
