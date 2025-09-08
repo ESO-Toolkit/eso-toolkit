@@ -27,7 +27,7 @@ import {
 import React, { Suspense } from 'react';
 
 import { FightFragment } from '../../graphql/generated';
-import { getSkeletonForTab, TabId, TabId } from '../../utils/getSkeletonForTab';
+import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { TargetSelector } from './insights/TargetSelector';
 

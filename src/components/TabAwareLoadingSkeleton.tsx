@@ -1,7 +1,7 @@
 import { Box, CircularProgress } from '@mui/material';
 import React from 'react';
 
-import { getSkeletonForTab, TabId, TabId } from '../utils/getSkeletonForTab';
+import { getSkeletonForTab, TabId } from '../utils/getSkeletonForTab';
 
 export const TabAwareLoadingSkeleton: React.FC = () => {
   // Check if we're on a fight details route
