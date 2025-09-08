@@ -36,19 +36,20 @@ const HeroSection = styled(Box, {
   justifyContent: 'center',
   padding: '0rem 2rem 0rem',
   position: 'relative',
-  paddingTop: '2.5rem',
+  paddingTop: '6rem', // Increased padding for desktop
   overflow: 'visible',
   width: '100%',
   maxWidth: '100vw',
   [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
     padding: '2rem 1rem 0rem',
+    paddingTop: '3rem', // Medium screens get moderate padding
   },
   [theme.breakpoints.down('sm')]: {
     minHeight: '60vh',
     padding: '1rem 1rem 0rem',
     alignItems: 'flex-start',
-    paddingTop: '3rem',
+    paddingTop: '3rem', // Mobile keeps original padding
   },
   // Only apply expensive effects after initial load
   ...(showAnimations && {
