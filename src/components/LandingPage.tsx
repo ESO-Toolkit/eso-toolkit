@@ -389,9 +389,14 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
 
 const ToolsGrid = styled(Box)(({ theme }) => ({
   display: 'grid',
-  gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
   gap: '2rem',
   marginTop: '3rem',
+  // Default: 2 columns for larger screens
+  gridTemplateColumns: 'repeat(2, 1fr)',
+  [theme.breakpoints.down('sm')]: {
+    // 1 column for small screens
+    gridTemplateColumns: '1fr',
+  },
 }));
 
 const ToolCard = styled(Box)(({ theme }) => ({
