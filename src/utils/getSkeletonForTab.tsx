@@ -2,6 +2,7 @@ import React from 'react';
 
 import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
+import { PlayersSkeleton } from '../components/PlayersSkeleton';
 
 // Tab identifiers as strings (matching FightDetailsView)
 export enum TabId {
@@ -39,7 +40,7 @@ export const getSkeletonForTab = (
           />
         );
       case TabId.PLAYERS:
-        return <GenericTabSkeleton title="Players" showTable={true} tableRows={6} />;
+        return <PlayersSkeleton showHeader={includeHeaderAndTabs} />;
       case TabId.DAMAGE_DONE:
         return (
           <GenericTabSkeleton

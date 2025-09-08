@@ -11,6 +11,7 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
   const [isTransitioning, setIsTransitioning] = useState(false);
   const previousTabKey = useRef(tabKey);
   const transitionTimeoutRef = useRef<NodeJS.Timeout>();
+  const pendingContentRef = useRef<React.ReactNode>(null);
 
   useEffect(() => {
     if (tabKey !== previousTabKey.current) {
@@ -19,22 +20,36 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
         clearTimeout(transitionTimeoutRef.current);
       }
 
-      // Start animation immediately, regardless of content loading state
+      // Store the new content but don't switch to it immediately
+      pendingContentRef.current = children;
+
+      // Start animation immediately
       setIsTransitioning(true);
 
       // Use React's concurrent features to avoid blocking
       startTransition(() => {
-        // Fast transition out, then switch content
+        // After fade out completes, switch to new content
         transitionTimeoutRef.current = setTimeout(() => {
-          setCurrentContent(children);
+          // Only switch to pending content if we still have the same tabKey
+          // This prevents race conditions with rapid tab switching
+          if (pendingContentRef.current) {
+            setCurrentContent(pendingContentRef.current);
+            pendingContentRef.current = null;
+          }
 
-          // Very brief pause to let DOM update, then fade in
+          // Brief pause to let DOM update, then fade in
           transitionTimeoutRef.current = setTimeout(() => {
             setIsTransitioning(false);
             previousTabKey.current = tabKey;
-          }, 100); // Reduced from 200ms
+          }, 50); // Reduced pause for faster perceived loading
         }, 150); // Quick fade out
       });
+    } else {
+      // Tab hasn't changed, but children might have (e.g., Suspense resolved)
+      // Update content immediately without animation if not transitioning
+      if (!isTransitioning) {
+        setCurrentContent(children);
+      }
     }
 
     return () => {
@@ -42,7 +57,7 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
         clearTimeout(transitionTimeoutRef.current);
       }
     };
-  }, [children, tabKey]);
+  }, [children, tabKey, isTransitioning]);
 
   return (
     <Box
