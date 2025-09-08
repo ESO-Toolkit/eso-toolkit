@@ -1,3 +1,4 @@
+import { Login, Logout, Person } from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
@@ -7,6 +8,9 @@ import {
   IconButton,
   useTheme,
   Container,
+  Tooltip,
+  Menu,
+  MenuItem,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
@@ -186,6 +190,23 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+const AuthIconButton = styled(IconButton)(({ theme }) => ({
+  width: 40,
+  height: 40,
+  borderRadius: 8,
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
+  '&:hover': {
+    backgroundColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(59, 130, 246, 0.08)',
+    transform: 'scale(1.1)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 4px 20px rgba(56, 189, 248, 0.15)'
+        : '0 4px 20px rgba(59, 130, 246, 0.12)',
+  },
+}));
+
 // Calculator SVG icon component
 type CalculatorProps = {
   size: string;
@@ -228,6 +249,7 @@ export const HeaderBar: React.FC = () => {
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+  const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   React.useEffect(() => {
     const onScroll = (): void => setScrolled(window.scrollY > 8);
@@ -250,6 +272,24 @@ export const HeaderBar: React.FC = () => {
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
+  };
+
+  const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = (): void => {
+    setAnchorEl(null);
+  };
+
+  const handleViewReports = (): void => {
+    navigate('/my-reports');
+    setAnchorEl(null);
+  };
+
+  const handleLogoutFromMenu = (): void => {
+    handleLogout();
+    setAnchorEl(null);
   };
 
   const navItems = [
@@ -390,117 +430,17 @@ export const HeaderBar: React.FC = () => {
               ))}
               <ThemeToggle />
               {isLoggedIn ? (
-                <>
-                  <Button
-                    color="inherit"
-                    onClick={() => navigate('/my-reports')}
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 500,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      background: 'transparent',
-                      border: '1px solid transparent',
-                      '&:hover': {
-                        transform: 'translateY(-1px)',
-                        background:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(59, 130, 246, 0.08)'
-                            : 'rgba(37, 99, 235, 0.06)',
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(59, 130, 246, 0.2)'
-                            : 'rgba(37, 99, 235, 0.15)',
-                        boxShadow:
-                          theme.palette.mode === 'dark'
-                            ? '0 4px 20px rgba(59, 130, 246, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                            : '0 4px 20px rgba(37, 99, 235, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                      },
-                      '&:active': {
-                        transform: 'translateY(0)',
-                      },
-                    }}
-                  >
-                    My Reports
-                  </Button>
-                  <Button
-                    color="inherit"
-                    onClick={handleLogout}
-                    sx={{
-                      px: 2,
-                      py: 1,
-                      borderRadius: 2,
-                      textTransform: 'none',
-                      fontWeight: 500,
-                      position: 'relative',
-                      overflow: 'hidden',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      background: 'transparent',
-                      border: '1px solid transparent',
-                      '&:hover': {
-                        transform: 'translateY(-1px)',
-                        background:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(239, 68, 68, 0.08)'
-                            : 'rgba(220, 38, 38, 0.06)',
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(239, 68, 68, 0.2)'
-                            : 'rgba(220, 38, 38, 0.15)',
-                        boxShadow:
-                          theme.palette.mode === 'dark'
-                            ? '0 4px 20px rgba(239, 68, 68, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                            : '0 4px 20px rgba(220, 38, 38, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                      },
-                      '&:active': {
-                        transform: 'translateY(0)',
-                      },
-                    }}
-                  >
-                    Log out
-                  </Button>
-                </>
+                <Tooltip title="Account" arrow placement="bottom">
+                  <AuthIconButton onClick={handleAccountClick}>
+                    <Person />
+                  </AuthIconButton>
+                </Tooltip>
               ) : (
-                <Button
-                  color="inherit"
-                  onClick={handleLogin}
-                  sx={{
-                    px: 2,
-                    py: 1,
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 500,
-                    position: 'relative',
-                    overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    background: 'transparent',
-                    border: '1px solid transparent',
-                    '&:hover': {
-                      transform: 'translateY(-1px)',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(34, 197, 94, 0.08)'
-                          : 'rgba(22, 163, 74, 0.06)',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(34, 197, 94, 0.2)'
-                          : 'rgba(22, 163, 74, 0.15)',
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 4px 20px rgba(34, 197, 94, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
-                          : '0 4px 20px rgba(22, 163, 74, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
-                    },
-                    '&:active': {
-                      transform: 'translateY(0)',
-                    },
-                  }}
-                >
-                  Log in
-                </Button>
+                <Tooltip title="Log in" arrow placement="bottom">
+                  <AuthIconButton onClick={handleLogin}>
+                    <Login />
+                  </AuthIconButton>
+                </Tooltip>
               )}
             </Box>
 
@@ -521,6 +461,88 @@ export const HeaderBar: React.FC = () => {
           </Toolbar>
         </Container>
       </AppBar>
+
+      {/* Account Menu for Logged In Users */}
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={handleMenuClose}
+        onClick={handleMenuClose}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              minWidth: 180,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
+                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(59, 130, 246, 0.15)',
+              borderRadius: 2,
+              '&::before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                right: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
+          },
+        }}
+      >
+        <MenuItem
+          onClick={handleViewReports}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            mb: 0.5,
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.08)'
+                  : 'rgba(59, 130, 246, 0.08)',
+            },
+          }}
+        >
+          <Person sx={{ mr: 1.5, fontSize: 20 }} />
+          View my reports
+        </MenuItem>
+        <MenuItem
+          onClick={handleLogoutFromMenu}
+          sx={{
+            py: 1.5,
+            px: 2,
+            borderRadius: 1,
+            mx: 1,
+            color: 'error.main',
+            '&:hover': {
+              backgroundColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(239, 68, 68, 0.08)'
+                  : 'rgba(220, 38, 38, 0.08)',
+            },
+          }}
+        >
+          <Logout sx={{ mr: 1.5, fontSize: 20 }} />
+          Log out
+        </MenuItem>
+      </Menu>
 
       {/* Modern Mobile Menu Overlay */}
       <MobileMenuOverlay open={mobileOpen}>
@@ -578,10 +600,44 @@ export const HeaderBar: React.FC = () => {
             </MobileNavButton>
           ))}
 
+          {isLoggedIn && (
+            <MobileNavButton
+              onClick={handleViewReports}
+              sx={{
+                animationDelay: `${navItems.length * 0.1 + 0.1}s`,
+                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.2)'
+                    : 'rgba(37, 99, 235, 0.15)',
+                '&:hover': {
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(59, 130, 246, 0.4)'
+                      : 'rgba(37, 99, 235, 0.25)',
+                },
+                '@keyframes slideInUp': {
+                  '0%': { opacity: 0, transform: 'translateY(30px)' },
+                  '100%': { opacity: 1, transform: 'translateY(0)' },
+                },
+              }}
+              startIcon={<Person sx={{ fontSize: 20 }} />}
+            >
+              View my reports
+            </MobileNavButton>
+          )}
           <MobileNavButton
             onClick={isLoggedIn ? handleLogout : handleLogin}
             sx={{
-              animationDelay: `${navItems.length * 0.1 + 0.1}s`,
+              animationDelay: `${navItems.length * 0.1 + (isLoggedIn ? 0.2 : 0.1)}s`,
               animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
               background: isLoggedIn
                 ? theme.palette.mode === 'dark'
@@ -618,6 +674,9 @@ export const HeaderBar: React.FC = () => {
                 '100%': { opacity: 1, transform: 'translateY(0)' },
               },
             }}
+            startIcon={
+              isLoggedIn ? <Logout sx={{ fontSize: 20 }} /> : <Login sx={{ fontSize: 20 }} />
+            }
           >
             {isLoggedIn ? 'Log out' : 'Log in'}
           </MobileNavButton>
