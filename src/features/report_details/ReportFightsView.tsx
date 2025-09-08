@@ -1001,8 +1001,9 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               mb: expandedEncounters.has(trialRun.id) ? 3 : 2,
               '&.Mui-expanded': {
                 marginBottom: 3,
-                background:
-                  'linear-gradient(135deg, rgb(224 239 255 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+                background: darkMode
+                  ? 'linear-gradient(135deg, rgb(0 0 0 / 25%) 0%, rgb(80 73 104 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+                  : 'linear-gradient(135deg, rgb(224 239 255 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
                 '& + .MuiAccordion-root': {
                   marginTop: 2,
                 },
