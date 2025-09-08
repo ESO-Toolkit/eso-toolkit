@@ -426,7 +426,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         wipeVeryLowGradient:
           'linear-gradient(90deg, rgb(252, 211, 77) 0%, rgba(162, 230, 53, 0.95) 100%)',
         wipeShadow: '0 0 6px rgba(255, 99, 71, 0.45)',
-        hoverBg: 'rgba(255,255,255,0.025)',
+        hoverBg: 'rgba(255,255,255,0.15)',
         badgeBorder: '1px solid rgba(255,255,255,0.18)',
         badgeBorderKill: '1px solid rgba(76, 217, 100, 0.3)',
         badgeShadow: '0 4px 12px rgba(255, 99, 71, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
@@ -844,6 +844,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
             '&:hover': {
               backgroundColor: getThemeColors.hoverBg,
+              borderColor: darkMode ? 'rgba(255,255,255,0.3)' : 'rgba(100, 116, 139, 0.6)',
             },
             '&:active': {
               transform: 'translateY(0.5px)',
