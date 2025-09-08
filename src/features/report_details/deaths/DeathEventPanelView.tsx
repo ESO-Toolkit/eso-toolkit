@@ -403,20 +403,40 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
                   <Avatar
                     sx={{
-                      width: 32,
-                      height: 32,
+                      width: 40,
+                      height: 40,
                       background:
                         theme.palette.mode === 'dark'
-                          ? roleColors.getPlayerColor(
-                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank',
-                            )
-                          : roleColors.getGradientColor(
-                              playerMap.get(info.playerId)?.role as 'dps' | 'healer' | 'tank',
-                            ),
-                      fontSize: '1rem',
+                          ? 'linear-gradient(145deg, #dc2626 0%, #991b1b 50%, #7f1d1d 100%)'
+                          : 'linear-gradient(145deg, #ef4444 0%, #dc2626 50%, #b91c1c 100%)',
+                      fontSize: '0.9rem',
+                      fontWeight: 900,
+                      fontFamily: '"Arial Black", "Helvetica Neue", Arial, sans-serif',
+                      color: theme.palette.mode === 'dark' ? '#fff' : '#fff',
+                      textShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 2px 4px rgba(0,0,0,0.8), 0 4px 8px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.3)'
+                          : '0 2px 4px rgba(0,0,0,0.6), 0 4px 8px rgba(0,0,0,0.4), 0 0 0 1px rgba(0,0,0,0.2)',
+                      border:
+                        theme.palette.mode === 'dark'
+                          ? '2px solid rgba(239, 68, 68, 0.5)'
+                          : '2px solid rgba(220, 38, 38, 0.6)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 12px rgba(220, 38, 38, 0.3), inset 0 2px 4px rgba(255,255,255,0.1)'
+                          : '0 4px 12px rgba(220, 38, 38, 0.4), inset 0 2px 4px rgba(255,255,255,0.2)',
+                      transform: 'perspective(50px) rotateX(5deg)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        transform: 'perspective(50px) rotateX(5deg) scale(1.1)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 6px 16px rgba(220, 38, 38, 0.4), inset 0 2px 4px rgba(255,255,255,0.15)'
+                            : '0 6px 16px rgba(220, 38, 38, 0.5), inset 0 2px 4px rgba(255,255,255,0.3)',
+                      },
                     }}
                   >
-                    💀
+                    #{idx + 1}
                   </Avatar>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography
