@@ -820,7 +820,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     }
 
     return (
-      <ListItem key={fight.id} sx={{ p: 0 }}>
+      <ListItem key={fight.id} sx={{ p: 0, overflow: 'visible' }}>
         <ListItemButton
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
@@ -839,6 +839,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             px: 1,
             position: 'relative',
             backgroundColor: 'transparent',
+            overflow: 'visible',
             transition:
               'background-color 120ms ease, transform 120ms ease, border-color 120ms ease',
             '&:hover': {
@@ -847,8 +848,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             '&:active': {
               transform: 'translateY(0.5px)',
             },
-            '&::after': {
-              content: '""',
+          }}
+        >
+          {/* Progress gradient background */}
+          <Box
+            sx={{
               position: 'absolute',
               top: 0,
               left: 0,
@@ -879,12 +883,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 : fight.difficulty == null
                   ? getThemeColors.trashShadow
                   : getThemeColors.killShadow,
-              borderRadius: `4px ${!isWipe ? '4px' : '0'} ${!isWipe ? '4px' : '0'} 4px`,
+              borderRadius: 1,
               opacity: 0.4,
               zIndex: 0,
-            },
-          }}
-        >
+            }}
+          />
           {/* Wipe badge */}
           <Box
             sx={{
@@ -972,6 +975,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           backgroundColor: 'background.paper',
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
+          overflow: 'visible',
         }}
       >
         <Typography
@@ -1216,7 +1220,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 </Box>
               </Box>
             </AccordionSummary>
-            <AccordionDetails>
+            <AccordionDetails sx={{ overflow: 'visible' }}>
               {trialRun.encounters.map((encounter) => {
                 return (
                   <Box
@@ -1227,6 +1231,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       borderRadius: 2,
                       border: '1px solid rgba(255, 255, 255, 0.0)',
                       transition: 'all 0.2s ease-in-out',
+                      overflow: 'visible',
                       '&:hover': {
                         border: '1px solid rgba(255, 255, 255, 0.15)',
                         background: 'rgba(255, 255, 255, 0.04)',
@@ -1332,6 +1337,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                             gap: 1,
+                            overflow: 'visible',
                           }}
                         >
                           {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
@@ -1345,6 +1351,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                         display: 'grid',
                         gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                         gap: 1,
+                        overflow: 'visible',
                       }}
                     >
                       {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
@@ -1366,6 +1373,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                             display: 'grid',
                             gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
                             gap: 1,
+                            overflow: 'visible',
                           }}
                         >
                           {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
