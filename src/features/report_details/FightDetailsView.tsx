@@ -26,6 +26,7 @@ import {
 } from '@mui/material';
 import React, { Suspense } from 'react';
 
+import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { FightFragment } from '../../graphql/generated';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
@@ -386,97 +387,99 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
       </Box>
 
       {/* Tab Content */}
-      <Box sx={{ mt: 2, minHeight: '600px' }}>
-        {validSelectedTabId === TabId.INSIGHTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
-            <InsightsPanel fight={fight} />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.PLAYERS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
-            <PlayersPanel />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.DAMAGE_DONE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
-            <DamageDonePanel />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.HEALING_DONE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
-            <HealingDonePanel fight={fight} />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.DEATHS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
-            <DeathEventPanel fight={fight} />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
-            <CriticalDamagePanel />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.PENETRATION && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-            <PenetrationPanel fight={fight} />
-          </Suspense>
-        )}
-        {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-            <DamageReductionPanel fight={fight} />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
-            <LocationHeatmapPanel fight={fight} />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
-            <EventsPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.TARGET_EVENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
-            <TargetEventsPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.DIAGNOSTICS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
-            <DiagnosticsPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.ACTORS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
-            <ActorsPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.TALENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
-            <TalentsGridPanel fight={fight} />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.ROTATION_ANALYSIS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
-            <RotationAnalysisPanel fight={fight} />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.AURAS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
-            <AurasPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.BUFFS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
-            <BuffsOverviewPanel />
-          </Suspense>
-        )}
-        {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
-            <DebuffsOverviewPanel />
-          </Suspense>
-        )}
+      <Box sx={{ mt: 2 }}>
+        <AnimatedTabContent tabKey={validSelectedTabId}>
+          {validSelectedTabId === TabId.INSIGHTS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
+              <InsightsPanel fight={fight} />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.PLAYERS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
+              <PlayersPanel />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.DAMAGE_DONE && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
+              <DamageDonePanel />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.HEALING_DONE && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
+              <HealingDonePanel fight={fight} />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.DEATHS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
+              <DeathEventPanel fight={fight} />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
+              <CriticalDamagePanel />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.PENETRATION && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
+              <PenetrationPanel fight={fight} />
+            </Suspense>
+          )}
+          {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
+              <DamageReductionPanel fight={fight} />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
+              <LocationHeatmapPanel fight={fight} />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
+              <EventsPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.TARGET_EVENTS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
+              <TargetEventsPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.DIAGNOSTICS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
+              <DiagnosticsPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.ACTORS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
+              <ActorsPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.TALENTS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
+              <TalentsGridPanel fight={fight} />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.ROTATION_ANALYSIS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
+              <RotationAnalysisPanel fight={fight} />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.AURAS_OVERVIEW && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
+              <AurasPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.BUFFS_OVERVIEW && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
+              <BuffsOverviewPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
+              <DebuffsOverviewPanel />
+            </Suspense>
+          )}
+        </AnimatedTabContent>
       </Box>
     </React.Fragment>
   );
