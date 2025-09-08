@@ -150,6 +150,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             flexGrow: 1,
             minHeight: 'auto',
             overflow: 'visible !important',
+            '& .MuiTabs-indicator': {
+              display: 'none',
+            },
             '& .MuiTabs-flexContainer': {
               gap: '8px',
               justifyContent: 'flex-start',
