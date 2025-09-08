@@ -1,13 +1,23 @@
 import AssignmentIcon from '@mui/icons-material/Assignment';
 import LinkIcon from '@mui/icons-material/Link';
 import LockOpenIcon from '@mui/icons-material/LockOpen';
-import { Box, Button, Container, TextField, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Button,
+  CircularProgress,
+  Container,
+  TextField,
+  Typography,
+  useTheme,
+} from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
+import { format } from 'date-fns';
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { startPKCEAuth } from '../features/auth/auth';
 import { useAuth } from '../features/auth/AuthContext';
+import { useLatestReport } from '../hooks/useLatestReport';
 import { clearAllEvents } from '../store/events_data/actions';
 import { clearMasterData } from '../store/master_data/masterDataSlice';
 import { clearReport } from '../store/report/reportSlice';
@@ -774,6 +784,7 @@ export const LandingPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const theme = useTheme();
   const { isLoggedIn } = useAuth();
+  const { report: latestReport, loading: latestReportLoading } = useLatestReport();
 
   // Defer complex animations until after initial render
   React.useEffect(() => {
@@ -1011,34 +1022,252 @@ export const LandingPage: React.FC = () => {
                   Analyze Log
                 </Button>
               </LogInputContainer>
+              {/* Desktop Layout */}
               <Box
                 sx={{
                   maxWidth: 600,
                   width: '100%',
                   mx: 'auto',
-                  display: 'flex',
+                  display: { xs: 'none', sm: 'flex' },
                   alignItems: 'center',
+                  justifyContent: 'space-between',
                   mt: 0.5,
                   gap: 2,
-                  [theme.breakpoints.down('sm')]: {
-                    maxWidth: '100%',
-                    justifyContent: 'center',
-                    gap: 0,
-                    mt: -0.5,
-                  },
                 }}
               >
+                {/* Latest Report Section */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    flexShrink: 0,
+                  }}
+                >
+                  {latestReportLoading ? (
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <CircularProgress size={14} />
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(51, 65, 85, 0.7)',
+                          fontSize: '0.875rem',
+                        }}
+                      >
+                        ⚡ Loading...
+                      </Typography>
+                    </Box>
+                  ) : latestReport ? (
+                    <Box
+                      onClick={() => navigate(`/report/${latestReport.code}`)}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        cursor: 'pointer',
+                        p: 1,
+                        borderRadius: '8px',
+                        transition: 'all 0.2s ease',
+                        '&:hover': {
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.05)'
+                              : 'rgba(0, 0, 0, 0.05)',
+                        },
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.9)'
+                              : 'rgba(51, 65, 85, 0.9)',
+                          fontSize: '0.875rem',
+                          fontWeight: 500,
+                          textDecoration: 'underline',
+                          textDecorationColor: 'transparent',
+                          '&:hover': {
+                            textDecorationColor: 'currentColor',
+                          },
+                        }}
+                      >
+                        <span style={{ fontWeight: 200 }}>{latestReport.title || 'Untitled'}</span>{' '}
+                        •{' '}
+                        <span style={{ fontWeight: 700 }}>
+                          📅 {format(new Date(latestReport.startTime), 'MMM dd')}
+                        </span>
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.5)'
+                            : 'rgba(51, 65, 85, 0.5)',
+                        fontSize: '0.875rem',
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      📝 No reports yet
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Spacer Line */}
+                <Box
+                  sx={{
+                    height: '1px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.2)'
+                        : 'rgba(14, 165, 233, 0.2)',
+                    flex: 1,
+                  }}
+                />
+
+                {/* View my reports button - moved to the right */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'flex-end',
+                    flexShrink: 0,
+                  }}
+                >
+                  <Button
+                    variant="text"
+                    size="small"
+                    onClick={() => navigate('/my-reports')}
+                    startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
+                    sx={{
+                      px: 0,
+                      minWidth: 'auto',
+                      textTransform: 'none',
+                      fontWeight: 400,
+                      letterSpacing: '0.2px',
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.7)'
+                          : 'rgba(51, 65, 85, 0.7)',
+                      '&:hover': {
+                        textDecoration: 'underline',
+                        backgroundColor: 'transparent',
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.9)'
+                            : 'rgba(51, 65, 85, 0.9)',
+                      },
+                    }}
+                  >
+                    View my reports
+                  </Button>
+                </Box>
+              </Box>
+
+              {/* Mobile Layout - Simple Text Based */}
+              <Box
+                sx={{
+                  display: { xs: 'flex', sm: 'none' },
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 1,
+                  maxWidth: '100%',
+                  width: '100%',
+                  mx: 'auto',
+                  mt: 1,
+                }}
+              >
+                {/* Latest Report */}
+                {latestReportLoading ? (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <CircularProgress size={14} />
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.7)'
+                            : 'rgba(51, 65, 85, 0.7)',
+                        fontSize: '0.875rem',
+                      }}
+                    >
+                      ⚡ Loading...
+                    </Typography>
+                  </Box>
+                ) : latestReport ? (
+                  <Typography
+                    variant="body2"
+                    onClick={() => navigate(`/report/${latestReport.code}`)}
+                    sx={{
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.9)'
+                          : 'rgba(51, 65, 85, 0.9)',
+                      fontSize: '0.875rem',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      p: 1,
+                      borderRadius: '6px',
+                      transition: 'all 0.2s ease',
+                      textDecoration: 'underline',
+                      textDecorationColor: 'transparent',
+                      '&:hover': {
+                        textDecorationColor: 'currentColor',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.05)',
+                      },
+                    }}
+                  >
+                    <span style={{ fontWeight: 200 }}>{latestReport.title || 'Untitled'}</span> •{' '}
+                    <span style={{ fontWeight: 700 }}>
+                      📅 {format(new Date(latestReport.startTime), 'MMM dd')}
+                    </span>
+                  </Typography>
+                ) : (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      color:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.5)'
+                          : 'rgba(51, 65, 85, 0.5)',
+                      fontSize: '0.875rem',
+                      fontStyle: 'italic',
+                      textAlign: 'center',
+                    }}
+                  >
+                    📝 No reports yet
+                  </Typography>
+                )}
+
+                {/* Simple divider */}
+                <Box
+                  sx={{
+                    width: '40%',
+                    height: '1px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.2)'
+                        : 'rgba(14, 165, 233, 0.2)',
+                  }}
+                />
+
+                {/* View my reports - simple text link */}
                 <Button
                   variant="text"
                   size="small"
                   onClick={() => navigate('/my-reports')}
-                  startIcon={<AssignmentIcon sx={{ fontSize: 18 }} />}
+                  startIcon={<AssignmentIcon sx={{ fontSize: 16 }} />}
                   sx={{
-                    px: 0,
-                    minWidth: 'auto',
+                    px: 1,
                     textTransform: 'none',
                     fontWeight: 400,
-                    letterSpacing: '0.2px',
+                    fontSize: '0.875rem',
                     color:
                       theme.palette.mode === 'dark'
                         ? 'rgba(255, 255, 255, 0.7)'
@@ -1053,22 +1282,8 @@ export const LandingPage: React.FC = () => {
                     },
                   }}
                 >
-                  View my reports
+                  View all reports
                 </Button>
-                <Box
-                  sx={{
-                    flex: 1,
-                    height: '6px',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.2)'
-                        : 'rgba(14, 165, 233, 0.2)',
-                    borderRadius: '3px',
-                    [theme.breakpoints.down('sm')]: {
-                      display: 'none',
-                    },
-                  }}
-                />
               </Box>
             </Box>
           ) : (
