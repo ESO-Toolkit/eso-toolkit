@@ -13,13 +13,14 @@ import { clearMasterData } from '../store/master_data/masterDataSlice';
 import { clearReport } from '../store/report/reportSlice';
 import { useAppDispatch } from '../store/useAppDispatch';
 
+import { Footer } from './Footer';
+
 // Styled components using your existing design
 const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
   position: 'relative',
-  overflowX: 'hidden',
-  overflowY: 'visible',
+  overflow: 'visible',
   width: '100%',
   maxWidth: '100vw',
   display: 'flex',
@@ -1153,6 +1154,8 @@ export const LandingPage: React.FC = () => {
           meta changes.
         </SectionSubtitle>
       </ToolsSection>
+
+      <Footer />
     </LandingContainer>
   );
 };
