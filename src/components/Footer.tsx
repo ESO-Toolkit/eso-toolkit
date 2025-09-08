@@ -52,8 +52,9 @@ export const Footer: React.FC = React.memo(() => {
         position: 'relative',
         background:
           theme.palette.mode === 'dark'
-            ? 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.4) 50%, rgba(3,7,18,0.8) 100%)'
-            : 'linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.6) 50%, rgba(241,245,249,0.9) 100%)',
+            ? 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.4) 50%, rgba(3,7,18,0.8) 100%) !important'
+            : 'linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.6) 50%, rgba(241,245,249,0.9) 100%) !important',
+        backgroundImage: 'none !important', // Ensure no other background images interfere
         '&::before': {
           content: '""',
           position: 'absolute',
