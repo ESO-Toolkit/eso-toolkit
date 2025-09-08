@@ -4,28 +4,26 @@ import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
 
 // Tab identifiers as strings (matching FightDetailsView)
-export const TAB_IDS = {
-  INSIGHTS: 'insights',
-  PLAYERS: 'players',
-  DAMAGE_DONE: 'damage-done',
-  HEALING_DONE: 'healing-done',
-  DEATHS: 'deaths',
-  CRITICAL_DAMAGE: 'critical-damage',
-  PENETRATION: 'penetration',
-  DAMAGE_REDUCTION: 'damage-reduction',
-  LOCATION_HEATMAP: 'location-heatmap',
-  RAW_EVENTS: 'raw-events',
-  TARGET_EVENTS: 'target-events',
-  DIAGNOSTICS: 'diagnostics',
-  ACTORS: 'actors',
-  TALENTS: 'talents',
-  ROTATION_ANALYSIS: 'rotation-analysis',
-  AURAS_OVERVIEW: 'auras-overview',
-  BUFFS_OVERVIEW: 'buffs-overview',
-  DEBUFFS_OVERVIEW: 'debuffs-overview',
-} as const;
-
-export type TabId = (typeof TAB_IDS)[keyof typeof TAB_IDS];
+export enum TabId {
+  INSIGHTS = 'insights',
+  PLAYERS = 'players',
+  DAMAGE_DONE = 'damage-done',
+  HEALING_DONE = 'healing-done',
+  DEATHS = 'deaths',
+  CRITICAL_DAMAGE = 'critical-damage',
+  PENETRATION = 'penetration',
+  DAMAGE_REDUCTION = 'damage-reduction',
+  LOCATION_HEATMAP = 'location-heatmap',
+  RAW_EVENTS = 'raw-events',
+  TARGET_EVENTS = 'target-events',
+  DIAGNOSTICS = 'diagnostics',
+  ACTORS = 'actors',
+  TALENTS = 'talents',
+  ROTATION_ANALYSIS = 'rotation-analysis',
+  AURAS_OVERVIEW = 'auras-overview',
+  BUFFS_OVERVIEW = 'buffs-overview',
+  DEBUFFS_OVERVIEW = 'debuffs-overview',
+}
 
 export const getSkeletonForTab = (
   tabId: TabId | undefined,
@@ -33,16 +31,16 @@ export const getSkeletonForTab = (
 ): React.ReactElement => {
   const getContentSkeleton = (): React.ReactElement => {
     switch (tabId) {
-      case TAB_IDS.INSIGHTS:
+      case TabId.INSIGHTS:
         return (
           <InsightsSkeletonLayout
             showHeader={includeHeaderAndTabs}
             showTabs={includeHeaderAndTabs}
           />
         );
-      case TAB_IDS.PLAYERS:
+      case TabId.PLAYERS:
         return <GenericTabSkeleton title="Players" showTable={true} tableRows={6} />;
-      case TAB_IDS.DAMAGE_DONE:
+      case TabId.DAMAGE_DONE:
         return (
           <GenericTabSkeleton
             title="Damage Done"
@@ -52,7 +50,7 @@ export const getSkeletonForTab = (
             tableRows={10}
           />
         );
-      case TAB_IDS.HEALING_DONE:
+      case TabId.HEALING_DONE:
         return (
           <GenericTabSkeleton
             title="Healing Done"
@@ -62,13 +60,13 @@ export const getSkeletonForTab = (
             tableRows={8}
           />
         );
-      case TAB_IDS.DEATHS:
+      case TabId.DEATHS:
         return <GenericTabSkeleton title="Death Events" showTable={true} tableRows={5} />;
-      case TAB_IDS.CRITICAL_DAMAGE:
+      case TabId.CRITICAL_DAMAGE:
         return <GenericTabSkeleton title="Critical Damage" showTable={true} tableRows={12} />;
-      case TAB_IDS.PENETRATION:
+      case TabId.PENETRATION:
         return <GenericTabSkeleton title="Penetration" showTable={true} tableRows={6} />;
-      case TAB_IDS.DAMAGE_REDUCTION:
+      case TabId.DAMAGE_REDUCTION:
         return (
           <GenericTabSkeleton
             title="Damage Reduction"
@@ -77,7 +75,7 @@ export const getSkeletonForTab = (
             tableRows={8}
           />
         );
-      case TAB_IDS.LOCATION_HEATMAP:
+      case TabId.LOCATION_HEATMAP:
         return (
           <GenericTabSkeleton
             title="Location Heatmap"
@@ -86,17 +84,17 @@ export const getSkeletonForTab = (
             showTable={false}
           />
         );
-      case TAB_IDS.RAW_EVENTS:
+      case TabId.RAW_EVENTS:
         return <GenericTabSkeleton title="Events" showTable={true} tableRows={20} />;
-      case TAB_IDS.TARGET_EVENTS:
+      case TabId.TARGET_EVENTS:
         return <GenericTabSkeleton title="Target Events" showTable={true} tableRows={15} />;
-      case TAB_IDS.DIAGNOSTICS:
+      case TabId.DIAGNOSTICS:
         return <GenericTabSkeleton title="Diagnostics" showTable={false} />;
-      case TAB_IDS.ACTORS:
+      case TabId.ACTORS:
         return <GenericTabSkeleton title="Actors" showTable={true} tableRows={8} />;
-      case TAB_IDS.TALENTS:
+      case TabId.TALENTS:
         return <GenericTabSkeleton title="Talents Grid" showTable={false} />;
-      case TAB_IDS.ROTATION_ANALYSIS:
+      case TabId.ROTATION_ANALYSIS:
         return (
           <GenericTabSkeleton
             title="Rotation Analysis"
@@ -105,11 +103,11 @@ export const getSkeletonForTab = (
             showTable={false}
           />
         );
-      case TAB_IDS.AURAS_OVERVIEW:
+      case TabId.AURAS_OVERVIEW:
         return <GenericTabSkeleton title="Auras" showTable={true} tableRows={15} />;
-      case TAB_IDS.BUFFS_OVERVIEW:
+      case TabId.BUFFS_OVERVIEW:
         return <GenericTabSkeleton title="Buffs Overview" showChart={true} showTable={true} />;
-      case TAB_IDS.DEBUFFS_OVERVIEW:
+      case TabId.DEBUFFS_OVERVIEW:
         return <GenericTabSkeleton title="Debuffs Overview" showTable={true} tableRows={15} />;
       default:
         return <GenericTabSkeleton title="Loading..." />;

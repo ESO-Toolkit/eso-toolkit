@@ -27,7 +27,7 @@ import {
 import React, { Suspense } from 'react';
 
 import { FightFragment } from '../../graphql/generated';
-import { getSkeletonForTab, TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
+import { getSkeletonForTab, TabId, TabId } from '../../utils/getSkeletonForTab';
 
 import { TargetSelector } from './insights/TargetSelector';
 
@@ -118,7 +118,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   showExperimentalTabs,
 }) => {
   // Ensure we always have a valid selectedTabId
-  const validSelectedTabId = selectedTabId || TAB_IDS.INSIGHTS;
+  const validSelectedTabId = selectedTabId || TabId.INSIGHTS;
 
   return (
     <React.Fragment>
@@ -189,7 +189,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           allowScrollButtonsMobile
         >
           <Tab
-            value={TAB_IDS.INSIGHTS}
+            value={TabId.INSIGHTS}
             icon={
               <Tooltip title="Insights">
                 <InsightsIcon />
@@ -197,7 +197,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.PLAYERS}
+            value={TabId.PLAYERS}
             icon={
               <Tooltip title="Players">
                 <PeopleIcon />
@@ -205,7 +205,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.DAMAGE_DONE}
+            value={TabId.DAMAGE_DONE}
             icon={
               <Tooltip title="Damage Done">
                 <Icon
@@ -218,7 +218,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.HEALING_DONE}
+            value={TabId.HEALING_DONE}
             icon={
               <Tooltip title="Healing Done">
                 <HealingIcon />
@@ -226,7 +226,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.DEATHS}
+            value={TabId.DEATHS}
             icon={
               <Tooltip title="Deaths">
                 <Icon
@@ -239,7 +239,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.CRITICAL_DAMAGE}
+            value={TabId.CRITICAL_DAMAGE}
             icon={
               <Tooltip title="Critical Damage">
                 <WhatshotIcon />
@@ -247,7 +247,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.PENETRATION}
+            value={TabId.PENETRATION}
             icon={
               <Tooltip title="Penetration">
                 <SecurityIcon />
@@ -255,7 +255,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
           <Tab
-            value={TAB_IDS.DAMAGE_REDUCTION}
+            value={TabId.DAMAGE_REDUCTION}
             icon={
               <Tooltip title="Damage Reduction">
                 <ShieldIcon />
@@ -266,7 +266,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && (
             <>
               <Tab
-                value={TAB_IDS.LOCATION_HEATMAP}
+                value={TabId.LOCATION_HEATMAP}
                 icon={
                   <Tooltip title="Location Heatmap">
                     <MapIcon />
@@ -274,7 +274,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.RAW_EVENTS}
+                value={TabId.RAW_EVENTS}
                 icon={
                   <Tooltip title="Raw Events">
                     <ListIcon />
@@ -282,7 +282,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.TARGET_EVENTS}
+                value={TabId.TARGET_EVENTS}
                 icon={
                   <Tooltip title="Target Events">
                     <GpsFixedIcon />
@@ -290,7 +290,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.DIAGNOSTICS}
+                value={TabId.DIAGNOSTICS}
                 icon={
                   <Tooltip title="Diagnostics">
                     <BugReportIcon />
@@ -298,7 +298,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.ACTORS}
+                value={TabId.ACTORS}
                 icon={
                   <Tooltip title="Actors">
                     <Person />
@@ -306,7 +306,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.TALENTS}
+                value={TabId.TALENTS}
                 icon={
                   <Tooltip title="Talents">
                     <StarIcon />
@@ -314,7 +314,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.ROTATION_ANALYSIS}
+                value={TabId.ROTATION_ANALYSIS}
                 icon={
                   <Tooltip title="Rotation Analysis">
                     <RepeatIcon />
@@ -322,7 +322,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.AURAS_OVERVIEW}
+                value={TabId.AURAS_OVERVIEW}
                 icon={
                   <Tooltip title="Auras Overview">
                     <AutoAwesomeIcon />
@@ -330,7 +330,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.BUFFS_OVERVIEW}
+                value={TabId.BUFFS_OVERVIEW}
                 icon={
                   <Tooltip title="Buffs Overview">
                     <FlareIcon />
@@ -338,7 +338,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 }
               />
               <Tab
-                value={TAB_IDS.DEBUFFS_OVERVIEW}
+                value={TabId.DEBUFFS_OVERVIEW}
                 icon={
                   <Tooltip title="Debuffs Overview">
                     <Icon
@@ -384,93 +384,93 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
       {/* Tab Content */}
       <Box sx={{ mt: 2, minHeight: '600px' }}>
-        {validSelectedTabId === TAB_IDS.INSIGHTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.INSIGHTS} />}>
+        {validSelectedTabId === TabId.INSIGHTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
             <InsightsPanel fight={fight} />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.PLAYERS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.PLAYERS} />}>
+        {validSelectedTabId === TabId.PLAYERS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.PLAYERS} />}>
             <PlayersPanel />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.DAMAGE_DONE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DAMAGE_DONE} />}>
+        {validSelectedTabId === TabId.DAMAGE_DONE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
             <DamageDonePanel />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.HEALING_DONE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.HEALING_DONE} />}>
+        {validSelectedTabId === TabId.HEALING_DONE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.HEALING_DONE} />}>
             <HealingDonePanel fight={fight} />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.DEATHS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DEATHS} />}>
+        {validSelectedTabId === TabId.DEATHS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEATHS} />}>
             <DeathEventPanel fight={fight} />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.CRITICAL_DAMAGE && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.CRITICAL_DAMAGE} />}>
+        {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
             <CriticalDamagePanel />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.PENETRATION && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.PENETRATION} />}>
+        {validSelectedTabId === TabId.PENETRATION && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
             <PenetrationPanel fight={fight} />
           </Suspense>
         )}
-        {validSelectedTabId === TAB_IDS.DAMAGE_REDUCTION && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DAMAGE_REDUCTION} />}>
+        {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
             <DamageReductionPanel fight={fight} />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.LOCATION_HEATMAP && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.LOCATION_HEATMAP} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.LOCATION_HEATMAP} />}>
             <LocationHeatmapPanel fight={fight} />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.RAW_EVENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.RAW_EVENTS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.RAW_EVENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.RAW_EVENTS} />}>
             <EventsPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.TARGET_EVENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.TARGET_EVENTS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.TARGET_EVENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.TARGET_EVENTS} />}>
             <TargetEventsPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.DIAGNOSTICS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DIAGNOSTICS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.DIAGNOSTICS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DIAGNOSTICS} />}>
             <DiagnosticsPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.ACTORS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.ACTORS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.ACTORS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.ACTORS} />}>
             <ActorsPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.TALENTS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.TALENTS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.TALENTS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.TALENTS} />}>
             <TalentsGridPanel fight={fight} />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.ROTATION_ANALYSIS && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.ROTATION_ANALYSIS} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.ROTATION_ANALYSIS && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.ROTATION_ANALYSIS} />}>
             <RotationAnalysisPanel fight={fight} />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.AURAS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.AURAS_OVERVIEW} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.AURAS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.AURAS_OVERVIEW} />}>
             <AurasPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.BUFFS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.BUFFS_OVERVIEW} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.BUFFS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.BUFFS_OVERVIEW} />}>
             <BuffsOverviewPanel />
           </Suspense>
         )}
-        {showExperimentalTabs && validSelectedTabId === TAB_IDS.DEBUFFS_OVERVIEW && (
-          <Suspense fallback={<PanelLoadingFallback tabId={TAB_IDS.DEBUFFS_OVERVIEW} />}>
+        {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
+          <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
             <DebuffsOverviewPanel />
           </Suspense>
         )}

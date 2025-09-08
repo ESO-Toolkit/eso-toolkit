@@ -6,7 +6,7 @@ import { useParams } from 'react-router-dom';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/generated';
 import { ReportFightContext } from '../../ReportFightContext';
-import { TAB_IDS, TabId } from '../../utils/getSkeletonForTab';
+import { TabId } from '../../utils/getSkeletonForTab';
 
 import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
 
@@ -21,7 +21,7 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const [latestFightId, setFightId] = React.useState<string | null | undefined>(fightId);
 
   // Local state for tab selection and experimental flag (not URL-driven for live log)
-  const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TAB_IDS.INSIGHTS);
+  const [selectedTabId, setSelectedTabId] = React.useState<TabId>(TabId.INSIGHTS);
   const [showExperimentalTabs, setShowExperimentalTabs] = React.useState<boolean>(false);
 
   const fetchLatestFightId = React.useCallback(async (): Promise<void> => {

@@ -6,7 +6,7 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
-import { getSkeletonForTab, TAB_IDS } from '../../../utils/getSkeletonForTab';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
@@ -113,7 +113,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     ]);
 
     if (isLoading) {
-      return getSkeletonForTab(TAB_IDS.PLAYERS, false);
+      return getSkeletonForTab(TabId.PLAYERS, false);
     }
 
     if (!playerActors || Object.keys(playerActors).length === 0) {
