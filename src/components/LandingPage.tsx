@@ -41,54 +41,6 @@ const HeroSection = styled(Box, {
   overflow: 'hidden',
   width: '100%',
   maxWidth: '100vw',
-  background: theme.palette.mode === 'dark' 
-    ? 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)'
-    : 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%)',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: theme.palette.mode === 'dark'
-      ? `
-        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.12) 0%, transparent 50%),
-        radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.08) 0%, transparent 50%)
-      `
-      : `
-        radial-gradient(circle at 20% 30%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-        radial-gradient(circle at 80% 70%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
-        radial-gradient(circle at 50% 20%, rgba(59, 130, 246, 0.04) 0%, transparent 50%)
-      `,
-    animation: 'gradientShift 20s ease-in-out infinite alternate',
-    pointerEvents: 'none',
-  },
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: theme.palette.mode === 'dark'
-      ? 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23ffffff" fill-opacity="0.02"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")'
-      : 'url("data:image/svg+xml,%3Csvg width="60" height="60" viewBox="0 0 60 60" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23000000" fill-opacity="0.015"%3E%3Cpath d="M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
-    opacity: 0.3,
-    pointerEvents: 'none',
-  },
-  '@keyframes gradientShift': {
-    '0%': {
-      transform: 'scale(1) rotate(0deg)',
-    },
-    '50%': {
-      transform: 'scale(1.05) rotate(1deg)',
-    },
-    '100%': {
-      transform: 'scale(1.02) rotate(-0.5deg)',
-    },
-  },
   [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
     padding: '2rem 1rem 0rem',
