@@ -600,38 +600,6 @@ const ComingSoonBadge = styled(Box)({
   },
 });
 
-const MarketingBadge = styled(Box)({
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: '0.5rem',
-  background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(0, 225, 255, 0.05))',
-  border: '1px solid rgba(56, 189, 248, 0.2)',
-  borderRadius: '50px',
-  padding: '0.5rem 1.2rem',
-  marginBottom: '1rem',
-  fontSize: '0.9rem',
-  fontWeight: 600,
-  color: '#38bdf8',
-  backdropFilter: 'blur(10px)',
-  boxShadow: '0 4px 20px rgba(56, 189, 248, 0.1)',
-  animation: 'float 3s ease-in-out infinite',
-  '@keyframes float': {
-    '0%, 100%': { transform: 'translateY(0px)' },
-    '50%': { transform: 'translateY(-4px)' },
-  },
-});
-
-const BadgeContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  marginBottom: '3rem',
-  marginTop: '2rem',
-  [theme.breakpoints.down('sm')]: {
-    marginBottom: '2rem',
-    marginTop: '2rem',
-  },
-}));
-
 const ParticleContainer = styled(Box)(({ theme }) => ({
   position: 'absolute',
   top: 0,
@@ -817,9 +785,6 @@ export const LandingPage: React.FC = () => {
       </HeroSection>
 
       <ToolsSection id="tools">
-        <BadgeContainer>
-          <MarketingBadge>⚔️ Battle-Tested by ESO Veterans</MarketingBadge>
-        </BadgeContainer>
         <SectionTitle variant="h2">Our Tools</SectionTitle>
         <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
 

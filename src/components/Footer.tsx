@@ -149,7 +149,7 @@ export const Footer: React.FC = React.memo(() => {
               }}
             >
               Essential tools built by the ESO community for enhanced gameplay, optimization, and
-              guild management. Battle-tested by veterans across Tamriel.
+              guild management.
             </Typography>
           </Box>
 
