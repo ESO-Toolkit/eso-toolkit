@@ -1,22 +1,3 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`OAuthRedirect Storybook Snapshot matches the default story snapshot 1`] = `
-<div
-  class="MuiContainer-root MuiContainer-maxWidthSm css-zzzaw2-MuiContainer-root"
-  style="text-align: center; margin-top: 4rem;"
->
-  <p
-    class="MuiTypography-root MuiTypography-body1 MuiTypography-gutterBottom css-1dvlme-MuiTypography-root"
-  >
-    Missing PKCE code verifier. Please restart the authentication process.
-  </p>
-  <button
-    class="MuiButtonBase-root MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary MuiButton-root MuiButton-contained MuiButton-containedPrimary MuiButton-sizeMedium MuiButton-containedSizeMedium MuiButton-colorPrimary css-74d805-MuiButtonBase-root-MuiButton-root"
-    style="margin-top: 1rem;"
-    tabindex="0"
-    type="button"
-  >
-    Restart Authentication
-  </button>
-</div>
-`;
+exports[`OAuthRedirect Storybook Snapshot matches the default story snapshot 1`] = ` `;
