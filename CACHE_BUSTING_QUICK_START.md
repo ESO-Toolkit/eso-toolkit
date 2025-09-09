@@ -6,6 +6,27 @@ This guide shows you how to use the cache-busting features in your ESO Log Aggre
 
 The cache-busting system ensures users always get the latest version of your application after deployments. It works automatically with your existing build process.
 
+## Troubleshooting
+
+### "New version available" showing in development
+
+If you see a persistent "New version available" notification while developing locally, this indicates a version mismatch between the client and server. This can happen when:
+
+1. The development server is running without version files generated
+2. The server has cached build files with different version information
+
+**Quick Fix:**
+```bash
+# Run this command to regenerate version files
+npm run fix:cache-busting
+
+# Or generate version files manually
+node scripts/generate-version.js
+```
+
+**Prevention:**
+The `npm run dev` and `npm start` commands now automatically generate version files (both TypeScript and JSON formats), but if you're running `vite` directly, make sure to generate version files first.
+
 ## Basic Usage
 
 ### 1. Building with Cache-Busting

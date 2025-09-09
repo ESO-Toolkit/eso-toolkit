@@ -18,11 +18,11 @@ let VERSION_INFO: typeof FALLBACK_VERSION_INFO;
 let cacheBuster: string;
 
 try {
-  // We need to use require here because the file is generated dynamically
+  // Load generated version info from JSON file
   // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const versionModule = require('./version');
-  VERSION_INFO = versionModule.VERSION_INFO;
-  cacheBuster = versionModule.cacheBuster;
+  const versionData = require('./version.json');
+  VERSION_INFO = versionData;
+  cacheBuster = versionData.cacheBuster;
 } catch (error) {
   // Version file doesn't exist (development mode)
   VERSION_INFO = FALLBACK_VERSION_INFO;

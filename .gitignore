@@ -44,7 +44,7 @@ data-downloads/
 eso-log-aggregator/
 
 # Auto-generated version files (created during build)
-src/utils/version.ts
+src/utils/version.json
 src/version.json
 public/version.json
 public/manifest.json
