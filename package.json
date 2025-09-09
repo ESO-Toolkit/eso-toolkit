@@ -19,7 +19,7 @@
     "@react-three/drei": "^9.122.0",
     "@react-three/fiber": "^8.18.0",
     "@reduxjs/toolkit": "^2.8.2",
-    "@sentry/react": "^10.7.0",
+    "@sentry/react": "^10.11.0",
     "@sentry/tracing": "^7.120.4",
     "@tanstack/react-table": "^8.21.3",
     "@testing-library/dom": "^10.4.1",
