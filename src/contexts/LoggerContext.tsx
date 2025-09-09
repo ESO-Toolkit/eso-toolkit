@@ -289,22 +289,28 @@ export const useLogger = (context?: string): ILogger => {
     throw new Error('useLogger must be used within a LoggerProvider');
   }
 
-  // Return a context-aware logger if context is provided
-  if (context) {
-    return {
-      debug: (message, data) => logger.debug(message, data, context),
-      info: (message, data) => logger.info(message, data, context),
-      warn: (message, data) => logger.warn(message, data, context),
-      error: (message, error, data) => logger.error(message, error, data, context),
-      setLevel: logger.setLevel.bind(logger),
-      getLevel: logger.getLevel.bind(logger),
-      getEntries: logger.getEntries.bind(logger),
-      clearEntries: logger.clearEntries.bind(logger),
-      exportLogs: logger.exportLogs.bind(logger),
-    };
-  }
+  // Memoize the context-aware logger to prevent re-creation on every render
+  const contextLogger = React.useMemo(() => {
+    // Return a context-aware logger if context is provided
+    if (context) {
+      return {
+        debug: (message: string, data?: unknown) => logger.debug(message, data, context),
+        info: (message: string, data?: unknown) => logger.info(message, data, context),
+        warn: (message: string, data?: unknown) => logger.warn(message, data, context),
+        error: (message: string, error?: Error, data?: unknown) =>
+          logger.error(message, error, data, context),
+        setLevel: logger.setLevel.bind(logger),
+        getLevel: logger.getLevel.bind(logger),
+        getEntries: logger.getEntries.bind(logger),
+        clearEntries: logger.clearEntries.bind(logger),
+        exportLogs: logger.exportLogs.bind(logger),
+      };
+    }
 
-  return logger;
+    return logger;
+  }, [logger, context]);
+
+  return contextLogger;
 };
 
 /**

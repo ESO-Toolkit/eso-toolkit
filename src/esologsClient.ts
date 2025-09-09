@@ -36,6 +36,12 @@ export class EsoLogsClient {
               return incoming;
             },
           },
+          reportData: {
+            merge(_existing, incoming) {
+              // Always return incoming, never cache reportData
+              return incoming;
+            },
+          },
         },
       },
     },
