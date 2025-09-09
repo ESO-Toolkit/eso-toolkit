@@ -10,7 +10,7 @@ export const AnimatedTabContent: React.FC<AnimatedTabContentProps> = ({ children
   const [currentContent, setCurrentContent] = useState(children);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const previousTabKey = useRef(tabKey);
-  const transitionTimeoutRef = useRef<NodeJS.Timeout>();
+  const transitionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const pendingContentRef = useRef<React.ReactNode>(null);
 
   useEffect(() => {

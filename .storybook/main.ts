@@ -6,7 +6,6 @@ const config: StorybookConfig = {
   staticDirs: ['./public'],
 
   addons: [
-    'storybook-addon-remix-react-router',
     '@storybook/addon-links',
     '@storybook/addon-docs',
     'msw-storybook-addon',

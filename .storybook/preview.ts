@@ -1,5 +1,5 @@
 import type { Preview } from '@storybook/react';
-import { withRouter } from 'storybook-addon-remix-react-router';
+import { withReactRouter } from './decorators/withReactRouter';
 import { initialize, mswDecorator, mswLoader } from 'msw-storybook-addon';
 import { withNoNetworkRequests } from '../src/test/decorators/withNoNetworkRequests';
 import '../src/index.css';
@@ -11,7 +11,7 @@ initialize({
 });
 
 const preview: Preview = {
-  decorators: [withNoNetworkRequests, withApollo, mswDecorator, withRouter],
+  decorators: [withNoNetworkRequests, withApollo, mswDecorator, withReactRouter],
   loaders: [mswLoader],
   parameters: {
     actions: { argTypesRegex: '^on[A-Z].*' },
