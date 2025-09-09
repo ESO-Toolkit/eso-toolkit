@@ -28,7 +28,9 @@
       "Bash(git cherry-pick:*)",
       "Bash(npx eslint:*)",
       "Bash(git restore:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npm test)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []

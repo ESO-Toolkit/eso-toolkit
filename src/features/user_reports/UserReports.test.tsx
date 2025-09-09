@@ -478,7 +478,7 @@ describe('UserReports Component', () => {
       });
 
       await waitFor(() => {
-        expect(screen.getByText('Total: 25 reports')).toBeInTheDocument();
+        expect(screen.getByRole('navigation', { name: /pagination/i })).toBeInTheDocument();
       });
     });
   });

@@ -298,6 +298,7 @@ export const UserReports: React.FC = () => {
                 onClick={handleRefresh}
                 disabled={state.loading}
                 color="primary"
+                aria-label="refresh"
                 sx={{
                   backgroundColor: theme.palette.action.hover,
                   '&:hover': {
