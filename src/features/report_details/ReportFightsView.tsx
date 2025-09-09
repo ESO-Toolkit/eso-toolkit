@@ -999,398 +999,407 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         <Box data-testid="fight-list">
-        {encounters.map((trialRun) => (
-          <Accordion
-            key={trialRun.id}
-            data-testid={`trial-accordion-${trialRun.id}`}
-            expanded={expandedEncounters.has(trialRun.id)}
-            onChange={() => toggleEncounter(trialRun.id)}
-            sx={{
-              mb: expandedEncounters.has(trialRun.id) ? 3 : 2,
-              '&.Mui-expanded': {
-                marginBottom: 3,
-                background: darkMode
-                  ? 'linear-gradient(135deg, rgb(0 0 0 / 25%) 0%, rgb(80 73 104 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-                  : 'linear-gradient(135deg, rgb(224 239 255 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
-                '& + .MuiAccordion-root': {
-                  marginTop: 2,
+          {encounters.map((trialRun) => (
+            <Accordion
+              key={trialRun.id}
+              data-testid={`trial-accordion-${trialRun.id}`}
+              expanded={expandedEncounters.has(trialRun.id)}
+              onChange={() => toggleEncounter(trialRun.id)}
+              sx={{
+                mb: expandedEncounters.has(trialRun.id) ? 3 : 2,
+                '&.Mui-expanded': {
+                  marginBottom: 3,
+                  background: darkMode
+                    ? 'linear-gradient(135deg, rgb(0 0 0 / 25%) 0%, rgb(80 73 104 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+                    : 'linear-gradient(135deg, rgb(224 239 255 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
+                  '& + .MuiAccordion-root': {
+                    marginTop: 2,
+                  },
                 },
-              },
-            }}
-          >
-            <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr auto', sm: '1fr auto' },
-                  alignItems: 'center',
-                  width: '100%',
-                  gap: { xs: 1, sm: 2 },
-                  pr: 2,
-                }}
-              >
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 200,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                      fontSize: { xs: '1rem', sm: '1.25rem' },
-                    }}
-                  >
-                    {(() => {
-                      // Extract base trial name without parenthesis and run number
-                      const cleanTrialName = trialRun.name
-                        .replace(/\([^)]*\)/g, '') // Remove parenthesis content
-                        .replace(/#\d+/, '') // Remove run number
-                        .trim();
+              }}
+            >
+              <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: { xs: '1fr auto', sm: '1fr auto' },
+                    alignItems: 'center',
+                    width: '100%',
+                    gap: { xs: 1, sm: 2 },
+                    pr: 2,
+                  }}
+                >
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontWeight: 200,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        fontSize: { xs: '1rem', sm: '1.25rem' },
+                      }}
+                    >
+                      {(() => {
+                        // Extract base trial name without parenthesis and run number
+                        const cleanTrialName = trialRun.name
+                          .replace(/\([^)]*\)/g, '') // Remove parenthesis content
+                          .replace(/#\d+/, '') // Remove run number
+                          .trim();
 
-                      // Get difficulty label from the calculated trial difficulty
-                      const difficultyLabel = trialRun.difficultyLabel;
+                        // Get difficulty label from the calculated trial difficulty
+                        const difficultyLabel = trialRun.difficultyLabel;
 
-                      // Define colors for different difficulty levels (theme-aware)
-                      const getDifficultyColor = (difficulty: string): string => {
-                        switch (difficulty) {
-                          case 'Normal':
-                            return getThemeColors.normalColor;
-                          case 'Veteran':
-                            return getThemeColors.veteranColor;
-                          case 'Veteran HM':
-                          case 'Veteran HM +1':
-                          case 'Veteran HM +2':
-                          case 'Veteran HM +3':
-                            return getThemeColors.hmColor;
-                          case 'Partial Veteran HM':
-                            return getThemeColors.partialHmColor;
-                          default:
-                            return 'inherit';
-                        }
-                      };
+                        // Define colors for different difficulty levels (theme-aware)
+                        const getDifficultyColor = (difficulty: string): string => {
+                          switch (difficulty) {
+                            case 'Normal':
+                              return getThemeColors.normalColor;
+                            case 'Veteran':
+                              return getThemeColors.veteranColor;
+                            case 'Veteran HM':
+                            case 'Veteran HM +1':
+                            case 'Veteran HM +2':
+                            case 'Veteran HM +3':
+                              return getThemeColors.hmColor;
+                            case 'Partial Veteran HM':
+                              return getThemeColors.partialHmColor;
+                            default:
+                              return 'inherit';
+                          }
+                        };
 
-                      return (
-                        <>
-                          <Box
-                            component="span"
-                            sx={{
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: { xs: 'nowrap', sm: 'normal' },
-                            }}
-                          >
-                            {cleanTrialName}
-                          </Box>
-                          {difficultyLabel && (
+                        return (
+                          <>
                             <Box
                               component="span"
                               sx={{
-                                fontWeight: 700,
-                                color: getDifficultyColor(difficultyLabel),
-                                backgroundColor: `${getDifficultyColor(difficultyLabel)}20`,
-                                px: 0.75,
-                                py: 0.25,
-                                borderRadius: 1,
-                                fontSize: '0.85em',
-                                flexShrink: 0,
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: { xs: 'nowrap', sm: 'normal' },
                               }}
                             >
-                              {difficultyLabel}
+                              {cleanTrialName}
                             </Box>
-                          )}
-                        </>
-                      );
-                    })()}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'flex-end' }}
-                >
-                  {(() => {
-                    // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
-                    const killedBosses = trialRun.encounters.reduce((count, encounter) => {
-                      const hasKill = encounter.bossFights.some((fight) => {
-                        // Use the same kill logic as individual fight cards
-                        const isBossFight = fight.difficulty != null;
-                        if (isBossFight) {
-                          const bossWasKilled =
-                            fight.bossPercentage !== null &&
-                            fight.bossPercentage !== undefined &&
-                            fight.bossPercentage <= 1.0;
-                          const rawIsWipe =
-                            fight.bossPercentage !== null &&
-                            fight.bossPercentage !== undefined &&
-                            fight.bossPercentage > 1.0;
-                          const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
-                          return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
-                        } else {
-                          // For trash fights, assume successful completion
-                          return true;
-                        }
-                      });
-                      return count + (hasKill ? 1 : 0);
-                    }, 0);
-
-                    const encounteredBosses = trialRun.encounters.length;
-
-                    // Determine expected total bosses based on zone name
-                    const zoneName = trialRun.name.replace(/#\d+/, '').trim();
-
-                    let expectedTotalBosses = encounteredBosses; // default fallback
-
-                    // Known trial boss counts
-                    if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Cloudrest')) {
-                      // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
-                      // Use actual encountered count since minis can be skipped
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Ossein Cage')) {
-                      // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
-                      // Minis don't affect boss naming, use actual encountered count
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Rockgrove')) {
-                      // Rockgrove has 4 main bosses + 1 optional mini (Basks-In-Snakes)
-                      // Use actual encountered count since mini is optional
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
-                    else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
-                    else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 4;
-                    else if (zoneName.includes('Asylum Sanctorium')) {
-                      // Asylum has variable bosses: 1 main + 0-2 minis
-                      // Use actual encountered count since minis can be skipped
-                      expectedTotalBosses = encounteredBosses;
-                    } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
-                    else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
-                    else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
-                    else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
-
-                    // Determine color based on completion against expected total
-                    let color = getThemeColors.circleOrange; // orange - default for low completion
-                    if (killedBosses === expectedTotalBosses) {
-                      color = getThemeColors.circleGreen; // green - ALL expected bosses killed
-                    } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
-                      color = getThemeColors.circleYellow; // yellow - 3-4 kills in 5-boss trial
-                    } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
-                      color = getThemeColors.circleYellow; // yellow - 2-3 kills in 4-boss trial
-                    } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
-                      color = getThemeColors.circleYellow; // yellow - 2 kills in 3-boss trial
-                    }
-
-                    return (
-                      <Box
-                        sx={{
-                          position: 'relative',
-                          overflow: 'hidden',
-                          width: 20,
-                          height: 20,
-                          borderRadius: '50%',
-                          backdropFilter: 'blur(10px)',
-                          WebkitBackdropFilter: 'blur(10px)',
-                          border: `1px solid ${color}66`,
-                          boxShadow:
-                            '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '10px',
-                          fontWeight: 600,
-                          color: color,
-                          textShadow: darkMode
-                            ? '0 1px 2px rgba(0,0,0,0.5)'
-                            : '0 1px 1px rgba(59, 130, 246, 0.2)',
-                          background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
-                          transition: 'all 0.3s ease',
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: '50%',
-                            background:
-                              'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
-                            borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
-                            pointerEvents: 'none',
-                          },
-                        }}
-                      >
-                        {killedBosses}
-                      </Box>
-                    );
-                  })()}
-                </Box>
-              </Box>
-            </AccordionSummary>
-            <AccordionDetails sx={{ overflow: 'visible' }}>
-              {trialRun.encounters.map((encounter) => {
-                return (
+                            {difficultyLabel && (
+                              <Box
+                                component="span"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: getDifficultyColor(difficultyLabel),
+                                  backgroundColor: `${getDifficultyColor(difficultyLabel)}20`,
+                                  px: 0.75,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  fontSize: '0.85em',
+                                  flexShrink: 0,
+                                }}
+                              >
+                                {difficultyLabel}
+                              </Box>
+                            )}
+                          </>
+                        );
+                      })()}
+                    </Typography>
+                  </Box>
                   <Box
-                    key={encounter.id}
-                    data-testid={`encounter-${encounter.id}`}
                     sx={{
-                      mb: 2,
-                      p: 2,
-                      borderRadius: 2,
-                      border: '1px solid rgba(255, 255, 255, 0.0)',
-                      transition: 'all 0.2s ease-in-out',
-                      overflow: 'visible',
-                      '&:hover': {
-                        border: '1px solid rgba(255, 255, 255, 0.15)',
-                        background: 'rgba(255, 255, 255, 0.04)',
-                        boxShadow:
-                          '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                        transform: 'translateY(-1px)',
-                      },
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      justifyContent: 'flex-end',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1,
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                        <BossAvatar bossName={encounter.name} size={32} />
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ color: 'text.primary', fontWeight: 'medium' }}
-                        >
-                          {encounter.name}{' '}
-                          {(() => {
-                            // Get difficulty from the first boss fight
-                            const bossFight = encounter.bossFights.find(
-                              (f) => f.difficulty != null,
-                            );
-                            if (bossFight && bossFight.difficulty != null) {
-                              const trialName = trialRun.trialName || '';
-                              const difficultyLabel = getDifficultyLabel(
-                                bossFight.difficulty,
-                                trialName,
-                              );
-                              return (
-                                <Box
-                                  component="span"
-                                  sx={{
-                                    fontWeight: 700,
-                                    color:
-                                      difficultyLabel === 'Veteran HM'
-                                        ? getThemeColors.hmColor
-                                        : darkMode
-                                          ? '#d2e5ff'
-                                          : '#64748b',
-                                  }}
-                                >
-                                  ({difficultyLabel})
-                                </Box>
-                              );
-                            }
-                            return null;
-                          })()}{' '}
-                          <Box component="span" sx={{ fontWeight: 200 }}>
-                            ({encounter.bossFights.length})
-                          </Box>
-                        </Typography>
-                      </Box>
-                      {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={showTrashForEncounter.has(encounter.id)}
-                              onChange={(e) => {
-                                e.stopPropagation();
-                                toggleTrashForEncounter(encounter.id);
-                              }}
-                              size="small"
-                              sx={{
-                                '& .MuiSwitch-switchBase.Mui-checked': {
-                                  color: '#38bdf8',
-                                  '&:hover': {
-                                    backgroundColor: 'rgba(56, 189, 248, 0.08)',
-                                  },
-                                },
-                                '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
-                                  backgroundColor: '#38bdf8',
-                                },
-                              }}
-                            />
+                    {(() => {
+                      // Count killed bosses (boss percentage <= 0.01 or false positive wipes)
+                      const killedBosses = trialRun.encounters.reduce((count, encounter) => {
+                        const hasKill = encounter.bossFights.some((fight) => {
+                          // Use the same kill logic as individual fight cards
+                          const isBossFight = fight.difficulty != null;
+                          if (isBossFight) {
+                            const bossWasKilled =
+                              fight.bossPercentage !== null &&
+                              fight.bossPercentage !== undefined &&
+                              fight.bossPercentage <= 1.0;
+                            const rawIsWipe =
+                              fight.bossPercentage !== null &&
+                              fight.bossPercentage !== undefined &&
+                              fight.bossPercentage > 1.0;
+                            const isFalsePositive = rawIsWipe && isFalsePositiveWipe(fight);
+                            return bossWasKilled || isFalsePositive; // Kill if boss was killed or false positive wipe
+                          } else {
+                            // For trash fights, assume successful completion
+                            return true;
                           }
-                          label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
-                          sx={{ ml: 2, mr: 0 }}
-                          onClick={(e) => e.stopPropagation()}
-                        />
-                      )}
-                    </Box>
+                        });
+                        return count + (hasKill ? 1 : 0);
+                      }, 0);
 
-                    {/* Pre-encounter trash */}
-                    <Collapse
-                      in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
-                    >
-                      <Box sx={{ mb: 2 }}>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
-                        >
-                          Pre-encounter trash
-                        </Typography>
-                        <List
+                      const encounteredBosses = trialRun.encounters.length;
+
+                      // Determine expected total bosses based on zone name
+                      const zoneName = trialRun.name.replace(/#\d+/, '').trim();
+
+                      let expectedTotalBosses = encounteredBosses; // default fallback
+
+                      // Known trial boss counts
+                      if (zoneName.includes("Kyne's Aegis")) expectedTotalBosses = 3;
+                      else if (zoneName.includes('Cloudrest')) {
+                        // Cloudrest has variable bosses: 1 main (Z'Maja) + 0-3 minis
+                        // Use actual encountered count since minis can be skipped
+                        expectedTotalBosses = encounteredBosses;
+                      } else if (zoneName.includes('Ossein Cage')) {
+                        // Ossein Cage has variable bosses: 1 main + 0-3 optional minis
+                        // Minis don't affect boss naming, use actual encountered count
+                        expectedTotalBosses = encounteredBosses;
+                      } else if (zoneName.includes('Sunspire')) expectedTotalBosses = 3;
+                      else if (zoneName.includes('Rockgrove')) {
+                        // Rockgrove has 4 main bosses + 1 optional mini (Basks-In-Snakes)
+                        // Use actual encountered count since mini is optional
+                        expectedTotalBosses = encounteredBosses;
+                      } else if (zoneName.includes('Dreadsail Reef')) expectedTotalBosses = 5;
+                      else if (zoneName.includes("Sanity's Edge")) expectedTotalBosses = 5;
+                      else if (zoneName.includes('Lucent Citadel')) expectedTotalBosses = 4;
+                      else if (zoneName.includes('Asylum Sanctorium')) {
+                        // Asylum has variable bosses: 1 main + 0-2 minis
+                        // Use actual encountered count since minis can be skipped
+                        expectedTotalBosses = encounteredBosses;
+                      } else if (zoneName.includes('Halls of Fabrication')) expectedTotalBosses = 5;
+                      else if (zoneName.includes('Maw of Lorkhaj')) expectedTotalBosses = 3;
+                      else if (zoneName.includes('Aetherian Archive')) expectedTotalBosses = 4;
+                      else if (zoneName.includes('Hel Ra Citadel')) expectedTotalBosses = 3;
+                      else if (zoneName.includes('Sanctum Ophidia')) expectedTotalBosses = 5;
+
+                      // Determine color based on completion against expected total
+                      let color = getThemeColors.circleOrange; // orange - default for low completion
+                      if (killedBosses === expectedTotalBosses) {
+                        color = getThemeColors.circleGreen; // green - ALL expected bosses killed
+                      } else if (expectedTotalBosses === 5 && killedBosses >= 3) {
+                        color = getThemeColors.circleYellow; // yellow - 3-4 kills in 5-boss trial
+                      } else if (expectedTotalBosses === 4 && killedBosses >= 2) {
+                        color = getThemeColors.circleYellow; // yellow - 2-3 kills in 4-boss trial
+                      } else if (expectedTotalBosses === 3 && killedBosses >= 2) {
+                        color = getThemeColors.circleYellow; // yellow - 2 kills in 3-boss trial
+                      }
+
+                      return (
+                        <Box
                           sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                            gap: 1,
-                            overflow: 'visible',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            width: 20,
+                            height: 20,
+                            borderRadius: '50%',
+                            backdropFilter: 'blur(10px)',
+                            WebkitBackdropFilter: 'blur(10px)',
+                            border: `1px solid ${color}66`,
+                            boxShadow:
+                              '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '10px',
+                            fontWeight: 600,
+                            color: color,
+                            textShadow: darkMode
+                              ? '0 1px 2px rgba(0,0,0,0.5)'
+                              : '0 1px 1px rgba(59, 130, 246, 0.2)',
+                            background: `linear-gradient(135deg, ${color}33 0%, ${color}1a 50%, ${color}14 100%)`,
+                            transition: 'all 0.3s ease',
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              height: '50%',
+                              background:
+                                'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, transparent 100%)',
+                              borderRadius: '50% 50% 100px 100px / 50% 50% 50px 50px',
+                              pointerEvents: 'none',
+                            },
                           }}
                         >
-                          {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
-                        </List>
-                      </Box>
-                    </Collapse>
-
-                    {/* Boss fights */}
-                    <List
+                          {killedBosses}
+                        </Box>
+                      );
+                    })()}
+                  </Box>
+                </Box>
+              </AccordionSummary>
+              <AccordionDetails sx={{ overflow: 'visible' }}>
+                {trialRun.encounters.map((encounter) => {
+                  return (
+                    <Box
+                      key={encounter.id}
+                      data-testid={`encounter-${encounter.id}`}
                       sx={{
-                        display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                        gap: 1,
+                        mb: 2,
+                        p: 2,
+                        borderRadius: 2,
+                        border: '1px solid rgba(255, 255, 255, 0.0)',
+                        transition: 'all 0.2s ease-in-out',
                         overflow: 'visible',
+                        '&:hover': {
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          boxShadow:
+                            '0 4px 16px 0 rgb(168 215 233 / 25%), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                          transform: 'translateY(-1px)',
+                        },
                       }}
                     >
-                      {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
-                    </List>
-
-                    {/* Post-encounter trash */}
-                    <Collapse
-                      in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
-                    >
-                      <Box>
-                        <Typography
-                          variant="subtitle2"
-                          sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
-                        >
-                          Post-encounter trash
-                        </Typography>
-                        <List
-                          sx={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                            gap: 1,
-                            overflow: 'visible',
-                          }}
-                        >
-                          {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
-                        </List>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          mb: 1,
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                          <BossAvatar bossName={encounter.name} size={32} />
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ color: 'text.primary', fontWeight: 'medium' }}
+                          >
+                            {encounter.name}{' '}
+                            {(() => {
+                              // Get difficulty from the first boss fight
+                              const bossFight = encounter.bossFights.find(
+                                (f) => f.difficulty != null,
+                              );
+                              if (bossFight && bossFight.difficulty != null) {
+                                const trialName = trialRun.trialName || '';
+                                const difficultyLabel = getDifficultyLabel(
+                                  bossFight.difficulty,
+                                  trialName,
+                                );
+                                return (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      fontWeight: 700,
+                                      color:
+                                        difficultyLabel === 'Veteran HM'
+                                          ? getThemeColors.hmColor
+                                          : darkMode
+                                            ? '#d2e5ff'
+                                            : '#64748b',
+                                    }}
+                                  >
+                                    ({difficultyLabel})
+                                  </Box>
+                                );
+                              }
+                              return null;
+                            })()}{' '}
+                            <Box component="span" sx={{ fontWeight: 200 }}>
+                              ({encounter.bossFights.length})
+                            </Box>
+                          </Typography>
+                        </Box>
+                        {(encounter.preTrash.length > 0 || encounter.postTrash.length > 0) && (
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={showTrashForEncounter.has(encounter.id)}
+                                onChange={(e) => {
+                                  e.stopPropagation();
+                                  toggleTrashForEncounter(encounter.id);
+                                }}
+                                size="small"
+                                sx={{
+                                  '& .MuiSwitch-switchBase.Mui-checked': {
+                                    color: '#38bdf8',
+                                    '&:hover': {
+                                      backgroundColor: 'rgba(56, 189, 248, 0.08)',
+                                    },
+                                  },
+                                  '& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track': {
+                                    backgroundColor: '#38bdf8',
+                                  },
+                                }}
+                              />
+                            }
+                            label={`🗑️ ${encounter.preTrash.length + encounter.postTrash.length}`}
+                            sx={{ ml: 2, mr: 0 }}
+                            onClick={(e) => e.stopPropagation()}
+                          />
+                        )}
                       </Box>
-                    </Collapse>
-                  </Box>
-                );
-              })}
-            </AccordionDetails>
-          </Accordion>
-        ))}
+
+                      {/* Pre-encounter trash */}
+                      <Collapse
+                        in={
+                          showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0
+                        }
+                      >
+                        <Box sx={{ mb: 2 }}>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            Pre-encounter trash
+                          </Typography>
+                          <List
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                              gap: 1,
+                              overflow: 'visible',
+                            }}
+                          >
+                            {encounter.preTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                          </List>
+                        </Box>
+                      </Collapse>
+
+                      {/* Boss fights */}
+                      <List
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                          gap: 1,
+                          overflow: 'visible',
+                        }}
+                      >
+                        {encounter.bossFights.map((fight, idx) => renderFightCard(fight, idx))}
+                      </List>
+
+                      {/* Post-encounter trash */}
+                      <Collapse
+                        in={
+                          showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0
+                        }
+                      >
+                        <Box>
+                          <Typography
+                            variant="subtitle2"
+                            sx={{ mb: 1, color: 'text.secondary', fontStyle: 'italic' }}
+                          >
+                            Post-encounter trash
+                          </Typography>
+                          <List
+                            sx={{
+                              display: 'grid',
+                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                              gap: 1,
+                              overflow: 'visible',
+                            }}
+                          >
+                            {encounter.postTrash.map((fight, idx) => renderFightCard(fight, idx))}
+                          </List>
+                        </Box>
+                      </Collapse>
+                    </Box>
+                  );
+                })}
+              </AccordionDetails>
+            </Accordion>
+          ))}
         </Box>
       </Box>
     </Paper>

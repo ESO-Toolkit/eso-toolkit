@@ -9,7 +9,7 @@ interface ReportFightsSkeletonProps {
   'data-testid'?: string;
 }
 
-export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ 
+export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
   instanceCount,
   'data-testid': dataTestId,
 }) => {
