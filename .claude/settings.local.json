@@ -28,7 +28,8 @@
       "Bash(git cherry-pick:*)",
       "Bash(npx eslint:*)",
       "Bash(git restore:*)",
-      "Bash(npm ls:*)"
+      "Bash(npm ls:*)",
+      "Bash(npm uninstall:*)"
     ],
     "deny": [],
     "ask": []

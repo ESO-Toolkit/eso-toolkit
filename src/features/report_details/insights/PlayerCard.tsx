@@ -389,22 +389,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 placement="top-start"
                                 enterDelay={0}
                                 arrow
+                                disableInteractive
+                                PopperProps={{
+                                  disablePortal: true,
+                                  modifiers: [
+                                    {
+                                      name: 'preventOverflow',
+                                      options: {
+                                        altAxis: true,
+                                        altBoundary: true,
+                                        tether: false,
+                                        rootBoundary: 'document',
+                                        padding: 16,
+                                      },
+                                    },
+                                    {
+                                      name: 'flip',
+                                      enabled: true,
+                                      options: {
+                                        altBoundary: true,
+                                        rootBoundary: 'document',
+                                        padding: 16,
+                                        fallbackPlacements: ['bottom'],
+                                      },
+                                    },
+                                    {
+                                      name: 'arrow',
+                                      enabled: true,
+                                    },
+                                  ],
+                                }}
                                 slotProps={{
-                                  popper: {
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: { padding: 8, rootBoundary: 'viewport' },
-                                      },
-                                      {
-                                        name: 'flip',
-                                        options: {
-                                          fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-                                        },
-                                      },
-                                      { name: 'offset', options: { offset: [0, 8] } },
-                                    ],
-                                  },
                                   tooltip: { sx: { maxWidth: 320, p: 0 } },
                                 }}
                               >
@@ -481,22 +496,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   placement="top-start"
                                   enterDelay={0}
                                   arrow
+                                  disableInteractive
+                                  PopperProps={{
+                                    disablePortal: true,
+                                    modifiers: [
+                                      {
+                                        name: 'preventOverflow',
+                                        options: {
+                                          altAxis: true,
+                                          altBoundary: true,
+                                          tether: false,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                        },
+                                      },
+                                      {
+                                        name: 'flip',
+                                        enabled: true,
+                                        options: {
+                                          altBoundary: true,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                          fallbackPlacements: ['bottom'],
+                                        },
+                                      },
+                                      {
+                                        name: 'arrow',
+                                        enabled: true,
+                                      },
+                                    ],
+                                  }}
                                   slotProps={{
-                                    popper: {
-                                      modifiers: [
-                                        {
-                                          name: 'preventOverflow',
-                                          options: { padding: 8, rootBoundary: 'viewport' },
-                                        },
-                                        {
-                                          name: 'flip',
-                                          options: {
-                                            fallbackPlacements: ['top', 'bottom', 'left', 'right'],
-                                          },
-                                        },
-                                        { name: 'offset', options: { offset: [0, 8] } },
-                                      ],
-                                    },
                                     tooltip: { sx: { maxWidth: 320, p: 0 } },
                                   }}
                                 >
