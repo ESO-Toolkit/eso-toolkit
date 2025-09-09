@@ -151,7 +151,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
 
         <Box sx={{ mt: 2, minHeight: '600px' }}>
           <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-            <CircularProgress />
+            <CircularProgress data-testid="loading-indicator" />
           </Box>
         </Box>
       </Paper>
@@ -387,7 +387,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
       ) : (
         <Box sx={{ mt: 2, minHeight: '600px' }}>
           <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-            <CircularProgress />
+            <CircularProgress data-testid="loading-indicator" />
           </Box>
         </Box>
       )}

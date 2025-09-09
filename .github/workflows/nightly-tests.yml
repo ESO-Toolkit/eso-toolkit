@@ -1,0 +1,331 @@
+name: Nightly Regression Tests
+
+# This workflow runs comprehensive nightly tests to ensure the site is up and running
+# It supports both scheduled runs and manual triggering with various options
+
+on:
+  # Scheduled run every day at 5 AM EST (10 AM UTC)
+  schedule:
+    - cron: '0 10 * * *'
+  
+  # Allow manual triggering with configurable options
+  workflow_dispatch:
+    inputs:
+      test_suite:
+        description: 'Test suite to run'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - chromium
+          - firefox
+          - webkit
+          - mobile
+          - auth-only
+      
+      headed:
+        description: 'Run tests in headed mode (for debugging)'
+        required: false
+        default: false
+        type: boolean
+      
+      debug_mode:
+        description: 'Enable debug mode (single failure, more verbose)'
+        required: false
+        default: false
+        type: boolean
+
+# Note: The following secrets should be configured in repository settings:
+# - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
+# - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret
+# - ESO_LOGS_TEST_EMAIL: Test user email (optional)
+# - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
+
+jobs:
+  nightly-tests:
+    runs-on: ubuntu-latest
+    
+    # Don't cancel in-progress runs for scheduled builds
+    concurrency:
+      group: nightly-tests-${{ github.ref }}-${{ github.event_name }}
+      cancel-in-progress: false
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - uses: ./.github/actions/setup-node-with-cache
+
+      - name: Get Playwright version
+        id: playwright-version
+        run: |
+          # Get Playwright version from package-lock.json for more accuracy
+          if [ -f package-lock.json ]; then
+            PLAYWRIGHT_VERSION=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          else
+            PLAYWRIGHT_VERSION=$(node -p "require('./package.json').devDependencies['@playwright/test']" | tr -d '^~')
+          fi
+          echo "PLAYWRIGHT_VERSION=${PLAYWRIGHT_VERSION}" >> $GITHUB_OUTPUT
+          echo "Playwright version: ${PLAYWRIGHT_VERSION}"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: |
+            ~/.cache/ms-playwright
+          key: playwright-nightly-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ steps.playwright-version.outputs.PLAYWRIGHT_VERSION }}
+          restore-keys: |
+            playwright-nightly-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            playwright-nightly-${{ runner.os }}-
+
+      - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        run: |
+          echo "🔄 Cache miss - installing Playwright browsers and dependencies..."
+          npx playwright install --with-deps
+
+      - name: Install Playwright Dependencies Only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: |
+          echo "⚡ Cache hit - installing only system dependencies..."
+          npx playwright install-deps
+
+      - name: Verify Playwright Installation
+        run: |
+          echo "🔍 Verifying Playwright installation..."
+          npx playwright --version
+          
+          # Verify browsers are available
+          if [ -d ~/.cache/ms-playwright ]; then
+            echo "✅ Browser cache directory exists"
+            echo "Installed browsers:"
+            find ~/.cache/ms-playwright -name "chrome-*" -o -name "chromium-*" -o -name "firefox-*" -o -name "webkit-*" | head -5
+          else
+            echo "❌ No browser cache found"
+            exit 1
+          fi
+
+      - name: Build Application
+        run: |
+          echo "🔨 Building application for nightly tests..."
+          npm run build
+        env:
+          # Disable source maps for faster builds in nightly tests
+          GENERATE_SOURCEMAP: false
+          # CI environment flags
+          CI: 'true'
+          # Node.js memory optimization
+          NODE_OPTIONS: '--max_old_space_size=8192'
+
+      - name: Start Application Server
+        run: |
+          echo "🚀 Starting application server..."
+          npm run preview &
+          
+          # Wait for server to be ready
+          echo "⏳ Waiting for server to start..."
+          timeout 60 bash -c 'until curl -f http://localhost:4173 > /dev/null 2>&1; do sleep 2; done'
+          echo "✅ Server is ready"
+        env:
+          PORT: 4173
+
+      - name: Determine Test Command
+        id: test-command
+        run: |
+          # Default command
+          TEST_CMD="npm run test:nightly:all"
+          
+          # Override based on inputs (only for manual runs)
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "${{ github.event.inputs.test_suite }}" in
+              "chromium")
+                TEST_CMD="npm run test:nightly:chromium"
+                ;;
+              "firefox")
+                TEST_CMD="npm run test:nightly:firefox"
+                ;;
+              "webkit")
+                TEST_CMD="npm run test:nightly:webkit"
+                ;;
+              "mobile")
+                TEST_CMD="npm run test:nightly:mobile"
+                ;;
+              "auth-only")
+                TEST_CMD="npm run test:nightly:auth"
+                ;;
+              *)
+                TEST_CMD="npm run test:nightly:all"
+                ;;
+            esac
+            
+            # Add headed mode if requested
+            if [ "${{ github.event.inputs.headed }}" = "true" ]; then
+              TEST_CMD="npm run test:nightly:headed"
+            fi
+            
+            # Add debug mode if requested
+            if [ "${{ github.event.inputs.debug_mode }}" = "true" ]; then
+              TEST_CMD="npm run test:nightly:debug"
+            fi
+          fi
+          
+          echo "TEST_CMD=${TEST_CMD}" >> $GITHUB_OUTPUT
+          echo "🧪 Will run: ${TEST_CMD}"
+
+      - name: Run Nightly Tests
+        run: |
+          echo "🌙 Running nightly regression tests..."
+          echo "Command: ${{ steps.test-command.outputs.TEST_CMD }}"
+          echo "Trigger: ${{ github.event_name }}"
+          
+          # Run the determined test command
+          ${{ steps.test-command.outputs.TEST_CMD }}
+        env:
+          # CI environment flags
+          CI: 'true'
+          # Node.js memory optimization
+          NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          # Optional test user credentials for browser flow testing
+          ESO_LOGS_TEST_EMAIL: ${{ secrets.ESO_LOGS_TEST_EMAIL }}
+          ESO_LOGS_TEST_PASSWORD: ${{ secrets.ESO_LOGS_TEST_PASSWORD }}
+          # Playwright optimizations
+          PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
+
+      - name: Upload Test Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-test-results-${{ github.run_id }}
+          path: |
+            test-results-nightly/
+            playwright-report-nightly/
+          retention-days: 30
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-playwright-report-${{ github.run_id }}
+          path: playwright-report-nightly/
+          retention-days: 30
+
+      - name: Comment Test Results on PR
+        uses: actions/github-script@v7
+        if: always() && github.event_name == 'workflow_dispatch'
+        with:
+          script: |
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Try to read test results
+            let testResults = "Nightly tests completed.";
+            try {
+              const reportPath = 'playwright-report-nightly/index.html';
+              if (fs.existsSync(reportPath)) {
+                testResults = `📊 Nightly test report generated. Check the artifacts for detailed results.`;
+              }
+            } catch (error) {
+              console.log('Could not read test results:', error);
+            }
+            
+            const body = `## 🌙 Nightly Test Results
+            
+            **Trigger:** Manual (workflow_dispatch)
+            **Test Suite:** ${{ github.event.inputs.test_suite || 'all' }}
+            **Headed Mode:** ${{ github.event.inputs.headed || 'false' }}
+            **Debug Mode:** ${{ github.event.inputs.debug_mode || 'false' }}
+            
+            ${testResults}
+            
+            **Artifacts:**
+            - Test Results: \`nightly-test-results-${{ github.run_id }}\`
+            - Playwright Report: \`nightly-playwright-report-${{ github.run_id }}\`
+            
+            *This comment was generated by the nightly tests workflow.*`;
+            
+            if (context.payload.pull_request) {
+              github.rest.issues.createComment({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+  notify-on-failure:
+    runs-on: ubuntu-latest
+    needs: nightly-tests
+    if: failure() && github.event_name == 'schedule'
+    
+    steps:
+      - name: Send notification on scheduled failure
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // Create an issue for failed nightly tests
+            const title = `🚨 Nightly Tests Failed - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Nightly Test Failure Report
+            
+            **Date:** ${new Date().toISOString()}
+            **Workflow:** ${context.workflow}
+            **Run ID:** ${context.runId}
+            **Branch:** ${context.ref}
+            
+            The nightly regression tests have failed. Please check the workflow logs and test results.
+            
+            **Links:**
+            - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - [Test Results Artifact](${context.payload.repository.html_url}/actions/runs/${context.runId}#artifacts)
+            
+            **Next Steps:**
+            1. Review the test failure logs
+            2. Check if this is a legitimate regression or test flakiness
+            3. Fix any identified issues
+            4. Close this issue once resolved
+            
+            ---
+            *This issue was automatically created by the nightly tests workflow.*`;
+            
+            // Check if an issue already exists for today
+            const today = new Date().toISOString().split('T')[0];
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'nightly-test-failure',
+              per_page: 100
+            });
+            
+            const existingIssue = issues.find(issue => 
+              issue.title.includes(today) && issue.title.includes('Nightly Tests Failed')
+            );
+            
+            if (!existingIssue) {
+              const { data: issue } = await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: title,
+                body: body,
+                labels: ['nightly-test-failure', 'automated', 'bug']
+              });
+              
+              console.log(`Created issue #${issue.number} for nightly test failure`);
+            } else {
+              console.log(`Issue already exists for today's nightly test failure: #${existingIssue.number}`);
+              
+              // Add a comment to the existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: `Another nightly test failure occurred at ${new Date().toISOString()}\n\n[View Run](${context.payload.repository.html_url}/actions/runs/${context.runId})`
+              });
+            }

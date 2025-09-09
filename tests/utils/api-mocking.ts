@@ -5,6 +5,17 @@ import { Page } from '@playwright/test';
  * This avoids the need for MSW service workers in the test environment
  */
 export async function setupApiMocking(page: Page) {
+  // In CI environments, block external font requests that might cause timeouts
+  if (process.env.CI) {
+    await page.route('**/fonts.googleapis.com/**', async (route) => {
+      await route.abort();
+    });
+
+    await page.route('**/fonts.gstatic.com/**', async (route) => {
+      await route.abort();
+    });
+  }
+
   // Mock ESO Logs OAuth endpoints
   await page.route('**/oauth/authorize**', async (route) => {
     // Mock OAuth authorization endpoint - should redirect back with code

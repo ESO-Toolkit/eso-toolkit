@@ -80,6 +80,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
     <>
       {/* Main insights grid layout */}
       <Box
+        data-testid="insights-panel"
         sx={{
           display: 'flex',
           flexWrap: 'wrap',

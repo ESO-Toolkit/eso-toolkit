@@ -581,6 +581,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
 
   return (
     <Paper
+      data-testid="data-grid"
       sx={{
         height,
         width: '100%',
