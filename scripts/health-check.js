@@ -34,7 +34,7 @@ function checkHealth(url) {
 
 async function waitForServer() {
   console.log('🔍 Checking server health...');
-  
+
   for (let i = 1; i <= MAX_RETRIES; i++) {
     try {
       await checkHealth(SERVER_URL);
@@ -42,14 +42,14 @@ async function waitForServer() {
       process.exit(0);
     } catch (error) {
       console.log(`❌ Attempt ${i}/${MAX_RETRIES}: ${error.message}`);
-      
+
       if (i === MAX_RETRIES) {
         console.error('💥 Server health check failed after maximum retries');
         process.exit(1);
       }
-      
+
       console.log(`⏳ Waiting ${RETRY_DELAY}ms before next attempt...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY));
+      await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY));
     }
   }
 }

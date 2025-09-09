@@ -195,22 +195,22 @@ jobs:
           echo "Running Playwright smoke tests..."
           echo "Node memory: $NODE_OPTIONS"
           echo "Playwright config: Smoke test mode with single worker"
-          
+
           # System info for debugging
           echo "System information:"
           echo "CPU cores: $(nproc)"
           echo "Memory: $(free -h | head -2)"
           echo "Node version: $(node --version)"
           echo "NPM version: $(npm --version)"
-          
+
           # Pre-warm the dependency cache
           echo "Pre-warming dependency cache..."
           npm run build --silent || echo "Build failed, continuing with tests..."
-          
+
           # Optional health check (can be enabled if needed)
           # echo "Running health check..."
           # timeout 60 npm run health-check || echo "Health check failed or timed out, continuing..."
-          
+
           # Run the smoke tests
           npm run test:smoke:e2e
         env:
