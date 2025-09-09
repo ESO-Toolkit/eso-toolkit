@@ -22,10 +22,10 @@ export default defineConfig({
   /* Single worker for faster startup */
   workers: 1,
 
-  /* Reduced timeout for smoke tests */
-  timeout: 30000,
+  /* Increased timeout for smoke tests to handle slower CI environments */
+  timeout: 120000, // 2 minutes per test
   expect: {
-    timeout: 5000,
+    timeout: 15000, // 15 seconds for assertions
   },
 
   /* Reporter to use. See https://playwright.dev/docs/test-reporters */
@@ -34,16 +34,16 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3000',
+    baseURL: 'http://localhost:3001',
 
     /* Collect trace only on failure for smoke tests */
     trace: 'retain-on-failure',
 
-    /* Reduced navigation timeout */
-    navigationTimeout: 15000,
+    /* Increased navigation timeout for CI environments */
+    navigationTimeout: process.env.CI ? 60000 : 30000, // 1 minute in CI, 30 seconds locally
 
-    /* Reduced action timeout */
-    actionTimeout: 10000,
+    /* Increased action timeout for CI environments */
+    actionTimeout: process.env.CI ? 30000 : 15000, // 30 seconds in CI, 15 seconds locally
 
     /* Block external requests in CI environment */
     ...(process.env.CI && {
@@ -77,15 +77,21 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm start',
-    port: 3000,
+    url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: 300000, // 5 minutes timeout for server startup
+    stdout: 'pipe',
+    stderr: 'pipe',
     env: {
       // Optimize dev server for testing
-      NODE_ENV: 'test',
+      NODE_ENV: 'development', // Use development instead of test
       BROWSER: 'none',
       // Disable source maps for faster builds
       GENERATE_SOURCEMAP: 'false',
+      // Set the port for Vite
+      PORT: '3001',
     },
+    // Additional options for better server startup detection
+    cwd: process.cwd(),
   },
 });

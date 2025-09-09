@@ -74,6 +74,7 @@
     "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts",
     "format:check": "prettier --check ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
     "format": "prettier --write ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
+    "health-check": "node scripts/health-check.js",
     "lint:fix": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --ext .ts,.tsx --fix",
     "lint": "cross-env NODE_OPTIONS=\"--max-old-space-size=4096\" eslint ./src --ext .ts,.tsx",
     "preview": "vite preview",
