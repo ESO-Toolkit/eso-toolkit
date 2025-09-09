@@ -27,7 +27,7 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
 
   // Show loading state while checking authentication or while client is not ready
   // Also ensure both auth states are in sync before rendering
-  if (userLoading || !isReady || (isLoggedIn !== clientLoggedIn)) {
+  if (userLoading || !isReady || isLoggedIn !== clientLoggedIn) {
     return null; // Or you could return a loading spinner here
   }
 
