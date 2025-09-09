@@ -7,6 +7,7 @@ import { EsoLogsClient } from './esologsClient';
 interface EsoLogsClientContextType {
   client: EsoLogsClient | null;
   isReady: boolean;
+  isLoggedIn: boolean;
   setAuthToken: (token: string) => void;
   clearAuthToken: () => void;
 }
@@ -49,8 +50,9 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   const contextValue = useMemo(() => {
     const value = {
-      client: isLoggedIn ? client : null,
-      isReady: isLoggedIn && client !== null,
+      client: client,
+      isReady: client !== null,
+      isLoggedIn: isLoggedIn,
       setAuthToken,
       clearAuthToken,
     };
@@ -66,11 +68,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>
-      {client && isLoggedIn ? (
-        <ApolloProvider client={client.getClient()}> {children}</ApolloProvider>
-      ) : (
-        children
-      )}
+      {client ? <ApolloProvider client={client.getClient()}> {children}</ApolloProvider> : children}
     </EsoLogsClientContext.Provider>
   );
 };
@@ -88,9 +86,9 @@ export const useEsoLogsClientContext = (): EsoLogsClientContextType => {
  * Throws an error if called when not authenticated or client is not ready.
  */
 export const useEsoLogsClientInstance = (): EsoLogsClient => {
-  const { client, isReady } = useEsoLogsClientContext();
+  const { client, isReady, isLoggedIn } = useEsoLogsClientContext();
 
-  if (!isReady || !client) {
+  if (!isReady || !client || !isLoggedIn) {
     throw new Error('EsoLogsClient is not ready. User must be authenticated.');
   }
 

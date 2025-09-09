@@ -111,6 +111,7 @@ const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ ch
       clearAuthToken: () => {
         // Mock implementation - no-op for Storybook
       },
+      isLoggedIn: true, // Assume logged in for Storybook
     }),
     [mockClient],
   );

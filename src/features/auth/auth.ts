@@ -11,6 +11,7 @@ export const getRedirectUri = (): string => {
 // Replace with your actual ESO Logs client ID
 export const CLIENT_ID = '9fd28ffc-300a-44ce-8a0e-6167db47a7e1';
 export const PKCE_CODE_VERIFIER_KEY = 'eso_code_verifier';
+export const INTENDED_DESTINATION_KEY = 'eso_intended_destination';
 
 export const LOCAL_STORAGE_ACCESS_TOKEN_KEY = 'access_token';
 
@@ -20,6 +21,18 @@ export function setPkceCodeVerifier(verifier: string): void {
 
 export function getPkceCodeVerifier(): string {
   return localStorage.getItem(PKCE_CODE_VERIFIER_KEY) || '';
+}
+
+export function setIntendedDestination(path: string): void {
+  localStorage.setItem(INTENDED_DESTINATION_KEY, path);
+}
+
+export function getIntendedDestination(): string {
+  return localStorage.getItem(INTENDED_DESTINATION_KEY) || '/';
+}
+
+export function clearIntendedDestination(): void {
+  localStorage.removeItem(INTENDED_DESTINATION_KEY);
 }
 
 const generateCodeVerifier = (): string => {

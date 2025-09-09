@@ -11,6 +11,7 @@ import { LandingPage } from './components/LandingPage';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
+import { AuthenticatedRoute } from './features/auth/AuthenticatedRoute';
 import { Login } from './features/auth/Login';
 import { ReportFightDetails } from './features/report_details/ReportFightDetails';
 import { UserReports } from './features/user_reports/UserReports';
@@ -178,53 +179,63 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/report/:reportId/fight/:fightId/:tabId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportFightDetails />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFightDetails />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportFightDetails />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
               path="/report/:reportId/fight/:fightId/replay"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <FightReplay />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <FightReplay />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
               path="/report/:reportId/live"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <LiveLog>
-                      <ReportFightDetails />
-                    </LiveLog>
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LiveLog>
+                        <ReportFightDetails />
+                      </LiveLog>
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
               path="/report/:reportId"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <ReportFights />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportFights />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route
@@ -240,11 +251,13 @@ const AppRoutes: React.FC = () => {
             <Route
               path="/my-reports"
               element={
-                <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
-                    <UserReports />
-                  </Suspense>
-                </ErrorBoundary>
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <UserReports />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
           </Route>
