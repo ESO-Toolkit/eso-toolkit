@@ -129,15 +129,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       [theme.palette.mode],
     );
 
-    // Memoize expensive gear chip props
+    // Memoize expensive gear chip props - sorted by count descending
     const gearChips = React.useMemo(
       () =>
-        playerGear?.map((rec, idx) => ({
-          key: `${rec.data.setID}-${idx}`,
-          label: `${rec.count} ${rec.labelName}`,
-          title: `Set ID: ${rec.data.setID ?? ''}`,
-          ...getGearChipProps(rec.labelName, rec.count, theme),
-        })) ?? [],
+        playerGear
+          ?.slice()
+          .sort((a, b) => b.count - a.count) // Sort by count descending (highest first)
+          .map((rec, idx) => ({
+            key: `${rec.data.setID}-${idx}`,
+            label: `${rec.count} ${rec.labelName}`,
+            title: `Set ID: ${rec.data.setID ?? ''}`,
+            ...getGearChipProps(rec.labelName, rec.count, theme),
+          })) ?? [],
       [playerGear, theme],
     );
 
