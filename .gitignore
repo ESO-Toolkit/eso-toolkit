@@ -44,3 +44,4 @@ eso-log-aggregator/
 src/utils/version.ts
 src/version.json
 public/version.json
+public/manifest.json
