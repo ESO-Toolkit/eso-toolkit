@@ -218,7 +218,7 @@ jobs:
           retention-days: 30
 
       - name: Comment Test Results on PR
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         if: always() && github.event_name == 'workflow_dispatch'
         with:
           script: |
@@ -267,7 +267,7 @@ jobs:
     
     steps:
       - name: Send notification on scheduled failure
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             // Create an issue for failed nightly tests
