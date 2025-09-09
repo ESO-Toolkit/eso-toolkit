@@ -381,12 +381,13 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   top: 0,
                   left: '-100%',
                   width: '100%',
-                  height: '50%',
+                  height: '100%',
                   background:
                     theme.palette.mode === 'dark'
                       ? 'linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent)'
                       : 'linear-gradient(90deg, transparent, rgba(15,23,42,0.08), transparent)',
-                  transform: 'skewX(-25deg)',
+                  transform: 'skewX(-15deg)',
+                  transformOrigin: 'center center',
                   transition: 'left 0.5s ease',
                 },
                 '&:hover': {
