@@ -1,70 +1,70 @@
 version: 2
 updates:
   # Enable version updates for npm
-  - package-ecosystem: "npm"
-    directory: "/"
+  - package-ecosystem: 'npm'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
     # Respect peer dependencies by grouping related packages
     groups:
       # Group React ecosystem packages to avoid peer dependency conflicts
       react:
         patterns:
-          - "react*"
-          - "@types/react*"
+          - 'react*'
+          - '@types/react*'
       # Group Testing Library packages
       testing:
         patterns:
-          - "@testing-library/*"
+          - '@testing-library/*'
       # Group ESLint packages
       eslint:
         patterns:
-          - "eslint*"
-          - "@typescript-eslint/*"
+          - 'eslint*'
+          - '@typescript-eslint/*'
       # Group Storybook packages
       storybook:
         patterns:
-          - "@storybook/*"
-          - "storybook*"
+          - '@storybook/*'
+          - 'storybook*'
       # Group GraphQL packages
       graphql:
         patterns:
-          - "graphql*"
-          - "@graphql*"
-          - "@apollo/*"
+          - 'graphql*'
+          - '@graphql*'
+          - '@apollo/*'
       # Group Vite packages
       vite:
         patterns:
-          - "vite*"
-          - "@vitejs/*"
+          - 'vite*'
+          - '@vitejs/*'
       # Group Jest packages
       jest:
         patterns:
-          - "jest*"
-          - "@types/jest"
-          - "ts-jest"
+          - 'jest*'
+          - '@types/jest'
+          - 'ts-jest'
       # Group Material UI packages
       mui:
         patterns:
-          - "@mui/*"
+          - '@mui/*'
       # Group Emotion packages (used by MUI)
       emotion:
         patterns:
-          - "@emotion/*"
+          - '@emotion/*'
       # Group Three.js packages
       threejs:
         patterns:
-          - "three*"
-          - "@react-three/*"
-          - "@types/three"
+          - 'three*'
+          - '@react-three/*'
+          - '@types/three'
     # Only update patch and minor versions to avoid breaking changes
     # Remove this if you want major version updates too
     ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+      - dependency-name: '*'
+        update-types: ['version-update:semver-major']
     # Limit number of open pull requests
     open-pull-requests-limit: 10
     # Add reviewers (uncomment and modify as needed)
@@ -75,29 +75,29 @@ updates:
     #   - "your-username"
     # Commit message options
     commit-message:
-      prefix: "deps"
-      prefix-development: "deps-dev"
-      include: "scope"
+      prefix: 'deps'
+      prefix-development: 'deps-dev'
+      include: 'scope'
     # PR title and body customization
     pull-request-branch-name:
-      separator: "/"
+      separator: '/'
     # Add labels to PRs
     labels:
-      - "dependencies"
-      - "auto-update"
+      - 'dependencies'
+      - 'auto-update'
 
   # Enable version updates for GitHub Actions
-  - package-ecosystem: "github-actions"
-    directory: "/"
+  - package-ecosystem: 'github-actions'
+    directory: '/'
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: 'weekly'
+      day: 'monday'
+      time: '09:00'
+      timezone: 'UTC'
     commit-message:
-      prefix: "ci"
-      include: "scope"
+      prefix: 'ci'
+      include: 'scope'
     labels:
-      - "github-actions"
-      - "auto-update"
+      - 'github-actions'
+      - 'auto-update'
     open-pull-requests-limit: 5

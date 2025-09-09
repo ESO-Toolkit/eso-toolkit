@@ -104,7 +104,7 @@ jobs:
         env:
           DISABLE_ESLINT_PLUGIN: true
 
-  playwright:
+  playwright-smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v5
@@ -190,15 +190,15 @@ jobs:
           echo "Generating version files for e2e tests..."
           node scripts/generate-version.js
           node scripts/update-manifest.js
-      - name: Run Playwright tests
+      - name: Run Playwright smoke tests
         run: |
-          echo "Running Playwright tests with optimizations..."
+          echo "Running Playwright smoke tests..."
           echo "Node memory: $NODE_OPTIONS"
-          echo "Playwright config: CI mode with single worker"
-          npm run test:e2e
+          echo "Playwright config: Smoke test mode with single worker"
+          npm run test:smoke:e2e
         env:
-          # Node.js memory optimization - increased heap size
-          NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
+          # Node.js memory optimization - reduced for smoke tests
+          NODE_OPTIONS: '--max_old_space_size=4096 --max_semi_space_size=512'
           # CI environment flags
           CI: 'true'
           PLAYWRIGHT_SKIP_VALIDATE_HOST_REQUIREMENTS: 'true'
@@ -217,6 +217,6 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: playwright-report
+          name: playwright-smoke-report
           path: playwright-report/
           retention-days: 30
