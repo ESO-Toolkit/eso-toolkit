@@ -46,7 +46,7 @@ const createOAuthMockScenario = (
 // Story for successful OAuth redirect with authorization code
 export const SuccessfulRedirect: Story = {
   parameters: {
-    remix: {
+    router: {
       location: '/?code=auth_code_123&state=xyz',
     },
     apolloMocks: createOAuthMockScenario('success'),
@@ -61,7 +61,7 @@ export const SuccessfulRedirect: Story = {
 // Story for OAuth error scenario
 export const ErrorRedirect: Story = {
   parameters: {
-    remix: {
+    router: {
       location: '/?error=access_denied&error_description=User%20denied%20access',
     },
     apolloMocks: createOAuthMockScenario('error'),
@@ -76,7 +76,7 @@ export const ErrorRedirect: Story = {
 // Story for missing parameters
 export const MissingParameters: Story = {
   parameters: {
-    remix: {
+    router: {
       location: '/',
     },
     docs: {
@@ -90,7 +90,7 @@ export const MissingParameters: Story = {
 // Story for loading state
 export const LoadingState: Story = {
   parameters: {
-    remix: {
+    router: {
       location: '/?code=auth_code_123&state=xyz',
     },
     apolloMocks: createOAuthMockScenario('loading'),
@@ -105,7 +105,7 @@ export const LoadingState: Story = {
 // Story for state mismatch error
 export const StateMismatch: Story = {
   parameters: {
-    remix: {
+    router: {
       location: '/?code=auth_code_123&state=invalid_state',
     },
     apolloMocks: createOAuthMockScenario('state-mismatch'),

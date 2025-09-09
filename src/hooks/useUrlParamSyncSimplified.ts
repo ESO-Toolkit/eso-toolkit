@@ -189,7 +189,7 @@ export function useUrlParamSync(): {
   const showExperimentalTabs = useSelector(selectShowExperimentalTabs);
 
   // Debounce URL parameter sync to reduce lag
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
+  const timeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Sync URL params to Redux state (debounced to improve performance)
   React.useEffect(() => {
