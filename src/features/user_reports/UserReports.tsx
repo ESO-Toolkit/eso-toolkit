@@ -41,7 +41,7 @@ interface UserReportsState {
   };
 }
 
-const REPORTS_PER_PAGE = 10;
+const REPORTS_PER_PAGE = 25;
 
 // Utility functions
 const formatDateTime = (timestamp: number): string => {
@@ -257,155 +257,222 @@ export const UserReports: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h4" component="h1">
-            My Reports
-          </Typography>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={state.loading}
-            aria-label="refresh"
-            sx={{ color: theme.palette.primary.main }}
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Card
+        elevation={3}
+        sx={{
+          borderRadius: 2,
+          background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.secondary.main}15 100%)`,
+          border: `1px solid ${theme.palette.divider}`,
+        }}
+      >
+        <CardContent sx={{ p: 4 }}>
+          {/* Header */}
+          <Box
+            display="flex"
+            justifyContent="space-between"
+            alignItems="center"
+            flexWrap="wrap"
+            gap={2}
+            mb={3}
           >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
+            <Box>
+              <Typography variant="h4" component="h1" gutterBottom>
+                My Reports
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                {currentUser ? (
+                  <>
+                    Reports for {currentUser.name}
+                    {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
+                    {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
+                  </>
+                ) : (
+                  'Your personal combat log collection'
+                )}
+              </Typography>
+            </Box>
 
-        {currentUser ? (
-          <Typography variant="body1" color="text.secondary">
-            Reports for {currentUser.name}
-            {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
-            {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
-          </Typography>
-        ) : (
-          !userLoading && (
-            <Alert severity="info" sx={{ mb: 2 }}>
+            <Box display="flex" alignItems="center" gap={2}>
+              <IconButton
+                onClick={handleRefresh}
+                disabled={state.loading}
+                color="primary"
+                sx={{
+                  backgroundColor: theme.palette.action.hover,
+                  '&:hover': {
+                    backgroundColor: theme.palette.action.selected,
+                  },
+                }}
+              >
+                <RefreshIcon />
+              </IconButton>
+            </Box>
+          </Box>
+
+          {/* User profile info alert */}
+          {!currentUser && !userLoading && (
+            <Alert severity="info" sx={{ mb: 3 }}>
               Note: Unable to load user profile information from ESO Logs API, but you can still
               view your reports below.
             </Alert>
-          )
-        )}
+          )}
 
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Total: {state.pagination.totalReports} reports
-        </Typography>
-      </Box>
+          {/* Error state */}
+          {state.error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {state.error}
+            </Alert>
+          )}
 
-      {/* Error Alert */}
-      {state.error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {state.error}
-        </Alert>
-      )}
-
-      {/* Reports Table */}
-      <Card>
-        <CardContent sx={{ p: 0 }}>
-          <TableContainer component={Paper} elevation={0}>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Zone</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Visibility</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {state.reports.map((report) => (
-                  <TableRow
-                    key={report.code}
-                    hover
-                    onClick={() => handleReportClick(report.code)}
-                    sx={{ cursor: 'pointer' }}
-                  >
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body1" fontWeight="medium">
-                          {report.title || 'Untitled Report'}
+          {/* Reports table */}
+          {state.reports.length > 0 ? (
+            <>
+              <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2, mb: 3 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Report
                         </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {report.code}
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Zone
                         </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{report.zone?.name || 'Unknown Zone'}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{formatDateTime(report.startTime)}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatDuration(report.startTime, report.endTime)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={report.visibility}
-                        size="small"
-                        color={getVisibilityColor(report.visibility)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Owner
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Start Time
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Duration
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          Visibility
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {state.reports.map((report) => (
+                      <TableRow
+                        key={report.code}
+                        hover
+                        onClick={() => handleReportClick(report.code)}
+                        sx={{
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease-in-out',
+                          '&:hover': {
+                            backgroundColor: theme.palette.action.hover,
+                            transform: 'translateX(4px)',
+                          },
+                        }}
+                      >
+                        <TableCell>
+                          <Box>
+                            <Typography
+                              variant="body2"
+                              fontWeight="medium"
+                              color="primary.main"
+                              noWrap
+                              sx={{ maxWidth: 200 }}
+                            >
+                              {report.title || 'Untitled Report'}
+                            </Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {report.code}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {report.zone?.name || 'Unknown Zone'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">{report.owner?.name || 'Unknown'}</Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {formatDateTime(report.startTime)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {formatDuration(report.startTime, report.endTime)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={report.visibility}
+                            color={getVisibilityColor(report.visibility)}
+                            size="small"
+                            variant="outlined"
+                            sx={{ textTransform: 'capitalize' }}
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+
+              {/* Pagination */}
+              <Box display="flex" justifyContent="center" mt={3}>
+                <Pagination
+                  count={state.pagination.totalPages}
+                  page={state.pagination.currentPage}
+                  onChange={handlePageChange}
+                  disabled={state.loading}
+                  color="primary"
+                  size="large"
+                  sx={{
+                    '& .MuiPaginationItem-root': {
+                      borderRadius: 2,
+                    },
+                  }}
+                />
+              </Box>
+            </>
+          ) : (
+            !state.loading && (
+              <Alert severity="info">
+                You haven't uploaded any reports yet, or they may not be visible with your current
+                permissions.
+              </Alert>
+            )
+          )}
 
           {/* Loading overlay */}
           {state.loading && state.reports.length > 0 && (
             <Box
-              sx={{
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                bgcolor: 'rgba(255, 255, 255, 0.7)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                zIndex: 1,
-              }}
+              position="absolute"
+              top={0}
+              left={0}
+              right={0}
+              bottom={0}
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              bgcolor="rgba(255,255,255,0.7)"
+              zIndex={1}
             >
-              <CircularProgress size={30} />
+              <CircularProgress />
             </Box>
           )}
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      {state.pagination.totalPages > 1 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
-          <Pagination
-            count={state.pagination.totalPages}
-            page={state.pagination.currentPage}
-            onChange={handlePageChange}
-            color="primary"
-            size="large"
-            disabled={state.loading}
-          />
-        </Box>
-      )}
-
-      {/* Empty state */}
-      {!state.loading && state.reports.length === 0 && !state.error && (
-        <Box sx={{ textAlign: 'center', py: 8 }}>
-          <Typography variant="h6" color="text.secondary" gutterBottom>
-            No reports found
-          </Typography>
-          <Typography variant="body2" color="text.secondary">
-            You haven't uploaded any reports yet, or they may not be visible with your current
-            permissions.
-          </Typography>
-        </Box>
-      )}
     </Container>
   );
 };
