@@ -24,7 +24,6 @@ This script generates version information that includes:
 
 - `public/version.json` - Static version file served to browsers
 - `src/version.json` - Version data for development
-- `src/utils/version.ts` - TypeScript constants for the application
 
 ### 2. Manifest Updates (`scripts/update-manifest.js`)
 
@@ -195,7 +194,6 @@ npm run build
 
 - `public/version.json`
 - `src/version.json`
-- `src/utils/version.ts`
 
 ### Configuration Files
 
