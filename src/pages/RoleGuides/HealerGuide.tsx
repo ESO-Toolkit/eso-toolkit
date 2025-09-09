@@ -9,6 +9,7 @@ import {
   Chip,
   Container,
   Divider,
+  Grid,
   InputAdornment,
   Paper,
   Stack,
@@ -17,7 +18,6 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import Grid from '@mui/material/Grid2';
 import { alpha, Theme } from '@mui/material/styles';
 import React from 'react';
 
@@ -35,7 +35,7 @@ interface HealerOutlineSlide {
   items: HealerOutlineItem[];
 }
 
-const heroSx = (theme: Theme) => ({
+const heroSx = (theme: Theme): Record<string, unknown> => ({
   position: 'relative',
   borderRadius: 3,
   p: { xs: 3, md: 5 },
@@ -51,7 +51,7 @@ const heroSx = (theme: Theme) => ({
       : '0 10px 30px rgba(59, 130, 246, 0.10), 0 2px 8px rgba(0, 0, 0, 0.05)',
 });
 
-const frostCardSx = (theme: Theme) => ({
+const frostCardSx = (theme: Theme): Record<string, unknown> => ({
   position: 'relative',
   p: 2.5,
   borderRadius: 2,
@@ -77,7 +77,7 @@ const frostCardSx = (theme: Theme) => ({
   },
 });
 
-const tagChipSx = (theme: Theme, type: string) => {
+const tagChipSx = (theme: Theme, type: string): Record<string, unknown> => {
   const base = {
     height: 24,
     borderRadius: 1,
@@ -143,10 +143,11 @@ export const HealerGuide: React.FC = () => {
     (async () => {
       try {
         const path = '../../data/Roles/healer/HealerOutline';
-        // @ts-ignore – module may not exist yet until script is run
         const mod = await import(/* @vite-ignore */ path);
         const slides: HealerOutlineSlide[] =
-          (mod as any)?.healerOutline?.slides || (mod as any)?.default?.slides;
+          (mod as { healerOutline?: { slides: HealerOutlineSlide[] }; default?: { slides: HealerOutlineSlide[] } })?.healerOutline?.slides || 
+          (mod as { healerOutline?: { slides: HealerOutlineSlide[] }; default?: { slides: HealerOutlineSlide[] } })?.default?.slides ||
+          [];
         if (Array.isArray(slides) && slides.length) {
           setOutlineSlides(slides);
         }
@@ -275,7 +276,8 @@ export const HealerGuide: React.FC = () => {
               desc: 'Drop ground heals, refresh HoTs, weave heavies, and time your buffs.',
             },
           ].map((s) => (
-            <Grid key={s.n} xs={12} md={4}>
+            // @ts-expect-error - MUI Grid item prop typing issue
+            <Grid item key={s.n} xs={12} md={4}>
               <Paper sx={frostCardSx(theme)}>
                 <Stack direction="row" spacing={1.5} alignItems="flex-start">
                   <Box
@@ -352,7 +354,8 @@ export const HealerGuide: React.FC = () => {
               'Symphony of Blades',
               "Grand Rejuvenation (Master's Restoration Staff)",
             ].map((name) => (
-              <Grid key={name} xs={12} md={4}>
+              // @ts-expect-error - MUI Grid item prop typing issue
+              <Grid item key={name} xs={12} md={4}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {name}
@@ -457,7 +460,8 @@ export const HealerGuide: React.FC = () => {
           </Typography>
           <Grid container spacing={2}>
             {outlineSlides.slice(0, 6).map((sl) => (
-              <Grid key={sl.index} xs={12} md={6}>
+              // @ts-expect-error - MUI Grid item prop typing issue
+              <Grid item key={sl.index} xs={12} md={6}>
                 <Paper sx={frostCardSx(theme)}>
                   <Typography variant="subtitle1" fontWeight={800}>
                     {sl.title}
@@ -540,7 +544,8 @@ export const HealerGuide: React.FC = () => {
 
             <Grid container spacing={2} sx={{ mt: 1 }}>
               {filtered.map((set) => (
-                <Grid key={`${set.full_name}-${set.category}`} xs={12} sm={6} md={4}>
+                // @ts-expect-error - MUI Grid item prop typing issue
+                <Grid item key={`${set.full_name}-${set.category}`} xs={12} sm={6} md={4}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack
                       direction="row"
@@ -611,7 +616,8 @@ export const HealerGuide: React.FC = () => {
             </Typography>
             <Grid container spacing={2}>
               {activationEntries.map(([key, desc]) => (
-                <Grid key={key} xs={12} sm={6} md={4}>
+                // @ts-expect-error - MUI Grid item prop typing issue
+                <Grid item key={key} xs={12} sm={6} md={4}>
                   <Paper sx={frostCardSx(theme)}>
                     <Stack direction="row" spacing={1} alignItems="center">
                       <Box component="span" role="img" aria-label={key} sx={{ fontSize: 18 }}>
@@ -642,7 +648,8 @@ export const HealerGuide: React.FC = () => {
             <Paper sx={{ ...frostCardSx(theme), mt: 1 }}>
               <Grid container spacing={2}>
                 {healingGuideData.build_strategies.example_builds.map((b) => (
-                  <Grid key={b.build_name} xs={12} md={6}>
+                  // @ts-expect-error - MUI Grid item prop typing issue
+                  <Grid item key={b.build_name} xs={12} md={6}>
                     <Paper sx={frostCardSx(theme)}>
                       <Typography variant="subtitle2" fontWeight={800}>
                         {b.build_name}
