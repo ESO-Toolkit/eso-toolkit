@@ -8,6 +8,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
+import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
 import { AuthProvider } from './features/auth/AuthContext';
@@ -111,6 +112,8 @@ const App: React.FC = () => {
                   <LazyModernFeedbackFab />
                 </Suspense>
               )}
+              {/* Update notification for new versions */}
+              <UpdateNotification />
             </AuthProvider>
           </EsoLogsClientProvider>
         </PersistGate>

@@ -39,3 +39,8 @@ data-downloads/
 
 # nested repository folder
 eso-log-aggregator/
+
+# Auto-generated version files (created during build)
+src/utils/version.ts
+src/version.json
+public/version.json

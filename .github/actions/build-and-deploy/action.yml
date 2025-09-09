@@ -26,6 +26,7 @@ runs:
       shell: bash
       run: |
         echo "REACT_APP_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
+        echo "VITE_RELEASE_VERSION=${{ inputs.release_version }}" >> $GITHUB_ENV
 
     - name: Setup Pages
       uses: actions/configure-pages@v5
@@ -35,6 +36,7 @@ runs:
       shell: bash
       run: |
         export GENERATE_SOURCEMAP=${{ inputs.enable_sourcemaps }}
+        export NODE_ENV=production
         npm run build
       env:
         VITE_BASE_URL: '${{steps.setup.outputs.base_url}}'
