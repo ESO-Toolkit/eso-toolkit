@@ -100,9 +100,10 @@ const TalentsGridPanel = React.lazy(() =>
   import('./talents/TalentsGridPanel').then((module) => ({ default: module.TalentsGridPanel })),
 );
 
-// Panel loading fallback component - uses tab-specific skeleton
-const PanelLoadingFallback: React.FC<{ tabId: TabId }> = ({ tabId }) =>
-  getSkeletonForTab(tabId, false);
+// Panel loading fallback component - uses tab-specific skeleton with consistent dimensions
+const PanelLoadingFallback: React.FC<{ tabId: TabId }> = ({ tabId }) => (
+  <Box sx={{ minHeight: 400, width: '100%' }}>{getSkeletonForTab(tabId, false)}</Box>
+);
 
 interface FightDetailsViewProps {
   fight: FightFragment;

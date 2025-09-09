@@ -162,8 +162,8 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     );
   }
 
-  // Don't render until we have data
-  if (isLoading) {
+  // Show no data message if we have no healing data but aren't loading
+  if (healingRows.length === 0) {
     return (
       <Box sx={{ textAlign: 'center', py: 4 }}>
         <Typography variant="body1" color="text.secondary">
