@@ -145,8 +145,18 @@ export const HealerGuide: React.FC = () => {
         const path = '../../data/Roles/healer/HealerOutline';
         const mod = await import(/* @vite-ignore */ path);
         const slides: HealerOutlineSlide[] =
-          (mod as { healerOutline?: { slides: HealerOutlineSlide[] }; default?: { slides: HealerOutlineSlide[] } })?.healerOutline?.slides || 
-          (mod as { healerOutline?: { slides: HealerOutlineSlide[] }; default?: { slides: HealerOutlineSlide[] } })?.default?.slides ||
+          (
+            mod as {
+              healerOutline?: { slides: HealerOutlineSlide[] };
+              default?: { slides: HealerOutlineSlide[] };
+            }
+          )?.healerOutline?.slides ||
+          (
+            mod as {
+              healerOutline?: { slides: HealerOutlineSlide[] };
+              default?: { slides: HealerOutlineSlide[] };
+            }
+          )?.default?.slides ||
           [];
         if (Array.isArray(slides) && slides.length) {
           setOutlineSlides(slides);
