@@ -26,7 +26,6 @@ import { useNavigate } from 'react-router-dom';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetLatestReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
 import { GetLatestReportsDocument } from '../../graphql/reports.generated';
-import { useLogger } from '../../hooks/useLogger';
 
 interface LatestReportsState {
   reports: UserReportSummaryFragment[];
@@ -80,7 +79,6 @@ export const LatestReports: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const client = useEsoLogsClientInstance();
-  const logger = useLogger('LatestReports');
 
   const [state, setState] = useState<LatestReportsState>({
     reports: [],
@@ -105,7 +103,7 @@ export const LatestReports: React.FC = () => {
           error: null,
         }));
 
-        const reportsResult: GetLatestReportsQuery = await client.query({
+        const reportsResult = await client.query<GetLatestReportsQuery>({
           query: GetLatestReportsDocument,
           variables: {
             limit: REPORTS_PER_PAGE,
@@ -113,15 +111,6 @@ export const LatestReports: React.FC = () => {
           },
           errorPolicy: 'all', // Return both data and errors
         });
-
-        if (reportsResult.errors && reportsResult.errors.length > 0) {
-          setState((prev) => ({
-            ...prev,
-            loading: false,
-            error: `API Error: ${reportsResult.errors.map((e) => e.message).join(', ')}`,
-          }));
-          return;
-        }
 
         const reportPagination = reportsResult.reportData?.reports;
 
