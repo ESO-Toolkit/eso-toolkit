@@ -81,7 +81,7 @@ export const PlayersPanel: React.FC = () => {
   const { abilitiesById } = reportMasterData;
 
   // Calculate loading state - include ALL data dependencies this panel needs
-  const isLoading = 
+  const isLoading =
     isMasterDataLoading ||
     isPlayerDataLoading ||
     isCombatantInfoEventsLoading ||

@@ -15,7 +15,7 @@ export const ActorsPanel: React.FC = () => {
   // Convert actors object to array for the data grid
   const actors = React.useMemo(() => {
     if (isLoading || !reportMasterData?.actorsById) return [];
-    
+
     return Object.values(reportMasterData.actorsById).map((actor) => ({
       id: actor.id ?? '',
       name: actor.name || 'Unknown',

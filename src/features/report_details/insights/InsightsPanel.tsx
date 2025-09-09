@@ -149,10 +149,10 @@ export const InsightsPanel: React.FC<InsightsPanelProps> = ({ fight }) => {
       buffActors={buffActors}
       firstDamageDealer={firstDamageDealer}
       isLoading={
-        isCombatantInfoEventsLoading || 
-        isDamageEventsLoading || 
-        isPlayerDataLoading || 
-        isMasterDataLoading || 
+        isCombatantInfoEventsLoading ||
+        isDamageEventsLoading ||
+        isPlayerDataLoading ||
+        isMasterDataLoading ||
         isStatusEffectUptimesLoading
       }
     />
