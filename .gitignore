@@ -8,8 +8,11 @@
 # testing
 /coverage
 /test-results/
+/test-results-nightly/
 /playwright-report/
+/playwright-report-nightly/
 /playwright/.cache/
+/tests/auth-state.json
 
 # production
 /build

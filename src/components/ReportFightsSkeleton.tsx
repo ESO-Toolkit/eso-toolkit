@@ -5,9 +5,14 @@ import React from 'react';
 interface ReportFightsSkeletonProps {
   /** Number of trial instances to show. If 1, auto-expand the accordion. If not specified, shows a realistic random number */
   instanceCount?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
-export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ instanceCount }) => {
+export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ 
+  instanceCount,
+  'data-testid': dataTestId,
+}) => {
   // Generate a realistic number of instances (3-6) if not specified
   const actualInstanceCount = React.useMemo(() => {
     if (instanceCount !== undefined) return instanceCount;
@@ -18,6 +23,7 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({ inst
     <Paper
       elevation={0}
       square
+      data-testid={dataTestId}
       sx={{
         p: 0,
         m: 0,

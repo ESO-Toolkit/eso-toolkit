@@ -95,7 +95,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   const getPlayerColor = roleColors.getPlayerColor;
 
   return (
-    <Box>
+    <Box data-testid="damage-done-panel">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         <Typography variant="h6">
           ⚔️ Damage Done By Player

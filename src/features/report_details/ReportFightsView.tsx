@@ -747,7 +747,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
   };
 
   if (loading) {
-    return <ReportFightsSkeleton />;
+    return <ReportFightsSkeleton data-testid="loading-indicator" />;
   }
 
   if (!fights?.length) {
@@ -822,6 +822,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     return (
       <ListItem key={fight.id} sx={{ p: 0, overflow: 'visible' }}>
         <ListItemButton
+          data-testid={`fight-button-${fight.id}`}
           selected={fightId === String(fight.id)}
           onClick={() => handleFightSelect(fight.id)}
           sx={{
@@ -997,9 +998,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         </Typography>
 
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
+        <Box data-testid="fight-list">
         {encounters.map((trialRun) => (
           <Accordion
             key={trialRun.id}
+            data-testid={`trial-accordion-${trialRun.id}`}
             expanded={expandedEncounters.has(trialRun.id)}
             onChange={() => toggleEncounter(trialRun.id)}
             sx={{
@@ -1226,6 +1229,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                 return (
                   <Box
                     key={encounter.id}
+                    data-testid={`encounter-${encounter.id}`}
                     sx={{
                       mb: 2,
                       p: 2,
@@ -1387,6 +1391,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             </AccordionDetails>
           </Accordion>
         ))}
+        </Box>
       </Box>
     </Paper>
   );
