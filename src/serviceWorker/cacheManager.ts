@@ -6,6 +6,7 @@
 /// <reference lib="webworker" />
 
 import { getBuildInfo, getCacheBustingQuery } from '../utils/cacheBusting';
+import { getBaseUrl } from '../utils/envUtils';
 
 declare const self: ServiceWorkerGlobalScope;
 
@@ -17,15 +18,17 @@ const CACHE_NAME = `${CACHE_NAME_PREFIX}-${CURRENT_VERSION}`;
 const STATIC_ASSETS = ['/', '/manifest.json', '/favicon.ico', '/robots.txt'];
 
 // Assets that should be cached with version checking
-const VERSIONED_ASSETS = ['/version.json'];
+const VERSIONED_ASSETS = [`${getBaseUrl()}version.json`];
 
 /**
  * Check if a cache should be invalidated based on version
  */
 async function shouldInvalidateCache(): Promise<boolean> {
   try {
-    // Try to fetch the current version from the server
-    const response = await fetch(`/version.json?${getCacheBustingQuery()}`);
+    // Try to fetch the current version from the server, respecting BASE_URL
+    const baseUrl = getBaseUrl();
+    const versionUrl = `${baseUrl}version.json?${getCacheBustingQuery()}`;
+    const response = await fetch(versionUrl);
     if (!response.ok) return false;
 
     const serverVersion = await response.json();

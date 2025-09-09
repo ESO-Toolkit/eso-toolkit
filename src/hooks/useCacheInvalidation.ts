@@ -6,6 +6,7 @@
 import { useEffect, useState, useCallback } from 'react';
 
 import { getBuildInfo, getCacheBustingQuery } from '../utils/cacheBusting';
+import { getBaseUrl } from '../utils/envUtils';
 
 interface CacheInvalidationState {
   isCheckingVersion: boolean;
@@ -38,8 +39,10 @@ export const useCacheInvalidation = (
     setState((prev) => ({ ...prev, isCheckingVersion: true }));
 
     try {
-      // Fetch version info from server with cache busting
-      const response = await fetch(`/version.json?${getCacheBustingQuery()}&t=${Date.now()}`);
+      // Fetch version info from server with cache busting, respecting BASE_URL
+      const baseUrl = getBaseUrl();
+      const versionUrl = `${baseUrl}version.json?${getCacheBustingQuery()}&t=${Date.now()}`;
+      const response = await fetch(versionUrl);
 
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}`);
