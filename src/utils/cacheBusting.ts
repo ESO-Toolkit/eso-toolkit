@@ -2,9 +2,32 @@
  * Cache busting utilities for ensuring fresh content delivery
  */
 
-// We need to use require here because the file is generated dynamically
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const { VERSION_INFO, cacheBuster } = require('./version');
+// Fallback version info for development when version files don't exist
+const FALLBACK_VERSION_INFO = {
+  version: '0.1.0',
+  buildTime: new Date().toISOString(),
+  gitCommit: 'dev-commit',
+  shortCommit: 'dev',
+  buildId: `0.1.0-dev-${Date.now()}`,
+  timestamp: Date.now(),
+  cacheBuster: `v=dev${Date.now()}`,
+} as const;
+
+// Try to load generated version info, fall back to development version
+let VERSION_INFO: typeof FALLBACK_VERSION_INFO;
+let cacheBuster: string;
+
+try {
+  // We need to use require here because the file is generated dynamically
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const versionModule = require('./version');
+  VERSION_INFO = versionModule.VERSION_INFO;
+  cacheBuster = versionModule.cacheBuster;
+} catch (error) {
+  // Version file doesn't exist (development mode)
+  VERSION_INFO = FALLBACK_VERSION_INFO;
+  cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
+}
 
 /**
  * Add cache-busting parameter to a URL
