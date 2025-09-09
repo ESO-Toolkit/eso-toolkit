@@ -272,3 +272,85 @@ export type GetUserReportsQueryResult = Apollo.QueryResult<
   Types.GetUserReportsQuery,
   Types.GetUserReportsQueryVariables
 >;
+export const GetLatestReportsDocument = gql`
+  query getLatestReports($limit: Int, $page: Int) {
+    reportData {
+      reports(limit: $limit, page: $page) {
+        data {
+          ...UserReportSummary
+        }
+        current_page
+        per_page
+        last_page
+        has_more_pages
+      }
+    }
+  }
+  ${UserReportSummaryFragmentDoc}
+`;
+
+/**
+ * __useGetLatestReportsQuery__
+ *
+ * To run a query within a React component, call `useGetLatestReportsQuery` and pass it any options that fit your needs.
+ * When your component renders, `useGetLatestReportsQuery` returns an object from Apollo Client that contains loading, error, and data properties
+ * you can use to render your UI.
+ *
+ * @param baseOptions options that will be passed into the query, supported options are listed on: https://www.apollographql.com/docs/react/api/react-hooks/#options;
+ *
+ * @example
+ * const { data, loading, error } = useGetLatestReportsQuery({
+ *   variables: {
+ *      limit: // value for 'limit'
+ *      page: // value for 'page'
+ *   },
+ * });
+ */
+export function useGetLatestReportsQuery(
+  baseOptions?: Apollo.QueryHookOptions<
+    Types.GetLatestReportsQuery,
+    Types.GetLatestReportsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useQuery<Types.GetLatestReportsQuery, Types.GetLatestReportsQueryVariables>(
+    GetLatestReportsDocument,
+    options,
+  );
+}
+export function useGetLatestReportsLazyQuery(
+  baseOptions?: Apollo.LazyQueryHookOptions<
+    Types.GetLatestReportsQuery,
+    Types.GetLatestReportsQueryVariables
+  >,
+) {
+  const options = { ...defaultOptions, ...baseOptions };
+  return Apollo.useLazyQuery<Types.GetLatestReportsQuery, Types.GetLatestReportsQueryVariables>(
+    GetLatestReportsDocument,
+    options,
+  );
+}
+export function useGetLatestReportsSuspenseQuery(
+  baseOptions?:
+    | Apollo.SkipToken
+    | Apollo.SuspenseQueryHookOptions<
+        Types.GetLatestReportsQuery,
+        Types.GetLatestReportsQueryVariables
+      >,
+) {
+  const options =
+    baseOptions === Apollo.skipToken ? baseOptions : { ...defaultOptions, ...baseOptions };
+  return Apollo.useSuspenseQuery<Types.GetLatestReportsQuery, Types.GetLatestReportsQueryVariables>(
+    GetLatestReportsDocument,
+    options,
+  );
+}
+export type GetLatestReportsQueryHookResult = ReturnType<typeof useGetLatestReportsQuery>;
+export type GetLatestReportsLazyQueryHookResult = ReturnType<typeof useGetLatestReportsLazyQuery>;
+export type GetLatestReportsSuspenseQueryHookResult = ReturnType<
+  typeof useGetLatestReportsSuspenseQuery
+>;
+export type GetLatestReportsQueryResult = Apollo.QueryResult<
+  Types.GetLatestReportsQuery,
+  Types.GetLatestReportsQueryVariables
+>;

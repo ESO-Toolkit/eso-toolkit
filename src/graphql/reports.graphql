@@ -62,3 +62,17 @@ query getUserReports($limit: Int, $page: Int, $userID: Int) {
     }
   }
 }
+
+query getLatestReports($limit: Int, $page: Int) {
+  reportData {
+    reports(limit: $limit, page: $page) {
+      data {
+        ...UserReportSummary
+      }
+      current_page
+      per_page
+      last_page
+      has_more_pages
+    }
+  }
+}

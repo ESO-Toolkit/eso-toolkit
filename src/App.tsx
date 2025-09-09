@@ -35,6 +35,11 @@ const ReportFights = React.lazy(() =>
     default: module.ReportFights,
   })),
 );
+const LatestReports = React.lazy(() =>
+  import('./features/latest_reports/LatestReports').then((module) => ({
+    default: module.LatestReports,
+  })),
+);
 const OAuthRedirect = React.lazy(() =>
   import('./OAuthRedirect').then((module) => ({ default: module.OAuthRedirect })),
 );
@@ -246,6 +251,18 @@ const AppRoutes: React.FC = () => {
                     <Calculator />
                   </Suspense>
                 </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/latest-reports"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <LatestReports />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
               }
             />
             <Route

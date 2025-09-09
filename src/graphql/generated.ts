@@ -2844,6 +2844,35 @@ export type GetUserReportsQuery = {
   } | null;
 };
 
+export type GetLatestReportsQueryVariables = Exact<{
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  page?: InputMaybe<Scalars['Int']['input']>;
+}>;
+
+export type GetLatestReportsQuery = {
+  __typename?: 'Query';
+  reportData?: {
+    __typename?: 'ReportData';
+    reports?: {
+      __typename?: 'ReportPagination';
+      current_page: number;
+      per_page: number;
+      last_page: number;
+      has_more_pages: boolean;
+      data?: Array<{
+        __typename?: 'Report';
+        code: string;
+        startTime: number;
+        endTime: number;
+        title: string;
+        visibility: string;
+        zone?: { __typename?: 'Zone'; name: string } | null;
+        owner?: { __typename?: 'User'; name: string } | null;
+      } | null> | null;
+    } | null;
+  } | null;
+};
+
 export type FightFragment = {
   __typename?: 'ReportFight';
   id: number;
@@ -6002,3 +6031,108 @@ export const GetUserReportsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetUserReportsQuery, GetUserReportsQueryVariables>;
+export const GetLatestReportsDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getLatestReports' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+          type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'reportData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'reports' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'limit' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'limit' } },
+                    },
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'page' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'page' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'data' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            {
+                              kind: 'FragmentSpread',
+                              name: { kind: 'Name', value: 'UserReportSummary' },
+                            },
+                          ],
+                        },
+                      },
+                      { kind: 'Field', name: { kind: 'Name', value: 'current_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'per_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'last_page' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'has_more_pages' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'UserReportSummary' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Report' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'visibility' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'owner' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [{ kind: 'Field', name: { kind: 'Name', value: 'name' } }],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetLatestReportsQuery, GetLatestReportsQueryVariables>;
