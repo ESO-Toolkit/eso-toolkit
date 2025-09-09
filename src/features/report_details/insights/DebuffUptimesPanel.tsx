@@ -84,25 +84,52 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       uniqueKey: `debuff_${debuff.abilityGameID}`, // Add unique key for regular debuffs
     }));
 
-    // Add Touch of Z'en stack debuffs if available
+    // Group Touch of Z'en stacks and provide all stack data with default to stack 5
     const touchOfZenStackUptimes = touchOfZenStacksData
-      ? touchOfZenStacksData.map((stackResult) => {
+      ? (() => {
+          if (touchOfZenStacksData.length === 0) return [];
+
+          // Sort stacks by level and prepare all stack data
+          const sortedStacks = [...touchOfZenStacksData].sort(
+            (a, b) => a.stackLevel - b.stackLevel,
+          );
+
+          // Use stack 5 as the default display (highest stack for initial display)
+          const defaultStack =
+            sortedStacks.find((stack) => stack.stackLevel === 5) ||
+            sortedStacks[sortedStacks.length - 1];
+
           // Look up the Touch of Z'en ability for icon information
-          const touchOfZenAbility = reportMasterData?.abilitiesById?.[stackResult.abilityGameID];
-          return {
-            abilityGameID: stackResult.abilityGameID,
-            abilityName: stackResult.abilityName,
-            icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : stackResult.icon,
-            totalDuration: stackResult.totalDuration,
-            uptime: stackResult.uptime,
-            uptimePercentage: stackResult.uptimePercentage,
-            applications: stackResult.applications,
-            isDebuff: stackResult.isDebuff,
-            hostilityType: stackResult.hostilityType,
-            uniqueKey: `touch_of_zen_stack_${stackResult.stackLevel}`, // Unique key for each stack level
-            dotAbilityIds: allDotAbilityIds || [], // Include the DOT ability IDs for filtering
-          };
-        })
+          const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+          // Create allStacksData for the interactive component
+          const allStacksData = sortedStacks.map((stack) => ({
+            stackLevel: stack.stackLevel,
+            totalDuration: stack.totalDuration,
+            uptime: stack.uptime,
+            uptimePercentage: stack.uptimePercentage,
+            applications: stack.applications,
+          }));
+
+          return [
+            {
+              abilityGameID: defaultStack.abilityGameID,
+              abilityName: "Touch of Z'en", // Clean name without stack info
+              icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : defaultStack.icon,
+              totalDuration: defaultStack.totalDuration,
+              uptime: defaultStack.uptime,
+              uptimePercentage: defaultStack.uptimePercentage,
+              applications: defaultStack.applications,
+              isDebuff: defaultStack.isDebuff,
+              hostilityType: defaultStack.hostilityType,
+              uniqueKey: `touch_of_zen_grouped`, // Single unique key for the grouped entry
+              dotAbilityIds: allDotAbilityIds || [], // Include the DOT ability IDs for filtering
+              stackLevel: defaultStack.stackLevel,
+              maxStacks: 5, // Touch of Z'en has 5 stacks maximum
+              allStacksData, // Provide all stack data for interactive switching
+            },
+          ];
+        })()
       : [];
 
     // Combine regular debuffs with Touch of Z'en stacks and sort by uptime percentage (descending)
