@@ -11,6 +11,8 @@ export interface BuffUptime {
   isDebuff: boolean;
   applications: number;
   hostilityType: 0 | 1;
+  uniqueKey: string; // Unique identifier to differentiate between stacks
+  dotAbilityIds?: number[]; // Optional DOT ability IDs for Touch of Z'en stacks
 }
 
 interface BuffUptimeProgressBarProps {
@@ -27,11 +29,23 @@ const createEsoLogsUrl = (
   selectedTargetId: number | null,
   isDebuff: boolean,
   hostility: 0 | 1,
+  dotAbilityIds?: number[],
 ): string => {
-  let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}&type=auras&hostility=${hostility}&ability=${abilityGameID}`;
+  let url = `https://www.esologs.com/reports/${reportId}?fight=${fightId}`;
 
-  if (isDebuff) {
-    url += `&spells=auras`;
+  if (dotAbilityIds && dotAbilityIds.length > 0) {
+    // For Touch of Z'en stacks, use the pins format to filter by all DOT abilities
+    // Format: pins=2$Off$#244F4B$expression$ability.id IN (id1,id2,id3,...)
+    const abilityList = dotAbilityIds.join('%2C'); // URL encode commas
+    const pinsExpression = `2%24Off%24%23244F4B%24expression%24ability.id%20IN%20%28${abilityList}%29`;
+    url += `&type=auras&spells=debuffs&hostility=1&pins=${pinsExpression}`;
+  } else {
+    // For regular abilities, use the standard auras view
+    url += `&type=auras&hostility=${hostility}&ability=${abilityGameID}`;
+
+    if (isDebuff) {
+      url += `&spells=auras`;
+    }
   }
 
   if (selectedTargetId) {
@@ -60,10 +74,19 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
       selectedTargetId,
       buff.isDebuff,
       buff.hostilityType,
+      buff.dotAbilityIds,
     );
 
     window.open(url, '_blank');
-  }, [reportId, fightId, buff.abilityGameID, selectedTargetId, buff.isDebuff, buff.hostilityType]);
+  }, [
+    reportId,
+    fightId,
+    buff.abilityGameID,
+    selectedTargetId,
+    buff.isDebuff,
+    buff.hostilityType,
+    buff.dotAbilityIds,
+  ]);
 
   return (
     <Box
