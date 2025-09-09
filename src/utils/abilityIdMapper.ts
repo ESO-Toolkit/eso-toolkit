@@ -1,10 +1,15 @@
+import { ReportAbilityFragment } from '../graphql/generated';
+import { selectAbilitiesById } from '../store/master_data/masterDataSelectors';
+import store, { RootState } from '../store/storeWithHistory';
+
 import { DataLoadError, NestedError, ValidationError } from './NestedError';
 
-// Type for ability data from abilities.json
+// Type for ability data - now uses ReportAbilityFragment from master data
 export interface AbilityData {
-  id: number;
+  gameID: number;
   name: string | null;
   icon: string;
+  type?: string;
   __typename?: string;
 }
 
@@ -33,47 +38,54 @@ class AbilityIdMapper {
 
   private async loadAbilitiesData(): Promise<void> {
     try {
-      // Dynamically import the abilities data only when needed
-      const { default: abilitiesData } = await import('../../data/abilities.json');
-      this.buildMappings(abilitiesData);
+      // Get abilities from master data in Redux store instead of abilities.json
+      const state = store.getState() as RootState;
+      const abilitiesById = selectAbilitiesById(state);
+
+      if (Object.keys(abilitiesById).length === 0) {
+        throw new Error(
+          'No abilities found in master data. Make sure master data is loaded first.',
+        );
+      }
+
+      this.buildMappings(abilitiesById);
       this.isLoaded = true;
     } catch (error) {
-      const nestedError = new DataLoadError(
-        'abilities.json',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          size: '~20MB',
-          purpose: 'ability name and icon mapping',
-          loadMethod: 'dynamic import',
-        },
-      );
-
-      // Reset loading state so future attempts can be made
-      this.loadingPromise = null;
-      throw nestedError;
+      throw new DataLoadError('master data abilities', error as Error, {
+        source: 'AbilityIdMapper.loadAbilitiesData',
+      });
     }
   }
 
-  private buildMappings(abilitiesData: unknown): void {
+  private buildMappings(abilitiesById: Record<string | number, ReportAbilityFragment>): void {
     try {
-      if (!abilitiesData || typeof abilitiesData !== 'object') {
-        throw new ValidationError('abilitiesData', abilitiesData, undefined, {
+      if (!abilitiesById || typeof abilitiesById !== 'object') {
+        throw new ValidationError('abilitiesById', abilitiesById, undefined, {
           expectedType: 'object',
-          actualType: typeof abilitiesData,
+          actualType: typeof abilitiesById,
         });
       }
 
       let processedCount = 0;
       let skippedCount = 0;
 
-      // Convert the abilities.json data into maps for quick lookups
-      Object.values(abilitiesData as Record<string, AbilityData>).forEach((ability, index) => {
+      // Convert the master data abilities into maps for quick lookups
+      Object.values(abilitiesById).forEach((ability, index) => {
         try {
-          if (ability.name && ability.id) {
+          if (ability.name && ability.gameID) {
+            // Convert ReportAbilityFragment to AbilityData format
+            const abilityData: AbilityData = {
+              gameID: ability.gameID,
+              name: ability.name,
+              icon: ability.icon || '',
+              type: ability.type || undefined,
+              __typename: ability.__typename,
+            };
+
             // Use lowercase for consistent lookups
             const normalizedName = this.normalizeAbilityName(ability.name);
-            this.nameToIdMap.set(normalizedName, ability);
-            this.idToDataMap.set(ability.id, ability);
+            this.nameToIdMap.set(normalizedName, abilityData);
+            this.idToDataMap.set(ability.gameID, abilityData);
             processedCount++;
           } else {
             skippedCount++;
@@ -94,7 +106,7 @@ class AbilityIdMapper {
       // Log success statistics
       // eslint-disable-next-line no-console
       console.log(
-        `AbilityIdMapper: Successfully processed ${processedCount} abilities, skipped ${skippedCount} invalid entries`,
+        `AbilityIdMapper: Successfully processed ${processedCount} abilities from master data, skipped ${skippedCount} invalid entries`,
       );
     } catch (error) {
       throw new NestedError(
@@ -103,7 +115,7 @@ class AbilityIdMapper {
         {
           code: 'MAPPING_BUILD_ERROR',
           context: {
-            dataType: typeof abilitiesData,
+            dataType: 'master data abilities',
             mapSizes: {
               nameToId: this.nameToIdMap.size,
               idToData: this.idToDataMap.size,
@@ -184,7 +196,7 @@ class AbilityIdMapper {
    */
   getAbilityId(name: string): number | null {
     const ability = this.getAbilityByName(name);
-    return ability ? ability.id : null;
+    return ability ? ability.gameID : null;
   }
 
   /**
