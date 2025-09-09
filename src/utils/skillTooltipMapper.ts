@@ -244,9 +244,9 @@ export function buildTooltipPropsFromClassAndName(
       node,
       inheritFrom: parent,
       morphOfName: parent?.name,
-      abilityId: abilityData?.id,
-      iconUrl: abilityData?.id
-        ? abilityIdMapper.getIconUrl(abilityData.id) || undefined
+      abilityId: abilityData?.gameID,
+      iconUrl: abilityData?.gameID
+        ? abilityIdMapper.getIconUrl(abilityData.gameID) || undefined
         : undefined,
     });
   }
