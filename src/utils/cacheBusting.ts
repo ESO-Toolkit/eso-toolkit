@@ -2,7 +2,9 @@
  * Cache busting utilities for ensuring fresh content delivery
  */
 
-import { VERSION_INFO, cacheBuster } from './version';
+// We need to use require here because the file is generated dynamically
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const { VERSION_INFO, cacheBuster } = require('./version');
 
 /**
  * Add cache-busting parameter to a URL
