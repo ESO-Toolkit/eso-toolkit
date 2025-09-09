@@ -120,6 +120,8 @@ export interface PlayerCardProps {
   resurrects: number;
   cpm: number;
   maxHealth: number;
+  maxStamina: number;
+  maxMagicka: number;
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];

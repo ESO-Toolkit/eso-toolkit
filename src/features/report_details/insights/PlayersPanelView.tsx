@@ -33,6 +33,8 @@ interface PlayersPanelViewProps {
   resurrectsByPlayer: Record<string, number>;
   cpmByPlayer: Record<string, number>;
   maxHealthByPlayer: Record<string, number>;
+  maxStaminaByPlayer: Record<string, number>;
+  maxMagickaByPlayer: Record<string, number>;
   reportId?: string | null;
   fightId?: string | null;
   isLoading: boolean;
@@ -54,6 +56,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     resurrectsByPlayer,
     cpmByPlayer,
     maxHealthByPlayer,
+    maxStaminaByPlayer,
+    maxMagickaByPlayer,
     reportId,
     fightId,
     isLoading,
@@ -77,6 +81,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const resurrects = resurrectsByPlayer?.[String(player.id)] ?? 0;
         const cpm = Math.round(cpmByPlayer?.[String(player.id)] ?? 0);
         const maxHealth = maxHealthByPlayer?.[String(player.id)] ?? 0;
+        const maxStamina = maxStaminaByPlayer?.[String(player.id)] ?? 0;
+        const maxMagicka = maxMagickaByPlayer?.[String(player.id)] ?? 0;
         const playerGearSets = (playerDataSet ?? [])
           .sort((a, b) => b.count - a.count)
           .filter((s) => s.count > 0);
@@ -94,6 +100,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           resurrects,
           cpm,
           maxHealth,
+          maxStamina,
+          maxMagicka,
           playerGear: playerGearSets,
         };
       });
@@ -110,6 +118,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       resurrectsByPlayer,
       cpmByPlayer,
       maxHealthByPlayer,
+      maxStaminaByPlayer,
+      maxMagickaByPlayer,
     ]);
 
     if (isLoading) {
@@ -176,6 +186,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               resurrects={playerData.resurrects}
               cpm={playerData.cpm}
               maxHealth={playerData.maxHealth}
+              maxStamina={playerData.maxStamina}
+              maxMagicka={playerData.maxMagicka}
               reportId={reportId}
               fightId={fightId}
               playerGear={playerData.playerGear}

@@ -46,6 +46,8 @@ interface PlayerCardProps {
   resurrects: number;
   cpm: number;
   maxHealth: number;
+  maxStamina: number;
+  maxMagicka: number;
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
@@ -64,6 +66,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     resurrects,
     cpm,
     maxHealth,
+    maxStamina,
+    maxMagicka,
     reportId,
     fightId,
     playerGear,
@@ -761,57 +765,152 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     </Typography>
                   </Box>
 
-                  {maxHealth > 0 && (
-                    <Box sx={{ mb: 2 }}>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color:
-                            theme.palette.mode === 'dark' ? theme.palette.text.primary : '#1e293b',
-                          fontWeight: 200,
-                          display: 'block',
-                          mb: 0.5,
-                          fontSize: '0.85rem',
-                          textShadow:
-                            theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none',
-                        }}
-                      >
-                        ❤️ Max Health
-                      </Typography>
+                  {(maxHealth > 0 || maxStamina > 0 || maxMagicka > 0) && (
+                    <Box
+                      sx={{
+                        mb: 1.5,
+                        p: 1,
+                        borderRadius: '10px',
+                        background:
+                          'linear-gradient(135deg, rgb(153 210 255 / 15%) 0%, rgb(255 210 210 / 33%) 55%, rgb(177 255 205 / 29%) 100%)',
+                        border:
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(255,255,255,0.05)'
+                            : '1px solid rgba(0,0,0,0.05)',
+                        backdropFilter: 'blur(10px)',
+                      }}
+                    >
                       <Box
                         sx={{
-                          display: 'block',
-                          width: '100%',
-                          px: 1.5,
-                          py: 0.25,
-                          borderRadius: '8px',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(185, 28, 28, 0.08) 100%)'
-                              : 'linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(252, 165, 165, 0.9) 100%)',
-                          border:
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(239, 68, 68, 0.3)'
-                              : '1px solid rgba(185, 28, 28, 0.2)',
-                          backdropFilter: 'blur(8px)',
-                          boxShadow:
-                            theme.palette.mode === 'dark'
-                              ? '0 2px 8px rgba(239, 68, 68, 0.15)'
-                              : '0 1px 4px rgba(185, 28, 28, 0.1)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: 1,
                         }}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: theme.palette.mode === 'dark' ? 'white' : 'black',
-                            fontSize: '0.8rem',
-                            fontWeight: 500,
-                            display: 'block',
-                            textAlign: 'center',
-                          }}
-                        >
-                          {maxHealth.toLocaleString()}
-                        </Typography>
+                        {maxMagicka > 0 && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              flex: 1,
+                            }}
+                          >
+                            <Tooltip title="Max Magicka" enterTouchDelay={0} leaveTouchDelay={3000}>
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: '50%',
+                                  background:
+                                    theme.palette.mode === 'dark'
+                                      ? 'radial-gradient(circle at 30% 30%, #8cc8ff 0%, #74c0fc 50%, #339af0 100%)'
+                                      : 'radial-gradient(circle at 30% 30%, #60a5fa 0%, #2563eb 50%, #1d4ed8 100%)',
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 0 8px rgba(116, 192, 252, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+                                      : '0 0 6px rgba(37, 99, 235, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
+                                  cursor: 'default',
+                                }}
+                              />
+                            </Tooltip>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {maxMagicka.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        )}
+                        {maxHealth > 0 && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              flex: 1,
+                            }}
+                          >
+                            <Tooltip title="Max Health" enterTouchDelay={0} leaveTouchDelay={3000}>
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: '50%',
+                                  background:
+                                    theme.palette.mode === 'dark'
+                                      ? 'radial-gradient(circle at 30% 30%, #ff8a8a 0%, #ff6b6b 50%, #ee5a5a 100%)'
+                                      : 'radial-gradient(circle at 30% 30%, #f87171 0%, #dc2626 50%, #b91c1c 100%)',
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 0 8px rgba(255, 107, 107, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+                                      : '0 0 6px rgba(220, 38, 38, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
+                                  cursor: 'default',
+                                }}
+                              />
+                            </Tooltip>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {maxHealth.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        )}
+                        {maxStamina > 0 && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: 0.5,
+                              flex: 1,
+                            }}
+                          >
+                            <Tooltip title="Max Stamina" enterTouchDelay={0} leaveTouchDelay={3000}>
+                              <Box
+                                sx={{
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: '50%',
+                                  background:
+                                    theme.palette.mode === 'dark'
+                                      ? 'radial-gradient(circle at 30% 30%, #6bcf7f 0%, #51cf66 50%, #37b24d 100%)'
+                                      : 'radial-gradient(circle at 30% 30%, #34d399 0%, #059669 50%, #047857 100%)',
+                                  boxShadow:
+                                    theme.palette.mode === 'dark'
+                                      ? '0 0 8px rgba(81, 207, 102, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.2)'
+                                      : '0 0 6px rgba(5, 150, 105, 0.3), inset 0 1px 2px rgba(255, 255, 255, 0.3)',
+                                  cursor: 'default',
+                                }}
+                              />
+                            </Tooltip>
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: theme.palette.mode === 'dark' ? '#ffffff' : '#374151',
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                letterSpacing: '0.02em',
+                              }}
+                            >
+                              {maxStamina.toLocaleString()}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
                     </Box>
                   )}
