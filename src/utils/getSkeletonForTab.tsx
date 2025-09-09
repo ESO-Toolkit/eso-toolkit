@@ -1,7 +1,10 @@
 import React from 'react';
 
+import { CriticalDamageSkeleton } from '../components/CriticalDamageSkeleton';
+import { DamageReductionSkeleton } from '../components/DamageReductionSkeleton';
 import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
+import { PenetrationSkeleton } from '../components/PenetrationSkeleton';
 import { PlayersSkeleton } from '../components/PlayersSkeleton';
 
 // Tab identifiers as strings (matching FightDetailsView)
@@ -64,18 +67,11 @@ export const getSkeletonForTab = (
       case TabId.DEATHS:
         return <GenericTabSkeleton title="Death Events" showTable={true} tableRows={5} />;
       case TabId.CRITICAL_DAMAGE:
-        return <GenericTabSkeleton title="Critical Damage" showTable={true} tableRows={12} />;
+        return <CriticalDamageSkeleton />;
       case TabId.PENETRATION:
-        return <GenericTabSkeleton title="Penetration" showTable={true} tableRows={6} />;
+        return <PenetrationSkeleton />;
       case TabId.DAMAGE_REDUCTION:
-        return (
-          <GenericTabSkeleton
-            title="Damage Reduction"
-            showChart={true}
-            showTable={true}
-            tableRows={8}
-          />
-        );
+        return <DamageReductionSkeleton />;
       case TabId.LOCATION_HEATMAP:
         return (
           <GenericTabSkeleton

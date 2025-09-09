@@ -25,7 +25,10 @@
       "Bash(tasklist:*)",
       "Bash(taskkill:*)",
       "Bash(npx kill-port:*)",
-      "Bash(git cherry-pick:*)"
+      "Bash(git cherry-pick:*)",
+      "Bash(npx eslint:*)",
+      "Bash(git restore:*)",
+      "Bash(npm ls:*)"
     ],
     "deny": [],
     "ask": []
