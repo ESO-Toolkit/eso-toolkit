@@ -1,4 +1,4 @@
-import { Box, Typography, LinearProgress, Avatar, useTheme } from '@mui/material';
+import { Box, Typography, LinearProgress, Avatar, useTheme, Chip } from '@mui/material';
 import React from 'react';
 
 export interface BuffUptime {
@@ -13,6 +13,15 @@ export interface BuffUptime {
   hostilityType: 0 | 1;
   uniqueKey: string; // Unique identifier to differentiate between stacks
   dotAbilityIds?: number[]; // Optional DOT ability IDs for Touch of Z'en stacks
+  stackLevel?: number; // Current selected stack level for Touch of Z'en abilities
+  maxStacks?: number; // Maximum stacks available for this ability
+  allStacksData?: Array<{
+    stackLevel: number;
+    totalDuration: number;
+    uptime: number;
+    uptimePercentage: number;
+    applications: number;
+  }>; // All stack data for Touch of Z'en to enable switching
 }
 
 interface BuffUptimeProgressBarProps {
@@ -64,9 +73,27 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
   selectedTargetId,
 }) => {
   const theme = useTheme();
-  const pct = Math.max(0, Math.min(100, buff.uptimePercentage));
 
-  const onClick = React.useCallback((): void => {
+  // State to track currently selected stack for Touch of Z'en
+  const [selectedStack, setSelectedStack] = React.useState(buff.stackLevel || buff.maxStacks || 5);
+
+  // Get current data based on selected stack
+  const currentData = React.useMemo(() => {
+    if (buff.allStacksData) {
+      const stackData = buff.allStacksData.find((stack) => stack.stackLevel === selectedStack);
+      return stackData || buff.allStacksData[buff.allStacksData.length - 1]; // Fallback to highest stack
+    }
+    return {
+      totalDuration: buff.totalDuration,
+      uptime: buff.uptime,
+      uptimePercentage: buff.uptimePercentage,
+      applications: buff.applications,
+    };
+  }, [buff, selectedStack]);
+
+  const pct = Math.max(0, Math.min(100, currentData.uptimePercentage));
+
+  const onMainClick = React.useCallback((): void => {
     const url = createEsoLogsUrl(
       reportId,
       fightId,
@@ -88,6 +115,17 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
     buff.dotAbilityIds,
   ]);
 
+  const onStackClick = React.useCallback(
+    (e: React.MouseEvent): void => {
+      e.stopPropagation(); // Prevent the main click from firing
+      if (buff.allStacksData && buff.maxStacks) {
+        const nextStack = selectedStack >= buff.maxStacks ? 1 : selectedStack + 1;
+        setSelectedStack(nextStack);
+      }
+    },
+    [buff.allStacksData, buff.maxStacks, selectedStack],
+  );
+
   return (
     <Box
       sx={{
@@ -98,7 +136,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           opacity: 0.9,
         },
       }}
-      onClick={onClick}
+      onClick={onMainClick}
     >
       {/* Background progress bar */}
       <LinearProgress
@@ -183,6 +221,7 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
+              mb: 0.25,
             }}
           >
             {buff.abilityName}
@@ -198,25 +237,89 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                   : '1px 1px 1px rgba(255,255,255,0.7), 0 0 3px rgba(255,255,255,0.5)',
             }}
           >
-            {buff.applications} applications • {buff.uptime.toFixed(1)}s total
+            {currentData.applications} applications • {currentData.uptime.toFixed(1)}s total
           </Typography>
         </Box>
 
-        {/* Percentage */}
-        <Typography
-          variant="body2"
-          sx={{
-            fontWeight: 700,
-            color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
-            textShadow:
-              theme.palette.mode === 'dark'
-                ? '1px 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.7)'
-                : '1px 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(255,255,255,0.6)',
-            flexShrink: 0,
-          }}
-        >
-          {Math.round(pct)}%
-        </Typography>
+        {/* Right side: Stack badge and Percentage */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+          {buff.maxStacks && (
+            <Chip
+              label={`${selectedStack}/${buff.maxStacks}`}
+              icon={
+                buff.allStacksData ? (
+                  <Box
+                    sx={{
+                      width: 4,
+                      height: 4,
+                      borderRadius: '50%',
+                      backgroundColor:
+                        theme.palette.mode === 'dark' ? '#fbbf24' : 'rgba(255,255,255,0.9)',
+                      mr: 0.5,
+                      boxShadow: '0 0 3px rgba(0,0,0,0.3)',
+                    }}
+                  />
+                ) : undefined
+              }
+              size="small"
+              onClick={onStackClick}
+              sx={{
+                height: 24,
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, #d97706 0%, #dc2626 100%)'
+                    : 'linear-gradient(135deg, #f59e0b 0%, #f97316 100%)',
+                color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                border: 'none',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 2px 8px rgba(59, 130, 246, 0.5), inset 0 1px 0 rgba(255,255,255,0.25)'
+                    : '0 2px 6px rgba(96, 165, 250, 0.4), inset 0 1px 0 rgba(255,255,255,0.5)',
+                backdropFilter: 'blur(8px)',
+                cursor: buff.allStacksData ? 'pointer' : 'default',
+                transition: 'all 0.15s ease-in-out',
+                '&:hover': buff.allStacksData
+                  ? {
+                      transform: 'scale(1.08)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 4px 12px rgba(59, 130, 246, 0.6), inset 0 1px 0 rgba(255,255,255,0.35)'
+                          : '0 3px 8px rgba(96, 165, 250, 0.5), inset 0 1px 0 rgba(255,255,255,0.6)',
+                    }
+                  : {},
+                '&:active': buff.allStacksData
+                  ? {
+                      transform: 'scale(0.95)',
+                    }
+                  : {},
+                '& .MuiChip-label': {
+                  px: buff.allStacksData ? 1 : 1.5,
+                  textShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.6)' : 'none',
+                  fontWeight: 800,
+                },
+                '& .MuiChip-icon': {
+                  marginLeft: '4px',
+                  marginRight: '-2px',
+                },
+              }}
+            />
+          )}
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 700,
+              color: theme.palette.mode === 'dark' ? '#ffffff' : '#1e293b',
+              textShadow:
+                theme.palette.mode === 'dark'
+                  ? '1px 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.7)'
+                  : '1px 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(255,255,255,0.6)',
+            }}
+          >
+            {Math.round(pct)}%
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
