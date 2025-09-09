@@ -97,6 +97,7 @@ describe('buffUptimeCalculator', () => {
         uptimePercentage: 50, // 50% of 10-second fight
         applications: 1,
         isDebuff: false,
+        uniqueKey: '12345-1',
         hostilityType: 1,
       });
     });
@@ -126,6 +127,7 @@ describe('buffUptimeCalculator', () => {
         applications: 2,
         isDebuff: false,
         hostilityType: 1,
+        uniqueKey: '12345-1',
       });
     });
 

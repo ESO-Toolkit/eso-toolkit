@@ -16,11 +16,13 @@ import {
   executeDamageReductionTask,
   executeDebuffLookupTask,
   executeHostileBuffLookupTask,
+  touchOfZenStacksActions,
+  executeTouchOfZenStacksTask,
 } from './workerResultsSlice';
 
 import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
 
-// Map task names to their corresponding actions
+// Map task names to their corresponding actions - requires all task types as keys
 const taskActionsMap = {
   calculateActorPositions: actorPositionsActions,
   calculateBuffLookup: buffLookupActions,
@@ -30,10 +32,14 @@ const taskActionsMap = {
   calculateDamageReductionData: damageReductionActions,
   calculateDebuffLookup: debuffLookupActions,
   calculateHostileBuffLookup: hostileBuffLookupActions,
+  calculateTouchOfZenStacks: touchOfZenStacksActions,
 } as const;
 
 // Map task names to their corresponding thunk actions
-const taskThunkMap = {
+const taskThunkMap: Record<
+  SharedComputationWorkerTaskType,
+  (input: SharedWorkerInputType<SharedComputationWorkerTaskType>) => unknown
+> = {
   calculateActorPositions: executeActorPositionsTask,
   calculateBuffLookup: executeBuffLookupTask,
   calculateCriticalDamageData: executeCriticalDamageTask,
@@ -42,6 +48,7 @@ const taskThunkMap = {
   calculateDamageReductionData: executeDamageReductionTask,
   calculateDebuffLookup: executeDebuffLookupTask,
   calculateHostileBuffLookup: executeHostileBuffLookupTask,
+  calculateTouchOfZenStacks: executeTouchOfZenStacksTask,
 } as const;
 
 // Utility functions to get actions for a specific task

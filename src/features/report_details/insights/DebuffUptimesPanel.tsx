@@ -5,6 +5,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useTouchOfZenStacksTask } from '../../../hooks/workerTasks/useTouchOfZenStacksTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
 import { KnownAbilities } from '../../../types/abilities';
@@ -39,6 +40,12 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const selectedTargetId = useSelector(selectSelectedTargetId);
 
+  // Touch of Z'en stacks data
+  const { touchOfZenStacksData, allDotAbilityIds, isTouchOfZenStacksLoading } =
+    useTouchOfZenStacksTask();
+
+  // Note: allDotAbilityIds contains the unique DOT ability IDs used for Touch of Z'en calculation
+
   const realTargetIds = useSelectedTargetIds();
 
   // State for toggling between important debuffs only and all debuffs
@@ -62,7 +69,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       debuffAbilityIds.add(abilityGameID);
     });
 
-    return computeBuffUptimes(debuffsLookup, {
+    // Calculate regular debuff uptimes
+    const regularDebuffUptimes = computeBuffUptimes(debuffsLookup, {
       abilityIds: debuffAbilityIds,
       targetIds: realTargetIds,
       fightStartTime,
@@ -71,7 +79,35 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       abilitiesById: reportMasterData?.abilitiesById || {},
       isDebuff: true,
       hostilityType: 1,
-    });
+    }).map((debuff) => ({
+      ...debuff,
+      uniqueKey: `debuff_${debuff.abilityGameID}`, // Add unique key for regular debuffs
+    }));
+
+    // Add Touch of Z'en stack debuffs if available
+    const touchOfZenStackUptimes = touchOfZenStacksData
+      ? touchOfZenStacksData.map((stackResult) => {
+          // Look up the Touch of Z'en ability for icon information
+          const touchOfZenAbility = reportMasterData?.abilitiesById?.[stackResult.abilityGameID];
+          return {
+            abilityGameID: stackResult.abilityGameID,
+            abilityName: stackResult.abilityName,
+            icon: touchOfZenAbility?.icon ? String(touchOfZenAbility.icon) : stackResult.icon,
+            totalDuration: stackResult.totalDuration,
+            uptime: stackResult.uptime,
+            uptimePercentage: stackResult.uptimePercentage,
+            applications: stackResult.applications,
+            isDebuff: stackResult.isDebuff,
+            hostilityType: stackResult.hostilityType,
+            uniqueKey: `touch_of_zen_stack_${stackResult.stackLevel}`, // Unique key for each stack level
+            dotAbilityIds: allDotAbilityIds || [], // Include the DOT ability IDs for filtering
+          };
+        })
+      : [];
+
+    // Combine regular debuffs with Touch of Z'en stacks and sort by uptime percentage (descending)
+    const combinedDebuffs = [...regularDebuffUptimes, ...touchOfZenStackUptimes];
+    return combinedDebuffs.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
     debuffsLookup,
     fightDuration,
@@ -79,6 +115,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     fightEndTime,
     realTargetIds,
     reportMasterData?.abilitiesById,
+    touchOfZenStacksData,
+    allDotAbilityIds,
   ]);
 
   // Filter debuff uptimes based on showAllDebuffs state
@@ -89,15 +127,18 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
 
     // Filter to show only important debuffs
     return allDebuffUptimes.filter((debuff) => {
-      const abilityId = parseInt(debuff.abilityGameID, 10);
-      return IMPORTANT_DEBUFF_ABILITIES.has(abilityId);
+      // Convert ability ID to number for comparison with enum values
+      const abilityIdNum = parseInt(debuff.abilityGameID, 10);
+
+      // Check if this ability ID is in our important list
+      return IMPORTANT_DEBUFF_ABILITIES.has(abilityIdNum as KnownAbilities);
     });
   }, [allDebuffUptimes, showAllDebuffs]);
 
   // Enhanced loading check: ensure ALL required data is available and processing is complete
   const isDataLoading = React.useMemo(() => {
     // Still loading if any of the core data sources are loading
-    if (isMasterDataLoading || isDebuffEventsLoading) {
+    if (isMasterDataLoading || isDebuffEventsLoading || isTouchOfZenStacksLoading) {
       return true;
     }
 
@@ -122,6 +163,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   }, [
     isMasterDataLoading,
     isDebuffEventsLoading,
+    isTouchOfZenStacksLoading,
     debuffsLookup,
     fightDuration,
     fightStartTime,

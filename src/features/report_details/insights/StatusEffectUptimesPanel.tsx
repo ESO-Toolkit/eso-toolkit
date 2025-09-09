@@ -36,6 +36,7 @@ export const StatusEffectUptimesPanel: React.FC<StatusEffectUptimesPanelProps> =
       const ability = reportMasterData.abilitiesById[uptime.abilityGameID];
       return {
         ...uptime,
+        uniqueKey: `${uptime.abilityGameID}`,
         abilityName: ability?.name || uptime.abilityName,
         icon: ability?.icon || uptime.icon,
       };

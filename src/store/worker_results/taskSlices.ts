@@ -54,3 +54,10 @@ export {
   executeHostileBuffLookupTask,
   hostileBuffLookupReducer,
 } from './hostileBuffLookupSlice';
+
+export {
+  touchOfZenStacksSlice,
+  touchOfZenStacksActions,
+  executeTouchOfZenStacksTask,
+  touchOfZenStacksReducer,
+} from './touchOfZenStacksSlice';

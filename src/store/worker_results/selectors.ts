@@ -66,6 +66,7 @@ export const selectPenetrationDataResult = selectWorkerTaskResult('calculatePene
 export const selectStatusEffectUptimesResult = selectWorkerTaskResult(
   'calculateStatusEffectUptimes',
 );
+export const selectTouchOfZenStacksResult = selectWorkerTaskResult('calculateTouchOfZenStacks');
 export const selectDamageReductionResult = selectWorkerTaskResult('calculateDamageReductionData');
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
 export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHostileBuffLookup');

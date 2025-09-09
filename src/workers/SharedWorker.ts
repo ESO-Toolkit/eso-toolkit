@@ -10,6 +10,7 @@ import { calculateCriticalDamageData } from './calculations/CalculateCriticalDam
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
 import { calculateStatusEffectUptimes } from './calculations/CalculateStatusEffectUptimes';
+import { calculateTouchOfZenStacks } from './calculations/CalculateTouchOfZenStacks';
 
 const SHARED_WORKER = {
   calculateBuffLookup,
@@ -19,6 +20,7 @@ const SHARED_WORKER = {
   calculateDamageReductionData,
   calculatePenetrationData,
   calculateStatusEffectUptimes,
+  calculateTouchOfZenStacks,
   calculateActorPositions,
 };
 

@@ -40,6 +40,7 @@ export function calculateStatusEffectUptimes(
   uptimePercentage: number;
   applications: number;
   isDebuff: boolean;
+  uniqueKey: string;
   hostilityType: 0 | 1;
 }> {
   const { debuffsLookup, hostileBuffsLookup, fightStartTime, fightEndTime } = data;
@@ -59,6 +60,7 @@ export function calculateStatusEffectUptimes(
     uptimePercentage: number;
     applications: number;
     isDebuff: boolean;
+    uniqueKey: string;
     hostilityType: 0 | 1;
   }> = [];
 
@@ -92,6 +94,7 @@ export function calculateStatusEffectUptimes(
           uptimePercentage: (totalUptime / fightDuration) * 100,
           applications,
           isDebuff: true,
+          uniqueKey: `${abilityId}-status-effect`,
           hostilityType: 1,
         });
       }
@@ -129,6 +132,7 @@ export function calculateStatusEffectUptimes(
           applications,
           isDebuff: false,
           hostilityType: 1,
+          uniqueKey: `${abilityId}-status-effect`,
         });
       }
     }

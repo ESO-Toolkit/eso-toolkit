@@ -17,6 +17,7 @@ export interface BuffUptimeResult {
   applications: number;
   isDebuff: boolean;
   hostilityType: 0 | 1;
+  uniqueKey: string;
 }
 
 export interface BuffUptimeCalculatorOptions {
@@ -140,6 +141,7 @@ export function computeBuffUptimes(
           applications: averageApplications,
           isDebuff,
           hostilityType,
+          uniqueKey: `${abilityGameID}-${hostilityType}`,
         });
       }
     }

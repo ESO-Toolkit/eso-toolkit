@@ -8,6 +8,7 @@ import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalD
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
+import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
 import { SharedComputationWorkerTaskType } from './SharedWorker';
 import type { WorkerPoolConfig, WorkerTask, WorkerInfo, WorkerStats } from './types';
 import { OnProgressCallback } from './Utils';
@@ -286,6 +287,12 @@ export class WorkerPool {
         case 'calculateActorPositions':
           result = await workerInfo.worker.calculateActorPositions(
             task.data as ActorPositionsCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculateTouchOfZenStacks':
+          result = await workerInfo.worker.calculateTouchOfZenStacks(
+            task.data as TouchOfZenStacksCalculationTask,
             onProgress,
           );
           break;
