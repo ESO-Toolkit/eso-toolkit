@@ -1,0 +1,126 @@
+/**
+ * Cache busting utilities for ensuring fresh content delivery
+ */
+
+// Fallback version info for development when version files don't exist
+const FALLBACK_VERSION_INFO = {
+  version: '0.1.0',
+  buildTime: new Date().toISOString(),
+  gitCommit: 'dev-commit',
+  shortCommit: 'dev',
+  buildId: `0.1.0-dev-${Date.now()}`,
+  timestamp: Date.now(),
+  cacheBuster: `v=dev${Date.now()}`,
+} as const;
+
+// Try to load generated version info, fall back to development version
+let VERSION_INFO: typeof FALLBACK_VERSION_INFO;
+let cacheBuster: string;
+
+try {
+  // We need to use require here because the file is generated dynamically
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  const versionModule = require('./version');
+  VERSION_INFO = versionModule.VERSION_INFO;
+  cacheBuster = versionModule.cacheBuster;
+} catch (error) {
+  // Version file doesn't exist (development mode)
+  VERSION_INFO = FALLBACK_VERSION_INFO;
+  cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
+}
+
+/**
+ * Add cache-busting parameter to a URL
+ * @param url - The base URL
+ * @param customVersion - Optional custom version parameter
+ * @returns URL with cache-busting parameter
+ */
+export const addCacheBuster = (url: string, customVersion?: string): string => {
+  const versionParam = customVersion || cacheBuster;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}${versionParam}`;
+};
+
+/**
+ * Get the current build version information
+ * @returns Version information object
+ */
+export const getBuildInfo = (): typeof VERSION_INFO => VERSION_INFO;
+
+/**
+ * Check if a cached resource should be invalidated
+ * @param cachedTimestamp - Timestamp of the cached resource
+ * @param maxAge - Maximum age in milliseconds (default: 1 hour)
+ * @returns true if cache should be invalidated
+ */
+export const shouldInvalidateCache = (
+  cachedTimestamp: number,
+  maxAge: number = 60 * 60 * 1000, // 1 hour
+): boolean => {
+  const now = Date.now();
+  const age = now - cachedTimestamp;
+
+  // Always invalidate if build is newer than cache
+  if (VERSION_INFO.timestamp > cachedTimestamp) {
+    return true;
+  }
+
+  // Invalidate if cache is older than maxAge
+  return age > maxAge;
+};
+
+/**
+ * Generate cache headers for HTTP responses
+ * @param maxAge - Cache max age in seconds
+ * @returns Cache control headers object
+ */
+export const getCacheHeaders = (maxAge = 3600): Record<string, string> => ({
+  'Cache-Control': `public, max-age=${maxAge}, must-revalidate`,
+  ETag: `"${VERSION_INFO.buildId}"`,
+  'Last-Modified': new Date(VERSION_INFO.buildTime).toUTCString(),
+});
+
+/**
+ * Create a versioned URL for assets
+ * @param assetPath - Path to the asset
+ * @param baseUrl - Base URL (optional)
+ * @returns Versioned asset URL
+ */
+export const createVersionedAssetUrl = (assetPath: string, baseUrl?: string): string => {
+  const base = baseUrl || '';
+  const fullPath = base + assetPath;
+  return addCacheBuster(fullPath);
+};
+
+/**
+ * Check if current version matches a stored version
+ * @param storedVersion - Previously stored version string
+ * @returns true if versions match
+ */
+export const isCurrentVersion = (storedVersion?: string): boolean => {
+  return storedVersion === VERSION_INFO.buildId;
+};
+
+/**
+ * Get cache-busting query string
+ * @returns Query string for cache busting
+ */
+export const getCacheBustingQuery = (): string => {
+  return cacheBuster;
+};
+
+/**
+ * Format version for display
+ * @returns Human-readable version string
+ */
+export const getDisplayVersion = (): string => {
+  return `v${VERSION_INFO.version} (${VERSION_INFO.shortCommit})`;
+};
+
+/**
+ * Check if this is a development build
+ * @returns true if development build
+ */
+export const isDevelopmentBuild = (): boolean => {
+  return VERSION_INFO.gitCommit.length === 40 ? false : true; // Real git commits are 40 chars
+};

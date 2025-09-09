@@ -121,6 +121,9 @@ export default defineConfig(({ command, mode }) => {
       'process.env.NODE_ENV': JSON.stringify(mode),
       'process.env.GENERATE_SOURCEMAP': JSON.stringify(env.GENERATE_SOURCEMAP || 'true'),
       'process.env.FAST_REFRESH': JSON.stringify(env.FAST_REFRESH || 'true'),
+      // Build-time version information
+      'import.meta.env.VITE_BUILD_TIME': JSON.stringify(new Date().toISOString()),
+      'import.meta.env.VITE_BUILD_TIMESTAMP': JSON.stringify(Date.now()),
     },
 
     // Dependency optimization

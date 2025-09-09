@@ -185,6 +185,11 @@ jobs:
           echo "127.0.0.1 fonts.gstatic.com" | sudo tee -a /etc/hosts
           echo "Blocked external services in /etc/hosts:"
           cat /etc/hosts | grep "127.0.0.1"
+      - name: Generate version files for cache busting
+        run: |
+          echo "Generating version files for e2e tests..."
+          node scripts/generate-version.js
+          node scripts/update-manifest.js
       - name: Run Playwright tests
         run: |
           echo "Running Playwright tests with optimizations..."
