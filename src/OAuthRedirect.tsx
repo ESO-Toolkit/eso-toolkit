@@ -11,6 +11,8 @@ import {
   getRedirectUri,
   LOCAL_STORAGE_ACCESS_TOKEN_KEY,
   startPKCEAuth,
+  getIntendedDestination,
+  clearIntendedDestination,
 } from './features/auth/auth';
 import { useAuth } from './features/auth/AuthContext';
 import { useAppDispatch } from './store/useAppDispatch';
@@ -64,7 +66,11 @@ export const OAuthRedirect: React.FC = () => {
         const data = await response.json();
         localStorage.setItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY, data.access_token);
         rebindAccessToken();
-        navigate('/');
+
+        // Redirect to the intended destination, or home if none was stored
+        const destination = getIntendedDestination();
+        clearIntendedDestination();
+        navigate(destination);
       } catch (err) {
         if (err instanceof Error) {
           setError(err.message);
