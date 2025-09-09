@@ -23,15 +23,16 @@ export const AuthenticatedRoute: React.FC<AuthenticatedRouteProps> = ({
 }) => {
   const { isLoggedIn, userLoading } = useAuth();
   const location = useLocation();
-  const { isReady } = useEsoLogsClientContext();
+  const { isReady, isLoggedIn: clientLoggedIn } = useEsoLogsClientContext();
 
-  // Show loading state while checking authentication
-  if (userLoading) {
+  // Show loading state while checking authentication or while client is not ready
+  // Also ensure both auth states are in sync before rendering
+  if (userLoading || !isReady || (isLoggedIn !== clientLoggedIn)) {
     return null; // Or you could return a loading spinner here
   }
 
   // If not logged in, store the intended destination and redirect to login page
-  if (!isLoggedIn || !isReady) {
+  if (!isLoggedIn) {
     setIntendedDestination(location.pathname + location.search + location.hash);
     return <Navigate to={redirectTo} replace />;
   }
