@@ -21,6 +21,7 @@ npm run prebuild
 ### 2. Show Update Notifications
 
 The `UpdateNotification` component is automatically included in the main App. It will:
+
 - Check for new versions every 5 minutes
 - Show a notification when updates are available
 - Allow users to reload and get the latest version
@@ -43,7 +44,7 @@ import { useCacheInvalidation } from '@/hooks/useCacheInvalidation';
 
 function MyComponent() {
   const [state, actions] = useCacheInvalidation();
-  
+
   if (state.hasUpdate) {
     return (
       <div>
@@ -52,7 +53,7 @@ function MyComponent() {
       </div>
     );
   }
-  
+
   return <div>Current version: {state.currentVersion}</div>;
 }
 ```
@@ -87,17 +88,13 @@ const [state, actions] = useCacheInvalidation(10 * 60 * 1000);
 ### Customize Update Notification
 
 ```tsx
-<UpdateNotification 
-  showVersionInfo={false}         // Hide version details
-  position={{ 
-    vertical: 'top', 
-    horizontal: 'center' 
+<UpdateNotification
+  showVersionInfo={false} // Hide version details
+  position={{
+    vertical: 'top',
+    horizontal: 'center',
   }}
-  customActions={
-    <Button onClick={customAction}>
-      Learn More
-    </Button>
-  }
+  customActions={<Button onClick={customAction}>Learn More</Button>}
 />
 ```
 
@@ -138,13 +135,16 @@ npm run build
 ## Troubleshooting
 
 ### "No updates detected"
+
 - Check browser Network tab for `/version.json` requests
 - Ensure version files were generated: `ls public/version.json`
 
 ### "Version files not found"
+
 - Run: `npm run clean:version && npm run prebuild`
 
 ### "Update notification not showing"
+
 - Check console for version check errors
 - Verify `UpdateNotification` is included in your component tree
 

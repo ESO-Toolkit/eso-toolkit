@@ -42,7 +42,7 @@ const versionInfo = {
   buildId,
   timestamp: Date.now(),
   // Additional cache-busting parameter for URLs
-  cacheBuster: `v=${buildId.replace(/[^a-zA-Z0-9]/g, '')}`
+  cacheBuster: `v=${buildId.replace(/[^a-zA-Z0-9]/g, '')}`,
 };
 
 // Write version.json to public directory (will be copied to build)

@@ -19,14 +19,16 @@ console.log('🧹 Cleaning up generated version files...');
 
 let cleanedCount = 0;
 
-filesToClean.forEach(filePath => {
+filesToClean.forEach((filePath) => {
   if (fs.existsSync(filePath)) {
     try {
       fs.unlinkSync(filePath);
       console.log(`   ✅ Removed: ${path.relative(process.cwd(), filePath)}`);
       cleanedCount++;
     } catch (error) {
-      console.log(`   ❌ Failed to remove: ${path.relative(process.cwd(), filePath)} - ${error.message}`);
+      console.log(
+        `   ❌ Failed to remove: ${path.relative(process.cwd(), filePath)} - ${error.message}`,
+      );
     }
   }
 });

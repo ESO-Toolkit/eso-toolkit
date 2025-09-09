@@ -11,6 +11,7 @@ The cache-busting system ensures that when a new version is deployed, users' bro
 ### 1. Version Generation (`scripts/generate-version.js`)
 
 This script generates version information that includes:
+
 - Package version from `package.json`
 - Git commit hash (short and full)
 - Build timestamp
@@ -20,6 +21,7 @@ This script generates version information that includes:
 **When it runs:** Before every build (`prebuild` script)
 
 **What it creates:**
+
 - `public/version.json` - Static version file served to browsers
 - `src/version.json` - Version data for development
 - `src/utils/version.ts` - TypeScript constants for the application
@@ -27,6 +29,7 @@ This script generates version information that includes:
 ### 2. Manifest Updates (`scripts/update-manifest.js`)
 
 Updates the web app manifest with version information:
+
 - Adds version to the manifest
 - Updates the start URL with cache-busting parameters
 - Includes build information for debugging
@@ -34,6 +37,7 @@ Updates the web app manifest with version information:
 ### 3. Cache-Busting Utilities (`src/utils/cacheBusting.ts`)
 
 Provides utility functions for:
+
 - Adding cache-busting parameters to URLs
 - Checking if cached resources should be invalidated
 - Generating cache headers
@@ -42,6 +46,7 @@ Provides utility functions for:
 ### 4. React Hooks (`src/hooks/useCacheInvalidation.ts`)
 
 React hooks for managing cache invalidation:
+
 - `useCacheInvalidation()` - Periodically checks for new versions
 - `useCacheBustedUrl()` - Adds cache-busting to URLs
 - `useVersionInfo()` - Access current version information
@@ -49,6 +54,7 @@ React hooks for managing cache invalidation:
 ### 5. UI Components (`src/components/UpdateNotification/`)
 
 User interface components:
+
 - `UpdateNotification` - Shows update notifications to users
 - `VersionInfo` - Displays version information
 
@@ -92,7 +98,7 @@ import { useCacheInvalidation } from '@/hooks/useCacheInvalidation';
 
 function MyComponent() {
   const [state, actions] = useCacheInvalidation();
-  
+
   if (state.hasUpdate) {
     // Show update notification
   }
@@ -141,6 +147,7 @@ const [state, actions] = useCacheInvalidation(10 * 60 * 1000); // 10 minutes
 ### Cache Headers
 
 The system adds appropriate cache headers:
+
 - `Cache-Control: public, max-age=3600, must-revalidate`
 - `ETag` based on build ID
 - `Last-Modified` based on build time
@@ -148,11 +155,13 @@ The system adds appropriate cache headers:
 ## Development vs Production
 
 ### Development
+
 - Uses random commit hash if git is not available
 - Shows build information in manifest description
 - More verbose logging
 
 ### Production
+
 - Uses actual git commit hash
 - Optimized for performance
 - Clean manifest without debug info
@@ -183,16 +192,19 @@ npm run build
 ## Files Created/Modified
 
 ### Generated Files (do not edit manually)
+
 - `public/version.json`
-- `src/version.json` 
+- `src/version.json`
 - `src/utils/version.ts`
 
 ### Configuration Files
+
 - Updated `package.json` scripts
 - Updated `vite.config.mjs` for build-time constants
 - Updated `public/index.html` with cache-control headers
 
 ### New Implementation Files
+
 - `scripts/generate-version.js`
 - `scripts/update-manifest.js`
 - `scripts/clean-version.js`
@@ -203,15 +215,19 @@ npm run build
 ## Troubleshooting
 
 ### Version files not generated
+
 Run: `npm run clean:version && npm run prebuild`
 
 ### Updates not detected
+
 Check browser network tab for `/version.json` requests
 
 ### Cache not clearing
+
 Use the force reload button in the update notification
 
 ### Version mismatch in development
+
 Ensure you've run `npm run prebuild` after pulling changes
 
 ## Best Practices
