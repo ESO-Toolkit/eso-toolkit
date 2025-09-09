@@ -1756,11 +1756,11 @@ export const maelstromBowData: SkillsetData = {
   },
 };
 
-export const maelstromSwordAndBoardData: SkillsetData = {
+export const maelstromSwordAndBoardAltData: SkillsetData = {
   weapon: 'Arena Weapon',
   skillLines: {
-    maelstromSwordAndBoard: {
-      name: 'Maelstrom Sword and Shield',
+    maelstromSwordAndBoardAlt: {
+      name: 'Maelstrom Sword and Shield (Alt)',
       icon: '',
       passives: [
         {
