@@ -2,8 +2,6 @@ import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } fr
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
-import iconOverrides from '../data/abilityIconOverrides.json';
-
 export interface SkillStat {
   label: string;
   value: string;
@@ -15,9 +13,9 @@ export interface SkillTooltipProps {
   headerBadge?: string;
   // Small text in the top-right, e.g. class/skill line
   lineText?: string;
-  // 48x48–64x64 icon for the skill
+  // 48x48–64x64 icon URL for the skill - required unless iconSlug is provided
   iconUrl?: string;
-  // RPG Logs ability icon slug, e.g. "ability_arcanist_005_a"; when provided, iconUrl is derived automatically
+  // RPG Logs ability icon slug, e.g. "ability_arcanist_005_a"; iconUrl is derived automatically - required unless iconUrl is provided
   iconSlug?: string;
   // ESO Logs ability id for reference (icon resolution must be handled by caller)
   abilityId?: number;
@@ -59,12 +57,18 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   description,
 }) => {
   const theme = useTheme();
-  // Fallback by name via small override map (case-sensitive key, keep simple)
-  const slugFromName = (name && (iconOverrides as Record<string, string>)[name]) || undefined;
+  const logger = useLogger();
+
+  // Ensure at least one icon source is provided
+  if (!iconUrl && !iconSlug) {
+    logger.warn(
+      `SkillTooltip: No icon provided for "${name}". Please provide either iconUrl or iconSlug.`,
+    );
+  }
+
   const resolvedIconUrl =
     iconUrl ??
-    (iconSlug ? `https://assets.rpglogs.com/img/eso/abilities/${iconSlug}.png` : undefined) ??
-    (slugFromName ? `https://assets.rpglogs.com/img/eso/abilities/${slugFromName}.png` : undefined);
+    (iconSlug ? `https://assets.rpglogs.com/img/eso/abilities/${iconSlug}.png` : undefined);
   // Stats row layout control: prefer full text by default. If <=3 stats and they overflow, abbreviate.
   // If >3 stats, allow wrapping to second line first; abbreviate only if still overflowing.
   const statsCount = stats?.length ?? 0;

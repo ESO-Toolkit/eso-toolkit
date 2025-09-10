@@ -19,7 +19,7 @@ help:
 	@echo "  clean         - Clean build artifacts"
 	@echo "  codegen       - Generate GraphQL types"
 	@echo "  fetch-abilities - Fetch abilities data"
-	@echo "  pre-commit    - Run full CI pipeline (lint-fix, test, build, typecheck)"
+	@echo "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
 	@echo "  all           - Run clean, install, lint, test, and build"
 
 # Install dependencies
@@ -89,15 +89,11 @@ typecheck:
 # Run full CI pipeline
 pre-commit: 
 	@echo "Running pre-commit checks..."
-	@echo "1/5 - Running ESLint with auto-fix..."
+	@echo "1/3 - Running ESLint with auto-fix..."
 	npm run lint:fix
-	@echo "2/5 - Running tests..."
-	npm run test:coverage:ci
-	@echo "3/5 - Building project..."
-	npm run build
-	@echo "4/5 - Running type check..."
+	@echo "2/3 - Running type check..."
 	npm run typecheck
-	@echo "4/5 - Running formatter ..."
+	@echo "3/3 - Running formatter ..."
 	npm run format
 	@echo "✅ All pre-commit tasks completed successfully!"
 

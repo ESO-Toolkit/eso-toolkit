@@ -14,6 +14,7 @@ export const InspiredScholarshipTooltip: React.FC = () => {
         name="Inspired Scholarship"
         description="Inspired Scholarship (ID: 185842)"
         lineText="Arcanist — Herald of the Tome"
+        iconSlug="ability_arcanist_005_a"
         stats={[]}
       />
     );
