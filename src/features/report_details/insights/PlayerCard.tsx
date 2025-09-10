@@ -1100,7 +1100,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         variant="body2"
                         fontWeight="bold"
                         sx={{
-                          color: '#c06220',
+                          color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,

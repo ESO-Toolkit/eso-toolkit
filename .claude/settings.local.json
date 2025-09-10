@@ -29,7 +29,8 @@
       "Bash(npx eslint:*)",
       "Bash(git restore:*)",
       "Bash(npm ls:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(git rebase:*)"
     ],
     "deny": [],
     "ask": []
