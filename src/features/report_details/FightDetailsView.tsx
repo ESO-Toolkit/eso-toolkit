@@ -139,7 +139,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           mb: 1,
           width: '100%',
           minWidth: 0,
-          overflow: 'hidden',
+          overflow: 'visible',
           maxWidth: '100vw',
         }}
       >
