@@ -7,6 +7,7 @@ import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
 import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
+import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
 import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
 import { SharedComputationWorkerTaskType } from './SharedWorker';
@@ -293,6 +294,12 @@ export class WorkerPool {
         case 'calculateTouchOfZenStacks':
           result = await workerInfo.worker.calculateTouchOfZenStacks(
             task.data as TouchOfZenStacksCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculateStaggerStacks':
+          result = await workerInfo.worker.calculateStaggerStacks(
+            task.data as StaggerStacksCalculationTask,
             onProgress,
           );
           break;

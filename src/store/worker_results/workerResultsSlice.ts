@@ -10,6 +10,7 @@ import {
   debuffLookupReducer,
   hostileBuffLookupReducer,
   touchOfZenStacksReducer,
+  staggerStacksReducer,
 } from './taskSlices';
 
 // Combine all worker task reducers
@@ -20,6 +21,7 @@ const workerResultsReducer = combineReducers({
   calculatePenetrationData: penetrationDataReducer,
   calculateStatusEffectUptimes: statusEffectUptimesReducer,
   calculateTouchOfZenStacks: touchOfZenStacksReducer,
+  calculateStaggerStacks: staggerStacksReducer,
   calculateDamageReductionData: damageReductionReducer,
   calculateDebuffLookup: debuffLookupReducer,
   calculateHostileBuffLookup: hostileBuffLookupReducer,
@@ -35,6 +37,7 @@ export {
   penetrationDataActions,
   statusEffectUptimesActions,
   touchOfZenStacksActions,
+  staggerStacksActions,
   damageReductionActions,
   debuffLookupActions,
   hostileBuffLookupActions,
@@ -45,6 +48,7 @@ export {
   executePenetrationDataTask,
   executeStatusEffectUptimesTask,
   executeTouchOfZenStacksTask,
+  executeStaggerStacksTask,
   executeDamageReductionTask,
   executeDebuffLookupTask,
   executeHostileBuffLookupTask,

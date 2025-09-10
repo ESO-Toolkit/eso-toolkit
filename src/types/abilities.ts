@@ -342,6 +342,7 @@ export enum KnownAbilities {
   PEARLESCENT_WARD = 172621,
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
+  STONE_GIANT = 133027,
   TOUCH_OF_ZEN = 126597,
 
   // Major Buffs and Debuffs

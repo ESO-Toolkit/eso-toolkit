@@ -61,3 +61,10 @@ export {
   executeTouchOfZenStacksTask,
   touchOfZenStacksReducer,
 } from './touchOfZenStacksSlice';
+
+export {
+  staggerStacksSlice,
+  staggerStacksActions,
+  executeStaggerStacksTask,
+  staggerStacksReducer,
+} from './staggerStacksSlice';

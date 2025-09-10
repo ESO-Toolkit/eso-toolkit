@@ -18,6 +18,8 @@ import {
   executeHostileBuffLookupTask,
   touchOfZenStacksActions,
   executeTouchOfZenStacksTask,
+  staggerStacksActions,
+  executeStaggerStacksTask,
 } from './workerResultsSlice';
 
 import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
@@ -33,6 +35,7 @@ const taskActionsMap = {
   calculateDebuffLookup: debuffLookupActions,
   calculateHostileBuffLookup: hostileBuffLookupActions,
   calculateTouchOfZenStacks: touchOfZenStacksActions,
+  calculateStaggerStacks: staggerStacksActions,
 } as const;
 
 // Map task names to their corresponding thunk actions
@@ -49,6 +52,7 @@ const taskThunkMap: Record<
   calculateDebuffLookup: executeDebuffLookupTask,
   calculateHostileBuffLookup: executeHostileBuffLookupTask,
   calculateTouchOfZenStacks: executeTouchOfZenStacksTask,
+  calculateStaggerStacks: executeStaggerStacksTask,
 } as const;
 
 // Utility functions to get actions for a specific task

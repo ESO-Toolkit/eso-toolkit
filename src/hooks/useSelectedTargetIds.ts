@@ -21,22 +21,35 @@ export function useSelectedTargetIds(): Set<number> {
     let newTargetIds: Set<number>;
 
     if (selectedTargetId) {
+      // If a specific target is selected, return only that target
       newTargetIds = new Set([selectedTargetId]);
     } else if (!fight?.enemyNPCs) {
+      // If no fight or no enemy NPCs, return empty set
       newTargetIds = new Set();
     } else {
-      newTargetIds = new Set(
-        fight.enemyNPCs
-          .filter((npc): npc is { id: number } => {
-            if (!npc?.id) {
-              return false;
-            }
+      // Find all boss targets
+      const bossTargets = fight.enemyNPCs
+        .filter((npc): npc is { id: number } => {
+          if (!npc?.id) {
+            return false;
+          }
 
-            const actor = reportMasterData?.actorsById?.[npc.id];
-            return actor && actor.subType === 'Boss';
-          })
-          .map((npc) => npc.id),
-      );
+          const actor = reportMasterData?.actorsById?.[npc.id];
+          return actor && actor.subType === 'Boss';
+        })
+        .map((npc) => npc.id);
+
+      if (bossTargets.length > 0) {
+        // If there are bosses, return only boss targets
+        newTargetIds = new Set(bossTargets);
+      } else {
+        // If no bosses and no individual target selected, return all targets
+        newTargetIds = new Set(
+          fight.enemyNPCs
+            .filter((npc): npc is { id: number } => npc?.id != null)
+            .map((npc) => npc.id),
+        );
+      }
     }
 
     return newTargetIds;
