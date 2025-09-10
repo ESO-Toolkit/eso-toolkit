@@ -1,0 +1,157 @@
+name: Coverage Report and Badges
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+  # Allow manual triggering
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node-with-cache
+
+      - name: Run Tests with Coverage
+        run: npm run test:coverage:ci
+        env:
+          # Prevent external network requests during testing
+          NO_PROXY: '*'
+          HTTP_PROXY: 'http://127.0.0.1:9999'
+          HTTPS_PROXY: 'http://127.0.0.1:9999'
+          # Block known external services
+          BLOCK_EXTERNAL_REQUESTS: 'true'
+          # Override external service URLs to localhost (will fail if not mocked)
+          ESOLOGS_API_URL: 'http://localhost:3000/mock-api'
+          SENTRY_DSN: ''
+          CI: true
+          NODE_ENV: test
+
+      - name: Generate Coverage Badges
+        run: npm run coverage:badges
+        if: always()
+
+      - name: Upload Coverage to GitHub Gist
+        run: node scripts/upload-coverage-to-gist.js
+        if: github.ref == 'refs/heads/master'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
+
+      - name: Upload Coverage Badges
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-badges-${{ github.run_number }}
+          path: coverage/badges/*.svg
+          retention-days: 90
+
+      - name: Upload Coverage Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report-${{ github.run_number }}
+          path: |
+            coverage/lcov-report/
+            coverage/coverage-final.json
+            coverage/coverage-status.json
+          retention-days: 30
+
+      - name: Comment Coverage on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read coverage summary if it exists
+            let coverageComment = '## 📊 Coverage Report\n\n';
+
+            try {
+              if (fs.existsSync('coverage/coverage-final.json')) {
+                const coverageData = JSON.parse(fs.readFileSync('coverage/coverage-final.json', 'utf8'));
+                
+                // Calculate total coverage
+                const total = Object.values(coverageData).reduce(
+                  (acc, file) => {
+                    acc.lines.total += file.lines.total;
+                    acc.lines.covered += file.lines.covered;
+                    acc.functions.total += file.functions.total;
+                    acc.functions.covered += file.functions.covered;
+                    acc.branches.total += file.branches.total;
+                    acc.branches.covered += file.branches.covered;
+                    acc.statements.total += file.statements.total;
+                    acc.statements.covered += file.statements.covered;
+                    return acc;
+                  },
+                  {
+                    lines: { total: 0, covered: 0 },
+                    functions: { total: 0, covered: 0 },
+                    branches: { total: 0, covered: 0 },
+                    statements: { total: 0, covered: 0 }
+                  }
+                );
+
+                const coverage = {
+                  overall: Math.round((total.statements.covered / total.statements.total) * 100),
+                  lines: Math.round((total.lines.covered / total.lines.total) * 100),
+                  functions: Math.round((total.functions.covered / total.functions.total) * 100),
+                  branches: Math.round((total.branches.covered / total.branches.total) * 100)
+                };
+
+                coverageComment += `| Metric | Coverage |\n`;
+                coverageComment += `|--------|----------|\n`;
+                coverageComment += `| **Overall** | **${coverage.overall}%** |\n`;
+                coverageComment += `| Lines | ${coverage.lines}% |\n`;
+                coverageComment += `| Functions | ${coverage.functions}% |\n`;
+                coverageComment += `| Branches | ${coverage.branches}% |\n\n`;
+                coverageComment += `📁 [Download detailed coverage report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
+              } else {
+                coverageComment += '⚠️ Coverage data not found.';
+              }
+            } catch (error) {
+              coverageComment += `❌ Error reading coverage data: ${error.message}`;
+            }
+
+            // Find existing coverage comment
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+
+            const existingComment = comments.data.find(comment => 
+              comment.user.login === 'github-actions[bot]' && 
+              comment.body.includes('📊 Coverage Report')
+            );
+
+            if (existingComment) {
+              // Update existing comment
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existingComment.id,
+                body: coverageComment
+              });
+            } else {
+              // Create new comment
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: coverageComment
+              });
+            }
