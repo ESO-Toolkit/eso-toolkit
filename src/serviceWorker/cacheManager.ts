@@ -11,7 +11,7 @@ import { getBaseUrl } from '../utils/envUtils';
 declare const self: ServiceWorkerGlobalScope;
 
 const CACHE_NAME_PREFIX = 'eso-log-aggregator';
-const CURRENT_VERSION = getBuildInfo().buildId;
+const CURRENT_VERSION = getBuildInfo()?.buildId;
 const CACHE_NAME = `${CACHE_NAME_PREFIX}-${CURRENT_VERSION}`;
 
 // Assets that should always be cached
@@ -35,7 +35,7 @@ async function shouldInvalidateCache(): Promise<boolean> {
     const localVersion = getBuildInfo();
 
     // Invalidate if server version is different
-    return serverVersion.buildId !== localVersion.buildId;
+    return serverVersion.buildId !== localVersion?.buildId;
   } catch (error) {
     // eslint-disable-next-line no-console
     console.warn('Could not check version for cache invalidation:', error);
