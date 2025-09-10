@@ -30,6 +30,8 @@ export const selectStatusEffectUptimesTask = selectWorkerTask('calculateStatusEf
 export const selectDamageReductionTask = selectWorkerTask('calculateDamageReductionData');
 export const selectDebuffLookupTask = selectWorkerTask('calculateDebuffLookup');
 export const selectHostileBuffLookupTask = selectWorkerTask('calculateHostileBuffLookup');
+export const selectTouchOfZenStacksTask = selectWorkerTask('calculateTouchOfZenStacks');
+export const selectStaggerStacksTask = selectWorkerTask('calculateStaggerStacks');
 
 // Selectors for specific task properties
 export const selectWorkerTaskResult = <T extends SharedComputationWorkerTaskType>(
@@ -67,6 +69,7 @@ export const selectStatusEffectUptimesResult = selectWorkerTaskResult(
   'calculateStatusEffectUptimes',
 );
 export const selectTouchOfZenStacksResult = selectWorkerTaskResult('calculateTouchOfZenStacks');
+export const selectStaggerStacksResult = selectWorkerTaskResult('calculateStaggerStacks');
 export const selectDamageReductionResult = selectWorkerTaskResult('calculateDamageReductionData');
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
 export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHostileBuffLookup');

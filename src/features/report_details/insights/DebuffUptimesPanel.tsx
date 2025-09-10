@@ -5,6 +5,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useStaggerStacksTask } from '../../../hooks/workerTasks/useStaggerStacksTask';
 import { useTouchOfZenStacksTask } from '../../../hooks/workerTasks/useTouchOfZenStacksTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { selectSelectedTargetId } from '../../../store/ui/uiSelectors';
@@ -43,6 +44,9 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   // Touch of Z'en stacks data
   const { touchOfZenStacksData, allDotAbilityIds, isTouchOfZenStacksLoading } =
     useTouchOfZenStacksTask();
+
+  // Stagger stacks data
+  const { staggerStacksData, isStaggerStacksLoading } = useStaggerStacksTask();
 
   // Note: allDotAbilityIds contains the unique DOT ability IDs used for Touch of Z'en calculation
 
@@ -132,8 +136,57 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
         })()
       : [];
 
-    // Combine regular debuffs with Touch of Z'en stacks and sort by uptime percentage (descending)
-    const combinedDebuffs = [...regularDebuffUptimes, ...touchOfZenStackUptimes];
+    // Group Stagger stacks and provide all stack data with default to stack 3
+    const staggerStackUptimes = staggerStacksData
+      ? (() => {
+          if (staggerStacksData.length === 0) return [];
+
+          // Sort stacks by level and prepare all stack data
+          const sortedStacks = [...staggerStacksData].sort((a, b) => a.stackLevel - b.stackLevel);
+
+          // Use stack 3 as the default display (highest stack for initial display)
+          const defaultStack =
+            sortedStacks.find((stack) => stack.stackLevel === 3) ||
+            sortedStacks[sortedStacks.length - 1];
+
+          // Look up the Stagger ability for icon information
+          const staggerAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+          // Create allStacksData for the interactive component
+          const allStacksData = sortedStacks.map((stack) => ({
+            stackLevel: stack.stackLevel,
+            totalDuration: stack.totalDuration,
+            uptime: stack.uptime,
+            uptimePercentage: stack.uptimePercentage,
+            applications: stack.applications,
+          }));
+
+          return [
+            {
+              abilityGameID: defaultStack.abilityGameID,
+              abilityName: 'Stagger', // Clean name without stack info
+              icon: staggerAbility?.icon ? String(staggerAbility.icon) : defaultStack.icon,
+              totalDuration: defaultStack.totalDuration,
+              uptime: defaultStack.uptime,
+              uptimePercentage: defaultStack.uptimePercentage,
+              applications: defaultStack.applications,
+              isDebuff: defaultStack.isDebuff,
+              hostilityType: defaultStack.hostilityType,
+              uniqueKey: `stagger_grouped`, // Single unique key for the grouped entry
+              stackLevel: defaultStack.stackLevel,
+              maxStacks: 3, // Stagger has 3 stacks maximum
+              allStacksData, // Provide all stack data for interactive switching
+            },
+          ];
+        })()
+      : [];
+
+    // Combine regular debuffs with Touch of Z'en stacks, Stagger stacks and sort by uptime percentage (descending)
+    const combinedDebuffs = [
+      ...regularDebuffUptimes,
+      ...touchOfZenStackUptimes,
+      ...staggerStackUptimes,
+    ];
     return combinedDebuffs.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
     debuffsLookup,
@@ -143,6 +196,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     realTargetIds,
     reportMasterData?.abilitiesById,
     touchOfZenStacksData,
+    staggerStacksData,
     allDotAbilityIds,
   ]);
 
@@ -165,7 +219,12 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   // Enhanced loading check: ensure ALL required data is available and processing is complete
   const isDataLoading = React.useMemo(() => {
     // Still loading if any of the core data sources are loading
-    if (isMasterDataLoading || isDebuffEventsLoading || isTouchOfZenStacksLoading) {
+    if (
+      isMasterDataLoading ||
+      isDebuffEventsLoading ||
+      isTouchOfZenStacksLoading ||
+      isStaggerStacksLoading
+    ) {
       return true;
     }
 
@@ -191,6 +250,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     isMasterDataLoading,
     isDebuffEventsLoading,
     isTouchOfZenStacksLoading,
+    isStaggerStacksLoading,
     debuffsLookup,
     fightDuration,
     fightStartTime,

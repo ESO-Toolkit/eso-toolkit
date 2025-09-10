@@ -328,7 +328,7 @@ describe('useSelectedTargetIds', () => {
     expect(result.current).toEqual(new Set());
   });
 
-  it('should return empty set when no master data is available', () => {
+  it('should return all enemy NPCs when no bosses are present', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
       isReportLoading: false,
@@ -359,10 +359,10 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(result.current).toEqual(new Set([100, 200, 300]));
   });
 
-  it('should filter out NPCs that are not bosses', () => {
+  it('should return all enemy NPCs when fight has only non-boss NPCs', () => {
     // Create fight with only non-boss NPCs
     const fightWithNonBosses: FightFragment = {
       ...mockFightWithBosses,
@@ -396,7 +396,8 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    // When no bosses are present, should return all enemy NPCs
+    expect(result.current).toEqual(new Set([300]));
   });
 
   it('should handle NPCs with null IDs', () => {
@@ -566,7 +567,7 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(result.current).toEqual(new Set([100, 200, 300]));
   });
 
   it('should return stable reference when params do not change', () => {
