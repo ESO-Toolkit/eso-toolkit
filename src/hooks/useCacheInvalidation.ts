@@ -5,15 +5,16 @@
 
 import { useEffect, useState, useCallback } from 'react';
 
-import { getBuildInfo, getCacheBustingQuery } from '../utils/cacheBusting';
+import { getBuildInfo, getBuildInfoAsync, getCacheBustingQuery } from '../utils/cacheBusting';
 import { getBaseUrl } from '../utils/envUtils';
 
 interface CacheInvalidationState {
   isCheckingVersion: boolean;
   hasUpdate: boolean;
-  currentVersion: string;
+  currentVersion?: string;
   serverVersion?: string;
   lastCheck?: Date;
+  versionLoaded: boolean;
 }
 
 interface CacheInvalidationActions {
@@ -32,10 +33,31 @@ export const useCacheInvalidation = (
   const [state, setState] = useState<CacheInvalidationState>({
     isCheckingVersion: false,
     hasUpdate: false,
-    currentVersion: getBuildInfo().buildId,
+    currentVersion: undefined,
+    versionLoaded: false,
   });
 
+  // Load version info on mount
+  useEffect(() => {
+    const loadVersion = async (): Promise<void> => {
+      const buildInfo = await getBuildInfoAsync();
+      if (buildInfo) {
+        setState((prev) => ({
+          ...prev,
+          currentVersion: buildInfo.buildId,
+          versionLoaded: true,
+        }));
+      }
+    };
+    loadVersion();
+  }, []);
+
   const checkForUpdates = useCallback(async () => {
+    // Don't check for updates until version is loaded
+    if (!state.versionLoaded || !state.currentVersion) {
+      return;
+    }
+
     setState((prev) => ({ ...prev, isCheckingVersion: true }));
 
     try {
@@ -51,7 +73,8 @@ export const useCacheInvalidation = (
       const serverVersion = await response.json();
       const currentVersion = getBuildInfo();
 
-      const hasUpdate = serverVersion.buildId !== currentVersion.buildId;
+      // Only compare if we have current version
+      const hasUpdate = currentVersion ? serverVersion.buildId !== currentVersion.buildId : false;
 
       setState((prev) => ({
         ...prev,
@@ -79,7 +102,7 @@ export const useCacheInvalidation = (
       // eslint-disable-next-line no-console
       console.warn('Version check failed:', error);
     }
-  }, []);
+  }, [state.versionLoaded, state.currentVersion]);
 
   const forceReload = useCallback(() => {
     // Clear all caches and reload

@@ -45,16 +45,8 @@ const versionInfo = {
   cacheBuster: `v=${buildId.replace(/[^a-zA-Z0-9]/g, '')}`,
 };
 
-// Write version.json to public directory (will be copied to build)
-const publicVersionPath = path.join(__dirname, '..', 'public', 'version.json');
-fs.writeFileSync(publicVersionPath, JSON.stringify(versionInfo, null, 2));
-
-// Write version.json to src directory for import
-const srcVersionPath = path.join(__dirname, '..', 'src', 'version.json');
-fs.writeFileSync(srcVersionPath, JSON.stringify(versionInfo, null, 2));
-
 // Write as JSON file for require() compatibility
-const versionJsonPath = path.join(__dirname, '..', 'src', 'utils', 'version.json');
+const versionJsonPath = path.join(__dirname, '..', 'public', 'version.json');
 fs.writeFileSync(versionJsonPath, JSON.stringify(versionInfo, null, 2));
 
 console.log('✅ Generated version information:');
