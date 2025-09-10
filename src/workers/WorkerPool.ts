@@ -6,6 +6,7 @@ import { ActorPositionsCalculationTask } from './calculations/CalculateActorPosi
 import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
 import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
+import { ElementalWeaknessStacksCalculationTask } from './calculations/CalculateElementalWeaknessStacks';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
 import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
@@ -300,6 +301,12 @@ export class WorkerPool {
         case 'calculateStaggerStacks':
           result = await workerInfo.worker.calculateStaggerStacks(
             task.data as StaggerStacksCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculateElementalWeaknessStacks':
+          result = await workerInfo.worker.calculateElementalWeaknessStacks(
+            task.data as ElementalWeaknessStacksCalculationTask,
             onProgress,
           );
           break;

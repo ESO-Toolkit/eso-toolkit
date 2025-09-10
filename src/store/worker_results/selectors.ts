@@ -70,6 +70,9 @@ export const selectStatusEffectUptimesResult = selectWorkerTaskResult(
 );
 export const selectTouchOfZenStacksResult = selectWorkerTaskResult('calculateTouchOfZenStacks');
 export const selectStaggerStacksResult = selectWorkerTaskResult('calculateStaggerStacks');
+export const selectElementalWeaknessStacksResult = selectWorkerTaskResult(
+  'calculateElementalWeaknessStacks',
+);
 export const selectDamageReductionResult = selectWorkerTaskResult('calculateDamageReductionData');
 export const selectDebuffLookupResult = selectWorkerTaskResult('calculateDebuffLookup');
 export const selectHostileBuffLookupResult = selectWorkerTaskResult('calculateHostileBuffLookup');

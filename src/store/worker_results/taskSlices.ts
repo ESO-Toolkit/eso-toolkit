@@ -68,3 +68,10 @@ export {
   executeStaggerStacksTask,
   staggerStacksReducer,
 } from './staggerStacksSlice';
+
+export {
+  elementalWeaknessStacksSlice,
+  elementalWeaknessStacksActions,
+  executeElementalWeaknessStacksTask,
+  elementalWeaknessStacksReducer,
+} from './elementalWeaknessStacksSlice';

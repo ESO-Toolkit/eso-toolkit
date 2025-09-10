@@ -8,6 +8,7 @@ import { calculateActorPositions } from './calculations/CalculateActorPositions'
 import { calculateBuffLookup } from './calculations/CalculateBuffLookups';
 import { calculateCriticalDamageData } from './calculations/CalculateCriticalDamage';
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
+import { calculateElementalWeaknessStacks } from './calculations/CalculateElementalWeaknessStacks';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
 import { calculateStaggerStacks } from './calculations/CalculateStaggerStacks';
 import { calculateStatusEffectUptimes } from './calculations/CalculateStatusEffectUptimes';
@@ -23,6 +24,7 @@ const SHARED_WORKER = {
   calculateStatusEffectUptimes,
   calculateTouchOfZenStacks,
   calculateStaggerStacks,
+  calculateElementalWeaknessStacks,
   calculateActorPositions,
 };
 
