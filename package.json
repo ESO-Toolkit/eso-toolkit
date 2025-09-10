@@ -53,7 +53,7 @@
   },
   "scripts": {
     "analyze-all": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
-    "analyze-bundle": "npm run build && node analyze-bundle.js",
+    "analyze-bundle": "npm run build && node scripts/analyze-bundle.js",
     "analyze-scribing-skills": "node scripts/analyze-scribing-skills.js",
     "analyze": "npm run build && npx vite-bundle-analyzer build/assets/*.js",
     "benchmark": "node benchmark-dev-server.js",
@@ -62,7 +62,7 @@
     "prebuild": "node scripts/generate-version.js && node scripts/update-manifest.js",
     "postbuild": "echo Build completed with cache-busting enabled",
     "clean:version": "node scripts/clean-version.js",
-    "codegen": "node --loader ts-node/esm run-codegen.mts",
+    "codegen": "node --loader ts-node/esm scripts/run-codegen.mts",
     "coverage:analyze:threshold": "node scripts/coverage-analyzer.js --threshold",
     "coverage:analyze:watch": "node scripts/coverage-analyzer.js --watch",
     "coverage:analyze": "node scripts/coverage-analyzer.js",

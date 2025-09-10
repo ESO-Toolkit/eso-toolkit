@@ -122,12 +122,12 @@ async function uploadCoverageToGist() {
         console.log('💡 Tip: The default GITHUB_TOKEN does not have gist permissions.');
         console.log('   To fix this, create a Personal Access Token with "gist" scope and');
         console.log('   add it as a repository secret named "GIST_TOKEN".');
-        console.log('   See docs/COVERAGE_BADGES_SETUP.md for detailed instructions.');
+        console.log('   See documentation/COVERAGE_BADGES_SETUP.md for detailed instructions.');
       }
     }
   } catch (error) {
     console.error('❌ Error uploading coverage data:', error.message);
-    console.log('💡 If this is a permission error, see docs/COVERAGE_BADGES_SETUP.md');
+    console.log('💡 If this is a permission error, see documentation/COVERAGE_BADGES_SETUP.md');
   }
 }
 

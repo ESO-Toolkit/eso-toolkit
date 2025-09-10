@@ -85,26 +85,26 @@ npm run test:nightly:report
 
 ```powershell
 # Basic run
-.\run-nightly-tests-manual.ps1
+.\scripts\run-nightly-tests-manual.ps1
 
 # Chromium tests in headed mode
-.\run-nightly-tests-manual.ps1 -TestSuite chromium -Headed
+.\scripts\run-nightly-tests-manual.ps1 -TestSuite chromium -Headed
 
 # Debug mode with fresh build
-.\run-nightly-tests-manual.ps1 -TestSuite auth-only -Debug -BuildFirst
+.\scripts\run-nightly-tests-manual.ps1 -TestSuite auth-only -Debug -BuildFirst
 ```
 
 #### Bash (Linux/macOS)
 
 ```bash
 # Basic run
-./run-nightly-tests-manual.sh
+./scripts/run-nightly-tests-manual.sh
 
 # Chromium tests in headed mode
-./run-nightly-tests-manual.sh --suite chromium --headed
+./scripts/run-nightly-tests-manual.sh --suite chromium --headed
 
 # Debug mode with fresh build
-./run-nightly-tests-manual.sh --suite auth-only --debug --build
+./scripts/run-nightly-tests-manual.sh --suite auth-only --debug --build
 ```
 
 ## Test Configuration
