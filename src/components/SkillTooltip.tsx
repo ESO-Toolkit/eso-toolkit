@@ -2,6 +2,8 @@ import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } fr
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
+import { useLogger } from '@/hooks/useLogger';
+
 export interface SkillStat {
   label: string;
   value: string;

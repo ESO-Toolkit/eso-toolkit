@@ -57,10 +57,10 @@ export const DebuffUptimesView: React.FC<DebuffUptimesViewProps> = ({
       {debuffUptimes.length > 0 ? (
         <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
           <List disablePadding>
-            {debuffUptimes.map((debuff) => {
+            {debuffUptimes.map((debuff, idx) => {
               return (
                 <ListItem
-                  key={debuff.abilityGameID}
+                  key={idx}
                   sx={{
                     py: 1,
                     pl: 0.5,
