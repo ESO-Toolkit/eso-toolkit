@@ -9,9 +9,6 @@ inputs:
     description: 'Release version to set in environment'
     required: false
     default: ''
-  github_token:
-    description: 'GitHub token for deployment'
-    required: true
 outputs:
   deployment-url:
     description: 'URL where the site was deployed'
@@ -56,9 +53,11 @@ runs:
         mkdir -p build/storybook
         cp -r storybook-static/* build/storybook/
 
+    - name: Upload Pages artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: ./build
+
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: peaceiris/actions-gh-pages@v4
-      with:
-        github_token: ${{ inputs.github_token }}
-        publish_dir: ./build
+      uses: actions/deploy-pages@v4
