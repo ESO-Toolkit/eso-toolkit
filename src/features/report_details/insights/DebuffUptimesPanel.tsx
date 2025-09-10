@@ -5,6 +5,7 @@ import { FightFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useWorkerDebuffLookup } from '../../../hooks/events/useDebuffEvents';
 import { useSelectedTargetIds } from '../../../hooks/useSelectedTargetIds';
+import { useElementalWeaknessStacksTask } from '../../../hooks/workerTasks/useElementalWeaknessStacksTask';
 import { useStaggerStacksTask } from '../../../hooks/workerTasks/useStaggerStacksTask';
 import { useTouchOfZenStacksTask } from '../../../hooks/workerTasks/useTouchOfZenStacksTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
@@ -47,6 +48,10 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
 
   // Stagger stacks data
   const { staggerStacksData, isStaggerStacksLoading } = useStaggerStacksTask();
+
+  // Elemental Weakness stacks data
+  const { elementalWeaknessStacksData, isElementalWeaknessStacksLoading } =
+    useElementalWeaknessStacksTask();
 
   // Note: allDotAbilityIds contains the unique DOT ability IDs used for Touch of Z'en calculation
 
@@ -106,14 +111,30 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
           // Look up the Touch of Z'en ability for icon information
           const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
 
-          // Create allStacksData for the interactive component
-          const allStacksData = sortedStacks.map((stack) => ({
-            stackLevel: stack.stackLevel,
-            totalDuration: stack.totalDuration,
-            uptime: stack.uptime,
-            uptimePercentage: stack.uptimePercentage,
-            applications: stack.applications,
-          }));
+          // Create a complete allStacksData array with all possible stack levels (1, 2, 3, 4, 5)
+          // Fill in 0% values for missing stack levels
+          const allStacksData = [];
+          for (let stackLevel = 1; stackLevel <= 5; stackLevel++) {
+            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
+            if (existingStack) {
+              allStacksData.push({
+                stackLevel: existingStack.stackLevel,
+                totalDuration: existingStack.totalDuration,
+                uptime: existingStack.uptime,
+                uptimePercentage: existingStack.uptimePercentage,
+                applications: existingStack.applications,
+              });
+            } else {
+              // Create a 0% entry for missing stack levels
+              allStacksData.push({
+                stackLevel,
+                totalDuration: 0,
+                uptime: 0,
+                uptimePercentage: 0,
+                applications: 0,
+              });
+            }
+          }
 
           return [
             {
@@ -152,14 +173,30 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
           // Look up the Stagger ability for icon information
           const staggerAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
 
-          // Create allStacksData for the interactive component
-          const allStacksData = sortedStacks.map((stack) => ({
-            stackLevel: stack.stackLevel,
-            totalDuration: stack.totalDuration,
-            uptime: stack.uptime,
-            uptimePercentage: stack.uptimePercentage,
-            applications: stack.applications,
-          }));
+          // Create a complete allStacksData array with all possible stack levels (1, 2, 3)
+          // Fill in 0% values for missing stack levels
+          const allStacksData = [];
+          for (let stackLevel = 1; stackLevel <= 3; stackLevel++) {
+            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
+            if (existingStack) {
+              allStacksData.push({
+                stackLevel: existingStack.stackLevel,
+                totalDuration: existingStack.totalDuration,
+                uptime: existingStack.uptime,
+                uptimePercentage: existingStack.uptimePercentage,
+                applications: existingStack.applications,
+              });
+            } else {
+              // Create a 0% entry for missing stack levels
+              allStacksData.push({
+                stackLevel,
+                totalDuration: 0,
+                uptime: 0,
+                uptimePercentage: 0,
+                applications: 0,
+              });
+            }
+          }
 
           return [
             {
@@ -181,11 +218,78 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
         })()
       : [];
 
-    // Combine regular debuffs with Touch of Z'en stacks, Stagger stacks and sort by uptime percentage (descending)
+    // Group Elemental Weakness stacks and provide all stack data with default to stack 3
+    const elementalWeaknessStackUptimes = elementalWeaknessStacksData
+      ? (() => {
+          if (elementalWeaknessStacksData.length === 0) return [];
+
+          // Sort stacks by level and prepare all stack data
+          const sortedStacks = [...elementalWeaknessStacksData].sort(
+            (a, b) => a.stackLevel - b.stackLevel,
+          );
+
+          // Use stack 3 as the default display (highest stack for initial display)
+          const defaultStack =
+            sortedStacks.find((stack) => stack.stackLevel === 3) ||
+            sortedStacks[sortedStacks.length - 1];
+
+          // Look up the Flame Weakness ability for icon information (using the first weakness as representative)
+          const flameWeaknessAbility =
+            reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
+
+          // Create a complete allStacksData array with all possible stack levels (1, 2, 3)
+          // Fill in 0% values for missing stack levels
+          const allStacksData = [];
+          for (let stackLevel = 1; stackLevel <= 3; stackLevel++) {
+            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
+            if (existingStack) {
+              allStacksData.push({
+                stackLevel: existingStack.stackLevel,
+                totalDuration: existingStack.totalDuration,
+                uptime: existingStack.uptime,
+                uptimePercentage: existingStack.uptimePercentage,
+                applications: existingStack.applications,
+              });
+            } else {
+              // Create a 0% entry for missing stack levels
+              allStacksData.push({
+                stackLevel,
+                totalDuration: 0,
+                uptime: 0,
+                uptimePercentage: 0,
+                applications: 0,
+              });
+            }
+          }
+
+          return [
+            {
+              abilityGameID: defaultStack.abilityGameID,
+              abilityName: 'Elemental Weakness', // Clean name without stack info
+              icon: flameWeaknessAbility?.icon
+                ? String(flameWeaknessAbility.icon)
+                : defaultStack.icon,
+              totalDuration: defaultStack.totalDuration,
+              uptime: defaultStack.uptime,
+              uptimePercentage: defaultStack.uptimePercentage,
+              applications: defaultStack.applications,
+              isDebuff: defaultStack.isDebuff,
+              hostilityType: defaultStack.hostilityType,
+              uniqueKey: `elemental_weakness_grouped`, // Single unique key for the grouped entry
+              stackLevel: defaultStack.stackLevel,
+              maxStacks: 3, // Elemental Weakness has 3 stacks maximum
+              allStacksData, // Provide all stack data for interactive switching
+            },
+          ];
+        })()
+      : [];
+
+    // Combine regular debuffs with Touch of Z'en stacks, Stagger stacks, Elemental Weakness stacks and sort by uptime percentage (descending)
     const combinedDebuffs = [
       ...regularDebuffUptimes,
       ...touchOfZenStackUptimes,
       ...staggerStackUptimes,
+      ...elementalWeaknessStackUptimes,
     ];
     return combinedDebuffs.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
@@ -197,6 +301,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     reportMasterData?.abilitiesById,
     touchOfZenStacksData,
     staggerStacksData,
+    elementalWeaknessStacksData,
     allDotAbilityIds,
   ]);
 
@@ -223,7 +328,8 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       isMasterDataLoading ||
       isDebuffEventsLoading ||
       isTouchOfZenStacksLoading ||
-      isStaggerStacksLoading
+      isStaggerStacksLoading ||
+      isElementalWeaknessStacksLoading
     ) {
       return true;
     }
@@ -251,6 +357,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     isDebuffEventsLoading,
     isTouchOfZenStacksLoading,
     isStaggerStacksLoading,
+    isElementalWeaknessStacksLoading,
     debuffsLookup,
     fightDuration,
     fightStartTime,
