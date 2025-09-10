@@ -139,7 +139,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           mb: 1,
           width: '100%',
           minWidth: 0,
-          overflow: 'visible',
+          overflow: 'hidden',
+          maxWidth: '100vw',
         }}
       >
         <Tabs
@@ -148,10 +149,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             onTabChange(v as TabId);
           }}
           sx={{
-            minWidth: 'auto',
+            minWidth: 0,
             flexGrow: 1,
             minHeight: 'auto',
-            overflow: 'visible !important',
+            overflow: 'hidden',
+            maxWidth: 'calc(100vw - 80px)', // Leave space for experimental toggle
             '& .MuiTabs-indicator': {
               display: 'none',
             },
@@ -176,6 +178,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               minWidth: 32,
               padding: 0,
               margin: 0,
+              flexShrink: 0,
               '&.Mui-disabled': {
                 opacity: 0.3,
               },
@@ -187,6 +190,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               margin: 0,
               opacity: 1,
               borderRadius: 100,
+              flexShrink: 0,
             },
           }}
           variant="scrollable"
