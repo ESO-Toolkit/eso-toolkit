@@ -297,7 +297,9 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             >
               {navigationData.currentIndex >= 0 && navigationData.totalCount > 0
                 ? `${navigationData.currentIndex + 1}/${navigationData.totalCount}`
-                : '0/0'}
+                : navigationData.previousFight || navigationData.nextFight
+                  ? `—/${navigationData.totalCount}`
+                  : '0/0'}
             </Typography>
           </Box>
 

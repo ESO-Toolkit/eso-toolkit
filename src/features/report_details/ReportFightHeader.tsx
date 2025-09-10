@@ -84,7 +84,35 @@ export const useFightNavigation = (): {
       currentFight?.difficulty != null ? 'boss' : 'trash';
 
     if (currentIndex === -1) {
-      // Current fight not found in active list
+      // Current fight not found in active list - handle cross-mode navigation
+      if (navigationMode === 'bosses' && currentFightType === 'trash') {
+        // We're on a trash fight but in boss mode - find nearest boss fights
+        const currentFightStartTime = currentFight?.startTime;
+        if (currentFightStartTime != null) {
+          // Find the previous boss fight (last boss before current fight)
+          const previousBoss =
+            bossFights
+              .filter((boss) => boss.startTime < currentFightStartTime)
+              .sort((a, b) => b.startTime - a.startTime)[0] || null;
+
+          // Find the next boss fight (first boss after current fight)
+          const nextBoss =
+            bossFights
+              .filter((boss) => boss.startTime > currentFightStartTime)
+              .sort((a, b) => a.startTime - b.startTime)[0] || null;
+
+          return {
+            currentIndex: -1, // Not in boss list
+            previousFight: previousBoss,
+            nextFight: nextBoss,
+            totalCount: activeList.length,
+            modeLabel: 'Boss', // We're in bosses mode when doing cross-navigation
+            currentFightType,
+          };
+        }
+      }
+
+      // Default case - current fight not found in active list
       return {
         currentIndex: -1,
         previousFight: null,
