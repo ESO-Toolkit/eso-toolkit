@@ -68,6 +68,7 @@
     "coverage:analyze": "node scripts/coverage-analyzer.js",
     "coverage:badges": "node scripts/coverage-badge-generator.js",
     "coverage:full": "npm run test:coverage && npm run coverage:badges && npm run coverage:analyze",
+    "coverage:gist": "node scripts/upload-coverage-to-gist.js",
     "coverage:open": "start coverage/lcov-report/index.html",
     "dev": "node scripts/generate-version.js && vite",
     "download-report-data": "npx tsx scripts/download-report-data.ts",
