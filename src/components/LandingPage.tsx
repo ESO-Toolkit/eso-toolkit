@@ -1,7 +1,8 @@
-import { Box, Button, Container, Typography } from '@mui/material';
+import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
 import React, { useState } from 'react';
 
+import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
@@ -731,6 +732,7 @@ const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
 export const LandingPage: React.FC = () => {
   const [showAnimations, setShowAnimations] = useState(false);
   const { isLoggedIn } = useAuth();
+  const { isReady, isLoggedIn: clientIsLoggedIn } = useEsoLogsClientContext();
 
   // Defer complex animations until after initial render
   React.useEffect(() => {
@@ -780,7 +782,18 @@ export const LandingPage: React.FC = () => {
             easy-to-use tools designed for Elder Scrolls Online players.
           </HeroSubtitle>
 
-          {isLoggedIn ? <AuthenticatedLandingSection /> : <UnauthenticatedLandingSection />}
+          {isLoggedIn && isReady && clientIsLoggedIn ? (
+            <AuthenticatedLandingSection />
+          ) : isLoggedIn && (!isReady || !clientIsLoggedIn) ? (
+            <Box display="flex" justifyContent="center" alignItems="center" sx={{ py: 4 }}>
+              <CircularProgress size={24} sx={{ mr: 2 }} />
+              <Typography variant="body1" color="text.secondary">
+                Initializing...
+              </Typography>
+            </Box>
+          ) : (
+            <UnauthenticatedLandingSection />
+          )}
         </HeroContent>
       </HeroSection>
 
