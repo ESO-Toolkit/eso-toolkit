@@ -600,7 +600,8 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                           },
                           tooltip: {
                             callbacks: {
-                              title: (context) => `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
+                              title: (context) =>
+                                `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
                               label: (context) =>
                                 `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)}%`,
                             },
@@ -654,7 +655,7 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
                             title: {
                               display: true,
                               text: 'Damage Reduction (%)',
-                              },
+                            },
                             min: 0,
                             max: 60,
                             ticks: {
