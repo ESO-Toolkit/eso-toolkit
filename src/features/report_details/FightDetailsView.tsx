@@ -30,6 +30,7 @@ import {
   ToggleButtonGroup,
   Typography,
 } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
@@ -138,6 +139,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     handleNavigationModeChange,
   } = useFightNavigation();
 
+  // Theme support for light/dark mode
+  const theme = useTheme();
+  const isDarkMode = theme.palette.mode === 'dark';
+
   return (
     <React.Fragment>
       {/* Target Selection and Navigation Row */}
@@ -166,9 +171,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           sx={{
             display: 'flex',
             alignItems: 'center',
-            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+            backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.04)',
             borderRadius: { xs: '10px', md: '12px' },
-            border: '1px solid rgba(255, 255, 255, 0.08)',
+            border: isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.08)'
+              : '1px solid rgba(0, 0, 0, 0.08)',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
             p: { xs: 0.5, md: 0.75 },
@@ -188,11 +195,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               height: { xs: 32, md: 28 },
               borderRadius: { xs: '6px', md: '8px' },
               backgroundColor: 'transparent',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
                 transform: 'scale(1.05)',
               },
               '&:disabled': {
@@ -211,7 +218,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             exclusive
             size="small"
             sx={{
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: '8px',
               border: 'none',
               '& .MuiToggleButtonGroup-grouped': {
@@ -238,13 +245,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 height: { xs: 32, md: 28 },
                 border: 'none',
                 borderRadius: '6px',
-                color: 'rgba(255, 255, 255, 0.6)',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.6)' : 'rgba(0, 0, 0, 0.6)',
                 fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
-                  color: 'rgba(255, 255, 255, 0.8)',
+                  backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.04)',
+                  color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.8)',
                 },
                 '&.Mui-selected': {
                   background: 'linear-gradient(135deg, #9333ea, #8b5cf6)',
@@ -268,7 +275,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             sx={{
               px: { xs: 1, md: 1.5 },
               py: 0.5,
-              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)',
               borderRadius: { xs: '6px', md: '8px' },
               minWidth: { xs: '40px', md: '48px' },
               display: 'flex',
@@ -280,7 +287,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             <Typography
               variant="body2"
               sx={{
-                color: 'rgba(255, 255, 255, 0.8)',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
                 fontWeight: 600,
                 fontSize: { xs: '0.7rem', md: '0.75rem' },
                 fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
@@ -304,11 +311,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               height: { xs: 32, md: 28 },
               borderRadius: { xs: '6px', md: '8px' },
               backgroundColor: 'transparent',
-              color: 'rgba(255, 255, 255, 0.8)',
+              color: isDarkMode ? 'rgba(255, 255, 255, 0.8)' : 'rgba(0, 0, 0, 0.7)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.08)',
-                color: 'rgba(255, 255, 255, 0.95)',
+                backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                color: isDarkMode ? 'rgba(255, 255, 255, 0.95)' : 'rgba(0, 0, 0, 0.87)',
                 transform: 'scale(1.05)',
               },
               '&:disabled': {
