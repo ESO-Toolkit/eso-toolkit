@@ -37,6 +37,7 @@ import { FightFragment } from '../../graphql/generated';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { TargetSelector } from './insights/TargetSelector';
+import { useFightNavigation } from './ReportFightHeader';
 
 // Lazy load heavy panel components for better initial page load performance
 const ActorsPanel = React.lazy(() =>
@@ -128,35 +129,64 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // Ensure we always have a valid selectedTabId
   const validSelectedTabId = selectedTabId || TabId.INSIGHTS;
 
+  // Get navigation data and functions
+  const {
+    navigationMode,
+    navigationData,
+    navigateToPrevious,
+    navigateToNext,
+    handleNavigationModeChange,
+  } = useFightNavigation();
+
   return (
     <React.Fragment>
       {/* Target Selection and Navigation Row */}
-      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <FormControl sx={{ minWidth: 200, overflow: 'visible' }}>
+      <Box
+        sx={{
+          mb: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          flexWrap: { xs: 'wrap', md: 'nowrap' },
+          gap: { xs: 2, md: 0 },
+        }}
+      >
+        <FormControl
+          sx={{
+            minWidth: { xs: '100%', sm: 180, md: 200 },
+            maxWidth: { xs: '100%', md: 'none' },
+            overflow: 'visible',
+          }}
+        >
           <TargetSelector />
         </FormControl>
-        
+
         {/* Fight Navigation - aligned with target selector */}
         <Box
           sx={{
             display: 'flex',
             alignItems: 'center',
             backgroundColor: 'rgba(255, 255, 255, 0.03)',
-            borderRadius: '12px',
+            borderRadius: { xs: '10px', md: '12px' },
             border: '1px solid rgba(255, 255, 255, 0.08)',
             backdropFilter: 'blur(8px)',
             boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
-            p: 0.75,
-            gap: 0.5,
+            p: { xs: 0.5, md: 0.75 },
+            gap: { xs: 0.25, md: 0.5 },
+            width: { xs: '100%', md: 'auto' },
+            justifyContent: { xs: 'center', md: 'flex-start' },
+            minWidth: 0, // Allow shrinking
           }}
         >
           {/* Previous Button */}
           <IconButton
+            onClick={navigateToPrevious}
+            disabled={!navigationData.previousFight}
             size="small"
             sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '8px',
+              width: { xs: 32, md: 28 },
+              height: { xs: 32, md: 28 },
+              borderRadius: { xs: '6px', md: '8px' },
               backgroundColor: 'transparent',
               color: 'rgba(255, 255, 255, 0.8)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -165,6 +195,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 color: 'rgba(255, 255, 255, 0.95)',
                 transform: 'scale(1.05)',
               },
+              '&:disabled': {
+                opacity: 0.3,
+                cursor: 'not-allowed',
+              },
             }}
           >
             <ArrowBackIcon fontSize="small" />
@@ -172,7 +206,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
           {/* Mode Toggle */}
           <ToggleButtonGroup
-            value="all"
+            value={navigationMode}
+            onChange={handleNavigationModeChange}
             exclusive
             size="small"
             sx={{
@@ -194,13 +229,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 },
               },
               '& .MuiToggleButton-root': {
-                px: 1.5,
+                px: { xs: 1.25, md: 1.5 },
                 py: 0.5,
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.75rem', md: '0.75rem' },
                 fontWeight: 600,
                 textTransform: 'none',
                 minWidth: 'auto',
-                height: 28,
+                height: { xs: 32, md: 28 },
                 border: 'none',
                 borderRadius: '6px',
                 color: 'rgba(255, 255, 255, 0.6)',
@@ -231,14 +266,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {/* Counter */}
           <Box
             sx={{
-              px: 1.5,
+              px: { xs: 1, md: 1.5 },
               py: 0.5,
               backgroundColor: 'rgba(255, 255, 255, 0.05)',
-              borderRadius: '8px',
-              minWidth: '48px',
+              borderRadius: { xs: '6px', md: '8px' },
+              minWidth: { xs: '40px', md: '48px' },
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
+              height: { xs: 32, md: 'auto' },
             }}
           >
             <Typography
@@ -246,23 +282,27 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
               sx={{
                 color: 'rgba(255, 255, 255, 0.8)',
                 fontWeight: 600,
-                fontSize: '0.75rem',
+                fontSize: { xs: '0.7rem', md: '0.75rem' },
                 fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
                 letterSpacing: '0.025em',
                 fontVariantNumeric: 'tabular-nums',
               }}
             >
-              2/18
+              {navigationData.currentIndex >= 0 && navigationData.totalCount > 0
+                ? `${navigationData.currentIndex + 1}/${navigationData.totalCount}`
+                : '0/0'}
             </Typography>
           </Box>
 
           {/* Next Button */}
           <IconButton
+            onClick={navigateToNext}
+            disabled={!navigationData.nextFight}
             size="small"
             sx={{
-              width: 28,
-              height: 28,
-              borderRadius: '8px',
+              width: { xs: 32, md: 28 },
+              height: { xs: 32, md: 28 },
+              borderRadius: { xs: '6px', md: '8px' },
               backgroundColor: 'transparent',
               color: 'rgba(255, 255, 255, 0.8)',
               transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -270,6 +310,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
                 backgroundColor: 'rgba(255, 255, 255, 0.08)',
                 color: 'rgba(255, 255, 255, 0.95)',
                 transform: 'scale(1.05)',
+              },
+              '&:disabled': {
+                opacity: 0.3,
+                cursor: 'not-allowed',
               },
             }}
           >

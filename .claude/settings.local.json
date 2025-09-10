@@ -30,7 +30,8 @@
       "Bash(git restore:*)",
       "Bash(npm ls:*)",
       "Bash(npm uninstall:*)",
-      "Bash(git rebase:*)"
+      "Bash(git rebase:*)",
+      "Bash(git fetch:*)"
     ],
     "deny": [],
     "ask": []
