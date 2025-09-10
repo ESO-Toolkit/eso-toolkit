@@ -95,28 +95,44 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
   const theme = useTheme();
   const roleColors = useRoleColors();
 
+  // Delay chart rendering to allow accordion animation to complete smoothly
+  const [shouldRenderChart, setShouldRenderChart] = React.useState(false);
+
+  React.useEffect(() => {
+    if (expanded) {
+      // Small delay to let the accordion animation complete before rendering the chart
+      const timer = setTimeout(() => {
+        setShouldRenderChart(true);
+      }, 150); // 150ms delay matches typical MUI accordion animation duration
+      return () => clearTimeout(timer);
+    } else {
+      setShouldRenderChart(false);
+    }
+  }, [expanded]);
+
   // Memoize expensive chart data transformations to prevent recalculation on every render
+  // Only calculate chart data when we should render the chart to improve performance
   const chartLabels = React.useMemo(() => {
-    return damageReductionData?.dataPoints.map((point) => point.relativeTime.toFixed(1)) || [];
-  }, [damageReductionData?.dataPoints]);
+    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
+    return damageReductionData.dataPoints.map((point) => point.relativeTime.toFixed(1));
+  }, [shouldRenderChart, damageReductionData?.dataPoints]);
 
   const chartDataPoints = React.useMemo(() => {
-    return (
-      damageReductionData?.dataPoints.map((point) => ({
-        x: point.relativeTime,
-        y: point.damageReduction,
-      })) || []
-    );
-  }, [damageReductionData?.dataPoints]);
+    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
+    return damageReductionData.dataPoints.map((point) => ({
+      x: point.relativeTime,
+      y: point.damageReduction,
+    }));
+  }, [shouldRenderChart, damageReductionData?.dataPoints]);
 
   const staticDataPoints = React.useMemo(() => {
-    if (!damageReductionData?.dataPoints) return [];
+    if (!shouldRenderChart || !damageReductionData?.dataPoints) return [];
     const staticDR = resistanceToDamageReduction(damageReductionData.staticResistance);
     return damageReductionData.dataPoints.map((point) => ({
       x: point.relativeTime,
       y: staticDR,
     }));
-  }, [damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
+  }, [shouldRenderChart, damageReductionData?.dataPoints, damageReductionData?.staticResistance]);
 
   if (isLoading || !damageReductionData) {
     return (
@@ -515,140 +531,185 @@ export const PlayerDamageReductionDetails: React.FC<PlayerDamageReductionDetails
             </Card>
           </Box>
 
-          {/* Damage Reduction vs Time Chart */}
-          <Card
-            sx={{
-              background:
-                'linear-gradient(135deg, rgba(76, 217, 100, 0.15) 0%, rgba(76, 217, 100, 0.08) 50%, rgba(76, 217, 100, 0.04) 100%)',
-              border: '1px solid rgba(76, 217, 100, 0.3)',
-              borderRadius: 2,
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          >
-            <CardContent>
-              <Typography
-                variant="h6"
-                gutterBottom
-                sx={{
-                  textShadow:
-                    '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
-                }}
-              >
-                Damage Reduction Over Time
-              </Typography>
-              <Box sx={{ width: '100%', height: 300 }}>
-                <LineChart
-                  data={{
-                    labels: chartLabels,
-                    datasets: [
-                      {
-                        label: 'Damage Reduction %',
-                        data: chartDataPoints,
-                        borderColor: '#2196f3',
-                        backgroundColor: 'rgba(33, 150, 243, 0.1)',
-                        borderWidth: 2,
-                        fill: false,
-                        stepped: 'after',
-                        pointRadius: 0,
-                        pointHoverRadius: 4,
-                        tension: 0,
-                      },
-                      {
-                        label: 'Static Reduction',
-                        data: staticDataPoints,
-                        borderColor: '#ff9800',
-                        backgroundColor: 'rgba(255, 152, 0, 0.1)',
-                        borderWidth: 1,
-                        fill: false,
-                        pointRadius: 0,
-                        pointHoverRadius: 0,
-                        tension: 0,
-                        borderDash: [2, 2],
-                      },
-                    ],
+          {/* Damage Reduction vs Time Chart - Only render when expanded for performance */}
+          {expanded ? (
+            <Card
+              sx={{
+                background:
+                  'linear-gradient(135deg, rgba(76, 217, 100, 0.15) 0%, rgba(76, 217, 100, 0.08) 50%, rgba(76, 217, 100, 0.04) 100%)',
+                border: '1px solid rgba(76, 217, 100, 0.3)',
+                borderRadius: 2,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+              }}
+            >
+              <CardContent>
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{
+                    textShadow:
+                      '0 2px 4px rgb(0 0 0 / 0%), 0 4px 8px rgba(0, 0, 0, 0.4), 0 8px 16px rgba(0, 0, 0, 0.2)',
                   }}
-                  options={{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    interaction: {
-                      intersect: false,
-                      mode: 'index',
-                    },
-                    plugins: {
-                      legend: {
-                        display: true,
-                        position: 'top',
-                      },
-                      tooltip: {
-                        callbacks: {
-                          title: (context) => `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
-                          label: (context) =>
-                            `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)}%`,
-                        },
-                      },
-                      annotation: {
-                        annotations: {
-                          targetLine: {
-                            type: 'line',
-                            yMin: 50,
-                            yMax: 50,
-                            borderColor: '#ff9800',
+                >
+                  Damage Reduction Over Time
+                </Typography>
+                <Box sx={{ width: '100%', height: 300 }}>
+                  {shouldRenderChart ? (
+                    <LineChart
+                      data={{
+                        labels: chartLabels,
+                        datasets: [
+                          {
+                            label: 'Damage Reduction %',
+                            data: chartDataPoints,
+                            borderColor: '#2196f3',
+                            backgroundColor: 'rgba(33, 150, 243, 0.1)',
                             borderWidth: 2,
-                            borderDash: [5, 5],
-                            label: {
-                              display: true,
-                              content: 'Target: 50%',
-                              position: 'end',
-                              backgroundColor: '#ff9800',
-                              color: 'white',
-                              padding: 4,
-                            },
+                            fill: false,
+                            stepped: 'after',
+                            pointRadius: 0,
+                            pointHoverRadius: 4,
+                            tension: 0,
                           },
-                          staticLine: {
-                            type: 'line',
-                            yMin: staticDamageReduction,
-                            yMax: staticDamageReduction,
-                            borderColor: '#ff5722',
+                          {
+                            label: 'Static Reduction',
+                            data: staticDataPoints,
+                            borderColor: '#ff9800',
+                            backgroundColor: 'rgba(255, 152, 0, 0.1)',
                             borderWidth: 1,
-                            borderDash: [3, 3],
-                            label: {
-                              display: true,
-                              content: `Static: ${staticDamageReduction.toFixed(1)}%`,
-                              position: 'start',
-                              backgroundColor: '#ff5722',
-                              color: 'white',
-                              padding: 4,
+                            fill: false,
+                            pointRadius: 0,
+                            pointHoverRadius: 0,
+                            tension: 0,
+                            borderDash: [2, 2],
+                          },
+                        ],
+                      }}
+                      options={{
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        interaction: {
+                          intersect: false,
+                          mode: 'index',
+                        },
+                        plugins: {
+                          legend: {
+                            display: true,
+                            position: 'top',
+                          },
+                          tooltip: {
+                            callbacks: {
+                              title: (context) => `Time: ${Number(context[0].parsed.x).toFixed(1)}s`,
+                              label: (context) =>
+                                `${context.dataset.label}: ${Number(context.parsed.y).toFixed(1)}%`,
+                            },
+                          },
+                          annotation: {
+                            annotations: {
+                              targetLine: {
+                                type: 'line',
+                                yMin: 50,
+                                yMax: 50,
+                                borderColor: '#ff9800',
+                                borderWidth: 2,
+                                borderDash: [5, 5],
+                                label: {
+                                  display: true,
+                                  content: 'Target: 50%',
+                                  position: 'end',
+                                  backgroundColor: '#ff9800',
+                                  color: 'white',
+                                  padding: 4,
+                                },
+                              },
+                              staticLine: {
+                                type: 'line',
+                                yMin: staticDamageReduction,
+                                yMax: staticDamageReduction,
+                                borderColor: '#ff5722',
+                                borderWidth: 1,
+                                borderDash: [3, 3],
+                                label: {
+                                  display: true,
+                                  content: `Static: ${staticDamageReduction.toFixed(1)}%`,
+                                  position: 'start',
+                                  backgroundColor: '#ff5722',
+                                  color: 'white',
+                                  padding: 4,
+                                },
+                              },
                             },
                           },
                         },
-                      },
-                    },
-                    scales: {
-                      x: {
-                        title: {
-                          display: true,
-                          text: 'Fight Time (seconds)',
+                        scales: {
+                          x: {
+                            title: {
+                              display: true,
+                              text: 'Fight Time (seconds)',
+                            },
+                            type: 'linear',
+                          },
+                          y: {
+                            title: {
+                              display: true,
+                              text: 'Damage Reduction (%)',
+                              },
+                            min: 0,
+                            max: 60,
+                            ticks: {
+                              callback: (value) => `${value}%`,
+                            },
+                          },
                         },
-                        type: 'linear',
-                      },
-                      y: {
-                        title: {
-                          display: true,
-                          text: 'Damage Reduction (%)',
-                        },
-                        min: 0,
-                        max: 60,
-                        ticks: {
-                          callback: (value) => `${value}%`,
-                        },
-                      },
-                    },
+                      }}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        color: 'text.secondary',
+                      }}
+                    >
+                      <Typography variant="body2">Loading chart...</Typography>
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+          ) : (
+            <Card
+              sx={{
+                background:
+                  'linear-gradient(135deg, rgba(76, 217, 100, 0.08) 0%, rgba(76, 217, 100, 0.04) 50%, rgba(76, 217, 100, 0.02) 100%)',
+                border: '1px solid rgba(76, 217, 100, 0.2)',
+                borderRadius: 2,
+                backdropFilter: 'blur(10px)',
+                WebkitBackdropFilter: 'blur(10px)',
+                cursor: 'pointer',
+              }}
+              onClick={() => onExpandChange({} as React.SyntheticEvent, true)}
+            >
+              <CardContent sx={{ py: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 1,
+                    color: 'text.secondary',
                   }}
-                />
-              </Box>
-            </CardContent>
-          </Card>
+                >
+                  <Typography variant="body2">
+                    📊 Click to expand and view damage reduction timeline chart
+                  </Typography>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
         </Stack>
       </AccordionDetails>
     </Accordion>
