@@ -49,14 +49,9 @@ jobs:
       - name: Upload Coverage to GitHub Gist
         run: node scripts/upload-coverage-to-gist.js
         if: github.ref == 'refs/heads/master'
-<<<<<<< HEAD
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GIST_TOKEN || secrets.GITHUB_TOKEN }}
-=======
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
->>>>>>> d5e6954e (Fixed cache busting version)
           COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
 
       - name: Upload Coverage Badges
@@ -89,43 +84,17 @@ jobs:
             let coverageComment = '## 📊 Coverage Report\n\n';
 
             try {
-              if (fs.existsSync('coverage/coverage-final.json')) {
-                const coverageData = JSON.parse(fs.readFileSync('coverage/coverage-final.json', 'utf8'));
-                
-                // Calculate total coverage
-                const total = Object.values(coverageData).reduce(
-                  (acc, file) => {
-                    acc.lines.total += file.lines.total;
-                    acc.lines.covered += file.lines.covered;
-                    acc.functions.total += file.functions.total;
-                    acc.functions.covered += file.functions.covered;
-                    acc.branches.total += file.branches.total;
-                    acc.branches.covered += file.branches.covered;
-                    acc.statements.total += file.statements.total;
-                    acc.statements.covered += file.statements.covered;
-                    return acc;
-                  },
-                  {
-                    lines: { total: 0, covered: 0 },
-                    functions: { total: 0, covered: 0 },
-                    branches: { total: 0, covered: 0 },
-                    statements: { total: 0, covered: 0 }
-                  }
-                );
-
-                const coverage = {
-                  overall: Math.round((total.statements.covered / total.statements.total) * 100),
-                  lines: Math.round((total.lines.covered / total.lines.total) * 100),
-                  functions: Math.round((total.functions.covered / total.functions.total) * 100),
-                  branches: Math.round((total.branches.covered / total.branches.total) * 100)
-                };
+              if (fs.existsSync('coverage/coverage-status.json')) {
+                const coverageStatusData = JSON.parse(fs.readFileSync('coverage/coverage-status.json', 'utf8'));
+                const coverage = coverageStatusData.coverage;
 
                 coverageComment += `| Metric | Coverage |\n`;
                 coverageComment += `|--------|----------|\n`;
-                coverageComment += `| **Overall** | **${coverage.overall}%** |\n`;
-                coverageComment += `| Lines | ${coverage.lines}% |\n`;
-                coverageComment += `| Functions | ${coverage.functions}% |\n`;
-                coverageComment += `| Branches | ${coverage.branches}% |\n\n`;
+                coverageComment += `| **Overall** | **${coverage.overall.percentage.toFixed(1)}%** |\n`;
+                coverageComment += `| Lines | ${coverage.lines.percentage.toFixed(1)}% (${coverage.lines.covered}/${coverage.lines.total}) |\n`;
+                coverageComment += `| Functions | ${coverage.functions.percentage.toFixed(1)}% (${coverage.functions.covered}/${coverage.functions.total}) |\n`;
+                coverageComment += `| Branches | ${coverage.branches.percentage.toFixed(1)}% (${coverage.branches.covered}/${coverage.branches.total}) |\n`;
+                coverageComment += `| Statements | ${coverage.statements.percentage.toFixed(1)}% (${coverage.statements.covered}/${coverage.statements.total}) |\n\n`;
                 coverageComment += `📁 [Download detailed coverage report](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})`;
               } else {
                 coverageComment += '⚠️ Coverage data not found.';
