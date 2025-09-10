@@ -1,4 +1,4 @@
-import { Login, Logout, Person } from '@mui/icons-material';
+import { Login, Logout, Person, ExpandMore, Build, ExpandLess } from '@mui/icons-material';
 import {
   AppBar,
   Toolbar,
@@ -11,6 +11,8 @@ import {
   Tooltip,
   Menu,
   MenuItem,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
@@ -190,6 +192,158 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
+const MobileSubmenuContainer = styled(Box)<{ open: boolean; itemCount?: number }>(
+  ({ theme, open, itemCount = 3 }) => ({
+    width: '100%',
+    overflow: 'hidden',
+    // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding
+    height: open ? `${itemCount * 56 + 4}px` : 0,
+    transition:
+      'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+    marginBottom: open ? theme.spacing(1) : 0,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingTop: open ? theme.spacing(0.5) : 0,
+    background: open
+      ? theme.palette.mode === 'dark'
+        ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.6) 100%)'
+        : 'linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.8) 100%)'
+      : 'transparent',
+    borderRadius: open ? '0 0 16px 16px' : 0,
+    backdropFilter: open ? 'blur(10px)' : 'none',
+  }),
+);
+
+const BaseMobileSubmenuItem = styled(Button, {
+  shouldForwardProp: (prop) => !['open', 'index', 'colorVariant'].includes(prop as string),
+})<{
+  open: boolean;
+  index: number;
+  colorVariant: 'default' | 'destructive' | 'positive';
+}>(({ theme, open, index, colorVariant }) => {
+  // Define color schemes for different variants
+  const getColors = (): {
+    borderLeft: string;
+    borderLeftHover: string;
+    borderHover: string;
+    gradient: string;
+    shadow: string;
+  } => {
+    switch (colorVariant) {
+      case 'destructive':
+        return {
+          borderLeft:
+            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.4)' : 'rgba(220, 38, 38, 0.5)',
+          borderLeftHover:
+            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.8)' : 'rgba(220, 38, 38, 0.9)',
+          borderHover:
+            theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.25)' : 'rgba(220, 38, 38, 0.3)',
+          gradient:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.06) 0%, rgba(220, 38, 38, 0.02) 50%, transparent 100%)'
+              : 'linear-gradient(135deg, rgba(220, 38, 38, 0.04) 0%, rgba(185, 28, 28, 0.02) 50%, transparent 100%)',
+          shadow:
+            theme.palette.mode === 'dark'
+              ? '0 4px 12px rgba(239, 68, 68, 0.12)'
+              : '0 4px 12px rgba(220, 38, 38, 0.1)',
+        };
+      case 'positive':
+        return {
+          borderLeft:
+            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.4)' : 'rgba(100, 116, 139, 0.5)',
+          borderLeftHover:
+            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.8)' : 'rgba(100, 116, 139, 0.9)',
+          borderHover:
+            theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.25)'
+              : 'rgba(100, 116, 139, 0.3)',
+          gradient:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
+              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
+          shadow:
+            theme.palette.mode === 'dark'
+              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
+              : '0 4px 12px rgba(100, 116, 139, 0.08)',
+        };
+      default:
+        return {
+          borderLeft:
+            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.3)' : 'rgba(100, 116, 139, 0.4)',
+          borderLeftHover:
+            theme.palette.mode === 'dark' ? 'rgba(148, 163, 184, 0.7)' : 'rgba(100, 116, 139, 0.8)',
+          borderHover:
+            theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.2)'
+              : 'rgba(100, 116, 139, 0.25)',
+          gradient:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.06) 0%, rgba(100, 116, 139, 0.02) 50%, transparent 100%)'
+              : 'linear-gradient(135deg, rgba(100, 116, 139, 0.04) 0%, rgba(71, 85, 105, 0.02) 50%, transparent 100%)',
+          shadow:
+            theme.palette.mode === 'dark'
+              ? '0 4px 12px rgba(148, 163, 184, 0.1)'
+              : '0 4px 12px rgba(100, 116, 139, 0.08)',
+        };
+    }
+  };
+
+  const colors = getColors();
+
+  return {
+    width: '100%',
+    maxWidth: 'none',
+    height: 52,
+    marginBottom: theme.spacing(0.5),
+    background: 'transparent',
+    border: `1px solid transparent`,
+    borderLeft: `2px solid ${colors.borderLeft}`,
+    borderRadius: 8,
+    color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
+    fontSize: '0.95rem',
+    fontWeight: 500,
+    textTransform: 'none',
+    position: 'relative',
+    overflow: 'hidden',
+    justifyContent: 'flex-start',
+    paddingLeft: theme.spacing(2),
+    opacity: open ? 1 : 0,
+    transform: open ? 'translateX(0) scale(1)' : 'translateX(-20px) scale(0.95)',
+    transition: `all 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)`,
+    transitionDelay: open ? `${0.1 + index * 0.08}s` : '0s',
+    '&::before': {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      right: 0,
+      bottom: 0,
+      background: colors.gradient,
+      opacity: 0,
+      transition: 'opacity 0.3s ease',
+      borderRadius: 8,
+    },
+    '&:hover': {
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(248, 250, 252, 0.6)',
+      borderColor: colors.borderHover,
+      borderLeftColor: colors.borderLeftHover,
+      borderLeftWidth: '3px',
+      transform: open ? 'translateX(2px) scale(1.02)' : 'translateX(-20px) scale(0.95)',
+      boxShadow: colors.shadow,
+      '&::before': {
+        opacity: 1,
+      },
+    },
+    '&:active': {
+      transform: open ? 'translateX(1px) scale(1)' : 'translateX(-20px) scale(0.95)',
+      background:
+        theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(248, 250, 252, 0.8)',
+    },
+  };
+});
+
 const AuthIconButton = styled(IconButton)(({ theme }) => ({
   width: 40,
   height: 40,
@@ -276,6 +430,9 @@ export const HeaderBar: React.FC = () => {
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
+  const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
+  const [mobileAccountOpen, setMobileAccountOpen] = React.useState(false);
 
   React.useEffect(() => {
     const onScroll = (): void => setScrolled(window.scrollY > 8);
@@ -298,6 +455,27 @@ export const HeaderBar: React.FC = () => {
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
+    if (!mobileOpen) {
+      // Reset submenus when opening mobile menu
+      setMobileToolsOpen(false);
+      setMobileAccountOpen(false);
+    }
+  };
+
+  const handleMobileToolsToggle = (): void => {
+    if (!mobileToolsOpen) {
+      // Close account submenu if it's open
+      setMobileAccountOpen(false);
+    }
+    setMobileToolsOpen(!mobileToolsOpen);
+  };
+
+  const handleMobileAccountToggle = (): void => {
+    if (!mobileAccountOpen) {
+      // Close tools submenu if it's open
+      setMobileToolsOpen(false);
+    }
+    setMobileAccountOpen(!mobileAccountOpen);
   };
 
   const handleAccountClick = (event: React.MouseEvent<HTMLElement>): void => {
@@ -318,21 +496,97 @@ export const HeaderBar: React.FC = () => {
     setAnchorEl(null);
   };
 
+  const handleToolsClick = (event: React.MouseEvent<HTMLElement>): void => {
+    setToolsAnchorEl(event.currentTarget);
+  };
+
+  const handleToolsClose = (): void => {
+    setToolsAnchorEl(null);
+  };
+
+  const handleToolNavigation = (path: string): void => {
+    if (path.startsWith('http')) {
+      window.open(path, '_blank', 'noopener,noreferrer');
+    } else {
+      navigate(path);
+    }
+    setToolsAnchorEl(null);
+    setMobileOpen(false);
+    setMobileToolsOpen(false);
+    setMobileAccountOpen(false);
+  };
+
+  const handleMobileViewReports = (): void => {
+    navigate('/my-reports');
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  };
+
+  const handleMobileAuthAction = (): void => {
+    if (isLoggedIn) {
+      handleLogout();
+    } else {
+      handleLogin();
+    }
+    setMobileOpen(false);
+    setMobileAccountOpen(false);
+  };
+
+  const toolsItems = [
+    {
+      text: 'Text Editor',
+      icon: '📝',
+      path: '/text-editor',
+    },
+    {
+      text: 'Calculator',
+      icon: <Calculator size="18" />,
+      path: '/calculator',
+    },
+    {
+      text: 'Logs',
+      icon: '📋',
+      path: '/logs',
+    },
+  ];
+
+  const accountItems = React.useMemo(() => {
+    const items: Array<{
+      text: string;
+      icon: React.ReactElement;
+      action: () => void;
+      colorVariant: 'default' | 'destructive' | 'positive';
+    }> = [];
+
+    if (isLoggedIn) {
+      items.push({
+        text: 'View my reports',
+        icon: <Person sx={{ fontSize: 18 }} />,
+        action: handleMobileViewReports,
+        colorVariant: 'default',
+      });
+      items.push({
+        text: 'Log out',
+        icon: <Logout sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'destructive',
+      });
+    } else {
+      items.push({
+        text: 'Log in',
+        icon: <Login sx={{ fontSize: 18 }} />,
+        action: handleMobileAuthAction,
+        colorVariant: 'positive',
+      });
+    }
+    return items;
+  }, [isLoggedIn, handleMobileAuthAction, handleMobileViewReports]);
+
   const navItems = [
     {
       text: 'Latest Reports',
       icon: <Reports size="18" />,
       href: '#/latest-reports',
-    },
-    {
-      text: 'Text Editor',
-      icon: '📝',
-      href: 'https://esohelper.tools/text-editor',
-    },
-    {
-      text: 'Calculator',
-      icon: <Calculator size="18" />,
-      href: '#/calculator',
     },
     {
       text: 'Discord',
@@ -459,6 +713,64 @@ export const HeaderBar: React.FC = () => {
                   {item.text}
                 </Button>
               ))}
+
+              {/* Tools submenu button */}
+              <Button
+                color="inherit"
+                onClick={handleToolsClick}
+                endIcon={<ExpandMore />}
+                startIcon={<Build />}
+                sx={{
+                  px: 2,
+                  py: 1,
+                  borderRadius: 2,
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  background: 'transparent',
+                  border: '1px solid transparent',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.1) 0%, rgba(147, 51, 234, 0.05) 100%)'
+                        : 'linear-gradient(135deg, rgba(59, 130, 246, 0.08) 0%, rgba(99, 102, 241, 0.04) 100%)',
+                    opacity: 0,
+                    transition: 'opacity 0.3s ease',
+                    borderRadius: 'inherit',
+                  },
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.08)'
+                        : 'rgba(59, 130, 246, 0.06)',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.2)'
+                        : 'rgba(59, 130, 246, 0.15)',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 20px rgba(56, 189, 248, 0.15), 0 2px 8px rgba(0, 0, 0, 0.1)'
+                        : '0 4px 20px rgba(59, 130, 246, 0.12), 0 2px 8px rgba(0, 0, 0, 0.05)',
+                    '&::before': {
+                      opacity: 1,
+                    },
+                  },
+                  '&:active': {
+                    transform: 'translateY(0)',
+                  },
+                }}
+              >
+                Tools
+              </Button>
               <ThemeToggle />
               {isLoggedIn ? (
                 <Tooltip title="Account" arrow placement="bottom">
@@ -575,6 +887,77 @@ export const HeaderBar: React.FC = () => {
         </MenuItem>
       </Menu>
 
+      {/* Tools Submenu */}
+      <Menu
+        anchorEl={toolsAnchorEl}
+        open={Boolean(toolsAnchorEl)}
+        onClose={handleToolsClose}
+        transformOrigin={{ horizontal: 'left', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'left', vertical: 'bottom' }}
+        slotProps={{
+          paper: {
+            elevation: 0,
+            sx: {
+              overflow: 'visible',
+              filter: 'drop-shadow(0px 2px 8px rgba(0,0,0,0.32))',
+              mt: 1.5,
+              minWidth: 180,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(15,23,42,0.98) 0%, rgba(3,7,18,0.98) 100%)'
+                  : 'linear-gradient(135deg, rgba(248,250,252,0.98) 0%, rgba(241,245,249,0.98) 100%)',
+              backdropFilter: 'blur(20px)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgba(59, 130, 246, 0.15)',
+              borderRadius: 2,
+              '&::before': {
+                content: '""',
+                display: 'block',
+                position: 'absolute',
+                top: 0,
+                left: 14,
+                width: 10,
+                height: 10,
+                bgcolor: 'background.paper',
+                transform: 'translateY(-50%) rotate(45deg)',
+                zIndex: 0,
+              },
+            },
+          },
+        }}
+      >
+        {toolsItems.map((item) => (
+          <MenuItem
+            key={item.text}
+            onClick={() => handleToolNavigation(item.path)}
+            sx={{
+              py: 1.5,
+              px: 2,
+              borderRadius: 1,
+              mx: 1,
+              mb: 0.5,
+              '&:hover': {
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.08)'
+                    : 'rgba(59, 130, 246, 0.08)',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ minWidth: 32 }}>
+              {typeof item.icon === 'string' ? (
+                <Box sx={{ fontSize: 18 }}>{item.icon}</Box>
+              ) : (
+                item.icon
+              )}
+            </ListItemIcon>
+            <ListItemText primary={item.text} />
+          </MenuItem>
+        ))}
+      </Menu>
+
       {/* Modern Mobile Menu Overlay */}
       <MobileMenuOverlay open={mobileOpen}>
         <CloseButton onClick={handleDrawerToggle} aria-label="close menu">
@@ -631,23 +1014,107 @@ export const HeaderBar: React.FC = () => {
             </MobileNavButton>
           ))}
 
-          {isLoggedIn && (
+          {/* Tools submenu in mobile menu */}
+          <Box>
             <MobileNavButton
-              onClick={handleViewReports}
+              onClick={handleMobileToolsToggle}
+              endIcon={mobileToolsOpen ? <ExpandLess /> : <ExpandMore />}
+              startIcon={<Build />}
               sx={{
-                animationDelay: `${navItems.length * 0.1 + 0.1}s`,
+                animationDelay: `${navItems.length * 0.1}s`,
                 animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-                background:
-                  theme.palette.mode === 'dark'
+                background: mobileToolsOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(126, 34, 206, 0.15) 0%, rgba(107, 33, 168, 0.08) 100%)'
+                  : theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.1) 0%, rgba(126, 34, 206, 0.05) 100%)'
+                    : 'linear-gradient(135deg, rgba(126, 34, 206, 0.08) 0%, rgba(107, 33, 168, 0.04) 100%)',
+                borderColor: mobileToolsOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(147, 51, 234, 0.4)'
+                    : 'rgba(126, 34, 206, 0.3)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(147, 51, 234, 0.2)'
+                    : 'rgba(126, 34, 206, 0.15)',
+                borderRadius: mobileToolsOpen ? '16px 16px 0 0' : '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  background: mobileToolsOpen
+                    ? theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.25) 0%, rgba(126, 34, 206, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(126, 34, 206, 0.2) 0%, rgba(107, 33, 168, 0.12) 100%)'
+                    : theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(147, 51, 234, 0.2) 0%, rgba(126, 34, 206, 0.1) 100%)'
+                      : 'linear-gradient(135deg, rgba(126, 34, 206, 0.12) 0%, rgba(107, 33, 168, 0.08) 100%)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(147, 51, 234, 0.4)'
+                      : 'rgba(126, 34, 206, 0.25)',
+                },
+                '@keyframes slideInUp': {
+                  '0%': { opacity: 0, transform: 'translateY(30px)' },
+                  '100%': { opacity: 1, transform: 'translateY(0)' },
+                },
+              }}
+            >
+              Tools
+            </MobileNavButton>
+
+            {/* Tools submenu items */}
+            <MobileSubmenuContainer open={mobileToolsOpen} itemCount={toolsItems.length}>
+              {toolsItems.map((item, index) => (
+                <BaseMobileSubmenuItem
+                  key={item.text}
+                  open={mobileToolsOpen}
+                  index={index}
+                  colorVariant="default"
+                  onClick={() => handleToolNavigation(item.path)}
+                  startIcon={
+                    typeof item.icon === 'string' ? (
+                      <Box sx={{ fontSize: 18, mr: 1 }}>{item.icon}</Box>
+                    ) : (
+                      <Box sx={{ mr: 1 }}>{item.icon}</Box>
+                    )
+                  }
+                >
+                  {item.text}
+                </BaseMobileSubmenuItem>
+              ))}
+            </MobileSubmenuContainer>
+          </Box>
+
+          {/* Account submenu in mobile menu */}
+          <Box>
+            <MobileNavButton
+              onClick={handleMobileAccountToggle}
+              endIcon={mobileAccountOpen ? <ExpandLess /> : <ExpandMore />}
+              startIcon={<Person />}
+              sx={{
+                animationDelay: `${(navItems.length + 1) * 0.1}s`,
+                animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
+                background: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
+                    : 'linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.08) 100%)'
+                  : theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)'
                     : 'linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(29, 78, 216, 0.04) 100%)',
-                borderColor:
-                  theme.palette.mode === 'dark'
+                borderColor: mobileAccountOpen
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(59, 130, 246, 0.4)'
+                    : 'rgba(37, 99, 235, 0.3)'
+                  : theme.palette.mode === 'dark'
                     ? 'rgba(59, 130, 246, 0.2)'
                     : 'rgba(37, 99, 235, 0.15)',
+                borderRadius: mobileAccountOpen ? '16px 16px 0 0' : '16px',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
-                  background:
-                    theme.palette.mode === 'dark'
+                  background: mobileAccountOpen
+                    ? theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.25) 0%, rgba(37, 99, 235, 0.15) 100%)'
+                      : 'linear-gradient(135deg, rgba(37, 99, 235, 0.2) 0%, rgba(29, 78, 216, 0.12) 100%)'
+                    : theme.palette.mode === 'dark'
                       ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(37, 99, 235, 0.1) 100%)'
                       : 'linear-gradient(135deg, rgba(37, 99, 235, 0.12) 0%, rgba(29, 78, 216, 0.08) 100%)',
                   borderColor:
@@ -660,57 +1127,26 @@ export const HeaderBar: React.FC = () => {
                   '100%': { opacity: 1, transform: 'translateY(0)' },
                 },
               }}
-              startIcon={<Person sx={{ fontSize: 20 }} />}
             >
-              View my reports
+              Account
             </MobileNavButton>
-          )}
-          <MobileNavButton
-            onClick={isLoggedIn ? handleLogout : handleLogin}
-            sx={{
-              animationDelay: `${navItems.length * 0.1 + (isLoggedIn ? 0.2 : 0.1)}s`,
-              animation: mobileOpen ? 'slideInUp 0.6s ease-out forwards' : 'none',
-              background: isLoggedIn
-                ? theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%)'
-                  : 'linear-gradient(135deg, rgba(220, 38, 38, 0.08) 0%, rgba(185, 28, 28, 0.04) 100%)'
-                : theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(22, 163, 74, 0.05) 100%)'
-                  : 'linear-gradient(135deg, rgba(22, 163, 74, 0.08) 0%, rgba(21, 128, 61, 0.04) 100%)',
-              borderColor: isLoggedIn
-                ? theme.palette.mode === 'dark'
-                  ? 'rgba(239, 68, 68, 0.2)'
-                  : 'rgba(220, 38, 38, 0.15)'
-                : theme.palette.mode === 'dark'
-                  ? 'rgba(34, 197, 94, 0.2)'
-                  : 'rgba(22, 163, 74, 0.15)',
-              '&:hover': {
-                background: isLoggedIn
-                  ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(220, 38, 38, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(220, 38, 38, 0.12) 0%, rgba(185, 28, 28, 0.08) 100%)'
-                  : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.2) 0%, rgba(22, 163, 74, 0.1) 100%)'
-                    : 'linear-gradient(135deg, rgba(22, 163, 74, 0.12) 0%, rgba(21, 128, 61, 0.08) 100%)',
-                borderColor: isLoggedIn
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(239, 68, 68, 0.4)'
-                    : 'rgba(220, 38, 38, 0.25)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(34, 197, 94, 0.4)'
-                    : 'rgba(22, 163, 74, 0.25)',
-              },
-              '@keyframes slideInUp': {
-                '0%': { opacity: 0, transform: 'translateY(30px)' },
-                '100%': { opacity: 1, transform: 'translateY(0)' },
-              },
-            }}
-            startIcon={
-              isLoggedIn ? <Logout sx={{ fontSize: 20 }} /> : <Login sx={{ fontSize: 20 }} />
-            }
-          >
-            {isLoggedIn ? 'Log out' : 'Log in'}
-          </MobileNavButton>
+
+            {/* Account submenu items */}
+            <MobileSubmenuContainer open={mobileAccountOpen} itemCount={accountItems.length}>
+              {accountItems.map((item, index) => (
+                <BaseMobileSubmenuItem
+                  key={item.text}
+                  open={mobileAccountOpen}
+                  index={index}
+                  colorVariant={item.colorVariant}
+                  onClick={item.action}
+                  startIcon={<Box sx={{ mr: 1 }}>{item.icon}</Box>}
+                >
+                  {item.text}
+                </BaseMobileSubmenuItem>
+              ))}
+            </MobileSubmenuContainer>
+          </Box>
         </MobileMenuContent>
       </MobileMenuOverlay>
     </>

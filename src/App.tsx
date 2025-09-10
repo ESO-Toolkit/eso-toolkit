@@ -47,6 +47,12 @@ const OAuthRedirect = React.lazy(() =>
 const Calculator = React.lazy(() =>
   import('./components/Calculator').then((module) => ({ default: module.Calculator })),
 );
+const TextEditor = React.lazy(() =>
+  import('./components/TextEditor').then((module) => ({ default: module.TextEditor })),
+);
+const Logs = React.lazy(() =>
+  import('./components/Logs').then((module) => ({ default: module.Logs })),
+);
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
@@ -252,6 +258,26 @@ const AppRoutes: React.FC = () => {
                 <ErrorBoundary>
                   <Suspense fallback={<LoadingFallback />}>
                     <Calculator />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/text-editor"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <TextEditor />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+            <Route
+              path="/logs"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <Logs />
                   </Suspense>
                 </ErrorBoundary>
               }
