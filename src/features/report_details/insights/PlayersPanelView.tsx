@@ -10,7 +10,6 @@ import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
-
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
