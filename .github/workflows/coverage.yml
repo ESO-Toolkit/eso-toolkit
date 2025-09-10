@@ -12,6 +12,8 @@ on:
 
 permissions:
   contents: read
+  issues: write
+  pull-requests: write
 
 jobs:
   coverage:
@@ -47,8 +49,9 @@ jobs:
       - name: Upload Coverage to GitHub Gist
         run: node scripts/upload-coverage-to-gist.js
         if: github.ref == 'refs/heads/master'
+        continue-on-error: true
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GIST_TOKEN || secrets.GITHUB_TOKEN }}
           COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
 
       - name: Upload Coverage Badges

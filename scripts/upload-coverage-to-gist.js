@@ -114,10 +114,20 @@ async function uploadCoverageToGist() {
       console.log('✅ Coverage data uploaded to GitHub Gist successfully');
       console.log(`📊 Coverage: ${coverage.overall}% overall`);
     } else {
-      console.error('❌ Failed to upload to GitHub Gist:', response.statusText);
+      const errorText = await response.text();
+      console.error('❌ Failed to upload to GitHub Gist:', response.status, response.statusText);
+      console.error('Error details:', errorText);
+
+      if (response.status === 403 || response.status === 401) {
+        console.log('💡 Tip: The default GITHUB_TOKEN does not have gist permissions.');
+        console.log('   To fix this, create a Personal Access Token with "gist" scope and');
+        console.log('   add it as a repository secret named "GIST_TOKEN".');
+        console.log('   See docs/COVERAGE_BADGES_SETUP.md for detailed instructions.');
+      }
     }
   } catch (error) {
     console.error('❌ Error uploading coverage data:', error.message);
+    console.log('💡 If this is a permission error, see docs/COVERAGE_BADGES_SETUP.md');
   }
 }
 
