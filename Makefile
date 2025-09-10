@@ -20,6 +20,7 @@ help:
 	@echo "  codegen       - Generate GraphQL types"
 	@echo "  fetch-abilities - Fetch abilities data"
 	@echo "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
+	@echo "  pc            - Alias for pre-commit"
 	@echo "  all           - Run clean, install, lint, test, and build"
 
 # Install dependencies
@@ -59,6 +60,9 @@ format:
 
 # Alias for format
 fmt: format
+
+# Alias for pre-commit
+pc: pre-commit
 
 # Start development server
 dev:
