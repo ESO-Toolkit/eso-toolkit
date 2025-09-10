@@ -1,4 +1,6 @@
 // Import MUI icons
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import BugReportIcon from '@mui/icons-material/BugReport';
 import FlareIcon from '@mui/icons-material/Flare';
@@ -23,6 +25,10 @@ import {
   FormControlLabel,
   Switch,
   Icon,
+  IconButton,
+  ToggleButton,
+  ToggleButtonGroup,
+  Typography,
 } from '@mui/material';
 import React, { Suspense } from 'react';
 
@@ -124,11 +130,152 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
   return (
     <React.Fragment>
-      {/* Target Selection */}
-      <Box sx={{ mb: 2 }}>
+      {/* Target Selection and Navigation Row */}
+      <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <FormControl sx={{ minWidth: 200, overflow: 'visible' }}>
           <TargetSelector />
         </FormControl>
+        
+        {/* Fight Navigation - aligned with target selector */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            backgroundColor: 'rgba(255, 255, 255, 0.03)',
+            borderRadius: '12px',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            backdropFilter: 'blur(8px)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.04)',
+            p: 0.75,
+            gap: 0.5,
+          }}
+        >
+          {/* Previous Button */}
+          <IconButton
+            size="small"
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: '8px',
+              backgroundColor: 'transparent',
+              color: 'rgba(255, 255, 255, 0.8)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: 'rgba(255, 255, 255, 0.95)',
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
+            <ArrowBackIcon fontSize="small" />
+          </IconButton>
+
+          {/* Mode Toggle */}
+          <ToggleButtonGroup
+            value="all"
+            exclusive
+            size="small"
+            sx={{
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              border: 'none',
+              '& .MuiToggleButtonGroup-grouped': {
+                border: 'none',
+                '&:not(:first-of-type)': {
+                  borderLeft: 'none',
+                },
+                '&:first-of-type': {
+                  borderTopLeftRadius: '6px',
+                  borderBottomLeftRadius: '6px',
+                },
+                '&:last-of-type': {
+                  borderTopRightRadius: '6px',
+                  borderBottomRightRadius: '6px',
+                },
+              },
+              '& .MuiToggleButton-root': {
+                px: 1.5,
+                py: 0.5,
+                fontSize: '0.75rem',
+                fontWeight: 600,
+                textTransform: 'none',
+                minWidth: 'auto',
+                height: 28,
+                border: 'none',
+                borderRadius: '6px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+                letterSpacing: '0.025em',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.06)',
+                  color: 'rgba(255, 255, 255, 0.8)',
+                },
+                '&.Mui-selected': {
+                  background: 'linear-gradient(135deg, #9333ea, #8b5cf6)',
+                  color: 'white',
+                  boxShadow: '0 2px 8px rgba(147, 51, 234, 0.4), 0 1px 3px rgba(147, 51, 234, 0.3)',
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #a855f7, #9333ea)',
+                    color: 'white',
+                    transform: 'scale(1.02)',
+                  },
+                },
+              },
+            }}
+          >
+            <ToggleButton value="all">All</ToggleButton>
+            <ToggleButton value="bosses">Bosses</ToggleButton>
+          </ToggleButtonGroup>
+
+          {/* Counter */}
+          <Box
+            sx={{
+              px: 1.5,
+              py: 0.5,
+              backgroundColor: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              minWidth: '48px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <Typography
+              variant="body2"
+              sx={{
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontWeight: 600,
+                fontSize: '0.75rem',
+                fontFamily: '"Inter", -apple-system, BlinkMacSystemFont, sans-serif',
+                letterSpacing: '0.025em',
+                fontVariantNumeric: 'tabular-nums',
+              }}
+            >
+              2/18
+            </Typography>
+          </Box>
+
+          {/* Next Button */}
+          <IconButton
+            size="small"
+            sx={{
+              width: 28,
+              height: 28,
+              borderRadius: '8px',
+              backgroundColor: 'transparent',
+              color: 'rgba(255, 255, 255, 0.8)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                backgroundColor: 'rgba(255, 255, 255, 0.08)',
+                color: 'rgba(255, 255, 255, 0.95)',
+                transform: 'scale(1.05)',
+              },
+            }}
+          >
+            <ArrowForwardIcon fontSize="small" />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* Tabs with integrated experimental toggle */}
