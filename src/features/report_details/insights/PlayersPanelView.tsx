@@ -10,13 +10,6 @@ import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
-function formatDuration(startTime: number, endTime: number): string {
-  const durationMs = endTime - startTime;
-  const totalSeconds = Math.floor(durationMs / 1000);
-  const minutes = Math.floor(totalSeconds / 60);
-  const seconds = totalSeconds % 60;
-  return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-}
 
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
@@ -135,65 +128,36 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     }
 
     return (
-      <Box sx={{ p: 2 }}>
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 300,
-              letterSpacing: '0.05em',
-            }}
-          >
-            Players
-          </Typography>
-          {fightStartTime && fightEndTime && (
-            <Box display="flex" alignItems="center">
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{
-                  fontFamily: 'Space Grotesk, sans-serif',
-                  fontSize: '0.85rem',
-                  letterSpacing: '0.02em',
-                }}
-              >
-                {formatDuration(fightStartTime, fightEndTime)}
-              </Typography>
-            </Box>
-          )}
-        </Box>
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-            gap: 2,
-            alignItems: 'stretch',
-            minHeight: '400px', // Prevent CLS when cards load
-          }}
-        >
-          {playerCards.map((playerData) => (
-            <PlayerCard
-              key={String(playerData.key)}
-              player={playerData.player}
-              mundusBuffs={playerData.mundusBuffs}
-              championPoints={playerData.championPoints}
-              auras={playerData.auras}
-              scribingSkills={playerData.scribingSkills}
-              buildIssues={playerData.buildIssues}
-              classAnalysis={playerData.classAnalysis}
-              deaths={playerData.deaths}
-              resurrects={playerData.resurrects}
-              cpm={playerData.cpm}
-              maxHealth={playerData.maxHealth}
-              maxStamina={playerData.maxStamina}
-              maxMagicka={playerData.maxMagicka}
-              reportId={reportId}
-              fightId={fightId}
-              playerGear={playerData.playerGear}
-            />
-          ))}
-        </Box>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+          gap: { xs: 0, md: 2 },
+          alignItems: 'stretch',
+          minHeight: '400px', // Prevent CLS when cards load
+        }}
+      >
+        {playerCards.map((playerData) => (
+          <PlayerCard
+            key={String(playerData.key)}
+            player={playerData.player}
+            mundusBuffs={playerData.mundusBuffs}
+            championPoints={playerData.championPoints}
+            auras={playerData.auras}
+            scribingSkills={playerData.scribingSkills}
+            buildIssues={playerData.buildIssues}
+            classAnalysis={playerData.classAnalysis}
+            deaths={playerData.deaths}
+            resurrects={playerData.resurrects}
+            cpm={playerData.cpm}
+            maxHealth={playerData.maxHealth}
+            maxStamina={playerData.maxStamina}
+            maxMagicka={playerData.maxMagicka}
+            reportId={reportId}
+            fightId={fightId}
+            playerGear={playerData.playerGear}
+          />
+        ))}
       </Box>
     );
   },
