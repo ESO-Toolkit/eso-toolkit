@@ -10,8 +10,6 @@ const path = require('path');
 
 const filesToClean = [
   path.join(__dirname, '..', 'public', 'version.json'),
-  path.join(__dirname, '..', 'src', 'version.json'),
-  path.join(__dirname, '..', 'src', 'utils', 'version.json'),
   path.join(__dirname, '..', 'build', 'version.json'),
 ];
 

@@ -33,7 +33,6 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
   position = { vertical: 'bottom', horizontal: 'right' },
 }) => {
   const [state, actions] = useCacheInvalidation();
-  const versionInfo = useVersionInfo();
 
   const handleUpdate = (): void => {
     actions.forceReload();
@@ -53,7 +52,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
     return version;
   };
 
-  if (!state.hasUpdate) {
+  // Only show notification if we have versions loaded and there's actually an update
+  if (!state.hasUpdate || !state.versionLoaded || !state.currentVersion) {
     return null;
   }
 
@@ -97,9 +97,9 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
           <Typography variant="body2" component="div" sx={{ fontWeight: 600 }}>
             New version available!
           </Typography>
-          {showVersionInfo && (
+          {showVersionInfo && state.versionLoaded && state.currentVersion && (
             <Typography variant="caption" component="div" sx={{ opacity: 0.9, mt: 0.5 }}>
-              Current: {formatVersion(versionInfo.buildId)}
+              Current: {formatVersion(state.currentVersion)}
               <br />
               Latest: {formatVersion(state.serverVersion)}
             </Typography>
@@ -141,6 +141,8 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
   };
 
   const getVersionDisplay = (): string => {
+    if (!versionInfo) return 'Version info not available';
+
     switch (format) {
       case 'full':
         return `v${versionInfo.version} (${versionInfo.shortCommit}) - Built ${formatBuildTime(versionInfo.buildTime)}`;
@@ -151,6 +153,10 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
         return `v${versionInfo.version} (${versionInfo.shortCommit})`;
     }
   };
+
+  if (!versionInfo) {
+    return null;
+  }
 
   if (format === 'badge') {
     return (
@@ -185,7 +191,7 @@ export const VersionInfo: React.FC<VersionInfoProps> = ({
       }}
     >
       {getVersionDisplay()}
-      {showBuildTime && format !== 'full' && (
+      {showBuildTime && format !== 'full' && versionInfo && (
         <>
           <br />
           Built: {formatBuildTime(versionInfo.buildTime)}

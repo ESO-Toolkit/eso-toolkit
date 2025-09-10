@@ -2,6 +2,8 @@
  * Cache busting utilities for ensuring fresh content delivery
  */
 
+import { getBaseUrl } from './envUtils';
+
 // Fallback version info for development when version files don't exist
 const FALLBACK_VERSION_INFO = {
   version: '0.1.0',
@@ -13,21 +15,34 @@ const FALLBACK_VERSION_INFO = {
   cacheBuster: `v=dev${Date.now()}`,
 } as const;
 
-// Try to load generated version info, fall back to development version
-let VERSION_INFO: typeof FALLBACK_VERSION_INFO;
-let cacheBuster: string;
+// Start with undefined, will be updated once version loads
+let VERSION_INFO: typeof FALLBACK_VERSION_INFO | undefined = undefined;
+let cacheBuster: string = FALLBACK_VERSION_INFO.cacheBuster;
 
-try {
-  // Load generated version info from JSON file
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  const versionData = require('./version.json');
-  VERSION_INFO = versionData;
-  cacheBuster = versionData.cacheBuster;
-} catch (error) {
-  // Version file doesn't exist (development mode)
-  VERSION_INFO = FALLBACK_VERSION_INFO;
-  cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
-}
+// Load version info asynchronously from the public directory
+const loadVersionInfo = async (): Promise<typeof FALLBACK_VERSION_INFO> => {
+  try {
+    // Try to fetch version.json from the public directory, respecting BASE_URL
+    const baseUrl = getBaseUrl();
+    const versionUrl = `${baseUrl}version.json?t=${Date.now()}`;
+    const response = await fetch(versionUrl);
+    if (response.ok) {
+      const versionData = (await response.json()) as typeof FALLBACK_VERSION_INFO;
+      VERSION_INFO = versionData;
+      cacheBuster = versionData.cacheBuster;
+      return versionData;
+    }
+  } catch (error) {
+    // Fall back to default version only if fetch fails
+    // eslint-disable-next-line no-console
+    console.debug('Could not load version.json, using fallback');
+    VERSION_INFO = FALLBACK_VERSION_INFO;
+  }
+  return VERSION_INFO || FALLBACK_VERSION_INFO;
+};
+
+// Store the loading promise so we can wait for it
+const versionLoadingPromise = loadVersionInfo();
 
 /**
  * Add cache-busting parameter to a URL
@@ -43,9 +58,21 @@ export const addCacheBuster = (url: string, customVersion?: string): string => {
 
 /**
  * Get the current build version information
- * @returns Version information object
+ * @returns Version information object, or undefined if not loaded yet
  */
-export const getBuildInfo = (): typeof VERSION_INFO => VERSION_INFO;
+export const getBuildInfo = (): typeof FALLBACK_VERSION_INFO | undefined => {
+  return VERSION_INFO;
+};
+
+/**
+ * Get the current build version information asynchronously
+ * This ensures the version is loaded from the server
+ * @returns Promise with version information object
+ */
+export const getBuildInfoAsync = async (): Promise<typeof VERSION_INFO> => {
+  await versionLoadingPromise;
+  return VERSION_INFO || FALLBACK_VERSION_INFO;
+};
 
 /**
  * Check if a cached resource should be invalidated
@@ -61,7 +88,7 @@ export const shouldInvalidateCache = (
   const age = now - cachedTimestamp;
 
   // Always invalidate if build is newer than cache
-  if (VERSION_INFO.timestamp > cachedTimestamp) {
+  if (VERSION_INFO && VERSION_INFO.timestamp > cachedTimestamp) {
     return true;
   }
 
@@ -74,11 +101,18 @@ export const shouldInvalidateCache = (
  * @param maxAge - Cache max age in seconds
  * @returns Cache control headers object
  */
-export const getCacheHeaders = (maxAge = 3600): Record<string, string> => ({
-  'Cache-Control': `public, max-age=${maxAge}, must-revalidate`,
-  ETag: `"${VERSION_INFO.buildId}"`,
-  'Last-Modified': new Date(VERSION_INFO.buildTime).toUTCString(),
-});
+export const getCacheHeaders = (maxAge = 3600): Record<string, string> => {
+  if (!VERSION_INFO) {
+    return {
+      'Cache-Control': `public, max-age=${maxAge}, must-revalidate`,
+    };
+  }
+  return {
+    'Cache-Control': `public, max-age=${maxAge}, must-revalidate`,
+    ETag: `"${VERSION_INFO.buildId}"`,
+    'Last-Modified': new Date(VERSION_INFO.buildTime).toUTCString(),
+  };
+};
 
 /**
  * Create a versioned URL for assets
@@ -98,7 +132,7 @@ export const createVersionedAssetUrl = (assetPath: string, baseUrl?: string): st
  * @returns true if versions match
  */
 export const isCurrentVersion = (storedVersion?: string): boolean => {
-  return storedVersion === VERSION_INFO.buildId;
+  return storedVersion === VERSION_INFO?.buildId;
 };
 
 /**
@@ -111,9 +145,10 @@ export const getCacheBustingQuery = (): string => {
 
 /**
  * Format version for display
- * @returns Human-readable version string
+ * @returns Human-readable version string, or undefined if not loaded
  */
-export const getDisplayVersion = (): string => {
+export const getDisplayVersion = (): string | undefined => {
+  if (!VERSION_INFO) return undefined;
   return `v${VERSION_INFO.version} (${VERSION_INFO.shortCommit})`;
 };
 
@@ -122,5 +157,6 @@ export const getDisplayVersion = (): string => {
  * @returns true if development build
  */
 export const isDevelopmentBuild = (): boolean => {
+  if (!VERSION_INFO) return true; // Assume dev if version not loaded
   return VERSION_INFO.gitCommit.length === 40 ? false : true; // Real git commits are 40 chars
 };

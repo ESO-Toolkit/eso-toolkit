@@ -49,9 +49,14 @@ jobs:
       - name: Upload Coverage to GitHub Gist
         run: node scripts/upload-coverage-to-gist.js
         if: github.ref == 'refs/heads/master'
+<<<<<<< HEAD
         continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GIST_TOKEN || secrets.GITHUB_TOKEN }}
+=======
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+>>>>>>> d5e6954e (Fixed cache busting version)
           COVERAGE_GIST_ID: ${{ secrets.COVERAGE_GIST_ID }}
 
       - name: Upload Coverage Badges

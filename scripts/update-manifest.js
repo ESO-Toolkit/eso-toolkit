@@ -9,7 +9,7 @@ const fs = require('fs');
 const path = require('path');
 
 // Read the generated version info
-const versionPath = path.join(__dirname, '..', 'src', 'version.json');
+const versionPath = path.join(__dirname, '..', 'public', 'version.json');
 if (!fs.existsSync(versionPath)) {
   console.error('❌ version.json not found. Run generate-version.js first.');
   process.exit(1);
