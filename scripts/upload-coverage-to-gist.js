@@ -45,7 +45,7 @@ async function uploadCoverageToGist() {
     (acc, file) => {
       // Count statements
       if (file.s) {
-        Object.values(file.s).forEach(hits => {
+        Object.values(file.s).forEach((hits) => {
           acc.statements.total++;
           if (hits > 0) acc.statements.covered++;
         });
@@ -53,7 +53,7 @@ async function uploadCoverageToGist() {
 
       // Count functions
       if (file.f) {
-        Object.values(file.f).forEach(hits => {
+        Object.values(file.f).forEach((hits) => {
           acc.functions.total++;
           if (hits > 0) acc.functions.covered++;
         });
@@ -61,9 +61,9 @@ async function uploadCoverageToGist() {
 
       // Count branches
       if (file.b) {
-        Object.values(file.b).forEach(branchHits => {
+        Object.values(file.b).forEach((branchHits) => {
           if (Array.isArray(branchHits)) {
-            branchHits.forEach(hits => {
+            branchHits.forEach((hits) => {
               acc.branches.total++;
               if (hits > 0) acc.branches.covered++;
             });
@@ -74,13 +74,13 @@ async function uploadCoverageToGist() {
       // Count lines (derived from statement map)
       if (file.statementMap) {
         const lines = new Set();
-        Object.values(file.statementMap).forEach(stmt => {
+        Object.values(file.statementMap).forEach((stmt) => {
           for (let line = stmt.start.line; line <= stmt.end.line; line++) {
             lines.add(line);
           }
         });
-        
-        lines.forEach(line => {
+
+        lines.forEach((line) => {
           acc.lines.total++;
           // Check if any statement on this line was executed
           const executed = Object.entries(file.statementMap).some(([key, stmt]) => {
@@ -102,11 +102,23 @@ async function uploadCoverageToGist() {
 
   // Calculate percentages
   const coverage = {
-    overall: total.statements.total > 0 ? Math.round((total.statements.covered / total.statements.total) * 100) : 0,
+    overall:
+      total.statements.total > 0
+        ? Math.round((total.statements.covered / total.statements.total) * 100)
+        : 0,
     lines: total.lines.total > 0 ? Math.round((total.lines.covered / total.lines.total) * 100) : 0,
-    functions: total.functions.total > 0 ? Math.round((total.functions.covered / total.functions.total) * 100) : 0,
-    branches: total.branches.total > 0 ? Math.round((total.branches.covered / total.branches.total) * 100) : 0,
-    statements: total.statements.total > 0 ? Math.round((total.statements.covered / total.statements.total) * 100) : 0,
+    functions:
+      total.functions.total > 0
+        ? Math.round((total.functions.covered / total.functions.total) * 100)
+        : 0,
+    branches:
+      total.branches.total > 0
+        ? Math.round((total.branches.covered / total.branches.total) * 100)
+        : 0,
+    statements:
+      total.statements.total > 0
+        ? Math.round((total.statements.covered / total.statements.total) * 100)
+        : 0,
   };
 
   // Create shields.io badge format
