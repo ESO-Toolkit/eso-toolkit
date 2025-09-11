@@ -391,13 +391,15 @@ export const AuthenticatedLandingSection: React.FC = () => {
               borderRadius: '6px',
               transition: 'all 0.2s ease',
               textDecoration: 'underline',
-              textDecorationColor: 'transparent',
+              textDecorationColor: 'currentColor',
+              backgroundColor:
+                theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
               '&:hover': {
                 textDecorationColor: 'currentColor',
                 backgroundColor:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.05)'
-                    : 'rgba(0, 0, 0, 0.05)',
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.08)',
               },
             }}
           >
