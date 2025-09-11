@@ -39,15 +39,11 @@ import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
+import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 
 // Lazy load heavy panel components for better initial page load performance
 const ActorsPanel = React.lazy(() =>
   import('./actors/ActorsPanel').then((module) => ({ default: module.ActorsPanel })),
-);
-const CriticalDamagePanel = React.lazy(() =>
-  import('./critical_damage/CriticalDamagePanel').then((module) => ({
-    default: module.CriticalDamagePanel,
-  })),
 );
 const DamageDonePanel = React.lazy(() =>
   import('./damage/DamageDonePanel').then((module) => ({ default: module.DamageDonePanel })),
