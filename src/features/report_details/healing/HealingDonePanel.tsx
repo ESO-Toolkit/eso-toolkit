@@ -148,13 +148,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return (
-      <GenericTabSkeleton
-        title="Healing Done"
-        showChart={true}
-        chartHeight={400}
-        showTable={true}
-        tableRows={8}
-      />
+      <GenericTabSkeleton title="Healing Done" showChart={false} showTable={true} tableRows={8} />
     );
   }
 
