@@ -6,6 +6,7 @@ import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -61,19 +62,8 @@ const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
-// Loading fallback component - simple and fast
-const LoadingFallback: React.FC = () => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    height="400px"
-    role="status"
-    aria-label="Loading"
-  >
-    <CircularProgress size={40} />
-  </Box>
-);
+// Loading fallback component - use skeleton for consistency
+const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
