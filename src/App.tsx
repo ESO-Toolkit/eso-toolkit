@@ -1,14 +1,12 @@
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
-import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
+import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
