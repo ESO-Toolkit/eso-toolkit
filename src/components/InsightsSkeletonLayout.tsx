@@ -12,11 +12,61 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
 }) => {
   return (
     <Box sx={{ minHeight: '800px' }}>
-      {/* Target Selection Skeleton */}
+      {/* Target Selection and Navigation Row Skeleton - from FightDetailsView */}
       {showHeader && (
-        <Box sx={{ mb: 2 }}>
-          <Box sx={{ minWidth: 200 }}>
-            <Skeleton variant="rounded" width={200} height={56} />
+        <Box
+          sx={{
+            mb: 2,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: { xs: 'wrap', md: 'nowrap' },
+            gap: { xs: 2, md: 0 },
+          }}
+        >
+          {/* Target Selector */}
+          <Box
+            sx={{
+              minWidth: { xs: '100%', sm: 180, md: 200 },
+              maxWidth: { xs: '100%', md: 'none' },
+            }}
+          >
+            <Skeleton
+              variant="rounded"
+              width="100%"
+              height={56}
+              sx={{
+                maxWidth: { xs: '100%', sm: 180, md: 200 },
+                minWidth: { xs: '100%', sm: 180, md: 200 },
+              }}
+            />
+          </Box>
+
+          {/* Fight Navigation */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              backgroundColor: 'rgba(0, 0, 0, 0.04)',
+              borderRadius: { xs: '10px', md: '12px' },
+              border: '1px solid rgba(0, 0, 0, 0.08)',
+              p: { xs: 0.5, md: 0.75 },
+              gap: { xs: 0.25, md: 0.5 },
+              width: { xs: '100%', md: 'auto' },
+              justifyContent: { xs: 'center', md: 'flex-start' },
+            }}
+          >
+            {/* Previous Button */}
+            <Skeleton variant="rounded" width={28} height={28} />
+
+            {/* Mode Toggle */}
+            <Skeleton variant="rounded" width={120} height={28} />
+
+            {/* Counter */}
+            <Skeleton variant="rounded" width={48} height={28} />
+
+            {/* Next Button */}
+            <Skeleton variant="rounded" width={28} height={28} />
           </Box>
         </Box>
       )}
@@ -38,8 +88,8 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               <Skeleton
                 key={i}
                 variant="rounded"
-                width={36}
-                height={36}
+                width={40}
+                height={40}
                 sx={{
                   borderRadius: '50%',
                   flexShrink: 0,
@@ -47,7 +97,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               />
             ))}
           </Box>
-          <Skeleton variant="rounded" width={140} height={32} />
+          <Skeleton variant="rounded" width={80} height={32} />
         </Box>
       )}
 

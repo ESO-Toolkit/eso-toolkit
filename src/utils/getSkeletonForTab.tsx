@@ -1,3 +1,4 @@
+import { Box } from '@mui/material';
 import React from 'react';
 
 import { CriticalDamageSkeleton } from '../components/CriticalDamageSkeleton';
@@ -29,6 +30,104 @@ export enum TabId {
   DEBUFFS_OVERVIEW = 'debuffs-overview',
 }
 
+// Shared header skeleton for FightDetailsView
+const HeaderSkeleton: React.FC = () => (
+  <>
+    {/* Target Selection and Navigation Row Skeleton - from FightDetailsView */}
+    <Box
+      sx={{
+        mb: 2,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: { xs: 'wrap', md: 'nowrap' },
+        gap: { xs: 2, md: 0 },
+      }}
+    >
+      {/* Target Selector */}
+      <Box
+        sx={{ minWidth: { xs: '100%', sm: 180, md: 200 }, maxWidth: { xs: '100%', md: 'none' } }}
+      >
+        <Box
+          sx={{
+            width: '100%',
+            height: 56,
+            maxWidth: { xs: '100%', sm: 180, md: 200 },
+            minWidth: { xs: '100%', sm: 180, md: 200 },
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+            borderRadius: 1,
+          }}
+        />
+      </Box>
+
+      {/* Fight Navigation */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.04)',
+          borderRadius: { xs: '10px', md: '12px' },
+          border: '1px solid rgba(0, 0, 0, 0.08)',
+          p: { xs: 0.5, md: 0.75 },
+          gap: { xs: 0.25, md: 0.5 },
+          width: { xs: '100%', md: 'auto' },
+          justifyContent: { xs: 'center', md: 'flex-start' },
+        }}
+      >
+        {/* Previous Button */}
+        <Box
+          sx={{ width: 28, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+        />
+
+        {/* Mode Toggle */}
+        <Box
+          sx={{ width: 120, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+        />
+
+        {/* Counter */}
+        <Box
+          sx={{ width: 48, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+        />
+
+        {/* Next Button */}
+        <Box
+          sx={{ width: 28, height: 28, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }}
+        />
+      </Box>
+    </Box>
+  </>
+);
+
+// Shared tabs skeleton
+const TabsSkeleton: React.FC = () => (
+  <Box
+    sx={{
+      display: 'flex',
+      alignItems: 'center',
+      mb: 1,
+      width: '100%',
+      gap: 1,
+      overflowX: 'auto',
+    }}
+  >
+    <Box sx={{ display: 'flex', gap: 1, flexGrow: 1 }}>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <Box
+          key={i}
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: '50%',
+            flexShrink: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+          }}
+        />
+      ))}
+    </Box>
+    <Box sx={{ width: 80, height: 32, backgroundColor: 'rgba(0, 0, 0, 0.11)', borderRadius: 1 }} />
+  </Box>
+);
+
 export const getSkeletonForTab = (
   tabId: TabId | undefined,
   includeHeaderAndTabs = false,
@@ -43,7 +142,7 @@ export const getSkeletonForTab = (
           />
         );
       case TabId.PLAYERS:
-        return <PlayersSkeleton showHeader={includeHeaderAndTabs} />;
+        return <PlayersSkeleton />;
       case TabId.DAMAGE_DONE:
         return (
           <GenericTabSkeleton
@@ -111,5 +210,19 @@ export const getSkeletonForTab = (
     }
   };
 
-  return getContentSkeleton();
+  const contentSkeleton = getContentSkeleton();
+
+  // Wrap with header and tabs skeleton for all tabs except Insights
+  // (which handles its own header/tabs)
+  if (includeHeaderAndTabs && tabId !== TabId.INSIGHTS) {
+    return (
+      <Box sx={{ minHeight: '800px' }}>
+        <HeaderSkeleton />
+        <TabsSkeleton />
+        {contentSkeleton}
+      </Box>
+    );
+  }
+
+  return contentSkeleton;
 };

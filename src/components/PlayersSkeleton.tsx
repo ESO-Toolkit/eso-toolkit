@@ -1,39 +1,9 @@
-import { Box, Card, CardContent, Skeleton, Typography } from '@mui/material';
+import { Box, Card, CardContent, Skeleton } from '@mui/material';
 import React from 'react';
 
-interface PlayersSkeletonProps {
-  showHeader?: boolean;
-}
-
-export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({ showHeader = true }) => {
+export const PlayersSkeleton: React.FC = () => {
   return (
     <Box sx={{ p: 2 }}>
-      {showHeader && (
-        <Box display="flex" alignItems="center" gap={1} mb={2}>
-          <Typography
-            variant="h6"
-            sx={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontWeight: 300,
-              letterSpacing: '0.05em',
-            }}
-          >
-            Players
-          </Typography>
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{
-              fontFamily: 'Space Grotesk, sans-serif',
-              fontSize: '0.85rem',
-              letterSpacing: '0.02em',
-            }}
-          >
-            <Skeleton variant="text" width={60} height={16} sx={{ display: 'inline-block' }} />
-          </Typography>
-        </Box>
-      )}
-
       <Box
         sx={{
           display: 'grid',

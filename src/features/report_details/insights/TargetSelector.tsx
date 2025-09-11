@@ -5,6 +5,7 @@ import {
   MenuItem,
   Select,
   SelectChangeEvent,
+  Skeleton,
   Typography,
   useTheme,
 } from '@mui/material';
@@ -60,7 +61,21 @@ export const TargetSelector: React.FC = () => {
   }, [reportMasterData, fight?.enemyNPCs]);
 
   if (isMasterDataLoading) {
-    return null;
+    return (
+      <Box
+        sx={{ minWidth: { xs: '100%', sm: 180, md: 200 }, maxWidth: { xs: '100%', md: 'none' } }}
+      >
+        <Skeleton
+          variant="rounded"
+          width="100%"
+          height={56}
+          sx={{
+            maxWidth: { xs: '100%', sm: 180, md: 200 },
+            minWidth: { xs: '100%', sm: 180, md: 200 },
+          }}
+        />
+      </Box>
+    );
   }
 
   if (!fight?.enemyNPCs?.length) {

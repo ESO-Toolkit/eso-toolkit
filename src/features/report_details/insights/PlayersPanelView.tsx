@@ -16,7 +16,6 @@ import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlic
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
-import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
@@ -183,7 +182,34 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     }, [playerCards, searchTerm, roleFilter, sortOption]);
 
     if (isLoading) {
-      return getSkeletonForTab(TabId.PLAYERS, false);
+      return (
+        <Box sx={{ p: 2 }}>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+              gap: 2,
+              alignItems: 'stretch',
+              minHeight: '400px',
+            }}
+          >
+            {/* Generate 4 player card skeletons (typical party size) */}
+            {Array.from({ length: 4 }).map((_, index) => (
+              <Box
+                key={index}
+                sx={{
+                  marginBottom: 2,
+                  minHeight: 380,
+                  height: '100%',
+                  backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                  borderRadius: 1,
+                  border: '1px solid rgba(0, 0, 0, 0.12)',
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
+      );
     }
 
     if (!playerActors || Object.keys(playerActors).length === 0) {
