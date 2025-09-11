@@ -206,13 +206,7 @@ export const DamageDonePanel: React.FC = () => {
   // Show table skeleton while data is being fetched
   if (isLoading) {
     return (
-      <GenericTabSkeleton
-        title="Damage Done"
-        showChart={true}
-        chartHeight={400}
-        showTable={true}
-        tableRows={10}
-      />
+      <GenericTabSkeleton title="Damage Done" showChart={false} showTable={true} tableRows={10} />
     );
   }
 
