@@ -147,8 +147,7 @@ export const getSkeletonForTab = (
         return (
           <GenericTabSkeleton
             title="Damage Done"
-            showChart={true}
-            chartHeight={400}
+            showChart={false}
             showTable={true}
             tableRows={10}
           />
@@ -157,8 +156,7 @@ export const getSkeletonForTab = (
         return (
           <GenericTabSkeleton
             title="Healing Done"
-            showChart={true}
-            chartHeight={400}
+            showChart={false}
             showTable={true}
             tableRows={8}
           />
@@ -454,7 +452,7 @@ export const getSkeletonForTab = (
   // (which handles its own header/tabs)
   if (includeHeaderAndTabs && tabId !== TabId.INSIGHTS) {
     return (
-      <Box sx={{ minHeight: '800px' }}>
+      <Box sx={{ minHeight: '400px' }}>
         <HeaderSkeleton />
         <TabsSkeleton />
         {contentSkeleton}
