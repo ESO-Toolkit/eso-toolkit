@@ -1,7 +1,9 @@
-import { Paper, Typography, Box, Stack, Skeleton, CircularProgress } from '@mui/material';
+import { Paper, Typography, Box, Stack, Skeleton } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../graphql/generated';
+import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { TabId, getSkeletonForTab } from '../../utils/getSkeletonForTab';
 
 import { FightDetails } from './FightDetails';
 import { ReportFightHeader } from './ReportFightHeader';
@@ -19,6 +21,8 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   fightsLoading,
   fightId,
 }) => {
+  const { selectedTabId } = useSelectedReportAndFight();
+
   // Immediate render strategy: show layout immediately for better LCP
   // Only show full loading state if we don't have a fightId yet
   if (fightsLoading && !fightId) {
@@ -50,9 +54,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         </Stack>
 
         <Box sx={{ mt: 2, minHeight: '600px' }}>
-          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-            <CircularProgress data-testid="loading-indicator" />
-          </Box>
+          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
         </Box>
       </Paper>
     );
@@ -75,9 +77,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
         <FightDetails />
       ) : (
         <Box sx={{ mt: 2, minHeight: '600px' }}>
-          <Box display="flex" justifyContent="center" alignItems="center" height="300px">
-            <CircularProgress data-testid="loading-indicator" />
-          </Box>
+          {getSkeletonForTab(selectedTabId || TabId.INSIGHTS, true)}
         </Box>
       )}
     </Paper>
