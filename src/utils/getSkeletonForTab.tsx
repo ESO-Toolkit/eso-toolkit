@@ -164,7 +164,245 @@ export const getSkeletonForTab = (
           />
         );
       case TabId.DEATHS:
-        return <GenericTabSkeleton title="Death Events" showTable={true} tableRows={5} />;
+        return (
+          <Box mt={2}>
+            {/* Header with summary skeleton */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+              <Box
+                sx={{
+                  width: 140,
+                  height: 28,
+                  backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                  borderRadius: 1,
+                }}
+              />
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <Box
+                  sx={{
+                    width: 120,
+                    height: 24,
+                    backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                    borderRadius: '12px',
+                  }}
+                />
+                <Box
+                  sx={{
+                    width: 100,
+                    height: 24,
+                    backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                    borderRadius: '12px',
+                  }}
+                />
+              </Box>
+            </Box>
+
+            {/* Death summary skeleton */}
+            <Box sx={{ mb: 3 }}>
+              <Box
+                sx={{
+                  width: 120,
+                  height: 20,
+                  backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                  borderRadius: 1,
+                  mb: 1,
+                }}
+              />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      width: 80 + i * 10,
+                      height: 24,
+                      backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                      borderRadius: '12px',
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            {/* Skills summary skeleton */}
+            <Box sx={{ mb: 3 }}>
+              <Box
+                sx={{
+                  width: 180,
+                  height: 20,
+                  backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                  borderRadius: 1,
+                  mb: 1,
+                }}
+              />
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                {Array.from({ length: 4 }).map((_, i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      width: 90 + i * 15,
+                      height: 24,
+                      backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                      borderRadius: '12px',
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
+            {/* Death events grid skeleton */}
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: {
+                  xs: '1fr',
+                  sm: 'repeat(1, 1fr)',
+                  md: 'repeat(2, 1fr)',
+                  lg: 'repeat(3, 1fr)',
+                },
+                gap: 2,
+              }}
+            >
+              {Array.from({ length: 4 }).map((_, i) => (
+                <Box
+                  key={i}
+                  sx={{
+                    borderRadius: '16px',
+                    background: 'rgba(0, 0, 0, 0.04)',
+                    border: '1px solid rgba(0, 0, 0, 0.08)',
+                    p: 2,
+                    minHeight: 200,
+                  }}
+                >
+                  {/* Player header skeleton */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: 40,
+                        height: 40,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: '50%',
+                      }}
+                    />
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Box
+                        sx={{
+                          width: '70%',
+                          height: 20,
+                          backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                          borderRadius: 1,
+                          mb: 0.5,
+                        }}
+                      />
+                      <Box
+                        sx={{
+                          width: '50%',
+                          height: 16,
+                          backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                          borderRadius: 1,
+                        }}
+                      />
+                    </Box>
+                  </Box>
+
+                  {/* Status sections skeleton */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: '40%',
+                        height: 16,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: 1,
+                        mb: 0.5,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        width: '80%',
+                        height: 32,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: '16px',
+                        mb: 1,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        width: '50%',
+                        height: 16,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: 1,
+                        mb: 0.5,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        width: '60%',
+                        height: 32,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: '16px',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Killing blow skeleton */}
+                  <Box sx={{ mb: 2 }}>
+                    <Box
+                      sx={{
+                        width: '40%',
+                        height: 16,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: 1,
+                        mb: 0.5,
+                      }}
+                    />
+                    <Box
+                      sx={{
+                        width: '90%',
+                        height: 48,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: '16px',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Recent attacks skeleton */}
+                  <Box>
+                    <Box
+                      sx={{
+                        width: '45%',
+                        height: 16,
+                        backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                        borderRadius: 1,
+                        mb: 0.5,
+                      }}
+                    />
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <Box
+                        key={j}
+                        sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}
+                      >
+                        <Box
+                          sx={{
+                            width: '70%',
+                            height: 14,
+                            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                            borderRadius: 1,
+                          }}
+                        />
+                        <Box
+                          sx={{
+                            width: '20%',
+                            height: 14,
+                            backgroundColor: 'rgba(0, 0, 0, 0.11)',
+                            borderRadius: 1,
+                          }}
+                        />
+                      </Box>
+                    ))}
+                  </Box>
+                </Box>
+              ))}
+            </Box>
+          </Box>
+        );
       case TabId.CRITICAL_DAMAGE:
         return <CriticalDamageSkeleton />;
       case TabId.PENETRATION:

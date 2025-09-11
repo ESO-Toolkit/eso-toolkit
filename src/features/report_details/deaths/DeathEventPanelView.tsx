@@ -123,9 +123,58 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   if (isLoading) {
     return (
       <Box mt={2}>
-        <Typography variant="h6" sx={{ mb: 2 }}>
-          💀 Death Events
-        </Typography>
+        {/* Header with summary skeleton */}
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3 }}>
+          <Typography variant="h6">💀 Death Events</Typography>
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Skeleton variant="rounded" width={120} height={24} sx={{ borderRadius: '12px' }} />
+            <Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: '12px' }} />
+          </Box>
+        </Box>
+
+        {/* Death summary skeleton */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 1, color: theme.palette.text.primary, fontWeight: 600 }}
+          >
+            Death Summary
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                variant="rounded"
+                width={80 + i * 10}
+                height={24}
+                sx={{ borderRadius: '12px' }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Skills summary skeleton */}
+        <Box sx={{ mb: 3 }}>
+          <Typography
+            variant="subtitle2"
+            sx={{ mb: 1, color: theme.palette.text.primary, fontWeight: 600 }}
+          >
+            ⚔️ Deadly Skills Summary
+          </Typography>
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+            {Array.from({ length: 4 }).map((_, i) => (
+              <Skeleton
+                key={i}
+                variant="rounded"
+                width={90 + i * 15}
+                height={24}
+                sx={{ borderRadius: '12px' }}
+              />
+            ))}
+          </Box>
+        </Box>
+
+        {/* Death events grid skeleton */}
         <Box
           sx={{
             display: 'grid',
@@ -145,20 +194,67 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                 borderRadius: '16px',
                 background:
                   theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgb(110 214 240 / 25%) 0%, rgb(131 208 227 / 15%) 50%, rgb(35 122 144 / 8%) 100%)'
-                    : 'linear-gradient(135deg, rgb(236 246 255 / 90%) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
+                    ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+                    : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
                 border:
                   theme.palette.mode === 'dark'
                     ? '1px solid rgba(255, 255, 255, 0.15)'
-                    : '1px solid rgba(15, 23, 42, 0.12)',
+                    : '1px solid rgba(59, 130, 246, 0.3)',
                 backdropFilter: 'blur(10px)',
                 WebkitBackdropFilter: 'blur(10px)',
+                boxShadow:
+                  '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
               }}
             >
               <CardContent sx={{ p: 2 }}>
-                <Skeleton variant="text" width="60%" height={24} sx={{ mb: 1 }} />
-                <Skeleton variant="text" width="40%" height={20} sx={{ mb: 2 }} />
-                <Skeleton variant="rectangular" width="100%" height={60} sx={{ borderRadius: 1 }} />
+                {/* Player header skeleton */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                  <Skeleton variant="circular" width={40} height={40} />
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Skeleton variant="text" width="70%" height={20} sx={{ mb: 0.5 }} />
+                    <Skeleton variant="text" width="50%" height={16} />
+                  </Box>
+                </Box>
+
+                {/* Status sections skeleton */}
+                <Box sx={{ mb: 2 }}>
+                  <Skeleton variant="text" width="40%" height={16} sx={{ mb: 0.5 }} />
+                  <Skeleton
+                    variant="rounded"
+                    width="80%"
+                    height={32}
+                    sx={{ borderRadius: '16px', mb: 1 }}
+                  />
+                  <Skeleton variant="text" width="50%" height={16} sx={{ mb: 0.5 }} />
+                  <Skeleton
+                    variant="rounded"
+                    width="60%"
+                    height={32}
+                    sx={{ borderRadius: '16px' }}
+                  />
+                </Box>
+
+                {/* Killing blow skeleton */}
+                <Box sx={{ mb: 2 }}>
+                  <Skeleton variant="text" width="40%" height={16} sx={{ mb: 0.5 }} />
+                  <Skeleton
+                    variant="rounded"
+                    width="90%"
+                    height={48}
+                    sx={{ borderRadius: '16px' }}
+                  />
+                </Box>
+
+                {/* Recent attacks skeleton */}
+                <Box>
+                  <Skeleton variant="text" width="45%" height={16} sx={{ mb: 0.5 }} />
+                  {Array.from({ length: 3 }).map((_, j) => (
+                    <Box key={j} sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Skeleton variant="text" width="70%" height={14} />
+                      <Skeleton variant="text" width="20%" height={14} />
+                    </Box>
+                  ))}
+                </Box>
               </CardContent>
             </Card>
           ))}
