@@ -33,7 +33,9 @@
       "Bash(git rebase:*)",
       "Bash(git fetch:*)",
       "Bash(git stash pop:*)",
-      "Bash(git pull:*)"
+      "Bash(npm audit:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": [],
     "ask": []
