@@ -516,13 +516,13 @@ export const HeaderBar: React.FC = () => {
     setMobileAccountOpen(false);
   };
 
-  const handleMobileViewReports = (): void => {
+  const handleMobileViewReports = React.useCallback((): void => {
     navigate('/my-reports');
     setMobileOpen(false);
     setMobileAccountOpen(false);
-  };
+  }, [navigate]);
 
-  const handleMobileAuthAction = (): void => {
+  const handleMobileAuthAction = React.useCallback((): void => {
     if (isLoggedIn) {
       handleLogout();
     } else {
@@ -530,7 +530,7 @@ export const HeaderBar: React.FC = () => {
     }
     setMobileOpen(false);
     setMobileAccountOpen(false);
-  };
+  }, [isLoggedIn, handleLogout, handleLogin]);
 
   const toolsItems = [
     {
