@@ -822,33 +822,6 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [maxResourcesByPlayer]);
 
-  // Show loading if any data is still loading
-  if (isLoading) {
-    return (
-      <PlayersPanelView
-        playerActors={{}}
-        deathsByPlayer={{}}
-        resurrectsByPlayer={{}}
-        cpmByPlayer={{}}
-        mundusBuffsByPlayer={{}}
-        championPointsByPlayer={{}}
-        aurasByPlayer={{}}
-        scribingSkillsByPlayer={{}}
-        buildIssuesByPlayer={{}}
-        classAnalysisByPlayer={{}}
-        maxHealthByPlayer={{}}
-        maxStaminaByPlayer={{}}
-        maxMagickaByPlayer={{}}
-        isLoading={true}
-        reportId={reportId}
-        fightId={fightId}
-        playerGear={playerGear}
-        fightStartTime={fight?.startTime}
-        fightEndTime={fight?.endTime}
-      />
-    );
-  }
-
   return (
     <PlayersPanelView
       playerActors={playerData?.playersById}
@@ -866,7 +839,7 @@ export const PlayersPanel: React.FC = () => {
       maxMagickaByPlayer={maxMagickaByPlayer}
       reportId={reportId}
       fightId={fightId}
-      isLoading={false}
+      isLoading={isLoading}
       playerGear={playerGear}
       fightStartTime={fight?.startTime}
       fightEndTime={fight?.endTime}
