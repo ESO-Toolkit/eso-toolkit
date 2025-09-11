@@ -31,7 +31,8 @@
       "Bash(npm ls:*)",
       "Bash(npm uninstall:*)",
       "Bash(git rebase:*)",
-      "Bash(git fetch:*)"
+      "Bash(git fetch:*)",
+      "Bash(git stash pop:*)"
     ],
     "deny": [],
     "ask": []
