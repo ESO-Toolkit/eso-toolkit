@@ -10,12 +10,17 @@ export const CriticalDamageSkeleton: React.FC<CriticalDamageSkeletonProps> = ({
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-      {/* Title */}
+      {/* Title - matches real title styling */}
       <Skeleton
         variant="text"
-        width="280px"
+        width="320px"
         height={40}
-        sx={{ mb: 2, fontFamily: 'Space Grotesk, sans-serif' }}
+        sx={{
+          mb: 2,
+          fontFamily: 'Space Grotesk, sans-serif',
+          background:
+            'linear-gradient(90deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.08) 100%)',
+        }}
       />
 
       {/* Player Accordion List */}
@@ -32,8 +37,11 @@ export const CriticalDamageSkeleton: React.FC<CriticalDamageSkeletonProps> = ({
             elevation={1}
             sx={{
               border: '1px solid rgba(0, 0, 0, 0.12)',
-              borderRadius: 1,
+              borderRadius: 2,
               overflow: 'hidden',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              background: 'rgba(255, 255, 255, 0.02)',
             }}
           >
             {/* Accordion Header */}
@@ -44,73 +52,76 @@ export const CriticalDamageSkeleton: React.FC<CriticalDamageSkeletonProps> = ({
                 px: 2,
                 py: 1.5,
                 backgroundColor: 'rgba(0, 0, 0, 0.02)',
-                borderBottom: '1px solid rgba(0, 0, 0, 0.08)',
+                minHeight: 72,
               }}
             >
               {/* Player Icon */}
-              <Skeleton variant="circular" width={40} height={40} sx={{ mr: 2 }} />
+              <Skeleton
+                variant="circular"
+                width={40}
+                height={40}
+                sx={{
+                  mr: 2,
+                  background: 'linear-gradient(135deg, rgba(0,0,0,0.1) 0%, rgba(0,0,0,0.15) 100%)',
+                }}
+              />
 
               {/* Player Name */}
-              <Skeleton variant="text" width="140px" height={24} sx={{ mr: 'auto' }} />
+              <Skeleton
+                variant="text"
+                width={140}
+                height={28}
+                sx={{
+                  mr: 'auto',
+                  background:
+                    'linear-gradient(90deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 50%, rgba(0,0,0,0.08) 100%)',
+                }}
+              />
 
               {/* Metric Pills */}
-              <Box sx={{ display: 'flex', gap: 1, mr: 2 }}>
-                <Skeleton variant="rectangular" width={80} height={24} sx={{ borderRadius: 12 }} />
-                <Skeleton variant="rectangular" width={90} height={24} sx={{ borderRadius: 12 }} />
-                <Skeleton variant="rectangular" width={70} height={24} sx={{ borderRadius: 12 }} />
+              <Box sx={{ display: { xs: 'none', md: 'flex' }, gap: 1, mr: 2 }}>
+                <Skeleton
+                  variant="rectangular"
+                  width={60}
+                  height={24}
+                  sx={{
+                    borderRadius: 12,
+                    background:
+                      'linear-gradient(90deg, rgba(76, 175, 80, 0.2) 0%, rgba(76, 175, 80, 0.3) 100%)',
+                  }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  width={85}
+                  height={24}
+                  sx={{
+                    borderRadius: 12,
+                    background:
+                      'linear-gradient(90deg, rgba(255, 152, 0, 0.2) 0%, rgba(255, 152, 0, 0.3) 100%)',
+                  }}
+                />
+                <Skeleton
+                  variant="rectangular"
+                  width={65}
+                  height={24}
+                  sx={{
+                    borderRadius: 12,
+                    background:
+                      'linear-gradient(90deg, rgba(244, 67, 54, 0.2) 0%, rgba(244, 67, 54, 0.3) 100%)',
+                  }}
+                />
               </Box>
 
               {/* Expand Icon */}
-              <Skeleton variant="circular" width={24} height={24} />
+              <Skeleton
+                variant="circular"
+                width={24}
+                height={24}
+                sx={{
+                  background: 'linear-gradient(135deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.12) 100%)',
+                }}
+              />
             </Box>
-
-            {/* Expanded Content (shown for first player) */}
-            {index === 0 && (
-              <Box sx={{ p: 2 }}>
-                {/* Critical Damage Chart */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton variant="text" width="200px" height={20} sx={{ mb: 1 }} />
-                  <Skeleton
-                    variant="rectangular"
-                    width="100%"
-                    height={300}
-                    sx={{ borderRadius: 1 }}
-                  />
-                </Box>
-
-                {/* Stats Checklist */}
-                <Box sx={{ mb: 3 }}>
-                  <Skeleton variant="text" width="180px" height={20} sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {Array.from({ length: 4 }).map((_, statIndex) => (
-                      <Box key={statIndex} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Skeleton variant="circular" width={20} height={20} />
-                        <Skeleton variant="text" width="250px" height={16} />
-                        <Skeleton variant="text" width="60px" height={16} />
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-
-                {/* Critical Damage Sources */}
-                <Box>
-                  <Skeleton variant="text" width="220px" height={20} sx={{ mb: 2 }} />
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    {Array.from({ length: 6 }).map((_, sourceIndex) => (
-                      <Box
-                        key={sourceIndex}
-                        sx={{ display: 'flex', alignItems: 'center', gap: 2, py: 0.5 }}
-                      >
-                        <Skeleton variant="circular" width={32} height={32} />
-                        <Skeleton variant="text" width="180px" height={16} />
-                        <Skeleton variant="text" width="50px" height={16} />
-                        <Skeleton variant="circular" width={16} height={16} />
-                      </Box>
-                    ))}
-                  </Box>
-                </Box>
-              </Box>
-            )}
           </Paper>
         ))}
       </Box>

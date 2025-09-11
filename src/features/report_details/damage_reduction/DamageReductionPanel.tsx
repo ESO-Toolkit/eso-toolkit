@@ -1,10 +1,9 @@
-import { Box } from '@mui/material';
 import React from 'react';
 
-import { StableLoading } from '../../../components/StableLoading';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
 import { useDamageReductionTask } from '../../../hooks/workerTasks/useDamageReductionTask';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerDamageReductionData } from '../../../workers/calculations/CalculateDamageReduction';
 
 import { DamageReductionPanelView } from './DamageReductionPanelView';
@@ -54,11 +53,7 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
 
   // Show loading state while fetching data OR if data is not complete
   if (!hasCompleteData) {
-    return (
-      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-        <StableLoading variant="panel" height={400} title="Loading damage reduction data..." />
-      </Box>
-    );
+    return getSkeletonForTab(TabId.DAMAGE_REDUCTION, false, false);
   }
 
   return (

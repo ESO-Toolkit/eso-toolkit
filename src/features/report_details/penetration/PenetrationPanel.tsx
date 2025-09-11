@@ -1,10 +1,9 @@
-import { Box } from '@mui/material';
 import React from 'react';
 
-import { StableLoading } from '../../../components/StableLoading';
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData, useSelectedTargetIds } from '../../../hooks';
 import { usePenetrationDataTask } from '../../../hooks/workerTasks/usePenetrationDataTask';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 import { PlayerPenetrationData } from '../../../workers/calculations/CalculatePenetration';
 
 import { PenetrationPanelView } from './PenetrationPanelView';
@@ -57,11 +56,7 @@ export const PenetrationPanel: React.FC<PenetrationPanelProps> = ({ fight }) => 
 
   // Show loading state while fetching data OR if data is not complete
   if (!hasCompleteData) {
-    return (
-      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-        <StableLoading variant="panel" height={400} title="Loading penetration data..." />
-      </Box>
-    );
+    return getSkeletonForTab(TabId.PENETRATION, false, false);
   }
 
   return (
