@@ -186,12 +186,25 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
     if (isLoading) {
       return (
-        <Box sx={{ p: 2 }}>
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          {/* Controls skeleton */}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
+            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 200 } }} />
+            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 180 } }} />
+            <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 120 } }} />
+          </Stack>
+
+          {/* Results summary skeleton */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
+            <Skeleton variant="text" width={150} height={20} />
+          </Box>
+
+          {/* Player cards grid */}
           <Box
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-              gap: 2,
+              gap: { xs: 0, md: 2 },
               alignItems: 'stretch',
               minHeight: '400px',
             }}
