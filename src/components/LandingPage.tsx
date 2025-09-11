@@ -309,7 +309,6 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
       theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.4)' : 'rgba(30, 41, 59, 0.25)',
   },
   [theme.breakpoints.down('md')]: {
-    maxWidth: '500px',
     borderRadius: '12px',
   },
   [theme.breakpoints.down('sm')]: {
