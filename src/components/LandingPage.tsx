@@ -335,6 +335,9 @@ const ToolsSection = styled(Container)(({ theme }) => ({
   padding: '0rem 0rem 0rem 0rem',
   paddingTop: 0,
   maxWidth: '1200px',
+  [theme.breakpoints.down('sm')]: {
+    padding: '0rem 1rem', // This adds 1rem padding on left and right for mobile
+  },
 }));
 
 const SectionTitle = styled(Typography, {
