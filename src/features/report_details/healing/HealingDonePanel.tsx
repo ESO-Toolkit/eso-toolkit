@@ -1,6 +1,7 @@
-import { Box, CircularProgress, Typography } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
+import { GenericTabSkeleton } from '../../../components/GenericTabSkeleton';
 import { FightFragment } from '../../../graphql/generated';
 import {
   useCastEvents,
@@ -144,21 +145,16 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     getPlayerRole,
   ]);
 
-  // Show loading spinner while data is being fetched
+  // Show table skeleton while data is being fetched
   if (isLoading) {
     return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minHeight: 200,
-        }}
-      >
-        <CircularProgress sx={{ mb: 2 }} />
-        <Typography variant="h6">Loading healing data...</Typography>
-      </Box>
+      <GenericTabSkeleton
+        title="Healing Done"
+        showChart={true}
+        chartHeight={400}
+        showTable={true}
+        tableRows={8}
+      />
     );
   }
 
