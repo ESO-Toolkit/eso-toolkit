@@ -80,8 +80,53 @@ export const DamageTypeBreakdownView: React.FC<DamageTypeBreakdownViewProps> = (
         <Typography variant="h6" gutterBottom>
           Damage by Type
         </Typography>
-        <Skeleton variant="rectangular" width="100%" height={40} />
-        <Skeleton variant="rectangular" width="100%" height={250} sx={{ mt: 2 }} />
+        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+          Damage breakdown by damage type from friendly players:{' '}
+          <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
+        </Typography>
+        <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+          {[...Array(4)].map((_, index) => (
+            <Box
+              key={index}
+              sx={{
+                py: 1.5,
+                pl: 0.5,
+                pr: 1.5,
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    height: 48,
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.06)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    px: 2,
+                  }}
+                >
+                  {/* Emoji icon placeholder */}
+                  <Skeleton variant="rounded" width={32} height={32} />
+
+                  {/* Text content */}
+                  <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                    <Skeleton variant="text" width="60%" height={16} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                      <Skeleton variant="text" width="40px" height={12} />
+                      <Skeleton variant="text" width="40px" height={12} />
+                    </Box>
+                  </Box>
+
+                  {/* Percentage only (no stack badge for damage types) */}
+                  <Skeleton variant="text" width="40px" height={20} />
+                </Box>
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
     );
   }
