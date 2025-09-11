@@ -1,8 +1,8 @@
 import { Box, Typography } from '@mui/material';
 import React from 'react';
 
-import { StableLoading } from '../../../components/StableLoading';
 import { useCriticalDamageTask, useCurrentFight, usePlayerData } from '../../../hooks';
+import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 
@@ -47,11 +47,7 @@ export const CriticalDamagePanel: React.FC = () => {
 
   // Show loading state while fetching data OR if data is not complete
   if (!hasCompleteData) {
-    return (
-      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
-        <StableLoading variant="panel" height={400} title="Loading critical damage data..." />
-      </Box>
-    );
+    return getSkeletonForTab(TabId.CRITICAL_DAMAGE, false, false);
   }
 
   // Show error state if there was an error
