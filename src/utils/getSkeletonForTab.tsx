@@ -131,6 +131,7 @@ const TabsSkeleton: React.FC = () => (
 export const getSkeletonForTab = (
   tabId: TabId | undefined,
   includeHeaderAndTabs = false,
+  showMinimalSkeleton = false,
 ): React.ReactElement => {
   const getContentSkeleton = (): React.ReactElement => {
     switch (tabId) {
@@ -402,11 +403,23 @@ export const getSkeletonForTab = (
           </Box>
         );
       case TabId.CRITICAL_DAMAGE:
-        return <CriticalDamageSkeleton />;
+        return showMinimalSkeleton ? (
+          <CriticalDamageSkeleton playerCount={3} />
+        ) : (
+          <CriticalDamageSkeleton />
+        );
       case TabId.PENETRATION:
-        return <PenetrationSkeleton />;
+        return showMinimalSkeleton ? (
+          <PenetrationSkeleton playerCount={3} />
+        ) : (
+          <PenetrationSkeleton />
+        );
       case TabId.DAMAGE_REDUCTION:
-        return <DamageReductionSkeleton />;
+        return showMinimalSkeleton ? (
+          <DamageReductionSkeleton playerCount={3} />
+        ) : (
+          <DamageReductionSkeleton />
+        );
       case TabId.LOCATION_HEATMAP:
         return (
           <GenericTabSkeleton
