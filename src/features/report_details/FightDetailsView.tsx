@@ -37,17 +37,13 @@ import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { FightFragment } from '../../graphql/generated';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
+import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
 import { TargetSelector } from './insights/TargetSelector';
 import { useFightNavigation } from './ReportFightHeader';
 
 // Lazy load heavy panel components for better initial page load performance
 const ActorsPanel = React.lazy(() =>
   import('./actors/ActorsPanel').then((module) => ({ default: module.ActorsPanel })),
-);
-const CriticalDamagePanel = React.lazy(() =>
-  import('./critical_damage/CriticalDamagePanel').then((module) => ({
-    default: module.CriticalDamagePanel,
-  })),
 );
 const DamageDonePanel = React.lazy(() =>
   import('./damage/DamageDonePanel').then((module) => ({ default: module.DamageDonePanel })),
