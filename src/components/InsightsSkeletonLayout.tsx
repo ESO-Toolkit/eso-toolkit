@@ -187,23 +187,32 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             </Typography>
             <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
               {[...Array(6)].map((_, index) => (
-                <Box key={index} sx={{ py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                    <Skeleton variant="rounded" width={32} height={32} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" width="70%" height={16} />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Skeleton variant="text" width="30%" height={12} />
-                        <Skeleton variant="text" width="20%" height={12} />
+                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ width: '100%' }}>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 2,
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={32} height={32} />
+                      <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                        <Skeleton variant="text" width="60%" height={16} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                          <Skeleton variant="text" width="40px" height={12} />
+                          <Skeleton variant="text" width="40px" height={12} />
+                        </Box>
                       </Box>
-                      <Skeleton
-                        variant="rectangular"
-                        width="100%"
-                        height={8}
-                        sx={{ mt: 1, borderRadius: 999 }}
-                      />
+                      <Skeleton variant="text" width="40px" height={20} />
                     </Box>
-                    <Skeleton variant="text" width="40%" height={14} />
                   </Box>
                 </Box>
               ))}
@@ -227,23 +236,32 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             </Typography>
             <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
               {[...Array(6)].map((_, index) => (
-                <Box key={index} sx={{ py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                    <Skeleton variant="rounded" width={32} height={32} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" width="70%" height={16} />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Skeleton variant="text" width="30%" height={12} />
-                        <Skeleton variant="text" width="20%" height={12} />
+                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ width: '100%' }}>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 2,
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={32} height={32} />
+                      <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                        <Skeleton variant="text" width="60%" height={16} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                          <Skeleton variant="text" width="40px" height={12} />
+                          <Skeleton variant="text" width="40px" height={12} />
+                        </Box>
                       </Box>
-                      <Skeleton
-                        variant="rectangular"
-                        width="100%"
-                        height={8}
-                        sx={{ mt: 1, borderRadius: 999 }}
-                      />
+                      <Skeleton variant="text" width="40px" height={20} />
                     </Box>
-                    <Skeleton variant="text" width="40%" height={14} />
                   </Box>
                 </Box>
               ))}
@@ -262,23 +280,32 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             </Typography>
             <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
               {[...Array(5)].map((_, index) => (
-                <Box key={index} sx={{ py: 1, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25 }}>
-                    <Skeleton variant="rounded" width={32} height={32} />
-                    <Box sx={{ flex: 1 }}>
-                      <Skeleton variant="text" width="70%" height={16} />
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5 }}>
-                        <Skeleton variant="text" width="30%" height={12} />
-                        <Skeleton variant="text" width="20%" height={12} />
+                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                  <Box sx={{ width: '100%' }}>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        height: 48,
+                        borderRadius: 2,
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
+                        display: 'flex',
+                        alignItems: 'center',
+                        px: 2,
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={32} height={32} />
+                      <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                        <Skeleton variant="text" width="60%" height={16} />
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                          <Skeleton variant="text" width="40px" height={12} />
+                          <Skeleton variant="text" width="40px" height={12} />
+                        </Box>
                       </Box>
-                      <Skeleton
-                        variant="rectangular"
-                        width="100%"
-                        height={8}
-                        sx={{ mt: 1, borderRadius: 999 }}
-                      />
+                      <Skeleton variant="text" width="40px" height={20} />
                     </Box>
-                    <Skeleton variant="text" width="40%" height={14} />
                   </Box>
                 </Box>
               ))}
@@ -360,7 +387,10 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         position: 'relative',
                         height: 48,
                         borderRadius: 2,
-                        bgcolor: 'rgba(0,0,0,0.06)',
+                        bgcolor: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.08)'
+                            : 'rgba(0,0,0,0.06)',
                         display: 'flex',
                         alignItems: 'center',
                         px: 2,
