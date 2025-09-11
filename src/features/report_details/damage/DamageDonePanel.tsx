@@ -2,7 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
-import { GenericTabSkeleton } from '../../../components/GenericTabSkeleton';
+import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import {
   useDamageEventsLookup,
   useReportMasterData,
@@ -205,9 +205,7 @@ export const DamageDonePanel: React.FC = () => {
 
   // Show table skeleton while data is being fetched
   if (isLoading) {
-    return (
-      <GenericTabSkeleton title="Damage Done" showChart={false} showTable={true} tableRows={10} />
-    );
+    return <DamageDoneTableSkeleton rowCount={10} />;
   }
 
   // Don't render until we have data

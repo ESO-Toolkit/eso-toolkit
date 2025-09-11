@@ -2,8 +2,10 @@ import { Box } from '@mui/material';
 import React from 'react';
 
 import { CriticalDamageSkeleton } from '../components/CriticalDamageSkeleton';
+import { DamageDoneTableSkeleton } from '../components/DamageDoneTableSkeleton';
 import { DamageReductionSkeleton } from '../components/DamageReductionSkeleton';
 import { GenericTabSkeleton } from '../components/GenericTabSkeleton';
+import { HealingDoneTableSkeleton } from '../components/HealingDoneTableSkeleton';
 import { InsightsSkeletonLayout } from '../components/InsightsSkeletonLayout';
 import { PenetrationSkeleton } from '../components/PenetrationSkeleton';
 import { PlayersSkeleton } from '../components/PlayersSkeleton';
@@ -145,23 +147,9 @@ export const getSkeletonForTab = (
       case TabId.PLAYERS:
         return <PlayersSkeleton />;
       case TabId.DAMAGE_DONE:
-        return (
-          <GenericTabSkeleton
-            title="Damage Done"
-            showChart={false}
-            showTable={true}
-            tableRows={10}
-          />
-        );
+        return <DamageDoneTableSkeleton rowCount={10} />;
       case TabId.HEALING_DONE:
-        return (
-          <GenericTabSkeleton
-            title="Healing Done"
-            showChart={false}
-            showTable={true}
-            tableRows={8}
-          />
-        );
+        return <HealingDoneTableSkeleton rowCount={8} />;
       case TabId.DEATHS:
         return (
           <Box mt={2}>

@@ -1,7 +1,7 @@
 import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 
-import { GenericTabSkeleton } from '../../../components/GenericTabSkeleton';
+import { HealingDoneTableSkeleton } from '../../../components/HealingDoneTableSkeleton';
 import { FightFragment } from '../../../graphql/generated';
 import {
   useCastEvents,
@@ -147,9 +147,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
 
   // Show table skeleton while data is being fetched
   if (isLoading) {
-    return (
-      <GenericTabSkeleton title="Healing Done" showChart={false} showTable={true} tableRows={8} />
-    );
+    return <HealingDoneTableSkeleton rowCount={8} />;
   }
 
   // Show no data message if we have no healing data but aren't loading
