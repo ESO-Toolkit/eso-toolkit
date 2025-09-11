@@ -24,8 +24,60 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
         <Typography variant="h6" gutterBottom>
           Status Effect Uptimes
         </Typography>
-        <Skeleton variant="rectangular" width="100%" height={40} />
-        <Skeleton variant="rectangular" width="100%" height={200} sx={{ mt: 2 }} />
+        <Box sx={{ height: '100%', overflowY: 'auto' }}>
+          {[...Array(7)].map((_, index) => (
+            <Box
+              key={index}
+              sx={{
+                py: 1.5,
+                pl: 0.5,
+                pr: 1.5,
+                borderBottom: '1px solid rgba(0,0,0,0.06)',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Box
+                  sx={{
+                    position: 'relative',
+                    height: 48,
+                    borderRadius: 2,
+                    bgcolor: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255,255,255,0.08)'
+                        : 'rgba(203, 213, 225, 0.3)',
+                    border: (theme) =>
+                      theme.palette.mode === 'dark' ? 'none' : '1px solid rgba(15, 23, 42, 0.08)',
+                    boxShadow: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
+                        : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    px: 2,
+                  }}
+                >
+                  {/* Icon placeholder */}
+                  <Skeleton variant="rounded" width={32} height={32} />
+
+                  {/* Text content */}
+                  <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
+                    <Skeleton variant="text" width="60%" height={16} />
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
+                      <Skeleton variant="text" width="40px" height={12} />
+                      <Skeleton variant="text" width="40px" height={12} />
+                    </Box>
+                  </Box>
+
+                  {/* Percentage and stack badge */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Skeleton variant="rounded" width={32} height={20} />
+                    <Skeleton variant="text" width="40px" height={20} />
+                  </Box>
+                </Box>
+              </Box>
+            </Box>
+          ))}
+        </Box>
       </Box>
     );
   }
@@ -44,7 +96,7 @@ export const StatusEffectUptimesView: React.FC<StatusEffectUptimesViewProps> = (
       </Typography>
 
       {statusEffectUptimes && statusEffectUptimes.length > 0 ? (
-        <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
+        <Box sx={{ height: '100%', overflowY: 'auto' }}>
           <List disablePadding>
             {statusEffectUptimes.map((statusEffect) => {
               return (

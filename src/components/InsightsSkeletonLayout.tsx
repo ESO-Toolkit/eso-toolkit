@@ -132,7 +132,7 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 300 }}>
                 Abilities Equipped:
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 1 }}>
                 {[...Array(4)].map((_, index) => (
                   <Box
                     key={index}
@@ -183,11 +183,19 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               Status Effect Uptimes
             </Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Shows average status effect uptimes across friendly players
+              Shows status effects applied to all targets
             </Typography>
-            <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-              {[...Array(6)].map((_, index) => (
-                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <Box sx={{ height: '100%', overflowY: 'auto' }}>
+              {[...Array(7)].map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    py: 1.5,
+                    pl: 0.5,
+                    pr: 1.5,
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
                   <Box sx={{ width: '100%' }}>
                     <Box
                       sx={{
@@ -197,13 +205,24 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         bgcolor: (theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
+                            : 'rgba(203, 213, 225, 0.3)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
+                            : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         px: 2,
                       }}
                     >
+                      {/* Icon placeholder */}
                       <Skeleton variant="rounded" width={32} height={32} />
+
+                      {/* Text content */}
                       <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                         <Skeleton variant="text" width="60%" height={16} />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
@@ -211,7 +230,12 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                           <Skeleton variant="text" width="40px" height={12} />
                         </Box>
                       </Box>
-                      <Skeleton variant="text" width="40px" height={20} />
+
+                      {/* Percentage and stack badge */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton variant="rounded" width={32} height={20} />
+                        <Skeleton variant="text" width="40px" height={20} />
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
@@ -234,9 +258,17 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Shows average buff uptimes across friendly players
             </Typography>
-            <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-              {[...Array(6)].map((_, index) => (
-                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+            <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
+              {[...Array(5)].map((_, index) => (
+                <Box
+                  key={index}
+                  sx={{
+                    py: 1.5,
+                    pl: 0.5,
+                    pr: 1.5,
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
                   <Box sx={{ width: '100%' }}>
                     <Box
                       sx={{
@@ -246,13 +278,24 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         bgcolor: (theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
+                            : 'rgba(203, 213, 225, 0.3)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
+                            : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         px: 2,
                       }}
                     >
+                      {/* Icon placeholder */}
                       <Skeleton variant="rounded" width={32} height={32} />
+
+                      {/* Text content */}
                       <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                         <Skeleton variant="text" width="60%" height={16} />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
@@ -260,7 +303,12 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                           <Skeleton variant="text" width="40px" height={12} />
                         </Box>
                       </Box>
-                      <Skeleton variant="text" width="40px" height={20} />
+
+                      {/* Percentage and stack badge */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton variant="rounded" width={32} height={20} />
+                        <Skeleton variant="text" width="40px" height={20} />
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
@@ -278,9 +326,17 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Shows average debuff uptimes against hostile targets
             </Typography>
-            <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
+            <Box sx={{ maxHeight: 400, overflowY: 'auto' }}>
               {[...Array(5)].map((_, index) => (
-                <Box key={index} sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}>
+                <Box
+                  key={index}
+                  sx={{
+                    py: 1.5,
+                    pl: 0.5,
+                    pr: 1.5,
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  }}
+                >
                   <Box sx={{ width: '100%' }}>
                     <Box
                       sx={{
@@ -290,13 +346,24 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         bgcolor: (theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
+                            : 'rgba(203, 213, 225, 0.3)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
+                            : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         px: 2,
                       }}
                     >
+                      {/* Icon placeholder */}
                       <Skeleton variant="rounded" width={32} height={32} />
+
+                      {/* Text content */}
                       <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                         <Skeleton variant="text" width="60%" height={16} />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
@@ -304,7 +371,12 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                           <Skeleton variant="text" width="40px" height={12} />
                         </Box>
                       </Box>
-                      <Skeleton variant="text" width="40px" height={20} />
+
+                      {/* Percentage and stack badge */}
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Skeleton variant="rounded" width={32} height={20} />
+                        <Skeleton variant="text" width="40px" height={20} />
+                      </Box>
                     </Box>
                   </Box>
                 </Box>
@@ -376,10 +448,15 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
               <Skeleton variant="text" width="60px" sx={{ display: 'inline-block' }} />
             </Typography>
             <Box sx={{ maxHeight: 350, overflowY: 'auto' }}>
-              {[...Array(6)].map((_, index) => (
+              {[...Array(4)].map((_, index) => (
                 <Box
                   key={index}
-                  sx={{ py: 1.5, pl: 0.5, pr: 1.5, borderBottom: '1px solid rgba(0,0,0,0.06)' }}
+                  sx={{
+                    py: 1.5,
+                    pl: 0.5,
+                    pr: 1.5,
+                    borderBottom: '1px solid rgba(0,0,0,0.06)',
+                  }}
                 >
                   <Box sx={{ width: '100%' }}>
                     <Box
@@ -390,13 +467,24 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                         bgcolor: (theme) =>
                           theme.palette.mode === 'dark'
                             ? 'rgba(255,255,255,0.08)'
-                            : 'rgba(0,0,0,0.06)',
+                            : 'rgba(203, 213, 225, 0.3)',
+                        border: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'none'
+                            : '1px solid rgba(15, 23, 42, 0.08)',
+                        boxShadow: (theme) =>
+                          theme.palette.mode === 'dark'
+                            ? 'inset 0 1px 3px rgba(0, 0, 0, 0.5)'
+                            : 'inset 0 1px 2px rgba(15, 23, 42, 0.1)',
                         display: 'flex',
                         alignItems: 'center',
                         px: 2,
                       }}
                     >
+                      {/* Emoji icon placeholder */}
                       <Skeleton variant="rounded" width={32} height={32} />
+
+                      {/* Text content */}
                       <Box sx={{ flex: 1, minWidth: 0, ml: 1.5 }}>
                         <Skeleton variant="text" width="60%" height={16} />
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.25 }}>
@@ -404,6 +492,8 @@ export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
                           <Skeleton variant="text" width="40px" height={12} />
                         </Box>
                       </Box>
+
+                      {/* Percentage only (no stack badge for damage types) */}
                       <Skeleton variant="text" width="40px" height={20} />
                     </Box>
                   </Box>
