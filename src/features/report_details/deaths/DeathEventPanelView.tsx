@@ -705,8 +705,8 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                         }}
                       >
                         {info.killerWasTaunted
-                          ? '🛡️ Killer was taunted'
-                          : '⚡ Killer was NOT taunted'}
+                          ? '✅ Killer was taunted'
+                          : '❌ Killer was NOT taunted'}
                       </Typography>
                     </Box>
                   ) : (
