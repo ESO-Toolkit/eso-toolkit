@@ -192,7 +192,16 @@ export const ReportFightHeader: React.FC = () => {
 
       // Upgrade to real content when available
       if (fight) {
-        titleElement.textContent = `${fight.name} (${fight.id})`;
+        const bossWasKilled =
+          fight.bossPercentage !== null &&
+          fight.bossPercentage !== undefined &&
+          fight.bossPercentage <= 1.0;
+        const statusIndicator = bossWasKilled
+          ? '✓'
+          : fight.bossPercentage
+            ? `${Math.round(fight.bossPercentage)}%`
+            : 'Wipe';
+        titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
       }
     }
   }, [fight, fightId]);
@@ -352,7 +361,26 @@ export const ReportFightHeader: React.FC = () => {
           }}
         >
           {/* Fallback content for SSR/initial render */}
-          {fightId ? `Fight ${fightId}` : 'Loading...'}
+          {fight
+            ? (() => {
+                const bossWasKilled =
+                  fight.bossPercentage !== null &&
+                  fight.bossPercentage !== undefined &&
+                  fight.bossPercentage <= 1.0;
+                const statusIndicator = bossWasKilled
+                  ? '✓'
+                  : fight.bossPercentage
+                    ? `${Math.round(fight.bossPercentage)}%`
+                    : 'Wipe';
+                return (
+                  <>
+                    {fight.name} (<span style={{ fontWeight: 300 }}>{statusIndicator}</span>)
+                  </>
+                );
+              })()
+            : fightId
+              ? `Fight ${fightId}`
+              : 'Loading...'}
         </Typography>
       </Stack>
     </React.Fragment>
