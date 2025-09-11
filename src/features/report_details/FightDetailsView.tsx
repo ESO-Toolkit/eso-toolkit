@@ -352,7 +352,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             minWidth: 0,
             flexGrow: 1,
             minHeight: 'auto',
-            overflow: 'hidden',
+            overflow: 'visible',
             maxWidth: 'calc(100vw - 80px)', // Leave space for experimental toggle
             '& .MuiTabs-indicator': {
               display: 'none',
