@@ -45,6 +45,7 @@ on:
 jobs:
   nightly-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 75  # Reduced timeout since Playwright manages server lifecycle
     
     # Don't cancel in-progress runs for scheduled builds
     concurrency:
@@ -122,17 +123,18 @@ jobs:
           # Node.js memory optimization
           NODE_OPTIONS: '--max_old_space_size=8192'
 
-      - name: Start Application Server
+      - name: Verify Build Output
         run: |
-          echo "🚀 Starting application server..."
-          npm run preview &
-          
-          # Wait for server to be ready
-          echo "⏳ Waiting for server to start..."
-          timeout 60 bash -c 'until curl -f http://localhost:4173 > /dev/null 2>&1; do sleep 2; done'
-          echo "✅ Server is ready"
-        env:
-          PORT: 4173
+          echo "✅ Verifying build output..."
+          if [ ! -d "build" ]; then
+            echo "❌ Build directory not found"
+            exit 1
+          fi
+          if [ ! -f "build/index.html" ]; then
+            echo "❌ Build index.html not found"
+            exit 1
+          fi
+          echo "✅ Build verification passed"
 
       - name: Determine Test Command
         id: test-command
@@ -178,6 +180,7 @@ jobs:
           echo "🧪 Will run: ${TEST_CMD}"
 
       - name: Run Nightly Tests
+        timeout-minutes: 60  # Set explicit timeout for test execution
         run: |
           echo "🌙 Running nightly regression tests..."
           echo "Command: ${{ steps.test-command.outputs.TEST_CMD }}"
@@ -188,6 +191,8 @@ jobs:
         env:
           # CI environment flags
           CI: 'true'
+          # Base URL for Playwright tests - let Playwright manage the server
+          BASE_URL: 'http://localhost:3000'
           # Node.js memory optimization
           NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
           # ESO Logs OAuth credentials for authenticated tests
