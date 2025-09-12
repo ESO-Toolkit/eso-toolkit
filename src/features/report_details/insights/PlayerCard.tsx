@@ -28,6 +28,7 @@ import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 
 import { getArmorWeightCounts } from '@/utils/armorUtils';
@@ -332,7 +333,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   noWrap
                                   sx={{ lineHeight: 1.05, fontSize: '0.70rem' }}
                                 >
-                                  {skill.skillLine}
+                                  {abbreviateSkillLine(skill.skillLine)}
                                 </Typography>
                               </Box>
                             </Tooltip>
