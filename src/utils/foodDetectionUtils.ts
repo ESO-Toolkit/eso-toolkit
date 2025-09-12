@@ -87,14 +87,33 @@ export function detectFoodFromAuras(
  * @returns Abbreviated food name
  */
 export function abbreviateFood(name: string): string {
+  // Special named food abbreviations
+  if (name.includes('Lava Foot Soup')) return 'LFSS';
+  if (name.includes('Artaeum Takeaway Broth')) return 'ATB';
+  if (name.includes('Bewitched Sugar Skulls')) return 'BSS';
+  if (name.includes('Clockwork Citrus Filet')) return 'CCF';
+  if (name.includes('Crown Fortifying Meal')) return 'CFM';
+  if (name.includes('Crown Vigorous Tincture')) return 'CVT';
+  if (name.includes('Dubious Camoran Throne')) return 'DCT';
+  if (name.includes('Eye Scream')) return 'ES';
+  if (name.includes('Ghastly Eye Bowl')) return 'GEB';
+  if (name.includes('Jewels of Misrule')) return 'JOM';
+  if (name.includes('Smoked Bear Haunch')) return 'SBH';
+  if (name.includes('Witchmother')) return 'WPB';
+  
+  // Generic food type abbreviations
   if (name.includes('Tri-Stat')) return 'TRI';
-  if (name.includes('Health') && name.includes('Regen')) return 'H+R';
-  if (name.includes('Health') && name.includes('Stamina')) return 'H+S';
-  if (name.includes('Health') && name.includes('Magicka')) return 'H+M';
-  if (name.includes('Health')) return 'HEALTH';
-  if (name.includes('Magicka')) return 'MAG';
-  if (name.includes('Stamina')) return 'STAM';
-  return name.slice(0, 6).toUpperCase();
+  if (name.includes('Health') && name.includes('Regen')) return 'HRGN';
+  if (name.includes('Health') && name.includes('Stamina')) return 'HSTA';
+  if (name.includes('Health') && name.includes('Magicka')) return 'HMAG';
+  if (name.includes('Health')) return 'HLTH';
+  if (name.includes('Magicka')) return 'MAGK';
+  if (name.includes('Stamina')) return 'STMN';
+  
+  // Fallback: take first letter of each word, max 4 chars
+  const words = name.split(' ').filter(word => word.length > 0);
+  const abbreviation = words.slice(0, 4).map(word => word[0]).join('');
+  return abbreviation.slice(0, 4).toUpperCase();
 }
 
 /**
