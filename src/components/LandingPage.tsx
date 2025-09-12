@@ -6,20 +6,16 @@ import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
 
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
-import { Footer } from './Footer';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
 
 // Styled components using your existing design
 const LandingContainer = styled(Box)(({ theme }) => ({
-  minHeight: '100vh',
-  background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
-  position: 'relative',
-  overflow: 'visible',
   width: '100%',
   maxWidth: '100vw',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
+  flex: 1,
 }));
 
 const HeroSection = styled(Box, {
@@ -35,6 +31,7 @@ const HeroSection = styled(Box, {
   overflow: 'hidden',
   width: '100%',
   maxWidth: '100vw',
+  flex: 1,
   [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
     padding: '2rem 1rem 0rem',
@@ -909,8 +906,6 @@ export const LandingPage: React.FC = () => {
           meta changes.
         </SectionSubtitle>
       </ToolsSection>
-
-      <Footer />
     </LandingContainer>
   );
 };

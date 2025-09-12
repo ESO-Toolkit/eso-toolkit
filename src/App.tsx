@@ -1,9 +1,11 @@
+import { Box } from '@mui/material';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
 import { ErrorBoundary } from './components/ErrorBoundary';
+import { Footer } from './components/Footer';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
@@ -70,8 +72,18 @@ const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
 const MainApp: React.FC = () => {
   return (
     <ReduxThemeProvider>
-      <HeaderBar />
-      <LandingPage />
+      <Box
+        sx={{
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
+          paddingBottom: { xs: '320px', md: '400px' }, // Space for fixed footer
+        }}
+      >
+        <HeaderBar />
+        <LandingPage />
+      </Box>
+      <Footer />
     </ReduxThemeProvider>
   );
 };

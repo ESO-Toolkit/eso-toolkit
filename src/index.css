@@ -39,8 +39,16 @@
     var(--scrollbar-track, rgba(255, 255, 255, 0.05));
 }
 
-body {
+/* Ensure full height for sticky footer */
+html,
+body,
+#root {
+  height: 100%;
   margin: 0;
+  padding: 0;
+}
+
+body {
   font-family:
     Inter,
     -apple-system,

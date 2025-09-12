@@ -48,13 +48,23 @@ export const Footer: React.FC = React.memo(() => {
     <Box
       component="footer"
       sx={{
-        marginTop: { xs: '4rem', md: '6rem' },
-        position: 'relative',
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 1000,
         background:
           theme.palette.mode === 'dark'
-            ? 'linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.4) 50%, rgba(3,7,18,0.8) 100%) !important'
-            : 'linear-gradient(180deg, transparent 0%, rgba(248,250,252,0.6) 50%, rgba(241,245,249,0.9) 100%) !important',
+            ? 'linear-gradient(180deg, rgba(15,23,42,0.2) 0%, rgba(15,23,42,0.6) 50%, rgba(3,7,18,0.95) 100%) !important'
+            : 'linear-gradient(180deg, rgba(248,250,252,0.3) 0%, rgba(248,250,252,0.7) 50%, rgba(241,245,249,0.98) 100%) !important',
         backgroundImage: 'none !important', // Ensure no other background images interfere
+        backdropFilter: 'blur(8px)',
+        WebkitBackdropFilter: 'blur(8px)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 -4px 20px rgba(0, 0, 0, 0.3), 0 -1px 4px rgba(0, 0, 0, 0.2)'
+            : '0 -4px 20px rgba(15, 23, 42, 0.1), 0 -1px 4px rgba(15, 23, 42, 0.05)',
+        borderTop: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(56, 189, 248, 0.15)'}`,
         '&::before': {
           content: '""',
           position: 'absolute',

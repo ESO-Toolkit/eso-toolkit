@@ -29,6 +29,7 @@ export const AppLayout: React.FC = () => {
           bgcolor: 'background.default',
           display: 'flex',
           flexDirection: 'column',
+          paddingBottom: { xs: '320px', md: '400px' }, // Space for fixed footer
         }}
       >
         <HeaderBar />
@@ -37,14 +38,17 @@ export const AppLayout: React.FC = () => {
           sx={{
             px: { xs: isLandingPage ? 2 : 0, sm: 2 },
             flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           <Box
             sx={{
               pt: { xs: isLandingPage ? 2 : 0, sm: 2 },
               pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
-              minHeight: 'calc(100vh - 200px)',
-              overflowY: 'auto',
+              flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <Login />
@@ -65,6 +69,7 @@ export const AppLayout: React.FC = () => {
             bgcolor: 'background.default',
             display: 'flex',
             flexDirection: 'column',
+            paddingBottom: { xs: '320px', md: '400px' }, // Space for fixed footer
           }}
         >
           <HeaderBar />
@@ -73,14 +78,17 @@ export const AppLayout: React.FC = () => {
             sx={{
               px: { xs: isLandingPage ? 2 : 0, sm: 2 },
               flex: 1,
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <Box
               sx={{
                 pt: { xs: isLandingPage ? 2 : 0, sm: 8 },
                 pb: { xs: isLandingPage ? 2 : 0, sm: 4 },
-                minHeight: 'calc(100vh - 200px)',
-                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
               }}
             >
               <Outlet />
