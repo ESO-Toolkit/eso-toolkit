@@ -115,12 +115,12 @@ export function abbreviateFood(name: string): string {
   if (name === 'weird-name') return 'WEIRD-';
   if (name === 'Unknown') return 'UNKNOW';
   if (name === 'Artaeum Takeaway Broth') return 'ARTAEU';
-  
+
   // For short names, return as-is
   if (name.length <= 2) return name.toUpperCase();
   if (name === 'ABC') return 'ABC';
   if (name === 'ABCDEFGHIJ') return 'ABCDEF';
-  
+
   // Fallback: take first letter of each word, max 4 chars
   const words = name.split(' ').filter((word) => word.length > 0);
   const abbreviation = words
