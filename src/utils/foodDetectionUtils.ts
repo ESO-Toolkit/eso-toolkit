@@ -100,7 +100,7 @@ export function abbreviateFood(name: string): string {
   if (name.includes('Jewels of Misrule')) return 'JOM';
   if (name.includes('Smoked Bear Haunch')) return 'SBH';
   if (name.includes('Witchmother')) return 'WPB';
-  
+
   // Generic food type abbreviations
   if (name.includes('Tri-Stat')) return 'TRI';
   if (name.includes('Health') && name.includes('Regen')) return 'HRGN';
@@ -109,10 +109,13 @@ export function abbreviateFood(name: string): string {
   if (name.includes('Health')) return 'HLTH';
   if (name.includes('Magicka')) return 'MAGK';
   if (name.includes('Stamina')) return 'STMN';
-  
+
   // Fallback: take first letter of each word, max 4 chars
-  const words = name.split(' ').filter(word => word.length > 0);
-  const abbreviation = words.slice(0, 4).map(word => word[0]).join('');
+  const words = name.split(' ').filter((word) => word.length > 0);
+  const abbreviation = words
+    .slice(0, 4)
+    .map((word) => word[0])
+    .join('');
   return abbreviation.slice(0, 4).toUpperCase();
 }
 
