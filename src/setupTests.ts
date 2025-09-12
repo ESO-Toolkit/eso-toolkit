@@ -44,7 +44,16 @@ global.fetch = jest.fn(() =>
   Promise.resolve({
     ok: true,
     status: 200,
-    json: () => Promise.resolve({}),
+    json: () =>
+      Promise.resolve({
+        version: '0.1.0',
+        buildTime: new Date().toISOString(),
+        gitCommit: 'dev-commit',
+        shortCommit: 'dev',
+        buildId: `0.1.0-dev-${Date.now()}`,
+        timestamp: Date.now(),
+        cacheBuster: `v=dev${Date.now()}`,
+      }),
     text: () => Promise.resolve(''),
     headers: new Headers(),
     redirected: false,
