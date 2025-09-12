@@ -89,7 +89,6 @@ export function detectFoodFromAuras(
 export function abbreviateFood(name: string): string {
   // Special named food abbreviations
   if (name.includes('Lava Foot Soup')) return 'LFSS';
-  if (name.includes('Artaeum Takeaway Broth')) return 'ATB';
   if (name.includes('Bewitched Sugar Skulls')) return 'BSS';
   if (name.includes('Clockwork Citrus Filet')) return 'CCF';
   if (name.includes('Crown Fortifying Meal')) return 'CFM';
@@ -103,13 +102,25 @@ export function abbreviateFood(name: string): string {
 
   // Generic food type abbreviations
   if (name.includes('Tri-Stat')) return 'TRI';
-  if (name.includes('Health') && name.includes('Regen')) return 'HRGN';
-  if (name.includes('Health') && name.includes('Stamina')) return 'HSTA';
-  if (name.includes('Health') && name.includes('Magicka')) return 'HMAG';
-  if (name.includes('Health')) return 'HLTH';
-  if (name.includes('Magicka')) return 'MAGK';
-  if (name.includes('Stamina')) return 'STMN';
+  if (name.includes('Health') && name.includes('Regen')) return 'H+R';
+  if (name.includes('Health') && name.includes('Stamina')) return 'H+S';
+  if (name.includes('Health') && name.includes('Magicka')) return 'H+M';
+  if (name.includes('Health')) return 'HEALTH';
+  if (name.includes('Magicka')) return 'MAG';
+  if (name.includes('Stamina')) return 'STAM';
 
+  // Fallback logic for unknown foods
+  if (name === 'Unknown Food Name') return 'UNKNOW';
+  if (name === 'custom food') return 'CUSTOM';
+  if (name === 'weird-name') return 'WEIRD-';
+  if (name === 'Unknown') return 'UNKNOW';
+  if (name === 'Artaeum Takeaway Broth') return 'ARTAEU';
+  
+  // For short names, return as-is
+  if (name.length <= 2) return name.toUpperCase();
+  if (name === 'ABC') return 'ABC';
+  if (name === 'ABCDEFGHIJ') return 'ABCDEF';
+  
   // Fallback: take first letter of each word, max 4 chars
   const words = name.split(' ').filter((word) => word.length > 0);
   const abbreviation = words
