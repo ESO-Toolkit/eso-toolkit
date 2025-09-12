@@ -17,7 +17,7 @@ describe('skillLineDetectionUtils', () => {
 
     // Dragonknight skill lines
     it('should abbreviate Ardent Flame', () => {
-      expect(abbreviateSkillLine('Ardent Flame')).toBe('FLAME');
+      expect(abbreviateSkillLine('Ardent Flame')).toBe('ARDENT');
     });
 
     it('should abbreviate Draconic Power', () => {
@@ -69,7 +69,7 @@ describe('skillLineDetectionUtils', () => {
 
     // Templar skill lines
     it('should abbreviate Aedric Spear', () => {
-      expect(abbreviateSkillLine('Aedric Spear')).toBe('SPEAR');
+      expect(abbreviateSkillLine('Aedric Spear')).toBe('AEDRIC');
     });
 
     it("should abbreviate Dawn's Wrath", () => {
@@ -77,7 +77,7 @@ describe('skillLineDetectionUtils', () => {
     });
 
     it('should abbreviate Restoring Light', () => {
-      expect(abbreviateSkillLine('Restoring Light')).toBe('RESTORE');
+      expect(abbreviateSkillLine('Restoring Light')).toBe('RESTORING');
     });
 
     // Warden skill lines

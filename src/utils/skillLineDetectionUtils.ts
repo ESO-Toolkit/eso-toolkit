@@ -14,7 +14,7 @@ export function abbreviateSkillLine(name: string): string {
   if (name === 'Curative Runeforms') return 'RUNEFORM';
 
   // Dragonknight skill lines
-  if (name === 'Ardent Flame') return 'FLAME';
+  if (name === 'Ardent Flame') return 'ARDENT';
   if (name === 'Draconic Power') return 'DRACONIC';
   if (name === 'Earthen Heart') return 'EARTHEN';
 
@@ -34,9 +34,9 @@ export function abbreviateSkillLine(name: string): string {
   if (name === 'Daedric Summoning') return 'DAEDRIC';
 
   // Templar skill lines
-  if (name === 'Aedric Spear') return 'SPEAR';
+  if (name === 'Aedric Spear') return 'AEDRIC';
   if (name === "Dawn's Wrath") return 'DAWN';
-  if (name === 'Restoring Light') return 'RESTORE';
+  if (name === 'Restoring Light') return 'RESTORING';
 
   // Warden skill lines
   if (name === 'Animal Companions') return 'ANIMAL';
