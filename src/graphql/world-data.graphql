@@ -1,0 +1,24 @@
+# World Data queries for encounters, zones, and game metadata
+# Used by: download-report-data script for fetching encounter metadata
+
+query getEncounterInfo($encounterId: Int!) {
+  worldData {
+    encounter(id: $encounterId) {
+      id
+      name
+      zone {
+        id
+        name
+        encounters {
+          id
+          name
+        }
+        difficulties {
+          id
+          name
+          sizes
+        }
+      }
+    }
+  }
+}

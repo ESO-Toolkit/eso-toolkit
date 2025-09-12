@@ -9,9 +9,21 @@ export const FightFragmentDoc = gql`
     difficulty
     startTime
     endTime
+    kill
+    encounterID
+    originalEncounterID
+    lastPhase
+    lastPhaseAsAbsoluteIndex
+    lastPhaseIsIntermission
     friendlyPlayers
     enemyPlayers
     bossPercentage
+    boundingBox {
+      minX
+      maxX
+      minY
+      maxY
+    }
     friendlyNPCs {
       gameID
       groupCount
@@ -29,6 +41,61 @@ export const FightFragmentDoc = gql`
       file
       id
       name
+    }
+    phaseTransitions {
+      id
+      startTime
+    }
+    gameZone {
+      id
+      name
+    }
+    dungeonPulls {
+      id
+      name
+      x
+      y
+      startTime
+      endTime
+      encounterID
+      kill
+      boundingBox {
+        minX
+        maxX
+        minY
+        maxY
+      }
+      maps {
+        file
+        id
+        name
+      }
+    }
+  }
+`;
+export const ReportInfoFragmentDoc = gql`
+  fragment ReportInfo on Report {
+    code
+    title
+    startTime
+    endTime
+    zone {
+      id
+      name
+      frozen
+      expansion {
+        id
+        name
+      }
+      encounters {
+        id
+        name
+      }
+      difficulties {
+        id
+        name
+        sizes
+      }
     }
   }
 `;

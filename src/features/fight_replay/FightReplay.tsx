@@ -1,87 +1,95 @@
-import React from 'react';
+import { Box, Typography, Alert } from '@mui/material';
+import React, { useMemo } from 'react';
 
-import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
-import { useReportData } from '../../hooks';
-import { useDamageEvents } from '../../hooks/events/useDamageEvents';
-import { useDeathEvents } from '../../hooks/events/useDeathEvents';
-import { useHealingEvents } from '../../hooks/events/useHealingEvents';
-import { useResourceEvents } from '../../hooks/events/useResourceEvents';
-import { useReportMasterData } from '../../hooks/useReportMasterData';
-import { useSelectedReportAndFight } from '../../ReportFightContext';
+import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
+import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
+import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 
-import { FightReplayView } from './FightReplayView';
+import { FightReplay3D } from './components/FightReplay3D';
 
-import { APPLICATION_NAME } from '@/Constants';
+import { useCurrentFight } from '@/hooks';
 
 export const FightReplay: React.FC = () => {
-  // Get current selected report and fight from context
-  const { reportId, fightId } = useSelectedReportAndFight();
+  const { lookup, isActorPositionsLoading, actorPositionsError } = useActorPositionsTask();
+  const { fight, isFightLoading } = useCurrentFight();
 
-  // Get report data
-  const { reportData, isReportLoading } = useReportData();
-  const { reportMasterData } = useReportMasterData();
+  // Get buff events for phase detection using the proper hooks that fetch data
+  const { friendlyBuffEvents, isFriendlyBuffEventsLoading } = useFriendlyBuffEvents();
+  const { hostileBuffEvents, isHostileBuffEventsLoading } = useHostileBuffEvents();
 
-  // Load event data to check loading states
-  const { isDamageEventsLoading } = useDamageEvents();
-  const { isHealingEventsLoading } = useHealingEvents();
-  const { isDeathEventsLoading } = useDeathEvents();
-  const { isResourceEventsLoading } = useResourceEvents();
+  // Combine buff events for phase detection (phase transitions might be in either)
+  const allBuffEvents = useMemo(() => {
+    return [...friendlyBuffEvents, ...hostileBuffEvents];
+  }, [friendlyBuffEvents, hostileBuffEvents]);
 
-  // Find the specific fight
-  const fight = React.useMemo(() => {
-    return reportData?.fights?.find((f) => String(f?.id) === String(fightId));
-  }, [reportData?.fights, fightId]);
+  const isLoading =
+    isActorPositionsLoading ||
+    isFriendlyBuffEventsLoading ||
+    isHostileBuffEventsLoading ||
+    isFightLoading;
 
-  // Calculate loading states
-  const eventsLoading =
-    isDamageEventsLoading ||
-    isHealingEventsLoading ||
-    isDeathEventsLoading ||
-    isResourceEventsLoading;
-
-  // Calculate overall loading state
-  const overallLoading = isReportLoading || eventsLoading;
-
-  // Generate dynamic meta tags for social sharing
-  const metaTags = React.useMemo(() => {
-    if (reportId && fight) {
-      return generateReportMetaTags(
-        reportId,
-        `${fight.name} - Replay`,
-        undefined, // playerName
-        undefined, // dps
-        fight.endTime - fight.startTime,
-      );
-    }
-    return null;
-  }, [reportId, fight]);
-
-  React.useEffect(() => {
-    if (reportData?.title && fight) {
-      document.title = `${fight.name} Replay - ${reportData.title} - ${APPLICATION_NAME}`;
-    } else {
-      document.title = `Fight Replay - ${APPLICATION_NAME}`;
-    }
-  }, [reportData?.title, fight]);
-
-  if (!fight && !overallLoading) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div>
-        <h2>Fight not found</h2>
-        <p>The requested fight could not be found in this report.</p>
-      </div>
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Fight Replay - 3D View
+        </Typography>
+        <Alert severity="info">Loading actor position data...</Alert>
+      </Box>
+    );
+  }
+
+  // Error state
+  if (actorPositionsError) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Fight Replay - 3D View
+        </Typography>
+        <Alert severity="error">Error loading actor positions: {actorPositionsError}</Alert>
+      </Box>
+    );
+  }
+
+  // No fight selected
+  if (!fight) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Fight Replay - 3D View
+        </Typography>
+        <Alert severity="warning">
+          No fight selected. Please select a fight to view the replay.
+        </Alert>
+      </Box>
+    );
+  }
+
+  // No lookup data
+  if (!lookup) {
+    return (
+      <Box sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Fight Replay - 3D View
+        </Typography>
+        <Alert severity="warning">No actor position data available for this fight.</Alert>
+      </Box>
     );
   }
 
   return (
-    <>
-      {metaTags && <DynamicMetaTags {...metaTags} />}
-      <FightReplayView
-        fight={fight || undefined}
-        fightsLoading={overallLoading}
-        eventsLoading={eventsLoading}
-        reportMasterData={reportMasterData}
-      />
-    </>
+    <Box sx={{ p: 3 }}>
+      <Typography variant="h5" gutterBottom>
+        Fight Replay - 3D View
+      </Typography>
+
+      <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+        {fight.name} - Duration: {Math.floor(fight?.endTime - fight?.startTime / 1000)}s
+      </Typography>
+
+      {/* 3D Arena */}
+      <FightReplay3D selectedFight={fight} allBuffEvents={allBuffEvents} showActorNames={true} />
+    </Box>
   );
 };

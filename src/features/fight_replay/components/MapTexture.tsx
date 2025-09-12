@@ -32,7 +32,7 @@ const TexturedMesh: React.FC<{ url: string; size: number; position: [number, num
   });
 
   return (
-    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} receiveShadow>
+    <mesh rotation={[-Math.PI / 2, 0, 0]} position={position} scale={[-1, 1, 1]} receiveShadow>
       <planeGeometry args={[size, size]} />
       <meshPhongMaterial map={texture} transparent opacity={0.9} shininess={10} />
     </mesh>

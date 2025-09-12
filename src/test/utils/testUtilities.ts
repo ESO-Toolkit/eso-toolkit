@@ -22,7 +22,7 @@ export const createBuffInterval = (
   start: number,
   end: number,
   targetID: number,
-  sourceID?: number,
+  sourceID = 1, // Default to actor 1 as source
 ): BuffInterval => ({
   start,
   end,

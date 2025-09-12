@@ -9,7 +9,8 @@ import {
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
 import { executeActorPositionsTask } from '../../store/worker_results/taskSlices';
-import { ActorPositionsTimeline } from '../../workers/calculations/CalculateActorPositions';
+import { TimestampPositionLookup } from '../../workers/calculations/CalculateActorPositions';
+import { useCastEvents } from '../events/useCastEvents';
 import { useDamageEvents } from '../events/useDamageEvents';
 import { useDeathEvents } from '../events/useDeathEvents';
 import { useHealingEvents } from '../events/useHealingEvents';
@@ -22,7 +23,7 @@ import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
 interface UseActorPositionsTaskResult {
-  timeline: ActorPositionsTimeline | null;
+  lookup: TimestampPositionLookup | null;
   isActorPositionsLoading: boolean;
   actorPositionsError: string | null;
   actorPositionsProgress: number | null;
@@ -35,26 +36,31 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
 
   // Get data from hooks instead of parameters
-  const fight = useCurrentFight();
+  const { fight, isFightLoading } = useCurrentFight();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
+  const { castEvents, isCastEventsLoading } = useCastEvents();
 
   // Create events object
   const events = React.useMemo(() => {
-    if (!damageEvents || !healingEvents || !deathEvents || !resourceEvents) {
+    if (!damageEvents || !healingEvents || !deathEvents || !resourceEvents || !castEvents) {
       return null;
     }
+    // Filter to only include actual cast events, not begincast events
+    const actualCastEvents = castEvents.filter((event) => event.type === 'cast');
+
     return {
       damage: damageEvents,
       heal: healingEvents,
       death: deathEvents,
       resource: resourceEvents,
+      cast: actualCastEvents,
     };
-  }, [damageEvents, healingEvents, deathEvents, resourceEvents]);
+  }, [damageEvents, healingEvents, deathEvents, resourceEvents, castEvents]);
 
   // Get players and actors data
   const playersById = playerData?.playersById;
@@ -62,12 +68,14 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
 
   // Check if any data is still loading
   const isAnyDataLoading =
+    isFightLoading ||
     isPlayerDataLoading ||
     isMasterDataLoading ||
     isDamageEventsLoading ||
     isHealingEventsLoading ||
     isDeathEventsLoading ||
     isResourceEventsLoading ||
+    isCastEventsLoading ||
     isDebuffLookupLoading;
 
   React.useEffect(() => {
@@ -98,28 +106,24 @@ export function useActorPositionsTask(): UseActorPositionsTaskResult {
   // Include all dependency loading states in the overall loading state
   const isActorPositionsLoading = isActorPositionsTaskLoading || isAnyDataLoading;
 
-  // Return the timeline directly, let consumers extract positions for specific times
-  const timeline = React.useMemo(() => {
+  // Return the lookup structure (the new simplified return type)
+  const lookup = React.useMemo(() => {
     if (!actorPositionsResult || typeof actorPositionsResult !== 'object') {
       return null;
     }
 
-    // The result should have a 'timeline' property
-    if (!('timeline' in actorPositionsResult)) {
-      return null;
-    }
-
-    return actorPositionsResult.timeline as ActorPositionsTimeline;
+    // The result is now directly the TimestampPositionLookup object
+    return actorPositionsResult as TimestampPositionLookup;
   }, [actorPositionsResult]);
 
   return React.useMemo(
     () => ({
-      timeline,
+      lookup,
       isActorPositionsLoading,
       actorPositionsError,
       actorPositionsProgress,
       selectedFight: fight || null,
     }),
-    [timeline, isActorPositionsLoading, actorPositionsError, actorPositionsProgress, fight],
+    [lookup, isActorPositionsLoading, actorPositionsError, actorPositionsProgress, fight],
   );
 }

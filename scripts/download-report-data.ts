@@ -38,12 +38,14 @@ import {
   GetCastEventsDocument,
   GetPlayersForReportDocument,
 } from '../src/graphql/generated';
+import { GetEncounterInfoDocument } from '../src/graphql/world-data.generated';
 
 // Import types separately (these work with ES modules)
 import type {
   GetReportByCodeQuery,
   GetReportMasterDataQuery,
   GetPlayersForReportQuery,
+  GetEncounterInfoQuery,
 } from '../src/graphql/generated.js';
 
 // Suppress Apollo Client deprecation warnings for canonizeResults
@@ -209,7 +211,7 @@ async function getAccessToken(): Promise<string> {
 async function retryOperation<T>(
   operation: () => Promise<T>,
   operationName: string,
-  maxRetries: number = MAX_RETRIES
+  maxRetries: number = MAX_RETRIES,
 ): Promise<T> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
@@ -234,7 +236,7 @@ async function retryOperation<T>(
 async function downloadReportMetadata(
   client: any,
   reportCode: string,
-  outputDir: string
+  outputDir: string,
 ): Promise<GetReportByCodeQuery> {
   console.log('📊 Downloading report metadata...');
 
@@ -288,7 +290,7 @@ async function downloadReportMetadata(
 async function downloadMasterData(
   client: any,
   reportCode: string,
-  outputDir: string
+  outputDir: string,
 ): Promise<GetReportMasterDataQuery> {
   console.log('👥 Downloading master data (actors & abilities)...');
 
@@ -336,7 +338,7 @@ async function downloadPlayerData(
   client: any,
   reportCode: string,
   fightIds: number[],
-  outputDir: string
+  outputDir: string,
 ): Promise<GetPlayersForReportQuery> {
   console.log('👤 Downloading player data...');
 
@@ -376,7 +378,7 @@ async function downloadEventType(
   fightIds: number[],
   startTime?: number,
   endTime?: number,
-  outputDir: string = ''
+  outputDir: string = '',
 ): Promise<void> {
   console.log(`🎯 Downloading ${eventConfig.name} events...`);
 
@@ -413,7 +415,7 @@ async function downloadEventType(
         const eventsDir = path.join(outputDir, 'events');
         const hostilityFilename = eventConfig.filename.replace(
           '.json',
-          `-${hostilityType.toLowerCase()}.json`
+          `-${hostilityType.toLowerCase()}.json`,
         );
         writeJsonSafe(path.join(eventsDir, hostilityFilename), eventData);
 
@@ -437,7 +439,7 @@ async function downloadEventType(
 
         writeJsonSafe(
           path.join(eventsDir, `${eventConfig.name}-${hostilityType.toLowerCase()}-metadata.json`),
-          hostilityMetadata
+          hostilityMetadata,
         );
       }
     }
@@ -482,9 +484,168 @@ async function downloadEventType(
     };
 
     writeJsonSafe(path.join(eventsDir, `${eventConfig.name}-metadata.json`), metadata);
+
+    console.log(`✅ ${eventConfig.name} events downloaded (${allEvents.length} total events)`);
   } catch (error) {
     console.error(`❌ Failed to download ${eventConfig.name} events:`, error);
-    // Continue with other event types even if one fails
+    throw error;
+  }
+}
+
+/**
+ * Downloads all event types for a fight and combines them into a single file
+ */
+async function downloadAllEvents(
+  client: any,
+  reportCode: string,
+  fightIds: number[],
+  startTime?: number,
+  endTime?: number,
+  outputDir: string = '',
+): Promise<void> {
+  console.log(`🎯 Downloading all events combined...`);
+
+  try {
+    let allCombinedEvents: any[] = [];
+    const eventTypeCounts: Record<string, number> = {};
+
+    // Download each event type and collect all events
+    for (const eventConfig of EVENT_TYPES) {
+      console.log(`  📥 Fetching ${eventConfig.name} events for all events file...`);
+
+      const isBuffOrDebuff = eventConfig.name === 'buffs' || eventConfig.name === 'debuffs';
+      const hostilityTypes = isBuffOrDebuff ? ['Friendlies', 'Enemies'] : ['Friendlies'];
+
+      let eventTypeEvents: any[] = [];
+
+      for (const hostilityType of hostilityTypes) {
+        const eventData = await retryOperation(async () => {
+          const result = await client.query({
+            query: eventConfig.document,
+            variables: {
+              code: reportCode,
+              fightIds,
+              startTime,
+              endTime,
+              hostilityType: hostilityType,
+              limit: EVENT_LIMIT,
+            },
+          });
+          return result as any;
+        }, `Download ${hostilityType.toLowerCase()} ${eventConfig.name} events for all events file`);
+
+        const events = eventData.reportData?.report?.events?.data || [];
+
+        // Add event type metadata to each event for easier filtering
+        const eventsWithType = events.map((event: any) => ({
+          ...event,
+          _eventType: eventConfig.name,
+          _hostilityType: hostilityType,
+        }));
+
+        eventTypeEvents = eventTypeEvents.concat(eventsWithType);
+      }
+
+      eventTypeCounts[eventConfig.name] = eventTypeEvents.length;
+      allCombinedEvents = allCombinedEvents.concat(eventTypeEvents);
+    }
+
+    // Sort all events by timestamp for chronological order
+    allCombinedEvents.sort((a, b) => {
+      const timeA = a.timestamp || 0;
+      const timeB = b.timestamp || 0;
+      return timeA - timeB;
+    });
+
+    // Save all events to a single file
+    const eventsDir = path.join(outputDir, 'events');
+    const allEventsData = {
+      reportData: {
+        report: {
+          events: {
+            data: allCombinedEvents,
+            nextPageTimestamp: null, // Combined data doesn't have pagination
+          },
+        },
+      },
+    };
+
+    writeJsonSafe(path.join(eventsDir, 'all-events.json'), allEventsData);
+
+    // Create metadata for all events file
+    const allEventsMetadata = {
+      eventType: 'all-events',
+      description: 'All event types combined in chronological order for comprehensive analysis',
+      totalCount: allCombinedEvents.length,
+      eventTypeCounts,
+      eventTypes: EVENT_TYPES.map((config) => config.name),
+      downloadParams: {
+        reportCode,
+        fightIds,
+        startTime,
+        endTime,
+        limit: EVENT_LIMIT,
+      },
+      sortedBy: 'timestamp',
+      note: 'Events include _eventType and _hostilityType fields for filtering',
+    };
+
+    writeJsonSafe(path.join(eventsDir, 'all-events-metadata.json'), allEventsMetadata);
+
+    console.log(
+      `✅ All events downloaded (${allCombinedEvents.length} total events across ${Object.keys(eventTypeCounts).length} types)`,
+    );
+    console.log(`   Event breakdown:`, eventTypeCounts);
+  } catch (error) {
+    console.error(`❌ Failed to download all events:`, error);
+    throw error;
+  }
+}
+
+/**
+ * Download encounter information for a specific encounter ID
+ */
+async function downloadEncounterInfo(
+  client: any,
+  encounterId: number,
+  outputDir: string,
+): Promise<GetEncounterInfoQuery | null> {
+  if (!encounterId || encounterId === 0) {
+    console.log('⚠️  Skipping encounter info download (trash fight or invalid encounter ID)');
+    return null;
+  }
+
+  console.log(`🏛️  Downloading encounter info for encounter ${encounterId}...`);
+
+  try {
+    const encounterData = await retryOperation(async () => {
+      const result = await client.query({
+        query: GetEncounterInfoDocument,
+        variables: { encounterId },
+      });
+      return result as GetEncounterInfoQuery;
+    }, 'Download encounter info');
+
+    // Save encounter data
+    writeJsonSafe(path.join(outputDir, 'encounter-info.json'), encounterData);
+
+    if (encounterData.worldData?.encounter) {
+      const encounter = encounterData.worldData.encounter;
+      console.log(`✅ Encounter info downloaded: ${encounter.name} (ID: ${encounter.id})`);
+      if (encounter.zone) {
+        console.log(`   Zone: ${encounter.zone.name} (ID: ${encounter.zone.id})`);
+        if (encounter.zone.encounters) {
+          console.log(`   Zone has ${encounter.zone.encounters.length} total encounters`);
+        }
+      }
+    } else {
+      console.warn(`⚠️  No encounter data found for ID ${encounterId}`);
+    }
+
+    return encounterData;
+  } catch (error) {
+    console.error(`❌ Failed to download encounter info for ${encounterId}:`, error);
+    return null;
   }
 }
 
@@ -567,6 +728,11 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
       enemyNPCs: fight.enemyNPCs,
     });
 
+    // Download encounter information if this is a boss fight
+    if (fight.encounterID && fight.encounterID !== 0) {
+      await downloadEncounterInfo(client, fight.encounterID, fightDir);
+    }
+
     // Download all event types for this fight
     for (const eventConfig of EVENT_TYPES) {
       await downloadEventType(
@@ -576,9 +742,21 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
         [fight.id],
         fight.startTime,
         fight.endTime,
-        fightDir
+        fightDir,
       );
     }
+
+    // Download all events in a single file for comprehensive analysis
+    await downloadAllEvents(
+      client,
+      reportCode,
+      [fight.id],
+      fight.startTime,
+      fight.endTime,
+      fightDir,
+    );
+
+    console.log(`✅ Fight ${fight.id} data downloaded successfully`);
   }
 
   // Create an index file for easy navigation
@@ -643,8 +821,12 @@ async function downloadReportData(options: DownloadOptions): Promise<void> {
   console.log('  - abilities-by-type.json (organized ability data)');
   targetFights.forEach((fight) => {
     console.log(`  - fight-${fight?.id}/ (fight-specific data)`);
-    console.log(`    - Combined event files (all events)`);
-    console.log(`    - Separate files for friendly/hostile buffs & debuffs`);
+    console.log(`    - fight-info.json (fight metadata)`);
+    console.log(`    - events/ (event data folder)`);
+    console.log(`      - all-events.json (all event types combined chronologically)`);
+    console.log(`      - all-events-metadata.json (all events metadata & breakdown)`);
+    console.log(`      - Individual event type files (damage, healing, buffs, etc.)`);
+    console.log(`      - Separate files for friendly/hostile buffs & debuffs`);
   });
 }
 

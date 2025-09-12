@@ -172,7 +172,7 @@ export const ReportFightHeader: React.FC = () => {
   const { reportId, fightId } = useSelectedReportAndFight();
   const theme = useTheme();
   const isDarkMode = theme.palette.mode === 'dark';
-  const fight = useCurrentFight();
+  const { fight, isFightLoading } = useCurrentFight();
 
   // Ref for immediate title rendering
   const titleRef = React.useRef<HTMLElement>(null);
@@ -204,7 +204,7 @@ export const ReportFightHeader: React.FC = () => {
         titleElement.innerHTML = `${fight.name} (<span style="font-weight: 300;">${statusIndicator}</span>)`;
       }
     }
-  }, [fight, fightId]);
+  }, [fight, isFightLoading, fightId]);
 
   // Force immediate render on mount
   React.useLayoutEffect(() => {
@@ -214,7 +214,7 @@ export const ReportFightHeader: React.FC = () => {
       titleRef.current.style.visibility = 'visible';
       titleRef.current.style.opacity = '1';
     }
-  }, [fightId, fight]);
+  }, [fightId, fight, isFightLoading]);
 
   return (
     <React.Fragment>

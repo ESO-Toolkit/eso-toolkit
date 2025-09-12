@@ -4,7 +4,7 @@ export interface BuffInterval {
   start: number;
   end: number;
   targetID: number;
-  sourceID?: number;
+  sourceID: number;
 }
 
 export interface BuffUptimeResult {

@@ -12,9 +12,11 @@ import {
 import React from 'react';
 import { Link } from 'react-router-dom';
 
-import { ReportActorFragment } from '../../../graphql/generated';
+import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
 import { useRoleColors } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
+
+import { timestampToFightTime } from '@/utils/fightTimeUtils';
 
 interface AttackEvent {
   abilityName?: string | null;
@@ -52,7 +54,7 @@ interface DeathEventPanelViewProps {
   players?: PlayerData[];
   reportId?: string | null;
   fightId?: number;
-  fight: { startTime?: number; endTime?: number };
+  fight: FightFragment;
   isLoading?: boolean;
 }
 
@@ -88,8 +90,9 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
 
   // Helper function to generate replay URL with death timestamp and player ID
   const generateReplayUrl = (timestamp: number, playerId: string): string => {
-    if (!reportId || !fightId) return '#';
-    return `/report/${reportId}/fight/${fightId}/replay?time=${Math.round(timestamp)}&actorId=${playerId}`;
+    if (!reportId) return '#';
+    const fightRelativeTime = timestampToFightTime(timestamp, fight);
+    return `/report/${reportId}/fight/${fight.id}/replay?time=${Math.round(fightRelativeTime)}&actorId=${playerId}`;
   };
 
   // Calculate skills summary for killing blows

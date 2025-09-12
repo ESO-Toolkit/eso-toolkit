@@ -28,7 +28,7 @@ export function usePenetrationDataTask(): {
   selectedFight: FightFragment | null;
 } {
   const dispatch = useAppDispatch();
-  const selectedFight = useCurrentFight();
+  const { fight: selectedFight, isFightLoading } = useCurrentFight();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { combatantInfoRecord, isCombatantInfoEventsLoading } = useCombatantInfoRecord();
   const { buffLookupData, isBuffLookupLoading } = useBuffLookupTask();
@@ -53,6 +53,7 @@ export function usePenetrationDataTask(): {
     // Check that all dependencies are completely loaded with data available
     const allDependenciesReady =
       selectedFight &&
+      !isFightLoading &&
       !isPlayerDataLoading &&
       playerData?.playersById &&
       !isCombatantInfoEventsLoading &&
@@ -77,6 +78,7 @@ export function usePenetrationDataTask(): {
   }, [
     dispatch,
     selectedFight,
+    isFightLoading,
     playerData,
     combatantInfoRecord,
     isCombatantInfoEventsLoading,

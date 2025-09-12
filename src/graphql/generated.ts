@@ -2707,9 +2707,22 @@ export type ReportFragment = {
     difficulty?: number | null;
     startTime: number;
     endTime: number;
+    kill?: boolean | null;
+    encounterID: number;
+    originalEncounterID?: number | null;
+    lastPhase?: number | null;
+    lastPhaseAsAbsoluteIndex?: number | null;
+    lastPhaseIsIntermission?: boolean | null;
     friendlyPlayers?: Array<number | null> | null;
     enemyPlayers?: Array<number | null> | null;
     bossPercentage?: number | null;
+    boundingBox?: {
+      __typename?: 'ReportMapBoundingBox';
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    } | null;
     friendlyNPCs?: Array<{
       __typename?: 'ReportFightNPC';
       gameID?: number | null;
@@ -2731,7 +2744,48 @@ export type ReportFragment = {
       id: number;
       name?: string | null;
     } | null> | null;
+    phaseTransitions?: Array<{
+      __typename?: 'PhaseTransition';
+      id: number;
+      startTime: number;
+    }> | null;
+    gameZone?: { __typename?: 'GameZone'; id: number; name?: string | null } | null;
+    dungeonPulls?: Array<{
+      __typename?: 'ReportDungeonPull';
+      id: number;
+      name: string;
+      x: number;
+      y: number;
+      startTime: number;
+      endTime: number;
+      encounterID: number;
+      kill?: boolean | null;
+      boundingBox?: {
+        __typename?: 'ReportMapBoundingBox';
+        minX: number;
+        maxX: number;
+        minY: number;
+        maxY: number;
+      } | null;
+      maps?: Array<{
+        __typename?: 'ReportMap';
+        file?: string | null;
+        id: number;
+        name?: string | null;
+      } | null> | null;
+    } | null> | null;
   } | null> | null;
+  phases?: Array<{
+    __typename?: 'EncounterPhases';
+    encounterID: number;
+    separatesWipes?: boolean | null;
+    phases?: Array<{
+      __typename?: 'PhaseMetadata';
+      id: number;
+      name: string;
+      isIntermission?: boolean | null;
+    }> | null;
+  }> | null;
 };
 
 export type UserReportSummaryFragment = {
@@ -2768,9 +2822,22 @@ export type GetReportByCodeQuery = {
         difficulty?: number | null;
         startTime: number;
         endTime: number;
+        kill?: boolean | null;
+        encounterID: number;
+        originalEncounterID?: number | null;
+        lastPhase?: number | null;
+        lastPhaseAsAbsoluteIndex?: number | null;
+        lastPhaseIsIntermission?: boolean | null;
         friendlyPlayers?: Array<number | null> | null;
         enemyPlayers?: Array<number | null> | null;
         bossPercentage?: number | null;
+        boundingBox?: {
+          __typename?: 'ReportMapBoundingBox';
+          minX: number;
+          maxX: number;
+          minY: number;
+          maxY: number;
+        } | null;
         friendlyNPCs?: Array<{
           __typename?: 'ReportFightNPC';
           gameID?: number | null;
@@ -2792,7 +2859,48 @@ export type GetReportByCodeQuery = {
           id: number;
           name?: string | null;
         } | null> | null;
+        phaseTransitions?: Array<{
+          __typename?: 'PhaseTransition';
+          id: number;
+          startTime: number;
+        }> | null;
+        gameZone?: { __typename?: 'GameZone'; id: number; name?: string | null } | null;
+        dungeonPulls?: Array<{
+          __typename?: 'ReportDungeonPull';
+          id: number;
+          name: string;
+          x: number;
+          y: number;
+          startTime: number;
+          endTime: number;
+          encounterID: number;
+          kill?: boolean | null;
+          boundingBox?: {
+            __typename?: 'ReportMapBoundingBox';
+            minX: number;
+            maxX: number;
+            minY: number;
+            maxY: number;
+          } | null;
+          maps?: Array<{
+            __typename?: 'ReportMap';
+            file?: string | null;
+            id: number;
+            name?: string | null;
+          } | null> | null;
+        } | null> | null;
       } | null> | null;
+      phases?: Array<{
+        __typename?: 'EncounterPhases';
+        encounterID: number;
+        separatesWipes?: boolean | null;
+        phases?: Array<{
+          __typename?: 'PhaseMetadata';
+          id: number;
+          name: string;
+          isIntermission?: boolean | null;
+        }> | null;
+      }> | null;
     } | null;
   } | null;
 };
@@ -2880,9 +2988,22 @@ export type FightFragment = {
   difficulty?: number | null;
   startTime: number;
   endTime: number;
+  kill?: boolean | null;
+  encounterID: number;
+  originalEncounterID?: number | null;
+  lastPhase?: number | null;
+  lastPhaseAsAbsoluteIndex?: number | null;
+  lastPhaseIsIntermission?: boolean | null;
   friendlyPlayers?: Array<number | null> | null;
   enemyPlayers?: Array<number | null> | null;
   bossPercentage?: number | null;
+  boundingBox?: {
+    __typename?: 'ReportMapBoundingBox';
+    minX: number;
+    maxX: number;
+    minY: number;
+    maxY: number;
+  } | null;
   friendlyNPCs?: Array<{
     __typename?: 'ReportFightNPC';
     gameID?: number | null;
@@ -2904,6 +3025,58 @@ export type FightFragment = {
     id: number;
     name?: string | null;
   } | null> | null;
+  phaseTransitions?: Array<{
+    __typename?: 'PhaseTransition';
+    id: number;
+    startTime: number;
+  }> | null;
+  gameZone?: { __typename?: 'GameZone'; id: number; name?: string | null } | null;
+  dungeonPulls?: Array<{
+    __typename?: 'ReportDungeonPull';
+    id: number;
+    name: string;
+    x: number;
+    y: number;
+    startTime: number;
+    endTime: number;
+    encounterID: number;
+    kill?: boolean | null;
+    boundingBox?: {
+      __typename?: 'ReportMapBoundingBox';
+      minX: number;
+      maxX: number;
+      minY: number;
+      maxY: number;
+    } | null;
+    maps?: Array<{
+      __typename?: 'ReportMap';
+      file?: string | null;
+      id: number;
+      name?: string | null;
+    } | null> | null;
+  } | null> | null;
+};
+
+export type ReportInfoFragment = {
+  __typename?: 'Report';
+  code: string;
+  title: string;
+  startTime: number;
+  endTime: number;
+  zone?: {
+    __typename?: 'Zone';
+    id: number;
+    name: string;
+    frozen: boolean;
+    expansion: { __typename?: 'Expansion'; id: number; name: string };
+    encounters?: Array<{ __typename?: 'Encounter'; id: number; name: string } | null> | null;
+    difficulties?: Array<{
+      __typename?: 'Difficulty';
+      id: number;
+      name: string;
+      sizes?: Array<number | null> | null;
+    } | null> | null;
+  } | null;
 };
 
 export type CharacterFragment = {
@@ -2964,6 +3137,34 @@ export type OptimizedMasterDataFragment = {
     subType?: string | null;
     type?: string | null;
   } | null> | null;
+};
+
+export type GetEncounterInfoQueryVariables = Exact<{
+  encounterId: Scalars['Int']['input'];
+}>;
+
+export type GetEncounterInfoQuery = {
+  __typename?: 'Query';
+  worldData?: {
+    __typename?: 'WorldData';
+    encounter?: {
+      __typename?: 'Encounter';
+      id: number;
+      name: string;
+      zone: {
+        __typename?: 'Zone';
+        id: number;
+        name: string;
+        encounters?: Array<{ __typename?: 'Encounter'; id: number; name: string } | null> | null;
+        difficulties?: Array<{
+          __typename?: 'Difficulty';
+          id: number;
+          name: string;
+          sizes?: Array<number | null> | null;
+        } | null> | null;
+      };
+    } | null;
+  } | null;
 };
 
 export const ReportAbilityFragmentDoc = {
@@ -3094,9 +3295,28 @@ export const FightFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'difficulty' } },
           { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'originalEncounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhase' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseAsAbsoluteIndex' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseIsIntermission' } },
           { kind: 'Field', name: { kind: 'Name', value: 'friendlyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'enemyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'bossPercentage' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'boundingBox' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'friendlyNPCs' },
@@ -3133,6 +3353,70 @@ export const FightFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'file' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phaseTransitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameZone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'dungeonPulls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'x' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'y' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'boundingBox' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maps' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -3172,6 +3456,29 @@ export const ReportFragmentDoc = {
               selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'Fight' } }],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'separatesWipes' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'phases' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isIntermission' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -3187,9 +3494,28 @@ export const ReportFragmentDoc = {
           { kind: 'Field', name: { kind: 'Name', value: 'difficulty' } },
           { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'originalEncounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhase' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseAsAbsoluteIndex' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseIsIntermission' } },
           { kind: 'Field', name: { kind: 'Name', value: 'friendlyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'enemyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'bossPercentage' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'boundingBox' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'friendlyNPCs' },
@@ -3226,6 +3552,70 @@ export const ReportFragmentDoc = {
                 { kind: 'Field', name: { kind: 'Name', value: 'file' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phaseTransitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameZone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'dungeonPulls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'x' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'y' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'boundingBox' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maps' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -3270,6 +3660,71 @@ export const UserReportSummaryFragmentDoc = {
     },
   ],
 } as unknown as DocumentNode<UserReportSummaryFragment, unknown>;
+export const ReportInfoFragmentDoc = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'FragmentDefinition',
+      name: { kind: 'Name', value: 'ReportInfo' },
+      typeCondition: { kind: 'NamedType', name: { kind: 'Name', value: 'Report' } },
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          { kind: 'Field', name: { kind: 'Name', value: 'code' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'title' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'zone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'frozen' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'expansion' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'encounters' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'difficulties' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'sizes' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<ReportInfoFragment, unknown>;
 export const CharacterFragmentDoc = {
   kind: 'Document',
   definitions: [
@@ -5816,6 +6271,29 @@ export const GetReportByCodeDocument = {
               selections: [{ kind: 'FragmentSpread', name: { kind: 'Name', value: 'Fight' } }],
             },
           },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phases' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'separatesWipes' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'phases' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'isIntermission' } },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
         ],
       },
     },
@@ -5831,9 +6309,28 @@ export const GetReportByCodeDocument = {
           { kind: 'Field', name: { kind: 'Name', value: 'difficulty' } },
           { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
           { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'originalEncounterID' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhase' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseAsAbsoluteIndex' } },
+          { kind: 'Field', name: { kind: 'Name', value: 'lastPhaseIsIntermission' } },
           { kind: 'Field', name: { kind: 'Name', value: 'friendlyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'enemyPlayers' } },
           { kind: 'Field', name: { kind: 'Name', value: 'bossPercentage' } },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'boundingBox' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+              ],
+            },
+          },
           {
             kind: 'Field',
             name: { kind: 'Name', value: 'friendlyNPCs' },
@@ -5870,6 +6367,70 @@ export const GetReportByCodeDocument = {
                 { kind: 'Field', name: { kind: 'Name', value: 'file' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'id' } },
                 { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'phaseTransitions' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'gameZone' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+              ],
+            },
+          },
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'dungeonPulls' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'x' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'y' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'startTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'endTime' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'encounterID' } },
+                { kind: 'Field', name: { kind: 'Name', value: 'kill' } },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'boundingBox' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'minX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxX' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'minY' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'maxY' } },
+                    ],
+                  },
+                },
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'maps' },
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'file' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                    ],
+                  },
+                },
               ],
             },
           },
@@ -6136,3 +6697,89 @@ export const GetLatestReportsDocument = {
     },
   ],
 } as unknown as DocumentNode<GetLatestReportsQuery, GetLatestReportsQueryVariables>;
+export const GetEncounterInfoDocument = {
+  kind: 'Document',
+  definitions: [
+    {
+      kind: 'OperationDefinition',
+      operation: 'query',
+      name: { kind: 'Name', value: 'getEncounterInfo' },
+      variableDefinitions: [
+        {
+          kind: 'VariableDefinition',
+          variable: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+          type: {
+            kind: 'NonNullType',
+            type: { kind: 'NamedType', name: { kind: 'Name', value: 'Int' } },
+          },
+        },
+      ],
+      selectionSet: {
+        kind: 'SelectionSet',
+        selections: [
+          {
+            kind: 'Field',
+            name: { kind: 'Name', value: 'worldData' },
+            selectionSet: {
+              kind: 'SelectionSet',
+              selections: [
+                {
+                  kind: 'Field',
+                  name: { kind: 'Name', value: 'encounter' },
+                  arguments: [
+                    {
+                      kind: 'Argument',
+                      name: { kind: 'Name', value: 'id' },
+                      value: { kind: 'Variable', name: { kind: 'Name', value: 'encounterId' } },
+                    },
+                  ],
+                  selectionSet: {
+                    kind: 'SelectionSet',
+                    selections: [
+                      { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                      { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                      {
+                        kind: 'Field',
+                        name: { kind: 'Name', value: 'zone' },
+                        selectionSet: {
+                          kind: 'SelectionSet',
+                          selections: [
+                            { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                            { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'encounters' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                ],
+                              },
+                            },
+                            {
+                              kind: 'Field',
+                              name: { kind: 'Name', value: 'difficulties' },
+                              selectionSet: {
+                                kind: 'SelectionSet',
+                                selections: [
+                                  { kind: 'Field', name: { kind: 'Name', value: 'id' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'name' } },
+                                  { kind: 'Field', name: { kind: 'Name', value: 'sizes' } },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+    },
+  ],
+} as unknown as DocumentNode<GetEncounterInfoQuery, GetEncounterInfoQueryVariables>;
