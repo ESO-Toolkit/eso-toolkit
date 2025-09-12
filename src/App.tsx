@@ -1,5 +1,3 @@
-import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
@@ -8,6 +6,7 @@ import { PersistGate } from 'redux-persist/integration/react';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
+import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
@@ -61,19 +60,8 @@ const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
-// Loading fallback component - simple and fast
-const LoadingFallback: React.FC = () => (
-  <Box
-    display="flex"
-    justifyContent="center"
-    alignItems="center"
-    height="400px"
-    role="status"
-    aria-label="Loading"
-  >
-    <CircularProgress size={40} />
-  </Box>
-);
+// Loading fallback component - use skeleton for consistency
+const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
