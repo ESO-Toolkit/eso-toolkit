@@ -298,17 +298,17 @@ class AbilityIdMapper {
   }
 
   async getAbilityByIdAsync(id: number): Promise<AbilityData | null> {
+    // Validate input parameters before async operations
+    if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
+      throw new ValidationError('abilityId', id, undefined, {
+        expectedType: 'positive integer',
+        actualType: typeof id,
+        value: id,
+      });
+    }
+
     try {
       await this.ensureLoaded();
-
-      if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
-        throw new ValidationError('abilityId', id, undefined, {
-          expectedType: 'positive integer',
-          actualType: typeof id,
-          value: id,
-        });
-      }
-
       return this.idToDataMap.get(id) || null;
     } catch (error) {
       throw new NestedError(

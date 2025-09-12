@@ -37,6 +37,7 @@ const loadVersionInfo = async (): Promise<typeof FALLBACK_VERSION_INFO> => {
     // eslint-disable-next-line no-console
     console.debug('Could not load version.json, using fallback');
     VERSION_INFO = FALLBACK_VERSION_INFO;
+    cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
   }
   return VERSION_INFO || FALLBACK_VERSION_INFO;
 };
@@ -70,6 +71,10 @@ export const getBuildInfo = (): typeof FALLBACK_VERSION_INFO | undefined => {
  * @returns Promise with version information object
  */
 export const getBuildInfoAsync = async (): Promise<typeof VERSION_INFO> => {
+  // If VERSION_INFO is undefined (e.g., after reset), reload
+  if (!VERSION_INFO) {
+    return await loadVersionInfo();
+  }
   await versionLoadingPromise;
   return VERSION_INFO || FALLBACK_VERSION_INFO;
 };
@@ -132,7 +137,10 @@ export const createVersionedAssetUrl = (assetPath: string, baseUrl?: string): st
  * @returns true if versions match
  */
 export const isCurrentVersion = (storedVersion?: string): boolean => {
-  return storedVersion === VERSION_INFO?.buildId;
+  if (!storedVersion || !VERSION_INFO?.buildId) {
+    return false;
+  }
+  return storedVersion === VERSION_INFO.buildId;
 };
 
 /**
@@ -159,4 +167,13 @@ export const getDisplayVersion = (): string | undefined => {
 export const isDevelopmentBuild = (): boolean => {
   if (!VERSION_INFO) return true; // Assume dev if version not loaded
   return VERSION_INFO.gitCommit.length === 40 ? false : true; // Real git commits are 40 chars
+};
+
+/**
+ * Reset the version info for testing purposes
+ * @internal This function is intended for testing only
+ */
+export const __resetVersionInfoForTesting = (): void => {
+  VERSION_INFO = undefined;
+  cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
 };
