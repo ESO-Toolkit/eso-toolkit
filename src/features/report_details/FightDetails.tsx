@@ -7,9 +7,27 @@ import { FightDetailsView } from './FightDetailsView';
 
 export const FightDetails: React.FC = () => {
   const { selectedTabId, showExperimentalTabs, setSelectedTab } = useSelectedReportAndFight();
-  const fight = useCurrentFight();
+  const { fight, isFightLoading } = useCurrentFight();
 
-  // Show "Fight not found" if fight is undefined
+  // Show loading state while fight is loading
+  if (isFightLoading) {
+    return (
+      <div
+        style={{
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          minHeight: '200px',
+          fontSize: '18px',
+          color: '#666',
+        }}
+      >
+        Loading fight...
+      </div>
+    );
+  }
+
+  // Show "Fight not found" if fight is undefined after loading
   if (!fight) {
     return (
       <div

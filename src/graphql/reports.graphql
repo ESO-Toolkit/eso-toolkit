@@ -13,6 +13,16 @@ fragment Report on Report {
   fights {
     ...Fight
   }
+
+  phases {
+    encounterID
+    separatesWipes
+    phases {
+      id
+      name
+      isIntermission
+    }
+  }
 }
 
 fragment UserReportSummary on Report {

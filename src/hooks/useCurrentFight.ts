@@ -1,21 +1,23 @@
 import { useMemo } from 'react';
-import { useSelector } from 'react-redux';
 
 import { FightFragment } from '../graphql/generated';
 import { useSelectedReportAndFight } from '../ReportFightContext';
-import { selectReport } from '../store/report/reportSelectors';
+
+import { useReportData } from './useReportData';
 
 /**
  * Hook to get the currently selected fight based on the fightId URL parameter.
  * Returns the fight object if found, undefined if no fightId in URL or fight not found.
  */
-export function useCurrentFight(): FightFragment | undefined {
+export function useCurrentFight(): { fight: FightFragment | undefined; isFightLoading: boolean } {
   const { fightId } = useSelectedReportAndFight();
+  const { reportData, isReportLoading } = useReportData();
 
-  const reportData = useSelector(selectReport);
-
-  return useMemo(() => {
-    const fight = reportData.data?.fights?.find((f) => String(f?.id) === fightId);
-    return fight === null ? undefined : fight;
-  }, [fightId, reportData]);
+  return useMemo(
+    () => ({
+      fight: reportData?.fights?.find((f) => String(f?.id) === fightId) ?? undefined,
+      isFightLoading: isReportLoading,
+    }),
+    [fightId, reportData, isReportLoading],
+  );
 }

@@ -6,10 +6,25 @@ fragment Fight on ReportFight {
   difficulty
   startTime
   endTime
+  # Kill and encounter information
+  kill
+  encounterID
+  originalEncounterID
+  # Phase information
+  lastPhase
+  lastPhaseAsAbsoluteIndex
+  lastPhaseIsIntermission
   # Participant information
   friendlyPlayers
   enemyPlayers
   bossPercentage
+  # Bounding box for coordinate system
+  boundingBox {
+    minX
+    maxX
+    minY
+    maxY
+  }
   # Optional: NPC information if needed
   friendlyNPCs {
     gameID
@@ -28,6 +43,64 @@ fragment Fight on ReportFight {
     file
     id
     name
+  }
+  # Phase transition information for multi-phase fights
+  phaseTransitions {
+    id
+    startTime
+  }
+  # Game zone information
+  gameZone {
+    id
+    name
+  }
+  # Dungeon pull information for dungeon visualizations
+  dungeonPulls {
+    id
+    name
+    x
+    y
+    startTime
+    endTime
+    encounterID
+    kill
+    boundingBox {
+      minX
+      maxX
+      minY
+      maxY
+    }
+    maps {
+      file
+      id
+      name
+    }
+  }
+}
+
+fragment ReportInfo on Report {
+  code
+  title
+  startTime
+  endTime
+  # Zone information for the report
+  zone {
+    id
+    name
+    frozen
+    expansion {
+      id
+      name
+    }
+    encounters {
+      id
+      name
+    }
+    difficulties {
+      id
+      name
+      sizes
+    }
   }
 }
 

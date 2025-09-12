@@ -1,0 +1,27 @@
+{
+  "fightInfo": {
+    "id": 16,
+    "name": "Lord Falgravn",
+    "startTime": 1713147,
+    "endTime": 2185887,
+    "duration": 472740
+  },
+  "playerDeaths": [
+    {
+      "playerId": 1,
+      "deathTime": 1768588,
+      "relativeTime": 55441
+    },
+    {
+      "playerId": 10,
+      "deathTime": 1777068,
+      "relativeTime": 63921
+    }
+  ],
+  "testResults": {
+    "playerId": 1,
+    "deathTime": 55441,
+    "testTime": 60000,
+    "isDead": true
+  }
+}

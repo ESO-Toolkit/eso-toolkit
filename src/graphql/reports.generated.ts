@@ -18,6 +18,15 @@ export const ReportFragmentDoc = gql`
     fights {
       ...Fight
     }
+    phases {
+      encounterID
+      separatesWipes
+      phases {
+        id
+        name
+        isIntermission
+      }
+    }
   }
   ${FightFragmentDoc}
 `;

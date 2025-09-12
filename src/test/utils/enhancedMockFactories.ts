@@ -24,6 +24,15 @@ export const createEnhancedMockFight = (overrides: Partial<FightFragment> = {}):
       { id: 202, gameID: 0 }, // Regular enemy
     ],
     friendlyNPCs: [{ id: 301 }],
+    // Add a bounding box centered around the default test coordinates
+    // This ensures tests get consistent coordinate conversion behavior
+    boundingBox: {
+      __typename: 'ReportMapBoundingBox',
+      minX: TEST_CONSTANTS.DEFAULT_X - 100, // 5135
+      maxX: TEST_CONSTANTS.DEFAULT_X + 100, // 5335
+      minY: TEST_CONSTANTS.DEFAULT_Y - 100, // 5310
+      maxY: TEST_CONSTANTS.DEFAULT_Y + 100, // 5510
+    },
     ...overrides,
   }) as FightFragment;
 

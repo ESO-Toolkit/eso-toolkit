@@ -1,0 +1,59 @@
+{
+  "fightInfo": {
+    "fightDuration": 472740,
+    "fightStartTime": 1713147,
+    "timestamps": 3602
+  },
+  "player1Timeline": {
+    "name": "Actor 1",
+    "type": "enemy",
+    "totalPositions": 100,
+    "samplePositions": [
+      {
+        "timestamp": 4464.7666666666655,
+        "isDead": false,
+        "position": [
+          53.338119908765044,
+          0,
+          41.52354773541863
+        ]
+      },
+      {
+        "timestamp": 4596.083333333332,
+        "isDead": false,
+        "position": [
+          53.38946562398172,
+          0,
+          41.672450309546996
+        ]
+      },
+      {
+        "timestamp": 4727.399999999999,
+        "isDead": false,
+        "position": [
+          53.4408113391984,
+          0,
+          41.82135288367536
+        ]
+      },
+      {
+        "timestamp": 4858.716666666665,
+        "isDead": false,
+        "position": [
+          53.492157054415074,
+          0,
+          41.970255457803724
+        ]
+      },
+      {
+        "timestamp": 4990.033333333332,
+        "isDead": false,
+        "position": [
+          53.54350276963184,
+          0,
+          42.11915803193235
+        ]
+      }
+    ]
+  }
+}

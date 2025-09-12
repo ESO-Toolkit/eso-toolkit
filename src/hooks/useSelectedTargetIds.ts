@@ -1,21 +1,15 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
-import { useSelectedReportAndFight } from '../ReportFightContext';
 import { selectSelectedTargetId } from '../store/ui/uiSelectors';
 
-import { useReportData } from './useReportData';
+import { useCurrentFight } from './useCurrentFight';
 import { useReportMasterData } from './useReportMasterData';
 
 export function useSelectedTargetIds(): Set<number> {
-  const { fightId } = useSelectedReportAndFight();
   const selectedTargetId = useSelector(selectSelectedTargetId);
-  const { reportData } = useReportData();
+  const { fight } = useCurrentFight();
   const { reportMasterData } = useReportMasterData();
-
-  const fight = React.useMemo(() => {
-    return reportData?.fights?.find((f) => String(f?.id) === fightId);
-  }, [reportData?.fights, fightId]);
 
   return React.useMemo(() => {
     let newTargetIds: Set<number>;

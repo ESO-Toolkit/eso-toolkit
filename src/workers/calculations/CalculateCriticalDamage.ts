@@ -2,6 +2,7 @@ import { OnProgressCallback } from '../Utils';
 
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '@/types/combatlogEvents';
+import { BuffLookupData } from '@/utils/BuffLookupUtils';
 import {
   calculateDynamicCriticalDamageAtTimestamp,
   calculateStaticCriticalDamage,
@@ -16,12 +17,8 @@ export interface CriticalDamageCalculationTask {
   };
   players: Record<number, PlayerDetailsWithRole>;
   combatantInfoEvents: Record<number, CombatantInfoEvent>;
-  friendlyBuffsLookup: {
-    buffIntervals: { [key: string]: Array<{ start: number; end: number; targetID: number }> };
-  };
-  debuffsLookup: {
-    buffIntervals: { [key: string]: Array<{ start: number; end: number; targetID: number }> };
-  };
+  friendlyBuffsLookup: BuffLookupData;
+  debuffsLookup: BuffLookupData;
 }
 
 export interface CriticalDamageDataPoint {

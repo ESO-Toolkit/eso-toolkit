@@ -73,7 +73,7 @@ export const PlayersPanel: React.FC = () => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { healingEvents, isHealingEventsLoading } = useHealingEvents();
   const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
-  const fight = useCurrentFight();
+  const { fight, isFightLoading } = useCurrentFight();
 
   // Get friendly buff lookup data for build issues detection
   const { buffLookupData: friendlyBuffLookup, isBuffLookupLoading } = useBuffLookupTask();
@@ -92,7 +92,8 @@ export const PlayersPanel: React.FC = () => {
     isDamageEventsLoading ||
     isHealingEventsLoading ||
     isResourceEventsLoading ||
-    isBuffLookupLoading;
+    isBuffLookupLoading ||
+    isFightLoading;
   // Calculate unique mundus buffs per player using MundusStones enum from combatantinfo auras
   const mundusBuffsByPlayer = React.useMemo(() => {
     const result: Record<string, Array<{ name: string; id: number }>> = {};

@@ -10,12 +10,12 @@ import { CriticalDamagePanelView } from './CriticalDamagePanelView';
  * Smart component that handles data processing and state management for critical damage panel
  */
 export const CriticalDamagePanel: React.FC = () => {
-  const fight = useCurrentFight();
+  const { fight, isFightLoading } = useCurrentFight();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { criticalDamageData, isCriticalDamageLoading, criticalDamageError } =
     useCriticalDamageTask();
 
-  const isLoading = isCriticalDamageLoading || isPlayerDataLoading;
+  const isLoading = isCriticalDamageLoading || isPlayerDataLoading || isFightLoading;
 
   // Only show details when all loading is complete AND we have data
   const hasCompleteData =

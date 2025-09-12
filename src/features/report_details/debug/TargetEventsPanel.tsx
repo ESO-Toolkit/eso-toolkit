@@ -12,7 +12,7 @@ import { EventsGrid } from './EventsGrid';
 
 export const TargetEventsPanel: React.FC = () => {
   const selectedTargetId = useSelector(selectSelectedTargetId);
-  const fight = useCurrentFight();
+  const { fight } = useCurrentFight();
   const actorsById = useSelector(selectActorsById);
   const allEvents = useSelector(selectAllEvents);
 

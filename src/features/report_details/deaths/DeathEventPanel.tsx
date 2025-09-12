@@ -16,8 +16,10 @@ import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
 
+import { FightFragment } from '@/graphql/generated';
+
 interface DeathEventPanelProps {
-  fight: { startTime?: number; endTime?: number };
+  fight: FightFragment;
 }
 
 interface AttackEvent {
