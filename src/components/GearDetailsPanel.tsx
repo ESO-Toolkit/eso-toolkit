@@ -376,7 +376,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           borderRadius: '24px',
           overflow: 'hidden',
           maxHeight: '85vh',
-          width: 'min(900px, calc(100vw - 8px))',
+          width: { xs: 'calc(100vw - 8px)', sm: 'min(900px, calc(100vw - 8px))' },
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -448,7 +448,25 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 columns={columns}
                 title={undefined}
                 autoHeight={true}
-                paperSx={{ borderRadius: 2 }}
+                paperSx={{
+                  borderRadius: 2,
+                  '& .MuiTableContainer-root': {
+                    overflowX: { xs: 'auto', sm: 'hidden' },
+                  },
+                  '& .MuiTable-root': {
+                    tableLayout: { xs: 'auto', sm: 'fixed' },
+                    minWidth: { xs: 'max-content', sm: '100%' },
+                  },
+                  '& .MuiTableCell-root': {
+                    whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                    padding: { xs: theme.spacing(0.8, 0.4), sm: theme.spacing(0.4, 0.6) },
+                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                  },
+                  '& .MuiTableHead-root .MuiTableCell-root': {
+                    fontSize: { xs: '0.7rem', sm: '0.875rem' },
+                    fontWeight: { xs: 500, sm: 600 },
+                  },
+                }}
                 initialPageSize={rows.length}
                 pageSizeOptions={[12]}
                 enableSorting
