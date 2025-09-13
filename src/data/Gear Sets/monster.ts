@@ -1171,3 +1171,23 @@ export const syvarraScalesData: SkillsetData = {
     },
   },
 };
+
+export const slimecrowData: SkillsetData = {
+  weapon: 'Monster',
+  skillLines: {
+    slimecraw: {
+      name: 'Slimecraw',
+      icon: '',
+      passives: [
+        { name: '(1 item)', description: 'Adds 657 Critical Chance', requirement: '' },
+        {
+          name: '(2 items)',
+          description: 'Adds 113 Critical Chance, Gain Minor Berserk at all times, increasing your damage done by 5%.',
+          requirement: 'Equipped',
+        },
+      ],
+      actives: [],
+      ultimates: [],
+    },
+  },
+};
