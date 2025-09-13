@@ -31,17 +31,12 @@
       "Bash(npm ls:*)",
       "Bash(npm uninstall:*)",
       "Bash(git rebase:*)",
-<<<<<<< Updated upstream
       "Bash(git fetch:*)",
       "Bash(git stash pop:*)",
       "Bash(npm audit:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
       "Bash(npm run codegen:*)"
-=======
-      "Bash(git pull:*)",
-      "Bash(git stash:*)"
->>>>>>> Stashed changes
     ],
     "deny": [],
     "ask": []
