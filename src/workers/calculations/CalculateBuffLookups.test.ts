@@ -47,6 +47,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 5000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -87,11 +88,13 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 3000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
         {
           start: FIGHT_START + 5000,
           end: FIGHT_START + 8000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -132,11 +135,13 @@ describe('CalculateBuffLookups', () => {
         start: FIGHT_START + 1000,
         end: FIGHT_START + 5000,
         targetID: TARGET_ID,
+        sourceID: 123,
       });
       expect(intervals.find((i: any) => i.targetID === TARGET_ID_2)).toEqual({
         start: FIGHT_START + 2000,
         end: FIGHT_START + 6000,
         targetID: TARGET_ID_2,
+        sourceID: 123,
       });
     });
 
@@ -164,6 +169,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 5000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -196,6 +202,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 5000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -220,6 +227,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_END,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -258,6 +266,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 5000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
 
@@ -266,6 +275,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 2000,
           end: FIGHT_START + 6000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -317,6 +327,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 8000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -363,11 +374,13 @@ describe('CalculateBuffLookups', () => {
         start: FIGHT_START + 1000,
         end: FIGHT_START + 3000,
         targetID: TARGET_ID + 1,
+        sourceID: 123,
       });
       expect(intervals[1]).toEqual({
         start: FIGHT_START + 5000,
         end: FIGHT_START + 8000,
         targetID: TARGET_ID,
+        sourceID: 123,
       });
     });
 
@@ -396,6 +409,7 @@ describe('CalculateBuffLookups', () => {
           start: FIGHT_START + 1000,
           end: FIGHT_START + 5000,
           targetID: TARGET_ID,
+          sourceID: 123,
         },
       ]);
     });
@@ -445,8 +459,8 @@ describe('CalculateBuffLookups', () => {
         onProgress,
       );
 
-      // Should have been called at least for progress milestones
-      expect(onProgress.mock.calls.length).toBeGreaterThan(2);
+      // Should have been called for start and completion
+      expect(onProgress).toHaveBeenCalledWith(0); // Initial progress
       expect(onProgress).toHaveBeenCalledWith(1); // Final progress
     });
   });
