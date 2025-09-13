@@ -14,11 +14,13 @@ import {
   Tooltip,
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import React from 'react';
+import React, { useState } from 'react';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
+import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
+import type { GearPieceInfo } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -93,6 +95,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     );
     const gear = player?.combatantInfo?.gear ?? [];
     const armorWeights = getArmorWeightCounts(gear);
+
+    // State for gear details panel
+    const [gearDetailsOpen, setGearDetailsOpen] = useState(false);
 
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
@@ -568,7 +573,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             // Find the corresponding gear record for tooltip
                             const gearRecord = playerGear[index];
                             const tooltipProps = gearRecord
-                              ? createGearSetTooltipProps(gearRecord)
+                              ? createGearSetTooltipProps(gearRecord, player.combatantInfo.gear)
                               : null;
 
                             if (tooltipProps) {
@@ -606,7 +611,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     ],
                                   }}
                                 >
-                                  <Chip label={chipData.label} size="small" sx={chipData.sx} />
+                                  <Box
+                                    onClick={() => {
+                                      setGearDetailsOpen(true);
+                                    }}
+                                    sx={{ cursor: 'pointer' }}
+                                  >
+                                    <Chip label={chipData.label} size="small" sx={chipData.sx} />
+                                  </Box>
                                 </Tooltip>
                               );
                             }
@@ -1155,6 +1167,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
             </Box>
           </CardContent>
         </Card>
+
+        {/* Gear Details Modal */}
+        <GearDetailsPanel
+          open={gearDetailsOpen}
+          onClose={() => setGearDetailsOpen(false)}
+          playerName={player.name}
+          playerClass={player.type}
+          gearPieces={gear}
+        />
       </Box>
     );
   },

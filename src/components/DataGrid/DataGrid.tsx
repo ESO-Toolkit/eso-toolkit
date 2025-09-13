@@ -31,6 +31,7 @@ import {
   useTheme,
   alpha,
 } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -82,13 +83,19 @@ export interface DataGridProps<T = Record<string, unknown>> {
   columns: ColumnDef<T>[];
   title?: string;
   height?: number;
+  /** If true, the grid will size to content height and not create an internal scroll area */
+  autoHeight?: boolean;
   initialPageSize?: number;
   pageSizeOptions?: number[];
   enableSorting?: boolean;
   enableFiltering?: boolean;
   enablePagination?: boolean;
+  /** Show the page-size selector in the toolbar (useful to hide for tiny datasets) */
+  showPageSizeSelector?: boolean;
   loading?: boolean;
   emptyMessage?: string;
+  /** Optional overrides for the root Paper styles */
+  paperSx?: SxProps<Theme>;
 }
 
 // Column filter component
@@ -149,15 +156,15 @@ const ColumnFilter = <T,>({ column }: { column: Column<T, unknown> }): React.JSX
         sx={{
           width: '100%',
           '& .MuiInputBase-root': {
-            backgroundColor: alpha(theme.palette.background.paper, 0.6),
-            transition: theme.transitions.create(['background-color', 'border-color'], {
+            backgroundColor: theme.palette.background.paper,
+            transition: theme.transitions.create(['border-color'], {
               duration: theme.transitions.duration.short,
             }),
             '&:hover': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.8),
+              backgroundColor: theme.palette.background.paper,
             },
             '&.Mui-focused': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.9),
+              backgroundColor: theme.palette.background.paper,
               '& .MuiOutlinedInput-notchedOutline': {
                 borderColor: theme.palette.primary.main,
                 borderWidth: 2,
@@ -206,7 +213,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
         alignItems: 'center',
         justifyContent: 'space-between',
         p: 2,
-        background: alpha(theme.palette.background.paper, 0.3),
+        backgroundColor: 'transparent',
         borderTop: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
       }}
     >
@@ -343,12 +350,14 @@ const DataGridToolbar = <T,>({
   totalRows,
   enableFiltering,
   pageSizeOptions,
+  showPageSizeSelector,
 }: {
   table: TanStackTable<T>;
   title?: string;
   totalRows: number;
   enableFiltering?: boolean;
   pageSizeOptions: number[];
+  showPageSizeSelector?: boolean;
 }): React.JSX.Element => {
   const theme = useTheme();
 
@@ -360,8 +369,7 @@ const DataGridToolbar = <T,>({
         gap: 2,
         alignItems: 'center',
         minHeight: 'auto !important',
-        background: alpha(theme.palette.background.paper, 0.3),
-        borderBottom: `1px solid ${alpha(theme.palette.divider, 0.2)}`,
+        backgroundColor: 'transparent',
       }}
     >
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
@@ -422,37 +430,39 @@ const DataGridToolbar = <T,>({
         </Tooltip>
       )}
 
-      <FormControl
-        size="small"
-        sx={{
-          minWidth: 120,
-          '& .MuiOutlinedInput-root': {
-            backgroundColor: alpha(theme.palette.background.paper, 0.6),
-            transition: theme.transitions.create(['background-color'], {
-              duration: theme.transitions.duration.short,
-            }),
-            '&:hover': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.8),
+      {showPageSizeSelector && (
+        <FormControl
+          size="small"
+          sx={{
+            minWidth: 120,
+            '& .MuiOutlinedInput-root': {
+              backgroundColor: alpha(theme.palette.background.paper, 0.6),
+              transition: theme.transitions.create(['background-color'], {
+                duration: theme.transitions.duration.short,
+              }),
+              '&:hover': {
+                backgroundColor: alpha(theme.palette.background.paper, 0.8),
+              },
+              '&.Mui-focused': {
+                backgroundColor: alpha(theme.palette.background.paper, 0.9),
+              },
             },
-            '&.Mui-focused': {
-              backgroundColor: alpha(theme.palette.background.paper, 0.9),
-            },
-          },
-        }}
-      >
-        <InputLabel>Rows</InputLabel>
-        <Select
-          value={table.getState().pagination.pageSize}
-          label="Rows"
-          onChange={(e) => table.setPageSize(Number(e.target.value))}
+          }}
         >
-          {pageSizeOptions.map((size) => (
-            <MenuItem key={size} value={size}>
-              {size}
-            </MenuItem>
-          ))}
-        </Select>
-      </FormControl>
+          <InputLabel>Rows</InputLabel>
+          <Select
+            value={table.getState().pagination.pageSize}
+            label="Rows"
+            onChange={(e) => table.setPageSize(Number(e.target.value))}
+          >
+            {pageSizeOptions.map((size) => (
+              <MenuItem key={size} value={size}>
+                {size}
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      )}
     </Toolbar>
   );
 };
@@ -466,13 +476,16 @@ export const DataGrid = <T extends Record<string, unknown>>({
   columns,
   title,
   height = 600,
+  autoHeight = false,
   initialPageSize = 25,
   pageSizeOptions = DEFAULT_PAGE_SIZE_OPTIONS,
   enableSorting = true,
   enableFiltering = true,
   enablePagination = true,
+  showPageSizeSelector = true,
   loading = false,
   emptyMessage = 'No data available',
+  paperSx,
 }: DataGridProps<T>): React.JSX.Element => {
   const theme = useTheme();
 
@@ -486,9 +499,6 @@ export const DataGrid = <T extends Record<string, unknown>>({
         '&:hover': {
           backgroundColor: alpha(theme.palette.primary.main, 0.04),
         },
-        '&:nth-of-type(even)': {
-          backgroundColor: alpha(theme.palette.action.selected, 0.02),
-        },
         '&:not(:last-child)': {
           borderBottom: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
         },
@@ -496,7 +506,9 @@ export const DataGrid = <T extends Record<string, unknown>>({
       tableCell: {
         fontSize: '0.875rem',
         color: theme.palette.text.primary,
-        padding: theme.spacing(1, 2),
+        padding: theme.spacing(0.4, 0.6),
+        whiteSpace: 'nowrap',
+        verticalAlign: 'middle',
       },
     }),
     [theme],
@@ -554,14 +566,11 @@ export const DataGrid = <T extends Record<string, unknown>>({
     return (
       <Paper
         sx={{
-          height,
+          height: autoHeight ? 'auto' : height,
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-              : theme.palette.background.paper,
+          background: theme.palette.background.paper,
           border: `1px solid ${theme.palette.divider}`,
         }}
       >
@@ -579,41 +588,66 @@ export const DataGrid = <T extends Record<string, unknown>>({
     );
   }
 
+  const showToolbar =
+    Boolean(title) || enableFiltering || (enablePagination && showPageSizeSelector);
+  // Compute total column size so we can proportionally size columns as percentages
+  const totalColumnSize = table.getAllLeafColumns().reduce((sum, col) => sum + col.getSize(), 0);
+
   return (
     <Paper
       data-testid="data-grid"
       sx={{
-        height,
+        height: autoHeight ? 'auto' : height,
         width: '100%',
+        boxSizing: 'border-box',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
         // Use theme's Paper styling
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-            : theme.palette.background.paper,
+        background: theme.palette.background.paper,
+        backgroundImage: 'none',
         border: `1px solid ${theme.palette.divider}`,
         boxShadow:
           theme.palette.mode === 'dark' ? '0 8px 30px rgba(0, 0, 0, 0.25)' : theme.shadows[4],
+        ...(paperSx as object),
       }}
     >
-      <DataGridToolbar
-        table={table}
-        title={title}
-        totalRows={data.length}
-        enableFiltering={enableFiltering}
-        pageSizeOptions={pageSizeOptions}
-      />
+      {showToolbar && (
+        <DataGridToolbar
+          table={table}
+          title={title}
+          totalRows={data.length}
+          enableFiltering={enableFiltering}
+          pageSizeOptions={pageSizeOptions}
+          showPageSizeSelector={enablePagination && showPageSizeSelector}
+        />
+      )}
 
-      <TableContainer sx={{ flex: 1, overflow: 'auto' }}>
-        <Table stickyHeader size="small">
+      <TableContainer
+        sx={{
+          flex: autoHeight ? 'unset' : 1,
+          overflowX: 'hidden',
+          overflowY: autoHeight ? 'visible' : 'auto',
+          scrollbarGutter: 'stable both-edges',
+        }}
+      >
+        <Table
+          stickyHeader
+          size="small"
+          sx={{
+            tableLayout: 'fixed',
+            width: '100%',
+            borderCollapse: 'collapse',
+            boxSizing: 'border-box',
+          }}
+        >
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
+                {headerGroup.headers.map((header, headerIdx) => {
                   const canSort = enableSorting && header.column.getCanSort();
                   const sortDirection = header.column.getIsSorted();
+                  const isLastHeader = headerIdx === headerGroup.headers.length - 1;
 
                   return (
                     <TableCell
@@ -622,15 +656,26 @@ export const DataGrid = <T extends Record<string, unknown>>({
                         fontWeight: 600,
                         cursor: canSort ? 'pointer' : 'default',
                         userSelect: 'none',
-                        minWidth: header.getSize(),
-                        backgroundColor: alpha(theme.palette.background.paper, 0.8),
-                        backdropFilter: 'blur(8px)',
-                        borderBottom: `2px solid ${alpha(theme.palette.primary.main, 0.2)}`,
-                        color: theme.palette.text.primary,
+                        minWidth: 0,
+                        width: isLastHeader
+                          ? 'auto'
+                          : `${(header.getSize() / (totalColumnSize || 1)) * 100}%`,
+                        maxWidth: 'none',
+                        boxSizing: 'border-box',
+                        backgroundColor: 'transparent',
+                        borderBottom: `2px solid ${alpha(theme.palette.divider, 0.4)}`,
+                        color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#334155',
                         fontSize: '0.875rem',
+                        textShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 1px rgba(0,0,0,0.1)',
                         transition: theme.transitions.create(['background-color'], {
                           duration: theme.transitions.duration.short,
                         }),
+                        whiteSpace: 'nowrap',
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
                         '&:hover': canSort
                           ? {
                               backgroundColor: alpha(theme.palette.primary.main, 0.05),
@@ -698,7 +743,18 @@ export const DataGrid = <T extends Record<string, unknown>>({
               table.getRowModel().rows.map((row, index) => (
                 <TableRow key={row.id} sx={styles.tableRow}>
                   {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} sx={styles.tableCell}>
+                    <TableCell
+                      key={cell.id}
+                      sx={{
+                        ...styles.tableCell,
+                        minWidth: 0,
+                        width: `${(cell.column.getSize() / (totalColumnSize || 1)) * 100}%`,
+                        boxSizing: 'border-box',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                      }}
+                    >
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </TableCell>
                   ))}
@@ -711,7 +767,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
                   sx={{
                     textAlign: 'center',
                     py: 8,
-                    backgroundColor: alpha(theme.palette.background.paper, 0.3),
+                    backgroundColor: theme.palette.background.paper,
                   }}
                 >
                   <Typography

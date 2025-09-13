@@ -1,0 +1,2718 @@
+Craftable
+Level 50 - CP 160
+Adept Rider Icon
+Adept Rider
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1487 Armor
+(4 items) Adds 1206 Maximum Health
+(5 items) Gain Gallop and Major Expedition at all times, increasing your Movement Speed by 30% and Mounted Speed by 15%.
+Dungeon
+Level 50 - CP 160
+Aegis Caller Icon
+Aegis Caller
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal critical damage with a Martial melee attack, summon a Lesser Aegis for 11 seconds. After 2.5 seconds, the Lesser Aegis spins its blades, dealing 478 Bleed Damage every 1 second. This effect can occur once every 12 seconds and scales off the higher of your Weapon or Spell Damage.
+Class Sets
+Level 50 - CP 160
+Aerie's Cry Icon
+Aerie's Cry
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with a Light Attack applies Eagle's Mark to your target for 12 seconds. Eagle's Mark causes an eagle to attack your target every 3 seconds after a 3 second delay, dealing 856 Physical Damage per attack. Applying Eagle's Mark grants you Aerie's Call for 12 seconds, increasing your damage done with Animal Companion abilities by 10% against enemies with Eagle's Mark. This effect can occur every 3 seconds but cannot be applied to enemies who have Eagle's Mark. You can have one Eagle's Mark active at a time.
+Class: Warden
+Craftable
+Level 50 - CP 160
+Aetherial Ascension Icon
+Aetherial Ascension
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1487 Armor
+(5 items) Adds 7377 Armor. Increases the cost of Block, Sprint, Dodge, and Break Free by 20%.
+Class Sets
+Level 50 - CP 160
+Aetheric Lancer Icon
+Aetheric Lancer
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with Burning Light twice within 30 seconds creates a 5 meter area for 5 seconds. This effect can occur once every 6 seconds. While in the area, dealing damage with an Aedric Spear ability launches a spear at your target, dealing 1684 Magic Damage and applying Sundered and increasing your Weapon and Spell Damage by 300 for 6 seconds. The damage scales off the higher of your Weapon or Spell Damage.
+Class: Templar
+Craftable
+Level 50 - CP 160
+Alessia's Bulwark Icon
+Alessia's Bulwark
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1487 Armor
+(5 items) When you take damage from a Martial melee attack, you reduce the attacker's Weapon and Spell Damage by 300 for 5 seconds.
+PvP
+Level 50 - CP 160
+Alessian Order Icon
+Alessian Order
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1487 Armor
+(4 items) Adds 1206 Maximum Health
+(5 items) Increase your Health Recovery by 2% of your sum total Physical Resistance and Spell Resistance, up to a maximum of 1320.
+Craftable
+Level 50 - CP 160
+Ancient Dragonguard Icon
+Ancient Dragonguard
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 300 Weapon and Spell Damage while your Health is above 50%. Adds 3460 Physical and Spell Resistance while your Health is 50% or less.
+Trial
+Level 50 - CP 160
+Ansuul's Torment Icon
+Ansuul's Torment
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Increases your damage done against monsters by 7%. When you interrupt an enemy, you increase your damage done against monsters by an additional 7% for 10 seconds.
+Monster Set
+Level 50 - CP 160
+Anthelmir's Construct Icon
+Anthelmir's Construct
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) Attacking an enemy with a fully-charged Heavy Attack throws an axe at your enemy, dealing 1572 Physical damage and reducing their Armor by 400 for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. The axe drops to the ground after traveling to your target for 5 seconds. Touching the axe reduces the cooldown of this set by 5 seconds.
+Dungeon
+Level 50 - CP 160
+Apocryphal Inspiration Icon
+Apocryphal Inspiration
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) You and group members within 28 meters of you gain Major Fortitude, Major Intellect, and Major Endurance, increasing your Health Recovery, Magicka Recovery, and Stamina Recovery by 30%.
+Monster Set
+Level 50 - CP 160
+Archdruid Devyric Icon
+Archdruid Devyric
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) When you deal damage with a Heavy Attack, after 1.2 seconds deal 650 Shock damage to up to 6 enemies within a 7 by 5 meter line on your target, applying Major Vulnerability to them for 7 seconds, increasing the damage enemies take by 10%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Arena
+Level 50 - CP 160
+Archer's Mind Icon
+Archer's Mind
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) Increases your Critical Damage and Healing by 8%. Increases your Critical Damage and Healing by an additional 16% when you are Sneaking or Invisible.
+Craftable
+Level 50 - CP 160
+Armor Master Icon
+Armor Master
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 1487 Armor
+(5 items) While you have an Armor ability slotted, your Max Health is increased by 5%. When you use an Armor ability while in combat, your Physical and Spell Resistance is increased by 5940 for 10 seconds.
+Craftable
+Level 50 - CP 160
+Armor of the Seducer Icon
+Armor of the Seducer
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Magicka Recovery
+(5 items) Reduces the cost of your Magicka abilities by 10%.
+Overland
+Level 50 - CP 160
+Armor of the Trainee Icon
+Armor of the Trainee
+Tooltips by ESO-Hub.com
+(1 item) Adds 1454 Maximum Health
+(2 items) Adds 1454 Maximum Magicka
+(3 items) Adds 1454 Maximum Stamina
+Trial
+Level 50 - CP 160
+Arms of Relequen Icon
+Arms of Relequen
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Your Light and Heavy attacks apply a stack of harmful winds to your target for 5 seconds. Harmful winds deal 51 Physical Damage per stack every 1 second. This effect can stack once every 0.5 seconds, up to 10 times, and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Ashen Grip Icon
+Ashen Grip
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Martial melee damage, you breathe fire to all enemies in front of you for 774 Flame damage. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Assassin's Guile Icon
+Assassin's Guile
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Increases the duration of your alchemical poisons by 4 seconds.
+Dungeon
+Level 50 - CP 160
+Azureblight Reaper Icon
+Azureblight Reaper
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage over time applies a stack of Blight Seed to the target for 5 seconds. At 20 stacks, Blight Seed explodes, dealing 667 Disease Damage to the target and nearby enemies, increasing by 150% per additional monster hit, up to 600%. The damage scales off your Weapon or Spell Damage and can occur once every 1 second. Enemies can only have one Blight Seed at a time and require 20 more stacks per group member wearing this set.
+Overland
+Level 50 - CP 160
+Bahraha's Curse Icon
+Bahraha's Curse
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1096 Maximum Stamina, Reduces your damage taken from environmental traps by 40%.
+(5 items) When you deal damage, you have a 25% chance to create desecrated ground for 5 seconds, which reduces the Movement Speed of enemies within 3.5 meters by 60%, damages them for 349 Magic damage every 1 second, and heals you for 100% of the damage done. This effect can occur once every 5 seconds and the damage scales off your Max Health.
+Monster Set
+Level 50 - CP 160
+Balorgh Icon
+Balorgh
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you use an Ultimate ability you gain Weapon and Spell Damage equal to the amount of total Ultimate consumed, and Physical and Spell Penetration equal to 23 times the amount for 12 seconds.
+Monster Set
+Level 50 - CP 160
+Bar-Sakka Icon
+Bar-Sakka
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) While in combat, performing a roll dodge creates a 6 meter pool of blood. After a 1 second delay, enemies in the pool take 788 Magic Damage. Gain a Damage Shield for 6 seconds based on total damage done by the pool to enemies, up to 15000 damage. This effect can occur once every 10 seconds and the amount of damage done scales off your Max Health and cannot critically hit.
+Dungeon
+Level 50 - CP 160
+Barkskin Icon
+Barkskin
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1487 Armor
+(5 items) Reduces the duration of immobilizations and snares applied to you by 50%. When an immobilization or snare is applied to you, heal for 1715 Health and restore 858 Stamina. This effect can occur once every 5 seconds.
+Monster Set
+Level 50 - CP 160
+Baron Thirsk Icon
+Baron Thirsk
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Stamina Recovery, Adds 129 Magicka Recovery
+(2 items) On dealing area direct damage, mark a target for 6 seconds. Every 2 seconds after, an Explosive Scamp is spawned nearby and detonates after 1 second, dealing 362 Magic damage to up to 6 enemies within 4 meters and applying Minor Timidity for 10 seconds, draining 1 Ultimate every 1.5 seconds. Each Explosive Scamp spawned deals 100% increased damage. This effect can occur once every 25 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Baron Zaudrus Icon
+Baron Zaudrus
+Tooltips by ESO-Hub.com
+(1 item) Adds 548 Maximum Stamina, Adds 548 Maximum Magicka, Adds 603 Maximum Health
+(2 items) Applying a status effect to an enemy grants you a stack of Zaudrus's Ambition for 10 seconds, up to 3 stacks max. When you gain 3 stacks, the stacks are removed and you gain 4 Ultimate. On gaining Ultimate, you cannot gain additional stacks of Zaudrus's Ambition for 1 second.
+Class Sets
+Level 50 - CP 160
+Basalt-Blooded Warrior Icon
+Basalt-Blooded Warrior
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Casting an Earthen Heart ability grants you a Rock Stance for 10 seconds. While on your Primary Weapon you gain Molten Stance, granting you Major Heroism, generating 3 Ultimate every 1.5 seconds. While you are on your Secondary Weapon you gain Obsidian Stance, increasing your Healing Done and damage shields by 14%. Bar Swapping will swap your Stance automatically.
+Class: Dragonknight
+PvP
+Level 50 - CP 160
+Battlefield Acrobat Icon
+Battlefield Acrobat
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Reduces the cost of all of your abilities by 6%.
+Class Sets
+Level 50 - CP 160
+Beacon of Oblivion Icon
+Beacon of Oblivion
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1206 Maximum Health
+(5 items) While you have a permanent pet active, gain 1840 Health and 1980 Armor. While you do not have a permanent pet active, increase your Damage Done and Healing Done by 15%. This value is reduced to 5% while affected by Battle Spirit.
+Class: Sorcerer
+Monster Set
+Level 50 - CP 160
+Black Gem Monstrosity Icon
+Black Gem Monstrosity
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) While in combat, casting a Soul Magic ability consumes a Soul Gem and gives you a Black Gemsplitter for 10 seconds. This effect can occur once every 6 seconds. Dealing Light or Heavy Attack damage fires the Black Gemsplitter at your target, dealing 17.1% of your target's Max Health as Magic Damage, up to 17100 Magic Damage.
+Dungeon
+Level 50 - CP 160
+Blood Moon Icon
+Blood Moon
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a melee Light Attack, you gain a stack of Blood Scent for 8 seconds. When you gain 5 stacks, you become Frenzied for 5 seconds, increasing your melee Light Attack damage by 2050 and attack speed by 50%. This effect can occur every 15 seconds.
+Dungeon
+Level 50 - CP 160
+Blooddrinker Icon
+Blooddrinker
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Increases your Bleed damaging attacks by 20%.
+Monster Set
+Level 50 - CP 160
+Bloodspawn Icon
+Bloodspawn
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Stamina Recovery
+(2 items) When you take damage, you have a 6% chance to generate 13 Ultimate and increase your Physical and Spell Resistance by 3731 for 5 seconds. This effect can occur once every 5 seconds.
+PvP
+Level 50 - CP 160
+Blunted Blades Icon
+Blunted Blades
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you take direct damage, Minor Enervation is applied to your enemy for 4 seconds, reducing their Critical Damage done by 10%. This can occur once every 5 seconds. Increase your damage done to enemies with Minor Enervation by 6%.
+Dungeon
+Level 50 - CP 160
+Bone Pirate's Tatters Icon
+Bone Pirate's Tatters
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1096 Maximum Stamina
+(5 items) While you have a drink buff active, your Max Stamina is increased by 2000 and Stamina Recovery by 133.
+Overland
+Level 50 - CP 160
+Briarheart Icon
+Briarheart
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Damage, you increase your Weapon and Spell Damage by 450 for 10 seconds. While this effect is active your Critical Strikes heal you for 95 Health. This effect can occur once every 15 seconds and the heal scales off the higher of your Max Magicka or Stamina.
+Overland
+Level 50 - CP 160
+Camonna Tong Icon
+Camonna Tong
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you kill a monster and gain Experience Points, gain 1 Weapon and Spell Damage for every 50 Experience Points the monster is worth for 30 seconds. This bonus can stack up to a maximum of 540 Weapon and Spell Damage. This item set is not affected by Experience Point boosting effects.
+Craftable
+Level 50 - CP 160
+Chimera's Rebuke Icon
+Chimera's Rebuke
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Dealing damage with a fully-charged Heavy Attack also restores 2363 Magicka or Stamina to the three allies nearest your target. The resource restore is based on the type of weapon you are wielding.
+Monster Set
+Level 50 - CP 160
+Chokethorn Icon
+Chokethorn
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Magicka Recovery
+(2 items) When you use a heal ability with a cost, you have a 33% chance to summon a strangler sapling that heals you or an ally for 6986 Health over 6 seconds. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.
+Craftable
+Level 50 - CP 160
+Claw of the Forest Wraith Icon
+Claw of the Forest Wraith
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 2037 Critical Chance to your Class abilities.
+Craftable
+Level 50 - CP 160
+Clever Alchemist Icon
+Clever Alchemist
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you drink a potion during combat you feel a rush of energy, increasing your Weapon and Spell Damage by 675 for 20 seconds.
+Craftable
+Level 50 - CP 160
+Coldharbour's Favorite Icon
+Coldharbour's Favorite
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Healing yourself or a group member summons Coldharbour's Favorite, who after 2 seconds, begins healing you and group members near him for 4648 Health over 6 seconds based on the higher of your Max Magicka or Stamina. Dealing damage summons Coldharbour's Favorite, who after 2 seconds, explodes, damaging enemies near him for 2352 Magic Damage over 6 seconds based on the higher of your Weapon or Spell Damage. Coldharbour's Favorite can only be summoned once every 10 seconds.
+PvP
+Level 50 - CP 160
+Colovian Highlands General Icon
+Colovian Highlands General
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) When you kill a Player, gain a stack of Blood Debt for 0.5 seconds. When Blood Debt expires, you and up to 5 group members within 28 meters of you gain 15 Ultimate per stack of Blood Debt.
+Trial
+Level 50 - CP 160
+Coral Riptide Icon
+Coral Riptide
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Increases your Weapon and Spell Damage by up to 600, based on your missing Stamina, reaching the maximum at 50% Stamina.
+Class Sets
+Level 50 - CP 160
+Corpseburster Icon
+Corpseburster
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Consuming a corpse causes the corpse to explode, dealing 1298 Magic Damage to enemies within 5 meters and applying Minor Breach to them for 5 seconds, reducing their Physical and Spell Resistance by 2974. This effect can occur once every 0.5 seconds, scales off the higher of your Weapon or Spell Damage, and deals 10% more damage for each Grave Lord ability slotted.
+Class: Necromancer
+PvP
+Level 50 - CP 160
+Coup De Grâce Icon
+Coup De Grâce
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage to an Immobilized enemy applies Major Vulnerability to them for 3 seconds, increasing their damage taken by 10%. This effect can occur once every 1 second.
+PvP
+Level 50 - CP 160
+Coward's Gear Icon
+Coward's Gear
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 250 Stamina Recovery, While Sprinting you gain Major Expedition and Major Protection, increasing your Movement Speed by 30% and reducing your damage taken by 10%.
+Craftable
+Level 50 - CP 160
+Critical Riposte Icon
+Critical Riposte
+Tooltips by ESO-Hub.com
+(2 items) Adds 424 Critical Resistance
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 424 Critical Resistance
+(5 items) When you take critical damage, you apply Minor Uncertainty and Minor Enervation to the enemy for 9 seconds, reducing their Physical and Spell Critical by 1314 and reducing their Critical Damage by 10%. An enemy can only be affected by your Critical Riposte once every 10 seconds.
+Dungeon
+Level 50 - CP 160
+Crusader Icon
+Crusader
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, you consecrate the ground beneath you for 10 seconds and gain a damage shield that absorbs 1595 damage for 6 seconds. Every 2 seconds you and nearby group members in the area gain Minor Courage for 12 seconds. These effects can occur once every 20 seconds and the damage shield scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Daedric Trickery Icon
+Daedric Trickery
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Magicka
+(5 items) When you deal damage you gain one of 5 random Major buffs for 21 seconds every 9 seconds. Eligible buffs are Expedition, Protection, Mending, Heroism, or Vitality.
+Dungeon
+Level 50 - CP 160
+Dagon's Dominion Icon
+Dagon's Dominion
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 492 Weapon and Spell Damage to your area of effect abilities.
+Craftable
+Level 50 - CP 160
+Daring Corsair Icon
+Daring Corsair
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 657 Critical Chance
+(5 items) Reduce the cost of your Weapon abilities by 10% Magicka or Stamina. After casting a Weapon ability, you gain Minor Heroism for 8 seconds, generating 1 Ultimate every 1.5 seconds while in combat. This effect can occur every 8 seconds.
+Overland
+Level 50 - CP 160
+Darkstride Icon
+Darkstride
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Stamina Recovery
+(5 items) Reduces the cost of Sprint and Sneak by 50%.
+Craftable
+Level 50 - CP 160
+Dauntless Combatant Icon
+Dauntless Combatant
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Magicka
+(5 items) Adds 1206 Maximum Health, When you are affected by a disabling effect, you automatically Break Free for no cost. After using this effect, you become Winded and cannot trigger this effect or others like it for 21 seconds.
+Overland
+Level 50 - CP 160
+Dead-Water's Guile Icon
+Dead-Water's Guile
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 129 Weapon and Spell Damage, Whenever you kill an enemy, you gain 15 Ultimate.
+Overland
+Level 50 - CP 160
+Deadlands Assassin Icon
+Deadlands Assassin
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 200 Weapon and Spell Damage, Dealing damage to an enemy within 10 meters of you with a Heavy Attack causes you to throw a cone of knives, dealing 816 Physical Damage to enemies hit. If an enemy hit has 50% Health or less, they also take an additional 1631 Bleed Damage over 14 seconds. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Deadlands Demolisher Icon
+Deadlands Demolisher
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Your Bash attacks deal 935 more damage. When you Bash, you also deal 0 Physical Damage in a cone in front of you, interrupting any enemies hit. This effect can occur once every 2 seconds and counts as Bash damage.
+PvP
+Level 50 - CP 160
+Deadly Strike Icon
+Deadly Strike
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Increase the damage your damage over time and channeled attacks do by 15%.
+Craftable
+Level 50 - CP 160
+Death's Wind Icon
+Death's Wind
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1206 Maximum Health
+(5 items) When you take melee damage while you are under 35% Health, you knockback and stun all enemies within 8 meters of you for 4 seconds. This effect can occur once every 15 seconds.
+Overland
+Level 50 - CP 160
+Death-Dancer Icon
+Death-Dancer
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 1528 Critical Chance while you have 50% or more Stamina. Reduce the cost of your Core Combat abilities by 23% while you have less than 50% of your Stamina.
+Overland
+Level 50 - CP 160
+Defiler Icon
+Defiler
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Damage, you summon a Hunger that spews poison to all enemies in front of it, dealing 990 Poison Damage and stunning any enemy hit for 5 seconds. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Diamond's Victory Icon
+Diamond's Victory
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) While in combat, using an ability with a range of 7 meters or less grants you Range Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your damage over time and ranged attacks. While in combat, using an ability with a range of over 7 meters grants you Melee Supremacy for 5 seconds, adding 437 Weapon and Spell Damage to your melee attacks.
+Monster Set
+Level 50 - CP 160
+Domihaus Icon
+Domihaus
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina, Adds 1096 Maximum Magicka
+(2 items) When you deal damage, you create a 10 meter ring of molten earth around you for 10 seconds, which deals 90 Flame damage and 90 Physical damage every 1 second. Standing within the ring grants you 300 Weapon and Spell Damage. This effect can occur once every 15 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Dragon's Appetite Icon
+Dragon's Appetite
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Stamina Recovery
+(5 items) Increase your damage done to Bleeding enemies by 225. Dealing non-Bleed damage to Bleeding enemies generates a stack of Dragon's Appetite for 5 seconds, up to once per half second. After 10 stacks you consume Dragon's Appetite and heal for 4415 Health. The heal effect scales off the higher of your Max Magicka or Stamina.
+Overland
+Level 50 - CP 160
+Dragonguard Elite Icon
+Dragonguard Elite
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Stamina Recovery
+(5 items) You gain a stack of Dragonguard Tactics for 5 seconds when you deal direct damage to an enemy from the front or their sides, up to 10 stacks. Each stack of Dragonguard Tactics increases your Critical Chance by 275. You can only gain one stack every 0.5 seconds.
+Dungeon
+Level 50 - CP 160
+Draugr Hulk Icon
+Draugr Hulk
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 2550 Maximum Stamina
+Overland
+Level 50 - CP 160
+Draugr's Heritage Icon
+Draugr's Heritage
+Tooltips by ESO-Hub.com
+(2 items) Adds 4% Healing Taken
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1206 Maximum Health
+(5 items) When you take damage while you are under 35% Health, you knockdown all enemies within 4 meters of you for 2 seconds and heal for 2506 Health. This effect can occur once every 7 seconds and the heal scales off the higher of your Max Magicka or Stamina.
+Dungeon
+Level 50 - CP 160
+Dro'Zakar's Claws Icon
+Dro'Zakar's Claws
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 129 Weapon and Spell Damage, For every bleed effect you have on an enemy, increase your Weapon and Spell Damage by 103 against them.
+Craftable
+Level 50 - CP 160
+Druid's Braid Icon
+Druid's Braid
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1206 Maximum Health
+(5 items) Adds 1565 Maximum Magicka
+(6 items) Adds 1565 Maximum Stamina
+(7 items) Adds 1722 Maximum Health
+(8 items) Adds 1565 Maximum Magicka
+(9 items) Adds 1565 Maximum Stamina
+(10 items) Adds 1722 Maximum Health
+(11 items) Adds 1565 Maximum Magicka
+(12 items) Adds 1565 Maximum Stamina
+Monster Set
+Level 50 - CP 160
+Earthgore Icon
+Earthgore
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Done
+(2 items) When you heal yourself or a group member that is under 50% Health, you conjure a pool of blood underneath them, immediately removing all harmful area effects, and healing the lowest Health group member in the area after 2 seconds for 1702 Health every 2 seconds over 8 seconds. This effect can occur once every 20 seconds and scales off the higher of your Max Magicka or Stamina.
+Monster Set
+Level 50 - CP 160
+Encratis's Behemoth Icon
+Encratis's Behemoth
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) Dealing Flame Damage to an enemy grants you Behemoth's Aura for 12 seconds that reaches up to 12 meters. You and up to 11 group members in the aura reduce Flame Damage taken by 5%. Enemies in the aura increase their Flame Damage taken by 5%. This effect can occur once every 15 seconds.
+Monster Set
+Level 50 - CP 160
+Engine Guardian Icon
+Engine Guardian
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Health Recovery
+(2 items) When you use an ability that costs resources, you have a 25% chance to summon a Dwemer automaton to restore 550 Stamina or Magicka or 1955 Health to you every 0.5 seconds for 6 seconds. This effect can occur once every 10 seconds.
+Dungeon
+Level 50 - CP 160
+Essence Thief Icon
+Essence Thief
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with a Light or Heavy Attack draws essence from the enemy that pools near them for 5 seconds. Drawing from the pool heals you for 4356 Health, restores 4356 Stamina, and increases your damage done by 10% for 10 seconds. A pool can only be created once every 10 seconds.
+Craftable
+Level 50 - CP 160
+Eternal Hunt Icon
+Eternal Hunt
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Stamina Recovery
+(5 items) When you use Roll Dodge, you leave behind a rune that detonates when an enemy comes close, dealing 992 Poison damage and immobilizing them for 1.5 seconds. This effect scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Euphotic Gatekeeper Icon
+Euphotic Gatekeeper
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Stamina Recovery
+(2 items) When you use Roll Dodge, create a Hadolid Husk after you roll. While within 5 meters of the Hadolid Husk, it will absorb all direct damage attacks against you. After 1 second, the Hadolid Husk explodes, dealing 1155 Poison damage to all enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Eyes of Mara Icon
+Eyes of Mara
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Reduces the cost of your Restoration Staff abilities by 15%.
+PvP
+Level 50 - CP 160
+Farstrider Icon
+Farstrider
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, decrease the Critical Resistance of your enemy by 40% and increase your Critical Resistance by an equal amount for 10 seconds. This effect can occur once every 7 seconds.
+Mythic
+Level 50 - CP 160
+Faun's Lark Cladding Icon
+Faun's Lark Cladding
+Tooltips by ESO-Hub.com
+(1 item) If you continuously Sprint for 1 second, you gain the ability to pass through enemies. Enemies you pass through become Charmed for 4 seconds, removing their ability to attack or cast abilities as they move toward you. Charming an enemy this way restores 678 Stamina and Magicka to you, and heals you for 678 Health. Charming an enemy removes you from Stealth.
+Craftable
+Level 50 - CP 160
+Fellowship's Fortitude Icon
+Fellowship's Fortitude
+Tooltips by ESO-Hub.com
+(5 items) Adds 7425 Armor
+(10 items) Adds 6020 Maximum Health
+(12 items) Gain Major Protection, reducing your damage taken by 10%.
+Overland
+Level 50 - CP 160
+Fiord's Legacy Icon
+Fiord's Legacy
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Stamina Recovery
+(5 items) Reduces the cost and increases the Movement Speed bonus of Sprint by 15%.
+Overland
+Level 50 - CP 160
+Flanking Strategist Icon
+Flanking Strategist
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 400 Weapon and Spell Damage to your damaging abilities when you attack an enemy from behind or their sides.
+Craftable
+Level 50 - CP 160
+Fortified Brass Icon
+Fortified Brass
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 1487 Armor
+(5 items) Adds 3460 Armor
+PvP
+Level 50 - CP 160
+Galerion's Revenge Icon
+Galerion's Revenge
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage with a Light or Heavy Attack, you put a Mark of Revenge on the enemy for 15 seconds. After stacking 5 Marks of Revenge on an enemy they detonate for 1462 Magic Damage. You can only apply a stack once every half second and the damage scales off the higher of your Weapon or Spell Damage.
+Class Sets
+Level 50 - CP 160
+Gardener of Seasons Icon
+Gardener of Seasons
+Tooltips by ESO-Hub.com
+(2 items) Adds 4% Healing Done
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Gain Herald of Spring, causing your Green Balance overheals to apply Minor Heroism for 3 seconds. Casting a Heal ability while Bracing consumes Herald of Spring and gives you Harbinger of Fall for 6 seconds, causing your Green Balance overheals to create an 8 meter area for 5 seconds, applying Major Cowardice to enemies and Minor Vitality to allies. You can create an area once every 5 seconds. When Harbinger of Fall ends, regain Herald of Spring.
+Class: Warden
+Unknown
+Level 50 - CP 160
+Giant Spider Icon
+Giant Spider
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Taken
+(2 items) When you Block an enemy that is between 8 and 22 meters from you, you spin strands of spider silk to pull the enemy to you and taunt them for 15 seconds if they are not already taunted. This effect can occur once every 1 second.
+Monster Set
+Level 50 - CP 160
+Glorgoloch the Destroyer Icon
+Glorgoloch the Destroyer
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) While in combat, each second you stand still grants you a stack of Flesh Fortress, up to 10 stacks. Each stack increases your Armor by 380 and your Critical Resistance by 38. Each second you move removes a stack of Flesh Fortress. Exiting combat removes all stacks of Flesh Fortress. Using charge and teleport abilities do not remove stacks of Flesh Fortress.
+Craftable
+Level 50 - CP 160
+Grave-Stake Collector Icon
+Grave-Stake Collector
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1206 Maximum Health
+(5 items) When an enemy you recently damaged dies, they drop a grave-stake for 6 seconds. When you touch the grave-stake, you restore 4564 Stamina and Magicka. Only one grave-stake can appear at a time.
+Dungeon
+Level 50 - CP 160
+Grisly Gourmet Icon
+Grisly Gourmet
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Adds 526 Maximum Stamina, Dealing Light Attack damage grants you a stack of Baker's Delight for 5 seconds. When you gain 3 stacks, you create a Sweetroll next to your target for 5 seconds. If you or an ally touches the Sweetroll, both you and your ally gain one of the following effects: Restore 1593 Health, Magicka and Stamina Gain Empower for 10 seconds Gain Major Force for 10 seconds This effect can occur once every 2 seconds.
+Monster Set
+Level 50 - CP 160
+Grothdarr Icon
+Grothdarr
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) When you deal damage to an enemy within 8 meters, you have a 10% chance to create lava pools that swirl around you, dealing 259 Flame damage to all enemies within 8 meters of you every 1 second for 5 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Grundwulf Icon
+Grundwulf
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) Whenever you deal critical damage, restore 700 Magicka or Stamina, whichever maximum is higher. You also gain 350 of the other resource. This effect can occur once every 5 seconds.
+Overland
+Level 50 - CP 160
+Gryphon's Ferocity Icon
+Gryphon's Ferocity
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) After dealing direct damage, you gain Minor Force and Minor Expedition for 10 seconds, increasing your Critical Damage done by 10% and increasing your Movement Speed by 15%.
+Dungeon
+Level 50 - CP 160
+Gryphon's Reprisal Icon
+Gryphon's Reprisal
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Damage, you or an ally can activate the Gryphon's Reprisal on the enemy within the next 8 seconds, causing a small gryphon to fly by and deal 4758 Bleed Damage over 10 seconds to enemies within 5 meters. This effect can occur once every 20 seconds and scales off the higher of the synergy activator's Weapon or Spell Damage.
+Mythic
+Level 50 - CP 160
+Harpooner's Wading Kilt Icon
+Harpooner's Wading Kilt
+Tooltips by ESO-Hub.com
+(1 item) Dealing direct damage grants you a stack of Hunter's Focus for 20 seconds, up to 10 stacks max. You can only gain 1 stack of Hunter's Focus per second. Each stack of Hunter's Focus increases your Critical Chance by 110 and your Critical Damage by 1%. Taking direct damage removes 5 stacks of Hunter's Focus, up to once per second. Removing Harpooner's Wading Kilt removes all stacks of Hunter's Focus.
+PvP
+Level 50 - CP 160
+Hawk's Eye Icon
+Hawk's Eye
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Reduces the cost and increases the damage of your Bow abilities by 6%.
+Craftable
+Level 50 - CP 160
+Heartland Conqueror Icon
+Heartland Conqueror
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Increase the effectiveness of your Weapon Traits by 100%. This does not affect Ornate or Intricate traits.
+Dungeon
+Level 50 - CP 160
+Heem-Jas' Retribution Icon
+Heem-Jas' Retribution
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 129 Weapon and Spell Damage, When you are within 28 meters of an enemy you are in combat with, and the enemy dies, you gain Major Berserk for 10 seconds, increasing your damage done by 10%.
+PvP
+Level 50 - CP 160
+Hew and Sunder Icon
+Hew and Sunder
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage with a Heavy Attack, gain 1236 Offensive Penetration for each enemy within 8 meters of your target for 10 seconds. This effect can occur once every 7 seconds.
+Overland
+Level 50 - CP 160
+Hexos' Ward Icon
+Hexos' Ward
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Dealing direct Critical Damage grants you a damage shield that absorbs up to 12305 damage for 6 seconds. This effect can occur once every 7 seconds.
+Overland
+Level 50 - CP 160
+Hide of the Werewolf Icon
+Hide of the Werewolf
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you take damage, you generate 6 Ultimate. This effect can occur once every 5 seconds.
+Craftable
+Level 50 - CP 160
+Highland Sentinel Icon
+Highland Sentinel
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 986 Critical Chance, While in combat, each second you stand still grants you a stack of Sentinel's Eye, increasing your Critical Chance by 443 per stack, stacking up to 3 times. Each second you move, one stack is removed. Using charge and teleport abilities does not remove stacks, and exiting combat will remove all stacks of Sentinel's Eye.
+Dungeon
+Level 50 - CP 160
+Hircine's Veneer Icon
+Hircine's Veneer
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Stamina Recovery
+(5 items) Grants 145 Stamina Recovery to you and up to 11 other group members within 28 meters of you. This bonus persists through death.
+Craftable
+Level 50 - CP 160
+Hist Bark Icon
+Hist Bark
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1206 Maximum Health
+(5 items) While you are Bracing, you gain Major Evasion, reducing damage from area attacks by 20%.
+Craftable
+Level 50 - CP 160
+Hist Whisperer Icon
+Hist Whisperer
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Health Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Magicka Recovery
+(5 items) Dealing damage with a Light or Medium Attack heals you for 318 Health and restores 318 Stamina and Magicka. Dealing damage with a fully-charged Heavy Attack heals you for 636 Health and restores 636 Stamina and Magicka.
+Craftable
+Level 50 - CP 160
+Hunding's Rage Icon
+Hunding's Rage
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 300 Weapon and Spell Damage
+Arena
+Level 50 - CP 160
+Hunt Leader Icon
+Hunt Leader
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When your pets attack an enemy you have also attacked in the last 10 seconds, you heal for 2433 Health and restore 1216 Stamina. This effect can occur once every 5 seconds.
+Monster Set
+Level 50 - CP 160
+Iceheart Icon
+Iceheart
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) When you deal Critical Damage, you have a 20% chance to gain a damage shield that absorbs 5000 damage for 6 seconds. While the damage shield holds, you deal 259 Frost damage to all enemies within 5 meters of you every 1 second. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Ilambris Icon
+Ilambris
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) When you deal Flame or Shock Damage, you have a 33% chance to summon a meteor shower that deals 145 Flame damage and 145 Shock damage to all enemies within 4 meters every 1 second for 5 seconds. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Immolator Charr Icon
+Immolator Charr
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Armor
+(2 items) Adds 1206 Maximum Health, When you take damage while below 50% Health, gain immunity to immobilization, snares, and crowd control effects for 10 seconds. This effect can occur once every 40 seconds.
+PvP
+Level 50 - CP 160
+Imperial Physique Icon
+Imperial Physique
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) While you are in Imperial City, you tap into the power of the Tel Var Stones you are carrying, increasing your Health, Magicka, and Stamina by 1032. While you have a 4x Tel Var Stone multiplier this effect is increased by 600%.
+PvP
+Level 50 - CP 160
+Impregnable Armor Icon
+Impregnable Armor
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Magicka
+(5 items) Adds 1650 Critical Resistance
+Monster Set
+Level 50 - CP 160
+Infernal Guardian Icon
+Infernal Guardian
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) When you apply a damage shield to yourself or an ally, you have a 50% chance to lob 3 mortars over 2 seconds at the furthest enemy from you that each deal 641 Flame damage to all enemies within 5 meters of the blast area. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Innate Axiom Icon
+Innate Axiom
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Magicka, Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 400 Weapon and Spell Damage to your Class abilities.
+Craftable
+Level 50 - CP 160
+Iron Flask Icon
+Iron Flask
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1487 Armor
+(5 items) When you drink a potion while in combat, gain 7779 Armor for 20 seconds.
+Dungeon
+Level 50 - CP 160
+Jailbreaker Icon
+Jailbreaker
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 142 Stamina Recovery, Gain Minor Expedition at all times, increasing your Movement Speed by 15%.
+PvP
+Level 50 - CP 160
+Jerall Mountains Warchief Icon
+Jerall Mountains Warchief
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) Dealing damage applies a stack of Malady to your enemy, reducing healing received by 1% for 5 seconds, up to 35 stacks. You can apply a stack once every 0.5 seconds. Applying Malady gives you a stack of Contagion, reducing healing received by 1% for 5 seconds, up to 15 stacks. You can only gain a stack once every 1 second.
+Dungeon
+Level 50 - CP 160
+Jerensi's Bladestorm Icon
+Jerensi's Bladestorm
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 1487 Offensive Penetration
+(5 items) While in combat, casting an ability that leaves an effect on the ground creates a 6 meter Spike Vortex that deals 3855 Physical Damage over 5 seconds to enemies inside it. After 5 seconds, enemies within the Vortex are dealt 1925 Physical Damage over 5 seconds. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Kagrenac's Hope Icon
+Kagrenac's Hope
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 1206 Maximum Health
+(5 items) Adds 222 Weapon and Spell Damage, Decreases the time it takes to resurrect an ally by 25%. When you successfully resurrect an ally, you restore 1720 Magicka.
+Monster Set
+Level 50 - CP 160
+Kargaeda Icon
+Kargaeda
+Tooltips by ESO-Hub.com
+(1 item) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina
+(2 items) On dealing damage with a Heavy Attack, create a 6 meter whirlwind that slowly moves forward for 8 seconds, growing by 3 meters every 3 seconds. Enemies within the whirlwind take 150 Shock damage and 150 Physical damage every second, while group members reduce their Magicka and Stamina costs by 10%. This effect can occur once every 20 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Trial
+Level 50 - CP 160
+Kazpian's Cruel Signet Icon
+Kazpian's Cruel Signet
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) On dealing area direct damage, place a Sword above an enemy, up to once every 1 second. You cannot place a Sword on an enemy who already has one from you. After 6 seconds, the Sword falls, dealing 772 Physical Damage. This damage scales off the higher of your Weapon or Spell Damage. Applying a Sword increases your damage done by 2% for 6 seconds, stacking up to 6 times.
+Dungeon
+Level 50 - CP 160
+Kinras's Wrath Icon
+Kinras's Wrath
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with a Light or Heavy Attack grants you a stack of Burning Heart for 5 seconds, up to 5 stacks. While you have 5 stacks, you generate an aura of wrath, granting you Major Berserk, increasing your damage done by 10%. While you have an aura of wrath, group members within 12 meters of you gain Minor Berserk, increasing their damage done by 5%.
+Monster Set
+Level 50 - CP 160
+Kjalnar's Nightmare Icon
+Kjalnar's Nightmare
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) Damaging an enemy with a Light Attack puts a Bone stack on them for 5 seconds, up to once every 0.5 seconds. At 5 stacks, an undodgeable skeletal hand attacks your enemy after 1 second, knocking them into the air and stunning them for 3 seconds, or dealing 2221 Magic damage if they cannot be stunned. Enemies then become immune to Kjalnar's Nightmare stacks for 4 seconds. The damage scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Kra'gh Icon
+Kra'gh
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) When you deal damage, you have a 10% chance to spawn dreugh limbs that create shockwaves in front of you dealing 249 Physical damage every 0.6 seconds for 2.4 seconds. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Kraglen's Howl Icon
+Kraglen's Howl
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) After an enemy you've recently damaged dies, you let out a howl, granting three allies within 15 meters the Heed the Call synergy. Activating the synergy gives you and the activator 12 Ultimate. This effect can occur once every 20 seconds.
+Craftable
+Level 50 - CP 160
+Kvatch Gladiator Icon
+Kvatch Gladiator
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) You gain 1475 Weapon and Spell Damage against targets who are at or below 25% Health.
+PvP
+Level 50 - CP 160
+Kyne's Kiss Icon
+Kyne's Kiss
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal direct damage while 12 meters or further from your target, you heal for 521 Health and restore 1314 Stamina. This effect can occur once every 5 seconds and the heal scales off the higher of your Max Magicka or Stamina.
+Monster Set
+Level 50 - CP 160
+Lady Malygda Icon
+Lady Malygda
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) When you deal direct damage to a target within 12 meters, create a 5 meter area that after 1 second, quickly moves forward and then returns, dealing 811 Shock damage to enemies and applying Minor Enervation for 5 seconds, causing the target to deal 10% less Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Lady Thorn Icon
+Lady Thorn
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) Casting an ability that costs Health spawns a blood ball for 10 seconds. This effect can occur once every 10 seconds. You or an ally near the blood ball can activate the Sanguine Burst synergy, dealing 2879 Disease damage to nearby enemies and applying Major Maim for 8 seconds, decreasing their damage done by 10%. Enemies can only receive Major Maim from Sanguine Burst once every 20 seconds. The damage scales off the synergy activator's Max Health.
+PvP
+Level 50 - CP 160
+Lamp Knight's Art Icon
+Lamp Knight's Art
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Gain 100000 Offensive Penetration. Reduce your damage done by 46%.
+Craftable
+Level 50 - CP 160
+Law of Julianos Icon
+Law of Julianos
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 300 Weapon and Spell Damage
+Mythic
+Level 50 - CP 160
+Lefthander's Aegis Belt Icon
+Lefthander's Aegis Belt
+Tooltips by ESO-Hub.com
+(1 item) Roll Dodge no longer evades attack and instead grants a damage shield that absorbs up to 20990 damage over 1 second. This damage shield is unaffected by Battle Spirit.
+Craftable
+Level 50 - CP 160
+Legacy of Karth Icon
+Legacy of Karth
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Enemies affected by your alchemic poisons take 285 Disease Damage every 1 second. This effect scales off the higher of your Weapon or Spell Damage.
+PvP
+Level 50 - CP 160
+Leki's Focus Icon
+Leki's Focus
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Stamina Recovery
+(5 items) Reduces your damage done with area of effect attacks by 5%, but grants Major Evasion at all times; reducing your damage taken from area of effect attacks by 20%.
+Dungeon
+Level 50 - CP 160
+Leviathan Icon
+Leviathan
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 1528 Critical Chance
+Monster Set
+Level 50 - CP 160
+Lord Warden Icon
+Lord Warden
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Armor
+(2 items) When you take damage, you have a 50% chance to summon a shadow orb for 10 seconds that increases the Physical and Spell Resistance of you and your group members within 8 meters by 3180. This effect can occur once every 10 seconds.
+Monster Set
+Level 50 - CP 160
+Maarselok Icon
+Maarselok
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina
+(2 items) When you deal damage with a melee Heavy Attack, you spew a cone of corruption, dealing 1492 Disease damage to enemies over 4 seconds. This damage is increased by 10% for each negative effect the enemies have, up to a maximum of 300%. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Macabre Vintage Icon
+Macabre Vintage
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 150 Weapon and Spell Damage, When you kill a monster they burst with blood magic, dealing 50% of their Max Health to enemies within 6 meters as Bleed Damage, up to 24096 Bleed Damage. This damage cannot critically strike. This effect can occur once every 0.5 seconds.
+Monster Set
+Level 50 - CP 160
+Magma Incarnate Icon
+Magma Incarnate
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Magicka Recovery, Adds 129 Stamina Recovery
+(2 items) When you heal yourself or a group member with a single target heal ability, grant the lowest Health group member within 28 meters Minor Courage and Minor Resolve, increasing their Weapon and Spell Damage by 215 and Armor by 2974 for 10 seconds. Daedric Energy will then bounce to a nearby group member within 8 meters, up to 3 times, applying Minor Courage and Minor Resolve for 10 seconds. This effect can occur once every 15 seconds.
+Craftable
+Level 50 - CP 160
+Magnus' Gift Icon
+Magnus' Gift
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you cast a Magicka ability, you have a 15% chance to negate that ability's cost.
+PvP
+Level 50 - CP 160
+Marksman's Crest Icon
+Marksman's Crest
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Reduces the cost of your Stamina abilities by 5% and increases the damage of your Bow abilities against Players by 8%.
+Monster Set
+Level 50 - CP 160
+Maw of the Infernal Icon
+Maw of the Infernal
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you deal damage with a Light or Heavy Attack, you have a 33% chance to summon a fire breathing Daedroth for 15 seconds. The Daedroth's attacks deal 599 Flame damage every 2 seconds. The Daedroth can only be summoned once every 15 seconds and its damage scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Mechanical Acuity Icon
+Mechanical Acuity
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal non Critical Damage, you gain a stack of Mechanical Acuity for 4 seconds, granting you 20% Critical Strike chance per stack, up to once every 1 second and stacking up to 5 times. Upon reaching max stacks or after the effect ends, this effect cannot occur again for 25 seconds.
+Craftable
+Level 50 - CP 160
+Might of the Lost Legion Icon
+Might of the Lost Legion
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 1206 Maximum Health, When you Block, you gain Empower, increasing the damage of your Heavy Attacks against monsters by 70% for 3 seconds.
+Monster Set
+Level 50 - CP 160
+Mighty Chudan Icon
+Mighty Chudan
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Armor
+(2 items) Adds 1206 Maximum Health, Gain Major Resolve at all times, increasing your Physical and Spell Resistance by 5948.
+Monster Set
+Level 50 - CP 160
+Molag Kena Icon
+Molag Kena
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you consecutively Light Attack 2 times, you trigger Overkill for 6 seconds, which increases your Weapon and Spell Damage by 560 but also increases the cost of your abilities by 8%. This effect can occur once every 6 seconds.
+Class Sets
+Level 50 - CP 160
+Monolith of Storms Icon
+Monolith of Storms
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with a Storm Calling ability's initial hit or every 5th tick creates a Monolith near the enemy for 10 seconds, up to one every 1 second. You may have up to 3 Monoliths at a time. Monoliths link to your other Monoliths within 28 meters of each other. Each link deals 680 Shock Damage, scaling off of the higher of your Weapon or Spell Damage, every 2 seconds to enemies between and near them. An enemy can only take damage from this set once every 2 seconds.
+Class: Sorcerer
+Craftable
+Level 50 - CP 160
+Morkuldin Icon
+Morkuldin
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage with a Light or Heavy Attack, you summon an animated weapon to attack your enemies for 15 seconds. The animated weapon's basic attacks deal 422 Physical damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Mother Ciannait Icon
+Mother Ciannait
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) While in combat, casting an ability with a cast time or channeling an ability grants you a damage shield that absorbs 5000 damage for 6 seconds. If the damage shield is broken, you restore 985 Magicka. This effect can occur once every 7 seconds.
+Craftable
+Level 50 - CP 160
+Naga Shaman Icon
+Naga Shaman
+Tooltips by ESO-Hub.com
+(2 items) Adds 4% Healing Taken
+(3 items) Adds 4% Healing Done
+(4 items) Adds 1096 Maximum Magicka
+(5 items) When you apply a damage shield to yourself or an ally, you gain Minor Mending and Minor Vitality for 6 seconds, increasing your healing done by 8% and healing received and damage shield strength by 6%. This effect can occur once every 6 seconds.
+Monster Set
+Level 50 - CP 160
+Nazaray Icon
+Nazaray
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) When you use an Ultimate ability, the closest 6 enemies within 12 meters have all Major and Minor debuffs applied to them extended by 1 second per 20 Ultimate spent. This effect can occur once every 30 seconds per target.
+Monster Set
+Level 50 - CP 160
+Nerien'eth Icon
+Nerien'eth
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you deal direct damage, you have a 15% chance to summon a Lich crystal that explodes after 2 seconds, dealing 1360 Magic damage to all enemies within 4 meters. This effect can occur once every 3 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+New Moon Acolyte Icon
+New Moon Acolyte
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Adds 401 Weapon and Spell Damage. Increases the cost of your active abilities by 5%.
+PvP
+Level 50 - CP 160
+Nibenay Bay Battlereeve Icon
+Nibenay Bay Battlereeve
+Tooltips by ESO-Hub.com
+(1 item) Adds 424 Critical Resistance
+(2 items) When you are forcefully moved via a Pull, Knockback or Teleport ability, gain a damage shield that absorbs up to 15112 damage for 6 seconds. This damage shield is not affected by Battle Spirit. This effect can occur once every 14 seconds. While you do not have the damage shield from this set, reduce your damage taken from players by 5%.
+Overland
+Level 50 - CP 160
+Night Mother's Embrace Icon
+Night Mother's Embrace
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 171 Weapon and Spell Damage, Reduces the radius you can be detected while Sneaking by 2 meters. Reduces the cost of Sneak by 25%.
+Craftable
+Level 50 - CP 160
+Night Mother's Gaze Icon
+Night Mother's Gaze
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Damage you apply Major Breach to the enemy, reducing their Physical and Spell Resistance by 5948 for 4 seconds.
+Overland
+Level 50 - CP 160
+Night Terror Icon
+Night Terror
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Reduces the radius you can be detected while Sneaking by 2 meters. Reduces the cost of Sneak by 10%.
+(4 items) Adds 1206 Maximum Health
+(5 items) When you take melee damage, you deal 285 Poison Damage to the attacker. This effect can occur once every 1 second and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Night's Silence Icon
+Night's Silence
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 657 Critical Chance
+(5 items) Ignore the Movement Speed penalty of Sneak.
+Monster Set
+Level 50 - CP 160
+Nightflame Icon
+Nightflame
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Magicka
+(2 items) When you heal yourself or an ally, you have a 20% chance to summon a totem for 6 seconds that heals you and your allies within 5 meters for 704 Health every 1 second. This effect can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.
+Dungeon
+Level 50 - CP 160
+Nix-Hound's Howl Icon
+Nix-Hound's Howl
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Completing a fully-charged Heavy Attack applies Major Cowardice to your target for 1 second per 1000 Weapon Damage you have, lowering their Weapon and Spell Damage by 430. You then gain Major Courage for the same duration, increasing your Weapon and Spell Damage by 430. This effect can occur once every 12 seconds. Current Durations Major Cowardice: 1 second Major Courage: 1 second
+Class Sets
+Level 50 - CP 160
+Nobility in Decay Icon
+Nobility in Decay
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 4% Healing Taken
+(4 items) Adds 1206 Maximum Health
+(5 items) Casting a Bone Tyrant ability while in combat grants you Beautiful Corpse and Death's Favor for 16 seconds. Death's Favor increases your healing received and reduces damage taken by up to 12% based on your missing Health. This can occur once every 20 seconds, and is reduced by 2 seconds for each slotted Bone Tyrant ability. Casting a corpse consumer ability consumes Beautiful Corpse, treating you as a corpse.
+Class: Necromancer
+Craftable
+Level 50 - CP 160
+Noble's Conquest Icon
+Noble's Conquest
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 4% Healing Taken
+(5 items) When you Bash a target, you heal for 3408 Health over 10 seconds and apply Minor Vulnerability to the enemy for 10 seconds, increasing their damage taken by 5%. The heal can only activate once every 10 seconds and scales off your Max Health.
+Craftable
+Level 50 - CP 160
+Nocturnal's Favor Icon
+Nocturnal's Favor
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1206 Maximum Health
+(5 items) Whenever you successfully Dodge, you heal yourself for 2820 Health over 5 seconds. This effect can occur every 5 seconds and scales off the higher of your Max Magicka or Stamina.
+PvP
+Level 50 - CP 160
+Nocturnal's Ploy Icon
+Nocturnal's Ploy
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 424 Critical Resistance
+(4 items) Adds 129 Stamina Recovery
+(5 items) When you directly apply a Major Debuff to an enemy, remove a Major Buff with a duration from the target. When you directly apply a Minor Debuff, remove a Minor Buff from the target. These effects can both occur once every 15 seconds and a target can be affected once every 15 seconds. This does not apply to abilities with delays.
+Dungeon
+Level 50 - CP 160
+Noxious Boulder Icon
+Noxious Boulder
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Dealing damage with a fully-charged Heavy Attack creates a 3 meter poison boulder. After 1.2 seconds the boulder rolls forward until it hits an enemy, dealing 1049 Poison Damage in a 6 meter area and creating a 6 meter pool of poison for 5 seconds, dealing 730 Poison Damage and applying the Poisoned status effect each second. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Nunatak Icon
+Nunatak
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Armor
+(2 items) On dealing Frost Damage, create a 6 meter area under the target for 6 seconds, dealing 191 Frost damage to enemies every 1 second and applying a 40% snare for 4 seconds. Enemies damaged four times become immobilized and afflicted with Major Brittle for 4 seconds, causing the target to take 20% increased Critical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Oblivion's Edge Icon
+Oblivion's Edge
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Stamina Recovery
+(5 items) Adds 258 Weapon and Spell Damage, When you kill an enemy, you fill an empty Soul Gem and heal for 5906 Health. The heal can occur once every 10 seconds and scales off the higher of your Max Magicka or Stamina.
+Craftable
+Level 50 - CP 160
+Oblivion's Foe Icon
+Oblivion's Foe
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 129 Weapon and Spell Damage, When you deal damage with Soul Magic, you mark the target's soul dealing 1875 Magic damage over 10 seconds, as long as they are not already marked from you. This effect scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Old Growth Brewer Icon
+Old Growth Brewer
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Health Recovery
+(5 items) When you drink a potion while in combat, you gain 245 Health, Magicka, and Stamina Recovery for 45 seconds.
+Craftable
+Level 50 - CP 160
+Order's Wrath Icon
+Order's Wrath
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 943 Critical Chance, Increases your Critical Damage and Critical Healing by 8%.
+Craftable
+Level 50 - CP 160
+Orgnum's Scales Icon
+Orgnum's Scales
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Health Recovery
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1206 Maximum Health
+(5 items) While you are under 60% Health, your Health Recovery is increased by 800 and your Physical and Spell Resistance is increased by 6400.
+Monster Set
+Level 50 - CP 160
+Orpheon the Tactician Icon
+Orpheon the Tactician
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) While in combat, casting an ability that leaves an effect on the ground summons a tentacle at the target's location. After 2 seconds, the tentacle swings wildly in a 5 meter radius, dealing 229 Physical damage and stunning up to 6 enemies for 3 seconds. Enemies immune to stun take 1429 Physical damage instead. This effect can occur every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Ozezan the Inferno Icon
+Ozezan the Inferno
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Magicka Recovery
+(2 items) Overhealing yourself or an ally grants them 4272 Armor for 1.1 seconds. Healing yourself or an ally grants them Minor Vitality for 1.1 seconds, increasing their healing received and damage shield strength by 6%.
+Arena
+Level 50 - CP 160
+Para Bellum Icon
+Para Bellum
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When you deal damage you gain a damage shield that absorbs up to 8412 damage for 6 seconds. This effect can occur once every 6 seconds.
+Craftable
+Level 50 - CP 160
+Pelinal's Wrath Icon
+Pelinal's Wrath
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Whenever you kill an enemy you gain a damage shield that absorbs up to 3876 damage for 10 seconds and a stack of Wrath of Whitestrake for 10 seconds. Each stack of Wrath of Whitestrake grants you 100 Weapon and Spell Damage, but causes you to take 159 Oblivion damage every second, up to 10 stacks. The damage shield scales off the higher of your Weapon or Spell Damage, and the damage scales off your Max Health.
+Trial
+Level 50 - CP 160
+Perfected Ansuul's Torment Icon
+Perfected Ansuul's Torment
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Adds 657 Critical Chance, Increases your damage done against monsters by 7%. When you interrupt an enemy, you increase your damage done against monsters by an additional 7% for 10 seconds.
+Trial
+Level 50 - CP 160
+Perfected Arms of Relequen Icon
+Perfected Arms of Relequen
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Adds 129 Weapon and Spell Damage, Your Light and Heavy attacks apply a stack of harmful winds to your target for 5 seconds. Harmful winds deal 51 Physical Damage per stack every 1 second. This effect can stack once every 0.5 seconds, up to 10 times, and scales off the higher of your Weapon or Spell Damage.
+Trial
+Level 50 - CP 160
+Perfected Coral Riptide Icon
+Perfected Coral Riptide
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 657 Critical Chance, Increases your Weapon and Spell Damage by up to 600, based on your missing Stamina, reaching the maximum at 50% Stamina.
+Trial
+Level 50 - CP 160
+Perfected Kazpian's Cruel Signet Icon
+Perfected Kazpian's Cruel Signet
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Adds 129 Weapon and Spell Damage, On dealing area direct damage, place a Sword above an enemy, up to once every 1 second. You cannot place a Sword on an enemy who already has one from you. After 6 seconds, the Sword falls, dealing 772 Physical Damage. This damage scales off the higher of your Weapon or Spell Damage. Applying a Sword increases your damage done by 2% for 6 seconds, stacking up to 6 times.
+Trial
+Level 50 - CP 160
+Perfected Slivers of the Null Arca Icon
+Perfected Slivers of the Null Arca
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 129 Weapon and Spell Damage, Dealing Critical Damage gives you a stack of Sliver for 10 seconds, up to once every 0.5 seconds. Upon gaining your third stack, they merge into a crystal that launches at the last enemy you damaged, dealing 1952 Physical Damage. This effect scales off the higher of your Weapon or Spell Damage, and you cannot gain Sliver for 4 seconds after the crystal is launched.
+Trial
+Level 50 - CP 160
+Perfected Sul-Xan's Torment Icon
+Perfected Sul-Xan's Torment
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 657 Critical Chance, When an enemy you recently damaged dies, they leave behind a vengeful soul for 6 seconds. You can only create one vengeful soul at a time. Touching the soul increases your Critical Chance by 2160 and your Critical Damage by 12% for 30 seconds.
+Trial
+Level 50 - CP 160
+Perfected Tooth of Lokkestiiz Icon
+Perfected Tooth of Lokkestiiz
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 657 Critical Chance, When you activate a synergy while in combat, gain Major Slayer for 16 seconds, increasing your damage done to Dungeon and Trial monsters by 10%.
+Trial
+Level 50 - CP 160
+Perfected Yandir's Might Icon
+Perfected Yandir's Might
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 129 Weapon and Spell Damage, Dealing Critical Damage increases your Weapon and Spell Damage by 86, stacking up to 10 times. This effect can occur once every 0.5 seconds. Completing a fully-charged Heavy Attack removes all stacks and increases your Weapon and Spell Damage by 136 per stack removed. You cannot have both effects active at the same time.
+Arena
+Level 50 - CP 160
+Pestilent Host Icon
+Pestilent Host
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 1487 Offensive Penetration, Whenever you kill an enemy afflicted with a poison effect, their corpse releases a writhing mass of Fetcherflies, which seek out the nearest enemy within 12 meters, causing them to bleed for 5850 Bleed Damage over 10 seconds. This effect scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Phoenix Moth Theurge Icon
+Phoenix Moth Theurge
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Healing yourself or an ally grants the target Minor Courage and Minor Force for 10 seconds, increasing their Weapon and Spell Damage by 215 and their Critical Damage done by 10%. This effect can occur once every 12 seconds per target.
+Dungeon
+Level 50 - CP 160
+Phylactery's Grasp Icon
+Phylactery's Grasp
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) On Light Attack Critical Damage, you apply Withered Soul, dealing 1500 Disease Damage over 10 seconds. On Light Attack Critical Damage on an enemy with Withered Soul, restore 575 Stamina. Withered Soul can occur once every 10 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Pillar of Nirn Icon
+Pillar of Nirn
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage, you create a fissure underneath the enemy after 1 second, dealing 803 Bleed Damage to all enemies within 2.5 meters and causing them to bleed for an additional 2405 Bleed Damage over 10 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Pirate Skeleton Icon
+Pirate Skeleton
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Armor
+(2 items) When you take damage, you transform into a skeleton and gain Major Protection and Minor Defile for 15 seconds, reducing your damage taken by 10% but reducing your healing received and damage shield strength by 6%. This effect can occur once every 20 seconds.
+Dungeon
+Level 50 - CP 160
+Plague Slinger Icon
+Plague Slinger
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you take damage, summon a Skeever corpse which will launch five poison balls over 5 seconds that each deal 737 Poison Damage to the nearest enemy within 10 meters. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.
+PvP
+Level 50 - CP 160
+Plaguebreak Icon
+Plaguebreak
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing direct damage causes player enemies to become a Plague Carrier, dealing 1000 Disease Damage over 10 seconds and applying the Diseased status effect. If the plague is removed early it explodes and deals 735 Disease Damage to all enemies within 8 meters of the carrier, increasing by 50% per enemy hit. This effect can occur once every 20 seconds per target, once per attack, and scales off the higher of your Weapon or Spell Damage.
+Trial
+Level 50 - CP 160
+Poisonous Serpent Icon
+Poisonous Serpent
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a Light or Heavy Attack against an enemy who has a Poison Damage ability on them, you deal an additional 48 Poison Damage and apply the Poisoned status effect to the enemy. This effect can occur once every 2 seconds and scales off the higher of your Weapon or Spell Damage.
+PvP
+Level 50 - CP 160
+Powerful Assault Icon
+Powerful Assault
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you cast an Assault ability while in combat, you and up to 5 group members within 12 meters gain 307 Weapon and Spell Damage for 15 seconds.
+Monster Set
+Level 50 - CP 160
+Prior Thierric Icon
+Prior Thierric
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) Dealing direct damage with an area of effect ability creates a 6 meter shadowy whirlwind below your enemy for 7 seconds. Enemies within the whirlwind take 283 Physical damage each second and increase their damage taken from your area of effect abilities by 5%. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Unknown
+Level 50 - CP 160
+Prophet's Icon
+Prophet's
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+Class Sets
+Level 50 - CP 160
+Pyrebrand Icon
+Pyrebrand
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Your Light Attacks deal 1220 Flame Damage over 6 seconds. Your fully-charged Heavy Attacks consume up to 3 of your damage over time effects to deal 862 Flame Damage in a 6 meter radius on the target, dealing up to 200% more damage to enemies below 33% Health. The damage scales off the higher of your Weapon or Spell Damage and is increased by 20% for each damage over time effect on the target, up to 60%.
+Class: Dragonknight
+Trial
+Level 50 - CP 160
+Quick Serpent Icon
+Quick Serpent
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Reduces the costs of your Stamina abilities by 8%. When an enemy you have recently damaged dies, you restore 2454 Stamina and gain Major Expedition for 8 seconds, increasing your Movement Speed by 30%. These effects can occur once every second.
+Dungeon
+Level 50 - CP 160
+Rage of the Ursauk Icon
+Rage of the Ursauk
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a Heavy Attack, create a 12 meter area for 12 seconds that grants Empower to group members inside, increasing the damage of their Heavy Attacks against monsters by 70%. This effect can occur once every 8 seconds.
+Mythic
+Level 50 - CP 160
+Rakkhat's Voidmantle Icon
+Rakkhat's Voidmantle
+Tooltips by ESO-Hub.com
+(1 item) Increases your damage done with non-Ultimate Heavy Attacks and decreases your damage done with Light Attacks by 50% each. Dealing damage with a Light Attack restores 431 Magicka or Stamina, depending on your equipped weapon type. This resource restore is treated as a Heavy Attack resource restore for bonuses and penalties. Your Heavy Attacks no longer restore resources.
+Overland
+Level 50 - CP 160
+Ranger's Gait Icon
+Ranger's Gait
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 129 Stamina Recovery, Reduce the effectiveness of snares applied to you by 50%.
+Class Sets
+Level 50 - CP 160
+Reawakened Hierophant Icon
+Reawakened Hierophant
+Tooltips by ESO-Hub.com
+(2 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina
+(3 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina
+(4 items) Adds 731 Maximum Magicka, Adds 731 Maximum Stamina
+(5 items) Casting a non-Ultimate Curative Runeform ability grants an effect for 6 seconds to your affected allies based on how many Crux you had. At 1 Crux, allies gain a damage shield that absorbs 3618 damage. At 2 Crux, allies gain Minor Heroism, granting 1 Ultimate every 1.5 seconds. At 3 Crux, allies gain Major Protection, reducing damage taken by 10%.
+Class: Arcanist
+Craftable
+Level 50 - CP 160
+Red Eagle's Fury Icon
+Red Eagle's Fury
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 469 Weapon and Spell Damage to your Weapon Skill abilities. Increases the cost of your Weapon Skill abilities by 5%.
+Craftable
+Level 50 - CP 160
+Redistributor Icon
+Redistributor
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Magicka
+(5 items) When you overheal yourself, you heal a group member within 15 meters of you for 663 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.
+Trial
+Level 50 - CP 160
+Roar of Alkosh Icon
+Roar of Alkosh
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you activate a synergy, you send a shockwave from your position that deals 318 Physical damage and an additional 1590 Physical damage over 10 seconds. Reduces the Physical and Spell Resistance of any enemy hit by the amount of your Weapon Damage for the duration, up to a maximum of 6000. The damage scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Roksa the Warped Icon
+Roksa the Warped
+Tooltips by ESO-Hub.com
+(1 item) Adds 70 Stamina Recovery, Adds 70 Magicka Recovery, Adds 70 Health Recovery
+(2 items) Each second you are in combat, gain a stack of Darklight, up to 30 stacks max. Each stack of Darklight increases your Stamina Recovery, Magicka Recovery, and Health Recovery by 8. Each second you are out of combat, lose a stack of Darklight.
+Dungeon
+Level 50 - CP 160
+Rush of Agony Icon
+Rush of Agony
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Dealing direct damage with a Blink, Charge, Leap, Teleport, or Pull ability creates an area under the enemy that pulls enemies within 12 meters after 0.8 seconds. After 2 seconds, deal 1705 Physical Damage to all enemies within 7 meters of you. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage. The pull will not apply Crowd Control Immunity but works once every 7 seconds per target.
+Overland
+Level 50 - CP 160
+Salvation Icon
+Salvation
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Reduces the cost of your Werewolf Transformation ability by 33%. While in Werewolf form, your Weapon and Spell Damage is increased by 150.
+Dungeon
+Level 50 - CP 160
+Savage Werewolf Icon
+Savage Werewolf
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Stamina Recovery
+(5 items) Your Light Attacks made within melee range rend flesh, causing your enemy to bleed for 232 Bleed Damage instantly and additionally every 2 seconds for 4 seconds. This effect scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Scavenging Demise Icon
+Scavenging Demise
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Poison Damage to an enemy, summon the Scavenging Maw which attacks your enemy after 2 seconds. The Scavenging Maw deals 2587 Poison Damage and inflicts Minor Vulnerability for 15 seconds, increasing their damage taken by 5%. This effect can occur every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Scourge Harvester Icon
+Scourge Harvester
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) When you take damage, you have a 10% chance to tether to your enemy for 6 seconds, as long as you remain within 8 meters of them. While tethered, you deal 311 Magic damage every second to the enemy, heal for the damage caused, and gain Major Vitality, increasing your healing received and damage shield strength by 12%. This effect can occur once every 6 seconds and scales off your Max Health.
+Craftable
+Level 50 - CP 160
+Seeker Synthesis Icon
+Seeker Synthesis
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When you cast an ability that costs resources while in combat, you reduce your potion cooldown by 1 second. This effect can occur once every 2 seconds.
+Monster Set
+Level 50 - CP 160
+Selene Icon
+Selene
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you deal Martial melee damage, you call upon a primal spirit that mauls the closest enemy in front of you after 1.3 seconds for 1702 Physical damage. This effect can occur once every 6 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Sellistrix Icon
+Sellistrix
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina
+(2 items) When you deal damage you create an earthquake under the enemy that erupts after 1.5 seconds, dealing 975 Physical damage to all enemies within 4 meters and stunning them for 3 seconds. This effect can occur once every 6 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Senche's Bite Icon
+Senche's Bite
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Whenever you successfully Dodge, increase your Critical Damage and Critical Healing by 15% for 10 seconds.
+Craftable
+Level 50 - CP 160
+Senche-Raht's Grit Icon
+Senche-Raht's Grit
+Tooltips by ESO-Hub.com
+(2 items) Adds 4% Healing Done
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 4% Healing Taken
+(5 items) After being damaged by a damage over time ability, increase your Healing Received by 6% and your Physical and Spell Resistance by 2585 for 3 seconds.
+Monster Set
+Level 50 - CP 160
+Sentinel of Rkugamz Icon
+Sentinel of Rkugamz
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Done
+(2 items) When you heal yourself or an ally you summon a Dwemer spider that heals for 1000 Health and restores 125 Magicka and Stamina to you and your allies within 5 meters every 1 second for 8 seconds. This effect can occur once every 15 seconds.
+PvP
+Level 50 - CP 160
+Sentry Icon
+Sentry
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 266 Weapon and Spell Damage, When you begin to crouch, gain Stealth Detection for 10 seconds. This effect can only be activated every 30 seconds.
+Craftable
+Level 50 - CP 160
+Serpent's Disdain Icon
+Serpent's Disdain
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Magicka
+(5 items) Increase the duration of Status Effects you apply by 16 seconds.
+Craftable
+Level 50 - CP 160
+Shacklebreaker Icon
+Shacklebreaker
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Magicka Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 2065 Maximum Stamina, Adds 2065 Maximum Magicka
+PvP
+Level 50 - CP 160
+Shadow Walker Icon
+Shadow Walker
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Stamina Recovery
+(5 items) While you are Sneaking or invisible and are not moving, heal for 2150 Health and restore 2150 Stamina every 1 second.
+Overland
+Level 50 - CP 160
+Shadow of the Red Mountain Icon
+Shadow of the Red Mountain
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a weapon, you spawn a volcano that erupts after 1 second, launching liquid hot lava at the closest enemy dealing 1860 Flame damage. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Shadowrend Icon
+Shadowrend
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Magicka Recovery
+(2 items) When you take damage, you summon a shadowy Clannfear for 15 seconds. The Clannfear's attacks deal 615 Magic damage and apply Minor Maim, reducing the target's damage done by 5% for 2 seconds. The Clannfear can be summoned once every 15 seconds and its damage scales off your Max Health.
+Craftable
+Level 50 - CP 160
+Shalidor's Curse Icon
+Shalidor's Curse
+Tooltips by ESO-Hub.com
+(2 items) Adds 841 Maximum Health
+(3 items) Adds 4% Healing Taken
+(4 items) Adds 841 Maximum Health
+(5 items) While you are under 50% Health, dealing damage with a Light or Heavy Attack heals you for 941 Health. This effect can occur once every 1 second and scales off the higher of your Max Magicka or Stamina.
+Craftable
+Level 50 - CP 160
+Shared Burden Icon
+Shared Burden
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Magicka
+(5 items) When you enter combat 6% the damage you take is transferred to your Companion instead. Reduce the damage your Companion takes by 16%. When your Companion dies in combat, they will automatically revive themselves after 12 seconds.
+PvP
+Level 50 - CP 160
+Shared Pain Icon
+Shared Pain
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Whenever you are dealt damage from a damage over time ability, you deal 139 Magic Damage to the attacker. This effect scales off the higher of your Weapon or Spell Damage. Reduce your damage taken from over time abilities by 8%.
+Craftable
+Level 50 - CP 160
+Shattered Fate Icon
+Shattered Fate
+Tooltips by ESO-Hub.com
+(5 items) Adds 7918 Offensive Penetration
+(10 items) Adds 687 Weapon and Spell Damage
+(12 items) Adds 1528 Critical Chance
+Dungeon
+Level 50 - CP 160
+Sheer Venom Icon
+Sheer Venom
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage with an Execute ability you infect the enemy, dealing 948 Poison damage over 6 seconds and dealing up to 100% more damage to enemies under 100% Health. This effect can occur once every 6 seconds per target and scales off the higher of your Weapon or Spell Damage.
+PvP
+Level 50 - CP 160
+Shell Splitter Icon
+Shell Splitter
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 1487 Offensive Penetration
+(5 items) When an enemy blocks one of your attacks, increase your Offensive Penetration by 631 for 5 seconds. This effect can stack up to 20 times. You can gain one stack every 0.5 seconds.
+PvP
+Level 50 - CP 160
+Shield Breaker Icon
+Shield Breaker
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Increases your damage done by 6%. This effect is doubled when attacking targets with a damage shield active.
+PvP
+Level 50 - CP 160
+Shield of the Valiant Icon
+Shield of the Valiant
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 4% Healing Taken
+(4 items) Reduces your damage taken from Players by 3%.
+(5 items) Reduces the cost of Break Free by 40%.
+Overland
+Level 50 - CP 160
+Sithis' Touch Icon
+Sithis' Touch
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you kill an enemy you gain 5% movement speed for 30 seconds and become invisible for 3 seconds. The movement speed stacks up to 20 times.
+Monster Set
+Level 50 - CP 160
+Slimecraw Icon
+Slimecraw
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) Adds 113 Critical Chance, Gain Minor Berserk at all times, increasing your damage done by 5%.
+Trial
+Level 50 - CP 160
+Slivers of the Null Arca Icon
+Slivers of the Null Arca
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 657 Critical Chance
+(5 items) Dealing Critical Damage gives you a stack of Sliver for 10 seconds, up to once every 0.5 seconds. Upon gaining your third stack, they merge into a crystal that launches at the last enemy you damaged, dealing 1952 Physical Damage. This effect scales off the higher of your Weapon or Spell Damage, and you cannot gain Sliver for 4 seconds after the crystal is launched.
+Craftable
+Level 50 - CP 160
+Sload's Semblance Icon
+Sload's Semblance
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Damaging an enemy has a 10% chance to fire a Shadow Pearl at them, dealing 3% of the target's Max Health as Oblivion Damage every 1 second for 6 seconds. The Shadow Pearl cannot be reflected. Effect can occur every 6 seconds. This can deal a maximum of 3000 Oblivion Damage per tick.
+Dungeon
+Level 50 - CP 160
+Sluthrug's Hunger Icon
+Sluthrug's Hunger
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Healing yourself or an ally makes the recipient Blood Hungry for 3 seconds. When you deal direct damage to an enemy, the enemy becomes Bloodied for 3 seconds. Bloodied enemies take 4% more damage from and deal 4% less damage to Blood Hungry targets.
+Mythic
+Level 50 - CP 160
+Snow Treaders Icon
+Snow Treaders
+Tooltips by ESO-Hub.com
+(1 item) While you are in combat, you are immune to snares and immobilizations that can be cleansed, but you cannot Sprint.
+PvP
+Level 50 - CP 160
+Soldier of Anguish Icon
+Soldier of Anguish
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Your melee Light Attacks place a ring on the ground that explodes after 1.3 seconds, applying 4830 Heal Absorption to all enemies hit for 4 seconds, negating the next 4830 points of healing done. This effect can occur once every 6 seconds.
+Craftable
+Level 50 - CP 160
+Song of Lamae Icon
+Song of Lamae
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1487 Armor
+(4 items) Adds 1206 Maximum Health
+(5 items) When you take damage while you are under 30% Health, you deal 1377 Magic damage to the attacker and heal for the damage done. This effect can occur once every 3 seconds and scales off your Max Health.
+Class Sets
+Level 50 - CP 160
+Soulcleaver Icon
+Soulcleaver
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) While in combat, strengthens your Siphoning abilities at the cost of Ultimate: Increases the damage and healing of Siphoning abilities by 21%. Reduces the cost of Siphoning abilities by 21%. Casting Siphoning abilities drains you of 1 Ultimate.
+Class: Nightblade
+Class Sets
+Level 50 - CP 160
+Spattering Disjunction Icon
+Spattering Disjunction
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with an Arcanist ability applies two random status effects to your target. This effect can occur once every 7 seconds. Dealing damage with a Herald of the Tome ability reduces this cooldown by 0.5 seconds, up to once every 1 second.
+Class: Arcanist
+Monster Set
+Level 50 - CP 160
+Spawn of Mephala Icon
+Spawn of Mephala
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina
+(2 items) When you deal damage with a fully-charged Heavy Attack, you create a web under the target for 10 seconds that deals 218 Poison damage every 1 second to all enemies within 4 meters. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Spectre's Eye Icon
+Spectre's Eye
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1206 Maximum Health
+(5 items) When you cast a Magicka ability while in combat you gain Major Evasion for 30 seconds, reducing damage from area attacks by 20%. This effect can occur once every 30 seconds.
+Craftable
+Level 50 - CP 160
+Spell Parasite Icon
+Spell Parasite
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1096 Maximum Magicka
+(5 items) Whenever you deal damage, you restore 63 Magicka. This effect can occur once every 0.25 seconds.
+Dungeon
+Level 50 - CP 160
+Spelunker Icon
+Spelunker
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Reduces the cost of your Undaunted abilities by 10%. When an ally uses one of your Undaunted ability synergies you restore 730 Magicka and Stamina. This effect can occur once every 5 seconds.
+Overland
+Level 50 - CP 160
+Spriggan's Thorns Icon
+Spriggan's Thorns
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 3460 Offensive Penetration
+Dungeon
+Level 50 - CP 160
+Spriggan's Vigor Icon
+Spriggan's Vigor
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal Critical Damage, restore 100 Stamina and gain a stack of Wild Growth for 5 seconds, increasing your Max Stamina by 222. This effect can stack up to 10 times and can occur once every 0.5 seconds.
+Monster Set
+Level 50 - CP 160
+Squall of Retribution Icon
+Squall of Retribution
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) When you take damage, gain one random effect for 6 seconds: Gain Minor Protection, reducing your damage taken by 5%. Gain a damage shield that absorbs up to 5835 damage. Heal for 607 Health every 2 seconds. The Health restore scales off of your Max Health. This effect can occur once every 4.5 seconds.
+Overland
+Level 50 - CP 160
+Steadfast's Mettle Icon
+Steadfast's Mettle
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Stamina
+(5 items) While you have a food buff active, reduce the cost of your Core Combat abilities by 25%.
+Monster Set
+Level 50 - CP 160
+Stone Husk Icon
+Stone Husk
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) Your Heavy Attacks tether you to enemies for 5 seconds, as long as you remain within 10 meters of them. Enemies touching the tether take 212 Physical damage every 1 second and you gain a stack of Husk Drain, up to 15 stacks. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage. When the tether ends, you consume the stacks and gain 30 Weapon and Spell Damage per stack for 5 seconds.
+Monster Set
+Level 50 - CP 160
+Stonekeeper Icon
+Stonekeeper
+Tooltips by ESO-Hub.com
+(1 item) Adds 548 Maximum Stamina, Adds 548 Maximum Magicka, Adds 603 Maximum Health
+(2 items) When you Block, you gain an energy Charge stack. When you gain 6 Charges, you release the energy, restoring 2480 Stamina and Magicka, and healing for 2480. After releasing the Charges, you cannot regain new Charges for 14 seconds. Charges can be accumulated up to once every .25 seconds.
+Dungeon
+Level 50 - CP 160
+Storm Master Icon
+Storm Master
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal Critical Damage with a fully-charged Heavy Attack, your Light and Heavy Attacks deal an additional 1542 damage to monsters for 8 seconds. This effect can occur once every 5 seconds.
+Monster Set
+Level 50 - CP 160
+Stormfist Icon
+Stormfist
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Stamina Recovery
+(2 items) When you deal damage, you have a 10% chance to create a thunderfist to crush the enemy, dealing 277 Shock damage every 1 second for 3 seconds to all enemies within 4 meters and a final 1110 Physical damage when the fist closes. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Strength of the Automaton Icon
+Strength of the Automaton
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 400 Weapon and Spell Damage to your Physical and Bleed Damage abilities.
+Craftable
+Level 50 - CP 160
+Stuhn's Favor Icon
+Stuhn's Favor
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage to an enemy who is Off Balance, your Offensive Penetration is increased by 5312 for 10 seconds.
+Overland
+Level 50 - CP 160
+Stygian Icon
+Stygian
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1487 Offensive Penetration
+(5 items) When you leave Sneak or invisibility while in combat, your Weapon and Spell Damage is increased by 369 for 15 seconds.
+Trial
+Level 50 - CP 160
+Sul-Xan's Torment Icon
+Sul-Xan's Torment
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 657 Critical Chance
+(5 items) When an enemy you recently damaged dies, they leave behind a vengeful soul for 6 seconds. You can only create one vengeful soul at a time. Touching the soul increases your Critical Chance by 2160 and your Critical Damage by 12% for 30 seconds.
+Dungeon
+Level 50 - CP 160
+Sunderflame Icon
+Sunderflame
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a fully-charged Heavy Attack, you deal an additional 1925 Flame Damage over 10 seconds and apply Minor Breach to the enemy, reducing their Physical and Spell Resistance by 2974. This effect scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Swamp Raider Icon
+Swamp Raider
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 600 Weapon and Spell Damage to your Poison and Disease Damage abilities.
+Monster Set
+Level 50 - CP 160
+Swarm Mother Icon
+Swarm Mother
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina, Adds 1096 Maximum Magicka
+(2 items) When you Block an enemy that is between 8 and 22 meters from you, you spin strands of spider silk to pull the enemy to you and taunt them for 15 seconds if they are not already taunted. This effect can occur once every 1 second.
+Dungeon
+Level 50 - CP 160
+Sword Dancer Icon
+Sword Dancer
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Adds 600 Weapon and Spell Damage to your Dual Wield abilities.
+Overland
+Level 50 - CP 160
+Sword-Singer Icon
+Sword-Singer
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 600 Weapon and Spell Damage to your Two Handed abilities.
+Monster Set
+Level 50 - CP 160
+Symphony of Blades Icon
+Symphony of Blades
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Done
+(2 items) When you heal a group member who is under 50% of their primary resource, grant them Meridia's Favor, which restores 570 Magicka or Stamina every 1 second for 6 seconds. This effect can occur every 18 seconds per target. This effect cannot target yourself, and the resource returned is based off the target's highest maximum resource.
+Overland
+Level 50 - CP 160
+Syvarra's Scales Icon
+Syvarra's Scales
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Magicka, Reduces your damage taken from Guards by 20%.
+(5 items) When you deal damage, you cause a burst of lamia poison that deals 149 Poison damage in a 5 meter radius and an additional 1494 Poison damage over 6 seconds to all enemies hit. This effect can occur once every 7 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Tarnished Nightmare Icon
+Tarnished Nightmare
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal Critical Damage to an enemy, glass shards burst 8 meters around them after 1.3 seconds, dealing 1129 Physical Damage to enemies in the burst and applying the Sundered status effect. This effect can occur once every 8 seconds and the damage scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Tava's Favor Icon
+Tava's Favor
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Magicka Recovery
+(5 items) When you dodge an attack, you receive the blessing of Tava, generating 12 Ultimate over 3 seconds. This effect can occur once every 3 seconds.
+Craftable
+Level 50 - CP 160
+Telvanni Efficiency Icon
+Telvanni Efficiency
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Magicka
+(5 items) While you have a living Companion, reduce the cooldown of their abilities by 50%. While you do not have a living Companion, reduce the cost of your Magicka, Stamina, Health, and Ultimate abilities by 8%.
+Craftable
+Level 50 - CP 160
+Tharriker's Strike Icon
+Tharriker's Strike
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing damage with a fully-charged Heavy Attack grants you Major Berserk for 4 seconds, increasing your damage done by 10%. This effect can occur once every 1 second.
+Monster Set
+Level 50 - CP 160
+The Blind Icon
+The Blind
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) When your healing critically strikes, your target gains a Hydroglass Damage Shield that absorbs up to 2692 damage for 6 seconds. While the Damage Shield holds and for 3 seconds after it ends, the target gains Minor Force, increasing their Critical Damage done by 10%. This effect can occur once every 6 seconds per target.
+PvP
+Level 50 - CP 160
+The Morag Tong Icon
+The Morag Tong
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal direct damage, you cause the enemy to take 10% more damage from Poison and Disease attacks for 5 seconds.
+Monster Set
+Level 50 - CP 160
+The Troll King Icon
+The Troll King
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Done
+(2 items) When you heal yourself or an ally, if they are still below 50% Health, their Health Recovery is increased by 925 for 10 seconds.
+PvP
+Level 50 - CP 160
+Thews of the Harbinger Icon
+Thews of the Harbinger
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When you Block, you deal 717 Physical Damage to the attacker. This effect scales off your Max Health.
+Craftable
+Level 50 - CP 160
+Threads of War Icon
+Threads of War
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Your Light and fully-charged Heavy Attacks gain 100% Status Effect Chance. The Status Effect is based on the damage type of your weapon.
+Monster Set
+Level 50 - CP 160
+Thurvokun Icon
+Thurvokun
+Tooltips by ESO-Hub.com
+(1 item) Adds 1206 Maximum Health
+(2 items) When you take damage from a nearby enemy, you summon a growing pool of desecrated bile for 8 seconds. Enemies in the bile take 195 Disease damage every 1 second and are afflicted with Minor Maim and the Diseased status for 4 seconds, reducing their damage done by 5% and healing received and Health Recovery by 6%. This effect can occur every 16 seconds and the damage scales off your Max Health.
+Craftable
+Level 50 - CP 160
+Tide-Born Wildstalker Icon
+Tide-Born Wildstalker
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1487 Offensive Penetration
+(5 items) Increase your direct damage done to monsters by 12%.
+Dungeon
+Level 50 - CP 160
+Titanborn Strength Icon
+Titanborn Strength
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Offensive Penetration
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 110 Weapon and Spell Damage and 1240 Offensive Penetration. While in combat, this bonus doubles when you are under 75% Health and quadruples when you are under 50% Health.
+Dungeon
+Level 50 - CP 160
+Tools of the Trapmaster Icon
+Tools of the Trapmaster
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 657 Critical Chance
+(5 items) Dealing direct damage with a non-Heavy Attack grants you a stack of Trapmaster for 5 seconds, up to 4 stacks max. You can gain a stack every 1 second. Dealing damage with a fully-charged Heavy Attack consumes the stacks, applies Sundered, and deals 353 Physical Damage per stack consumed.
+Trial
+Level 50 - CP 160
+Tooth of Lokkestiiz Icon
+Tooth of Lokkestiiz
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you activate a synergy while in combat, gain Major Slayer for 16 seconds, increasing your damage done to Dungeon and Trial monsters by 10%.
+Dungeon
+Level 50 - CP 160
+Toothrow Icon
+Toothrow
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 171 Weapon and Spell Damage, Gain Major Savagery and Prophecy at all times, increasing your Weapon and Spell Critical rating by 2629.
+Craftable
+Level 50 - CP 160
+Torug's Pact Icon
+Torug's Pact
+Tooltips by ESO-Hub.com
+(2 items) Adds 1487 Armor
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1487 Armor
+(5 items) Decreases weapon enchantment cooldown by 33% and increases non Oblivion Damage weapon enchantment potency by 45%.
+Dungeon
+Level 50 - CP 160
+Trappings of Invigoration Icon
+Trappings of Invigoration
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 129 Stamina Recovery
+(5 items) When you cast an ability that costs resources while under 25% Stamina, you restore 11350 Stamina. This effect can occur once every 45 seconds.
+Monster Set
+Level 50 - CP 160
+Tremorscale Icon
+Tremorscale
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina
+(2 items) When you activate a taunt ability on an enemy, you cause a duneripper to burst from the ground beneath them after 1 second, dealing 0 Physical damage to all enemies within 4 meters and reducing their Armor by 0 for 15 seconds. This effect can occur once every 10 seconds and scales off the higher of your Physical or Spell Resistance.
+Craftable
+Level 50 - CP 160
+Trial by Fire Icon
+Trial by Fire
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 4% Healing Taken
+(5 items) While under the effect of an Elemental Status Effect you gain 8500 Armor.
+Craftable
+Level 50 - CP 160
+Twice-Born Star Icon
+Twice-Born Star
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Magicka
+(5 items) You can have two Mundus Stone boons at the same time.
+Trial
+Level 50 - CP 160
+Twice-Fanged Serpent Icon
+Twice-Fanged Serpent
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 2305 Offensive Penetration, When you deal damage, your Offensive Penetration is increased by 660 for 5 seconds, stacking up to 5 times. This effect can occur once every half second.
+Craftable
+Level 50 - CP 160
+Twilight's Embrace Icon
+Twilight's Embrace
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Increases your healing received by 10%.
+Overland
+Level 50 - CP 160
+Twin Sisters Icon
+Twin Sisters
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you Block, you cause all enemies within 5 meters of you to bleed for 1932 Bleed damage over 10 seconds. This effect can occur once every 10 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Tzogvin's Warband Icon
+Tzogvin's Warband
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1487 Offensive Penetration
+(5 items) When you deal Critical Damage, you gain a stack of Precision, increasing your Critical Chance by 177 for 5 seconds, up to 10 stacks max. At max stacks, you also gain Minor Force, increasing your Critical Damage done by 10%. This effect can occur once every half second.
+Class Sets
+Level 50 - CP 160
+Umbral Edge Icon
+Umbral Edge
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When you cast a Shadow ability, you gain Umbral Riposte for 3 seconds, up to once every 6 seconds. Umbral Riposte causes you to dodge the next attack made against you and automatically curses the attacking enemy, applying Major Vulnerability for 5 seconds, increasing their damage taken by 10%.
+Class: Nightblade
+Craftable
+Level 50 - CP 160
+Unchained Aggressor Icon
+Unchained Aggressor
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) After Breaking Free, gain Major Berserk for 12 seconds, increasing your damage done by 10%. This effect can occur once every 14 seconds.
+Dungeon
+Level 50 - CP 160
+Undaunted Bastion Icon
+Undaunted Bastion
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 1487 Armor
+(5 items) When you use a taunt ability while you are under 75% Health, gain a damage shield that absorbs 14127 damage for 6 seconds. This effect can occur once every 10 seconds.
+Dungeon
+Level 50 - CP 160
+Undaunted Infiltrator Icon
+Undaunted Infiltrator
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you use an ability that costs Magicka while in combat, you increase the damage of your Light and Heavy Attacks against monsters by 1645 for 10 seconds.
+Overland
+Level 50 - CP 160
+Unfathomable Darkness Icon
+Unfathomable Darkness
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage, you call a murder of crows around you for 12 seconds. Every 3 seconds a crow will be sent to peck the closest enemy within 12 meters of you, dealing 871 Physical Damage. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Unleashed Terror Icon
+Unleashed Terror
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When you deal direct damage with a Blink, Charge, Leap, Teleport, or Pull ability, you cut your enemy, causing them to bleed for 10 seconds, dealing 1870 Bleed Damage over the duration and applying the Hemorrhaging status effect every tick. This ability can occur once every 10 seconds per target and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Valkyn Skoria Icon
+Valkyn Skoria
+Tooltips by ESO-Hub.com
+(1 item) Adds 1487 Offensive Penetration
+(2 items) When you deal damage with a damage over time effect, you have an 8% chance to summon a meteor that deals 1342 Flame damage to the target and 447 Flame damage to all other enemies within 5 meters. This effect can occur once every 5 seconds and scales off the higher of your Weapon or Spell Damage.
+Craftable
+Level 50 - CP 160
+Vampire's Kiss Icon
+Vampire's Kiss
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1096 Maximum Stamina, Adds 1096 Maximum Magicka
+(5 items) Adds 129 Weapon and Spell Damage, When you kill an enemy, you heal for 10512 Health over 10 seconds. This effect scales off the higher of your Max Magicka or Stamina.
+Craftable
+Level 50 - CP 160
+Varen's Legacy Icon
+Varen's Legacy
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 4% Healing Taken
+(5 items) When you Block, your next direct damage area of effect attack used within 5 seconds deals an additional 3290 damage. This bonus does not work with channeled effects. This effect can occur once every 2 seconds.
+Craftable
+Level 50 - CP 160
+Vastarie's Tutelage Icon
+Vastarie's Tutelage
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 1206 Maximum Health
+(4 items) Adds 1096 Maximum Magicka
+(5 items) Adds 129 Magicka Recovery, Adds 129 Stamina Recovery, When you resurrect an ally, you and your ally gain 258 Weapon and Spell Damage and 10% cost reduction to non-Ultimate abilities for 10 seconds.
+Monster Set
+Level 50 - CP 160
+Velidreth Icon
+Velidreth
+Tooltips by ESO-Hub.com
+(1 item) Adds 129 Weapon and Spell Damage
+(2 items) When you deal damage, you have a 20% chance to spawn 3 disease spores in front of you after 1 second that deal 1557 Disease damage to any enemy they hit. This effect can occur once every 8 seconds and scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Venomous Smite Icon
+Venomous Smite
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing Critical Damage inflicts Hunter's Venom on your enemy for 10 seconds, dealing 714 Poison Damage to your target and enemies within 6 meters of them every 2 seconds. This effect can occur once every 15 seconds and scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Vesture of Darloc Brae Icon
+Vesture of Darloc Brae
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Reduces the radius you can be detected while Sneaking by 2 meters. Reduces the cost of Sneak by 10%.
+(5 items) While you are crouching and not Bracing, you restore 670 Magicka and Stamina and heal for 670 Health every second.
+PvP
+Level 50 - CP 160
+Vicecanon of Venom Icon
+Vicecanon of Venom
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Stamina Recovery
+(5 items) When you deal direct Critical Damage to an enemy while behind them, you inject a leeching poison that deals 1300 Poison Damage over 10 seconds to them and heals you for 100% of the damage done. This effect can occur once every 10 seconds per enemy and scales off the higher of your Weapon or Spell Damage.
+Trial
+Level 50 - CP 160
+Vicious Serpent Icon
+Vicious Serpent
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 657 Critical Chance
+(5 items) Adds 129 Weapon and Spell Damage, Reduces the cost of your Stamina abilities by 8%. When an enemy you have recently damaged dies, you restore 2454 Stamina and gain Major Expedition for 8 seconds, increasing your Movement Speed by 30%. These effects can occur once every second.
+Dungeon
+Level 50 - CP 160
+Viper's Sting Icon
+Viper's Sting
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1096 Maximum Stamina
+(4 items) Adds 657 Critical Chance
+(5 items) When you deal damage with a Martial melee attack, you deal an additional 928 Poison Damage over 4 seconds. This effect can occur once every 4 seconds and scales off the higher of your Weapon or Spell Damage.
+Dungeon
+Level 50 - CP 160
+Vykand's Soulfury Icon
+Vykand's Soulfury
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1487 Offensive Penetration
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) While in combat, completing a fully-charged Heavy Attack grants you either Major Force, Major Berserk, or Major Courage for 12 seconds, increasing your Critical Damage done by 20%, your damage done by 10%, or your Weapon and Spell Damage by 430. This effect can occur once every 9 seconds.
+Monster Set
+Level 50 - CP 160
+Vykosa Icon
+Vykosa
+Tooltips by ESO-Hub.com
+(1 item) Adds 4% Healing Taken
+(2 items) When you Bash an enemy you've taunted, you frighten them with a deafening howl, applying Major Cowardice to them, lowering their Weapon and Spell Damage by 430 for 8 seconds. This effect can occur once every 15 seconds.
+Trial
+Level 50 - CP 160
+War Machine Icon
+War Machine
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Stamina
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you use an Ultimate ability while in combat, you and the closest 5 group members within 28 meters of you gain Major Slayer for 1 second per 10 Ultimate spent, increasing your damage done to Dungeon, Trial, and Arena Monsters by 10%.
+PvP
+Level 50 - CP 160
+Ward of Cyrodiil Icon
+Ward of Cyrodiil
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Stamina Recovery
+(5 items) When you deal Martial melee damage, you apply Major Defile to the enemy for 4 seconds, reducing their healing received and damage shield strength by 12%. This effect can occur once every 5 seconds.
+Overland
+Level 50 - CP 160
+Way of Air Icon
+Way of Air
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Increases the radius you can detect Sneaking enemies by 2 meters.
+(5 items) Adds 129 Stamina Recovery, When you use Roll Dodge, your Weapon and Spell Damage is increased by 391 for 6 seconds.
+Craftable
+Level 50 - CP 160
+Way of the Arena Icon
+Way of the Arena
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1096 Maximum Magicka
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Adds 165 Weapon and Spell Damage, Reduces the cost of Break Free by 40%.
+Craftable
+Level 50 - CP 160
+Whitestrake's Retribution Icon
+Whitestrake's Retribution
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) Adds 1487 Armor
+(4 items) Adds 129 Health Recovery
+(5 items) When you take damage while you are under 30% Health, you gain a damage shield that absorbs 13035 damage for 6 seconds. This effect can occur once every 15 seconds.
+Dungeon
+Level 50 - CP 160
+Widowmaker Icon
+Widowmaker
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 1096 Maximum Stamina
+(5 items) When your alchemical poison fires, you drop a poisonous spore in front of you that bursts after 1 second, dealing 2856 Poison Damage over 10 seconds to all enemies within 5 meters. This effect scales off the higher of your Weapon or Spell Damage.
+Overland
+Level 50 - CP 160
+Wilderqueen's Arch Icon
+Wilderqueen's Arch
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 1096 Maximum Stamina
+(5 items) Your Bow attacks reduce the Movement Speed of any enemy they hit by 15% and increase your Movement Speed by 15% for 3 seconds.
+Craftable
+Level 50 - CP 160
+Willow's Path Icon
+Willow's Path
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Health Recovery
+(5 items) Increases your Health, Magicka, and Stamina Recovery by 18%.
+Overland
+Level 50 - CP 160
+Witch-Knight's Defiance Icon
+Witch-Knight's Defiance
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Increases your Weapon and Spell Damage by 369 against enemies inflicted with a Poison Damage effect.
+Overland
+Level 50 - CP 160
+Witchman Armor Icon
+Witchman Armor
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Stamina Recovery
+(3 items) Adds 129 Weapon and Spell Damage
+(4 items) Adds 1206 Maximum Health
+(5 items) When you use an Ultimate ability, you heal for 51 Health and restore 51 Stamina and Magicka per Ultimate spent.
+Class Sets
+Level 50 - CP 160
+Wrathsun Icon
+Wrathsun
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 657 Critical Chance
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) When you deal damage with a Dawn's Wrath ability, you gain a stack of Sunlight for 15 seconds, once per attack. You can have 40 stacks max and gain 12 Magicka Recovery per stack. When at max stacks, your Dawn's Wrath abilities deal 25% bonus damage and a Wrathful Nova is cast on the enemy, but you cannot refresh Sunlight. When Sunlight expires at max stacks, you lose 50% of your current Magicka.
+Class: Templar
+Craftable
+Level 50 - CP 160
+Wretched Vitality Icon
+Wretched Vitality
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Magicka Recovery
+(3 items) Adds 129 Stamina Recovery
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) While in combat, applying a Major Buff or Debuff with a duration to a target grants you 260 Magicka and Stamina Recovery for 15 seconds. While in combat, applying a Minor Buff or Debuff with a duration to a target grants you 130 Magicka and Stamina Recovery for 15 seconds.
+Trial
+Level 50 - CP 160
+Yandir's Might Icon
+Yandir's Might
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Gain Minor Slayer at all times, increasing your damage done to Dungeon, Trial, and Arena Monsters by 5%.
+(4 items) Adds 129 Weapon and Spell Damage
+(5 items) Dealing Critical Damage increases your Weapon and Spell Damage by 86, stacking up to 10 times. This effect can occur once every 0.5 seconds. Completing a fully-charged Heavy Attack removes all stacks and increases your Weapon and Spell Damage by 136 per stack removed. You cannot have both effects active at the same time.
+Monster Set
+Level 50 - CP 160
+Zaan Icon
+Zaan
+Tooltips by ESO-Hub.com
+(1 item) Adds 657 Critical Chance
+(2 items) When you deal Critical Damage with a Light or Heavy Attack, you have a 33% chance to tether to your enemy for 10 seconds as long as you remain within 8 meters of them. Enemies touching the tether take 145 Flame damage every 1 second, increasing by 100% per tick and are afflicted with the Burning status effect. This effect can occur once every 20 seconds and scales off the higher of your Weapon or Spell Damage.
+Monster Set
+Level 50 - CP 160
+Zoal the Ever-Wakeful Icon
+Zoal the Ever-Wakeful
+Tooltips by ESO-Hub.com
+(1 item) Adds 1096 Maximum Stamina
+(2 items) When you Break Free, you release a wave of Watcher energy, causing enemies within 8 meters of you to become Feared for 3 seconds. You also gain 34 Weapon and Spell Damage for each enemy hit, up to 6 enemies, for 7 seconds.

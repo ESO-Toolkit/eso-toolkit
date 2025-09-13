@@ -1,15 +1,21 @@
-import type { GearSetTooltipProps, GearSetBonus } from '../components/GearSetTooltip';
+import type {
+  GearSetTooltipProps,
+  GearSetBonus,
+  GearPieceInfo,
+} from '../components/GearSetTooltip';
+import * as arenaSets from '../data/Gear Sets/arena';
 import * as arenaSpecialSets from '../data/Gear Sets/arena-specials';
 import * as heavySets from '../data/Gear Sets/heavy';
 import * as lightSets from '../data/Gear Sets/light';
+import * as mediumSets from '../data/Gear Sets/medium';
 import * as monsterSets from '../data/Gear Sets/monster';
 import * as mythicSets from '../data/Gear Sets/mythics';
 import * as sharedSets from '../data/Gear Sets/shared';
+import type { PlayerGear } from '../types/playerDetails';
 
 import type { PlayerGearSetRecord } from './gearUtilities';
 
 // Create a normalized name lookup map
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const GEAR_SET_REGISTRY = new Map<string, any>();
 
 // Helper function to normalize gear set names for lookup
@@ -23,15 +29,21 @@ const normalizeGearSetName = (name: string): string => {
     .trim();
 };
 
-// Helper function to extract set name from skillset data
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getSetNameFromSkillset = (skillsetData: any): string => {
-  const skillLines = skillsetData.skillLines;
-  if (!skillLines) return '';
+// Helper function to extract set name from gear set data (handles both old and new formats)
+const getSetNameFromGearSet = (gearSet: any): string => {
+  // Check if it's the new format
+  if (gearSet.name && gearSet.setType && gearSet.bonuses) {
+    return gearSet.name;
+  }
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const firstSkillLine = Object.values(skillLines)[0] as any;
-  return firstSkillLine?.name || '';
+  // Check if it's the old SkillsetData format
+  if (gearSet.skillLines) {
+    const skillLines = gearSet.skillLines;
+    const firstSkillLine = Object.values(skillLines)[0] as any;
+    return firstSkillLine?.name || '';
+  }
+
+  return '';
 };
 
 // Populate the registry with all gear sets
@@ -39,14 +51,16 @@ const populateGearSetRegistry = (): void => {
   const allSets = [
     ...Object.values(lightSets),
     ...Object.values(heavySets),
+    ...Object.values(mediumSets),
     ...Object.values(monsterSets),
     ...Object.values(mythicSets),
     ...Object.values(arenaSpecialSets),
+    ...Object.values(arenaSets),
     ...Object.values(sharedSets),
   ];
 
   allSets.forEach((setData) => {
-    const setName = getSetNameFromSkillset(setData);
+    const setName = getSetNameFromGearSet(setData);
     if (setName) {
       const normalizedName = normalizeGearSetName(setName);
       GEAR_SET_REGISTRY.set(normalizedName, setData);
@@ -57,20 +71,41 @@ const populateGearSetRegistry = (): void => {
 // Initialize the registry
 populateGearSetRegistry();
 
-// Helper function to determine armor type from gear set data
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const getArmorTypeFromSetData = (setData: any): string => {
-  return setData.weapon || 'Unknown';
+// Helper function to determine set type from gear set data (handles both old and new formats)
+const getSetTypeFromGearSet = (gearSet: any): string => {
+  // Check if it's the new format
+  if (gearSet.name && gearSet.setType && gearSet.bonuses) {
+    return gearSet.setType;
+  }
+
+  // Check if it's the old SkillsetData format
+  if (gearSet.weapon) {
+    return gearSet.weapon;
+  }
+
+  return 'Unknown';
 };
 
 // Helper function to get category badge
-const getCategoryBadge = (setName: string, armorType: string): string => {
+const getCategoryBadge = (setName: string, setType: string): string => {
+  // For new format, use the setType directly
+  if (setType === 'Mythic') return 'Mythic';
+  if (setType === 'Monster Set') return 'Monster Set';
+  if (setType === 'Arena') return 'Arena';
+  if (setType === 'Dungeon') return 'Dungeon';
+  if (setType === 'Overland') return 'Overland';
+  if (setType === 'Trial') return 'Trial';
+  if (setType === 'Craftable') return 'Craftable';
+  if (setType === 'PvP') return 'PvP';
+  if (setType === 'Class Sets') return 'Class Set';
+
+  // Fallback to checking old format sets
   const normalizedName = normalizeGearSetName(setName);
 
   // Check for mythic sets
   if (
     Object.values(mythicSets).some(
-      (set) => normalizeGearSetName(getSetNameFromSkillset(set)) === normalizedName,
+      (set) => normalizeGearSetName(getSetNameFromGearSet(set)) === normalizedName,
     )
   ) {
     return 'Mythic';
@@ -79,7 +114,7 @@ const getCategoryBadge = (setName: string, armorType: string): string => {
   // Check for monster sets
   if (
     Object.values(monsterSets).some(
-      (set) => normalizeGearSetName(getSetNameFromSkillset(set)) === normalizedName,
+      (set) => normalizeGearSetName(getSetNameFromGearSet(set)) === normalizedName,
     )
   ) {
     return 'Monster Set';
@@ -88,17 +123,19 @@ const getCategoryBadge = (setName: string, armorType: string): string => {
   // Check for arena sets
   if (
     Object.values(arenaSpecialSets).some(
-      (set) => normalizeGearSetName(getSetNameFromSkillset(set)) === normalizedName,
+      (set) => normalizeGearSetName(getSetNameFromGearSet(set)) === normalizedName,
+    ) ||
+    Object.values(arenaSets).some(
+      (set) => normalizeGearSetName(getSetNameFromGearSet(set)) === normalizedName,
     )
   ) {
     return 'Arena';
   }
 
-  return armorType;
+  return setType;
 };
 
-// Convert skillset passives to gear set bonuses
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// Convert skillset passives to gear set bonuses (old format)
 const convertPassivesToBonuses = (passives: any[], equippedCount: number): GearSetBonus[] => {
   if (!passives) return [];
 
@@ -121,11 +158,39 @@ const convertPassivesToBonuses = (passives: any[], equippedCount: number): GearS
   });
 };
 
+// Convert gear set bonuses to tooltip format (new format)
+const convertBonusesToTooltipFormat = (
+  bonuses: string[],
+  equippedCount: number,
+): GearSetBonus[] => {
+  if (!bonuses) return [];
+
+  return bonuses.map((bonus) => {
+    // Extract the piece count from the bonus string
+    const pieceMatch = bonus.match(/\((\d+)\s*items?\)/i);
+    const pieces = pieceMatch ? pieceMatch[0] : bonus.split(' ')[0] || '(1 item)';
+
+    // Extract the effect description
+    const effect = bonus.replace(/\(\d+\s*items?\)\s*/i, '').trim();
+
+    // Determine if this bonus is active based on equipped count
+    const requiredPieces = pieceMatch ? parseInt(pieceMatch[1], 10) : 1;
+    const active = equippedCount >= requiredPieces;
+
+    return {
+      pieces,
+      effect,
+      active,
+    };
+  });
+};
+
 /**
- * Create gear set tooltip props from a PlayerGearSetRecord
+ * Create gear set tooltip props from a PlayerGearSetRecord and player gear data
  */
 export function createGearSetTooltipProps(
   gearRecord: PlayerGearSetRecord,
+  playerGear?: PlayerGear[],
 ): GearSetTooltipProps | null {
   const setName = gearRecord.labelName;
   const normalizedName = normalizeGearSetName(setName);
@@ -147,20 +212,77 @@ export function createGearSetTooltipProps(
     };
   }
 
-  const armorType = getArmorTypeFromSetData(setData);
-  const skillLines = setData.skillLines;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const firstSkillLine = Object.values(skillLines)[0] as any;
-  const passives = firstSkillLine?.passives || [];
+  const setType = getSetTypeFromGearSet(setData);
 
-  const setBonuses = convertPassivesToBonuses(passives, gearRecord.count);
+  // Handle both old and new formats for bonuses
+  let setBonuses: GearSetBonus[];
+  let iconUrl: string | undefined;
+  let gearPieces: GearPieceInfo[] = [];
+
+  if (setData.bonuses && Array.isArray(setData.bonuses)) {
+    // New format
+    setBonuses = convertBonusesToTooltipFormat(setData.bonuses, gearRecord.count);
+
+    // Find individual gear pieces for this set
+    const setGearPieces =
+      playerGear?.filter((gear) => gear.setID === gearRecord.data.setID && gear.id !== 0) || [];
+
+    // Create detailed gear piece information
+    gearPieces = setGearPieces.map((gear) => ({
+      id: gear.id,
+      name: gear.name || 'Unknown Item',
+      icon: gear.icon,
+      slot: gear.slot,
+      quality: gear.quality,
+      championPoints: gear.championPoints,
+      trait: gear.trait,
+      enchantType: gear.enchantType,
+      enchantQuality: gear.enchantQuality,
+      encodedIconUrl: `https://assets.rpglogs.com/img/eso/abilities/${encodeURIComponent(gear.icon)}.png`,
+    }));
+
+    // Use the first gear icon as the main icon, or undefined if no gear pieces
+    iconUrl = gearPieces.length > 0 ? gearPieces[0].encodedIconUrl : undefined;
+  } else if (setData.skillLines) {
+    // Old format (SkillsetData)
+    const skillLines = setData.skillLines;
+    const firstSkillLine = Object.values(skillLines)[0] as any;
+    const passives = firstSkillLine?.passives || [];
+    setBonuses = convertPassivesToBonuses(passives, gearRecord.count);
+    iconUrl = undefined; // Old format doesn't have icons
+
+    // For old format, try to find gear pieces by set name matching
+    const setGearPieces =
+      playerGear?.filter(
+        (gear) => gear.id !== 0 && gear.name?.toLowerCase().includes(setName.toLowerCase()),
+      ) || [];
+
+    gearPieces = setGearPieces.map((gear) => ({
+      id: gear.id,
+      name: gear.name || 'Unknown Item',
+      icon: gear.icon,
+      slot: gear.slot,
+      quality: gear.quality,
+      championPoints: gear.championPoints,
+      trait: gear.trait,
+      enchantType: gear.enchantType,
+      enchantQuality: gear.enchantQuality,
+      encodedIconUrl: `https://assets.rpglogs.com/img/eso/abilities/${encodeURIComponent(gear.icon)}.png`,
+    }));
+  } else {
+    // Fallback
+    setBonuses = [];
+    iconUrl = undefined;
+    gearPieces = [];
+  }
 
   return {
-    headerBadge: getCategoryBadge(setName, armorType),
+    headerBadge: getCategoryBadge(setName, setType),
     setName: setName,
     setBonuses,
     itemCount: `${gearRecord.count}`,
-    // Could add lore/description here if available
+    iconUrl,
+    gearPieces,
   };
 }
 
@@ -178,18 +300,38 @@ export function getGearSetTooltipPropsByName(
     return null;
   }
 
-  const armorType = getArmorTypeFromSetData(setData);
-  const skillLines = setData.skillLines;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const firstSkillLine = Object.values(skillLines)[0] as any;
-  const passives = firstSkillLine?.passives || [];
+  const setType = getSetTypeFromGearSet(setData);
 
-  const setBonuses = convertPassivesToBonuses(passives, equippedCount);
+  // Handle both old and new formats for bonuses
+  let setBonuses: GearSetBonus[];
+  let iconUrl: string | undefined;
+  let gearPieces: GearPieceInfo[] = [];
+
+  if (setData.bonuses && Array.isArray(setData.bonuses)) {
+    // New format
+    setBonuses = convertBonusesToTooltipFormat(setData.bonuses, equippedCount);
+    // Gear sets don't have individual icons like gear items do
+    iconUrl = undefined;
+  } else if (setData.skillLines) {
+    // Old format (SkillsetData)
+    const skillLines = setData.skillLines;
+    const firstSkillLine = Object.values(skillLines)[0] as any;
+    const passives = firstSkillLine?.passives || [];
+    setBonuses = convertPassivesToBonuses(passives, equippedCount);
+    iconUrl = undefined; // Old format doesn't have icons
+  } else {
+    // Fallback
+    setBonuses = [];
+    iconUrl = undefined;
+    gearPieces = [];
+  }
 
   return {
-    headerBadge: getCategoryBadge(setName, armorType),
+    headerBadge: getCategoryBadge(setName, setType),
     setName: setName,
     setBonuses,
     itemCount: equippedCount > 0 ? `${equippedCount}` : undefined,
+    iconUrl,
+    gearPieces,
   };
 }
