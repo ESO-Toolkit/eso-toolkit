@@ -22,6 +22,7 @@ import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import type { GearPieceInfo } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
+import { MobileFriendlyGearChip } from '../../../components/MobileFriendlyGearChip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
@@ -147,12 +148,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         playerGear
           ?.slice()
           .sort((a, b) => b.count - a.count) // Sort by count descending (highest first)
-          .map((rec, idx) => ({
-            key: `${rec.data.setID}-${idx}`,
-            label: `${rec.count} ${rec.labelName}`,
-            title: `Set ID: ${rec.data.setID ?? ''}`,
-            ...getGearChipProps(rec.labelName, rec.count, theme),
-          })) ?? [],
+          .map((rec, idx) => {
+            const chipProps = getGearChipProps(rec.labelName, rec.count, theme);
+            return {
+              key: `${rec.data.setID}-${idx}`,
+              label: `${rec.count} ${rec.labelName}`,
+              title: rec.data.setID ? `Set ID: ${rec.data.setID}` : undefined,
+              sx: chipProps.sx,
+            };
+          }) ?? [],
       [playerGear, theme],
     );
 
@@ -578,48 +582,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                             if (tooltipProps) {
                               return (
-                                <Tooltip
-                                  key={chipData.key}
-                                  title={<GearSetTooltip {...tooltipProps} />}
-                                  placement="top"
-                                  enterDelay={300}
-                                  arrow
-                                  disableInteractive={false}
-                                  PopperProps={{
-                                    disablePortal: true,
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: {
-                                          altAxis: true,
-                                          altBoundary: true,
-                                          tether: false,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                        },
-                                      },
-                                      {
-                                        name: 'flip',
-                                        enabled: true,
-                                        options: {
-                                          altBoundary: true,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                          fallbackPlacements: ['bottom', 'left', 'right'],
-                                        },
-                                      },
-                                    ],
-                                  }}
-                                >
-                                  <Box
-                                    onClick={() => {
-                                      setGearDetailsOpen(true);
-                                    }}
-                                    sx={{ cursor: 'pointer' }}
-                                  >
-                                    <Chip label={chipData.label} size="small" sx={chipData.sx} />
-                                  </Box>
-                                </Tooltip>
+                                <MobileFriendlyGearChip
+                                  key={chipData.key || undefined}
+                                  label={chipData.label}
+                                  title={chipData.title}
+                                  tooltipContent={<GearSetTooltip {...tooltipProps} />}
+                                  sx={chipData.sx}
+                                  onOpenDetails={() => setGearDetailsOpen(true)}
+                                />
                               );
                             }
 
