@@ -19,10 +19,10 @@ import React, { useState } from 'react';
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
+import { GearInfoIcon } from '../../../components/GearInfoIcon';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import type { GearPieceInfo } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
-import { MobileFriendlyGearChip } from '../../../components/MobileFriendlyGearChip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
@@ -148,15 +148,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         playerGear
           ?.slice()
           .sort((a, b) => b.count - a.count) // Sort by count descending (highest first)
-          .map((rec, idx) => {
-            const chipProps = getGearChipProps(rec.labelName, rec.count, theme);
-            return {
-              key: `${rec.data.setID}-${idx}`,
-              label: `${rec.count} ${rec.labelName}`,
-              title: rec.data.setID ? `Set ID: ${rec.data.setID}` : undefined,
-              sx: chipProps.sx,
-            };
-          }) ?? [],
+          .map((rec, idx) => ({
+            key: `${rec.data.setID}-${idx}`,
+            label: `${rec.count} ${rec.labelName}`,
+            title: `Set ID: ${rec.data.setID ?? ''}`,
+            ...getGearChipProps(rec.labelName, rec.count, theme),
+          })) ?? [],
       [playerGear, theme],
     );
 
@@ -582,18 +579,17 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                             if (tooltipProps) {
                               return (
-                                <MobileFriendlyGearChip
-                                  key={chipData.key || undefined}
-                                  label={chipData.label}
-                                  title={chipData.title}
-                                  tooltipContent={<GearSetTooltip {...tooltipProps} />}
-                                  sx={chipData.sx}
-                                  onOpenDetails={() => setGearDetailsOpen(true)}
-                                />
+                                <Box key={chipData.key} display="flex" alignItems="center">
+                                  <Chip label={chipData.label} size="small" sx={chipData.sx} />
+                                  <GearInfoIcon
+                                    tooltipContent={<GearSetTooltip {...tooltipProps} />}
+                                    onClick={() => setGearDetailsOpen(true)}
+                                  />
+                                </Box>
                               );
                             }
 
-                            // Fallback to simple chip with basic tooltip if no gear set data
+                            // Fallback to simple chip if no gear set data
                             return (
                               <Chip
                                 key={chipData.key}
