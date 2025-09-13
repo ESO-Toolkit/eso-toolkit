@@ -611,7 +611,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     ],
                                   }}
                                 >
-                                  <Box 
+                                  <Box
                                     onClick={() => {
                                       setGearDetailsOpen(true);
                                     }}

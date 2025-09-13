@@ -86,18 +86,25 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
   const roleColors = useRoleColors();
 
   // Filter out empty slots (id: 0) and group by slot
-  const validGearPieces = gearPieces.filter(piece => piece.id !== 0);
+  const validGearPieces = gearPieces.filter((piece) => piece.id !== 0);
 
   // Calculate average gear stats
-  const avgCP = validGearPieces.length > 0
-    ? Math.round(validGearPieces.reduce((sum, piece) => sum + (piece.championPoints || 0), 0) / validGearPieces.length)
-    : championPoints || 0;
+  const avgCP =
+    validGearPieces.length > 0
+      ? Math.round(
+          validGearPieces.reduce((sum, piece) => sum + (piece.championPoints || 0), 0) /
+            validGearPieces.length,
+        )
+      : championPoints || 0;
 
-  const qualityDistribution = validGearPieces.reduce((acc, piece) => {
-    const quality = piece.quality;
-    acc[quality] = (acc[quality] || 0) + 1;
-    return acc;
-  }, {} as Record<number, number>);
+  const qualityDistribution = validGearPieces.reduce(
+    (acc, piece) => {
+      const quality = piece.quality;
+      acc[quality] = (acc[quality] || 0) + 1;
+      return acc;
+    },
+    {} as Record<number, number>,
+  );
 
   // Helpers for the table view
   const getQualityKey = (
@@ -180,22 +187,27 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           const cp = info.getValue() as number;
           const color = cp >= 160 ? '#4caf50' : cp >= 150 ? '#ff9800' : '#f44336';
           return (
-            <Box sx={{ 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: 0.2, 
-              px: 0.2,
-              py: 0.5,
-              minWidth: 'auto',
-              maxWidth: 'none',
-            }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.2,
+                px: 0.2,
+                py: 0.5,
+                minWidth: 'auto',
+                maxWidth: 'none',
+              }}
+            >
               <StarIcon sx={{ fontSize: '0.7rem', color }} />
-              <Typography variant="caption" sx={{ 
-                color, 
-                fontVariantNumeric: 'tabular-nums', 
-                fontSize: '0.7rem',
-                whiteSpace: 'nowrap',
-              }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color,
+                  fontVariantNumeric: 'tabular-nums',
+                  fontSize: '0.7rem',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {cp || '-'}
               </Typography>
             </Box>
@@ -205,18 +217,22 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'type',
         header: 'Type',
-        accessorFn: (row: Record<string, unknown>) => getTypeLabel((row as unknown as PlayerGear).type),
+        accessorFn: (row: Record<string, unknown>) =>
+          getTypeLabel((row as unknown as PlayerGear).type),
         size: 85,
         cell: (info: any) => (
-          <Typography variant="caption" sx={{ 
-            color: 'text.primary', 
-            fontSize: '0.7rem', 
-            px: 0.2,
-            py: 0.5,
-            minWidth: 'auto',
-            maxWidth: 'none',
-            whiteSpace: 'nowrap',
-          }}>
+          <Typography
+            variant="caption"
+            sx={{
+              color: 'text.primary',
+              fontSize: '0.7rem',
+              px: 0.2,
+              py: 0.5,
+              minWidth: 'auto',
+              maxWidth: 'none',
+              whiteSpace: 'nowrap',
+            }}
+          >
             {info.getValue() as string}
           </Typography>
         ),
@@ -224,14 +240,27 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'slot',
         header: 'Slot',
-        accessorFn: (row: Record<string, unknown>) => getSlotName((row as unknown as PlayerGear).slot),
+        accessorFn: (row: Record<string, unknown>) =>
+          getSlotName((row as unknown as PlayerGear).slot),
         size: 110,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, px: 0.2, py: 0.5, minWidth: 'auto', maxWidth: 'none' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                px: 0.2,
+                py: 0.5,
+                minWidth: 'auto',
+                maxWidth: 'none',
+              }}
+            >
               <span style={{ fontSize: '0.8rem' }}>{getSlotIcon(piece.slot)}</span>
-              <Typography variant="caption" sx={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>{info.getValue() as string}</Typography>
+              <Typography variant="caption" sx={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+                {info.getValue() as string}
+              </Typography>
             </Box>
           );
         },
@@ -244,12 +273,27 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           return (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, minWidth: 'auto', maxWidth: 'none', px: 0.2, py: 0.5 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+                minWidth: 'auto',
+                maxWidth: 'none',
+                px: 0.2,
+                py: 0.5,
+              }}
+            >
               <GearIcon gear={piece} size={18} quality={getQualityKey(piece.quality)} rounded />
               <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="caption"
-                  sx={{ fontWeight: 600, color: QUALITY_COLORS[piece.quality], fontSize: '0.75rem', whiteSpace: 'nowrap' }}
+                  sx={{
+                    fontWeight: 600,
+                    color: QUALITY_COLORS[piece.quality],
+                    fontSize: '0.75rem',
+                    whiteSpace: 'nowrap',
+                  }}
                 >
                   {piece.name || 'Unknown'}
                 </Typography>
@@ -261,10 +305,21 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'trait',
         header: 'Trait',
-        accessorFn: (row: Record<string, unknown>) => TRAIT_NAMES[(row as unknown as PlayerGear).trait] || '',
+        accessorFn: (row: Record<string, unknown>) =>
+          TRAIT_NAMES[(row as unknown as PlayerGear).trait] || '',
         size: 80,
         cell: (info: any) => (
-          <Typography variant="caption" sx={{ fontWeight: 500, color: getTraitColor((info.row.original as PlayerGear).trait), fontSize: '0.7rem', px: 0.2, py: 0.5, whiteSpace: 'nowrap' }}>
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: 500,
+              color: getTraitColor((info.row.original as PlayerGear).trait),
+              fontSize: '0.7rem',
+              px: 0.2,
+              py: 0.5,
+              whiteSpace: 'nowrap',
+            }}
+          >
             {(info.getValue() as string) || '—'}
           </Typography>
         ),
@@ -272,27 +327,28 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'enchant',
         header: 'Enchant',
-        accessorFn: (row: Record<string, unknown>) => ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
+        accessorFn: (row: Record<string, unknown>) =>
+          ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
         size: 170,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           const label = ENCHANTMENT_NAMES[piece.enchantType] || '—';
-          const color = getEnchantmentColor(
-            piece.enchantType,
-            piece.enchantQuality || 1,
-          );
+          const color = getEnchantmentColor(piece.enchantType, piece.enchantQuality || 1);
           return (
-            <Typography variant="caption" sx={{ 
-              color, 
-              fontWeight: 500, 
-              fontSize: '0.7rem',
-              lineHeight: 1.1,
-              px: 0.2,
-              py: 0.5,
-              whiteSpace: 'normal',
-              display: 'block',
-              maxWidth: '100%',
-            }}>
+            <Typography
+              variant="caption"
+              sx={{
+                color,
+                fontWeight: 500,
+                fontSize: '0.7rem',
+                lineHeight: 1.1,
+                px: 0.2,
+                py: 0.5,
+                whiteSpace: 'normal',
+                display: 'block',
+                maxWidth: '100%',
+              }}
+            >
               {label}
             </Typography>
           );
@@ -324,7 +380,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
-          boxShadow: 
+          boxShadow:
             '0 8px 32px 0 rgba(0, 0, 0, 0.37), inset 0 1px 0 rgba(255, 255, 255, 0.2), inset 0 -1px 0 rgba(0, 0, 0, 0.2)',
           transition: 'all 0.3s ease',
           '&::before': {
@@ -350,7 +406,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           },
           '&:hover': {
             transform: 'translateY(-2px)',
-            boxShadow: '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
+            boxShadow:
+              '0 12px 40px 0 rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.3), inset 0 -1px 0 rgba(0,0,0,0.3)',
           },
           '&:hover::before': {
             left: '100%',
@@ -358,49 +415,52 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         },
       }}
     >
-  
       <DialogContent sx={{ px: 0, py: 0, overflow: 'visible' }}>
-      {/* Gear Pieces List with symmetric padding and no internal scrolling */}
-      <Box sx={{ px: 0, py: 0.5, minHeight: '300px' }}>
-        {/* Close button */}
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-          <IconButton onClick={onClose} sx={{ 
-            p: 0.5, 
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            '&:hover': {
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-            },
-          }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
+        {/* Gear Pieces List with symmetric padding and no internal scrolling */}
+        <Box sx={{ px: 0, py: 0.5, minHeight: '300px' }}>
+          {/* Close button */}
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+            <IconButton
+              onClick={onClose}
+              sx={{
+                p: 0.5,
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                },
+              }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Box>
+          {rows.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
+              <Typography variant="h6">No gear pieces found</Typography>
+              <Typography variant="body2">
+                No detailed gear information available for this set.
+              </Typography>
+            </Box>
+          ) : (
+            <Box>
+              <DataGrid
+                key={`gear-grid-${Date.now()}`}
+                data={rows as unknown as Record<string, unknown>[]}
+                columns={columns}
+                title={undefined}
+                autoHeight={true}
+                paperSx={{ borderRadius: 2 }}
+                initialPageSize={rows.length}
+                pageSizeOptions={[12]}
+                enableSorting
+                enableFiltering={false}
+                enablePagination={false}
+                showPageSizeSelector={false}
+                emptyMessage="No gear"
+              />
+            </Box>
+          )}
         </Box>
-        {rows.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 8, color: 'text.secondary' }}>
-            <Typography variant="h6">No gear pieces found</Typography>
-            <Typography variant="body2">No detailed gear information available for this set.</Typography>
-          </Box>
-        ) : (
-          <Box>
-            <DataGrid
-              key={`gear-grid-${Date.now()}`}
-              data={rows as unknown as Record<string, unknown>[]}
-              columns={columns}
-              title={undefined}
-              autoHeight={true}
-              paperSx={{ borderRadius: 2 }}
-              initialPageSize={rows.length}
-              pageSizeOptions={[12]}
-              enableSorting
-              enableFiltering={false}
-              enablePagination={false}
-              showPageSizeSelector={false}
-              emptyMessage="No gear"
-            />
-          </Box>
-        )}
-      </Box>
-    </DialogContent>
-
+      </DialogContent>
     </Dialog>
-);
+  );
 };

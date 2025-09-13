@@ -33,7 +33,7 @@ export const TRAIT_NAMES: Record<number, string> = {
   30: 'Parrying',
   31: 'Defending (Weapon)',
   32: 'Sharpened (Weapon)',
-  
+
   // Armor Traits
   33: 'Sturdy',
   34: 'Impenetrable',
@@ -47,7 +47,7 @@ export const TRAIT_NAMES: Record<number, string> = {
   42: 'Prosperous',
   43: 'Ornate',
   44: 'Intricate',
-  
+
   // Jewelry Traits
   45: 'Arcane',
   46: 'Healthy',
@@ -94,7 +94,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   26: 'Soul Trap',
   27: 'Weapon Power',
   28: 'Spell Power',
-  
+
   // Armor Enchantments
   29: 'Increase Health',
   30: 'Increase Magicka',
@@ -108,7 +108,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   38: 'Health Recovery',
   39: 'Prismatic Defense',
   40: 'Prismatic Resistance',
-  
+
   // Jewelry Enchantments
   41: 'Increase Health',
   42: 'Increase Magicka',
@@ -126,7 +126,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   54: 'Aegis',
   55: 'Sustaining',
   56: 'Infused',
-  
+
   // Special enchantments
   57: 'Decrease Health',
   58: 'Decrease Magicka',
@@ -176,9 +176,12 @@ export const QUALITY_COLORS: Record<number, string> = {
 // Helper function to get trait color based on effectiveness
 export const getTraitColor = (trait: number): string => {
   const goodTraits = [
-    7, 32, // Sharpened
+    7,
+    32, // Sharpened
     35, // Reinforced
-    4, 38, 49, // Infused
+    4,
+    38,
+    49, // Infused
     40, // Divines
     13, // Nirnhoned
     53, // Bloodthirsty
@@ -186,16 +189,20 @@ export const getTraitColor = (trait: number): string => {
     50, // Protective
     48, // Triune
   ];
-  
+
   const neutralTraits = [
-    5, 31, // Defending
+    5,
+    31, // Defending
     33, // Sturdy
     34, // Impenetrable
-    45, 46, 47, // Arcane, Healthy, Robust
+    45,
+    46,
+    47, // Arcane, Healthy, Robust
     3, // Precise
-    9, 41, // Nirnhoned
+    9,
+    41, // Nirnhoned
   ];
-  
+
   if (goodTraits.includes(trait)) {
     return '#4caf50'; // Green for good traits
   } else if (neutralTraits.includes(trait)) {
@@ -208,21 +215,30 @@ export const getTraitColor = (trait: number): string => {
 export const getEnchantmentColor = (enchantType: number, quality: number): string => {
   // High value enchantments
   const highValueEnchants = [
-    27, 28, // Weapon/Spell Power
-    47, 48, // Weapon/Spell Power (Jewelry)
+    27,
+    28, // Weapon/Spell Power
+    47,
+    48, // Weapon/Spell Power (Jewelry)
     13, // Crusher
-    39, 40, // Prismatic
+    39,
+    40, // Prismatic
     67, // All Stats
   ];
-  
+
   // Medium value enchantments
   const mediumValueEnchants = [
-    29, 30, 31, // Health/Magicka/Stamina
-    4, 5, // Physical/Magical Harm
-    32, 33, // Reduce Harm
-    52, 53, 54, // Recovery stats
+    29,
+    30,
+    31, // Health/Magicka/Stamina
+    4,
+    5, // Physical/Magical Harm
+    32,
+    33, // Reduce Harm
+    52,
+    53,
+    54, // Recovery stats
   ];
-  
+
   if (highValueEnchants.includes(enchantType) && quality >= 4) {
     return '#4caf50'; // Green for high value purple/gold enchants
   } else if (mediumValueEnchants.includes(enchantType) && quality >= 4) {

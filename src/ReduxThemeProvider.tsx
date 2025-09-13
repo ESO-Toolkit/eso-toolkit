@@ -438,7 +438,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)'} !important`,
           },
-                    '.MuiDialog-root .MuiOutlinedInput-root': {
+          '.MuiDialog-root .MuiOutlinedInput-root': {
             backgroundColor: `${darkMode ? tokens.panel : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             '&:hover': {

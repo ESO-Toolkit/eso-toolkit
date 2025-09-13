@@ -1,0 +1,64 @@
+PvP
+Level 50 - CP 160
+Agility Icon
+Agility
+Tooltips by ESO-Hub.com
+(2 items) Adds 1752 Maximum Stamina
+(3 items) Adds 206 Weapon and Spell Damage
+
+PvP
+Level 50 - CP 160
+Blessing of the Potentates Icon
+Blessing of the Potentates
+Tooltips by ESO-Hub.com
+(2 items) Reduces your damage taken from Players by 3%.
+(3 items) Reduces the cost of your Ultimate abilities by 15%.
+
+
+PvP
+Level 50 - CP 160
+Eagle Eye Icon
+Eagle Eye
+Tooltips by ESO-Hub.com
+(2 items) Adds 657 Critical Chance
+(3 items) Adds 1652 Critical Chance to your ranged direct damage abilities.
+
+PvP
+Level 50 - CP 160
+Endurance Icon
+Endurance
+Tooltips by ESO-Hub.com
+(2 items) Adds 1928 Maximum Health
+(3 items) Adds 618 Health Recovery
+
+PvP
+Level 50 - CP 160
+Grace of the Ancients Icon
+Grace of the Ancients
+Tooltips by ESO-Hub.com
+(2 items) Adds 1096 Maximum Magicka
+(3 items) Adds 2406 Maximum Magicka
+
+PvP
+Level 50 - CP 160
+Vengeance Leech Icon
+Vengeance Leech
+Tooltips by ESO-Hub.com
+(2 items) Adds 1206 Maximum Health
+(3 items) When you kill an enemy, you heal for 2772 Health and restore 2772 Magicka and Stamina.
+
+PvP
+Level 50 - CP 160
+Willpower Icon
+Willpower
+Tooltips by ESO-Hub.com
+(2 items) Adds 1752 Maximum Magicka
+(3 items) Adds 206 Weapon and Spell Damage
+
+PvP
+Level 50 - CP 160
+Wrath of the Imperium Icon
+Wrath of the Imperium
+Tooltips by ESO-Hub.com
+(2 items) Adds 129 Weapon and Spell Damage
+(3 items) Adds 325 Weapon and Spell Damage to your ranged direct damage abilities.

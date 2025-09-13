@@ -588,11 +588,10 @@ export const DataGrid = <T extends Record<string, unknown>>({
     );
   }
 
-  const showToolbar = Boolean(title) || enableFiltering || (enablePagination && showPageSizeSelector);
+  const showToolbar =
+    Boolean(title) || enableFiltering || (enablePagination && showPageSizeSelector);
   // Compute total column size so we can proportionally size columns as percentages
-  const totalColumnSize = table
-    .getAllLeafColumns()
-    .reduce((sum, col) => sum + col.getSize(), 0);
+  const totalColumnSize = table.getAllLeafColumns().reduce((sum, col) => sum + col.getSize(), 0);
 
   return (
     <Paper
@@ -624,8 +623,24 @@ export const DataGrid = <T extends Record<string, unknown>>({
         />
       )}
 
-      <TableContainer sx={{ flex: autoHeight ? 'unset' : 1, overflowX: 'hidden', overflowY: autoHeight ? 'visible' : 'auto', scrollbarGutter: 'stable both-edges' }}>
-        <Table stickyHeader size="small" sx={{ tableLayout: 'fixed', width: '100%', borderCollapse: 'collapse', boxSizing: 'border-box' }}>
+      <TableContainer
+        sx={{
+          flex: autoHeight ? 'unset' : 1,
+          overflowX: 'hidden',
+          overflowY: autoHeight ? 'visible' : 'auto',
+          scrollbarGutter: 'stable both-edges',
+        }}
+      >
+        <Table
+          stickyHeader
+          size="small"
+          sx={{
+            tableLayout: 'fixed',
+            width: '100%',
+            borderCollapse: 'collapse',
+            boxSizing: 'border-box',
+          }}
+        >
           <TableHead>
             {table.getHeaderGroups().map((headerGroup) => (
               <TableRow key={headerGroup.id}>
@@ -651,9 +666,10 @@ export const DataGrid = <T extends Record<string, unknown>>({
                         borderBottom: `2px solid ${alpha(theme.palette.divider, 0.4)}`,
                         color: theme.palette.mode === 'dark' ? '#e5e7eb' : '#334155',
                         fontSize: '0.875rem',
-                        textShadow: theme.palette.mode === 'dark'
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.1)',
+                        textShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 1px rgba(0,0,0,0.1)',
                         transition: theme.transitions.create(['background-color'], {
                           duration: theme.transitions.duration.short,
                         }),
