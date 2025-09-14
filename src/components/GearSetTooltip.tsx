@@ -99,6 +99,20 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
       className="u-fade-in"
       sx={{
         maxWidth: { xs: 280, sm: 340, md: 380 },
+        backgroundColor:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 50%, rgba(2, 6, 23, 0.95) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.95) 50%, rgba(241, 245, 249, 0.98) 100%)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border:
+          theme.palette.mode === 'dark'
+            ? '1px solid rgba(148, 163, 184, 0.18)'
+            : '1px solid rgba(226, 232, 240, 0.8)',
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 8px 32px 0 rgba(0, 0, 0, 0.45), 0 2px 16px 0 rgba(0, 0, 0, 0.3)'
+            : '0 8px 32px 0 rgba(0, 0, 0, 0.12), 0 2px 16px 0 rgba(0, 0, 0, 0.08)',
       }}
     >
       <CardContent sx={{ p: 1.25 }}>
@@ -195,7 +209,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
                         }
                       : {
                           background:
-                            'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
+                            'linear-gradient(135deg,rgb(0, 98, 255) 0%, #0f172a 50%, #334155 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
@@ -286,24 +300,6 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
                 </Box>
               ))}
             </Stack>
-          </Box>
-        )}
-
-        {gearPieces && gearPieces.length > 0 && (
-          <Box sx={{ mt: 0.5, mb: 1 }}>
-            <Typography
-              variant="caption"
-              sx={{
-                color: 'text.secondary',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                fontStyle: 'italic',
-                display: 'block',
-                textAlign: 'center',
-              }}
-            >
-              Click for detailed gear breakdown
-            </Typography>
           </Box>
         )}
 

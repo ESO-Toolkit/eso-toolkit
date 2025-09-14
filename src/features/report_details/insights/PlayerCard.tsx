@@ -568,7 +568,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     )}
                     {gear.length > 0 && (
                       <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
-                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          mb={0.75}
+                        >
                           <Typography
                             variant="body2"
                             fontWeight="bold"
@@ -585,14 +590,26 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               px: 0.75,
                               py: 0.25,
                               borderRadius: 0.5,
-                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.08)'
+                                  : 'rgb(255 255 255 / 15%)',
                               border: '1px solid',
-                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.12)'
+                                  : 'rgba(0, 0, 0, 0.12)',
                               cursor: 'pointer',
                               transition: 'all 0.2s ease',
                               '&:hover': {
-                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
-                                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.12)'
+                                    : 'rgba(0, 0, 0, 0.1)',
+                                borderColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.2)'
+                                    : 'rgba(0, 0, 0, 0.2)',
                               },
                             }}
                           >
@@ -601,14 +618,14 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               variant="caption"
                               sx={{
                                 fontSize: '0.65rem',
-                                fontWeight: 500,
+                                fontWeight: 300,
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
                                 letterSpacing: '0.3px',
                                 lineHeight: 1,
                               }}
                             >
-                              Details
+                              INFO
                             </Typography>
                           </Box>
                         </Box>
@@ -630,11 +647,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   arrow
                                   disableInteractive={false}
                                 >
-                                  <Chip
-                                    label={chipData.label}
-                                    size="small"
-                                    sx={chipData.sx}
-                                  />
+                                  <Chip label={chipData.label} size="small" sx={chipData.sx} />
                                 </Tooltip>
                               );
                             }
