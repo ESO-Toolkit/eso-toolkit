@@ -36,7 +36,10 @@
       "Bash(npm audit:*)",
       "Bash(git pull:*)",
       "Bash(git stash:*)",
-      "Bash(npm run codegen:*)"
+      "Bash(npm run codegen:*)",
+      "Bash(curl:*)",
+      "Bash(netstat:*)",
+      "Bash(npm run test)"
     ],
     "deny": [],
     "ask": []

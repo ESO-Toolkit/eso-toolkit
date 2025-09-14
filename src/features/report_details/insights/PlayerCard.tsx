@@ -1,5 +1,6 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import {
   Box,
@@ -20,7 +21,6 @@ import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearSetTooltip } from '../../../components/GearSetTooltip';
-import type { GearPieceInfo } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -568,7 +568,68 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     )}
                     {gear.length > 0 && (
                       <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
-                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={48}>
+                        <Box
+                          display="flex"
+                          alignItems="center"
+                          justifyContent="space-between"
+                          mb={2.5}
+                        >
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            sx={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem' }}
+                          >
+                            Gear
+                          </Typography>
+                          <Box
+                            onClick={() => setGearDetailsOpen(true)}
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.25,
+                              px: 0.75,
+                              py: 0.25,
+                              borderRadius: 0.5,
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.08)'
+                                  : 'rgb(255 255 255 / 15%)',
+                              border: '1px solid',
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(255, 255, 255, 0.12)'
+                                  : 'rgba(0, 0, 0, 0.12)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.12)'
+                                    : 'rgba(0, 0, 0, 0.1)',
+                                borderColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.2)'
+                                    : 'rgba(0, 0, 0, 0.2)',
+                              },
+                            }}
+                          >
+                            <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.65rem',
+                                fontWeight: 300,
+                                color: 'text.secondary',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.3px',
+                                lineHeight: 1,
+                              }}
+                            >
+                              INFO
+                            </Typography>
+                          </Box>
+                        </Box>
+                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
                             const gearRecord = playerGear[index];
@@ -585,45 +646,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   enterDelay={300}
                                   arrow
                                   disableInteractive={false}
-                                  PopperProps={{
-                                    disablePortal: true,
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: {
-                                          altAxis: true,
-                                          altBoundary: true,
-                                          tether: false,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                        },
-                                      },
-                                      {
-                                        name: 'flip',
-                                        enabled: true,
-                                        options: {
-                                          altBoundary: true,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                          fallbackPlacements: ['bottom', 'left', 'right'],
-                                        },
-                                      },
-                                    ],
-                                  }}
                                 >
-                                  <Box
-                                    onClick={() => {
-                                      setGearDetailsOpen(true);
-                                    }}
-                                    sx={{ cursor: 'pointer' }}
-                                  >
-                                    <Chip label={chipData.label} size="small" sx={chipData.sx} />
-                                  </Box>
+                                  <Chip label={chipData.label} size="small" sx={chipData.sx} />
                                 </Tooltip>
                               );
                             }
 
-                            // Fallback to simple chip with basic tooltip if no gear set data
+                            // Fallback to simple chip if no gear set data
                             return (
                               <Chip
                                 key={chipData.key}
