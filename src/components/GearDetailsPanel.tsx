@@ -1,29 +1,20 @@
+import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import CloseIcon from '@mui/icons-material/Close';
-import PersonIcon from '@mui/icons-material/Person';
+import HealingIcon from '@mui/icons-material/Healing';
+import ShieldIcon from '@mui/icons-material/Shield';
+import SportsMmaIcon from '@mui/icons-material/SportsMma';
 import StarIcon from '@mui/icons-material/Star';
-import {
-  Box,
-  Chip,
-  Typography,
-  useTheme,
-  IconButton,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  alpha,
-  Tooltip,
-} from '@mui/material';
+import { Box, Typography, useTheme, IconButton, Dialog, DialogContent } from '@mui/material';
 import type { ColumnDef } from '@tanstack/react-table';
 import React from 'react';
 
 import { useRoleColors } from '../hooks/useRoleColors';
+import { type PlayerDetailsWithRole } from '../store/player_data/playerDataSlice';
 import { ArmorType, WeaponType, type PlayerGear } from '../types/playerDetails';
 import {
   TRAIT_NAMES,
   ENCHANTMENT_NAMES,
-  QUALITY_NAMES,
   QUALITY_COLORS,
   getTraitColor,
   getEnchantmentColor,
@@ -35,10 +26,9 @@ import { GearIcon } from './GearIcon';
 interface GearDetailsPanelProps {
   open: boolean;
   onClose: () => void;
-  playerName: string;
-  playerClass: string;
-  gearPieces: PlayerGear[];
-  championPoints?: number;
+  currentPlayerId: string | number;
+  players: PlayerDetailsWithRole[];
+  onPlayerChange: (playerId: string | number) => void;
 }
 
 // Helper function to get slot name from slot number
@@ -77,125 +67,92 @@ const getSlotIcon = (slot: number): string => {
 export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
   open,
   onClose,
-  playerName,
-  playerClass,
-  gearPieces,
-  championPoints,
+  currentPlayerId,
+  players,
+  onPlayerChange,
 }) => {
   const theme = useTheme();
   const roleColors = useRoleColors();
 
-  // Filter out empty slots (id: 0) and group by slot
-  const validGearPieces = gearPieces.filter((piece) => piece.id !== 0);
+  // Animation state
+  const [isTransitioning, setIsTransitioning] = React.useState(false);
+  const [transitionDirection, setTransitionDirection] = React.useState<'left' | 'right'>('right');
+  const [displayedPlayerId, setDisplayedPlayerId] = React.useState(currentPlayerId);
+  const [fadeStage, setFadeStage] = React.useState<'in' | 'out' | 'none'>('none');
 
-  // Calculate average gear stats
-  const avgCP =
-    validGearPieces.length > 0
-      ? Math.round(
-          validGearPieces.reduce((sum, piece) => sum + (piece.championPoints || 0), 0) /
-            validGearPieces.length,
-        )
-      : championPoints || 0;
+  // Find current player data for display
+  const currentPlayer = players.find((p) => p.id === currentPlayerId);
+  const displayedPlayer = players.find((p) => p.id === displayedPlayerId) || currentPlayer;
 
-  const qualityDistribution = validGearPieces.reduce(
-    (acc, piece) => {
-      const quality = piece.quality;
-      acc[quality] = (acc[quality] || 0) + 1;
-      return acc;
-    },
-    {} as Record<number, number>,
-  );
+  // Get sorted players list for navigation
+  const sortedPlayers = React.useMemo(() => {
+    return [...players].sort((a, b) => a.name.localeCompare(b.name));
+  }, [players]);
 
-  // Helpers for the table view
-  const getQualityKey = (
-    q: number,
-  ): 'normal' | 'fine' | 'superior' | 'epic' | 'legendary' | 'mythic' => {
-    switch (q) {
-      case 6:
-        return 'mythic';
-      case 5:
-        return 'legendary';
-      case 4:
-        return 'epic';
-      case 3:
-        return 'superior';
-      case 2:
-        return 'fine';
-      default:
-        return 'normal';
-    }
-  };
+  // Find current player index
+  const currentPlayerIndex = React.useMemo(() => {
+    return sortedPlayers.findIndex((p) => p.id === currentPlayerId);
+  }, [sortedPlayers, currentPlayerId]);
 
-  // Helper function to get quality CSS class
-  const getQualityClass = (quality: number): string => {
-    switch (quality) {
-      case 0:
-        return 'gear-quality-trait';
-      case 1:
-        return 'gear-quality-normal';
-      case 2:
-        return 'gear-quality-fine';
-      case 3:
-        return 'gear-quality-superior';
-      case 4:
-        return 'gear-quality-epic';
-      case 5:
-        return 'gear-quality-legendary';
-      case 6:
-        return 'gear-quality-mythic';
-      default:
-        return 'gear-quality-normal';
-    }
-  };
+  // Player navigation functions with fancy fade transition
+  const goToPreviousPlayer = React.useCallback(() => {
+    if (sortedPlayers.length <= 1) return;
+    const prevIndex = currentPlayerIndex > 0 ? currentPlayerIndex - 1 : sortedPlayers.length - 1;
+    setTransitionDirection('right');
+    setFadeStage('out');
+    setIsTransitioning(true);
 
-  const getTypeLabel = (t: number): string => {
-    switch (t) {
-      case ArmorType.LIGHT:
-        return 'Light';
-      case ArmorType.MEDIUM:
-        return 'Medium';
-      case ArmorType.HEAVY:
-        return 'Heavy';
-      case ArmorType.JEWELRY:
-        return 'Jewelry';
-      case WeaponType.AXE:
-        return 'Axe';
-      case WeaponType.MACE:
-        return 'Mace';
-      case WeaponType.SWORD:
-        return 'Sword';
-      case WeaponType.TWO_HANDED_SWORD:
-        return '2H Sword';
-      case WeaponType.TWO_HANDED_AXE:
-        return '2H Axe';
-      case WeaponType.MAUL:
-        return 'Maul';
-      case WeaponType.DAGGER:
-        return 'Dagger';
-      case WeaponType.INFERNO_STAFF:
-        return 'Inferno Staff';
-      case WeaponType.FROST_STAFF:
-        return 'Frost Staff';
-      case WeaponType.LIGHTNING_STAFF:
-        return 'Lightning Staff';
-      case WeaponType.RESO_STAFF:
-        return 'Resto Staff';
-      case WeaponType.SHIELD:
-        return 'Shield';
-      default:
-        return '—';
-    }
-  };
+    setTimeout(() => {
+      setDisplayedPlayerId(sortedPlayers[prevIndex].id);
+      setFadeStage('in');
+
+      setTimeout(() => {
+        onPlayerChange(sortedPlayers[prevIndex].id);
+        setFadeStage('none');
+        setIsTransitioning(false);
+      }, 300);
+    }, 300);
+  }, [sortedPlayers, currentPlayerIndex, onPlayerChange]);
+
+  const goToNextPlayer = React.useCallback(() => {
+    if (sortedPlayers.length <= 1) return;
+    const nextIndex = currentPlayerIndex < sortedPlayers.length - 1 ? currentPlayerIndex + 1 : 0;
+    setTransitionDirection('left');
+    setFadeStage('out');
+    setIsTransitioning(true);
+
+    setTimeout(() => {
+      setDisplayedPlayerId(sortedPlayers[nextIndex].id);
+      setFadeStage('in');
+
+      setTimeout(() => {
+        onPlayerChange(sortedPlayers[nextIndex].id);
+        setFadeStage('none');
+        setIsTransitioning(false);
+      }, 300);
+    }, 300);
+  }, [sortedPlayers, currentPlayerIndex, onPlayerChange]);
+
+  // Keyboard navigation
+  React.useEffect(() => {
+    if (!open || sortedPlayers.length <= 1) return;
+
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'ArrowLeft') {
+        goToPreviousPlayer();
+      } else if (event.key === 'ArrowRight') {
+        goToNextPlayer();
+      } else if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [open, sortedPlayers.length, goToPreviousPlayer, goToNextPlayer, onClose]);
 
   // Sort rows by logical slot order similar to the screenshot
-  const slotOrderNums = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13];
-  const rows = React.useMemo(
-    () =>
-      [...validGearPieces].sort(
-        (a, b) => slotOrderNums.indexOf(a.slot) - slotOrderNums.indexOf(b.slot),
-      ),
-    [validGearPieces],
-  );
+  const slotOrderNums = React.useMemo(() => [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13], []);
 
   // DataGrid columns inspired by the reference screenshot (with Name+Set combined)
   const columns = React.useMemo<ColumnDef<Record<string, unknown>>[]>(
@@ -245,8 +202,47 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'type',
         header: 'Type',
-        accessorFn: (row: Record<string, unknown>) =>
-          getTypeLabel((row as unknown as PlayerGear).type),
+        accessorFn: (row: Record<string, unknown>) => {
+          const getTypeLabel = (t: number): string => {
+            switch (t) {
+              case ArmorType.LIGHT:
+                return 'Light';
+              case ArmorType.MEDIUM:
+                return 'Medium';
+              case ArmorType.HEAVY:
+                return 'Heavy';
+              case ArmorType.JEWELRY:
+                return 'Jewelry';
+              case WeaponType.AXE:
+                return 'Axe';
+              case WeaponType.MACE:
+                return 'Mace';
+              case WeaponType.SWORD:
+                return 'Sword';
+              case WeaponType.TWO_HANDED_SWORD:
+                return '2H Sword';
+              case WeaponType.TWO_HANDED_AXE:
+                return '2H Axe';
+              case WeaponType.MAUL:
+                return 'Maul';
+              case WeaponType.DAGGER:
+                return 'Dagger';
+              case WeaponType.INFERNO_STAFF:
+                return 'Inferno Staff';
+              case WeaponType.FROST_STAFF:
+                return 'Frost Staff';
+              case WeaponType.LIGHTNING_STAFF:
+                return 'Lightning Staff';
+              case WeaponType.RESO_STAFF:
+                return 'Resto Staff';
+              case WeaponType.SHIELD:
+                return 'Shield';
+              default:
+                return '—';
+            }
+          };
+          return getTypeLabel((row as unknown as PlayerGear).type);
+        },
         size: 85,
         cell: (info: any) => (
           <Typography
@@ -308,6 +304,46 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         size: 230,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
+          const getQualityKey = (
+            q: number,
+          ): 'normal' | 'fine' | 'superior' | 'epic' | 'legendary' | 'mythic' => {
+            switch (q) {
+              case 6:
+                return 'mythic';
+              case 5:
+                return 'legendary';
+              case 4:
+                return 'epic';
+              case 3:
+                return 'superior';
+              case 2:
+                return 'fine';
+              default:
+                return 'normal';
+            }
+          };
+
+          const getQualityClass = (quality: number): string => {
+            switch (quality) {
+              case 0:
+                return 'gear-quality-trait';
+              case 1:
+                return 'gear-quality-normal';
+              case 2:
+                return 'gear-quality-fine';
+              case 3:
+                return 'gear-quality-superior';
+              case 4:
+                return 'gear-quality-epic';
+              case 5:
+                return 'gear-quality-legendary';
+              case 6:
+                return 'gear-quality-mythic';
+              default:
+                return 'gear-quality-normal';
+            }
+          };
+
           return (
             <Box
               sx={{
@@ -384,13 +420,14 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               sx={{
                 color,
                 fontWeight: 300,
-                fontSize: '0.7rem',
-                lineHeight: 1.1,
-                px: 0.2,
-                py: 0.5,
-                whiteSpace: 'normal',
+                fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                lineHeight: { xs: 1.1, sm: 1.2 },
+                px: { xs: 0.1, sm: 0.2 },
+                py: { xs: 0.3, sm: 0.5 },
+                whiteSpace: { xs: 'normal', sm: 'normal' },
+                wordBreak: { xs: 'break-word', sm: 'normal' },
                 display: 'block',
-                maxWidth: '100%',
+                width: '100%',
               }}
             >
               {label}
@@ -399,7 +436,21 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         },
       },
     ],
-    [theme],
+    [roleColors.isDarkMode],
+  );
+
+  if (!currentPlayer) {
+    return null;
+  }
+
+  const gearPieces = displayedPlayer?.combatantInfo?.gear || [];
+  const playerName = displayedPlayer?.name || currentPlayer?.name || 'Unknown Player';
+
+  // Filter out empty slots (id: 0) and group by slot
+  const validGearPieces = gearPieces.filter((piece) => piece.id !== 0);
+
+  const rows = [...validGearPieces].sort(
+    (a, b) => slotOrderNums.indexOf(a.slot) - slotOrderNums.indexOf(b.slot),
   );
 
   return (
@@ -419,8 +470,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
             : 'linear-gradient(135deg, rgb(202 231 255 / 30%) 0%, rgb(211 217 255 / 38%) 50%, rgb(208 245 255 / 28%) 100%) !important',
           borderRadius: '24px',
           overflow: 'hidden',
-          maxHeight: '85vh',
-          width: { xs: 'calc(100vw - 8px)', sm: 'min(900px, calc(100vw - 8px))' },
+          maxHeight: { xs: '90vh', sm: '85vh' },
+          width: { xs: 'calc(100vw - 16px)', sm: 'min(900px, calc(100vw - 32px))' },
           backdropFilter: 'blur(10px)',
           WebkitBackdropFilter: 'blur(10px)',
           border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -461,26 +512,286 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
     >
       <DialogContent sx={{ px: 0, py: 0, overflow: 'visible' }}>
         {/* Gear Pieces List with symmetric padding and no internal scrolling */}
-        <Box sx={{ px: 0, py: 0.5, minHeight: '300px' }}>
-          {/* Close button */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, mr: 1 }}>
+        <Box sx={{ px: 0, py: 0.5, minHeight: '300px', position: 'relative' }}>
+          {/* Header with player swapper and close button */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: { xs: 'center', sm: 'space-between' },
+              alignItems: 'center',
+              mb: { xs: 1, sm: 1.5 },
+              mx: { xs: 0.5, sm: 1.5 },
+              pt: { xs: 0.5, sm: 1 },
+              position: 'relative',
+            }}
+          >
+            {/* Player swapper */}
+            {sortedPlayers.length > 1 && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: { xs: 0.5, sm: 1 },
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%)'
+                      : 'linear-gradient(135deg, rgba(0,0,0,0.08) 0%, rgba(0,0,0,0.04) 100%)',
+                  borderRadius: { xs: '16px', sm: '20px' },
+                  padding: { xs: '3px 6px', sm: '4px 8px' },
+                  border:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(255,255,255,0.15)'
+                      : '1px solid rgba(0,0,0,0.1)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1)'
+                      : '0 2px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255,255,255,0.8)',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  transform: 'translateY(0) scale(1)',
+                  '&:hover': {
+                    transform: 'translateY(-1px) scale(1.01)',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 4px 16px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.2)'
+                        : '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255,255,255,0.9)',
+                  },
+                  '&:active': {
+                    transform: 'translateY(0px) scale(0.99)',
+                    transition: 'transform 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                  },
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {},
+                }}
+              >
+                {/* Previous button */}
+                <IconButton
+                  onClick={goToPreviousPlayer}
+                  disabled={sortedPlayers.length <= 1 || isTransitioning}
+                  sx={{
+                    p: { xs: 0.5, sm: 0.4 },
+                    backgroundColor: 'transparent',
+                    color: 'text.primary',
+                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    minWidth: { xs: '32px', sm: 'auto' },
+                    minHeight: { xs: '32px', sm: 'auto' },
+                    transform: isTransitioning
+                      ? 'scale(0.85) rotate(-10deg)'
+                      : 'scale(1) rotate(0deg)',
+                    opacity: isTransitioning ? 0.4 : 1,
+                    '&:hover': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.15)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                      transform: isTransitioning
+                        ? 'scale(0.85) rotate(-10deg)'
+                        : 'scale(1.1) rotate(5deg)',
+                    },
+                    '&:active': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.25)'
+                          : 'rgba(0, 0, 0, 0.15)',
+                      transform: 'scale(0.92) rotate(-2deg)',
+                    },
+                    '&:disabled': {
+                      opacity: 0.3,
+                      color: 'text.disabled',
+                      cursor: 'not-allowed',
+                      transform: 'scale(0.9) rotate(0deg)',
+                    },
+                  }}
+                >
+                  <ChevronLeftIcon sx={{ fontSize: '1.2rem' }} />
+                </IconButton>
+
+                {/* Player info */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: { xs: 0.6, sm: 0.8 },
+                    minWidth: 0,
+                    px: { xs: 0.3, sm: 0.5 },
+                  }}
+                >
+                  {/* Role icon */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      width: { xs: '20px', sm: '24px' },
+                      height: { xs: '20px', sm: '24px' },
+                      borderRadius: '50%',
+                      background:
+                        currentPlayer.role === 'tank'
+                          ? theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, #4fc3f7, #29b6f6)'
+                            : 'linear-gradient(135deg, #1976d2, #1565c0)'
+                          : currentPlayer.role === 'healer'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, #81c784, #66bb6a)'
+                              : 'linear-gradient(135deg, #388e3c, #2e7d32)'
+                            : theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, #ff8a65, #ff7043)'
+                              : 'linear-gradient(135deg, #d84315, #bf360c)',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                      animation: 'pulse 2s ease-in-out infinite',
+                      '@keyframes pulse': {
+                        '0%': { transform: 'scale(1)' },
+                        '50%': { transform: 'scale(1.05)' },
+                        '100%': { transform: 'scale(1)' },
+                      },
+                    }}
+                  >
+                    {currentPlayer.role === 'tank' && (
+                      <ShieldIcon sx={{ fontSize: { xs: '12px', sm: '14px' }, color: 'white' }} />
+                    )}
+                    {currentPlayer.role === 'healer' && (
+                      <HealingIcon sx={{ fontSize: { xs: '12px', sm: '14px' }, color: 'white' }} />
+                    )}
+                    {currentPlayer.role === 'dps' && (
+                      <SportsMmaIcon
+                        sx={{ fontSize: { xs: '12px', sm: '14px' }, color: 'white' }}
+                      />
+                    )}
+                  </Box>
+
+                  {/* Player name and counter - single line on desktop */}
+                  <Box
+                    sx={{
+                      minWidth: 0,
+                      display: 'flex',
+                      alignItems: 'baseline',
+                      gap: { xs: 0, sm: 0.5 },
+                    }}
+                  >
+                    <Typography
+                      variant="subtitle2"
+                      sx={{
+                        fontWeight: 600,
+                        color: 'text.primary',
+                        fontSize: { xs: '0.75rem', sm: '0.85rem' },
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        lineHeight: 1.2,
+                        textShadow:
+                          theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none',
+                      }}
+                    >
+                      {playerName}
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'text.secondary',
+                        fontSize: { xs: '0.65rem', sm: '0.7rem' },
+                        fontWeight: 400,
+                        opacity: 0.8,
+                        lineHeight: 1,
+                        display: { xs: 'block', sm: 'inline' },
+                      }}
+                    >
+                      ({currentPlayerIndex + 1}/{sortedPlayers.length})
+                    </Typography>
+                  </Box>
+                </Box>
+
+                {/* Next button */}
+                <IconButton
+                  onClick={goToNextPlayer}
+                  disabled={sortedPlayers.length <= 1 || isTransitioning}
+                  sx={{
+                    p: { xs: 0.5, sm: 0.4 },
+                    backgroundColor: 'transparent',
+                    color: 'text.primary',
+                    transition: 'all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)',
+                    minWidth: { xs: '32px', sm: 'auto' },
+                    minHeight: { xs: '32px', sm: 'auto' },
+                    transform: isTransitioning
+                      ? 'scale(0.85) rotate(10deg)'
+                      : 'scale(1) rotate(0deg)',
+                    opacity: isTransitioning ? 0.4 : 1,
+                    '&:hover': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.15)'
+                          : 'rgba(0, 0, 0, 0.1)',
+                      transform: isTransitioning
+                        ? 'scale(0.85) rotate(10deg)'
+                        : 'scale(1.1) rotate(-5deg)',
+                    },
+                    '&:active': {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.25)'
+                          : 'rgba(0, 0, 0, 0.15)',
+                      transform: 'scale(0.92) rotate(2deg)',
+                    },
+                    '&:disabled': {
+                      opacity: 0.3,
+                      color: 'text.disabled',
+                      cursor: 'not-allowed',
+                      transform: 'scale(0.9) rotate(0deg)',
+                    },
+                  }}
+                >
+                  <ChevronRightIcon sx={{ fontSize: '1.2rem' }} />
+                </IconButton>
+              </Box>
+            )}
+
+            {/* Enhanced close button */}
             <IconButton
               onClick={onClose}
               sx={{
-                p: 0.5,
+                p: { xs: 0.7, sm: 0.6 },
                 backgroundColor:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.1)'
-                    : 'rgba(0, 0, 0, 0.08)',
+                    ? 'rgba(158, 158, 158, 0.2)'
+                    : 'rgba(66, 66, 66, 0.1)',
+                color: theme.palette.mode === 'dark' ? '#e0e0e0' : '#424242',
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(224, 224, 224, 0.3)'
+                    : '1px solid rgba(66, 66, 66, 0.2)',
+                transition: 'all 0.2s ease',
+                minWidth: { xs: '32px', sm: 'auto' },
+                minHeight: { xs: '32px', sm: 'auto' },
+                position: { xs: 'absolute', sm: 'relative' },
+                top: { xs: '8px', sm: 'auto' },
+                right: { xs: '8px', sm: 'auto' },
+                borderRadius: '12px',
                 '&:hover': {
                   backgroundColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.2)'
-                      : 'rgba(0, 0, 0, 0.15)',
+                      ? 'rgba(244, 67, 54, 0.25)'
+                      : 'rgba(244, 67, 54, 0.15)',
+                  color: theme.palette.mode === 'dark' ? '#ff8a80' : '#d32f2f',
+                  border:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(244, 67, 54, 0.4)'
+                      : '1px solid rgba(244, 67, 54, 0.3)',
+                  transform: 'scale(1.05)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(244, 67, 54, 0.3)'
+                      : '0 2px 8px rgba(244, 67, 54, 0.2)',
+                },
+                '&:active': {
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(244, 67, 54, 0.35)'
+                      : 'rgba(244, 67, 54, 0.25)',
+                  color: theme.palette.mode === 'dark' ? '#ffab91' : '#b71c1c',
+                  transform: 'scale(0.95)',
                 },
               }}
             >
-              <CloseIcon fontSize="small" />
+              <CloseIcon sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }} />
             </IconButton>
           </Box>
           {rows.length === 0 ? (
@@ -491,40 +802,239 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               </Typography>
             </Box>
           ) : (
-            <Box>
-              <DataGrid
-                key={`gear-grid-${Date.now()}`}
-                data={rows as unknown as Record<string, unknown>[]}
-                columns={columns}
-                title={undefined}
-                autoHeight={true}
-                paperSx={{
-                  borderRadius: 2,
-                  '& .MuiTableContainer-root': {
-                    overflowX: { xs: 'auto', sm: 'hidden' },
-                  },
-                  '& .MuiTable-root': {
-                    tableLayout: { xs: 'auto', sm: 'fixed' },
-                    minWidth: { xs: 'max-content', sm: '100%' },
-                  },
-                  '& .MuiTableCell-root': {
-                    whiteSpace: { xs: 'normal', sm: 'nowrap' },
-                    padding: { xs: theme.spacing(0.8, 0.4), sm: theme.spacing(0.4, 0.6) },
-                    fontSize: { xs: '0.65rem', sm: '0.7rem' },
-                  },
-                  '& .MuiTableHead-root .MuiTableCell-root': {
-                    fontSize: { xs: '0.7rem', sm: '0.875rem' },
-                    fontWeight: { xs: 500, sm: 600 },
+            <Box sx={{ position: 'relative' }}>
+              {/* Enhanced mobile scroll indicator */}
+              <Box
+                sx={{
+                  display: { xs: 'flex', sm: 'none' },
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: 0.5,
+                  py: 1,
+                  px: { xs: 2, sm: 1.5 },
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(99, 102, 241, 0.15)'
+                      : 'rgba(99, 102, 241, 0.08)',
+                  borderRadius: '16px',
+                  mb: 1.5,
+                  mx: 'auto',
+                  border:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(99, 102, 241, 0.3)'
+                      : '1px solid rgba(99, 102, 241, 0.2)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 2px 8px rgba(99, 102, 241, 0.2)'
+                      : '0 2px 8px rgba(99, 102, 241, 0.1)',
+                  animation: 'pulse 2s ease-in-out infinite',
+                  '@keyframes pulse': {
+                    '0%': { opacity: 0.7 },
+                    '50%': { opacity: 1 },
+                    '100%': { opacity: 0.7 },
                   },
                 }}
-                initialPageSize={rows.length}
-                pageSizeOptions={[12]}
-                enableSorting
-                enableFiltering={false}
-                enablePagination={false}
-                showPageSizeSelector={false}
-                emptyMessage="No gear"
-              />
+              >
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                  }}
+                >
+                  <ChevronLeftIcon
+                    sx={{
+                      fontSize: '0.8rem',
+                      color: theme.palette.mode === 'dark' ? '#818cf8' : '#6366f1',
+                      animation: 'slideLeft 1.5s ease-in-out infinite',
+                      '@keyframes slideLeft': {
+                        '0%, 100%': { transform: 'translateX(0)' },
+                        '50%': { transform: 'translateX(-3px)' },
+                      },
+                    }}
+                  />
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      fontSize: '0.7rem',
+                      fontWeight: 600,
+                      color: theme.palette.mode === 'dark' ? '#a5b4fc' : '#6366f1',
+                      textAlign: 'center',
+                      letterSpacing: '0.3px',
+                    }}
+                  >
+                    Swipe to see all columns
+                  </Typography>
+                  <ChevronRightIcon
+                    sx={{
+                      fontSize: '0.8rem',
+                      color: theme.palette.mode === 'dark' ? '#818cf8' : '#6366f1',
+                      animation: 'slideRight 1.5s ease-in-out infinite',
+                      '@keyframes slideRight': {
+                        '0%, 100%': { transform: 'translateX(0)' },
+                        '50%': { transform: 'translateX(3px)' },
+                      },
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.6rem',
+                    color: 'text.secondary',
+                    opacity: 0.8,
+                    textAlign: 'center',
+                    fontStyle: 'italic',
+                  }}
+                >
+                  Enchant column →
+                </Typography>
+              </Box>
+              <Box
+                sx={{
+                  position: 'relative',
+                  overflow: 'hidden',
+                  borderRadius: 2,
+                  minHeight: '400px',
+                }}
+              >
+                {/* Fancy fade transition overlay */}
+                {isTransitioning && (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      background: 'transparent',
+                      border: 'none',
+                      boxShadow: 'none',
+                      zIndex: 10,
+                      borderRadius: 2,
+                      willChange: 'opacity',
+                      backfaceVisibility: 'hidden',
+                      WebkitBackfaceVisibility: 'hidden',
+                      transform: 'translateZ(0)',
+                      opacity: fadeStage === 'out' ? 0 : 1,
+                      transition:
+                        'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), background 0.4s ease, border 0.4s ease, box-shadow 0.4s ease',
+                    }}
+                  >
+                    {/* Elegant fade transition indicator */}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                      }}
+                    ></Box>
+                  </Box>
+                )}
+                <Box
+                  sx={{
+                    transform: 'translateX(0) translateZ(0) scale(1)',
+                    opacity: fadeStage === 'out' ? 0 : 1,
+                    transition: 'opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+                    willChange: fadeStage !== 'none' ? 'opacity' : 'auto',
+                    backfaceVisibility: 'hidden',
+                    WebkitBackfaceVisibility: 'hidden',
+                    filter: 'blur(0px)',
+                    WebkitFilter: 'blur(0px)',
+                  }}
+                >
+                  <DataGrid
+                    key={`gear-grid-${currentPlayerId}`}
+                    data={rows as unknown as Record<string, unknown>[]}
+                    columns={columns}
+                    title={undefined}
+                    autoHeight={true}
+                    paperSx={{
+                      borderRadius: 2,
+                      '& .MuiTableContainer-root': {
+                        overflowX: { xs: 'auto', sm: 'hidden' },
+                        WebkitOverflowScrolling: 'touch',
+                        touchAction: 'pan-x pinch-zoom',
+                        width: '100%',
+                        '&::-webkit-scrollbar': {
+                          height: { xs: '6px', sm: '6px' },
+                        },
+                        '&::-webkit-scrollbar-thumb': {
+                          backgroundColor: { xs: 'rgba(0,0,0,0.3)', sm: 'rgba(0,0,0,0.3)' },
+                          borderRadius: '3px',
+                          minHeight: '20px',
+                        },
+                        '&::-webkit-scrollbar-track': {
+                          backgroundColor: { xs: 'rgba(0,0,0,0.1)', sm: 'rgba(0,0,0,0.1)' },
+                        },
+                      },
+                      '& .MuiTable-root': {
+                        tableLayout: { xs: 'auto', sm: 'fixed' },
+                        minWidth: { xs: '750px', sm: '100%' },
+                        width: { xs: '750px', sm: '100%' },
+                        borderCollapse: 'separate',
+                        borderSpacing: 0,
+                      },
+                      '& .MuiTableCell-root': {
+                        whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                        overflow: { xs: 'visible', sm: 'visible' },
+                        textOverflow: { xs: 'clip', sm: 'ellipsis' },
+                        padding: {
+                          xs: theme.spacing(0.6, 0.3),
+                          sm: theme.spacing(0.4, 0.6),
+                        },
+                        fontSize: { xs: '0.6rem', sm: '0.7rem' },
+                        lineHeight: { xs: 1.2, sm: 1.4 },
+                        borderBottom: {
+                          xs: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
+                          sm: undefined,
+                        },
+                      },
+                      // Enchant column specific fix - target by index (enchant should be 6th column)
+                      '& td:nth-child(6), & th:nth-child(6)': {
+                        minWidth: { xs: '150px', sm: '170px' },
+                        maxWidth: { xs: '150px', sm: '170px' },
+                        width: { xs: '150px', sm: '170px' },
+                      },
+                      '& .MuiTableHead-root .MuiTableCell-root': {
+                        fontSize: { xs: '0.65rem', sm: '0.875rem' },
+                        fontWeight: { xs: 600, sm: 600 },
+                        backgroundColor:
+                          theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.02)',
+                        position: 'sticky',
+                        top: 0,
+                        zIndex: 1,
+                        textTransform: 'uppercase',
+                        letterSpacing: { xs: '0.5px', sm: '0.8px' },
+                      },
+                      '& .MuiTableRow-root:hover': {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.03)'
+                            : 'rgba(0,0,0,0.02)',
+                      },
+                      '& .MuiTableRow-root:active': {
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.06)'
+                            : 'rgba(0,0,0,0.04)',
+                      },
+                    }}
+                    initialPageSize={rows.length}
+                    pageSizeOptions={[12]}
+                    enableSorting
+                    enableFiltering={false}
+                    enablePagination={false}
+                    showPageSizeSelector={false}
+                    emptyMessage="No gear"
+                  />
+                </Box>
+              </Box>
             </Box>
           )}
         </Box>
