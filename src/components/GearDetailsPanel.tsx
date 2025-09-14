@@ -779,82 +779,20 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  gap: 0.5,
                   py: 1,
                   px: { xs: 2, sm: 1.5 },
-                  backgroundColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(99, 102, 241, 0.15)'
-                      : 'rgba(99, 102, 241, 0.08)',
-                  borderRadius: '16px',
                   mb: 1.5,
                   mx: 'auto',
-                  border:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(99, 102, 241, 0.3)'
-                      : '1px solid rgba(99, 102, 241, 0.2)',
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 2px 8px rgba(99, 102, 241, 0.2)'
-                      : '0 2px 8px rgba(99, 102, 241, 0.1)',
-                  animation: 'pulse 2s ease-in-out infinite',
-                  '@keyframes pulse': {
-                    '0%': { opacity: 0.7 },
-                    '50%': { opacity: 1 },
-                    '100%': { opacity: 0.7 },
-                  },
                 }}
               >
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                  }}
-                >
-                  <ChevronLeftIcon
-                    sx={{
-                      fontSize: '0.8rem',
-                      color: theme.palette.mode === 'dark' ? '#818cf8' : '#6366f1',
-                      animation: 'slideLeft 1.5s ease-in-out infinite',
-                      '@keyframes slideLeft': {
-                        '0%, 100%': { transform: 'translateX(0)' },
-                        '50%': { transform: 'translateX(-3px)' },
-                      },
-                    }}
-                  />
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      fontSize: '0.7rem',
-                      fontWeight: 600,
-                      color: theme.palette.mode === 'dark' ? '#a5b4fc' : '#6366f1',
-                      textAlign: 'center',
-                      letterSpacing: '0.3px',
-                    }}
-                  >
-                    Swipe to see all columns
-                  </Typography>
-                  <ChevronRightIcon
-                    sx={{
-                      fontSize: '0.8rem',
-                      color: theme.palette.mode === 'dark' ? '#818cf8' : '#6366f1',
-                      animation: 'slideRight 1.5s ease-in-out infinite',
-                      '@keyframes slideRight': {
-                        '0%, 100%': { transform: 'translateX(0)' },
-                        '50%': { transform: 'translateX(3px)' },
-                      },
-                    }}
-                  />
-                </Box>
                 <Typography
                   variant="caption"
                   sx={{
-                    fontSize: '0.6rem',
-                    color: 'text.secondary',
-                    opacity: 0.8,
+                    fontSize: '0.7rem',
+                    fontWeight: 600,
+                    color: theme.palette.mode === 'dark' ? '#a5b4fc' : '#6366f1',
                     textAlign: 'center',
-                    fontStyle: 'italic',
+                    letterSpacing: '0.3px',
                   }}
                 >
                   Swipe to see all columns

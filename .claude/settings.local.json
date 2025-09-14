@@ -39,7 +39,8 @@
       "Bash(npm run codegen:*)",
       "Bash(curl:*)",
       "Bash(netstat:*)",
-      "Bash(npm run test)"
+      "Bash(npm run test)",
+      "Bash(git branch:*)"
     ],
     "deny": [],
     "ask": []
