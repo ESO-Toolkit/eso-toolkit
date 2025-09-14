@@ -355,7 +355,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               tooltip: {
                 backgroundColor: 'rgba(97, 97, 97, 0.92)',
                 padding: '8px 12px',
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
+                boxShadow: darkMode ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
               },
             },
           },
@@ -442,7 +442,20 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)'} !important`,
           },
-          '.MuiDialog-root .MuiDialogActions-root': {
+          // Exclude gear details table from global dialog styles to preserve custom gradients
+          '.MuiDialog-root.gear-details-table .MuiDialogContent-root': {
+            background: 'none !important',
+            backgroundColor: 'transparent !important',
+          },
+          // Custom typography colors for gear details table
+          '.MuiDialog-root.gear-details-table .MuiTypography-root': {
+            color: '#040635 !important',
+          },
+          '.MuiDialog-root.gear-details-table.dark-mode .MuiTypography-root': {
+            color: '#ffffff !important',
+            textShadow: '1px 1px 0 rgba(0, 0, 0, 0.89)',
+          },
+            '.MuiDialog-root .MuiDialogActions-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)'} !important`,
@@ -861,6 +874,17 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           // Utility: align digits for better comparison in stat-heavy UIs
           '.u-tabular': {
             fontVariantNumeric: 'tabular-nums',
+          },
+          // Make specific MUI tooltip classes transparent
+          '.css-4zfaxu-MuiTooltip-tooltip': {
+            backgroundColor: 'transparent !important',
+            background: 'transparent !important',
+            backgroundImage: 'none !important',
+          },
+          '.css-16pnnlo-MuiTooltip-tooltip': {
+            backgroundColor: 'transparent !important',
+            background: 'transparent !important',
+            backgroundImage: 'none !important',
           },
           '@media (prefers-reduced-motion: reduce)': {
             '.u-fade-in': { animation: 'none !important' },

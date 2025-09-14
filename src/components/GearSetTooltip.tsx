@@ -30,7 +30,7 @@ const getQualityColor = (quality: number): string => {
     2: '#62a603', // Fine
     3: '#417dc1', // Superior
     4: '#c040c0', // Epic
-    5: '#ffbf00', // Legendary
+    5: '#ffffff', // Legendary
     6: '#ff6b35', // Mythic
   };
   return qualityColors[quality] || '#ffffff';

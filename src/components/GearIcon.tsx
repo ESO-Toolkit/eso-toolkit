@@ -32,6 +32,8 @@ export interface GearIconProps {
   quality?: 'normal' | 'fine' | 'superior' | 'epic' | 'legendary' | 'mythic';
   /** Whether the icon should be rounded */
   rounded?: boolean;
+  /** Whether to use desaturated colors (for gear details table) */
+  useDesaturatedColors?: boolean;
   /** Click handler */
   onClick?: (event: React.MouseEvent<HTMLElement>) => void;
 }
@@ -43,6 +45,16 @@ const qualityColors = {
   epic: '#c040c0',
   legendary: '#ffbf00',
   mythic: '#ff6b35',
+} as const;
+
+// Desaturated quality colors specifically for gear details table
+const desaturatedQualityColors = {
+  normal: '#e5e5e5', // off-white
+  fine: '#7cb342', // muted green
+  superior: '#5c9ce6', // desaturated blue
+  epic: '#9978d4', // muted purple
+  legendary: '#dec369', // muted gold
+  mythic: '#c47a5a', // desaturated orange
 } as const;
 
 /**
@@ -59,10 +71,14 @@ export const GearIcon: React.FC<GearIconProps> = ({
   tooltipPlacement = 'top',
   quality = 'normal',
   rounded = true,
+  useDesaturatedColors = false,
   onClick,
 }) => {
   // Construct the gear icon URL - using the same pattern as ESO Logs
   const iconUrl = `https://assets.rpglogs.com/img/eso/abilities/${gear.icon}.png`;
+
+  // Choose color set based on whether we want desaturated colors
+  const colors = useDesaturatedColors ? desaturatedQualityColors : qualityColors;
 
   const iconElement = (
     <Box
@@ -76,14 +92,14 @@ export const GearIcon: React.FC<GearIconProps> = ({
         height: size,
         display: 'inline-block',
         verticalAlign: 'middle',
-        border: quality !== 'normal' ? `2px solid ${qualityColors[quality]}` : 'none',
+        border: quality !== 'normal' ? `2px solid ${colors[quality]}` : 'none',
         borderRadius: rounded ? 1 : 0,
         cursor: onClick ? 'pointer' : 'default',
         transition: 'all 0.2s ease-in-out',
         '&:hover': onClick
           ? {
               transform: 'scale(1.05)',
-              boxShadow: `0 0 8px ${qualityColors[quality]}50`,
+              boxShadow: `0 0 8px ${colors[quality]}50`,
             }
           : {},
         ...style,

@@ -126,6 +126,28 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
     }
   };
 
+  // Helper function to get quality CSS class
+  const getQualityClass = (quality: number): string => {
+    switch (quality) {
+      case 0:
+        return 'gear-quality-trait';
+      case 1:
+        return 'gear-quality-normal';
+      case 2:
+        return 'gear-quality-fine';
+      case 3:
+        return 'gear-quality-superior';
+      case 4:
+        return 'gear-quality-epic';
+      case 5:
+        return 'gear-quality-legendary';
+      case 6:
+        return 'gear-quality-mythic';
+      default:
+        return 'gear-quality-normal';
+    }
+  };
+
   const getTypeLabel = (t: number): string => {
     switch (t) {
       case ArmorType.LIGHT:
@@ -198,11 +220,15 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 maxWidth: 'none',
               }}
             >
-              <StarIcon sx={{ fontSize: '0.7rem', color }} />
+              <StarIcon sx={{
+                fontSize: '0.7rem',
+                color: roleColors.isDarkMode ? 'rgb(175 149 76)' : 'rgb(253 245 212)'
+              }} />
               <Typography
                 variant="caption"
                 sx={{
                   color,
+                  fontWeight: 700,
                   fontVariantNumeric: 'tabular-nums',
                   fontSize: '0.7rem',
                   whiteSpace: 'nowrap',
@@ -225,6 +251,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
             variant="caption"
             sx={{
               color: 'text.primary',
+              fontWeight: roleColors.isDarkMode ? 200 : 300,
               fontSize: '0.7rem',
               px: 0.2,
               py: 0.5,
@@ -258,7 +285,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               }}
             >
               <span style={{ fontSize: '0.8rem' }}>{getSlotIcon(piece.slot)}</span>
-              <Typography variant="caption" sx={{ fontSize: '0.7rem', whiteSpace: 'nowrap' }}>
+              <Typography variant="caption" sx={{ fontSize: '0.7rem', whiteSpace: 'nowrap', fontWeight: roleColors.isDarkMode ? 300 : 300 }}>
                 {info.getValue() as string}
               </Typography>
             </Box>
@@ -284,12 +311,14 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 py: 0.5,
               }}
             >
-              <GearIcon gear={piece} size={18} quality={getQualityKey(piece.quality)} rounded />
+              <Box className={getQualityClass(piece.quality)}>
+                <GearIcon gear={piece} size={18} quality={getQualityKey(piece.quality)} rounded useDesaturatedColors />
+              </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography
                   variant="caption"
                   sx={{
-                    fontWeight: 600,
+                    fontWeight: 500,
                     color: QUALITY_COLORS[piece.quality],
                     fontSize: '0.75rem',
                     whiteSpace: 'nowrap',
@@ -312,7 +341,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           <Typography
             variant="caption"
             sx={{
-              fontWeight: 500,
+              fontWeight: roleColors.isDarkMode ? 100 : 300,
               color: getTraitColor((info.row.original as PlayerGear).trait),
               fontSize: '0.7rem',
               px: 0.2,
@@ -339,7 +368,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               variant="caption"
               sx={{
                 color,
-                fontWeight: 500,
+                fontWeight: 300,
                 fontSize: '0.7rem',
                 lineHeight: 1.1,
                 px: 0.2,
@@ -365,14 +394,14 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       maxWidth={false}
       fullWidth={false}
       scroll="body"
-      className="gear-details-table"
+      className={`gear-details-table ${roleColors.isDarkMode ? 'dark-mode' : ''}`}
       sx={{
         '& .MuiPaper-root': {
           backgroundColor: 'transparent !important',
           backgroundImage: 'none !important',
           background: roleColors.isDarkMode
-            ? 'linear-gradient(135deg, rgb(152 129 255 / 60%) 0%, rgb(102 68 223 / 33%) 50%, rgb(153 114 231 / 79%) 100%) !important'
-            : 'linear-gradient(135deg, rgb(113 192 255 / 40%) 0%, rgb(190 242 255 / 30%) 50%, rgb(32 210 254 / 20%) 100%) !important',
+            ? 'linear-gradient(135deg, rgb(23 8 86 / 45%) 0%, rgb(27 18 58 / 20%) 50%, rgb(52 23 107 / 9%) 100%) !important'
+            : 'linear-gradient(135deg, rgb(202 231 255 / 30%) 0%, rgb(211 217 255 / 38%) 50%, rgb(208 245 255 / 28%) 100%) !important',
           borderRadius: '24px',
           overflow: 'hidden',
           maxHeight: '85vh',
