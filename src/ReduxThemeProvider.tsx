@@ -350,6 +350,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
+          MuiTooltip: {
+            styleOverrides: {
+              tooltip: {
+                backgroundColor: 'transparent',
+                padding: 0,
+                boxShadow: 'none',
+              },
+            },
+          },
         },
       }),
     [darkMode, tokens],
