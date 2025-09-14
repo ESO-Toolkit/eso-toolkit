@@ -383,6 +383,28 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         },
       },
       {
+        id: 'enchant',
+        header: 'Enchant',
+        accessorFn: (row: Record<string, unknown>) =>
+          ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
+        size: 80,
+        cell: (info: any) => (
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: roleColors.isDarkMode ? 100 : 300,
+              color: getEnchantmentColor((info.row.original as PlayerGear).enchantType, (info.row.original as PlayerGear).enchantQuality),
+              fontSize: '0.7rem',
+              px: 0.2,
+              py: 0.5,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {(info.getValue() as string) || '—'}
+          </Typography>
+        ),
+      },
+      {
         id: 'trait',
         header: 'Trait',
         accessorFn: (row: Record<string, unknown>) =>
