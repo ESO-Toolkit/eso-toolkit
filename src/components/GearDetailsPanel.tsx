@@ -161,7 +161,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         id: 'cp',
         header: 'CP',
         accessorKey: 'championPoints',
-        size: 60,
+        size: 55,
         cell: (info: any) => {
           const cp = info.getValue() as number;
           const color = cp >= 160 ? '#4caf50' : cp >= 150 ? '#ff9800' : '#f44336';
@@ -243,7 +243,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           };
           return getTypeLabel((row as unknown as PlayerGear).type);
         },
-        size: 85,
+        size: 80,
         cell: (info: any) => (
           <Typography
             variant="caption"
@@ -267,7 +267,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Slot',
         accessorFn: (row: Record<string, unknown>) =>
           getSlotName((row as unknown as PlayerGear).slot),
-        size: 110,
+        size: 100,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           return (
@@ -301,7 +301,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         id: 'item',
         header: 'Item',
         accessorFn: (row: Record<string, unknown>) => (row as unknown as PlayerGear).name || '',
-        size: 230,
+        size: 200,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           const getQualityKey = (
@@ -387,7 +387,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Enchant',
         accessorFn: (row: Record<string, unknown>) =>
           ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
-        size: 110,
+        size: 130,
         cell: (info: any) => (
           <Typography
             variant="caption"
@@ -412,7 +412,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Trait',
         accessorFn: (row: Record<string, unknown>) =>
           TRAIT_NAMES[(row as unknown as PlayerGear).trait] || '',
-        size: 80,
+        size: 90,
         cell: (info: any) => (
           <Typography
             variant="caption"
