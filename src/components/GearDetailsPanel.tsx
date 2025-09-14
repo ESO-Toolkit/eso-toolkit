@@ -1004,8 +1004,6 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                       '& .MuiTableHead-root .MuiTableCell-root': {
                         fontSize: { xs: '0.65rem', sm: '0.875rem' },
                         fontWeight: { xs: 600, sm: 600 },
-                        backgroundColor:
-                          theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.3)' : 'rgba(0,0,0,0.02)',
                         position: 'sticky',
                         top: 0,
                         zIndex: 1,
