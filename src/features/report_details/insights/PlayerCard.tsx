@@ -20,8 +20,6 @@ import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
 import { GearInfoIcon } from '../../../components/GearInfoIcon';
-import { GearSetTooltip } from '../../../components/GearSetTooltip';
-import type { GearPieceInfo } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -37,7 +35,6 @@ import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
-import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
 interface PlayerCardProps {
@@ -569,28 +566,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     )}
                     {gear.length > 0 && (
                       <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
-                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={48}>
-                          {gearChips.map((chipData, index) => {
-                            // Find the corresponding gear record for tooltip
-                            const gearRecord = playerGear[index];
-                            const tooltipProps = gearRecord
-                              ? createGearSetTooltipProps(gearRecord, player.combatantInfo.gear)
-                              : null;
-
-                            if (tooltipProps) {
-                              return (
-                                <Box key={chipData.key} display="flex" alignItems="center">
-                                  <Chip label={chipData.label} size="small" sx={chipData.sx} />
-                                  <GearInfoIcon
-                                    tooltipContent={<GearSetTooltip {...tooltipProps} />}
-                                    onClick={() => setGearDetailsOpen(true)}
-                                  />
-                                </Box>
-                              );
-                            }
-
-                            // Fallback to simple chip if no gear set data
-                            return (
+                        <Box display="flex" alignItems="center" gap={1.25} minHeight={48}>
+                          <Box display="flex" flexWrap="wrap" gap={1.25} flex={1}>
+                            {gearChips.map((chipData) => (
                               <Chip
                                 key={chipData.key}
                                 label={chipData.label}
@@ -598,8 +576,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 title={chipData.title}
                                 sx={chipData.sx}
                               />
-                            );
-                          })}
+                            ))}
+                          </Box>
+                          <GearInfoIcon
+                            tooltipContent="View detailed gear information"
+                            onClick={() => setGearDetailsOpen(true)}
+                            size="medium"
+                          />
                         </Box>
                       </Box>
                     )}
