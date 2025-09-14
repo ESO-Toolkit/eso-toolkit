@@ -937,16 +937,20 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                         letterSpacing: { xs: '0.5px', sm: '0.8px' },
                       },
                       '& .MuiTableRow-root:hover': {
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.03)'
-                            : 'rgba(0,0,0,0.02)',
+                        '@media (hover: hover)': {
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.03)'
+                              : 'rgba(0,0,0,0.02)',
+                        },
                       },
                       '& .MuiTableRow-root:active': {
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.04)',
+                        '@media (hover: hover)': {
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.04)',
+                        },
                       },
                     }}
                     initialPageSize={rows.length}
