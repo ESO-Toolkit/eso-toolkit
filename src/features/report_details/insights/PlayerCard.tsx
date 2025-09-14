@@ -16,6 +16,7 @@ import {
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
+import { useSelector } from 'react-redux';
 
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
@@ -25,6 +26,7 @@ import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillT
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
 import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
@@ -98,6 +100,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
     // State for gear details panel
     const [gearDetailsOpen, setGearDetailsOpen] = useState(false);
+    const [currentGearPlayerId, setCurrentGearPlayerId] = useState<string | number>(player.id);
+
+    // Get all players from Redux store
+    const playerData = useSelector(selectPlayerData);
+    const allPlayers = React.useMemo(() => {
+      return Object.values(playerData?.playersById || {});
+    }, [playerData]);
 
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
@@ -582,7 +591,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             Gear
                           </Typography>
                           <Box
-                            onClick={() => setGearDetailsOpen(true)}
+                            onClick={() => {
+                              setCurrentGearPlayerId(player.id);
+                              setGearDetailsOpen(true);
+                            }}
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
@@ -1202,10 +1214,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
         {/* Gear Details Modal */}
         <GearDetailsPanel
           open={gearDetailsOpen}
-          onClose={() => setGearDetailsOpen(false)}
-          playerName={player.name}
-          playerClass={player.type}
-          gearPieces={gear}
+          onClose={() => {
+            setGearDetailsOpen(false);
+            setCurrentGearPlayerId(player.id); // Reset to current player when closing
+          }}
+          currentPlayerId={currentGearPlayerId}
+          players={allPlayers}
+          onPlayerChange={setCurrentGearPlayerId}
         />
       </Box>
     );
