@@ -572,7 +572,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           display="flex"
                           alignItems="center"
                           justifyContent="space-between"
-                          mb={0.75}
+                          mb={2.5}
                         >
                           <Typography
                             variant="body2"

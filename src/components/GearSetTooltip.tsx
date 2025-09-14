@@ -96,7 +96,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
   return (
     <Card
       variant="outlined"
-      className="u-fade-in"
+      className="u-fade-in gear-set-tooltip"
       sx={{
         maxWidth: { xs: 280, sm: 340, md: 380 },
         backgroundColor:

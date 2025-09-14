@@ -371,8 +371,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           backgroundColor: 'transparent !important',
           backgroundImage: 'none !important',
           background: roleColors.isDarkMode
-            ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%) !important'
-            : 'linear-gradient(135deg, rgba(110, 214, 240, 0.4) 0%, rgba(131, 208, 227, 0.3) 50%, rgba(35, 122, 144, 0.2) 100%) !important',
+            ? 'linear-gradient(135deg, rgb(152 129 255 / 60%) 0%, rgb(102 68 223 / 33%) 50%, rgb(153 114 231 / 79%) 100%) !important'
+            : 'linear-gradient(135deg, rgb(113 192 255 / 40%) 0%, rgb(190 242 255 / 30%) 50%, rgb(32 210 254 / 20%) 100%) !important',
           borderRadius: '24px',
           overflow: 'hidden',
           maxHeight: '85vh',
@@ -419,14 +419,20 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         {/* Gear Pieces List with symmetric padding and no internal scrolling */}
         <Box sx={{ px: 0, py: 0.5, minHeight: '300px' }}>
           {/* Close button */}
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, mr: 1 }}>
             <IconButton
               onClick={onClose}
               sx={{
                 p: 0.5,
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.1)'
+                    : 'rgba(0, 0, 0, 0.08)',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.2)'
+                      : 'rgba(0, 0, 0, 0.15)',
                 },
               }}
             >
