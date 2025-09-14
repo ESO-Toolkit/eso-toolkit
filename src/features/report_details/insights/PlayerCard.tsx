@@ -566,23 +566,30 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                     )}
                     {gear.length > 0 && (
                       <Box mt={1.25} sx={{ pt: 0.9, pb: 0 }}>
-                        <Box display="flex" alignItems="center" gap={1.25} minHeight={48}>
-                          <Box display="flex" flexWrap="wrap" gap={1.25} flex={1}>
-                            {gearChips.map((chipData) => (
-                              <Chip
-                                key={chipData.key}
-                                label={chipData.label}
-                                size="small"
-                                title={chipData.title}
-                                sx={chipData.sx}
-                              />
-                            ))}
-                          </Box>
+                        <Box display="flex" alignItems="center" justifyContent="space-between" mb={0.75}>
+                          <Typography
+                            variant="body2"
+                            fontWeight="bold"
+                            sx={{ fontFamily: 'Space Grotesk, sans-serif', fontSize: '0.8rem' }}
+                          >
+                            Gear
+                          </Typography>
                           <GearInfoIcon
                             tooltipContent="View detailed gear information"
                             onClick={() => setGearDetailsOpen(true)}
-                            size="medium"
+                            size="small"
                           />
+                        </Box>
+                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
+                          {gearChips.map((chipData) => (
+                            <Chip
+                              key={chipData.key}
+                              label={chipData.label}
+                              size="small"
+                              title={chipData.title}
+                              sx={chipData.sx}
+                            />
+                          ))}
                         </Box>
                       </Box>
                     )}
