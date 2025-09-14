@@ -20,6 +20,7 @@ import React, { useState } from 'react';
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
+import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -35,6 +36,7 @@ import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
 import { getArmorWeightCounts } from '@/utils/armorUtils';
 import { toClassKey } from '@/utils/classNameUtils';
 import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
+import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
 interface PlayerCardProps {
@@ -611,15 +613,43 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           </Box>
                         </Box>
                         <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
-                          {gearChips.map((chipData) => (
-                            <Chip
-                              key={chipData.key}
-                              label={chipData.label}
-                              size="small"
-                              title={chipData.title}
-                              sx={chipData.sx}
-                            />
-                          ))}
+                          {gearChips.map((chipData, index) => {
+                            // Find the corresponding gear record for tooltip
+                            const gearRecord = playerGear[index];
+                            const tooltipProps = gearRecord
+                              ? createGearSetTooltipProps(gearRecord, player.combatantInfo.gear)
+                              : null;
+
+                            if (tooltipProps) {
+                              return (
+                                <Tooltip
+                                  key={chipData.key}
+                                  title={<GearSetTooltip {...tooltipProps} />}
+                                  placement="top"
+                                  enterDelay={300}
+                                  arrow
+                                  disableInteractive={false}
+                                >
+                                  <Chip
+                                    label={chipData.label}
+                                    size="small"
+                                    sx={chipData.sx}
+                                  />
+                                </Tooltip>
+                              );
+                            }
+
+                            // Fallback to simple chip if no gear set data
+                            return (
+                              <Chip
+                                key={chipData.key}
+                                label={chipData.label}
+                                size="small"
+                                title={chipData.title}
+                                sx={chipData.sx}
+                              />
+                            );
+                          })}
                         </Box>
                       </Box>
                     )}
