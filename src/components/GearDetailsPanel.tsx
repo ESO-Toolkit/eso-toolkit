@@ -220,10 +220,12 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 maxWidth: 'none',
               }}
             >
-              <StarIcon sx={{
-                fontSize: '0.7rem',
-                color: roleColors.isDarkMode ? 'rgb(175 149 76)' : 'rgb(253 245 212)'
-              }} />
+              <StarIcon
+                sx={{
+                  fontSize: '0.7rem',
+                  color: roleColors.isDarkMode ? 'rgb(175 149 76)' : 'rgb(253 245 212)',
+                }}
+              />
               <Typography
                 variant="caption"
                 sx={{
@@ -285,7 +287,14 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               }}
             >
               <span style={{ fontSize: '0.8rem' }}>{getSlotIcon(piece.slot)}</span>
-              <Typography variant="caption" sx={{ fontSize: '0.7rem', whiteSpace: 'nowrap', fontWeight: roleColors.isDarkMode ? 300 : 300 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: '0.7rem',
+                  whiteSpace: 'nowrap',
+                  fontWeight: roleColors.isDarkMode ? 300 : 300,
+                }}
+              >
                 {info.getValue() as string}
               </Typography>
             </Box>
@@ -312,7 +321,13 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               }}
             >
               <Box className={getQualityClass(piece.quality)}>
-                <GearIcon gear={piece} size={18} quality={getQualityKey(piece.quality)} rounded useDesaturatedColors />
+                <GearIcon
+                  gear={piece}
+                  size={18}
+                  quality={getQualityKey(piece.quality)}
+                  rounded
+                  useDesaturatedColors
+                />
               </Box>
               <Box sx={{ minWidth: 0 }}>
                 <Typography

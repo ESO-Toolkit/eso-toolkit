@@ -455,7 +455,7 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             color: '#ffffff !important',
             textShadow: '1px 1px 0 rgba(0, 0, 0, 0.89)',
           },
-            '.MuiDialog-root .MuiDialogActions-root': {
+          '.MuiDialog-root .MuiDialogActions-root': {
             backgroundColor: `${darkMode ? tokens.bg : '#ffffff'} !important`,
             color: `${darkMode ? tokens.text : '#000000'} !important`,
             background: `${darkMode ? `linear-gradient(135deg, ${tokens.bg} 0%, ${tokens.panel2} 100%)` : 'linear-gradient(135deg, rgba(255, 255, 255, 0.8) 0%, rgba(248, 250, 252, 0.8) 100%)'} !important`,
