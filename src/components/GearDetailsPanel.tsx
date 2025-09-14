@@ -387,13 +387,16 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Enchant',
         accessorFn: (row: Record<string, unknown>) =>
           ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
-        size: 80,
+        size: 110,
         cell: (info: any) => (
           <Typography
             variant="caption"
             sx={{
               fontWeight: roleColors.isDarkMode ? 100 : 300,
-              color: getEnchantmentColor((info.row.original as PlayerGear).enchantType, (info.row.original as PlayerGear).enchantQuality),
+              color: getEnchantmentColor(
+                (info.row.original as PlayerGear).enchantType,
+                (info.row.original as PlayerGear).enchantQuality,
+              ),
               fontSize: '0.7rem',
               px: 0.2,
               py: 0.5,
