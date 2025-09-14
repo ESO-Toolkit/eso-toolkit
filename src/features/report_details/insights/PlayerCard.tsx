@@ -579,10 +579,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 0.5,
-                              px: 1,
-                              py: 0.5,
-                              borderRadius: 1,
+                              gap: 0.25,
+                              px: 0.75,
+                              py: 0.25,
+                              borderRadius: 0.5,
                               backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
                               border: '1px solid',
                               borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
@@ -594,15 +594,16 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               },
                             }}
                           >
-                            <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                            <InfoIcon sx={{ fontSize: 12, color: 'text.secondary' }} />
                             <Typography
                               variant="caption"
                               sx={{
-                                fontSize: '0.7rem',
+                                fontSize: '0.65rem',
                                 fontWeight: 500,
                                 color: 'text.secondary',
                                 textTransform: 'uppercase',
-                                letterSpacing: '0.5px',
+                                letterSpacing: '0.3px',
+                                lineHeight: 1,
                               }}
                             >
                               Details
