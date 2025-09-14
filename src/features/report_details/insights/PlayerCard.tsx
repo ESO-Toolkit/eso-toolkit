@@ -644,6 +644,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   title={<GearSetTooltip {...tooltipProps} />}
                                   placement="top"
                                   enterDelay={300}
+                                  enterTouchDelay={0}
+                                  leaveTouchDelay={3000}
                                   arrow
                                   disableInteractive={false}
                                 >
