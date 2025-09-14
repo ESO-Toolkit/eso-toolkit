@@ -1,5 +1,6 @@
 import CheckCircleOutlineIcon from '@mui/icons-material/CheckCircleOutline';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import InfoIcon from '@mui/icons-material/Info';
 import ShieldOutlinedIcon from '@mui/icons-material/ShieldOutlined';
 import {
   Box,
@@ -19,7 +20,6 @@ import React, { useState } from 'react';
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
-import { GearInfoIcon } from '../../../components/GearInfoIcon';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
@@ -574,11 +574,40 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           >
                             Gear
                           </Typography>
-                          <GearInfoIcon
-                            tooltipContent="View detailed gear information"
+                          <Box
                             onClick={() => setGearDetailsOpen(true)}
-                            size="small"
-                          />
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              px: 1,
+                              py: 0.5,
+                              borderRadius: 1,
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+                              border: '1px solid',
+                              borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.12)',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              '&:hover': {
+                                backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.1)',
+                                borderColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                              },
+                            }}
+                          >
+                            <InfoIcon sx={{ fontSize: 14, color: 'text.secondary' }} />
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.7rem',
+                                fontWeight: 500,
+                                color: 'text.secondary',
+                                textTransform: 'uppercase',
+                                letterSpacing: '0.5px',
+                              }}
+                            >
+                              Details
+                            </Typography>
+                          </Box>
                         </Box>
                         <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
                           {gearChips.map((chipData) => (
