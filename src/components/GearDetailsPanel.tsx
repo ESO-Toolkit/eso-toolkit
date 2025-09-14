@@ -404,37 +404,6 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           </Typography>
         ),
       },
-      {
-        id: 'enchant',
-        header: 'Enchant',
-        accessorFn: (row: Record<string, unknown>) =>
-          ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
-        size: 170,
-        cell: (info: any) => {
-          const piece = info.row.original as PlayerGear;
-          const label = ENCHANTMENT_NAMES[piece.enchantType] || '—';
-          const color = getEnchantmentColor(piece.enchantType, piece.enchantQuality || 1);
-          return (
-            <Typography
-              variant="caption"
-              sx={{
-                color,
-                fontWeight: 300,
-                fontSize: { xs: '0.6rem', sm: '0.7rem' },
-                lineHeight: { xs: 1.1, sm: 1.2 },
-                px: { xs: 0.1, sm: 0.2 },
-                py: { xs: 0.3, sm: 0.5 },
-                whiteSpace: { xs: 'normal', sm: 'normal' },
-                wordBreak: { xs: 'break-word', sm: 'normal' },
-                display: 'block',
-                width: '100%',
-              }}
-            >
-              {label}
-            </Typography>
-          );
-        },
-      },
     ],
     [roleColors.isDarkMode],
   );
@@ -888,7 +857,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                     fontStyle: 'italic',
                   }}
                 >
-                  Enchant column →
+                  Swipe to see all columns
                 </Typography>
               </Box>
               <Box
@@ -994,12 +963,6 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                           xs: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)'}`,
                           sm: undefined,
                         },
-                      },
-                      // Enchant column specific fix - target by index (enchant should be 6th column)
-                      '& td:nth-child(6), & th:nth-child(6)': {
-                        minWidth: { xs: '150px', sm: '170px' },
-                        maxWidth: { xs: '150px', sm: '170px' },
-                        width: { xs: '150px', sm: '170px' },
                       },
                       '& .MuiTableHead-root .MuiTableCell-root': {
                         fontSize: { xs: '0.65rem', sm: '0.875rem' },
