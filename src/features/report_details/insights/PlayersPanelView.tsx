@@ -204,7 +204,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
             sx={{
               display: 'grid',
               gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-              gap: { xs: 0, md: 2 },
+              gap: { xs: 2, md: 2 },
               alignItems: 'stretch',
               minHeight: '400px',
             }}
@@ -387,7 +387,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
-            gap: { xs: 0, md: 2 },
+            gap: { xs: 2, md: 2 },
             alignItems: 'stretch',
             minHeight: '400px', // Prevent CLS when cards load
           }}

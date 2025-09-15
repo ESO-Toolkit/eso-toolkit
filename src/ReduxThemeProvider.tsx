@@ -350,15 +350,6 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               },
             },
           },
-          MuiTooltip: {
-            styleOverrides: {
-              tooltip: {
-                backgroundColor: 'rgba(97, 97, 97, 0.92)',
-                padding: '8px 12px',
-                boxShadow: darkMode ? '0 2px 8px rgba(0, 0, 0, 0.15)' : 'none',
-              },
-            },
-          },
         },
       }),
     [darkMode, tokens],
@@ -874,17 +865,6 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           // Utility: align digits for better comparison in stat-heavy UIs
           '.u-tabular': {
             fontVariantNumeric: 'tabular-nums',
-          },
-          // Make specific MUI tooltip classes transparent
-          '.css-4zfaxu-MuiTooltip-tooltip': {
-            backgroundColor: 'transparent !important',
-            background: 'transparent !important',
-            backgroundImage: 'none !important',
-          },
-          '.css-16pnnlo-MuiTooltip-tooltip': {
-            backgroundColor: 'transparent !important',
-            background: 'transparent !important',
-            backgroundImage: 'none !important',
           },
           '@media (prefers-reduced-motion: reduce)': {
             '.u-fade-in': { animation: 'none !important' },
