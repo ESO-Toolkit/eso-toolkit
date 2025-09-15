@@ -8,8 +8,11 @@ import {
   useReportMasterData,
   usePlayerData,
   useSelectedTargetIds,
+  useDeathEvents,
+  useCastEvents,
 } from '../../../hooks';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
+import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
 
@@ -25,6 +28,8 @@ export const DamageDonePanel: React.FC = () => {
   const { damageEventsByPlayer, isDamageEventsLookupLoading } = useDamageEventsLookup();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
+  const { castEvents, isCastEventsLoading } = useCastEvents();
   const fight = useSelectedFight();
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
@@ -49,8 +54,20 @@ export const DamageDonePanel: React.FC = () => {
 
   // Compute loading and error states
   const isLoading = useMemo(() => {
-    return isDamageEventsLookupLoading || isMasterDataLoading || isPlayerDataLoading;
-  }, [isDamageEventsLookupLoading, isMasterDataLoading, isPlayerDataLoading]);
+    return (
+      isDamageEventsLookupLoading ||
+      isMasterDataLoading ||
+      isPlayerDataLoading ||
+      isDeathEventsLoading ||
+      isCastEventsLoading
+    );
+  }, [
+    isDamageEventsLookupLoading,
+    isMasterDataLoading,
+    isPlayerDataLoading,
+    isDeathEventsLoading,
+    isCastEventsLoading,
+  ]);
 
   const isDataReady = useMemo(() => {
     return !isLoading;
@@ -129,6 +146,39 @@ export const DamageDonePanel: React.FC = () => {
     return 1;
   }, [fight]);
 
+  const deathsByPlayer = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const fightNum = fight?.id ? Number(fight.id) : undefined;
+
+    for (const ev of deathEvents) {
+      if (
+        ev.type === 'death' &&
+        (fightNum == null || (typeof ev.fight === 'number' && ev.fight === fightNum))
+      ) {
+        const target = ev.targetID;
+        if (target != null) {
+          const key = String(target);
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [deathEvents, fight]);
+
+  const resByPlayer = useMemo(() => {
+    const result: Record<string, number> = {};
+
+    for (const event of castEvents) {
+      if (event.type !== 'cast') continue;
+
+      if (event.abilityGameID === KnownAbilities.RESURRECT) {
+        result[event.sourceID] = (result[event.sourceID] || 0) + 1;
+      }
+    }
+
+    return result;
+  }, [castEvents]);
+
   const isPlayerActor = useMemo(() => {
     return (id: string) => {
       const actor = masterData.actorsById[id];
@@ -178,6 +228,8 @@ export const DamageDonePanel: React.FC = () => {
           : undefined;
 
         const role = getPlayerRole(id);
+        const deaths = deathsByPlayer[id] || 0;
+        const resurrects = resByPlayer[id] || 0;
 
         // Get active percentage for this player
         const activeData = activePercentages[playerId];
@@ -191,6 +243,8 @@ export const DamageDonePanel: React.FC = () => {
           activePercentage,
           iconUrl,
           role,
+          deaths,
+          resurrects,
         };
       })
       .sort((a, b) => b.dps - a.dps);
@@ -201,6 +255,8 @@ export const DamageDonePanel: React.FC = () => {
     fightDuration,
     getPlayerRole,
     activePercentages,
+    deathsByPlayer,
+    resByPlayer,
   ]);
 
   // Show table skeleton while data is being fetched

@@ -15,6 +15,7 @@ interface HealingRow {
   overhealPercentage: number;
   iconUrl?: string;
   ressurects: number;
+  deaths: number;
   role?: 'dps' | 'tank' | 'healer';
 }
 
@@ -269,7 +270,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '2fr 3fr 1fr 1fr',
+              gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr',
               gap: 2,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -383,6 +384,20 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
             >
               Overheal{getSortIcon('overheal')}
             </Box>
+            <Box
+              sx={{
+                textAlign: 'center',
+              }}
+            >
+              💀
+            </Box>
+            <Box
+              sx={{
+                textAlign: 'center',
+              }}
+            >
+              ❤️
+            </Box>
           </Box>
 
           {/* Data Rows */}
@@ -396,7 +411,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '2fr 3fr 1fr 1fr',
+                  gridTemplateColumns: '2fr 3fr 1fr 1fr 1fr 1fr',
                   gap: 2,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -516,6 +531,78 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                 >
                   {formatNumber(row.overheal)}
                 </Typography>
+
+                {/* Deaths */}
+                {row.deaths > 0 ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(220,38,38,0.2)',
+                      }}
+                    >
+                      💀 {row.deaths}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      textAlign: 'center',
+                    }}
+                  >
+                    —
+                  </Typography>
+                )}
+
+                {/* Resurrects */}
+                {row.ressurects > 0 ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(34,197,94,0.2)',
+                      }}
+                    >
+                      ❤️ {row.ressurects}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      textAlign: 'center',
+                    }}
+                  >
+                    —
+                  </Typography>
+                )}
               </Box>
             );
           })}
@@ -637,7 +724,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   </Typography>
                 </Box>
 
-                {/* Mobile Overheal and Resurrects */}
+                {/* Mobile Overheal and Deaths */}
                 <Box
                   sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                 >
@@ -652,6 +739,28 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                   >
                     Overheal: {formatNumber(row.overheal)}
                   </Typography>
+                  {row.deaths > 0 && (
+                    <Box
+                      sx={{
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: '12px',
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(244, 67, 54, 0.2)'
+                          : 'rgba(239, 68, 68, 0.1)',
+                        border: roleColors.isDarkMode
+                          ? '1px solid rgba(244, 67, 54, 0.4)'
+                          : '1px solid rgba(239, 68, 68, 0.2)',
+                        cursor: 'default',
+                        userSelect: 'none',
+                        fontSize: '0.7rem',
+                        color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      💀 {row.deaths}
+                    </Box>
+                  )}
                   {row.ressurects > 0 && (
                     <Box
                       onClick={() => handleResurrectClick(row.id)}
@@ -671,7 +780,7 @@ export const HealingDonePanelView: React.FC<HealingDonePanelViewProps> = ({ heal
                         },
                       }}
                     >
-                      💀 {row.ressurects}
+                      ❤️ {row.ressurects}
                     </Box>
                   )}
                 </Box>
