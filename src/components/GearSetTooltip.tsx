@@ -2,40 +2,6 @@ import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } fr
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
-// Helper function to get slot name from slot number
-const getSlotName = (slot: number): string => {
-  const slotNames: Record<number, string> = {
-    0: 'Head',
-    1: 'Chest',
-    2: 'Shoulders',
-    3: 'Waist',
-    4: 'Hands',
-    5: 'Legs',
-    6: 'Feet',
-    7: 'Neck',
-    8: 'Ring 1',
-    9: 'Ring 2',
-    10: 'Main Hand',
-    11: 'Off Hand',
-    12: 'Backup Main',
-    13: 'Backup Off',
-  };
-  return slotNames[slot] || `Slot ${slot}`;
-};
-
-// Helper function to get quality color
-const getQualityColor = (quality: number): string => {
-  const qualityColors: Record<number, string> = {
-    1: '#ffffff', // Normal
-    2: '#62a603', // Fine
-    3: '#417dc1', // Superior
-    4: '#c040c0', // Epic
-    5: '#ffffff', // Legendary
-    6: '#ff6b35', // Mythic
-  };
-  return qualityColors[quality] || '#ffffff';
-};
-
 export interface GearSetBonus {
   pieces: string; // "(2 items)", "(5 items)", etc.
   effect: string; // Description of the bonus
@@ -97,14 +63,19 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
     <Card
       variant="outlined"
       className="u-fade-in gear-set-tooltip"
-      sx={{
+      sx={(theme) => ({
         maxWidth: { xs: 280, sm: 340, md: 380 },
-        backgroundColor: 'transparent',
+        backgroundColor:
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
-        border: 'none',
+        border:
+          theme.palette.mode === 'dark'
+            ? '1px solid rgba(255, 255, 255, 0.1)'
+            : '1px solid rgba(0, 0, 0, 0.1)',
         boxShadow: 'none',
-      }}
+        borderRadius: '10px',
+      })}
     >
       <CardContent sx={{ p: 1.25 }}>
         <Box

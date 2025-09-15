@@ -129,9 +129,19 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
     <Card
       variant="outlined"
       className="u-fade-in"
-      sx={{
+      sx={(theme) => ({
         maxWidth: { xs: 260, sm: 320, md: 360 },
-      }}
+        backgroundColor:
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
+        border:
+          theme.palette.mode === 'dark'
+            ? '1px solid rgba(255, 255, 255, 0.1)'
+            : '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: 'none',
+        borderRadius: '10px',
+      })}
     >
       <CardContent sx={{ p: 1.25 }}>
         <Box
