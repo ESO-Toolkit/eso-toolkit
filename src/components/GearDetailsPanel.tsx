@@ -797,32 +797,6 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
             </Box>
           ) : (
             <Box sx={{ position: 'relative' }}>
-              {/* Enhanced mobile scroll indicator */}
-              <Box
-                sx={{
-                  display: { xs: 'flex', sm: 'none' },
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  py: 1,
-                  px: { xs: 2, sm: 1.5 },
-                  mb: 1.5,
-                  mx: 'auto',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? '#a5b4fc' : '#6366f1',
-                    textAlign: 'center',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  Swipe to see all columns
-                </Typography>
-              </Box>
               <Box
                 sx={{
                   position: 'relative',
