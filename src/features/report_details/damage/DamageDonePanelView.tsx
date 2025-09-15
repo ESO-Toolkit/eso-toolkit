@@ -138,16 +138,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'name' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+              sortField === 'name'
+                ? roleColors.isDarkMode
+                  ? 'rgba(56, 181, 248, 0.2)'
+                  : 'rgba(14, 165, 233, 0.1)'
+                : roleColors.isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(15, 23, 42, 0.05)',
+            border: roleColors.isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'name' ? '#38bdf8' : '#ecf0f1',
+            color:
+              sortField === 'name'
+                ? roleColors.isDarkMode
+                  ? '#38bdf8'
+                  : '#0ea5e9'
+                : roleColors.isDarkMode
+                  ? '#ecf0f1'
+                  : '#334155',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(56, 181, 248, 0.15)',
-              color: '#38bdf8',
+              backgroundColor: roleColors.isDarkMode
+                ? 'rgba(56, 181, 248, 0.15)'
+                : 'rgba(14, 165, 233, 0.08)',
+              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
             },
           }}
         >
@@ -160,16 +177,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'total' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+              sortField === 'total'
+                ? roleColors.isDarkMode
+                  ? 'rgba(56, 181, 248, 0.2)'
+                  : 'rgba(14, 165, 233, 0.1)'
+                : roleColors.isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(15, 23, 42, 0.05)',
+            border: roleColors.isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'total' ? '#38bdf8' : '#ecf0f1',
+            color:
+              sortField === 'total'
+                ? roleColors.isDarkMode
+                  ? '#38bdf8'
+                  : '#0ea5e9'
+                : roleColors.isDarkMode
+                  ? '#ecf0f1'
+                  : '#334155',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(56, 181, 248, 0.15)',
-              color: '#38bdf8',
+              backgroundColor: roleColors.isDarkMode
+                ? 'rgba(56, 181, 248, 0.15)'
+                : 'rgba(14, 165, 233, 0.08)',
+              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
             },
           }}
         >
@@ -182,15 +216,30 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'dps' ? 'rgba(255, 139, 97, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+              sortField === 'dps'
+                ? roleColors.isDarkMode
+                  ? 'rgba(255, 139, 97, 0.2)'
+                  : 'rgba(239, 68, 68, 0.1)'
+                : roleColors.isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(15, 23, 42, 0.05)',
+            border: roleColors.isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'dps' ? roleColors.getPlayerColor('dps') : '#ecf0f1',
+            color:
+              sortField === 'dps'
+                ? roleColors.getPlayerColor('dps')
+                : roleColors.isDarkMode
+                  ? '#ecf0f1'
+                  : '#334155',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(255, 139, 97, 0.15)',
+              backgroundColor: roleColors.isDarkMode
+                ? 'rgba(255, 139, 97, 0.15)'
+                : 'rgba(239, 68, 68, 0.08)',
               color: roleColors.getPlayerColor('dps'),
             },
           }}
@@ -204,16 +253,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             py: 0.5,
             borderRadius: '12px',
             backgroundColor:
-              sortField === 'activeDps' ? 'rgba(56, 181, 248, 0.2)' : 'rgba(255, 255, 255, 0.1)',
-            border: '1px solid rgba(255, 255, 255, 0.2)',
+              sortField === 'activeDps'
+                ? roleColors.isDarkMode
+                  ? 'rgba(56, 181, 248, 0.2)'
+                  : 'rgba(14, 165, 233, 0.1)'
+                : roleColors.isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(15, 23, 42, 0.05)',
+            border: roleColors.isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
             fontSize: '0.75rem',
-            color: sortField === 'activeDps' ? '#38bdf8' : '#ecf0f1',
+            color:
+              sortField === 'activeDps'
+                ? roleColors.isDarkMode
+                  ? '#38bdf8'
+                  : '#0ea5e9'
+                : roleColors.isDarkMode
+                  ? '#ecf0f1'
+                  : '#334155',
             transition: 'all 0.2s ease',
             '&:hover': {
-              backgroundColor: 'rgba(56, 181, 248, 0.15)',
-              color: '#38bdf8',
+              backgroundColor: roleColors.isDarkMode
+                ? 'rgba(56, 181, 248, 0.15)'
+                : 'rgba(14, 165, 233, 0.08)',
+              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
             },
           }}
         >
@@ -599,20 +665,31 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   <Box>
                     <Typography
                       sx={{
-                        color: '#ecf0f1',
+                        color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
                         fontWeight: 700,
                         fontSize: '0.9rem',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.12)',
                       }}
                     >
                       {formatNumber(row.dps)} DPS
                     </Typography>
                     <Typography
                       sx={{
-                        color: row.activePercentage > 0 ? '#38bdf8' : '#888',
+                        color:
+                          row.activePercentage > 0
+                            ? roleColors.isDarkMode
+                              ? '#38bdf8'
+                              : '#0ea5e9'
+                            : roleColors.isDarkMode
+                              ? '#888'
+                              : '#64748b',
                         fontWeight: 600,
                         fontSize: '0.8rem',
-                        textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.1)',
                       }}
                     >
                       {row.activePercentage > 0
@@ -626,11 +703,13 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Typography
                     sx={{
-                      color: '#ecf0f1',
+                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
                       fontWeight: 500,
                       fontSize: '0.8rem',
                       minWidth: '45px',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {percentage}%
@@ -647,11 +726,13 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Box>
                   <Typography
                     sx={{
-                      color: '#ecf0f1',
+                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
                       fontSize: '0.8rem',
                       minWidth: '70px',
                       textAlign: 'right',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.5)',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
                     {formatNumber(row.total)}
