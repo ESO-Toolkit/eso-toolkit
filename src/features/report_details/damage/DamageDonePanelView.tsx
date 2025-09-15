@@ -11,6 +11,8 @@ interface DamageRow {
   activePercentage: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
+  deaths: number;
+  resurrects: number;
 }
 
 interface DamageDonePanelViewProps {
@@ -283,7 +285,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             },
           }}
         >
-          Active DPS{getSortIcon('activeDps')}
+          Active{getSortIcon('activeDps')}
         </Box>
       </Box>
       {damageRows.length > 0 ? (
@@ -335,8 +337,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1fr 2fr 100px 100px',
-              gap: 2,
+              gridTemplateColumns: '1.5fr 2fr 80px 80px 60px 60px',
+              gap: 1,
               p: 1.5,
               backgroundColor: 'transparent',
               borderBottom: roleColors.isDarkMode
@@ -444,10 +446,34 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 '&:hover': {
                   color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
                 },
+                position: 'relative',
               }}
               onClick={() => handleSort('activeDps')}
             >
-              Active DPS{getSortIcon('activeDps')}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'flex-end',
+                  gap: 1,
+                }}
+              >
+                Active{getSortIcon('activeDps')}
+              </Box>
+            </Box>
+            <Box
+              sx={{
+                textAlign: 'center',
+              }}
+            >
+              💀
+            </Box>
+            <Box
+              sx={{
+                textAlign: 'center',
+              }}
+            >
+              ❤️
             </Box>
           </Box>
 
@@ -462,8 +488,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1fr 2fr 100px 100px',
-                  gap: 2,
+                  gridTemplateColumns: '1.5fr 2fr 80px 80px 60px 60px',
+                  gap: 1,
                   p: 1.5,
                   backgroundColor: 'transparent',
                   borderBottom:
@@ -494,7 +520,6 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       overflow: 'hidden',
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
-                      maxWidth: '120px',
                       ...(roleColors.isDarkMode
                         ? {
                             color: roleColors.getPlayerColor(row.role),
@@ -528,7 +553,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   >
                     {percentage}%
                   </Typography>
-                  <Box sx={{ width: '200px', minWidth: '200px' }}>
+                  <Box sx={{ flex: 1, minWidth: '100px' }}>
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
@@ -551,48 +576,130 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 </Box>
 
                 {/* DPS */}
-                <Typography
+                <Box
                   sx={{
-                    color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
-                    fontWeight: 700,
-                    fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow: roleColors.isDarkMode
-                      ? '0 1px 3px rgba(0,0,0,0.5)'
-                      : '0 1px 1px rgba(0,0,0,0.12)',
                   }}
                 >
-                  {formatNumber(row.dps)}
-                </Typography>
+                  <Typography
+                    sx={{
+                      color: roleColors.getPlayerColor('dps'),
+                      fontWeight: 700,
+                      fontSize: '0.875rem',
+                      textShadow: roleColors.isDarkMode
+                        ? '0 1px 3px rgba(0,0,0,0.5)'
+                        : '0 1px 1px rgba(0,0,0,0.12)',
+                    }}
+                  >
+                    {formatNumber(row.dps)}
+                  </Typography>
+                </Box>
 
                 {/* Active DPS */}
-                <Typography
+                <Box
                   sx={{
-                    color:
-                      row.activePercentage > 0
-                        ? roleColors.isDarkMode
-                          ? '#38bdf8'
-                          : '#0ea5e9'
-                        : roleColors.isDarkMode
-                          ? '#888'
-                          : '#64748b',
-                    fontWeight: 700,
-                    fontSize: '0.875rem',
                     textAlign: 'right',
-                    textShadow:
-                      row.activePercentage > 0
-                        ? roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 0 rgba(14,165,233,0.25)'
-                        : roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.1)',
                   }}
                 >
-                  {row.activePercentage > 0
-                    ? formatNumber(Math.round(row.dps / (row.activePercentage / 100)))
-                    : 'N/A'}
-                </Typography>
+                  {row.activePercentage > 0 ? (
+                    <Typography
+                      sx={{
+                        color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(14,165,233,0.25)',
+                      }}
+                    >
+                      {formatNumber(Math.round(row.dps / (row.activePercentage / 100)))}
+                    </Typography>
+                  ) : (
+                    <Typography
+                      sx={{
+                        color: roleColors.isDarkMode ? '#888' : '#64748b',
+                        fontWeight: 500,
+                        fontSize: '0.8rem',
+                        fontStyle: 'italic',
+                        opacity: 0.7,
+                      }}
+                    >
+                      —
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Deaths */}
+                {row.deaths > 0 ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(220,38,38,0.2)',
+                      }}
+                    >
+                      💀 {row.deaths}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      textAlign: 'center',
+                    }}
+                  >
+                    —
+                  </Typography>
+                )}
+
+                {/* Resurrects */}
+                {row.resurrects > 0 ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      sx={{
+                        fontSize: '0.875rem',
+                        fontWeight: 700,
+                        color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 0 rgba(34,197,94,0.2)',
+                      }}
+                    >
+                      ❤️ {row.resurrects}
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Typography
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      color: roleColors.isDarkMode ? '#666' : '#999',
+                      textAlign: 'center',
+                    }}
+                  >
+                    —
+                  </Typography>
+                )}
               </Box>
             );
           })}
@@ -643,7 +750,6 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
-                        maxWidth: '150px',
                         ...(roleColors.isDarkMode
                           ? {
                               color: roleColors.getPlayerColor(row.role),
@@ -700,7 +806,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 </Box>
 
                 {/* Mobile Progress Bar and Amount */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                   <Typography
                     sx={{
                       color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
@@ -738,6 +844,63 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {formatNumber(row.total)}
                   </Typography>
                 </Box>
+
+                {/* Mobile Death and Resurrect Counters */}
+                {(row.deaths > 0 || row.resurrects > 0) && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'flex-end',
+                      mt: 0.5,
+                      gap: 0.5,
+                    }}
+                  >
+                    {row.deaths > 0 && (
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: '12px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(244, 67, 54, 0.2)'
+                            : 'rgba(239, 68, 68, 0.1)',
+                          border: roleColors.isDarkMode
+                            ? '1px solid rgba(244, 67, 54, 0.4)'
+                            : '1px solid rgba(239, 68, 68, 0.2)',
+                          cursor: 'default',
+                          userSelect: 'none',
+                          fontSize: '0.7rem',
+                          color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        💀 {row.deaths}
+                      </Box>
+                    )}
+                    {row.resurrects > 0 && (
+                      <Box
+                        sx={{
+                          px: 1.5,
+                          py: 0.5,
+                          borderRadius: '12px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(74, 222, 128, 0.2)'
+                            : 'rgba(34, 197, 94, 0.1)',
+                          border: roleColors.isDarkMode
+                            ? '1px solid rgba(74, 222, 128, 0.4)'
+                            : '1px solid rgba(34, 197, 94, 0.2)',
+                          cursor: 'default',
+                          userSelect: 'none',
+                          fontSize: '0.7rem',
+                          color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
+                          transition: 'all 0.2s ease',
+                        }}
+                      >
+                        ❤️ {row.resurrects}
+                      </Box>
+                    )}
+                  </Box>
+                )}
               </Box>
             );
           })}

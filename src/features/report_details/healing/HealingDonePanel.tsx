@@ -8,6 +8,7 @@ import {
   useHealingEvents,
   useReportMasterData,
   usePlayerData,
+  useDeathEvents,
 } from '../../../hooks';
 import { KnownAbilities } from '../../../types/abilities';
 import { HealEvent } from '../../../types/combatlogEvents';
@@ -28,6 +29,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { castEvents, isCastEventsLoading } = useCastEvents();
   const { playerData, isPlayerDataLoading } = usePlayerData();
+  const { deathEvents, isDeathEventsLoading } = useDeathEvents();
 
   const masterData = useMemo(
     () => reportMasterData || { actorsById: {}, abilitiesById: {} },
@@ -36,7 +38,11 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
 
   // Compute loading state
   const isLoading =
-    isHealingEventsLoading || isMasterDataLoading || isCastEventsLoading || isPlayerDataLoading;
+    isHealingEventsLoading ||
+    isMasterDataLoading ||
+    isCastEventsLoading ||
+    isPlayerDataLoading ||
+    isDeathEventsLoading;
 
   // Memoize healing calculations to prevent unnecessary recalculations
   const healingStatistics = useMemo(() => {
@@ -71,6 +77,25 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
 
     return result;
   }, [castEvents]);
+
+  const deathsByPlayer = useMemo(() => {
+    const counts: Record<string, number> = {};
+    const fightNum = fight?.id ? Number(fight.id) : undefined;
+
+    for (const ev of deathEvents) {
+      if (
+        ev.type === 'death' &&
+        (fightNum == null || (typeof ev.fight === 'number' && ev.fight === fightNum))
+      ) {
+        const target = ev.targetID;
+        if (target != null) {
+          const key = String(target);
+          counts[key] = (counts[key] || 0) + 1;
+        }
+      }
+    }
+    return counts;
+  }, [deathEvents, fight]);
 
   const fightDuration = useMemo(() => {
     if (fight && fight.startTime != null && fight.endTime != null) {
@@ -116,6 +141,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           : undefined;
 
         const ressurects = resByPlayer[id] || 0;
+        const deaths = deathsByPlayer[id] || 0;
         const role = getPlayerRole(id);
 
         // Calculate overheal percentage: (overheal / (raw + overheal)) * 100
@@ -132,6 +158,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
           overhealPercentage,
           iconUrl,
           ressurects,
+          deaths,
           role,
         };
       })
@@ -142,6 +169,7 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     masterData.actorsById,
     fightDuration,
     resByPlayer,
+    deathsByPlayer,
     getPlayerRole,
   ]);
 
