@@ -242,11 +242,11 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       }
                     : {
                         background:
-                          'linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #334155 100%)',
+                          'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
-                        textShadow: '0 1px 3px rgba(15, 23, 42, 0.3)',
+                        textShadow: '0 1px 3px rgba(255, 255, 255, 0.3)',
                       }),
                   lineHeight: 1.1,
                   fontSize: { xs: '0.86rem', sm: '0.92rem' },
@@ -373,7 +373,13 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
         )}
 
         <Divider
-          sx={(theme) => ({ my: 1, borderColor: alpha(theme.palette.common.white, 0.08) })}
+          sx={(theme) => ({
+            my: 1,
+            borderColor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.common.white, 0.08)
+                : alpha(theme.palette.common.black, 0.08),
+          })}
         />
 
         <Typography

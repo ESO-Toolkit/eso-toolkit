@@ -121,8 +121,14 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
             p: 0.75,
             pt: 0.5,
             borderRadius: '10px',
-            backgroundColor: alpha(theme.palette.common.white, 0.02),
-            border: `1px solid ${alpha(theme.palette.common.white, 0.06)}`,
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? alpha(theme.palette.common.white, 0.02)
+                : alpha(theme.palette.common.black, 0.02),
+            border:
+              theme.palette.mode === 'dark'
+                ? `1px solid ${alpha(theme.palette.common.white, 0.06)}`
+                : `1px solid ${alpha(theme.palette.common.black, 0.06)}`,
             mb: 1,
           })}
         >
@@ -134,7 +140,10 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
                   height: { xs: 40, sm: 44 },
                   borderRadius: '7px',
                   border: `1px solid ${theme.palette.divider}`,
-                  backgroundColor: alpha(theme.palette.common.white, 0.04),
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? alpha(theme.palette.common.white, 0.04)
+                      : alpha(theme.palette.common.black, 0.04),
                   overflow: 'hidden',
                   display: 'inline-block',
                   flex: '0 0 auto',
@@ -268,7 +277,13 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
         {description && (
           <>
             <Divider
-              sx={(theme) => ({ my: 1, borderColor: alpha(theme.palette.common.white, 0.08) })}
+              sx={(theme) => ({
+                my: 1,
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.common.white, 0.08)
+                    : alpha(theme.palette.common.black, 0.08),
+              })}
             />
             <Typography
               variant="body2"
