@@ -161,7 +161,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         id: 'cp',
         header: 'CP',
         accessorKey: 'championPoints',
-        size: 60,
+        size: 55,
         cell: (info: any) => {
           const cp = info.getValue() as number;
           const color = cp >= 160 ? '#4caf50' : cp >= 150 ? '#ff9800' : '#f44336';
@@ -171,7 +171,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.2,
-                px: 0.2,
+                px: 0.1,
                 py: 0.5,
                 minWidth: 'auto',
                 maxWidth: 'none',
@@ -243,7 +243,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           };
           return getTypeLabel((row as unknown as PlayerGear).type);
         },
-        size: 85,
+        size: 80,
         cell: (info: any) => (
           <Typography
             variant="caption"
@@ -251,7 +251,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
               color: 'text.primary',
               fontWeight: roleColors.isDarkMode ? 200 : 300,
               fontSize: '0.7rem',
-              px: 0.2,
+              px: 0.1,
               py: 0.5,
               minWidth: 'auto',
               maxWidth: 'none',
@@ -267,7 +267,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Slot',
         accessorFn: (row: Record<string, unknown>) =>
           getSlotName((row as unknown as PlayerGear).slot),
-        size: 110,
+        size: 100,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           return (
@@ -276,7 +276,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 display: 'flex',
                 alignItems: 'center',
                 gap: 0.5,
-                px: 0.2,
+                px: 0.1,
                 py: 0.5,
                 minWidth: 'auto',
                 maxWidth: 'none',
@@ -301,7 +301,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         id: 'item',
         header: 'Item',
         accessorFn: (row: Record<string, unknown>) => (row as unknown as PlayerGear).name || '',
-        size: 230,
+        size: 200,
         cell: (info: any) => {
           const piece = info.row.original as PlayerGear;
           const getQualityKey = (
@@ -352,7 +352,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                 gap: 0.5,
                 minWidth: 'auto',
                 maxWidth: 'none',
-                px: 0.2,
+                px: 0.1,
                 py: 0.5,
               }}
             >
@@ -383,11 +383,36 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         },
       },
       {
+        id: 'enchant',
+        header: 'Enchant',
+        accessorFn: (row: Record<string, unknown>) =>
+          ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
+        size: 130,
+        cell: (info: any) => (
+          <Typography
+            variant="caption"
+            sx={{
+              fontWeight: roleColors.isDarkMode ? 100 : 300,
+              color: getEnchantmentColor(
+                (info.row.original as PlayerGear).enchantType,
+                (info.row.original as PlayerGear).enchantQuality,
+              ),
+              fontSize: '0.7rem',
+              px: 0.2,
+              py: 0.5,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {(info.getValue() as string) || '—'}
+          </Typography>
+        ),
+      },
+      {
         id: 'trait',
         header: 'Trait',
         accessorFn: (row: Record<string, unknown>) =>
           TRAIT_NAMES[(row as unknown as PlayerGear).trait] || '',
-        size: 80,
+        size: 90,
         cell: (info: any) => (
           <Typography
             variant="caption"
@@ -772,32 +797,6 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
             </Box>
           ) : (
             <Box sx={{ position: 'relative' }}>
-              {/* Enhanced mobile scroll indicator */}
-              <Box
-                sx={{
-                  display: { xs: 'flex', sm: 'none' },
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  py: 1,
-                  px: { xs: 2, sm: 1.5 },
-                  mb: 1.5,
-                  mx: 'auto',
-                }}
-              >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? '#a5b4fc' : '#6366f1',
-                    textAlign: 'center',
-                    letterSpacing: '0.3px',
-                  }}
-                >
-                  Swipe to see all columns
-                </Typography>
-              </Box>
               <Box
                 sx={{
                   position: 'relative',
@@ -912,16 +911,20 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
                         letterSpacing: { xs: '0.5px', sm: '0.8px' },
                       },
                       '& .MuiTableRow-root:hover': {
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.03)'
-                            : 'rgba(0,0,0,0.02)',
+                        '@media (hover: hover)': {
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.03)'
+                              : 'rgba(0,0,0,0.02)',
+                        },
                       },
                       '& .MuiTableRow-root:active': {
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,255,255,0.06)'
-                            : 'rgba(0,0,0,0.04)',
+                        '@media (hover: hover)': {
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255,255,255,0.06)'
+                              : 'rgba(0,0,0,0.04)',
+                        },
                       },
                     }}
                     initialPageSize={rows.length}
