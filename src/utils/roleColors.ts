@@ -10,7 +10,7 @@ export const DARK_ROLE_COLORS = {
 
 // Light mode role colors with vibrant gradients
 export const LIGHT_ROLE_COLORS = {
-  dps: 'linear-gradient(135deg, #ff9246d9 56% 56%, #ff000078 100%)',
+  dps: 'linear-gradient(135deg, #ff9246 36% 36%, #ff3400e6 100%)',
   healer: 'linear-gradient(135deg, #9333ea 0%, #c084fc 100%)',
   tank: 'linear-gradient(135deg, #0ea5e9 0%, #38bdf8 100%)',
 } as const;
