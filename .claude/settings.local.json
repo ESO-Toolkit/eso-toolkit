@@ -42,7 +42,8 @@
       "Bash(npm run test)",
       "Bash(git branch:*)",
       "Bash(sed:*)",
-      "Read(//c/**)"
+      "Read(//c/**)",
+      "Bash(gh pr create:*)"
     ],
     "deny": [],
     "ask": []

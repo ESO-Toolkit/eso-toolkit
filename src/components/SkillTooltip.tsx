@@ -128,20 +128,10 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   return (
     <Card
       variant="outlined"
-      className="u-fade-in"
-      sx={(theme) => ({
+      className="u-fade-in skill-tooltip"
+      sx={{
         maxWidth: { xs: 260, sm: 320, md: 360 },
-        backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
-        border:
-          theme.palette.mode === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.1)'
-            : '1px solid rgba(0, 0, 0, 0.1)',
-        boxShadow: 'none',
-        borderRadius: '10px',
-      })}
+      }}
     >
       <CardContent sx={{ p: 1.25 }}>
         <Box
@@ -242,11 +232,11 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       }
                     : {
                         background:
-                          'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
+                          'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
                         WebkitBackgroundClip: 'text',
                         WebkitTextFillColor: 'transparent',
                         backgroundClip: 'text',
-                        textShadow: '0 1px 3px rgba(255, 255, 255, 0.3)',
+                        textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
                       }),
                   lineHeight: 1.1,
                   fontSize: { xs: '0.86rem', sm: '0.92rem' },

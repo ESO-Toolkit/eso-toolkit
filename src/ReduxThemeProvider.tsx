@@ -181,6 +181,36 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 border: `1px solid ${tokens.border}`,
                 borderRadius: 14,
                 transition: 'all 0.3s ease',
+                // Exclude tooltip cards from global Card styling
+                '&.gear-set-tooltip': {
+                  background: darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(249, 250, 251, 0.75)',
+                  backdropFilter: 'blur(12px) !important',
+                  WebkitBackdropFilter: 'blur(12px) !important',
+                  border: darkMode
+                    ? '1px solid rgba(255, 255, 255, 0.1)'
+                    : '1px solid rgba(0, 0, 0, 0.08)',
+                  boxShadow: 'none',
+                  borderRadius: '10px',
+                },
+                '&.skill-tooltip': {
+                  background: darkMode ? 'rgba(15, 23, 42, 0.95)' : 'rgba(255, 255, 255, 0.95)',
+                  border: darkMode
+                    ? '1px solid rgba(255, 255, 255, 0.2)'
+                    : '1px solid rgba(0, 0, 0, 0.15)',
+                  boxShadow: darkMode
+                    ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                    : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  borderRadius: '10px',
+                  '&:hover': {
+                    transform: 'none',
+                    boxShadow: darkMode
+                      ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                      : '0 2px 8px rgba(0, 0, 0, 0.1)',
+                    borderColor: darkMode
+                      ? '1px solid rgba(255, 255, 255, 0.2)'
+                      : '1px solid rgba(0, 0, 0, 0.15)',
+                  },
+                },
                 '&:hover': {
                   transform: 'translateY(-3px)',
                   boxShadow: darkMode
