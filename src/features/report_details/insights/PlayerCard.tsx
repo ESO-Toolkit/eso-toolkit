@@ -1207,96 +1207,41 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                 {buildIssues.length > 0 && (
                   <Accordion
-                    disableGutters
-                    square
+                    variant="outlined"
                     sx={{
                       mt: 1,
-                      border: '1px solid',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(255,193,7,0.3)'
-                          : 'rgba(245,158,11,0.2)',
-                      borderRadius: 1,
-                      '&:before': { display: 'none' },
+                      borderColor: theme.palette.mode === 'light' ? '#000000' : 'warning.main',
+                      backgroundColor: 'rgba(255,193,7,0.07)',
+                      borderTop: '1px solid #5c574d',
+                      borderTopLeftRadius: '5px',
+                      borderTopRightRadius: '5px',
+                      overflow: 'hidden',
                       '&.Mui-expanded': {
-                        margin: '8px 0',
-                        borderColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255,193,7,0.4)'
-                            : 'rgba(245,158,11,0.3)',
+                        borderTop: 'none',
+                        borderTopLeftRadius: '5px',
+                        borderTopRightRadius: '5px',
                       },
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(255,193,7,0.15) 0%, rgba(255,193,7,0.08) 50%, rgba(255,193,7,0.04) 100%)'
-                          : 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 50%, rgba(245,158,11,0.02) 100%)',
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={
-                        <ExpandMoreIcon
-                          sx={{
-                            fontSize: '1rem',
-                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
-                          }}
-                        />
-                      }
-                      sx={{
-                        minHeight: 48,
-                        '&.Mui-expanded': { minHeight: 48 },
-                        px: 2,
-                        background:
-                          theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(255,193,7,0.2) 0%, rgba(255,193,7,0.1) 50%, rgba(255,193,7,0.05) 100%)'
-                            : 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.075) 50%, rgba(245,158,11,0.025) 100%)',
-                        '&:hover': {
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(255,193,7,0.25) 0%, rgba(255,193,7,0.125) 50%, rgba(255,193,7,0.0625) 100%)'
-                              : 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.1) 50%, rgba(245,158,11,0.033) 100%)',
-                        },
-                      }}
+                      expandIcon={<ExpandMoreIcon sx={{ color: 'warning.main' }} />}
+                      sx={{ '& .MuiAccordionSummary-content': { alignItems: 'center' } }}
                     >
-                      <Box
+                      <Typography
+                        variant="body2"
+                        fontWeight="bold"
                         sx={{
+                          color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,
-                          width: '100%',
                         }}
                       >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
-                            fontWeight: 600,
-                            fontSize: '0.85rem',
-                            textTransform: 'uppercase',
-                            letterSpacing: '0.05em',
-                          }}
-                        >
-                          Build Issues
-                        </Typography>
-                        <Chip
-                          label={buildIssues.length}
-                          size="small"
-                          sx={{
-                            height: 20,
-                            fontSize: '0.7rem',
-                            fontWeight: 'bold',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(255,193,7,0.2)'
-                                : 'rgba(245,158,11,0.15)',
-                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
-                            border: '1px solid',
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(255,193,7,0.3)'
-                                : 'rgba(245,158,11,0.25)',
-                            '& .MuiChip-label': { px: 0.75 },
-                          }}
-                        />
-                      </Box>
+                        <span role="img" aria-label="attention">
+                          ⚠️
+                        </span>
+                        Build Issues ({buildIssues.length})
+                      </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ px: 2, pb: 1.5, pt: 0.5 }}>
                       {(() => {
