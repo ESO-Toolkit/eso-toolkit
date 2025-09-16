@@ -1269,14 +1269,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               {} as Record<string, number>,
                             );
 
-                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
-                              count > 1 ? `${name}(x${count})` : name,
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
                             );
-
-                            const displayName =
-                              displayNames.length > 1
-                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
-                                : displayNames[0];
 
                             issues.push(
                               <Box
@@ -1301,11 +1300,57 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   overflow: 'hidden',
                                 }}
                               >
-                                <Tooltip
-                                  title={displayName}
-                                  enterTouchDelay={0}
-                                  leaveTouchDelay={3000}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '140px',
+                                  }}
                                 >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
                                   <Typography
                                     variant="caption"
                                     sx={{
@@ -1313,16 +1358,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
-                                      maxWidth: '140px',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      cursor: 'default',
                                     }}
                                   >
-                                    {displayName}:
+                                    :
                                   </Typography>
-                                </Tooltip>
+                                </Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1359,14 +1399,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               {} as Record<string, number>,
                             );
 
-                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
-                              count > 1 ? `${name}(x${count})` : name,
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
                             );
-
-                            const displayName =
-                              displayNames.length > 1
-                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
-                                : displayNames[0];
 
                             issues.push(
                               <Box
@@ -1391,11 +1430,57 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   overflow: 'hidden',
                                 }}
                               >
-                                <Tooltip
-                                  title={displayName}
-                                  enterTouchDelay={0}
-                                  leaveTouchDelay={3000}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '140px',
+                                  }}
                                 >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
                                   <Typography
                                     variant="caption"
                                     sx={{
@@ -1403,16 +1488,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
-                                      maxWidth: '140px',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      cursor: 'default',
                                     }}
                                   >
-                                    {displayName}:
+                                    :
                                   </Typography>
-                                </Tooltip>
+                                </Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
@@ -1449,14 +1529,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               {} as Record<string, number>,
                             );
 
-                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
-                              count > 1 ? `${name}(x${count})` : name,
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
                             );
-
-                            const displayName =
-                              displayNames.length > 1
-                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
-                                : displayNames[0];
 
                             issues.push(
                               <Box
@@ -1481,11 +1560,57 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   overflow: 'hidden',
                                 }}
                               >
-                                <Tooltip
-                                  title={displayName}
-                                  enterTouchDelay={0}
-                                  leaveTouchDelay={3000}
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '140px',
+                                  }}
                                 >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
                                   <Typography
                                     variant="caption"
                                     sx={{
@@ -1493,16 +1618,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
-                                      maxWidth: '140px',
-                                      whiteSpace: 'nowrap',
-                                      overflow: 'hidden',
-                                      textOverflow: 'ellipsis',
-                                      cursor: 'default',
                                     }}
                                   >
-                                    {displayName}:
+                                    :
                                   </Typography>
-                                </Tooltip>
+                                </Box>
                                 <Typography
                                   variant="caption"
                                   sx={{
