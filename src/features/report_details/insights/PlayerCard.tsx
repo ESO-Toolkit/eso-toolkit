@@ -1235,6 +1235,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,
+                          textShadow:
+                            theme.palette.mode === 'light'
+                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                              : 'none',
                         }}
                       >
                         <span role="img" aria-label="attention">
@@ -1306,7 +1310,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     alignItems: 'center',
                                     gap: 0.25,
                                     flexShrink: 0,
-                                    maxWidth: '140px',
+                                    maxWidth: '180px',
                                   }}
                                 >
                                   <Tooltip
@@ -1325,6 +1329,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         cursor: 'default',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
                                       }}
                                     >
                                       {displayNames.map((d) => d.name).join(', ')}
@@ -1339,6 +1347,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
                                       }}
                                     >
                                       {displayNames.length === 1 && displayNames[0].count > 1
@@ -1358,21 +1370,93 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
+                                      textShadow:
+                                        theme.palette.mode === 'light'
+                                          ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                          : 'none',
                                     }}
                                   >
                                     :
                                   </Typography>
                                 </Box>
-                                <Typography
-                                  variant="caption"
+                                <Box
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#ff8c42' : '#ea580c',
-                                    fontSize: '0.7rem',
-                                    whiteSpace: 'nowrap',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.1,
                                   }}
                                 >
-                                  {message.replace(/^.*?:\s*/, '')}
-                                </Typography>
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('quality is') &&
+                                      messageText.includes('should be')
+                                    ) {
+                                      const currentMatch = messageText.match(/quality is (\d+)/);
+                                      const shouldMatch = messageText.match(/should be (\d+)/);
+                                      if (currentMatch && shouldMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Box
+                                                key={star}
+                                                component="span"
+                                                sx={{
+                                                  fontSize: '1.3em',
+                                                  display: 'inline-block',
+                                                  lineHeight: 1,
+                                                  filter:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? 'drop-shadow(0 0 2px rgba(251, 191, 36, 0.6))'
+                                                      : 'none',
+                                                  textShadow:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? '0 0 8px rgba(251, 191, 36, 0.4)'
+                                                      : 'none',
+                                                  color:
+                                                    star <= current
+                                                      ? theme.palette.mode === 'dark'
+                                                        ? '#fbbf24'
+                                                        : '#d97706'
+                                                      : theme.palette.mode === 'dark'
+                                                        ? '#d1d5db'
+                                                        : '#9ca3af',
+                                                  transform:
+                                                    star <= current ? 'scale(1.1)' : 'scale(0.95)',
+                                                  transition: 'all 0.2s ease',
+                                                  opacity: star <= current ? 1 : 0.9,
+                                                  border: 'none',
+                                                  borderRadius: '0px',
+                                                  padding: '0px',
+                                                }}
+                                              >
+                                                {star <= current ? '★' : '☆'}
+                                              </Box>
+                                            ))}
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#ff8c42' : '#ea580c',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                          textShadow:
+                                            theme.palette.mode === 'light'
+                                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                              : 'none',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
                               </Box>,
                             );
                           });
@@ -1436,7 +1520,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     alignItems: 'center',
                                     gap: 0.25,
                                     flexShrink: 0,
-                                    maxWidth: '140px',
+                                    maxWidth: '180px',
                                   }}
                                 >
                                   <Tooltip
@@ -1455,6 +1539,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         overflow: 'hidden',
                                         textOverflow: 'ellipsis',
                                         cursor: 'default',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
                                       }}
                                     >
                                       {displayNames.map((d) => d.name).join(', ')}
@@ -1469,6 +1557,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
                                       }}
                                     >
                                       {displayNames.length === 1 && displayNames[0].count > 1
@@ -1488,21 +1580,104 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
+                                      textShadow:
+                                        theme.palette.mode === 'light'
+                                          ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                          : 'none',
                                     }}
                                   >
                                     :
                                   </Typography>
                                 </Box>
-                                <Typography
-                                  variant="caption"
+                                <Box
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706',
-                                    fontSize: '0.75rem',
-                                    whiteSpace: 'nowrap',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.1,
                                   }}
                                 >
-                                  {message.replace(/^.*?:\s*/, '')}
-                                </Typography>
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('Enchantment quality is') &&
+                                      messageText.includes('should be')
+                                    ) {
+                                      const currentMatch = messageText.match(
+                                        /Enchantment quality is (\d+)/,
+                                      );
+                                      const shouldMatch = messageText.match(/should be (\d+)/);
+                                      if (currentMatch && shouldMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.6rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                mr: 0.2,
+                                              }}
+                                            >
+                                              Enchant:
+                                            </Box>
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Box
+                                                key={star}
+                                                component="span"
+                                                sx={{
+                                                  fontSize: '1.3em',
+                                                  display: 'inline-block',
+                                                  lineHeight: 1,
+                                                  filter:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? 'drop-shadow(0 0 2px rgba(251, 191, 36, 0.6))'
+                                                      : 'none',
+                                                  textShadow:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? '0 0 8px rgba(251, 191, 36, 0.4)'
+                                                      : 'none',
+                                                  color:
+                                                    star <= current
+                                                      ? theme.palette.mode === 'dark'
+                                                        ? '#fbbf24'
+                                                        : '#d97706'
+                                                      : theme.palette.mode === 'dark'
+                                                        ? '#d1d5db'
+                                                        : '#9ca3af',
+                                                  transform:
+                                                    star <= current ? 'scale(1.1)' : 'scale(0.95)',
+                                                  transition: 'all 0.2s ease',
+                                                  opacity: star <= current ? 1 : 0.9,
+                                                  border: 'none',
+                                                  borderRadius: '0px',
+                                                  padding: '0px',
+                                                }}
+                                              >
+                                                {star <= current ? '★' : '☆'}
+                                              </Box>
+                                            ))}
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
                               </Box>,
                             );
                           });
@@ -1566,7 +1741,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     alignItems: 'center',
                                     gap: 0.25,
                                     flexShrink: 0,
-                                    maxWidth: '140px',
+                                    maxWidth: '180px',
                                   }}
                                 >
                                   <Tooltip
@@ -1623,16 +1798,96 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     :
                                   </Typography>
                                 </Box>
-                                <Typography
-                                  variant="caption"
+                                <Box
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#a16207' : '#92400e',
-                                    fontSize: '0.75rem',
-                                    whiteSpace: 'nowrap',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
                                   }}
                                 >
-                                  {message.replace(/^.*?:\s*/, '')}
-                                </Typography>
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('CP level is') &&
+                                      messageText.includes('should be 160')
+                                    ) {
+                                      const currentMatch = messageText.match(/CP level is (\d+)/);
+                                      if (currentMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.6rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              CP:
+                                            </Box>
+                                            <Typography
+                                              variant="caption"
+                                              sx={{
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#a16207'
+                                                    : '#92400e',
+                                                fontSize: '0.65rem',
+                                                fontWeight: 600,
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              {current}
+                                            </Typography>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.65rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              → 160
+                                            </Box>
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#a16207' : '#92400e',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                          textShadow:
+                                            theme.palette.mode === 'light'
+                                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                              : 'none',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
                               </Box>,
                             );
                           });
@@ -1651,38 +1906,123 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   py: 0.5,
                                   px: 1,
                                   borderRadius: 0.5,
-                                  backgroundColor:
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(192,132,252,0.08)'
-                                      : 'rgba(147,51,234,0.06)',
+                                  backgroundColor: (() => {
+                                    const buffName = buff.buffName.toLowerCase();
+                                    if (
+                                      buffName.includes('sorcery') ||
+                                      buffName.includes('prophecy')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(251, 191, 36, 0.08)'
+                                        : 'rgba(245, 158, 11, 0.06)';
+                                    } else if (
+                                      buffName.includes('brutality') ||
+                                      buffName.includes('savagery')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(239, 68, 68, 0.08)'
+                                        : 'rgba(220, 38, 38, 0.06)';
+                                    } else if (buffName.includes('aegis')) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.08)'
+                                        : 'rgba(37, 99, 235, 0.06)';
+                                    } else {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(192, 132, 252, 0.08)'
+                                        : 'rgba(147, 51, 234, 0.06)';
+                                    }
+                                  })(),
                                   border: '1px solid',
-                                  borderColor:
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(192,132,252,0.2)'
-                                      : 'rgba(147,51,234,0.15)',
+                                  borderColor: (() => {
+                                    const buffName = buff.buffName.toLowerCase();
+                                    if (
+                                      buffName.includes('sorcery') ||
+                                      buffName.includes('prophecy')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(251, 191, 36, 0.2)'
+                                        : 'rgba(245, 158, 11, 0.15)';
+                                    } else if (
+                                      buffName.includes('brutality') ||
+                                      buffName.includes('savagery')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(239, 68, 68, 0.2)'
+                                        : 'rgba(220, 38, 38, 0.15)';
+                                    } else if (buffName.includes('aegis')) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.2)'
+                                        : 'rgba(37, 99, 235, 0.15)';
+                                    } else {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(192, 132, 252, 0.2)'
+                                        : 'rgba(147, 51, 234, 0.15)';
+                                    }
+                                  })(),
                                   mb: 0.5,
                                 }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: theme.palette.mode === 'dark' ? '#c084fc' : '#9333ea',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {buff.buffName}:
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: theme.palette.mode === 'dark' ? '#e9d5ff' : '#a855f7',
-                                    fontSize: '0.75rem',
-                                  }}
-                                >
-                                  Missing buff
-                                </Typography>
+                                {(() => {
+                                  // Determine buff type and colors
+                                  const isSorcery = buff.buffName.toLowerCase().includes('sorcery');
+                                  const isProphecy = buff.buffName
+                                    .toLowerCase()
+                                    .includes('prophecy');
+                                  const isBrutality = buff.buffName
+                                    .toLowerCase()
+                                    .includes('brutality');
+                                  const isSavagery = buff.buffName
+                                    .toLowerCase()
+                                    .includes('savagery');
+                                  const isAegis = buff.buffName.toLowerCase().includes('aegis');
+
+                                  // Set colors based on buff type
+                                  let textColor;
+
+                                  if (isSorcery || isProphecy) {
+                                    // Gold for universal buffs (sorcery/prophecy)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706';
+                                  } else if (isBrutality || isSavagery) {
+                                    // Red for DPS buffs (brutality/savagery)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626';
+                                  } else if (isAegis) {
+                                    // Blue for tank buffs (aegis)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb';
+                                  } else {
+                                    // Default purple for other buffs
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#c084fc' : '#9333ea';
+                                  }
+
+                                  return (
+                                    <>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: textColor,
+                                          fontWeight: 600,
+                                          fontSize: '0.75rem',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        {buff.buffName}:
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: textColor,
+                                          fontSize: '0.75rem',
+                                          opacity: 0.8,
+                                        }}
+                                      >
+                                        Missing buff
+                                      </Typography>
+                                    </>
+                                  );
+                                })()}
                               </Box>,
                             );
                           });
