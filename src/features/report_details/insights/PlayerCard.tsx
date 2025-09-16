@@ -60,6 +60,53 @@ interface PlayerCardProps {
   playerGear: PlayerGearSetRecord[];
 }
 
+// Helper function to consolidate build issues
+function consolidateBuildIssues(buildIssues: BuildIssue[]): {
+  gearQuality: Array<{ gearName: string; quality: number; message: string }>;
+  enchantQuality: Array<{ gearName: string; quality: number; message: string }>;
+  gearLevel: Array<{ gearName: string; level: number; message: string }>;
+  missingBuffs: Array<{ buffName: string; abilityId: number; message: string }>;
+} {
+  const grouped = {
+    gearQuality: [] as Array<{ gearName: string; quality: number; message: string }>,
+    enchantQuality: [] as Array<{ gearName: string; quality: number; message: string }>,
+    gearLevel: [] as Array<{ gearName: string; level: number; message: string }>,
+    missingBuffs: [] as Array<{ buffName: string; abilityId: number; message: string }>,
+  };
+
+  buildIssues.forEach((issue) => {
+    if ('gearName' in issue) {
+      if ('gearQuality' in issue) {
+        grouped.gearQuality.push({
+          gearName: issue.gearName,
+          quality: issue.gearQuality,
+          message: issue.message,
+        });
+      } else if ('enchantQuality' in issue) {
+        grouped.enchantQuality.push({
+          gearName: issue.gearName,
+          quality: issue.enchantQuality,
+          message: issue.message,
+        });
+      } else if ('gearLevel' in issue) {
+        grouped.gearLevel.push({
+          gearName: issue.gearName,
+          level: issue.gearLevel,
+          message: issue.message,
+        });
+      }
+    } else if ('buffName' in issue) {
+      grouped.missingBuffs.push({
+        buffName: issue.buffName,
+        abilityId: issue.abilityId,
+        message: issue.message,
+      });
+    }
+  });
+
+  return grouped;
+}
+
 export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
   ({
     player,
@@ -1160,77 +1207,387 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
                 {buildIssues.length > 0 && (
                   <Accordion
-                    variant="outlined"
+                    disableGutters
+                    square
                     sx={{
                       mt: 1,
-                      borderColor: theme.palette.mode === 'light' ? '#000000' : 'warning.main',
-                      backgroundColor: 'rgba(255,193,7,0.07)',
-                      borderTop: '1px solid #5c574d',
-                      borderTopLeftRadius: '5px',
-                      borderTopRightRadius: '5px',
-                      overflow: 'hidden',
+                      border: '1px solid',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255,193,7,0.3)'
+                          : 'rgba(245,158,11,0.2)',
+                      borderRadius: 1,
+                      '&:before': { display: 'none' },
                       '&.Mui-expanded': {
-                        borderTop: 'none',
-                        borderTopLeftRadius: '5px',
-                        borderTopRightRadius: '5px',
+                        margin: '8px 0',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,193,7,0.4)'
+                            : 'rgba(245,158,11,0.3)',
                       },
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(135deg, rgba(255,193,7,0.08) 0%, rgba(255,193,7,0.04) 50%, rgba(255,193,7,0.02) 100%)'
+                          : 'linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.03) 50%, rgba(245,158,11,0.01) 100%)',
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={<ExpandMoreIcon sx={{ color: 'warning.main' }} />}
-                      sx={{ '& .MuiAccordionSummary-content': { alignItems: 'center' } }}
+                      expandIcon={
+                        <ExpandMoreIcon
+                          sx={{
+                            fontSize: '1rem',
+                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
+                          }}
+                        />
+                      }
+                      sx={{
+                        minHeight: 48,
+                        '&.Mui-expanded': { minHeight: 48 },
+                        px: 2,
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(255,193,7,0.12) 0%, rgba(255,193,7,0.06) 50%, rgba(255,193,7,0.03) 100%)'
+                            : 'linear-gradient(135deg, rgba(245,158,11,0.09) 0%, rgba(245,158,11,0.045) 50%, rgba(245,158,11,0.015) 100%)',
+                        '&:hover': {
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(255,193,7,0.16) 0%, rgba(255,193,7,0.08) 50%, rgba(255,193,7,0.04) 100%)'
+                              : 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 50%, rgba(245,158,11,0.02) 100%)',
+                        },
+                      }}
                     >
-                      <Typography
-                        variant="body2"
-                        fontWeight="bold"
+                      <Box
                         sx={{
-                          color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,
+                          width: '100%',
                         }}
                       >
-                        <span role="img" aria-label="attention">
-                          ⚠️
-                        </span>
-                        Build Issues ({buildIssues.length})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box component="ul" sx={{ m: 0, pl: 0, listStyle: 'none' }}>
-                        {buildIssues.map((issue, idx) => (
-                          <Typography
-                            key={`issue-${idx}`}
-                            component="li"
-                            variant="body2"
-                            sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
-                          >
-                            <span aria-hidden="true" style={{ width: 18 }}>
-                              •
-                            </span>
-                            <span>
-                              {(() => {
-                                if ('gearName' in issue) {
-                                  return (
-                                    <>
-                                      <strong>{issue.gearName}</strong>:{' '}
-                                      {issue.message.replace(/^.*?:\s*/, '')}
-                                    </>
-                                  );
-                                } else if ('buffName' in issue) {
-                                  return (
-                                    <>
-                                      <strong>{issue.buffName}</strong>:{' '}
-                                      {issue.message.replace(/^.*?\s-\s*/, '')}
-                                    </>
-                                  );
-                                }
-                                return (issue as { message: string }).message;
-                              })()}
-                            </span>
-                          </Typography>
-                        ))}
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
+                            fontWeight: 600,
+                            fontSize: '0.85rem',
+                            textTransform: 'uppercase',
+                            letterSpacing: '0.05em',
+                          }}
+                        >
+                          Build Issues
+                        </Typography>
+                        <Chip
+                          label={buildIssues.length}
+                          size="small"
+                          sx={{
+                            height: 20,
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold',
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,193,7,0.2)'
+                                : 'rgba(245,158,11,0.15)',
+                            color: theme.palette.mode === 'dark' ? '#ff9246' : '#c06220',
+                            border: '1px solid',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(255,193,7,0.3)'
+                                : 'rgba(245,158,11,0.25)',
+                            '& .MuiChip-label': { px: 0.75 },
+                          }}
+                        />
                       </Box>
+                    </AccordionSummary>
+                    <AccordionDetails sx={{ px: 2, pb: 1.5, pt: 0.5 }}>
+                      {(() => {
+                        const grouped = consolidateBuildIssues(buildIssues);
+                        const issues: React.ReactElement[] = [];
+
+                        // Gear quality issues
+                        if (grouped.gearQuality.length > 0) {
+                          const qualityGroups = grouped.gearQuality.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(qualityGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
+                              count > 1 ? `${name}(x${count})` : name,
+                            );
+
+                            const displayName =
+                              displayNames.length > 1
+                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
+                                : displayNames[0];
+
+                            issues.push(
+                              <Box
+                                key="quality"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255,107,53,0.08)'
+                                      : 'rgba(217,119,6,0.06)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255,107,53,0.2)'
+                                      : 'rgba(217,119,6,0.15)',
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {displayName}:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#ff8c42' : '#f59e0b',
+                                    fontSize: '0.7rem',
+                                  }}
+                                >
+                                  {message.replace(/^.*?:\s*/, '')}
+                                </Typography>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Enchant quality issues
+                        if (grouped.enchantQuality.length > 0) {
+                          const enchantGroups = grouped.enchantQuality.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(enchantGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
+                              count > 1 ? `${name}(x${count})` : name,
+                            );
+
+                            const displayName =
+                              displayNames.length > 1
+                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
+                                : displayNames[0];
+
+                            issues.push(
+                              <Box
+                                key="enchant"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(251,191,36,0.08)'
+                                      : 'rgba(245,158,11,0.06)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(251,191,36,0.2)'
+                                      : 'rgba(245,158,11,0.15)',
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {displayName}:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#fbbf24' : '#f59e0b',
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  {message.replace(/^.*?:\s*/, '')}
+                                </Typography>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Gear level issues
+                        if (grouped.gearLevel.length > 0) {
+                          const levelGroups = grouped.gearLevel.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(levelGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(([name, count]) =>
+                              count > 1 ? `${name}(x${count})` : name,
+                            );
+
+                            const displayName =
+                              displayNames.length > 1
+                                ? `${displayNames.slice(0, -1).join(', ')}${displayNames.length > 2 ? ', ' : ' and '}${displayNames[displayNames.length - 1]}`
+                                : displayNames[0];
+
+                            issues.push(
+                              <Box
+                                key="level"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(146,64,14,0.08)'
+                                      : 'rgba(146,64,14,0.06)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(146,64,14,0.2)'
+                                      : 'rgba(146,64,14,0.15)',
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {displayName}:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#a16207' : '#ca8a04',
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  {message.replace(/^.*?:\s*/, '')}
+                                </Typography>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Missing buffs
+                        if (grouped.missingBuffs.length > 0) {
+                          grouped.missingBuffs.forEach((buff) => {
+                            issues.push(
+                              <Box
+                                key={`buff-${buff.abilityId}`}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(192,132,252,0.08)'
+                                      : 'rgba(147,51,234,0.06)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(192,132,252,0.2)'
+                                      : 'rgba(147,51,234,0.15)',
+                                  mb: 0.5,
+                                }}
+                              >
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#c084fc' : '#9333ea',
+                                    fontWeight: 600,
+                                    fontSize: '0.75rem',
+                                    flexShrink: 0,
+                                  }}
+                                >
+                                  {buff.buffName}:
+                                </Typography>
+                                <Typography
+                                  variant="caption"
+                                  sx={{
+                                    color: theme.palette.mode === 'dark' ? '#e9d5ff' : '#a855f7',
+                                    fontSize: '0.75rem',
+                                  }}
+                                >
+                                  Missing buff
+                                </Typography>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        return (
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>{issues}</Box>
+                        );
+                      })()}
                     </AccordionDetails>
                   </Accordion>
                 )}
