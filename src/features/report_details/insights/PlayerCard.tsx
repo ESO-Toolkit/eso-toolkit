@@ -383,7 +383,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             >
                               <Tooltip
                                 enterTouchDelay={0}
-                                leaveTouchDelay={3000}
+                                leaveTouchDelay={999999}
                                 title={(() => {
                                   // Use memoized tooltip props lookup
                                   const rich = tooltipPropsLookup.get(talent.guid);
@@ -441,7 +441,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   ],
                                 }}
                                 slotProps={{
-                                  tooltip: { sx: { maxWidth: 320, p: 0 } },
+                                  tooltip: {
+                                    sx: {
+                                      maxWidth: 320,
+                                      p: 0,
+                                      backgroundColor: 'transparent !important',
+                                      border: 'none !important',
+                                      boxShadow: 'none !important',
+                                    },
+                                  },
                                 }}
                               >
                                 <Avatar
@@ -548,7 +556,15 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                     ],
                                   }}
                                   slotProps={{
-                                    tooltip: { sx: { maxWidth: 320, p: 0 } },
+                                    tooltip: {
+                                      sx: {
+                                        maxWidth: 320,
+                                        p: 0,
+                                        backgroundColor: 'transparent !important',
+                                        border: 'none !important',
+                                        boxShadow: 'none !important',
+                                      },
+                                    },
                                   }}
                                 >
                                   <Avatar
@@ -660,6 +676,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   leaveTouchDelay={3000}
                                   arrow
                                   disableInteractive={false}
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        maxWidth: 320,
+                                        p: 0,
+                                        backgroundColor: 'transparent !important',
+                                        border: 'none !important',
+                                        boxShadow: 'none !important',
+                                      },
+                                    },
+                                    arrow: { sx: { display: 'none' } },
+                                  }}
                                 >
                                   <Chip label={chipData.label} size="small" sx={chipData.sx} />
                                 </Tooltip>

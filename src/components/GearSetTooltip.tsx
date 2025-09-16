@@ -66,7 +66,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
       sx={(theme) => ({
         maxWidth: { xs: 280, sm: 340, md: 380 },
         backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.8)' : 'rgba(249, 250, 251, 0.85)',
         backdropFilter: 'blur(12px)',
         WebkitBackdropFilter: 'blur(12px)',
         border:
@@ -180,11 +180,11 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
                         }
                       : {
                           background:
-                            'linear-gradient(135deg,rgb(0, 98, 255) 0%, #0f172a 50%, #334155 100%)',
+                            'linear-gradient(135deg, #68acfb 0%, #2474c4 50%, #439cdc 70%, #5191ff 100%)',
                           WebkitBackgroundClip: 'text',
                           WebkitTextFillColor: 'transparent',
                           backgroundClip: 'text',
-                          textShadow: '0 1px 3px rgba(15, 23, 42, 0.3)',
+                          textShadow: '0 1px 2px rgba(36, 116, 196, 0.2)',
                         }),
                     lineHeight: 1.1,
                     fontSize: { xs: '0.86rem', sm: '0.92rem' },
