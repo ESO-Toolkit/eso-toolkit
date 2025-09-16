@@ -1284,7 +1284,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: 0.75,
+                                  gap: 0.5,
                                   py: 0.5,
                                   px: 1,
                                   borderRadius: 0.5,
@@ -1298,24 +1298,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       ? 'rgba(255,107,53,0.2)'
                                       : 'rgba(217,119,6,0.15)',
                                   mb: 0.5,
+                                  overflow: 'hidden',
                                 }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    flexShrink: 0,
-                                  }}
+                                <Tooltip
+                                  title={displayName}
+                                  enterTouchDelay={0}
+                                  leaveTouchDelay={3000}
                                 >
-                                  {displayName}:
-                                </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                      maxWidth: '140px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      cursor: 'default',
+                                    }}
+                                  >
+                                    {displayName}:
+                                  </Typography>
+                                </Tooltip>
                                 <Typography
                                   variant="caption"
                                   sx={{
                                     color: theme.palette.mode === 'dark' ? '#ff8c42' : '#f59e0b',
                                     fontSize: '0.7rem',
+                                    whiteSpace: 'nowrap',
                                   }}
                                 >
                                   {message.replace(/^.*?:\s*/, '')}
@@ -1361,7 +1374,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: 0.75,
+                                  gap: 0.5,
                                   py: 0.5,
                                   px: 1,
                                   borderRadius: 0.5,
@@ -1375,24 +1388,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       ? 'rgba(251,191,36,0.2)'
                                       : 'rgba(245,158,11,0.15)',
                                   mb: 0.5,
+                                  overflow: 'hidden',
                                 }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    flexShrink: 0,
-                                  }}
+                                <Tooltip
+                                  title={displayName}
+                                  enterTouchDelay={0}
+                                  leaveTouchDelay={3000}
                                 >
-                                  {displayName}:
-                                </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                      maxWidth: '140px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      cursor: 'default',
+                                    }}
+                                  >
+                                    {displayName}:
+                                  </Typography>
+                                </Tooltip>
                                 <Typography
                                   variant="caption"
                                   sx={{
                                     color: theme.palette.mode === 'dark' ? '#fbbf24' : '#f59e0b',
                                     fontSize: '0.75rem',
+                                    whiteSpace: 'nowrap',
                                   }}
                                 >
                                   {message.replace(/^.*?:\s*/, '')}
@@ -1438,7 +1464,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 sx={{
                                   display: 'flex',
                                   alignItems: 'center',
-                                  gap: 0.75,
+                                  gap: 0.5,
                                   py: 0.5,
                                   px: 1,
                                   borderRadius: 0.5,
@@ -1452,24 +1478,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       ? 'rgba(146,64,14,0.2)'
                                       : 'rgba(146,64,14,0.15)',
                                   mb: 0.5,
+                                  overflow: 'hidden',
                                 }}
                               >
-                                <Typography
-                                  variant="caption"
-                                  sx={{
-                                    color: theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
-                                    fontWeight: 600,
-                                    fontSize: '0.75rem',
-                                    flexShrink: 0,
-                                  }}
+                                <Tooltip
+                                  title={displayName}
+                                  enterTouchDelay={0}
+                                  leaveTouchDelay={3000}
                                 >
-                                  {displayName}:
-                                </Typography>
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                      maxWidth: '140px',
+                                      whiteSpace: 'nowrap',
+                                      overflow: 'hidden',
+                                      textOverflow: 'ellipsis',
+                                      cursor: 'default',
+                                    }}
+                                  >
+                                    {displayName}:
+                                  </Typography>
+                                </Tooltip>
                                 <Typography
                                   variant="caption"
                                   sx={{
                                     color: theme.palette.mode === 'dark' ? '#a16207' : '#ca8a04',
                                     fontSize: '0.75rem',
+                                    whiteSpace: 'nowrap',
                                   }}
                                 >
                                   {message.replace(/^.*?:\s*/, '')}
