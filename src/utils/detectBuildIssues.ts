@@ -1,5 +1,5 @@
 import { CombatantAura } from '../types/combatlogEvents';
-import { PlayerGear } from '../types/playerDetails';
+import { PlayerGear, GearSlot } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActive } from './BuffLookupUtils';
 
@@ -102,8 +102,16 @@ export function detectBuildIssues(
       });
     }
 
-    // Gear quality is not legendary
-    if (g.quality !== 5) {
+    // Gear quality check: armor pieces can be quality 4, but weapons and jewelry must be quality 5
+    const isArmor = g.slot >= GearSlot.HEAD && g.slot <= GearSlot.FEET;
+
+    if (isArmor && g.quality < 4) {
+      issues.push({
+        gearName: g.name || 'Unnamed Gear',
+        gearQuality: g.quality,
+        message: `${g.name || 'Unnamed Gear'}: Gear quality is ${g.quality} (should be at least 4)`,
+      });
+    } else if (!isArmor && g.quality !== 5) {
       issues.push({
         gearName: g.name || 'Unnamed Gear',
         gearQuality: g.quality,

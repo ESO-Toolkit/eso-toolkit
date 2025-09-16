@@ -1,4 +1,5 @@
-import { PlayerGear } from '../types/playerDetails';
+import { PlayerGear, ArmorType, WeaponType, GearTrait } from '../types/playerDetails';
+import { ItemQuality } from './gearUtilities';
 
 import { BuffLookupData } from './BuffLookupUtils';
 import {
@@ -77,11 +78,17 @@ describe('detectBuildIssues', () => {
     const gear: PlayerGear[] = [
       {
         id: 1,
-        name: 'Epic Helm',
-        quality: 4,
-        enchantQuality: 4,
+        slot: 10,
+        quality: ItemQuality.EPIC,
+        icon: 'test-icon',
+        name: 'Epic Weapon',
         championPoints: 160,
-      } as PlayerGear,
+        trait: GearTrait.SHARPENED,
+        enchantType: 1,
+        enchantQuality: 4,
+        setID: 1,
+        type: WeaponType.SWORD,
+      },
     ];
 
     const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
@@ -90,9 +97,9 @@ describe('detectBuildIssues', () => {
     ) as GearQualityIssue;
 
     expect(qualityIssue).toBeDefined();
-    expect(qualityIssue.gearName).toBe('Epic Helm');
+    expect(qualityIssue.gearName).toBe('Epic Weapon');
     expect(qualityIssue.gearQuality).toBe(4);
-    expect(qualityIssue.message).toBe('Epic Helm: Gear quality is 4 (should be 5)');
+    expect(qualityIssue.message).toBe('Epic Weapon: Gear quality is 4 (should be 5)');
   });
 
   it('should detect champion points issues for gear below CP 160', () => {
@@ -164,6 +171,84 @@ describe('detectBuildIssues', () => {
         issue.message.includes('CP level'),
     );
     expect(gearIssues).toHaveLength(0);
+  });
+
+  it('should accept quality 4 for armor pieces', () => {
+    const gear: PlayerGear[] = [
+      {
+        id: 1,
+        slot: 1, // CHEST slot
+        quality: ItemQuality.EPIC,
+        icon: 'test-icon',
+        name: 'Epic Chest',
+        championPoints: 160,
+        trait: GearTrait.SHARPENED,
+        enchantType: 1,
+        enchantQuality: 4,
+        setID: 1,
+        type: ArmorType.HEAVY,
+      },
+    ];
+
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
+    const qualityIssues = result.filter((issue) => issue.message.includes('Gear quality'));
+    expect(qualityIssues).toHaveLength(0);
+  });
+
+  it('should reject quality 3 for armor pieces', () => {
+    const gear: PlayerGear[] = [
+      {
+        id: 1,
+        slot: 1, // CHEST slot
+        quality: ItemQuality.RARE,
+        icon: 'test-icon',
+        name: 'Rare Chest',
+        championPoints: 160,
+        trait: GearTrait.SHARPENED,
+        enchantType: 1,
+        enchantQuality: 3,
+        setID: 1,
+        type: ArmorType.HEAVY,
+      },
+    ];
+
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
+    const qualityIssue = result.find((issue) =>
+      issue.message.includes('Gear quality'),
+    ) as GearQualityIssue;
+
+    expect(qualityIssue).toBeDefined();
+    expect(qualityIssue.gearName).toBe('Rare Chest');
+    expect(qualityIssue.gearQuality).toBe(3);
+    expect(qualityIssue.message).toBe('Rare Chest: Gear quality is 3 (should be at least 4)');
+  });
+
+  it('should require quality 5 for jewelry', () => {
+    const gear: PlayerGear[] = [
+      {
+        id: 1,
+        slot: 8, // RING1 slot
+        quality: ItemQuality.EPIC,
+        icon: 'test-icon',
+        name: 'Epic Ring',
+        championPoints: 160,
+        trait: GearTrait.SHARPENED,
+        enchantType: 1,
+        enchantQuality: 4,
+        setID: 1,
+        type: ArmorType.JEWELRY,
+      },
+    ];
+
+    const result = detectBuildIssues(gear, undefined, undefined, undefined, [], 'dps');
+    const qualityIssue = result.find((issue) =>
+      issue.message.includes('Gear quality'),
+    ) as GearQualityIssue;
+
+    expect(qualityIssue).toBeDefined();
+    expect(qualityIssue.gearName).toBe('Epic Ring');
+    expect(qualityIssue.gearQuality).toBe(4);
+    expect(qualityIssue.message).toBe('Epic Ring: Gear quality is 4 (should be 5)');
   });
 
   describe('role-based buff checking', () => {
