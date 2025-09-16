@@ -1227,8 +1227,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       },
                       background:
                         theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(255,193,7,0.08) 0%, rgba(255,193,7,0.04) 50%, rgba(255,193,7,0.02) 100%)'
-                          : 'linear-gradient(135deg, rgba(245,158,11,0.06) 0%, rgba(245,158,11,0.03) 50%, rgba(245,158,11,0.01) 100%)',
+                          ? 'linear-gradient(135deg, rgba(255,193,7,0.15) 0%, rgba(255,193,7,0.08) 50%, rgba(255,193,7,0.04) 100%)'
+                          : 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 50%, rgba(245,158,11,0.02) 100%)',
                     }}
                   >
                     <AccordionSummary
@@ -1246,13 +1246,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         px: 2,
                         background:
                           theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(255,193,7,0.12) 0%, rgba(255,193,7,0.06) 50%, rgba(255,193,7,0.03) 100%)'
-                            : 'linear-gradient(135deg, rgba(245,158,11,0.09) 0%, rgba(245,158,11,0.045) 50%, rgba(245,158,11,0.015) 100%)',
+                            ? 'linear-gradient(135deg, rgba(255,193,7,0.2) 0%, rgba(255,193,7,0.1) 50%, rgba(255,193,7,0.05) 100%)'
+                            : 'linear-gradient(135deg, rgba(245,158,11,0.15) 0%, rgba(245,158,11,0.075) 50%, rgba(245,158,11,0.025) 100%)',
                         '&:hover': {
                           background:
                             theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(255,193,7,0.16) 0%, rgba(255,193,7,0.08) 50%, rgba(255,193,7,0.04) 100%)'
-                              : 'linear-gradient(135deg, rgba(245,158,11,0.12) 0%, rgba(245,158,11,0.06) 50%, rgba(245,158,11,0.02) 100%)',
+                              ? 'linear-gradient(135deg, rgba(255,193,7,0.25) 0%, rgba(255,193,7,0.125) 50%, rgba(255,193,7,0.0625) 100%)'
+                              : 'linear-gradient(135deg, rgba(245,158,11,0.2) 0%, rgba(245,158,11,0.1) 50%, rgba(245,158,11,0.033) 100%)',
                         },
                       }}
                     >
