@@ -60,6 +60,53 @@ interface PlayerCardProps {
   playerGear: PlayerGearSetRecord[];
 }
 
+// Helper function to consolidate build issues
+function consolidateBuildIssues(buildIssues: BuildIssue[]): {
+  gearQuality: Array<{ gearName: string; quality: number; message: string }>;
+  enchantQuality: Array<{ gearName: string; quality: number; message: string }>;
+  gearLevel: Array<{ gearName: string; level: number; message: string }>;
+  missingBuffs: Array<{ buffName: string; abilityId: number; message: string }>;
+} {
+  const grouped = {
+    gearQuality: [] as Array<{ gearName: string; quality: number; message: string }>,
+    enchantQuality: [] as Array<{ gearName: string; quality: number; message: string }>,
+    gearLevel: [] as Array<{ gearName: string; level: number; message: string }>,
+    missingBuffs: [] as Array<{ buffName: string; abilityId: number; message: string }>,
+  };
+
+  buildIssues.forEach((issue) => {
+    if ('gearName' in issue) {
+      if ('gearQuality' in issue) {
+        grouped.gearQuality.push({
+          gearName: issue.gearName,
+          quality: issue.gearQuality,
+          message: issue.message,
+        });
+      } else if ('enchantQuality' in issue) {
+        grouped.enchantQuality.push({
+          gearName: issue.gearName,
+          quality: issue.enchantQuality,
+          message: issue.message,
+        });
+      } else if ('gearLevel' in issue) {
+        grouped.gearLevel.push({
+          gearName: issue.gearName,
+          level: issue.gearLevel,
+          message: issue.message,
+        });
+      }
+    } else if ('buffName' in issue) {
+      grouped.missingBuffs.push({
+        buffName: issue.buffName,
+        abilityId: issue.abilityId,
+        message: issue.message,
+      });
+    }
+  });
+
+  return grouped;
+}
+
 export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
   ({
     player,
@@ -1188,6 +1235,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           display: 'flex',
                           alignItems: 'center',
                           gap: 1,
+                          textShadow:
+                            theme.palette.mode === 'light'
+                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                              : 'none',
                         }}
                       >
                         <span role="img" aria-label="attention">
@@ -1196,41 +1247,791 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         Build Issues ({buildIssues.length})
                       </Typography>
                     </AccordionSummary>
-                    <AccordionDetails>
-                      <Box component="ul" sx={{ m: 0, pl: 0, listStyle: 'none' }}>
-                        {buildIssues.map((issue, idx) => (
-                          <Typography
-                            key={`issue-${idx}`}
-                            component="li"
-                            variant="body2"
-                            sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}
-                          >
-                            <span aria-hidden="true" style={{ width: 18 }}>
-                              •
-                            </span>
-                            <span>
-                              {(() => {
-                                if ('gearName' in issue) {
+                    <AccordionDetails sx={{ px: 2, pb: 1.5, pt: 0.5 }}>
+                      {(() => {
+                        const grouped = consolidateBuildIssues(buildIssues);
+                        const issues: React.ReactElement[] = [];
+
+                        // Gear quality issues
+                        if (grouped.gearQuality.length > 0) {
+                          const qualityGroups = grouped.gearQuality.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(qualityGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
+                            );
+
+                            issues.push(
+                              <Box
+                                key="quality"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255,107,53,0.08)'
+                                      : 'rgba(251,146,60,0.08)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255,107,53,0.2)'
+                                      : 'rgba(251,146,60,0.2)',
+                                  mb: 0.5,
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '180px',
+                                  }}
+                                >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                      textShadow:
+                                        theme.palette.mode === 'light'
+                                          ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                          : 'none',
+                                    }}
+                                  >
+                                    :
+                                  </Typography>
+                                </Box>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.1,
+                                  }}
+                                >
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('quality is') &&
+                                      messageText.includes('should be')
+                                    ) {
+                                      const currentMatch = messageText.match(/quality is (\d+)/);
+                                      const shouldMatch = messageText.match(/should be (\d+)/);
+                                      if (currentMatch && shouldMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Box
+                                                key={star}
+                                                component="span"
+                                                sx={{
+                                                  fontSize: '1.3em',
+                                                  display: 'inline-block',
+                                                  lineHeight: 1,
+                                                  filter:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? 'drop-shadow(0 0 2px rgba(251, 191, 36, 0.6))'
+                                                      : 'none',
+                                                  textShadow:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? '0 0 8px rgba(251, 191, 36, 0.4)'
+                                                      : 'none',
+                                                  color:
+                                                    star <= current
+                                                      ? theme.palette.mode === 'dark'
+                                                        ? '#fbbf24'
+                                                        : '#d97706'
+                                                      : theme.palette.mode === 'dark'
+                                                        ? '#d1d5db'
+                                                        : '#9ca3af',
+                                                  transform:
+                                                    star <= current ? 'scale(1.1)' : 'scale(0.95)',
+                                                  transition: 'all 0.2s ease',
+                                                  opacity: star <= current ? 1 : 0.9,
+                                                  border: 'none',
+                                                  borderRadius: '0px',
+                                                  padding: '0px',
+                                                }}
+                                              >
+                                                {star <= current ? '★' : '☆'}
+                                              </Box>
+                                            ))}
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#ff8c42' : '#ea580c',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                          textShadow:
+                                            theme.palette.mode === 'light'
+                                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                              : 'none',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Enchant quality issues
+                        if (grouped.enchantQuality.length > 0) {
+                          const enchantGroups = grouped.enchantQuality.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(enchantGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
+                            );
+
+                            issues.push(
+                              <Box
+                                key="enchant"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(251,191,36,0.08)'
+                                      : 'rgba(245,158,11,0.08)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(251,191,36,0.2)'
+                                      : 'rgba(245,158,11,0.2)',
+                                  mb: 0.5,
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '180px',
+                                  }}
+                                >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        textShadow:
+                                          theme.palette.mode === 'light'
+                                            ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                            : 'none',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                      textShadow:
+                                        theme.palette.mode === 'light'
+                                          ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                          : 'none',
+                                    }}
+                                  >
+                                    :
+                                  </Typography>
+                                </Box>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.1,
+                                  }}
+                                >
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('Enchantment quality is') &&
+                                      messageText.includes('should be')
+                                    ) {
+                                      const currentMatch = messageText.match(
+                                        /Enchantment quality is (\d+)/,
+                                      );
+                                      const shouldMatch = messageText.match(/should be (\d+)/);
+                                      if (currentMatch && shouldMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.6rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                mr: 0.2,
+                                              }}
+                                            >
+                                              Enchant:
+                                            </Box>
+                                            {[1, 2, 3, 4, 5].map((star) => (
+                                              <Box
+                                                key={star}
+                                                component="span"
+                                                sx={{
+                                                  fontSize: '1.3em',
+                                                  display: 'inline-block',
+                                                  lineHeight: 1,
+                                                  filter:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? 'drop-shadow(0 0 2px rgba(251, 191, 36, 0.6))'
+                                                      : 'none',
+                                                  textShadow:
+                                                    star <= current && theme.palette.mode === 'dark'
+                                                      ? '0 0 8px rgba(251, 191, 36, 0.4)'
+                                                      : 'none',
+                                                  color:
+                                                    star <= current
+                                                      ? theme.palette.mode === 'dark'
+                                                        ? '#fbbf24'
+                                                        : '#d97706'
+                                                      : theme.palette.mode === 'dark'
+                                                        ? '#d1d5db'
+                                                        : '#9ca3af',
+                                                  transform:
+                                                    star <= current ? 'scale(1.1)' : 'scale(0.95)',
+                                                  transition: 'all 0.2s ease',
+                                                  opacity: star <= current ? 1 : 0.9,
+                                                  border: 'none',
+                                                  borderRadius: '0px',
+                                                  padding: '0px',
+                                                }}
+                                              >
+                                                {star <= current ? '★' : '☆'}
+                                              </Box>
+                                            ))}
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Gear level issues
+                        if (grouped.gearLevel.length > 0) {
+                          const levelGroups = grouped.gearLevel.reduce(
+                            (acc, issue) => {
+                              const key = issue.message;
+                              if (!acc[key]) acc[key] = [];
+                              acc[key].push(issue.gearName);
+                              return acc;
+                            },
+                            {} as Record<string, string[]>,
+                          );
+
+                          Object.entries(levelGroups).forEach(([message, gearNames]) => {
+                            const nameCounts = gearNames.reduce(
+                              (acc, name) => {
+                                acc[name] = (acc[name] || 0) + 1;
+                                return acc;
+                              },
+                              {} as Record<string, number>,
+                            );
+
+                            const displayNames = Object.entries(nameCounts).map(
+                              ([name, count]) => ({
+                                name,
+                                count,
+                                display: count > 1 ? `${name}(x${count})` : name,
+                              }),
+                            );
+
+                            issues.push(
+                              <Box
+                                key="level"
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(146,64,14,0.08)'
+                                      : 'rgba(180,83,9,0.08)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(146,64,14,0.2)'
+                                      : 'rgba(180,83,9,0.2)',
+                                  mb: 0.5,
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.25,
+                                    flexShrink: 0,
+                                    maxWidth: '180px',
+                                  }}
+                                >
+                                  <Tooltip
+                                    title={displayNames.map((d) => d.name).join(', ')}
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                  >
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        cursor: 'default',
+                                      }}
+                                    >
+                                      {displayNames.map((d) => d.name).join(', ')}
+                                    </Typography>
+                                  </Tooltip>
+                                  {displayNames.some((d) => d.count > 1) && (
+                                    <Typography
+                                      variant="caption"
+                                      sx={{
+                                        color:
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
+                                        fontWeight: 600,
+                                        fontSize: '0.75rem',
+                                        whiteSpace: 'nowrap',
+                                      }}
+                                    >
+                                      {displayNames.length === 1 && displayNames[0].count > 1
+                                        ? `(x${displayNames[0].count})`
+                                        : displayNames.filter((d) => d.count > 1).length > 0
+                                          ? `(x${displayNames
+                                              .filter((d) => d.count > 1)
+                                              .map((d) => d.count)
+                                              .join(',x')})`
+                                          : ''}
+                                    </Typography>
+                                  )}
+                                  <Typography
+                                    variant="caption"
+                                    sx={{
+                                      color: theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
+                                      fontWeight: 600,
+                                      fontSize: '0.75rem',
+                                      flexShrink: 0,
+                                    }}
+                                  >
+                                    :
+                                  </Typography>
+                                </Box>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  {(() => {
+                                    const messageText = message.replace(/^.*?:\s*/, '');
+                                    if (
+                                      messageText.includes('CP level is') &&
+                                      messageText.includes('should be 160')
+                                    ) {
+                                      const currentMatch = messageText.match(/CP level is (\d+)/);
+                                      if (currentMatch) {
+                                        const current = parseInt(currentMatch[1]);
+                                        return (
+                                          <>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.6rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              CP:
+                                            </Box>
+                                            <Typography
+                                              variant="caption"
+                                              sx={{
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#a16207'
+                                                    : '#92400e',
+                                                fontSize: '0.65rem',
+                                                fontWeight: 600,
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              {current}
+                                            </Typography>
+                                            <Box
+                                              component="span"
+                                              sx={{
+                                                fontSize: '0.65rem',
+                                                color:
+                                                  theme.palette.mode === 'dark'
+                                                    ? '#9ca3af'
+                                                    : '#6b7280',
+                                                textShadow:
+                                                  theme.palette.mode === 'light'
+                                                    ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                                    : 'none',
+                                              }}
+                                            >
+                                              → 160
+                                            </Box>
+                                          </>
+                                        );
+                                      }
+                                    }
+                                    return (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color:
+                                            theme.palette.mode === 'dark' ? '#a16207' : '#92400e',
+                                          fontSize: '0.65rem',
+                                          whiteSpace: 'nowrap',
+                                          textShadow:
+                                            theme.palette.mode === 'light'
+                                              ? '1px 1px 0 rgb(104 115 157 / 16%)'
+                                              : 'none',
+                                        }}
+                                      >
+                                        {messageText}
+                                      </Typography>
+                                    );
+                                  })()}
+                                </Box>
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        // Missing buffs
+                        if (grouped.missingBuffs.length > 0) {
+                          grouped.missingBuffs.forEach((buff) => {
+                            issues.push(
+                              <Box
+                                key={`buff-${buff.abilityId}`}
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.75,
+                                  py: 0.5,
+                                  px: 1,
+                                  borderRadius: 0.5,
+                                  backgroundColor: (() => {
+                                    const buffName = buff.buffName.toLowerCase();
+                                    if (
+                                      buffName.includes('sorcery') ||
+                                      buffName.includes('prophecy')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(251, 191, 36, 0.08)'
+                                        : 'rgba(245, 158, 11, 0.06)';
+                                    } else if (
+                                      buffName.includes('brutality') ||
+                                      buffName.includes('savagery')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(239, 68, 68, 0.08)'
+                                        : 'rgba(220, 38, 38, 0.06)';
+                                    } else if (buffName.includes('aegis')) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.08)'
+                                        : 'rgba(37, 99, 235, 0.06)';
+                                    } else {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(192, 132, 252, 0.08)'
+                                        : 'rgba(147, 51, 234, 0.06)';
+                                    }
+                                  })(),
+                                  border: '1px solid',
+                                  borderColor: (() => {
+                                    const buffName = buff.buffName.toLowerCase();
+                                    if (
+                                      buffName.includes('sorcery') ||
+                                      buffName.includes('prophecy')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(251, 191, 36, 0.2)'
+                                        : 'rgba(245, 158, 11, 0.15)';
+                                    } else if (
+                                      buffName.includes('brutality') ||
+                                      buffName.includes('savagery')
+                                    ) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(239, 68, 68, 0.2)'
+                                        : 'rgba(220, 38, 38, 0.15)';
+                                    } else if (buffName.includes('aegis')) {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(59, 130, 246, 0.2)'
+                                        : 'rgba(37, 99, 235, 0.15)';
+                                    } else {
+                                      return theme.palette.mode === 'dark'
+                                        ? 'rgba(192, 132, 252, 0.2)'
+                                        : 'rgba(147, 51, 234, 0.15)';
+                                    }
+                                  })(),
+                                  mb: 0.5,
+                                }}
+                              >
+                                {(() => {
+                                  // Determine buff type and colors
+                                  const isSorcery = buff.buffName.toLowerCase().includes('sorcery');
+                                  const isProphecy = buff.buffName
+                                    .toLowerCase()
+                                    .includes('prophecy');
+                                  const isBrutality = buff.buffName
+                                    .toLowerCase()
+                                    .includes('brutality');
+                                  const isSavagery = buff.buffName
+                                    .toLowerCase()
+                                    .includes('savagery');
+                                  const isAegis = buff.buffName.toLowerCase().includes('aegis');
+
+                                  // Set colors based on buff type
+                                  let textColor;
+
+                                  if (isSorcery || isProphecy) {
+                                    // Gold for universal buffs (sorcery/prophecy)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706';
+                                  } else if (isBrutality || isSavagery) {
+                                    // Red for DPS buffs (brutality/savagery)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#ef4444' : '#dc2626';
+                                  } else if (isAegis) {
+                                    // Blue for tank buffs (aegis)
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb';
+                                  } else {
+                                    // Default purple for other buffs
+                                    textColor =
+                                      theme.palette.mode === 'dark' ? '#c084fc' : '#9333ea';
+                                  }
+
                                   return (
                                     <>
-                                      <strong>{issue.gearName}</strong>:{' '}
-                                      {issue.message.replace(/^.*?:\s*/, '')}
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: textColor,
+                                          fontWeight: 600,
+                                          fontSize: '0.75rem',
+                                          flexShrink: 0,
+                                        }}
+                                      >
+                                        {buff.buffName}:
+                                      </Typography>
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          color: textColor,
+                                          fontSize: '0.75rem',
+                                          opacity: 0.8,
+                                        }}
+                                      >
+                                        Missing buff
+                                      </Typography>
                                     </>
                                   );
-                                } else if ('buffName' in issue) {
-                                  return (
-                                    <>
-                                      <strong>{issue.buffName}</strong>:{' '}
-                                      {issue.message.replace(/^.*?\s-\s*/, '')}
-                                    </>
-                                  );
-                                }
-                                return (issue as { message: string }).message;
-                              })()}
-                            </span>
-                          </Typography>
-                        ))}
-                      </Box>
+                                })()}
+                              </Box>,
+                            );
+                          });
+                        }
+
+                        return (
+                          <Box sx={{ display: 'flex', flexDirection: 'column' }}>{issues}</Box>
+                        );
+                      })()}
                     </AccordionDetails>
                   </Accordion>
                 )}
