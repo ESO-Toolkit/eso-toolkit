@@ -1290,12 +1290,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   backgroundColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(255,107,53,0.08)'
-                                      : 'rgba(217,119,6,0.06)',
+                                      : 'rgba(251,146,60,0.08)',
                                   border: '1px solid',
                                   borderColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(255,107,53,0.2)'
-                                      : 'rgba(217,119,6,0.15)',
+                                      : 'rgba(251,146,60,0.2)',
                                   mb: 0.5,
                                   overflow: 'hidden',
                                 }}
@@ -1318,7 +1318,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1335,7 +1335,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                          theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1354,7 +1354,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: theme.palette.mode === 'dark' ? '#ff6b35' : '#d97706',
+                                      color: theme.palette.mode === 'dark' ? '#ff6b35' : '#c2410c',
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
@@ -1366,7 +1366,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#ff8c42' : '#f59e0b',
+                                    color: theme.palette.mode === 'dark' ? '#ff8c42' : '#ea580c',
                                     fontSize: '0.7rem',
                                     whiteSpace: 'nowrap',
                                   }}
@@ -1420,12 +1420,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   backgroundColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(251,191,36,0.08)'
-                                      : 'rgba(245,158,11,0.06)',
+                                      : 'rgba(245,158,11,0.08)',
                                   border: '1px solid',
                                   borderColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(251,191,36,0.2)'
-                                      : 'rgba(245,158,11,0.15)',
+                                      : 'rgba(245,158,11,0.2)',
                                   mb: 0.5,
                                   overflow: 'hidden',
                                 }}
@@ -1448,7 +1448,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1465,7 +1465,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                          theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1484,7 +1484,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: theme.palette.mode === 'dark' ? '#f59e0b' : '#d97706',
+                                      color: theme.palette.mode === 'dark' ? '#f59e0b' : '#b45309',
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
@@ -1496,7 +1496,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#fbbf24' : '#f59e0b',
+                                    color: theme.palette.mode === 'dark' ? '#fbbf24' : '#d97706',
                                     fontSize: '0.75rem',
                                     whiteSpace: 'nowrap',
                                   }}
@@ -1550,12 +1550,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   backgroundColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(146,64,14,0.08)'
-                                      : 'rgba(146,64,14,0.06)',
+                                      : 'rgba(180,83,9,0.08)',
                                   border: '1px solid',
                                   borderColor:
                                     theme.palette.mode === 'dark'
                                       ? 'rgba(146,64,14,0.2)'
-                                      : 'rgba(146,64,14,0.15)',
+                                      : 'rgba(180,83,9,0.2)',
                                   mb: 0.5,
                                   overflow: 'hidden',
                                 }}
@@ -1578,7 +1578,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1595,7 +1595,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       variant="caption"
                                       sx={{
                                         color:
-                                          theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                          theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
                                         fontWeight: 600,
                                         fontSize: '0.75rem',
                                         whiteSpace: 'nowrap',
@@ -1614,7 +1614,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: theme.palette.mode === 'dark' ? '#92400e' : '#92400e',
+                                      color: theme.palette.mode === 'dark' ? '#92400e' : '#713f12',
                                       fontWeight: 600,
                                       fontSize: '0.75rem',
                                       flexShrink: 0,
@@ -1626,7 +1626,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 <Typography
                                   variant="caption"
                                   sx={{
-                                    color: theme.palette.mode === 'dark' ? '#a16207' : '#ca8a04',
+                                    color: theme.palette.mode === 'dark' ? '#a16207' : '#92400e',
                                     fontSize: '0.75rem',
                                     whiteSpace: 'nowrap',
                                   }}
