@@ -43,7 +43,8 @@
       "Bash(git branch:*)",
       "Bash(sed:*)",
       "Read(//c/**)",
-      "Bash(gh pr create:*)"
+      "Bash(gh pr create:*)",
+      "Bash(npm test:*)"
     ],
     "deny": [],
     "ask": []
