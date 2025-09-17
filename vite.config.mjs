@@ -59,6 +59,7 @@ export default defineConfig(({ command, mode }) => {
       port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
       open: false,
       host: true,
+      strictPort: process.env.STRICT_PORT === 'true', // Only strict if explicitly set
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
