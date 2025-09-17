@@ -1269,26 +1269,26 @@ const Calculator: React.FC = React.memo(() => {
                 '& .MuiInputBase-root': {
                   ...textFieldStyles['& .MuiInputBase-root'],
                   backgroundColor: !hasQuantity
-                    ? (theme.palette.mode === 'dark'
+                    ? theme.palette.mode === 'dark'
                       ? 'rgba(30, 41, 59, 0.5)'
-                      : 'rgba(241, 245, 249, 0.8)')
+                      : 'rgba(241, 245, 249, 0.8)'
                     : 'transparent',
                   opacity: !hasQuantity ? 0.6 : 1,
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
                   borderColor: !hasQuantity
-                    ? (theme.palette.mode === 'dark'
+                    ? theme.palette.mode === 'dark'
                       ? 'rgba(148, 163, 184, 0.3)'
-                      : 'rgba(148, 163, 184, 0.4)')
+                      : 'rgba(148, 163, 184, 0.4)'
                     : 'transparent',
                 },
                 '& .MuiInputBase-input': {
                   ...textFieldStyles['& .MuiInputBase-input'],
                   color: !hasQuantity
-                    ? (theme.palette.mode === 'dark'
+                    ? theme.palette.mode === 'dark'
                       ? 'rgba(148, 163, 184, 0.8)'
-                      : 'rgba(100, 116, 139, 0.8)')
+                      : 'rgba(100, 116, 139, 0.8)'
                     : 'inherit',
                   cursor: !hasQuantity ? 'not-allowed' : 'text',
                 },
