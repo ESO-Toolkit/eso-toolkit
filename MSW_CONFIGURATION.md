@@ -7,25 +7,57 @@
 ## Current Configuration
 
 ### ✅ Correct Setup
+
 - MSW service worker is located in `.storybook/public/mockServiceWorker.js`
 - Package.json MSW config points only to `.storybook/public`
 - Storybook uses MSW for component testing with mocked APIs
 - Main application and Playwright tests use real network requests
 
 ### ❌ Previous Issue
+
 - MSW service worker was accidentally placed in `public/mockServiceWorker.js`
 - This caused nightly regression tests to timeout due to network request interception
 - Playwright nightly tests require real ESO Logs API calls for proper validation
 
+## Browser Security Configuration
+
+### localStorage Access in Tests
+
+Playwright nightly tests require localStorage access for authentication state. Browser security restrictions may prevent this, so the configuration includes:
+
+```typescript
+// playwright.nightly.config.ts
+launchOptions: {
+  args: ['--disable-web-security', '--no-sandbox', '--disable-dev-shm-usage'];
+}
+```
+
+### Error Handling in Test Utilities
+
+All localStorage access in test utilities is wrapped with proper error handling:
+
+```typescript
+// tests/auth-utils.ts
+await page.evaluate(() => {
+  try {
+    localStorage.setItem('access_token', token);
+  } catch (e) {
+    console.warn('Could not access localStorage:', e);
+  }
+});
+```
+
 ## Maintenance
 
 ### To Update MSW
+
 ```bash
 # Reinitialize MSW for Storybook only
 npx msw init .storybook/public --save
 ```
 
 ### To Verify Configuration
+
 ```bash
 # Check MSW config in package.json
 cat package.json | grep -A5 "msw"
@@ -38,21 +70,25 @@ ls -la public/mockServiceWorker.js  # Should NOT exist
 ## Test Environment Isolation
 
 ### Storybook (Uses MSW)
+
 - Mock API responses for component testing
 - MSW worker available at `.storybook/public/mockServiceWorker.js`
 - Isolated from main application
 
 ### Nightly Tests (Real Network)
+
 - Playwright tests use `npm run preview` (production build)
 - No MSW interference - real ESO Logs API calls
 - Configured in `playwright.nightly.config.ts`
 
 ### Smoke Tests (Blocked Network)
-- Playwright tests use `npm start` (development server)  
+
+- Playwright tests use `npm start` (development server)
 - Blocks external requests in CI via headers
 - Uses route interception instead of MSW
 
 ## Related Files
+
 - `package.json` - MSW worker directory configuration
 - `playwright.nightly.config.ts` - Nightly test configuration
 - `.storybook/preview.ts` - Storybook MSW setup

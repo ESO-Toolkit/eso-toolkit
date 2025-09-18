@@ -93,6 +93,14 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
         storageState: 'tests/auth-state.json',
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
       },
       testMatch: '**/nightly-regression-auth.spec.ts',
     },
@@ -113,6 +121,14 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
         storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
     },
@@ -141,6 +157,9 @@ export default defineConfig({
       use: {
         ...devices['Pixel 5'],
         storageState: undefined, // No auth state for mobile
+        launchOptions: {
+          args: ['--disable-web-security', '--no-sandbox', '--disable-dev-shm-usage'],
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts'],
     },

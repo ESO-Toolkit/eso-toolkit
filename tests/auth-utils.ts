@@ -22,11 +22,19 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
     /**
      * Check if the user is currently authenticated
      */
-     async isAuthenticated(): Promise<boolean> {
+    async isAuthenticated(): Promise<boolean> {
       try {
+        // Wait for page to be fully loaded first
+        await page.waitForLoadState('domcontentloaded');
+
         return await page.evaluate(() => {
-          const token = localStorage.getItem('access_token');
-          return !!token && token.length > 0;
+          try {
+            const token = localStorage.getItem('access_token');
+            return !!token && token.length > 0;
+          } catch (e) {
+            // localStorage might not be accessible in this context
+            return false;
+          }
         });
       } catch (error) {
         // Handle cases where localStorage might not be accessible yet
@@ -40,8 +48,16 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
      */
     async getAccessToken(): Promise<string | null> {
       try {
+        // Wait for page to be fully loaded first
+        await page.waitForLoadState('domcontentloaded');
+
         return await page.evaluate(() => {
-          return localStorage.getItem('access_token');
+          try {
+            return localStorage.getItem('access_token');
+          } catch (e) {
+            // localStorage might not be accessible in this context
+            return null;
+          }
         });
       } catch (error) {
         console.warn('Could not access localStorage:', error);
@@ -53,17 +69,28 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
      * Set the access token in localStorage
      */
     async setAccessToken(token: string): Promise<void> {
-      await page.evaluate((token) => {
-        localStorage.setItem('access_token', token);
-        // Trigger storage event to notify the app
-        window.dispatchEvent(
-          new StorageEvent('storage', {
-            key: 'access_token',
-            newValue: token,
-            storageArea: localStorage,
-          }),
-        );
-      }, token);
+      try {
+        // Wait for page to be fully loaded first
+        await page.waitForLoadState('domcontentloaded');
+
+        await page.evaluate((token) => {
+          try {
+            localStorage.setItem('access_token', token);
+            // Trigger storage event to notify the app
+            window.dispatchEvent(
+              new StorageEvent('storage', {
+                key: 'access_token',
+                newValue: token,
+                storageArea: localStorage,
+              }),
+            );
+          } catch (e) {
+            console.warn('Could not set localStorage item:', e);
+          }
+        }, token);
+      } catch (error) {
+        console.warn('Could not access localStorage for setting token:', error);
+      }
     },
 
     /**
@@ -71,18 +98,25 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
      */
     async clearAuth(): Promise<void> {
       try {
+        // Wait for page to be fully loaded first
+        await page.waitForLoadState('domcontentloaded');
+
         await page.evaluate(() => {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('eso_code_verifier');
-          localStorage.removeItem('eso_intended_destination');
-          // Trigger storage event to notify the app
-          window.dispatchEvent(
-            new StorageEvent('storage', {
-              key: 'access_token',
-              newValue: null,
-              storageArea: localStorage,
-            }),
-          );
+          try {
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('eso_code_verifier');
+            localStorage.removeItem('eso_intended_destination');
+            // Trigger storage event to notify the app
+            window.dispatchEvent(
+              new StorageEvent('storage', {
+                key: 'access_token',
+                newValue: null,
+                storageArea: localStorage,
+              }),
+            );
+          } catch (e) {
+            console.warn('Could not access localStorage for clearing:', e);
+          }
         });
       } catch (error) {
         console.warn('Could not clear localStorage:', error);
@@ -96,9 +130,15 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
     async waitForAuthState(authenticated: boolean, timeout = 10000): Promise<void> {
       await page.waitForFunction(
         (expectedAuth) => {
-          const token = localStorage.getItem('access_token');
-          const isAuth = !!token && token.length > 0;
-          return isAuth === expectedAuth;
+          try {
+            const token = localStorage.getItem('access_token');
+            const isAuth = !!token && token.length > 0;
+            return isAuth === expectedAuth;
+          } catch (e) {
+            console.warn('Could not access localStorage for auth state check:', e);
+            // If we can't access localStorage, assume not authenticated
+            return expectedAuth === false;
+          }
         },
         authenticated,
         { timeout },
@@ -110,20 +150,41 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
      */
     async verifyAuthenticationRequired(): Promise<void> {
       // Check for login button or authentication prompt
-      const hasLoginButton = await page.locator('button:has-text(Login)').isVisible().catch(() => false);
-      const hasLoginLink = await page.locator('a:has-text(Login)').isVisible().catch(() => false);
-      const hasConnectButton = await page.locator('button:has-text(Connect to ESO Logs)').isVisible().catch(() => false);
-      const hasConnectLink = await page.locator('a:has-text(Connect to ESO Logs)').isVisible().catch(() => false);
-      
+      const hasLoginButton = await page
+        .locator('button:has-text(Login)')
+        .isVisible()
+        .catch(() => false);
+      const hasLoginLink = await page
+        .locator('a:has-text(Login)')
+        .isVisible()
+        .catch(() => false);
+      const hasConnectButton = await page
+        .locator('button:has-text(Connect to ESO Logs)')
+        .isVisible()
+        .catch(() => false);
+      const hasConnectLink = await page
+        .locator('a:has-text(Connect to ESO Logs)')
+        .isVisible()
+        .catch(() => false);
+
       const hasAuthElements = hasLoginButton || hasLoginLink || hasConnectButton || hasConnectLink;
-      
+
       // Also check for text patterns
-      const hasLoginText = await page.getByText(/log.*in/i).isVisible().catch(() => false);
-      const hasConnectText = await page.getByText(/connect.*account/i).isVisible().catch(() => false);
-      const hasAuthText = await page.getByText(/authenticate/i).isVisible().catch(() => false);
-      
+      const hasLoginText = await page
+        .getByText(/log.*in/i)
+        .isVisible()
+        .catch(() => false);
+      const hasConnectText = await page
+        .getByText(/connect.*account/i)
+        .isVisible()
+        .catch(() => false);
+      const hasAuthText = await page
+        .getByText(/authenticate/i)
+        .isVisible()
+        .catch(() => false);
+
       const hasAuthTextElements = hasLoginText || hasConnectText || hasAuthText;
-      
+
       expect(hasAuthElements || hasAuthTextElements).toBeTruthy();
     },
 
@@ -135,16 +196,36 @@ export function createAuthTestUtils(page: Page): AuthTestUtils {
       await page.waitForTimeout(2000);
 
       // Check that we don't see login prompts
-      const hasLoginButton = await page.locator('button:has-text(Login)').isVisible().catch(() => false);
-      const hasLoginLink = await page.locator('a:has-text(Login)').isVisible().catch(() => false);
-      const hasConnectButton = await page.locator('button:has-text(Connect to ESO Logs)').isVisible().catch(() => false);
-      
+      const hasLoginButton = await page
+        .locator('button:has-text(Login)')
+        .isVisible()
+        .catch(() => false);
+      const hasLoginLink = await page
+        .locator('a:has-text(Login)')
+        .isVisible()
+        .catch(() => false);
+      const hasConnectButton = await page
+        .locator('button:has-text(Connect to ESO Logs)')
+        .isVisible()
+        .catch(() => false);
+
       // Check for auth required text
-      const hasAuthRequiredText = await page.getByText(/authenticate.*required/i).isVisible().catch(() => false);
-      const hasLoginRequiredText = await page.getByText(/please.*log.*in/i).isVisible().catch(() => false);
-      
-      const hasAuthPrompts = hasLoginButton || hasLoginLink || hasConnectButton || hasAuthRequiredText || hasLoginRequiredText;
-      
+      const hasAuthRequiredText = await page
+        .getByText(/authenticate.*required/i)
+        .isVisible()
+        .catch(() => false);
+      const hasLoginRequiredText = await page
+        .getByText(/please.*log.*in/i)
+        .isVisible()
+        .catch(() => false);
+
+      const hasAuthPrompts =
+        hasLoginButton ||
+        hasLoginLink ||
+        hasConnectButton ||
+        hasAuthRequiredText ||
+        hasLoginRequiredText;
+
       // Should not see login prompts when authenticated
       expect(hasAuthPrompts).toBeFalsy();
     },
