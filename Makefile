@@ -1,12 +1,27 @@
 # ESO Log Aggregator Makefile
 # This Makefile provides convenient commands for common development tasks
+# Cross-platform compatible (Windows, Linux, macOS)
 
-.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all
+# Detect OS for cross-platform compatibility
+ifeq ($(OS),Windows_NT)
+	DETECTED_OS := Windows
+	RM_CMD := if exist build rmdir /s /q build
+	RM_CACHE := if exist node_modules\.cache rmdir /s /q node_modules\.cache
+	RM_ESLINT := if exist .eslintcache del /q .eslintcache
+else
+	DETECTED_OS := $(shell uname -s)
+	RM_CMD := rm -rf build/
+	RM_CACHE := rm -rf node_modules/.cache/
+	RM_ESLINT := rm -rf .eslintcache
+endif
+
+.PHONY: help install build test lint lint-fix format fmt clean dev codegen fetch-abilities all os-info clean-cache clear-cache clean-modules clean-all reinstall pre-commit pc check prod-build setup test-watch typecheck
 
 # Default target
 help:
 	@echo "Available commands:"
 	@echo "  help          - Show this help message"
+	@echo "  os-info       - Show detected operating system"
 	@echo "  install       - Install dependencies"
 	@echo "  build         - Build the project for production"
 	@echo "  test          - Run tests"
@@ -17,11 +32,23 @@ help:
 	@echo "  fmt           - Alias for format"
 	@echo "  dev           - Start development server"
 	@echo "  clean         - Clean build artifacts"
+	@echo "  clean-cache   - Clear npm cache"
+	@echo "  clean-modules - Remove node_modules"
+	@echo "  clean-all     - Remove all generated files"
+	@echo "  reinstall     - Clean and reinstall dependencies"
 	@echo "  codegen       - Generate GraphQL types"
 	@echo "  fetch-abilities - Fetch abilities data"
+	@echo "  typecheck     - Run TypeScript type checking"
 	@echo "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
 	@echo "  pc            - Alias for pre-commit"
+	@echo "  check         - Quick code quality checks (lint + test)"
+	@echo "  prod-build    - Production build with optimizations"
+	@echo "  setup         - Initial project setup for new developers"
 	@echo "  all           - Run clean, install, lint, test, and build"
+
+# Show detected OS
+os-info:
+	@echo "Detected OS: $(DETECTED_OS)"
 
 # Install dependencies
 install:
@@ -72,9 +99,10 @@ dev:
 # Clean build artifacts
 clean:
 	@echo "Cleaning build artifacts..."
-	rm -rf build/
-	rm -rf node_modules/.cache/
-	rm -rf .eslintcache
+	@echo "Detected OS: $(DETECTED_OS)"
+	$(RM_CMD)
+	$(RM_CACHE)
+	$(RM_ESLINT)
 
 # Generate GraphQL types
 codegen:
@@ -112,8 +140,34 @@ check: lint test
 # Production build with optimizations
 prod-build: clean install
 	@echo "Building for production..."
+ifeq ($(OS),Windows_NT)
+	set NODE_ENV=production && npm run build
+else
 	NODE_ENV=production npm run build
+endif
 
 # Quick start for new developers
 setup: install codegen fetch-abilities
 	@echo "✅ Project setup complete! Run 'make dev' to start development server."
+
+# Cross-platform npm cache clear
+clear-cache:
+	@echo "Clearing npm cache..."
+	npm cache clean --force
+
+# Cross-platform node_modules cleanup
+clean-modules:
+	@echo "Removing node_modules..."
+ifeq ($(OS),Windows_NT)
+	if exist node_modules rmdir /s /q node_modules
+else
+	rm -rf node_modules
+endif
+
+# Full clean - removes all generated files
+clean-all: clean clean-modules
+	@echo "✅ All generated files removed!"
+
+# Reinstall everything from scratch
+reinstall: clean-modules install
+	@echo "✅ Dependencies reinstalled!"
