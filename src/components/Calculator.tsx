@@ -519,10 +519,10 @@ const CalculatorCard = styled(Paper, {
   background: liteMode
     ? theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)'
-      : 'linear-gradient(180deg, rgba(255,255,255,0.98) 0%, rgba(248,250,252,0.95) 100%)'
+      : 'linear-gradient(180deg, rgb(17 42 92 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)'
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-      : 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(248,250,252,0.9) 100%)',
+      : 'linear-gradient(180deg, rgb(17 42 92 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
   backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   borderRadius: liteMode ? 12 : 14,
@@ -1052,7 +1052,9 @@ const Calculator: React.FC = React.memo(() => {
             : 'rgb(56 189 248 / 24%)'
           : theme.palette.mode === 'dark'
             ? 'rgba(15, 23, 42, 0.6)'
-            : 'rgba(241, 245, 249, 0.8)',
+            : liteMode
+              ? 'rgb(136 164 192 / 15%)'
+              : 'rgba(241, 245, 249, 0.8)',
         border: item.enabled
           ? theme.palette.mode === 'dark'
             ? '1px solid rgba(56, 189, 248, 0.3)'
@@ -1060,7 +1062,7 @@ const Calculator: React.FC = React.memo(() => {
           : theme.palette.mode === 'dark'
             ? '1px solid rgba(255, 255, 255, 0.08)'
             : '1px solid rgba(226, 232, 240, 0.5)',
-        borderRadius: liteMode ? 6 : 10,
+        borderRadius: '8px !important',
         mb: liteMode ? 0.5 : 1,
         cursor: item.locked ? 'not-allowed' : 'pointer',
         opacity: item.locked ? 0.7 : 1,
@@ -1080,7 +1082,13 @@ const Calculator: React.FC = React.memo(() => {
                   ? '0 4px 12px rgba(56, 189, 248, 0.2)'
                   : '0 4px 12px rgba(59, 130, 246, 0.1)',
               '& .MuiCheckbox-root': {
-                backgroundColor: 'rgba(56, 189, 248, 0.1)',
+                backgroundColor: liteMode
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.08)'
+                    : 'rgb(136 164 192 / 15%)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.1)'
+                    : 'rgba(59, 130, 246, 0.1)',
               },
             }
           : {},
@@ -1271,9 +1279,28 @@ const Calculator: React.FC = React.memo(() => {
                   backgroundColor: !hasQuantity
                     ? theme.palette.mode === 'dark'
                       ? 'rgba(30, 41, 59, 0.5)'
-                      : 'rgba(241, 245, 249, 0.8)'
-                    : 'transparent',
+                      : liteMode
+                        ? 'rgb(136 164 192 / 15%)'
+                        : 'rgba(241, 245, 249, 0.8)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(30, 41, 59, 0.3)'
+                      : liteMode
+                        ? 'rgb(136 164 192 / 8%)'
+                        : 'rgba(241, 245, 249, 0.6)',
                   opacity: !hasQuantity ? 0.6 : 1,
+                  '&:hover': {
+                    backgroundColor: !hasQuantity
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.5)'
+                        : liteMode
+                          ? 'rgb(136 164 192 / 15%)'
+                          : 'rgba(241, 245, 249, 0.8)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.5)'
+                        : liteMode
+                          ? 'rgb(136 164 192 / 20%)'
+                          : 'rgba(241, 245, 249, 0.9)',
+                  },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
                   ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
@@ -1281,7 +1308,22 @@ const Calculator: React.FC = React.memo(() => {
                     ? theme.palette.mode === 'dark'
                       ? 'rgba(148, 163, 184, 0.3)'
                       : 'rgba(148, 163, 184, 0.4)'
-                    : 'transparent',
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.2)'
+                      : liteMode
+                        ? 'rgba(136, 164, 192, 0.3)'
+                        : 'rgba(148, 163, 184, 0.3)',
+                  '&:hover': {
+                    borderColor: !hasQuantity
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.4)'
+                        : 'rgba(148, 163, 184, 0.5)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.4)'
+                        : liteMode
+                          ? 'rgba(99, 102, 241, 0.5)'
+                          : 'rgba(99, 102, 241, 0.4)',
+                  },
                 },
                 '& .MuiInputBase-input': {
                   ...textFieldStyles['& .MuiInputBase-input'],
@@ -1544,11 +1586,11 @@ const Calculator: React.FC = React.memo(() => {
                     : 'rgb(99 102 241 / 15%)',
                 background: liteMode
                   ? theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgb(110 170 240 / 20%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 10%) 100%)'
-                    : 'linear-gradient(135deg, rgb(99 102 241 / 15%) 0%, rgb(139 92 246 / 12%) 50%, rgb(168 85 247 / 8%) 100%)'
+                    ? 'rgba(15, 23, 42, 0.8)'
+                    : 'rgba(255, 255, 255, 0.95)'
                   : theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgb(110 170 240 / 20%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 10%) 100%)'
-                    : 'linear-gradient(135deg, rgb(99 102 241 / 15%) 0%, rgb(139 92 246 / 12%) 50%, rgb(168 85 247 / 8%) 100%)',
+                    ? 'rgba(15, 23, 42, 0.9)'
+                    : 'rgba(255, 255, 255, 0.98)',
                 borderRadius: liteMode ? 0 : '16px 16px 0 0',
                 backdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 WebkitBackdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
@@ -1595,60 +1637,52 @@ const Calculator: React.FC = React.memo(() => {
                     <Switch
                       checked={liteMode}
                       onChange={(e) => setLiteMode(e.target.checked)}
-                      size={liteMode ? 'small' : 'medium'}
+                      size="medium"
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           '&.Mui-checked': {
-                            color: 'rgb(110 170 240 / 90%)',
-                          },
-                          '&.Mui-checked + .MuiSwitch-track': {
-                            backgroundColor: 'rgb(110 170 240 / 25%)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(90deg, rgb(110 170 240 / 30%) 0%, rgb(152 131 227 / 30%) 50%, rgb(173 192 255 / 30%) 100%)'
-                                : 'linear-gradient(90deg, rgb(99 102 241 / 25%) 0%, rgb(139 92 246 / 25%) 50%, rgb(168 85 247 / 25%) 100%)',
+                            color: theme.palette.mode === 'dark' ? '#818cf8' : '#4f46e5',
+                            '& + .MuiSwitch-track': {
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(99, 102, 241, 0.3)'
+                                  : 'rgba(99, 102, 241, 0.2)',
+                            },
                           },
                         },
+                        '& .MuiSwitch-thumb': {
+                          backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 2px 4px rgba(0, 0, 0, 0.3)'
+                              : '0 2px 4px rgba(0, 0, 0, 0.2)',
+                        },
                         '& .MuiSwitch-track': {
-                          borderRadius: '12px',
                           backgroundColor:
                             theme.palette.mode === 'dark'
-                              ? 'rgb(110 170 240 / 8%)'
-                              : 'rgb(99 102 241 / 10%)',
+                              ? 'rgba(255, 255, 255, 0.1)'
+                              : 'rgba(0, 0, 0, 0.1)',
+                          borderRadius: 12,
                           border:
                             theme.palette.mode === 'dark'
-                              ? '1px solid rgb(110 170 240 / 15%)'
-                              : '1px solid rgb(99 102 241 / 20%)',
+                              ? '1px solid rgba(255, 255, 255, 0.1)'
+                              : '1px solid rgba(0, 0, 0, 0.1)',
                         },
                       }}
                     />
                   }
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.75 : 1 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography
                         sx={{
-                          fontSize: liteMode ? '0.9rem' : '1.1rem',
-                          fontWeight: 700,
-                          background: liteMode
-                            ? 'linear-gradient(135deg, rgb(110 170 240 / 90%) 0%, rgb(152 131 227 / 85%) 100%)'
-                            : 'none',
-                          WebkitBackgroundClip: 'text',
-                          WebkitTextFillColor: liteMode ? 'transparent' : 'inherit',
-                          backgroundClip: liteMode ? 'text' : 'none',
-                          filter: liteMode ? 'drop-shadow(0 0 8px rgb(110 170 240 / 35%))' : 'none',
-                        }}
-                      >
-                        ⚡
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: liteMode ? '0.85rem' : '1rem',
+                          fontSize: '0.95rem',
                           fontWeight: 600,
-                          color: liteMode ? 'rgb(110 170 240 / 90%)' : 'text.primary',
-                          letterSpacing: liteMode ? '0.5px' : 'normal',
+                          color:
+                            theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
+                          textTransform: 'none',
                         }}
                       >
-                        Lite Mode
+                        {liteMode ? 'Lite Mode' : 'Full Mode'}
                       </Typography>
                     </Box>
                   }
@@ -1767,29 +1801,14 @@ const Calculator: React.FC = React.memo(() => {
                       : 'rgb(99 102 241 / 15%)',
                   background: liteMode
                     ? theme.palette.mode === 'dark'
-                      ? 'linear-gradient(180deg, rgb(110 170 240 / 15%) 0%, rgb(152 131 227 / 12%) 50%, rgb(173 192 255 / 8%) 100%)'
-                      : 'linear-gradient(180deg, rgb(99 102 241 / 12%) 0%, rgb(139 92 246 / 10%) 50%, rgb(168 85 247 / 7%) 100%)'
+                      ? 'rgba(15, 23, 42, 0.6)'
+                      : 'rgba(255, 255, 255, 0.9)'
                     : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(180deg, rgb(110 170 240 / 15%) 0%, rgb(152 131 227 / 12%) 50%, rgb(173 192 255 / 8%) 100%)'
-                      : 'linear-gradient(180deg, rgb(99 102 241 / 12%) 0%, rgb(139 92 246 / 10%) 50%, rgb(168 85 247 / 7%) 100%)',
+                      ? 'rgba(15, 23, 42, 0.7)'
+                      : 'rgba(255, 255, 255, 0.95)',
                   backdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   WebkitBackdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   position: 'relative',
-                  '&::before': liteMode
-                    ? {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 20,
-                        right: 20,
-                        height: '1px',
-                        background:
-                          theme.palette.mode === 'dark'
-                            ? 'linear-gradient(90deg, rgb(110 170 240 / 50%) 0%, rgb(152 131 227 / 50%) 50%, rgb(173 192 255 / 50%) 100%)'
-                            : 'linear-gradient(90deg, rgb(99 102 241 / 50%) 0%, rgb(139 92 246 / 50%) 50%, rgb(168 85 247 / 50%) 100%)',
-                        opacity: 0.6,
-                      }
-                    : {},
                 }}
               >
                 <Tabs
@@ -1799,52 +1818,45 @@ const Calculator: React.FC = React.memo(() => {
                     '& .MuiTab-root': {
                       fontSize: '1rem',
                       fontWeight: 600,
-                      minHeight: 52,
-                      padding: '12px 20px',
+                      minHeight: 48,
+                      padding: '12px 24px',
+                      textTransform: 'none',
                       borderRadius: '8px 8px 0 0',
-                      color: theme.palette.text.secondary,
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      color:
+                        theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
+                      transition: 'all 0.2s ease',
+                      border: '1px solid transparent',
+                      borderBottom: 'none',
+                      marginRight: 1,
                       '&:hover': {
-                        color: theme.palette.primary.main,
-                        background:
+                        color:
+                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                        backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'rgb(56 189 248 / 5%)'
-                            : 'rgb(99 102 241 / 5%)',
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.04)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderBottom: 'none',
                       },
                       '&.Mui-selected': {
-                        color: theme.palette.primary.main,
-                        background:
+                        color:
+                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                        backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'linear-gradient(180deg, rgb(56 189 248 / 10%) 0%, rgb(0 225 255 / 5%) 100%)'
-                            : 'linear-gradient(180deg, rgb(99 102 241 / 10%) 0%, rgb(168 85 247 / 5%) 100%)',
+                            ? 'rgba(99, 102, 241, 0.15)'
+                            : 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.5)',
+                        borderBottom: 'none',
                       },
                     },
                     '& .MuiTabs-indicator': {
-                      backgroundColor: 'rgb(56 189 248 / 100%)',
-                      height: 3,
-                      borderRadius: '3px 3px 0 0',
-                      mx: 1,
+                      display: 'none',
                     },
+                    minHeight: 48,
                   }}
                 >
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Typography>🎯</Typography>
-                        <Typography>Penetration</Typography>
-                      </Box>
-                    }
-                    {...a11yProps(0)}
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Typography>⚡</Typography>
-                        <Typography>Critical</Typography>
-                      </Box>
-                    }
-                    {...a11yProps(1)}
-                  />
+                  <Tab label="Penetration" {...a11yProps(0)} />
+                  <Tab label="Critical" {...a11yProps(1)} />
                 </Tabs>
 
                 {/* Action buttons for current tab */}
@@ -2057,52 +2069,45 @@ const Calculator: React.FC = React.memo(() => {
                     '& .MuiTab-root': {
                       fontSize: isMobile ? '0.9rem' : '1rem',
                       fontWeight: 600,
-                      minHeight: isMobile ? 44 : 52,
-                      padding: isMobile ? '8px 16px' : '12px 20px',
+                      minHeight: isMobile ? 44 : 48,
+                      padding: isMobile ? '8px 16px' : '12px 24px',
+                      textTransform: 'none',
                       borderRadius: '8px 8px 0 0',
-                      color: theme.palette.text.secondary,
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      color:
+                        theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
+                      transition: 'all 0.2s ease',
+                      border: '1px solid transparent',
+                      borderBottom: 'none',
+                      marginRight: isMobile ? 0 : 1,
                       '&:hover': {
-                        color: theme.palette.primary.main,
-                        background:
+                        color:
+                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                        backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'rgb(56 189 248 / 5%)'
-                            : 'rgb(99 102 241 / 5%)',
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.04)',
+                        border: '1px solid rgba(99, 102, 241, 0.3)',
+                        borderBottom: 'none',
                       },
                       '&.Mui-selected': {
-                        color: theme.palette.primary.main,
-                        background:
+                        color:
+                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                        backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'linear-gradient(180deg, rgb(56 189 248 / 10%) 0%, rgb(0 225 255 / 5%) 100%)'
-                            : 'linear-gradient(180deg, rgb(99 102 241 / 10%) 0%, rgb(168 85 247 / 5%) 100%)',
+                            ? 'rgba(99, 102, 241, 0.15)'
+                            : 'rgba(99, 102, 241, 0.08)',
+                        border: '1px solid rgba(99, 102, 241, 0.5)',
+                        borderBottom: 'none',
                       },
                     },
                     '& .MuiTabs-indicator': {
-                      backgroundColor: 'rgb(56 189 248 / 100%)',
-                      height: 3,
-                      borderRadius: '3px 3px 0 0',
-                      mx: 1,
+                      display: 'none',
                     },
+                    minHeight: isMobile ? 44 : 48,
                   }}
                 >
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Typography>🎯</Typography>
-                        <Typography>Penetration</Typography>
-                      </Box>
-                    }
-                    {...a11yProps(0)}
-                  />
-                  <Tab
-                    label={
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                        <Typography>⚡</Typography>
-                        <Typography>Critical</Typography>
-                      </Box>
-                    }
-                    {...a11yProps(1)}
-                  />
+                  <Tab label="Penetration" {...a11yProps(0)} />
+                  <Tab label="Critical" {...a11yProps(1)} />
                 </Tabs>
               </Box>
             )}
