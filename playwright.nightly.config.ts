@@ -51,10 +51,10 @@ export default defineConfig({
     ['line'],
   ],
 
-  /* Global setup for nightly tests */
+  /* Base URL - use environment variable or default */
   use: {
     /* Base URL - should point to dev server or staging */
-    baseURL: process.env.NIGHTLY_BASE_URL || 'http://localhost:3000',
+    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'http://localhost:3000',
 
     /* Extended navigation timeout for real API calls */
     navigationTimeout: 60000,
@@ -74,11 +74,11 @@ export default defineConfig({
     },
   },
 
-  /* Automatically start development server for tests */
+  /* Web server configuration - let Playwright manage the server lifecycle */
   webServer: {
-    command: 'npm start',
+    command: 'npm run preview',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI, // Reuse existing server in development
+    reuseExistingServer: !!process.env.CI, // Reuse existing server in CI
     timeout: 120000, // 2 minutes to start
     stdout: 'pipe',
     stderr: 'pipe',
