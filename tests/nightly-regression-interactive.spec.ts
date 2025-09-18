@@ -10,7 +10,8 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
  * that require real data to function properly.
  */
 
-const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 2); // Use first 2 for faster tests
+const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
+const REPORT_WITH_FIGHTS = REAL_REPORT_IDS[1]; // qdxpGgyQ92A31LBr - try with auth
 
 test.describe('Nightly Regression - Interactive Features', () => {
   test.beforeEach(async ({ page }) => {
@@ -42,7 +43,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
   test.describe('Fight Replay Functionality', () => {
     test('should load and interact with fight replay', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Navigate to report to get fights
       await page.goto(`/#/report/${reportId}`, {
@@ -51,6 +52,23 @@ test.describe('Nightly Regression - Interactive Features', () => {
       });
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+
+      // Wait for either fight list or loading state to appear
+      await expect(
+        page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
+      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+
+      // Check if accordion is collapsed and expand it if needed
+      const accordion = page.locator('[data-testid*="trial-accordion"]').first();
+      if (await accordion.isVisible()) {
+        const isExpanded = await accordion.getAttribute('aria-expanded');
+        if (isExpanded === 'false' || isExpanded === null) {
+          const accordionSummary = accordion.locator('.MuiAccordionSummary-root');
+          await accordionSummary.click();
+          // Wait a moment for the accordion to expand
+          await page.waitForTimeout(2000);
+        }
+      }
 
       // Take screenshot of report page
       await page.screenshot({
@@ -61,7 +79,44 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       // Check if fight links are available (may not be present for all reports)
       const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      
+      // Check if fights exist in DOM first, then check usability
+      const fightButtonCount = await page.locator(SELECTORS.ANY_FIGHT_BUTTON).count();
+      
+      let hasFights = false;
+      let usableFightButton = null;
+      if (fightButtonCount > 0) {
+        // Try scrolling to the first fight button
+        const firstButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+        await firstButton.scrollIntoViewIfNeeded().catch(() => {});
+        await page.waitForTimeout(1000); // Wait for any animations
+        
+        // If fight buttons exist in DOM, check if any are usable
+        for (let i = 0; i < Math.min(fightButtonCount, 5); i++) {
+          const button = page.locator(SELECTORS.ANY_FIGHT_BUTTON).nth(i);
+          
+          // Try scrolling to this specific button
+          await button.scrollIntoViewIfNeeded().catch(() => {});
+          
+          const isVisible = await button.isVisible({ timeout: 2000 }).catch(() => false);
+          
+          // If not visible, try checking if it's just outside viewport but clickable
+          if (!isVisible) {
+            const isEnabled = await button.isEnabled().catch(() => false);
+            const boundingBox = await button.boundingBox().catch(() => null);
+            
+            if (isEnabled && boundingBox) {
+              hasFights = true;
+              usableFightButton = button;
+              break;
+            }
+          } else {
+            hasFights = true;
+            usableFightButton = button;
+            break;
+          }
+        }
+      }
       
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} - this is normal for some reports`);
@@ -69,8 +124,20 @@ test.describe('Nightly Regression - Interactive Features', () => {
         return;
       }
       
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
+      const href = await usableFightButton!.getAttribute('href');
+      
+      let fightId = href?.match(/\/fight\/(\d+)/)?.[1];
+      
+      // If no href, try to extract from data-testid
+      if (!fightId) {
+        const dataTestId = await usableFightButton!.getAttribute('data-testid');
+        if (dataTestId) {
+          const idMatch = dataTestId.match(/fight-button-(.+)/);
+          if (idMatch) {
+            fightId = idMatch[1];
+          }
+        }
+      }
 
       if (!fightId) {
         console.log('⚠️  Could not extract fight ID from href:', href);
@@ -128,7 +195,8 @@ test.describe('Nightly Regression - Interactive Features', () => {
         // Test timeline scrubbing if available
         const timeline = page.locator('input[type="range"], .timeline-slider, .scrubber');
         if (await timeline.first().isVisible({ timeout: 3000 })) {
-          await timeline.first().click();
+          // For sliders, force click is often needed due to overlay elements
+          await timeline.first().click({ force: true });
           await page.waitForTimeout(2000);
           
           await page.screenshot({
@@ -155,7 +223,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
   test.describe('Live Logging Functionality', () => {
     test('should load live logging interface', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Navigate to live logging
       await page.goto(`/#/report/${reportId}/live`, {
@@ -199,7 +267,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
   test.describe('Advanced Visualizations', () => {
     test('should test location heatmap visualization', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Navigate to report and get fight
       await page.goto(`/#/report/${reportId}`, {
@@ -258,7 +326,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
     });
 
     test('should test rotation analysis visualization', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Get fight ID
       await page.goto(`/#/report/${reportId}`, {
@@ -331,7 +399,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
     });
 
     test('should test talents grid visualization', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Get fight ID
       await page.goto(`/#/report/${reportId}`, {
@@ -400,7 +468,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
   test.describe('Data Filtering and Search', () => {
     test('should test advanced filtering functionality', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Get fight ID and navigate to damage done tab
       await page.goto(`/#/report/${reportId}`, {
@@ -468,7 +536,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
     });
 
     test('should test search functionality across tabs', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Test search in events tab
       await page.goto(`/#/report/${reportId}`, {
@@ -528,7 +596,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
   test.describe('Performance Under Load', () => {
     test('should handle rapid tab switching', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Get fight ID
       await page.goto(`/#/report/${reportId}`, {
@@ -589,7 +657,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
     });
 
     test('should handle large datasets in data grids', async ({ page }) => {
-      const reportId = REAL_REPORT_IDS[0];
+      const reportId = REPORT_WITH_FIGHTS;
       
       // Navigate to raw events which typically has the most data
       await page.goto(`/#/report/${reportId}`, {

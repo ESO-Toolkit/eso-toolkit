@@ -137,7 +137,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: undefined, // No auth state
+        storageState: 'tests/auth-state.json', // Use auth state for interactive features
+        launchOptions: {
+          firefoxUserPrefs: {
+            'dom.security.https_only_mode': false,
+            'security.tls.insecure_fallback_hosts': 'localhost',
+            'network.stricttransportsecurity.preloadlist': false,
+            'security.fileuri.strict_origin_policy': false,
+          },
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
     },
