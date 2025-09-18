@@ -8,6 +8,11 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Run with: npx playwright test --config=playwright.nightly.config.ts
  *
+ * Sharding Support:
+ * - Run with shards: npm run test:nightly:sharded (3 parallel shards)
+ * - Individual shard: SHARD_INDEX=1 SHARD_TOTAL=3 npx playwright test --config=playwright.nightly.config.ts
+ * - Custom shard count: SHARD_TOTAL=4 npm run test:nightly:sharded
+ *
  * Environment Variables for Authentication:
  * - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
  * - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret (optional)
@@ -27,6 +32,12 @@ export default defineConfig({
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4, // Fewer workers to be respectful to APIs
+
+  /* Enable sharding for faster parallel execution */
+  shard:
+    process.env.SHARD_INDEX && process.env.SHARD_TOTAL
+      ? { current: parseInt(process.env.SHARD_INDEX), total: parseInt(process.env.SHARD_TOTAL) }
+      : undefined,
 
   /* Retry failed tests */
   retries: process.env.CI ? 2 : 1,

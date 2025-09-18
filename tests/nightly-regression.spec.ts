@@ -4,13 +4,13 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
 
 /**
  * Nightly Regression Tests
- * 
+ *
  * These tests use real ESO Logs data to ensure the application works correctly
  * with actual production data. They test various report pages, tabs, and functionality
  * to catch regressions that might not be caught by unit tests or mocked integration tests.
- * 
+ *
  * Run with: npx playwright test tests/nightly-regression.spec.ts
- * 
+ *
  * Note: These tests will fail if run against a dev server with API mocking enabled.
  * They require real data from esologs.com APIs.
  */
@@ -21,7 +21,7 @@ const MAIN_TABS = TEST_DATA.MAIN_TABS;
 
 const EXPERIMENTAL_TABS = [
   'location-heatmap',
-  'raw-events', 
+  'raw-events',
   'target-events',
   'diagnostics',
   'actors',
@@ -36,16 +36,16 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   // Disable API mocking for these tests since we want real data
   test.beforeEach(async ({ page }) => {
     // Don't call setupApiMocking - we want real API calls
-    
+
     // Set longer timeouts for real data loading
     test.setTimeout(120000); // 2 minutes per test
-    
+
     // Monitor console errors
     const errors: string[] = [];
     page.on('pageerror', (error) => {
       errors.push(error.message);
     });
-    
+
     // Store errors on the page for later access
     await page.addInitScript(() => {
       (window as any).testErrors = [];
@@ -68,29 +68,35 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
         // Wait for the report data to load - look for fight list or loading state
         try {
-          await expect(
-            page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-          ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+          await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+            timeout: TEST_TIMEOUTS.dataLoad,
+          });
         } catch (error) {
           // If the expected elements aren't found, check what actually loaded
-          console.log(`⚠️ Expected elements not found for report ${reportId}. Checking page state...`);
-          
+          console.log(
+            `⚠️ Expected elements not found for report ${reportId}. Checking page state...`,
+          );
+
           // Check if there are any error messages on the page
-          const errorElements = await page.locator('[data-testid="error-message"], .error, .alert-error').count();
+          const errorElements = await page
+            .locator('[data-testid="error-message"], .error, .alert-error')
+            .count();
           const hasContent = await page.locator('body').textContent();
-          
+
           console.log(`📋 Page content length: ${hasContent?.length || 0} characters`);
           console.log(`❌ Error elements found: ${errorElements}`);
-          
+
           // Take a diagnostic screenshot
           await page.screenshot({
             path: `test-results/debug-${reportId}-failed-load.png`,
             fullPage: true,
             timeout: TEST_TIMEOUTS.screenshot,
           });
-          
+
           // Re-throw the error with additional context
-          throw new Error(`Report ${reportId} failed to load expected elements. Check debug screenshot for details. Original error: ${error instanceof Error ? error.message : String(error)}`);
+          throw new Error(
+            `Report ${reportId} failed to load expected elements. Check debug screenshot for details. Original error: ${error instanceof Error ? error.message : String(error)}`,
+          );
         }
 
         // Take screenshot for visual regression
@@ -102,10 +108,11 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
         // Verify no critical JavaScript errors
         const errors = await page.evaluate(() => (window as any).testErrors || []);
-        const criticalErrors = errors.filter((error: string) => 
-          !error.includes('ResizeObserver') && 
-          !error.includes('Not implemented') &&
-          !error.includes('Non-Error promise rejection')
+        const criticalErrors = errors.filter(
+          (error: string) =>
+            !error.includes('ResizeObserver') &&
+            !error.includes('Not implemented') &&
+            !error.includes('Non-Error promise rejection'),
         );
         expect(criticalErrors).toHaveLength(0);
       });
@@ -123,11 +130,11 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
         // Wait for fights to load and get the first fight
         await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-        
+
         // Wait for either fight list or loading state to appear
-        await expect(
-          page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-        ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+        await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+          timeout: TEST_TIMEOUTS.dataLoad,
+        });
 
         // Check if accordion is collapsed and expand it if needed
         const accordion = page.locator('[data-testid*="trial-accordion"]').first();
@@ -143,78 +150,82 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
         // Look for a specific fight button by ID (fight-button-1 should usually exist)
         const specificFightButton = page.locator('[data-testid="fight-button-1"]');
-        
+
         // Check if fight-button-1 exists, otherwise fall back to first available
-        const fightButton = await specificFightButton.count() > 0 
-          ? specificFightButton 
-          : page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-        
+        const fightButton =
+          (await specificFightButton.count()) > 0
+            ? specificFightButton
+            : page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+
         // Instead of checking visibility, just wait for the element to be attached to DOM
         await fightButton.waitFor({ state: 'attached', timeout: TEST_TIMEOUTS.dataLoad });
-        
+
         // Log some debug info before clicking
         const buttonText = await fightButton.textContent();
         const buttonId = await fightButton.getAttribute('data-testid');
         console.log('Clicking button with text:', buttonText, 'and id:', buttonId);
-        
+
         // Listen for console errors
         page.on('console', (msg) => {
           if (msg.type() === 'error') {
             console.log('Browser console error:', msg.text());
           }
         });
-        
+
         // Force the click even if Playwright thinks it's "hidden"
         await fightButton.scrollIntoViewIfNeeded();
         await page.waitForTimeout(500); // Small delay after scroll
-        
+
         // Wait for the component to be fully interactive
         await page.waitForLoadState('networkidle');
-        
+
         // Try force click first since the element might be overlapped or has visibility issues
         await fightButton.click({ force: true });
-        
+
         // Give some time and check URL
         await page.waitForTimeout(3000);
         const urlAfterClick = page.url();
         console.log('URL after click:', urlAfterClick);
-        
+
         // If click didn't work, try again with force
         if (!urlAfterClick.includes('/fight/')) {
           console.log('First click failed, trying direct navigation...');
-          
+
           // Extract fight ID from the button's data-testid
           const fightId = buttonId?.replace('fight-button-', '') || '1';
           const directNavigationUrl = `/#/report/${reportId}/fight/${fightId}/insights`;
-          
+
           console.log('Navigating directly to:', directNavigationUrl);
           await page.goto(`http://localhost:3000${directNavigationUrl}`, {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
           });
         }
-        
+
         // Wait for React Router navigation - check for hash change
-        await page.waitForFunction(() => {
-          return window.location.hash.includes('/fight/');
-        }, { timeout: TEST_TIMEOUTS.navigation });
-        
+        await page.waitForFunction(
+          () => {
+            return window.location.hash.includes('/fight/');
+          },
+          { timeout: TEST_TIMEOUTS.navigation },
+        );
+
         // Extract fight ID from the hash URL
         const currentUrl = page.url();
         const fightIdMatch = currentUrl.match(/#\/report\/[^\/]+\/fight\/(\d+)/);
-        
+
         if (!fightIdMatch) {
           throw new Error(`Could not find fight ID in URL: ${currentUrl}`);
         }
-        
+
         const fightId = fightIdMatch[1];
-        
+
         console.log('Successfully navigated to fight page. Fight ID:', fightId);
 
         // Test each main tab without using test.step to avoid context issues
         for (const tabId of MAIN_TABS) {
           console.log(`\nTesting tab: ${tabId}`);
-          
+
           try {
             await page.goto(`/#/report/${reportId}/fight/${fightId}/${tabId}`, {
               waitUntil: 'domcontentloaded',
@@ -225,28 +236,49 @@ test.describe('Nightly Regression Tests - Real Data', () => {
             await page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
               console.log('Network idle timeout - proceeding anyway');
             });
-            
+
             // Debug: log what tabs are available
-            const availableTabs = await page.locator('[role="tab"]').allTextContents().catch(() => []);
+            const availableTabs = await page
+              .locator('[role="tab"]')
+              .allTextContents()
+              .catch(() => []);
             console.log('Available tabs on page:', availableTabs);
-            
+
             // If no tabs found, this might be a report without fight data - skip gracefully
             if (availableTabs.length === 0) {
-              console.log(`ℹ️ No tabs found for ${reportId} fight ${fightId} - report may not have fight details`);
+              console.log(
+                `ℹ️ No tabs found for ${reportId} fight ${fightId} - report may not have fight details`,
+              );
               continue; // Skip this tab instead of failing
             }
-            
-            const activeTab = await page.locator('[role="tab"][aria-selected="true"]').textContent().catch(() => '');
+
+            const activeTab = await page
+              .locator('[role="tab"][aria-selected="true"]')
+              .textContent()
+              .catch(() => '');
             console.log('Currently active tab:', activeTab);
 
             // Instead of strict tab matching, just verify that we have content loaded
             // Check if there's any meaningful content on the page
-            const hasMainContent = await page.locator(SELECTORS.MAIN_CONTENT).first().isVisible().catch(() => false);
-            const hasDataGrid = await page.locator('[data-testid="data-grid"]').isVisible().catch(() => false);
-            const hasAnyContent = await page.locator('main, [role="main"], .MuiContainer-root').first().isVisible().catch(() => false);
-            
+            const hasMainContent = await page
+              .locator(SELECTORS.MAIN_CONTENT)
+              .first()
+              .isVisible()
+              .catch(() => false);
+            const hasDataGrid = await page
+              .locator('[data-testid="data-grid"]')
+              .isVisible()
+              .catch(() => false);
+            const hasAnyContent = await page
+              .locator('main, [role="main"], .MuiContainer-root')
+              .first()
+              .isVisible()
+              .catch(() => false);
+
             if (!hasMainContent && !hasDataGrid && !hasAnyContent) {
-              console.log('⚠️ No main content found - tab may not have loaded or may not contain this data type');
+              console.log(
+                '⚠️ No main content found - tab may not have loaded or may not contain this data type',
+              );
               // Some tabs legitimately may not have data, so we'll just warn instead of failing
               continue;
             }
@@ -261,7 +293,10 @@ test.describe('Nightly Regression Tests - Real Data', () => {
                 timeout: 5000,
               });
             } catch (screenshotError) {
-              console.log('Screenshot failed but continuing test:', (screenshotError as Error).message);
+              console.log(
+                'Screenshot failed but continuing test:',
+                (screenshotError as Error).message,
+              );
             }
           } catch (tabError) {
             console.log(`⚠️ Error testing tab ${tabId}:`, (tabError as Error).message);
@@ -276,7 +311,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Experimental Tabs', () => {
     test(`should load experimental tabs for first report`, async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
-      
+
       // Navigate to report and get first fight
       await page.goto(`/#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
@@ -284,20 +319,22 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       });
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      
+
       // Wait for either fight list or loading state to appear
-      await expect(
-        page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
-      
+      await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+
       const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
       const hasFights = await firstFightButton.isVisible({ timeout: 5000 }).catch(() => false);
-      
+
       if (!hasFights) {
-        console.log(`ℹ️ No fights found in report ${reportId} for experimental tab testing - this is normal for some reports`);
+        console.log(
+          `ℹ️ No fights found in report ${reportId} for experimental tab testing - this is normal for some reports`,
+        );
         return; // Skip this test gracefully
       }
-      
+
       await firstFightButton.click();
       await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation }).catch(() => {
         console.log('Fight navigation failed, trying direct approach');
@@ -316,18 +353,20 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       });
 
       // Enable experimental tabs if toggle exists
-      const experimentalToggle = page.locator('input[type="checkbox"]').filter({ hasText: /experimental/i });
+      const experimentalToggle = page
+        .locator('input[type="checkbox"]')
+        .filter({ hasText: /experimental/i });
       if (await experimentalToggle.isVisible({ timeout: 5000 })) {
         await experimentalToggle.check();
       }
 
       // Test a few key experimental tabs
       const keyExperimentalTabs = ['raw-events', 'actors', 'talents', 'diagnostics'];
-      
+
       for (const tabId of keyExperimentalTabs) {
         test.step(`Testing experimental ${tabId} tab`, async () => {
           console.log(`\nTesting experimental tab: ${tabId}`);
-          
+
           await page.goto(`/#/report/${reportId}/fight/${fightId}/${tabId}`, {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
@@ -337,12 +376,18 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
           // Check if there's any meaningful content (be very lenient for experimental features)
-          const hasAnyContent = await page.locator('main, [role="main"], .MuiContainer-root, .MuiPaper-root').first().isVisible().catch(() => false);
-          
+          const hasAnyContent = await page
+            .locator('main, [role="main"], .MuiContainer-root, .MuiPaper-root')
+            .first()
+            .isVisible()
+            .catch(() => false);
+
           if (hasAnyContent) {
             console.log(`✅ Experimental tab ${tabId} loaded with content`);
           } else {
-            console.log(`⚠️ Experimental tab ${tabId} may not have content (this is acceptable for experimental features)`);
+            console.log(
+              `⚠️ Experimental tab ${tabId} may not have content (this is acceptable for experimental features)`,
+            );
           }
 
           // Take a quick screenshot (with error handling)
@@ -363,7 +408,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Interactive Features', () => {
     test('should test player selection and filtering', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
-      
+
       // Navigate to players tab - use direct navigation to avoid fight button issues
       await page.goto(`/#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
@@ -371,14 +416,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       });
 
       // Wait for either fight list or loading state to appear
-      await expect(
-        page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       // Try to click fight button, but use fallback if it fails
       const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
       let fightId = '1'; // Default fallback
-      
+
       try {
         await firstFightButton.click({ timeout: 10000 });
         await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation });
@@ -396,12 +441,18 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
       // Check if players content loaded (be lenient)
-      const hasPlayersContent = await page.locator('[data-testid*="player"], .player, [role="table"]').first().isVisible({ timeout: 10000 }).catch(() => false);
-      
+      const hasPlayersContent = await page
+        .locator('[data-testid*="player"], .player, [role="table"]')
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+
       if (hasPlayersContent) {
         console.log('✅ Players content loaded successfully');
       } else {
-        console.log('⚠️ Players content may not have loaded - this test may need manual verification');
+        console.log(
+          '⚠️ Players content may not have loaded - this test may need manual verification',
+        );
       }
 
       // Try to take a screenshot without failing the test
@@ -417,8 +468,12 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       // Test player selection in data grid if available (simplified)
       console.log('Looking for data grid...');
-      const hasDataGrid = await page.locator('[data-testid="data-grid"], [role="table"], table').first().isVisible({ timeout: 5000 }).catch(() => false);
-      
+      const hasDataGrid = await page
+        .locator('[data-testid="data-grid"], [role="table"], table')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+
       if (hasDataGrid) {
         console.log('✅ Data grid found - player functionality appears to be working');
       } else {
@@ -429,19 +484,27 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     test('should test target selector functionality', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
       const fightId = '1'; // Use direct fight ID to avoid navigation issues
-      
+
       // Navigate directly to damage tab which should have target selector
       await page.goto(`/#/report/${reportId}/fight/${fightId}/damage-done`, {
-        waitUntil: 'domcontentloaded', 
+        waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
       // Look for target selector or any interactive elements
-      const hasTargetSelector = await page.locator('[data-testid*="target"], [data-testid*="selector"], select, .MuiSelect-root').first().isVisible({ timeout: 10000 }).catch(() => false);
-      const hasDamageContent = await page.locator('[data-testid*="damage"], [data-testid="data-grid"], [role="table"]').first().isVisible({ timeout: 10000 }).catch(() => false);
-      
+      const hasTargetSelector = await page
+        .locator('[data-testid*="target"], [data-testid*="selector"], select, .MuiSelect-root')
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+      const hasDamageContent = await page
+        .locator('[data-testid*="damage"], [data-testid="data-grid"], [role="table"]')
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+
       if (hasTargetSelector) {
         console.log('✅ Target selector found');
       } else if (hasDamageContent) {
@@ -475,13 +538,13 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     test('should test fight navigation', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
       const navigationFightId = '1'; // Use direct fight ID to avoid navigation issues
-      
+
       // Test navigation between different fight tabs
       const tabsToTest = ['insights', 'players', 'damage-done'];
-      
+
       for (const tab of tabsToTest) {
         console.log(`Testing navigation to ${tab} tab...`);
-        
+
         await page.goto(`/#/report/${reportId}/fight/${navigationFightId}/${tab}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
@@ -499,9 +562,17 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       }
 
       // Wait for either fight list or loading state to appear, or just any main content
-      const hasExpectedContent = await page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first().isVisible({ timeout: 10000 }).catch(() => false);
-      const hasAnyContent = await page.locator('main, [role="main"], .MuiContainer-root').first().isVisible({ timeout: 5000 }).catch(() => false);
-      
+      const hasExpectedContent = await page
+        .locator(SELECTORS.FIGHT_LIST_OR_LOADING)
+        .first()
+        .isVisible({ timeout: 10000 })
+        .catch(() => false);
+      const hasAnyContent = await page
+        .locator('main, [role="main"], .MuiContainer-root')
+        .first()
+        .isVisible({ timeout: 5000 })
+        .catch(() => false);
+
       if (!hasExpectedContent && !hasAnyContent) {
         console.log(`ℹ️ Page may not have loaded properly for navigation testing - skipping`);
         return;
@@ -509,12 +580,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
       const hasFights = await firstFightButton.isVisible({ timeout: 5000 }).catch(() => false);
-      
+
       if (!hasFights) {
-        console.log(`ℹ️ No fights found in report for navigation testing - this is normal for some reports`);
+        console.log(
+          `ℹ️ No fights found in report for navigation testing - this is normal for some reports`,
+        );
         return; // Skip this test gracefully
       }
-      
+
       await firstFightButton.click();
       await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation }).catch(() => {
         console.log('Fight navigation failed');
@@ -525,19 +598,19 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Performance and Error Monitoring', () => {
     test('should monitor load times and network requests', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
-      
+
       // Track performance metrics
       const startTime = Date.now();
-      
+
       await page.goto(`/#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
 
       // Wait for either fight list or loading state to appear
-      await expect(
-        page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
+      await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
 
       const firstFightButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
       let performanceFightId = '1'; // Default fallback
@@ -562,7 +635,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
       // Verify reasonable load times (adjust thresholds as needed)
       expect(insightsLoadTime).toBeLessThan(60000); // 60 seconds max (increased for nightly tests)
-      
+
       console.log(`Insights tab loaded in ${insightsLoadTime}ms`);
 
       // Check for failed network requests (simplified monitoring)
@@ -604,19 +677,19 @@ test.describe('Nightly Regression Tests - Real Data', () => {
   test.describe('Visual Regression Detection', () => {
     test('should capture full page screenshots for visual comparison', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
-      
+
       // Landing page
       await page.goto(`/#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
-      
+
       // Wait for either fight list or loading state to appear
-      await expect(
-        page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()
-      ).toBeVisible({ timeout: TEST_TIMEOUTS.dataLoad });
-      
+      await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
+        timeout: TEST_TIMEOUTS.dataLoad,
+      });
+
       // Take screenshot of landing page
       try {
         await page.screenshot({
@@ -630,7 +703,9 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       }
 
       // Skip fight detail screenshots for now due to loading issues
-      console.log('✅ Visual regression test completed (fight details skipped due to loading issues)');
+      console.log(
+        '✅ Visual regression test completed (fight details skipped due to loading issues)',
+      );
     });
   });
 
@@ -638,24 +713,28 @@ test.describe('Nightly Regression Tests - Real Data', () => {
     test('should verify data makes sense across tabs', async ({ page }) => {
       const reportId = REAL_REPORT_IDS[0];
       const consistencyFightId = '1'; // Use direct navigation
-      
+
       console.log('Testing data consistency across tabs...');
-      
+
       // Test basic data consistency by navigating to key tabs
       const tabsToCheck = ['insights', 'players'];
-      
+
       for (const tab of tabsToCheck) {
         try {
           await page.goto(`/#/report/${reportId}/fight/${consistencyFightId}/${tab}`, {
             waitUntil: 'domcontentloaded',
             timeout: 15000,
           });
-          
+
           await page.waitForLoadState('networkidle', { timeout: 15000 });
-          
+
           // Check if we have any meaningful content
-          const hasContent = await page.locator('[data-testid*="data"], [role="table"], .MuiPaper-root').first().isVisible({ timeout: 5000 }).catch(() => false);
-          
+          const hasContent = await page
+            .locator('[data-testid*="data"], [role="table"], .MuiPaper-root')
+            .first()
+            .isVisible({ timeout: 5000 })
+            .catch(() => false);
+
           if (hasContent) {
             console.log(`✅ ${tab} tab has content`);
           } else {
