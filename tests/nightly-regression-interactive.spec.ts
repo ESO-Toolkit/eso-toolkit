@@ -13,6 +13,71 @@ import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
 const REAL_REPORT_IDS = TEST_DATA.REAL_REPORT_IDS.slice(0, 3); // Use first 3 for better coverage
 const REPORT_WITH_FIGHTS = REAL_REPORT_IDS[1]; // qdxpGgyQ92A31LBr - try with auth
 
+/**
+ * Helper function to check if fights are available and get a usable fight button
+ * This uses the same robust logic as the working fight replay test
+ */
+async function findUsableFightButton(page: any): Promise<{ hasFights: boolean; fightButton: any; fightId?: string }> {
+  // Check if fight links are available (may not be present for all reports)
+  const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+
+  // Check if fights exist in DOM first, then check usability
+  const fightButtonCount = await page.locator(SELECTORS.ANY_FIGHT_BUTTON).count();
+  console.log(`🔍 Found ${fightButtonCount} fight buttons in DOM`);
+
+  let hasFights = false;
+  let usableFightButton = null;
+  let fightId = null;
+
+  if (fightButtonCount > 0) {
+    // Try scrolling to the first fight button
+    const firstButton = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
+    await firstButton.scrollIntoViewIfNeeded().catch(() => {});
+    await page.waitForTimeout(1000); // Wait for any animations
+
+    // If fight buttons exist in DOM, check if any are usable
+    for (let i = 0; i < Math.min(fightButtonCount, 5); i++) {
+      const button = page.locator(SELECTORS.ANY_FIGHT_BUTTON).nth(i);
+      
+      try {
+        // Check if button is actually usable
+        await button.scrollIntoViewIfNeeded();
+        const isVisible = await button.isVisible({ timeout: 5000 });
+        const isEnabled = await button.isEnabled();
+        
+        console.log(`🔍 Button ${i}: visible=${isVisible}, enabled=${isEnabled}`);
+        
+        if (isVisible && isEnabled) {
+          // Try to get fight ID from data-testid first (more reliable)
+          const dataTestId = await button.getAttribute('data-testid');
+          let extractedFightId = dataTestId?.match(/fight-button-(.+)/)?.[1];
+          
+          // If no data-testid, try href as fallback
+          if (!extractedFightId) {
+            const href = await button.getAttribute('href');
+            extractedFightId = href?.match(/\/fight\/(\d+)/)?.[1];
+          }
+          
+          if (extractedFightId) {
+            hasFights = true;
+            usableFightButton = button;
+            fightId = extractedFightId;
+            console.log(`✅ Found usable fight button: ${fightId}`);
+            break;
+          }
+        }
+      } catch (error) {
+        // Continue to next button if this one fails
+        continue;
+      }
+    }
+  } else {
+    console.log('❌ No fight buttons found in DOM');
+  }
+
+  return { hasFights, fightButton: usableFightButton, fightId };
+}
+
 test.describe('Nightly Regression - Interactive Features', () => {
   test.beforeEach(async ({ page }) => {
     // No API mocking - we need real data for these features
@@ -42,7 +107,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
   });
 
   test.describe('Fight Replay Functionality', () => {
-    test('should load and interact with fight replay', async ({ page }) => {
+    test('should load and interact with fight replay', async ({ page }, testInfo) => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Navigate to report to get fights
@@ -52,6 +117,11 @@ test.describe('Nightly Regression - Interactive Features', () => {
       });
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+
+      // Additional wait for WebKit to ensure JavaScript has fully executed
+      if (testInfo.project.name.includes('webkit')) {
+        await page.waitForTimeout(3000);
+      }
 
       // Wait for either fight list or loading state to appear
       await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
@@ -282,18 +352,14 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for heatmap visualization`);
         test.skip(true, 'Skipping heatmap test - no fights available in this report');
         return;
       }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
 
       // Navigate to location heatmap (experimental tab)
       await page.goto(`/#/report/${reportId}/fight/${fightId}/location-heatmap`, {
@@ -303,12 +369,13 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForTimeout(10000); // Heatmaps can take time to render
 
-      // Look for heatmap visualization
-      const heatmapElements = page.locator('canvas, .heatmap, .visualization, .map-container, svg');
+      // Look for heatmap visualization - be more specific about what we're looking for
+      const heatmapElements = page.locator('canvas, .heatmap, .visualization, .map-container');
+      const heatmapSVG = page.locator('svg[width][height]').filter({ hasText: '' }); // Empty SVG likely to be visualization
 
-      const hasHeatmap = await heatmapElements
-        .first()
-        .isVisible({ timeout: TEST_TIMEOUTS.interaction });
+      // Check for actual heatmap content
+      const hasHeatmap = await heatmapElements.first().isVisible({ timeout: 5000 }).catch(() => false);
+      const hasHeatmapSVG = await heatmapSVG.first().isVisible({ timeout: 5000 }).catch(() => false);
 
       await page.screenshot({
         path: `test-results/nightly-regression-heatmap-${reportId}-${fightId}.png`,
@@ -317,20 +384,46 @@ test.describe('Nightly Regression - Interactive Features', () => {
       });
 
       if (hasHeatmap) {
-        // Test interaction with heatmap if possible
+        // Test interaction with heatmap if possible - use the main heatmap element
         const heatmapElement = heatmapElements.first();
-        await heatmapElement.click({ position: { x: 100, y: 100 } });
-        await page.waitForTimeout(1000);
+        const boundingBox = await heatmapElement.boundingBox();
+        
+        // Only try to click if the element is reasonably large (not a small icon)
+        if (boundingBox && boundingBox.width > 50 && boundingBox.height > 50) {
+          await heatmapElement.click({ position: { x: 100, y: 100 } });
+          await page.waitForTimeout(1000);
 
-        await page.screenshot({
-          path: `test-results/nightly-regression-heatmap-clicked-${reportId}.png`,
-          fullPage: true,
-          timeout: TEST_TIMEOUTS.screenshot,
-        });
+          await page.screenshot({
+            path: `test-results/nightly-regression-heatmap-clicked-${reportId}.png`,
+            fullPage: true,
+            timeout: TEST_TIMEOUTS.screenshot,
+          });
+        } else {
+          console.log('ℹ️  Heatmap element too small for interaction testing');
+        }
+      } else if (hasHeatmapSVG) {
+        // If we found an SVG that might be a heatmap, check its size
+        const svgElement = heatmapSVG.first();
+        const boundingBox = await svgElement.boundingBox();
+        
+        if (boundingBox && boundingBox.width > 50 && boundingBox.height > 50) {
+          await svgElement.click({ position: { x: boundingBox.width / 2, y: boundingBox.height / 2 } });
+          await page.waitForTimeout(1000);
+
+          await page.screenshot({
+            path: `test-results/nightly-regression-heatmap-clicked-${reportId}.png`,
+            fullPage: true,
+            timeout: TEST_TIMEOUTS.screenshot,
+          });
+        } else {
+          console.log('ℹ️  SVG element too small for interaction testing');
+        }
+      } else {
+        console.log('ℹ️  No heatmap visualization found - this may be expected for some fights');
       }
     });
 
-    test('should test rotation analysis visualization', async ({ page }) => {
+    test('should test rotation analysis visualization', async ({ page }, testInfo) => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Get fight ID
@@ -341,22 +434,17 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
-
-      if (!hasFights) {
-        console.log(`ℹ️  No fights found in report ${reportId} for rotation analysis`);
-        test.skip(true, 'Skipping rotation analysis test - no fights available in this report');
-        return;
+      // Additional wait for WebKit to ensure JavaScript has fully executed
+      if (testInfo.project.name.includes('webkit')) {
+        await page.waitForTimeout(3000);
       }
 
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
+      // Use the robust fight detection helper
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
-      if (!fightId) {
-        console.log('⚠️  Could not extract fight ID for rotation analysis');
-        test.skip(true, 'Skipping rotation analysis test - could not extract fight ID');
+      if (!hasFights || !fightId) {
+        console.log(`ℹ️  No fights found in report ${reportId} for rotation analysis`);
+        test.skip(true, 'Skipping rotation analysis test - no fights available in this report');
         return;
       }
 
@@ -414,22 +502,12 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for talents grid`);
         test.skip(true, 'Skipping talents grid test - no fights available in this report');
-        return;
-      }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
-
-      if (!fightId) {
-        console.log('⚠️  Could not extract fight ID for talents grid');
-        test.skip(true, 'Skipping talents grid test - could not extract fight ID');
         return;
       }
 
@@ -483,22 +561,12 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for advanced filtering`);
         test.skip(true, 'Skipping advanced filtering test - no fights available in this report');
-        return;
-      }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
-
-      if (!fightId) {
-        console.log('⚠️  Could not extract fight ID for advanced filtering');
-        test.skip(true, 'Skipping advanced filtering test - could not extract fight ID');
         return;
       }
 
@@ -551,18 +619,14 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for search functionality`);
         test.skip(true, 'Skipping search functionality test - no fights available in this report');
         return;
       }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
 
       await page.goto(`/#/report/${reportId}/fight/${fightId}/raw-events`, {
         waitUntil: 'domcontentloaded',
@@ -613,22 +677,12 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for rapid tab switching`);
         test.skip(true, 'Skipping rapid tab switching test - no fights available in this report');
-        return;
-      }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
-
-      if (!fightId) {
-        console.log('⚠️  Could not extract fight ID for rapid tab switching');
-        test.skip(true, 'Skipping rapid tab switching test - could not extract fight ID');
         return;
       }
 
@@ -674,22 +728,12 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Check if fight links are available
-      const firstFightLink = page.locator(SELECTORS.ANY_FIGHT_BUTTON).first();
-      const hasFights = await firstFightLink.isVisible({ timeout: 10000 }).catch(() => false);
+      // Use the robust fight detection helper function
+      const { hasFights, fightButton, fightId } = await findUsableFightButton(page);
 
       if (!hasFights) {
         console.log(`ℹ️  No fights found in report ${reportId} for large datasets test`);
         test.skip(true, 'Skipping large datasets test - no fights available in this report');
-        return;
-      }
-
-      const href = await firstFightLink.getAttribute('href');
-      const fightId = href?.match(/\/fight\/(\d+)/)?.[1];
-
-      if (!fightId) {
-        console.log('⚠️  Could not extract fight ID for large datasets test');
-        test.skip(true, 'Skipping large datasets test - could not extract fight ID');
         return;
       }
 

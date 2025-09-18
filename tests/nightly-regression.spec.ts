@@ -54,7 +54,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
 
   test.describe('Report Landing Pages', () => {
     REAL_REPORT_IDS.forEach((reportId) => {
-      test(`should load report ${reportId} landing page`, async ({ page }) => {
+      test(`should load report ${reportId} landing page`, async ({ page }, testInfo) => {
         // Navigate to report
         await page.goto(`/#/report/${reportId}`, {
           waitUntil: 'domcontentloaded',
@@ -66,6 +66,14 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           timeout: TEST_TIMEOUTS.dataLoad,
         });
 
+        // WebKit-specific: Wait for network idle before checking for elements
+        await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
+
+        // Additional wait for WebKit to ensure JavaScript has fully executed
+        if (testInfo.project.name.includes('webkit')) {
+          await page.waitForTimeout(3000);
+        }
+
         // Wait for the report data to load - look for fight list or loading state
         try {
           await expect(page.locator(SELECTORS.FIGHT_LIST_OR_LOADING).first()).toBeVisible({
@@ -76,6 +84,15 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           console.log(
             `⚠️ Expected elements not found for report ${reportId}. Checking page state...`,
           );
+
+          // WebKit-specific debugging: check for auth issues
+          const currentUrl = page.url();
+          const hasLoginForm = await page.locator('form[action*="login"], [data-testid="login"]').count();
+          const hasErrorMessage = await page.locator('[data-testid="error"], .error, .alert').count();
+          
+          console.log(`🔍 Current URL: ${currentUrl}`);
+          console.log(`🔑 Login forms found: ${hasLoginForm}`);
+          console.log(`❌ Error messages found: ${hasErrorMessage}`);
 
           // Check if there are any error messages on the page
           const errorElements = await page

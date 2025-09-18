@@ -97,35 +97,7 @@ export default defineConfig({
 
   /* Test projects for different browsers and authentication scenarios */
   projects: [
-    /* Authenticated Desktop Tests */
-    {
-      name: 'chromium-desktop-auth',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json',
-        launchOptions: {
-          args: [
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor',
-            '--no-sandbox',
-            '--disable-dev-shm-usage',
-          ],
-        },
-      },
-      testMatch: '**/nightly-regression-auth.spec.ts',
-    },
-    {
-      name: 'firefox-desktop-auth',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json',
-      },
-      testMatch: '**/nightly-regression-auth.spec.ts',
-    },
-
-    /* Authenticated Desktop Tests */
+    /* Authenticated Desktop Tests - Primary test suite */
     {
       name: 'chromium-desktop',
       use: {
@@ -148,7 +120,7 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json', // Use auth state for interactive features
+        storageState: 'tests/auth-state.json', // Use auth state for report access
         launchOptions: {
           firefoxUserPrefs: {
             'dom.security.https_only_mode': false,
@@ -165,9 +137,70 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: undefined, // No auth state
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          // WebKit specific options for better compatibility
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--allow-running-insecure-content',
+          ],
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+    },
+
+    /* Additional Authenticated Tests for specific auth scenarios */
+    {
+      name: 'chromium-desktop-auth',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
+    },
+    {
+      name: 'firefox-desktop-auth',
+      use: {
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          firefoxUserPrefs: {
+            'dom.security.https_only_mode': false,
+            'security.tls.insecure_fallback_hosts': 'localhost',
+            'network.stricttransportsecurity.preloadlist': false,
+            'security.fileuri.strict_origin_policy': false,
+          },
+        },
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
+    },
+    {
+      name: 'webkit-desktop-auth',
+      use: {
+        ...devices['Desktop Safari'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          // WebKit specific options for better compatibility
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--allow-running-insecure-content',
+          ],
+        },
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
     },
 
     /* Mobile Tests (typically unauthenticated) */
