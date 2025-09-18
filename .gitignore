@@ -46,3 +46,6 @@ eso-log-aggregator/
 # Auto-generated version files (created during build)
 public/version.json
 public/manifest.json
+
+# MSW service worker (should only exist in .storybook/public/)
+public/mockServiceWorker.js

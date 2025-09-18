@@ -68,7 +68,7 @@ export default defineConfig({
     /* Use saved authentication state if available */
     storageState: process.env.CI ? undefined : 'tests/auth-state.json',
 
-    /* Disable request blocking - we want real API calls */
+    /* Real network requests - MSW service worker removed from public folder to prevent interference */
     extraHTTPHeaders: {
       'X-Playwright-Nightly': 'true',
     },
