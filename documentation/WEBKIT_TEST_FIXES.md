@@ -181,8 +181,8 @@ All browser types now have consistent authentication configuration:
 
 **WebKit (Safari):**
 - ✅ Authentication: `storageState: 'tests/auth-state.json'`
-- ✅ Launch Options: `{ "--no-sandbox": "" }` for compatibility
-- ✅ Test Result: 1 passed (13.5s)
+- ✅ Launch Options: Removed Chromium-specific args (`--disable-web-security`, `--disable-features`) that cause WebKit launch failures
+- ✅ Test Result: 1 passed (31.2s)
 
 All browsers successfully authenticate and access protected ESO Logs reports.
 
@@ -193,5 +193,7 @@ The final configuration ensures all desktop browsers have:
 - Proper launch options for browser compatibility
 - Standardized test execution environment
 - Reliable element interaction patterns
+
+**Important WebKit Fix**: Removed Chromium-specific launch arguments (`--disable-web-security`, `--disable-features=VizDisplayCompositor`, `--allow-running-insecure-content`) that caused WebKit to fail with "Cannot parse arguments: Unknown option" errors. WebKit uses a different engine and doesn't support these Chromium flags.
 
 This provides a solid foundation for future test development and maintenance.

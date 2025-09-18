@@ -138,14 +138,7 @@ export default defineConfig({
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
         storageState: 'tests/auth-state.json', // Use auth state for report access
-        launchOptions: {
-          // WebKit specific options for better compatibility
-          args: [
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor',
-            '--allow-running-insecure-content',
-          ],
-        },
+        // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
     },
