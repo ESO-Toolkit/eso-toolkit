@@ -31,14 +31,14 @@ This file provides comprehensive CSS and React code, fully commented for Claude 
 */
 
 /* Import both built-in themes */
-@import "~@simonwep/pickr/dist/themes/classic.min.css";
-@import "~@simonwep/pickr/dist/themes/monolith.min.css";
+@import '~@simonwep/pickr/dist/themes/classic.min.css';
+@import '~@simonwep/pickr/dist/themes/monolith.min.css';
 
 /* Dark-mode overrides */
 .dark-mode .pcr-app {
   background: var(--site-bg, #121212) !important;
   color: var(--site-fg, #e0e0e0) !important;
-  box-shadow: 0 0 12px var(--site-shadow, rgba(0,0,0,0.8)) !important;
+  box-shadow: 0 0 12px var(--site-shadow, rgba(0, 0, 0, 0.8)) !important;
 }
 
 .dark-mode .pcr-widget .pcr-selection,
@@ -52,7 +52,7 @@ This file provides comprehensive CSS and React code, fully commented for Claude 
 
 .dark-mode .pcr-widget .pcr-hue,
 .dark-mode .pcr-widget .pcr-opacity {
-  background: rgba(18,18,18,0.9) !important;
+  background: rgba(18, 18, 18, 0.9) !important;
 }
 
 .dark-mode .pcr-widget .pcr-hue .pcr-pointer,

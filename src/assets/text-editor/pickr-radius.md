@@ -6,7 +6,7 @@ This markdown file provides CSS and usage instructions for customizing border ra
 
 ## CSS: src/styles/pickr-radius.css
 
-```css
+````css
 /*
   pickr-radius.css
 
@@ -62,7 +62,7 @@ This markdown file provides CSS and usage instructions for customizing border ra
 .pcr-widget .pcr-swatches .pcr-swatch {
   border-radius: calc(var(--site-radius) / 2) !important;
 }
-```
+````
 
 ---
 
@@ -70,7 +70,7 @@ This markdown file provides CSS and usage instructions for customizing border ra
 
 ```tsx
 import React from 'react';
-import '../styles/pickr-theme.css';  // Ensure theme CSS is loaded first
+import '../styles/pickr-theme.css'; // Ensure theme CSS is loaded first
 import '../styles/pickr-radius.css'; // Then load radius overrides
 
 function TextEditorWrapper() {

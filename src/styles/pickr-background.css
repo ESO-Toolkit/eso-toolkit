@@ -1,0 +1,108 @@
+/*
+  pickr-background.css
+
+  Purpose:
+  - Add background image support to Pickr elements with proper opacity control.
+  - Prevent background opacity from affecting text/content visibility.
+  - Support both light and dark modes with appropriate overlay handling.
+
+  Usage:
+  1. Place this file at `src/styles/pickr-background.css`.
+  2. Import after pickr-theme.css and pickr-radius.css:
+     ```ts
+     import '../styles/pickr-theme.css';
+     import '../styles/pickr-radius.css';
+     import '../styles/pickr-background.css';
+     ```
+  3. Define CSS variables for background control in your global styles.
+
+  Required CSS Variables:
+    --pickr-bg-image      (background image URL)           default: none
+    --pickr-bg-opacity    (background opacity 0-1)        default: 0.15
+    --pickr-overlay-color (overlay color for contrast)    default: rgba(0,0,0,0.3)
+*/
+
+:root {
+  /* CSS variable will be set dynamically by JavaScript */
+  --pickr-bg-image: none;
+  --pickr-bg-opacity: 0.15;
+  --pickr-overlay-color: rgba(0, 0, 0, 0.3);
+}
+
+/* Apply background to the entire page body when on text-editor route */
+body.text-editor-page {
+  position: relative !important;
+  min-height: 100vh !important;
+  background: var(--pickr-bg-image) !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+}
+
+/* Create background layer with pseudo-element for additional control */
+body.text-editor-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: var(--pickr-bg-image);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: var(--pickr-bg-opacity);
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Overlay for better text contrast */
+body.text-editor-page::after {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: var(--pickr-overlay-color);
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* Ensure content stays above background layers */
+.pcr-widget {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Dark mode adjustments */
+.dark-mode .pcr-app::after {
+  background: rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Light mode adjustments */
+body:not(.dark-mode) .pcr-app::after {
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Enhance readability for inputs and buttons over background */
+.pcr-widget input,
+.pcr-widget .pcr-btn {
+  backdrop-filter: blur(2px) !important;
+  background: var(--site-bg, rgba(255, 255, 255, 0.9)) !important;
+}
+
+.dark-mode .pcr-widget input,
+.dark-mode .pcr-widget .pcr-btn {
+  background: var(--site-bg, rgba(0, 0, 0, 0.8)) !important;
+}
+
+/* Enhance color preview visibility */
+.pcr-widget .pcr-color {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+.dark-mode .pcr-widget .pcr-color {
+  box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.8) !important;
+}

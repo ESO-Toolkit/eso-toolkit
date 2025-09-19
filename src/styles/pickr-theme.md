@@ -8,14 +8,14 @@ This file includes both the CSS theme overrides and the React initialization cod
 
 ```css
 /* Import both Pickr built-in themes */
-@import "~@simonwep/pickr/dist/themes/classic.min.css";
-@import "~@simonwep/pickr/dist/themes/monolith.min.css";
+@import '~@simonwep/pickr/dist/themes/classic.min.css';
+@import '~@simonwep/pickr/dist/themes/monolith.min.css';
 
 /* Dark-mode overrides scoped under .dark-mode on <body> */
 .dark-mode .pcr-app {
   background: var(--site-bg, #121212) !important;
   color: var(--site-fg, #e0e0e0) !important;
-  box-shadow: 0 0 12px var(--site-shadow, rgba(0,0,0,0.8)) !important;
+  box-shadow: 0 0 12px var(--site-shadow, rgba(0, 0, 0, 0.8)) !important;
 }
 .dark-mode .pcr-widget .pcr-selection,
 .dark-mode .pcr-widget .pcr-xy-indicator {
@@ -26,7 +26,7 @@ This file includes both the CSS theme overrides and the React initialization cod
 }
 .dark-mode .pcr-widget .pcr-hue,
 .dark-mode .pcr-widget .pcr-opacity {
-  background: rgba(18,18,18,0.9) !important;
+  background: rgba(18, 18, 18, 0.9) !important;
 }
 .dark-mode .pcr-widget .pcr-hue .pcr-pointer,
 .dark-mode .pcr-widget .pcr-opacity .pcr-pointer {
@@ -45,7 +45,7 @@ This file includes both the CSS theme overrides and the React initialization cod
 .dark-mode .pcr-widget .pcr-swatches .pcr-swatch {
   border: 1px solid var(--site-border, #333333) !important;
 }
-``` 
+```
 
 ---
 

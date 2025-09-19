@@ -1156,8 +1156,20 @@ const Calculator: React.FC = React.memo(() => {
       const textFieldStyles = {
         width: liteMode ? 44 : isExtraSmall ? 48 : isMobile ? 56 : 60,
         '& .MuiInputBase-root': {
-          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.8rem' : isMobile ? '0.85rem' : '0.8rem',
-          padding: liteMode ? '6px 8px' : isExtraSmall ? '8px 10px' : isMobile ? '8px 12px' : '4px 8px',
+          fontSize: liteMode
+            ? '0.75rem'
+            : isExtraSmall
+              ? '0.8rem'
+              : isMobile
+                ? '0.85rem'
+                : '0.8rem',
+          padding: liteMode
+            ? '6px 8px'
+            : isExtraSmall
+              ? '8px 10px'
+              : isMobile
+                ? '8px 12px'
+                : '4px 8px',
           height: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
           minHeight: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
           boxSizing: 'border-box',
@@ -1178,9 +1190,21 @@ const Calculator: React.FC = React.memo(() => {
           },
         },
         '& .MuiInputBase-input': {
-          padding: liteMode ? '6px 8px' : isExtraSmall ? '8px 12px' : isMobile ? '8px 12px' : '2px 4px',
+          padding: liteMode
+            ? '6px 8px'
+            : isExtraSmall
+              ? '8px 12px'
+              : isMobile
+                ? '8px 12px'
+                : '2px 4px',
           textAlign: 'center',
-          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.75rem',
+          fontSize: liteMode
+            ? '0.75rem'
+            : isExtraSmall
+              ? '0.85rem'
+              : isMobile
+                ? '0.9rem'
+                : '0.75rem',
           fontWeight: 500,
           // Hide spin buttons for a cleaner look
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
@@ -1744,7 +1768,9 @@ const Calculator: React.FC = React.memo(() => {
                 }}
               >
                 <ButtonGroup
-                  size={isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'}
+                  size={
+                    isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
+                  }
                   variant="outlined"
                   sx={{
                     '& .MuiButton-root': {
@@ -1781,9 +1807,29 @@ const Calculator: React.FC = React.memo(() => {
                   <Button
                     variant={gameMode === 'pve' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('pve')}
-                    startIcon={<Typography fontSize={isExtraSmall ? '0.75rem' : liteMode ? '0.8rem' : isMobile ? '0.9rem' : '1rem'}>🗡️</Typography>}
+                    startIcon={
+                      <Typography
+                        fontSize={
+                          isExtraSmall
+                            ? '0.75rem'
+                            : liteMode
+                              ? '0.8rem'
+                              : isMobile
+                                ? '0.9rem'
+                                : '1rem'
+                        }
+                      >
+                        🗡️
+                      </Typography>
+                    }
                     sx={{
-                      fontSize: isExtraSmall ? '0.75rem' : liteMode ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
                       px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
@@ -1801,9 +1847,29 @@ const Calculator: React.FC = React.memo(() => {
                   <Button
                     variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('pvp')}
-                    startIcon={<Typography fontSize={isExtraSmall ? '0.75rem' : liteMode ? '0.8rem' : isMobile ? '0.9rem' : '1rem'}>🛡️</Typography>}
+                    startIcon={
+                      <Typography
+                        fontSize={
+                          isExtraSmall
+                            ? '0.75rem'
+                            : liteMode
+                              ? '0.8rem'
+                              : isMobile
+                                ? '0.9rem'
+                                : '1rem'
+                        }
+                      >
+                        🛡️
+                      </Typography>
+                    }
                     sx={{
-                      fontSize: isExtraSmall ? '0.75rem' : liteMode ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
                       px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
@@ -1822,7 +1888,13 @@ const Calculator: React.FC = React.memo(() => {
                     variant={gameMode === 'both' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('both')}
                     sx={{
-                      fontSize: isExtraSmall ? '0.75rem' : liteMode ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
                       px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
