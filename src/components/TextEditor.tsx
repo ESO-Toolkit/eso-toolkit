@@ -48,7 +48,7 @@ interface PickrOptions {
   appClass: string;
 }
 
-// Styled Components (matching original design)
+// Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   backgroundColor: theme.palette.background.default,
@@ -70,7 +70,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: theme.palette.text.primary,
   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
   transition: 'all 0.3s ease',
-  // Mobile styles - use grid for reordering
+  // Mobile styles - use grid for reordering (from latest commit)
   [theme.breakpoints.down('sm')]: {
     display: 'grid',
     gridTemplateRows: 'auto auto',
@@ -78,31 +78,25 @@ const EditorTool = styled(Box)(({ theme }) => ({
   },
 }));
 
-
+// Desktop: Simple horizontal toolbar (from previous commit)
 const Toolbar = styled(Box)(({ theme }) => ({
   display: 'flex',
-  gap: '8px',
+  gap: '12px',
   marginBottom: '20px',
-  padding: '12px',
+  padding: '16px',
   background:
     theme.palette.mode === 'dark'
       ? theme.palette.background.default
       : alpha(theme.palette.background.default, 0.8),
   borderRadius: '12px',
   border: `1px solid ${theme.palette.divider}`,
-  flexWrap: 'nowrap',
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  overflowX: 'hidden',
+  overflowX: 'auto',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
-    flexDirection: 'column',
-    gap: '8px',
-    rowGap: '12px',
-    padding: '12px',
-    flexWrap: 'wrap',
-    overflowX: 'hidden',
+    display: 'none', // Hide on mobile, use grid containers instead
   },
 }));
 
@@ -111,14 +105,12 @@ const ToolbarButton = styled('button')(({ theme }) => ({
   color: theme.palette.text.primary,
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: '8px',
-  padding: '6px 10px',
+  padding: '10px 16px',
   cursor: 'pointer',
-  fontSize: '11px',
+  fontSize: '13px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-  flexShrink: 0,
-  whiteSpace: 'nowrap',
   '&:hover': {
     background: theme.palette.primary.main,
     borderColor: theme.palette.primary.main,
@@ -140,7 +132,7 @@ const ToolbarButton = styled('button')(({ theme }) => ({
     opacity: 1,
     cursor: 'not-allowed',
   },
-  // Mobile styles
+  // Mobile styles (from latest commit)
   [theme.breakpoints.down('sm')]: {
     padding: '10px 14px',
     fontSize: '14px',
@@ -154,8 +146,7 @@ const ToolbarButton = styled('button')(({ theme }) => ({
 const UndoRedoGroup = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
-  flexShrink: 0,
-  // Mobile styles
+  // Mobile styles (from latest commit)
   [theme.breakpoints.down('sm')]: {
     gap: '6px',
     order: 1,
@@ -164,13 +155,15 @@ const UndoRedoGroup = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Mobile-specific components (from latest commit)
 const FormatContainer = styled(Box)(({ theme }) => ({
-  display: 'flex',
+  display: 'none', // Hidden on desktop
   flexDirection: 'column',
   gap: '8px',
   marginBottom: '20px',
   // Mobile styles - position in grid
   [theme.breakpoints.down('sm')]: {
+    display: 'flex',
     gridRow: 2,
   },
 }));
@@ -190,41 +183,64 @@ const FormatRow = styled(Box)(({ theme }) => ({
 }));
 
 const ColorSection = styled(Box)(({ theme }) => ({
-  display: 'flex',
+  display: 'none', // Hidden on desktop
   flexDirection: 'column',
   alignItems: 'center',
   gap: '40px',
   marginBottom: '4px',
   // Mobile styles - position in grid (move to top)
   [theme.breakpoints.down('sm')]: {
+    display: 'flex',
     gridRow: 1,
     marginBottom: '2px',
   },
 }));
 
+// Desktop color components (from previous commit)
 const PresetColors = styled(Box)(({ theme }) => ({
   display: 'flex',
-  gap: '8px',
-  width: '100%',
-  justifyContent: 'space-between',
+  gap: '4px',
+  marginLeft: '8px',
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    gap: '8px',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginLeft: 0,
+  },
 }));
 
 const PresetColor = styled('button')(({ theme }) => ({
-  width: 'calc(16.666% - 7px)', // 6 colors with 8px gap = 100% - 40px gap = 60px ÷ 6 = ~10px each
-  height: '40px',
-  borderRadius: '6px',
+  width: '24px',
+  height: '24px',
+  borderRadius: '3px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
-  border: `1px solid ${theme.palette.divider}`,
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    width: 'calc(16.666% - 7px)',
+    height: '40px',
+    borderRadius: '6px',
+    border: `1px solid ${theme.palette.divider}`,
+    '&:hover': {
+      transform: 'scale(1.05)',
+    },
+  },
   '&:hover': {
-    transform: 'scale(1.05)',
+    transform: 'scale(1.1)',
   },
 }));
 
 const ColorPickerWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  justifyContent: 'center',
+  gap: '8px',
+  marginLeft: 'auto',
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    justifyContent: 'center',
+    marginLeft: 0,
+  },
 }));
 
 const EmojiButton = styled('button')(({ theme }) => ({
@@ -347,14 +363,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   },
 }));
 
-
 // Utility Functions
-
-// Predefined colors (matching original)
 const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF'];
 
-
-// Main Component (matching original structure)
+// Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
   const [text, setText] = useState('');
@@ -387,7 +399,6 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  
   // Initialize Pickr with theme switching
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
@@ -534,7 +545,7 @@ export const TextEditor: React.FC = () => {
     saveToHistory(exampleText);
   }, [saveToHistory]);
 
-  // Event Handlers (matching original)
+  // Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const newText = e.target.value;
     setText(newText);
@@ -681,9 +692,73 @@ export const TextEditor: React.FC = () => {
   return (
     <TextEditorContainer>
       <Container maxWidth="lg">
-        
+
         <EditorTool>
-          {/* Format controls container */}
+          {/* Desktop Layout (from previous commit f1071c2) */}
+          <Toolbar>
+            <UndoRedoGroup>
+              <ToolbarButton
+                onClick={undo}
+                disabled={historyIndex <= 0}
+                aria-label="Undo last change"
+              >
+                Undo
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={redo}
+                disabled={historyIndex >= history.length - 1}
+                aria-label="Redo last change"
+              >
+                Redo
+              </ToolbarButton>
+            </UndoRedoGroup>
+
+            <ToolbarButton onClick={clearFormatting} aria-label="Clear all formatting from text">
+              Clear All Formatting
+            </ToolbarButton>
+            <ToolbarButton
+              onClick={removeFormatFromSelection}
+              aria-label="Remove formatting from selection"
+            >
+              Remove Format
+            </ToolbarButton>
+
+            <PresetColors role="group" aria-label="Quick color choices">
+              {presetColors.map((color, index) => (
+                <PresetColor
+                  key={index}
+                  type="button"
+                  style={{ background: color }}
+                  onClick={() => applyQuickColor(color.substring(1))}
+                  aria-label={`Apply ${color} color`}
+                />
+              ))}
+            </PresetColors>
+
+            <ColorPickerWrapper>
+              <EmojiButton
+                id="eso-native-emoji-btn"
+                type="button"
+                onClick={handleEmojiClick}
+                aria-label="Choose custom color"
+              >
+                🎨
+              </EmojiButton>
+              <div
+                ref={pickrAnchorRef}
+                id="eso-pickr-anchor"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '0',
+                  height: '0',
+                  overflow: 'hidden',
+                }}
+              />
+            </ColorPickerWrapper>
+          </Toolbar>
+
+          {/* Mobile Layout (from latest commit d94de66) */}
           <FormatContainer>
             {/* Row 1: Undo/Redo */}
             <FormatRow>
@@ -719,7 +794,7 @@ export const TextEditor: React.FC = () => {
             </FormatRow>
           </FormatContainer>
 
-          {/* Color section container with emoji above swatches */}
+          {/* Color section with emoji above swatches */}
           <ColorSection>
             <ColorPickerWrapper>
               <EmojiButton
