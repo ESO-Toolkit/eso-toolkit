@@ -107,6 +107,14 @@
     "test:nightly:headed": "playwright test --config=playwright.nightly.config.ts --headed --project=chromium-desktop",
     "test:nightly:mobile": "playwright test --config=playwright.nightly.config.ts --project=mobile-chrome --project=mobile-safari",
     "test:nightly:report": "playwright show-report playwright-report-nightly",
+    "test:nightly:shard1": "cross-env SHARD_INDEX=1 SHARD_TOTAL=3 playwright test --config=playwright.nightly.config.ts",
+    "test:nightly:shard2": "cross-env SHARD_INDEX=2 SHARD_TOTAL=3 playwright test --config=playwright.nightly.config.ts",
+    "test:nightly:shard3": "cross-env SHARD_INDEX=3 SHARD_TOTAL=3 playwright test --config=playwright.nightly.config.ts",
+    "test:nightly:sharded": "npm-run-all --parallel test:nightly:shard1 test:nightly:shard2 test:nightly:shard3",
+    "test:nightly:sharded:advanced": "node scripts/run-sharded-tests.js",
+    "test:nightly:sharded:chromium": "npm-run-all --parallel \"test:nightly:shard* -- --project=chromium-desktop\"",
+    "test:nightly:sharded:firefox": "npm-run-all --parallel \"test:nightly:shard* -- --project=firefox-desktop\"",
+    "test:nightly:sharded:win": "start \"Shard 1\" cmd /c \"npm run test:nightly:shard1\" && start \"Shard 2\" cmd /c \"npm run test:nightly:shard2\" && start \"Shard 3\" cmd /c \"npm run test:nightly:shard3\"",
     "test:nightly:webkit": "playwright test --config=playwright.nightly.config.ts --project=webkit-desktop",
     "test:smoke:e2e": "playwright test --config=playwright.smoke.config.ts",
     "test:smoke:unit": "jest --config=jest.smoke.config.js --watchAll=false",
@@ -162,6 +170,7 @@
     "jest-watch-typeahead": "^3.0.1",
     "msw": "^2.11.1",
     "msw-storybook-addon": "^2.0.5",
+    "npm-run-all": "^4.1.5",
     "prettier": "^3.6.2",
     "prop-types": "^15.8.1",
     "source-map-explorer": "^2.5.3",
@@ -178,8 +187,7 @@
   },
   "msw": {
     "workerDirectory": [
-      ".storybook/public",
-      ".storybook\\public"
+      ".storybook/public"
     ]
   }
 }

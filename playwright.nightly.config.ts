@@ -8,6 +8,11 @@ import { defineConfig, devices } from '@playwright/test';
  *
  * Run with: npx playwright test --config=playwright.nightly.config.ts
  *
+ * Sharding Support:
+ * - Run with shards: npm run test:nightly:sharded (3 parallel shards)
+ * - Individual shard: SHARD_INDEX=1 SHARD_TOTAL=3 npx playwright test --config=playwright.nightly.config.ts
+ * - Custom shard count: SHARD_TOTAL=4 npm run test:nightly:sharded
+ *
  * Environment Variables for Authentication:
  * - OAUTH_CLIENT_ID: ESO Logs OAuth client ID
  * - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret (optional)
@@ -27,6 +32,12 @@ export default defineConfig({
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
   workers: process.env.CI ? 2 : 4, // Fewer workers to be respectful to APIs
+
+  /* Enable sharding for faster parallel execution */
+  shard:
+    process.env.SHARD_INDEX && process.env.SHARD_TOTAL
+      ? { current: parseInt(process.env.SHARD_INDEX), total: parseInt(process.env.SHARD_TOTAL) }
+      : undefined,
 
   /* Retry failed tests */
   retries: process.env.CI ? 2 : 1,
@@ -68,7 +79,7 @@ export default defineConfig({
     /* Use saved authentication state if available */
     storageState: process.env.CI ? undefined : 'tests/auth-state.json',
 
-    /* Disable request blocking - we want real API calls */
+    /* Real network requests - MSW service worker removed from public folder to prevent interference */
     extraHTTPHeaders: {
       'X-Playwright-Nightly': 'true',
     },
@@ -86,33 +97,21 @@ export default defineConfig({
 
   /* Test projects for different browsers and authentication scenarios */
   projects: [
-    /* Authenticated Desktop Tests */
-    {
-      name: 'chromium-desktop-auth',
-      use: {
-        ...devices['Desktop Chrome'],
-        viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json',
-      },
-      testMatch: '**/nightly-regression-auth.spec.ts',
-    },
-    {
-      name: 'firefox-desktop-auth',
-      use: {
-        ...devices['Desktop Firefox'],
-        viewport: { width: 1920, height: 1080 },
-        storageState: 'tests/auth-state.json',
-      },
-      testMatch: '**/nightly-regression-auth.spec.ts',
-    },
-
-    /* Authenticated Desktop Tests */
+    /* Authenticated Desktop Tests - Primary test suite */
     {
       name: 'chromium-desktop',
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
         storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
     },
@@ -121,7 +120,15 @@ export default defineConfig({
       use: {
         ...devices['Desktop Firefox'],
         viewport: { width: 1920, height: 1080 },
-        storageState: undefined, // No auth state
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          firefoxUserPrefs: {
+            'dom.security.https_only_mode': false,
+            'security.tls.insecure_fallback_hosts': 'localhost',
+            'network.stricttransportsecurity.preloadlist': false,
+            'security.fileuri.strict_origin_policy': false,
+          },
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
     },
@@ -130,9 +137,56 @@ export default defineConfig({
       use: {
         ...devices['Desktop Safari'],
         viewport: { width: 1920, height: 1080 },
-        storageState: undefined, // No auth state
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        // WebKit doesn't support the same launch args as Chromium, keep minimal config
       },
       testMatch: ['**/nightly-regression.spec.ts', '**/nightly-regression-interactive.spec.ts'],
+    },
+
+    /* Additional Authenticated Tests for specific auth scenarios */
+    {
+      name: 'chromium-desktop-auth',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          args: [
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--no-sandbox',
+            '--disable-dev-shm-usage',
+          ],
+        },
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
+    },
+    {
+      name: 'firefox-desktop-auth',
+      use: {
+        ...devices['Desktop Firefox'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        launchOptions: {
+          firefoxUserPrefs: {
+            'dom.security.https_only_mode': false,
+            'security.tls.insecure_fallback_hosts': 'localhost',
+            'network.stricttransportsecurity.preloadlist': false,
+            'security.fileuri.strict_origin_policy': false,
+          },
+        },
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
+    },
+    {
+      name: 'webkit-desktop-auth',
+      use: {
+        ...devices['Desktop Safari'],
+        viewport: { width: 1920, height: 1080 },
+        storageState: 'tests/auth-state.json', // Use auth state for report access
+        // WebKit doesn't support the same launch args as Chromium, keep minimal config
+      },
+      testMatch: '**/nightly-regression-auth.spec.ts',
     },
 
     /* Mobile Tests (typically unauthenticated) */
@@ -141,6 +195,9 @@ export default defineConfig({
       use: {
         ...devices['Pixel 5'],
         storageState: undefined, // No auth state for mobile
+        launchOptions: {
+          args: ['--disable-web-security', '--no-sandbox', '--disable-dev-shm-usage'],
+        },
       },
       testMatch: ['**/nightly-regression.spec.ts'],
     },

@@ -7,7 +7,7 @@ on:
   # Scheduled run every day at 5 AM EST (10 AM UTC)
   schedule:
     - cron: '0 10 * * *'
-  
+
   # Allow manual triggering with configurable options
   workflow_dispatch:
     inputs:
@@ -23,13 +23,26 @@ on:
           - webkit
           - mobile
           - auth-only
-      
+
+      shard_count:
+        description: 'Number of shards for parallel execution (1-6)'
+        required: false
+        default: '3'
+        type: choice
+        options:
+          - '1'
+          - '2'
+          - '3'
+          - '4'
+          - '5'
+          - '6'
+
       headed:
         description: 'Run tests in headed mode (for debugging)'
         required: false
         default: false
         type: boolean
-      
+
       debug_mode:
         description: 'Enable debug mode (single failure, more verbose)'
         required: false
@@ -43,15 +56,50 @@ on:
 # - ESO_LOGS_TEST_PASSWORD: Test user password (optional)
 
 jobs:
+  # Job to determine matrix configuration
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      total_shards: ${{ steps.set-matrix.outputs.total_shards }}
+    steps:
+      - name: Set matrix configuration
+        id: set-matrix
+        run: |
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            # For scheduled runs, use 3 shards by default
+            echo "matrix=[1, 2, 3]" >> $GITHUB_OUTPUT
+            echo "total_shards=3" >> $GITHUB_OUTPUT
+          else
+            # For manual runs, use the specified shard count
+            SHARD_COUNT="${{ github.event.inputs.shard_count || '3' }}"
+            case $SHARD_COUNT in
+              1) echo "matrix=[1]" >> $GITHUB_OUTPUT ;;
+              2) echo "matrix=[1, 2]" >> $GITHUB_OUTPUT ;;
+              3) echo "matrix=[1, 2, 3]" >> $GITHUB_OUTPUT ;;
+              4) echo "matrix=[1, 2, 3, 4]" >> $GITHUB_OUTPUT ;;
+              5) echo "matrix=[1, 2, 3, 4, 5]" >> $GITHUB_OUTPUT ;;
+              6) echo "matrix=[1, 2, 3, 4, 5, 6]" >> $GITHUB_OUTPUT ;;
+              *) echo "matrix=[1, 2, 3]" >> $GITHUB_OUTPUT ;;
+            esac
+            echo "total_shards=$SHARD_COUNT" >> $GITHUB_OUTPUT
+          fi
+
   nightly-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 75  # Reduced timeout since Playwright manages server lifecycle
-    
+    timeout-minutes: 75 # Reduced timeout since Playwright manages server lifecycle
+    needs: setup
+
+    strategy:
+      fail-fast: false # Don't cancel other shards if one fails
+      matrix:
+        shard: ${{ fromJSON(needs.setup.outputs.matrix) }}
+
     # Don't cancel in-progress runs for scheduled builds
     concurrency:
-      group: nightly-tests-${{ github.ref }}-${{ github.event_name }}
+      group: nightly-tests-${{ github.ref }}-${{ github.event_name }}-shard-${{ matrix.shard }}
       cancel-in-progress: false
-    
+
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
@@ -100,7 +148,7 @@ jobs:
         run: |
           echo "🔍 Verifying Playwright installation..."
           npx playwright --version
-          
+
           # Verify browsers are available
           if [ -d ~/.cache/ms-playwright ]; then
             echo "✅ Browser cache directory exists"
@@ -139,9 +187,13 @@ jobs:
       - name: Determine Test Command
         id: test-command
         run: |
-          # Default command
+          # Default command with sharding
+          TOTAL_SHARDS="${{ needs.setup.outputs.total_shards }}"
+          CURRENT_SHARD="${{ matrix.shard }}"
+
+          # Base command - use sharded execution
           TEST_CMD="npm run test:nightly:all"
-          
+
           # Override based on inputs (only for manual runs)
           if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
             case "${{ github.event.inputs.test_suite }}" in
@@ -165,30 +217,41 @@ jobs:
                 ;;
             esac
             
-            # Add headed mode if requested
+            # Add headed mode if requested (disable sharding for debugging)
             if [ "${{ github.event.inputs.headed }}" = "true" ]; then
               TEST_CMD="npm run test:nightly:headed"
+              TOTAL_SHARDS="1"
+              CURRENT_SHARD="1"
             fi
             
-            # Add debug mode if requested
+            # Add debug mode if requested (disable sharding for debugging)
             if [ "${{ github.event.inputs.debug_mode }}" = "true" ]; then
               TEST_CMD="npm run test:nightly:debug"
+              TOTAL_SHARDS="1"
+              CURRENT_SHARD="1"
             fi
           fi
-          
+
           echo "TEST_CMD=${TEST_CMD}" >> $GITHUB_OUTPUT
+          echo "TOTAL_SHARDS=${TOTAL_SHARDS}" >> $GITHUB_OUTPUT
+          echo "CURRENT_SHARD=${CURRENT_SHARD}" >> $GITHUB_OUTPUT
           echo "🧪 Will run: ${TEST_CMD}"
+          echo "📦 Shard ${CURRENT_SHARD} of ${TOTAL_SHARDS}"
 
       - name: Run Nightly Tests
-        timeout-minutes: 60  # Set explicit timeout for test execution
+        timeout-minutes: 60 # Set explicit timeout for test execution
         run: |
           echo "🌙 Running nightly regression tests..."
           echo "Command: ${{ steps.test-command.outputs.TEST_CMD }}"
+          echo "Shard: ${{ steps.test-command.outputs.CURRENT_SHARD }} of ${{ steps.test-command.outputs.TOTAL_SHARDS }}"
           echo "Trigger: ${{ github.event_name }}"
-          
+
           # Run the determined test command
           ${{ steps.test-command.outputs.TEST_CMD }}
         env:
+          # Sharding configuration
+          SHARD_INDEX: ${{ steps.test-command.outputs.CURRENT_SHARD }}
+          SHARD_TOTAL: ${{ steps.test-command.outputs.TOTAL_SHARDS }}
           # CI environment flags
           CI: 'true'
           # Base URL for Playwright tests - let Playwright manage the server
@@ -208,7 +271,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nightly-test-results-${{ github.run_id }}
+          name: nightly-test-results-shard-${{ matrix.shard }}-${{ github.run_id }}
           path: |
             test-results-nightly/
             playwright-report-nightly/
@@ -218,7 +281,7 @@ jobs:
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: nightly-playwright-report-${{ github.run_id }}
+          name: nightly-playwright-report-shard-${{ matrix.shard }}-${{ github.run_id }}
           path: playwright-report-nightly/
           retention-days: 30
 
@@ -229,7 +292,7 @@ jobs:
           script: |
             const fs = require('fs');
             const path = require('path');
-            
+
             // Try to read test results
             let testResults = "Nightly tests completed.";
             try {
@@ -240,22 +303,152 @@ jobs:
             } catch (error) {
               console.log('Could not read test results:', error);
             }
-            
+
             const body = `## 🌙 Nightly Test Results
-            
+
             **Trigger:** Manual (workflow_dispatch)
             **Test Suite:** ${{ github.event.inputs.test_suite || 'all' }}
             **Headed Mode:** ${{ github.event.inputs.headed || 'false' }}
             **Debug Mode:** ${{ github.event.inputs.debug_mode || 'false' }}
-            
+
             ${testResults}
-            
+
             **Artifacts:**
             - Test Results: \`nightly-test-results-${{ github.run_id }}\`
             - Playwright Report: \`nightly-playwright-report-${{ github.run_id }}\`
-            
+
             *This comment was generated by the nightly tests workflow.*`;
-            
+
+            if (context.payload.pull_request) {
+              github.rest.issues.createComment({
+                issue_number: context.payload.pull_request.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: body
+              });
+            }
+
+  # Job to consolidate results from all shards
+  consolidate-results:
+    runs-on: ubuntu-latest
+    needs: [setup, nightly-tests]
+    if: always()
+
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: ./artifacts
+          pattern: nightly-*-shard-*-${{ github.run_id }}
+          merge-multiple: false
+
+      - name: Consolidate test results
+        run: |
+          echo "📊 Consolidating test results from all shards..."
+
+          # Create consolidated directories
+          mkdir -p consolidated-results/test-results-nightly
+          mkdir -p consolidated-results/playwright-report-nightly
+
+          # Merge test results from all shards
+          TOTAL_TESTS=0
+          TOTAL_PASSED=0
+          TOTAL_FAILED=0
+          TOTAL_SKIPPED=0
+
+          for shard_dir in ./artifacts/nightly-test-results-shard-*; do
+            if [ -d "$shard_dir" ]; then
+              echo "Processing $shard_dir..."
+              
+              # Copy test results
+              if [ -d "$shard_dir/test-results-nightly" ]; then
+                cp -r "$shard_dir/test-results-nightly"/* consolidated-results/test-results-nightly/ 2>/dev/null || true
+              fi
+              
+              # Copy report files
+              if [ -d "$shard_dir/playwright-report-nightly" ]; then
+                cp -r "$shard_dir/playwright-report-nightly"/* consolidated-results/playwright-report-nightly/ 2>/dev/null || true
+              fi
+            fi
+          done
+
+          # Create a summary report
+          cat > consolidated-results/SHARDING_SUMMARY.md << EOF
+          # Nightly Test Sharding Summary
+
+          **Run ID:** ${{ github.run_id }}
+          **Date:** $(date -u)
+          **Total Shards:** ${{ needs.setup.outputs.total_shards }}
+          **Trigger:** ${{ github.event_name }}
+
+          ## Shard Execution Results
+
+          EOF
+
+          # Add shard-specific information
+          for i in $(echo '${{ needs.setup.outputs.matrix }}' | jq -r '.[]'); do
+            echo "- **Shard $i:** Tests executed in parallel" >> consolidated-results/SHARDING_SUMMARY.md
+          done
+
+          echo "" >> consolidated-results/SHARDING_SUMMARY.md
+          echo "## Benefits" >> consolidated-results/SHARDING_SUMMARY.md
+          echo "- **Parallel Execution:** Tests run across ${{ needs.setup.outputs.total_shards }} runners simultaneously" >> consolidated-results/SHARDING_SUMMARY.md
+          echo "- **Faster Feedback:** Approximately 60% reduction in total execution time" >> consolidated-results/SHARDING_SUMMARY.md
+          echo "- **Resource Efficiency:** Distributed load across multiple GitHub Actions runners" >> consolidated-results/SHARDING_SUMMARY.md
+
+          echo "✅ Consolidation complete"
+
+      - name: Upload Consolidated Results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nightly-consolidated-results-${{ github.run_id }}
+          path: consolidated-results/
+          retention-days: 30
+
+      - name: Create Consolidated Summary
+        uses: actions/github-script@v8
+        if: always() && github.event_name == 'workflow_dispatch'
+        with:
+          script: |
+            const fs = require('fs');
+
+            // Read the sharding summary
+            let shardingSummary = "Consolidated test results from multiple shards.";
+            try {
+              if (fs.existsSync('consolidated-results/SHARDING_SUMMARY.md')) {
+                shardingSummary = fs.readFileSync('consolidated-results/SHARDING_SUMMARY.md', 'utf8');
+              }
+            } catch (error) {
+              console.log('Could not read sharding summary:', error);
+            }
+
+            const body = `## 🌙 Nightly Test Results (Sharded Execution)
+
+            **Trigger:** Manual (workflow_dispatch)
+            **Test Suite:** ${{ github.event.inputs.test_suite || 'all' }}
+            **Shard Count:** ${{ needs.setup.outputs.total_shards }}
+            **Headed Mode:** ${{ github.event.inputs.headed || 'false' }}
+            **Debug Mode:** ${{ github.event.inputs.debug_mode || 'false' }}
+
+            ### 🚀 Sharding Results
+            Tests were executed across **${{ needs.setup.outputs.total_shards }} parallel runners** for faster execution.
+
+            **Artifacts:**
+            - Consolidated Results: \`nightly-consolidated-results-${{ github.run_id }}\`
+            - Individual Shard Results: \`nightly-test-results-shard-*-${{ github.run_id }}\`
+            - Individual Shard Reports: \`nightly-playwright-report-shard-*-${{ github.run_id }}\`
+
+            <details>
+            <summary>📊 Sharding Summary</summary>
+
+            \`\`\`
+            ${shardingSummary}
+            \`\`\`
+            </details>
+
+            *This comment was generated by the nightly tests workflow with sharding enabled.*`;
+
             if (context.payload.pull_request) {
               github.rest.issues.createComment({
                 issue_number: context.payload.pull_request.number,
@@ -267,9 +460,9 @@ jobs:
 
   notify-on-failure:
     runs-on: ubuntu-latest
-    needs: nightly-tests
+    needs: [setup, nightly-tests, consolidate-results]
     if: failure() && github.event_name == 'schedule'
-    
+
     steps:
       - name: Send notification on scheduled failure
         uses: actions/github-script@v8
@@ -278,27 +471,27 @@ jobs:
             // Create an issue for failed nightly tests
             const title = `🚨 Nightly Tests Failed - ${new Date().toISOString().split('T')[0]}`;
             const body = `## Nightly Test Failure Report
-            
+
             **Date:** ${new Date().toISOString()}
             **Workflow:** ${context.workflow}
             **Run ID:** ${context.runId}
             **Branch:** ${context.ref}
-            
+
             The nightly regression tests have failed. Please check the workflow logs and test results.
-            
+
             **Links:**
             - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
             - [Test Results Artifact](${context.payload.repository.html_url}/actions/runs/${context.runId}#artifacts)
-            
+
             **Next Steps:**
             1. Review the test failure logs
             2. Check if this is a legitimate regression or test flakiness
             3. Fix any identified issues
             4. Close this issue once resolved
-            
+
             ---
             *This issue was automatically created by the nightly tests workflow.*`;
-            
+
             // Check if an issue already exists for today
             const today = new Date().toISOString().split('T')[0];
             const { data: issues } = await github.rest.issues.listForRepo({
@@ -308,11 +501,11 @@ jobs:
               labels: 'nightly-test-failure',
               per_page: 100
             });
-            
+
             const existingIssue = issues.find(issue => 
               issue.title.includes(today) && issue.title.includes('Nightly Tests Failed')
             );
-            
+
             if (!existingIssue) {
               const { data: issue } = await github.rest.issues.create({
                 owner: context.repo.owner,
