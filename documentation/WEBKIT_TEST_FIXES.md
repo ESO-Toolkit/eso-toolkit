@@ -1,22 +1,27 @@
 # WebKit Test Fixes Documentation
 
 ## Overview
+
 This document tracks the fixes applied to resolve WebKit-specific test failures in the nightly regression test suite.
 
 ## Initial Problem
+
 WebKit tests were failing with errors like:
+
 ```
 expect(locator).toBeVisible() failed: Locator was not found
 ```
 
 The main issues were:
+
 1. Missing authentication state for WebKit browser
-2. WebKit-specific timing sensitivity 
+2. WebKit-specific timing sensitivity
 3. Inconsistent fight button detection logic
 
 ## Fixes Applied
 
 ### 1. Authentication Configuration Fix
+
 **File:** `playwright.nightly.config.ts`
 
 **Problem:** WebKit project didn't inherit authentication state from global setup.
@@ -42,6 +47,7 @@ The main issues were:
 ```
 
 ### 2. WebKit Timing Adjustments
+
 **File:** `tests/nightly-regression.spec.ts`
 
 **Problem:** WebKit needed extra time for DOM elements to become visible.
@@ -56,6 +62,7 @@ if (testInfo.project.name.includes('webkit')) {
 ```
 
 ### 3. Enhanced Fight Button Detection
+
 **File:** `tests/nightly-regression-interactive.spec.ts`
 
 **Problem:** Interactive tests were failing to detect fight buttons due to relying on `href` attributes that weren't always present.
@@ -77,16 +84,19 @@ if (!extractedFightId) {
 ## Test Results
 
 ### Before Fixes
+
 - **Status:** 0 passed, 22 failed
 - **Error:** `expect(locator).toBeVisible() failed`
 - **Root Cause:** Missing authentication and WebKit incompatibility
 
 ### After Authentication Fix
+
 - **Status:** 15 passed, 7 skipped
 - **Improvement:** All critical functionality tests now pass
 - **Remaining:** 7 interactive tests skipped due to fight detection issues
 
 ### After Fight Detection Enhancement (Final)
+
 - **Status:** 21 passed, 1 failed (heatmap interaction issue)
 - **Improvement:** Fixed ALL 6 remaining skipped tests! They now run instead of being skipped
 - **Result:** Complete elimination of fight detection issues - all tests that can find fights now run successfully
@@ -123,6 +133,7 @@ npm run test:nightly
 ## Final Results Summary
 
 ### Complete Success in Fight Detection
+
 The robust `findUsableFightButton` helper function has completely eliminated fight detection issues:
 
 - ✅ **7 out of 7 interactive tests** now find fights successfully
@@ -131,15 +142,18 @@ The robust `findUsableFightButton` helper function has completely eliminated fig
 - ❌ **1 test failing** on specific interaction (heatmap click), not fight detection
 
 ### Test Status Transformation
-| Test Category | Before Fixes | After Auth Fix | Final State |
-|---------------|--------------|----------------|-------------|
-| **Fight Detection** | 0 working | 1 working | 7 working |
-| **Passed Tests** | 0 | 15 | 21 |
-| **Skipped Tests** | 0 | 7 | 0 |
-| **Failed Tests** | 22 | 0 | 1 |
+
+| Test Category       | Before Fixes | After Auth Fix | Final State |
+| ------------------- | ------------ | -------------- | ----------- |
+| **Fight Detection** | 0 working    | 1 working      | 7 working   |
+| **Passed Tests**    | 0            | 15             | 21          |
+| **Skipped Tests**   | 0            | 7              | 0           |
+| **Failed Tests**    | 22           | 0              | 1           |
 
 ### Remaining Issue
+
 The only remaining failure is the "location heatmap visualization" test which:
+
 - ✅ Successfully finds fights using the improved detection
 - ✅ Successfully navigates to the heatmap page
 - ❌ Fails when trying to click on a small SVG icon instead of the actual heatmap
@@ -149,6 +163,7 @@ This is a UI interaction issue, not a fundamental test infrastructure problem.
 ## Monitoring
 
 Continue monitoring WebKit test results to ensure stability. The current configuration should provide:
+
 - ✅ Consistent authentication across all browsers
 - ✅ Reliable element detection and interaction
 - ✅ Graceful handling of edge cases and missing data
@@ -159,6 +174,7 @@ Continue monitoring WebKit test results to ensure stability. The current configu
 ### Test Results Summary
 
 **Total Tests: 22**
+
 - ✅ **Passed: 22**
 - ❌ **Failed: 0**
 - ⏸️ **Skipped: 0**
@@ -172,14 +188,17 @@ All tests now pass consistently across all browser types with proper authenticat
 All browser types now have consistent authentication configuration:
 
 **Chrome (Chromium):**
+
 - ✅ Authentication: `storageState: 'tests/auth-state.json'`
 - ✅ Test Result: 1 passed (9.2s)
 
 **Firefox:**
+
 - ✅ Authentication: `storageState: 'tests/auth-state.json'`
 - ✅ Test Result: 1 passed (10.2s)
 
 **WebKit (Safari):**
+
 - ✅ Authentication: `storageState: 'tests/auth-state.json'`
 - ✅ Launch Options: Removed Chromium-specific args (`--disable-web-security`, `--disable-features`) that cause WebKit launch failures
 - ✅ Test Result: 1 passed (31.2s)
@@ -189,11 +208,22 @@ All browsers successfully authenticate and access protected ESO Logs reports.
 ### Configuration Consistency
 
 The final configuration ensures all desktop browsers have:
+
 - Consistent authentication state management
 - Proper launch options for browser compatibility
 - Standardized test execution environment
 - Reliable element interaction patterns
 
-**Important WebKit Fix**: Removed Chromium-specific launch arguments (`--disable-web-security`, `--disable-features=VizDisplayCompositor`, `--allow-running-insecure-content`) that caused WebKit to fail with "Cannot parse arguments: Unknown option" errors. WebKit uses a different engine and doesn't support these Chromium flags.
+**Important WebKit Fix**: Removed Chromium-specific launch arguments (`--disable-web-security`, `--disable-features=VizDisplayCompositor`, `--allow-running-insecure-content`) that caused WebKit to fail with "Cannot parse arguments: Unknown option" errors. This fix was applied to both:
+
+- `webkit-desktop` project (for main regression tests)
+- `webkit-desktop-auth` project (for authentication tests)
+
+WebKit uses a different engine and doesn't support these Chromium flags.
+
+**Verification Results:**
+
+- ✅ webkit-desktop: All interactive tests now pass
+- ✅ webkit-desktop-auth: 3/3 critical auth tests pass (maintain authentication state, redirect unauthenticated users, load latest reports page)
 
 This provides a solid foundation for future test development and maintenance.

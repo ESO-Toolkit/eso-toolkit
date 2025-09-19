@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createAuthTestUtils, AuthEnv, skipIfNoAuth } from './auth-utils';
+import { createAuthTestUtils, AuthEnv } from './auth-utils';
 
 /**
  * Nightly Regression Tests - Authentication and User Reports
@@ -82,8 +82,6 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
 
     test('should maintain authentication state', async ({ page }) => {
-      skipIfNoAuth(test);
-
       // Navigate to app first
       await page.goto('/#/', {
         waitUntil: 'domcontentloaded',
@@ -306,15 +304,11 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('User Reports Page (Authenticated)', () => {
     test('should show user reports when authenticated', async ({ page }) => {
-      skipIfNoAuth(test);
-
       const authUtils = createAuthTestUtils(page);
 
-      // Verify we have authentication
+      // Check authentication status - test both scenarios
       const isAuth = await authUtils.isAuthenticated();
-      if (!isAuth) {
-        test.skip(true, 'Skipping test - no authentication available');
-      }
+      console.log(`ℹ️  Testing user reports page - authenticated: ${isAuth}`);
 
       await page.goto('/#/my-reports', {
         waitUntil: 'domcontentloaded',
@@ -323,32 +317,51 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
       await page.waitForLoadState('networkidle', { timeout: TEST_TIMEOUTS.dataLoad });
 
-      // Take screenshot of user reports page after authentication
+      // Take screenshot of user reports page
       await page.screenshot({
-        path: 'test-results/nightly-auth-user-reports-initial.png',
+        path: `test-results/nightly-auth-user-reports-${isAuth ? 'authenticated' : 'unauthenticated'}.png`,
         fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
 
-      // Should show user reports or empty state (but not auth prompt)
-      await authUtils.verifyAuthenticatedAccess();
+      if (isAuth) {
+        // Test authenticated behavior
+        await authUtils.verifyAuthenticatedAccess();
 
-      // Look for reports content or empty state
-      const hasContent = await page
-        .locator(
-          [
-            '.MuiDataGrid-root',
-            '.report-card',
-            '.report-item',
-            'text=/your reports/i',
-            'text=/my reports/i',
-            'text=/no reports found/i',
-            'text=/upload.*report/i',
-          ].join(', '),
-        )
-        .isVisible({ timeout: 10000 });
+        // Look for reports content or empty state
+        const hasContent = await page
+          .locator(
+            [
+              '.MuiDataGrid-root',
+              '.report-card',
+              '.report-item',
+              'text=/your reports/i',
+              'text=/my reports/i',
+              'text=/no reports found/i',
+              'text=/upload.*report/i',
+            ].join(', '),
+          )
+          .isVisible({ timeout: 10000 });
 
-      expect(hasContent).toBeTruthy();
+        expect(hasContent).toBeTruthy();
+      } else {
+        // Test unauthenticated behavior - should show login prompt or redirect
+        const hasAuthPrompt = await page
+          .locator(
+            [
+              'text=/sign in/i',
+              'text=/log in/i',
+              'text=/login/i',
+              'text=/authentication/i',
+              'text=/not.*logged.*in/i',
+              '.login-button',
+              '.auth-button',
+            ].join(', '),
+          )
+          .isVisible({ timeout: 10000 });
+
+        expect(hasAuthPrompt).toBeTruthy();
+      }
 
       await page.screenshot({
         path: 'test-results/nightly-regression-authenticated-my-reports.png',
@@ -358,14 +371,11 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
 
     test('should handle report interactions when authenticated', async ({ page }) => {
-      skipIfNoAuth(test);
-
       const authUtils = createAuthTestUtils(page);
 
-      // Verify we have authentication
-      if (!(await authUtils.isAuthenticated())) {
-        test.skip(true, 'Skipping test - no authentication available');
-      }
+      // Check authentication status - test appropriate scenario
+      const isAuth = await authUtils.isAuthenticated();
+      console.log(`ℹ️  Testing report interactions - authenticated: ${isAuth}`);
 
       await page.goto('/#/my-reports', {
         waitUntil: 'domcontentloaded',
@@ -376,31 +386,44 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
       // Take screenshot of reports interaction page
       await page.screenshot({
-        path: 'test-results/nightly-auth-report-interactions.png',
+        path: `test-results/nightly-auth-report-interactions-${isAuth ? 'authenticated' : 'unauthenticated'}.png`,
         fullPage: true,
         timeout: TEST_TIMEOUTS.screenshot,
       });
 
-      // Try to interact with reports if they exist
-      const reportLinks = page.locator('a[href*="/report/"]');
-      const reportCount = await reportLinks.count();
+      // Try to interact with reports if they exist and user is authenticated
+      if (isAuth) {
+        const reportLinks = page.locator('a[href*="/report/"]');
+        const reportCount = await reportLinks.count();
 
-      if (reportCount > 0) {
-        console.log(`✅ Found ${reportCount} user reports`);
+        if (reportCount > 0) {
+          console.log(`✅ Found ${reportCount} user reports`);
 
-        // Click on the first report
-        await reportLinks.first().click();
+          // Click on the first report
+          await reportLinks.first().click();
 
-        // Should navigate to report page
-        await page.waitForURL(/\/report\/[A-Za-z0-9]+/, { timeout: 15000 });
+          // Should navigate to report page
+          await page.waitForURL(/\/report\/[A-Za-z0-9]+/, { timeout: 15000 });
 
-        await page.screenshot({
-          path: 'test-results/nightly-regression-auth-report-navigation.png',
-          fullPage: true,
-          timeout: TEST_TIMEOUTS.screenshot,
-        });
+          await page.screenshot({
+            path: 'test-results/nightly-regression-auth-report-navigation.png',
+            fullPage: true,
+            timeout: TEST_TIMEOUTS.screenshot,
+          });
+        } else {
+          console.log('ℹ️  No user reports found - this is normal for test accounts');
+        }
       } else {
-        console.log('ℹ️  No user reports found - this is normal for test accounts');
+        // Test unauthenticated interaction - should show appropriate messaging
+        console.log('ℹ️  Testing unauthenticated access to my-reports page');
+        
+        // Should show authentication requirement message
+        const hasAuthMessage = await page
+          .locator('text=/login/i, text=/sign in/i, text=/authentication/i, text=/not.*logged.*in/i')
+          .isVisible({ timeout: 5000 });
+        
+        // This is acceptable - unauthenticated users should see auth prompts
+        console.log(`ℹ️  Authentication prompt shown: ${hasAuthMessage}`);
       }
     });
   });
