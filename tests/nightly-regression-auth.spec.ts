@@ -329,37 +329,41 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         await authUtils.verifyAuthenticatedAccess();
 
         // Look for reports content or empty state
-        const hasContent = await page
-          .locator(
-            [
-              '.MuiDataGrid-root',
-              '.report-card',
-              '.report-item',
-              'text=/your reports/i',
-              'text=/my reports/i',
-              'text=/no reports found/i',
-              'text=/upload.*report/i',
-            ].join(', '),
-          )
-          .isVisible({ timeout: 10000 });
+        const hasReportsContent = await page
+          .locator('.MuiDataGrid-root, .report-card, .report-item')
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
+
+        const hasReportsText = await page
+          .locator('text=/your reports/i')
+          .or(page.locator('text=/my reports/i'))
+          .or(page.locator('text=/no reports found/i'))
+          .or(page.locator('text=/upload.*report/i'))
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
+
+        const hasContent = hasReportsContent || hasReportsText;
 
         expect(hasContent).toBeTruthy();
       } else {
         // Test unauthenticated behavior - should show login prompt or redirect
-        const hasAuthPrompt = await page
-          .locator(
-            [
-              'text=/sign in/i',
-              'text=/log in/i',
-              'text=/login/i',
-              'text=/authentication/i',
-              'text=/not.*logged.*in/i',
-              '.login-button',
-              '.auth-button',
-            ].join(', '),
-          )
-          .isVisible({ timeout: 10000 });
+        // Check for text-based auth indicators
+        const hasAuthText = await page
+          .locator('text=/sign in/i')
+          .or(page.locator('text=/log in/i'))
+          .or(page.locator('text=/login/i'))
+          .or(page.locator('text=/authentication/i'))
+          .or(page.locator('text=/not.*logged.*in/i'))
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
 
+        // Check for button-based auth indicators
+        const hasAuthButton = await page
+          .locator('.login-button, .auth-button')
+          .isVisible({ timeout: 5000 })
+          .catch(() => false);
+
+        const hasAuthPrompt = hasAuthText || hasAuthButton;
         expect(hasAuthPrompt).toBeTruthy();
       }
 
@@ -419,7 +423,10 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         
         // Should show authentication requirement message
         const hasAuthMessage = await page
-          .locator('text=/login/i, text=/sign in/i, text=/authentication/i, text=/not.*logged.*in/i')
+          .locator('text=/login/i')
+          .or(page.locator('text=/sign in/i'))
+          .or(page.locator('text=/authentication/i'))
+          .or(page.locator('text=/not.*logged.*in/i'))
           .isVisible({ timeout: 5000 });
         
         // This is acceptable - unauthenticated users should see auth prompts
