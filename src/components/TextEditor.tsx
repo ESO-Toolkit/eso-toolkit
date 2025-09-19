@@ -3,6 +3,10 @@ import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
+import '../styles/pickr-background.css';
+import '../styles/text-editor-page-background.css';
+import { usePageBackground } from '../hooks/usePageBackground';
+import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
 
 // Types
 declare global {
@@ -51,7 +55,7 @@ interface PickrOptions {
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: 'transparent',
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
 }));
@@ -59,10 +63,9 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.paper
-      : alpha(theme.palette.background.paper, 0.95),
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(0, 0, 0, 0.85)'
+    : 'rgba(255, 255, 255, 0.9)',
   padding: '24px',
   borderRadius: '14px',
   border: `1px solid ${theme.palette.divider}`,
@@ -70,6 +73,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: theme.palette.text.primary,
   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
   transition: 'all 0.3s ease',
+  backdropFilter: 'blur(2px)',
   // Mobile styles - use grid for reordering (from latest commit)
   [theme.breakpoints.down('sm')]: {
     display: 'grid',
@@ -84,16 +88,16 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(0, 0, 0, 0.9)'
+    : 'rgba(255, 255, 255, 0.95)',
   borderRadius: '12px',
   border: `1px solid ${theme.palette.divider}`,
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
   overflowX: 'auto',
+  backdropFilter: 'blur(4px)',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     display: 'none', // Hide on mobile, use grid containers instead
@@ -268,7 +272,9 @@ const TextInput = styled('textarea')(({ theme }) => ({
   width: '100%',
   height: '280px',
   padding: '20px',
-  background: theme.palette.background.paper,
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(0, 0, 0, 0.85)'
+    : 'rgba(255, 255, 255, 0.95)',
   color: theme.palette.text.primary,
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: '12px 12px 0 0',
@@ -280,6 +286,7 @@ const TextInput = styled('textarea')(({ theme }) => ({
   boxSizing: 'border-box',
   transition: 'all 0.15s ease-in-out',
   boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+  backdropFilter: 'blur(2px)',
   '&:focus': {
     outline: 'none',
     borderColor: theme.palette.primary.main,
@@ -292,10 +299,9 @@ const StatusBar = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(0, 0, 0, 0.85)'
+    : 'rgba(255, 255, 255, 0.95)',
   border: `1px solid ${theme.palette.divider}`,
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
@@ -303,6 +309,7 @@ const StatusBar = styled(Box)(({ theme }) => ({
   fontSize: '14px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
+  backdropFilter: 'blur(2px)',
 }));
 
 const CharCounter = styled(Typography)(({ theme }) => ({
@@ -340,10 +347,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(0, 0, 0, 0.8)'
+    : 'rgba(255, 255, 255, 0.9)',
   border: `1px solid ${theme.palette.divider}`,
   fontSize: '1rem',
   lineHeight: '1.6',
@@ -352,6 +358,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   zIndex: 0,
   transition: 'all 0.15s ease-in-out',
+  backdropFilter: 'blur(2px)',
   '& span': {
     textShadow: 'none',
   },
@@ -376,6 +383,27 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
+  // Apply page background when component mounts and react to theme changes
+  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
+
+  // Set background image via CSS variable for better path resolution
+  useEffect(() => {
+    document.documentElement.style.setProperty('--page-bg-image', `url(${backgroundImage})`);
+
+    // Debug: log to verify the hook is working
+    console.log('TextEditor mounted, setting background image:', backgroundImage);
+    console.log('Body classes after mount:', document.body.className);
+    console.log('CSS variable set:', document.documentElement.style.getPropertyValue('--page-bg-image'));
+
+    // Test if CSS is loaded by checking if we can find our styles
+    const styles = document.styleSheets;
+    console.log('Total stylesheets loaded:', styles.length);
+
+    return () => {
+      document.documentElement.style.removeProperty('--page-bg-image');
+    };
+  }, [backgroundImage]);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const pickrRef = useRef<PickrInstance | null>(null);
   const pickrAnchorRef = useRef<HTMLDivElement>(null);
@@ -399,6 +427,7 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  
   // Initialize Pickr with theme switching
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
@@ -412,13 +441,6 @@ export const TextEditor: React.FC = () => {
                           document.documentElement.classList.contains('dark') ||
                           document.body.classList.contains('dark');
         const pickrTheme = isDarkMode ? 'monolith' : 'classic';
-
-        // Ensure <body> has .dark-mode when isDarkMode is true
-        if (isDarkMode) {
-          document.body.classList.add('dark-mode');
-        } else {
-          document.body.classList.remove('dark-mode');
-        }
 
         if (pickrAnchorRef.current) {
           pickrRef.current = (Pickr as PickrInstance).create({
@@ -692,7 +714,6 @@ export const TextEditor: React.FC = () => {
   return (
     <TextEditorContainer>
       <Container maxWidth="lg">
-
         <EditorTool>
           {/* Desktop Layout (from previous commit f1071c2) */}
           <Toolbar>
@@ -798,7 +819,7 @@ export const TextEditor: React.FC = () => {
           <ColorSection>
             <ColorPickerWrapper>
               <EmojiButton
-                id="eso-native-emoji-btn"
+                id="eso-native-emoji-btn-mobile"
                 type="button"
                 onClick={handleEmojiClick}
                 aria-label="Choose custom color"
@@ -807,7 +828,7 @@ export const TextEditor: React.FC = () => {
               </EmojiButton>
               <div
                 ref={pickrAnchorRef}
-                id="eso-pickr-anchor"
+                id="eso-pickr-anchor-mobile"
                 style={{
                   position: 'absolute',
                   left: '-9999px',
