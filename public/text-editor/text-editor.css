@@ -1,0 +1,534 @@
+/* Theme-aware background styling for iframe */
+body {
+  background-color: var(--bg);
+  color: var(--text);
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  min-height: 100vh;
+}
+
+/* Remove any background image overlays - we're now theme-aware */
+
+@media (min-width: 1024px) {
+  .eso-tool {
+    margin: 0;
+  }
+}
+
+.eso-tool {
+  max-width: 900px;
+  margin: 2rem auto 2rem auto;
+  background: var(--panel);
+  padding: 24px;
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
+  transition: all 0.3s ease;
+}
+
+.eso-tool h3 {
+  font-family: 'Cinzel', serif;
+  font-size: 1.5em;
+  font-weight: 600;
+  color: var(--accent);
+  text-align: center;
+  margin-bottom: 1.5rem;
+  letter-spacing: '0.02em';
+}
+
+.eso-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+  padding: 16px;
+  background: var(--panel2);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  flex-wrap: nowrap;
+  align-items: center;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow-x: auto;
+}
+
+/* Toolbar action buttons (only direct children, not color swatches or nested controls) */
+.eso-toolbar > button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Apply same button styling to Undo/Redo buttons inside their group */
+.undo-redo-group > button {
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 16px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.eso-toolbar > button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.undo-redo-group > button:hover {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.eso-toolbar > button:active {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: var(--bg);
+  transform: translateY(0px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.undo-redo-group > button:active {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: var(--bg);
+  transform: translateY(0px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.eso-toolbar > button:disabled {
+  background: transparent; /* keep border-only look when disabled */
+  color: var(--muted); /* readable */
+  border-color: var(--border); /* keep border visible */
+  opacity: 1; /* override browser default faded look */
+  cursor: not-allowed;
+}
+
+.eso-toolbar > button:disabled:hover {
+  background: transparent;
+  border-color: var(--border);
+}
+
+/* Ensure Undo/Redo inside their group stay visible when disabled */
+.undo-redo-group > button:disabled {
+  background: var(--panel-2) !important; /* brighter background */
+  color: var(--muted) !important; /* brighter text */
+  border: 1px solid var(--border) !important;
+  font-weight: 600 !important; /* improve readability */
+  opacity: 1 !important; /* ensure not faded */
+}
+
+.preset-colors {
+  display: flex;
+  gap: 4px;
+  margin-left: 8px;
+}
+
+.preset-color {
+  width: 24px;
+  height: 24px;
+  border-radius: 3px;
+  cursor: pointer;
+  transition: transform 0.1s;
+}
+
+.preset-color:hover {
+  transform: scale(1.1);
+}
+
+.color-picker-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.eso-pickr-button {
+  width: 40px;
+  height: 30px;
+  border: 1px solid #666;
+  border-radius: 4px;
+  background: #ffffff;
+  cursor: pointer;
+  transition: transform 0.1s;
+  position: relative;
+  z-index: 1;
+}
+
+.eso-pickr-button:hover {
+  transform: scale(1.05);
+}
+
+/* Hide native color input by default (desktop) */
+/* Hide the native input globally; the 🎨 button triggers it programmatically */
+#eso-native-color {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Emoji trigger button (all breakpoints) */
+.native-emoji-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px; /* larger on desktop */
+  height: 52px; /* larger on desktop */
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent !important;
+  background-color: transparent !important; /* explicitly override any inline bg-color */
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 46px !important; /* scale emoji to fit new size */
+  line-height: 1;
+  transition: transform 0.1s;
+}
+.native-emoji-btn:hover {
+  transform: scale(1.05);
+}
+
+/* Show the native color group by default so the 🎨 button is visible */
+.native-color-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Keep Pickr anchor hidden so the emoji stays visible on desktop */
+#eso-pickr-anchor.pickr-anchor {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+}
+/* If Pickr injects a button inside/next to the anchor, hide it */
+#eso-pickr-anchor .pcr-button,
+.pickr-anchor .pcr-button {
+  display: none !important;
+}
+
+.undo-redo-group {
+  display: flex;
+  gap: 8px; /* Increased spacing between undo/redo */
+}
+
+/* Force Pickr to appear above everything */
+.pcr-app {
+  background: var(--panel) !important;
+  border: 1px solid var(--border) !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.2) !important;
+  z-index: 99999 !important;
+  font-family: 'Open Sans', sans-serif !important;
+  position: fixed !important;
+  border-radius: 10px !important;
+  color: var(--text) !important;
+}
+
+/* Always hide Pickr's trigger button (we use the 🎨 emoji as the only visible trigger) */
+.pcr-button {
+  display: none !important;
+}
+
+.pcr-app * {
+  box-sizing: border-box !important;
+}
+
+.pcr-app .pcr-selection .pcr-color-preview {
+  border: 1px solid var(--border) !important;
+}
+
+.pcr-app .pcr-interaction input {
+  background: var(--panel-2) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+  font-family: monospace !important;
+}
+
+.pcr-app .pcr-interaction input:focus {
+  border-color: var(--accent) !important;
+  outline: none !important;
+}
+
+.pcr-app .pcr-interaction .pcr-save {
+  background: var(--accent) !important;
+  color: var(--bg) !important;
+  border: none !important;
+}
+
+.pcr-app .pcr-interaction .pcr-save:hover {
+  background: var(--accent-2) !important;
+  color: var(--bg) !important;
+}
+.pcr-app .pcr-swatches > button {
+  border: 1px solid var(--border) !important;
+}
+
+.pcr-app .pcr-interaction input {
+  border-radius: 4px !important;
+}
+.eso-input {
+  width: 100%;
+  height: 280px;
+  padding: 20px;
+  background: var(--panel);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 12px 12px 0 0;
+  font-family: 'SF Mono', 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
+  resize: vertical;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  box-sizing: border-box;
+  transition: all 0.15s ease-in-out;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.eso-input:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+.eso-preview {
+  margin-top: 20px;
+  padding: 20px;
+  border-radius: 12px;
+  min-height: 120px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  font-size: 1rem;
+  line-height: 1.6;
+  box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.1);
+  position: relative; /* ensure ::before positions to this */
+  overflow: hidden; /* clip overlay corners */
+  z-index: 0; /* create stacking context */
+  transition: all 0.15s ease-in-out;
+}
+
+.eso-preview span {
+  text-shadow: none; /* Remove text shadow for better readability in light mode */
+}
+
+.status-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-top: none;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+}
+
+.char-counter {
+  color: var(--muted);
+}
+
+.copy-button {
+  background: var(--accent);
+  color: var(--bg);
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease-in-out;
+  margin-left: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.copy-button:hover {
+  background: var(--accent2);
+  border-color: var(--accent2);
+  color: var(--bg);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.copy-button:active {
+  background: var(--accent);
+  transform: translateY(0px);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* Remove toolbar divider entirely */
+.toolbar-divider {
+  display: none !important;
+}
+
+/* Remove toolbar spacer to reduce extra empty space */
+.toolbar-spacer {
+  display: none !important;
+}
+
+/* Mobile-specific styling */
+@media (max-width: 768px) {
+  .eso-toolbar {
+    justify-content: center; /* center rows on mobile */
+    gap: 8px; /* balanced spacing on mobile */
+    row-gap: 12px;
+    padding: 12px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Keep undo/redo group with proper spacing */
+  .undo-redo-group {
+    gap: 6px; /* Balanced spacing on mobile */
+  }
+
+  /* Hide "Quick Colors:" text on mobile */
+  .eso-toolbar span:nth-of-type(1) {
+    display: none;
+  }
+
+  /* Stack and center color controls on their own rows */
+  .preset-colors {
+    order: 1; /* below custom picker */
+    flex-basis: 100%;
+    display: flex;
+    justify-content: space-evenly; /* fill horizontal space */
+    flex-wrap: wrap; /* allow wrap if tight */
+    column-gap: 12px;
+    row-gap: 12px;
+    margin: 4px 0 0 0;
+  }
+
+  .color-picker-wrapper {
+    order: 0; /* top row */
+    flex-basis: 100%;
+    display: flex;
+    justify-content: center;
+    margin: 0;
+  }
+  /* Hide the "Custom:" label on mobile to save space */
+  .color-picker-wrapper .toolbar-label {
+    display: none;
+  }
+
+  /* Push action buttons to the bottom rows and make them wide */
+  .eso-toolbar > button {
+    order: 3;
+    flex: 1 1 calc(50% - 12px);
+    max-width: calc(50% - 12px);
+    min-height: 44px; /* accessible tap target */
+    font-size: 14px;
+  }
+  .undo-redo-group {
+    order: 3;
+    justify-content: center;
+    width: 100%;
+    gap: 10px;
+  }
+  .undo-redo-group > button {
+    flex: 1 1 calc(50% - 12px);
+    max-width: calc(50% - 12px);
+    min-height: 44px;
+    font-size: 14px;
+  }
+
+  /* Make buttons slightly larger on mobile for better fit */
+  .eso-toolbar button {
+    padding: 10px 14px;
+    font-size: 14px;
+  }
+
+  .preset-color {
+    width: clamp(36px, 10vw, 56px);
+    height: clamp(36px, 10vw, 56px);
+    border-radius: 6px;
+  }
+
+  .eso-pickr-button {
+    width: clamp(48px, 12vw, 72px);
+    height: clamp(40px, 10vw, 60px);
+    border-radius: 8px;
+  }
+
+  /* Mobile container adjustments */
+  .eso-tool {
+    margin: 0 auto; /* remove vertical margins */
+    position: relative; /* anchor overlay */
+    overflow: hidden; /* clip overlay to radius */
+    border: none;
+  }
+
+  /* Remove mobile overlay for cleaner modern look */
+  .eso-tool::before {
+    display: none;
+  }
+
+  /* Ensure tool content renders above the overlay */
+  .eso-tool > * {
+    position: relative;
+    z-index: 1;
+  }
+}
+
+/* Tablet and below: use native color input, hide Pickr button */
+@media (max-width: 1024px) {
+  .eso-pickr-button {
+    display: none !important;
+  }
+  .native-color-group {
+    display: flex;
+    gap: 8px;
+  }
+  .native-color-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  /* WebKit swatch tweaks for a crisp look */
+  .native-color-value {
+    display: none;
+  }
+  .color-hint {
+    display: none;
+  }
+  /* Larger sizing on smaller screens */
+  .native-emoji-btn {
+    width: clamp(48px, 12vw, 64px);
+    font-size: clamp(24px, 7vw, 28px);
+    background: var(--accent) !important;
+    border: 1px solid var(--accent) !important;
+    border-radius: 8px !important;
+    margin: 0.5rem 0;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.15s ease-in-out;
+  }
+
+  .native-emoji-btn:hover {
+    background: var(--accent2) !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  }
+}
