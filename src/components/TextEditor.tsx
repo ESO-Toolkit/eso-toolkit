@@ -1,13 +1,50 @@
 import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
-import '@simonwep/pickr/dist/themes/classic.min.css';
+import '../styles/pickr-theme.css';
 
 // Types
 declare global {
   interface Window {
-    Pickr: any;
+    Pickr: unknown;
   }
+}
+
+interface PickrColor {
+  toHEXA: () => { toString: () => string };
+}
+
+interface PickrInstance {
+  create: (options: PickrOptions) => PickrInstance;
+  on: (event: string, callback: (color: PickrColor) => void) => PickrInstance;
+  show: () => PickrInstance;
+  hide: () => PickrInstance;
+  destroy: () => void;
+}
+
+interface PickrOptions {
+  el: HTMLElement;
+  theme: 'classic' | 'monolith';
+  default: string;
+  swatches: string[];
+  components: {
+    preview: boolean;
+    opacity: boolean;
+    hue: boolean;
+    interaction: {
+      hex: boolean;
+      rgba: boolean;
+      hsla: boolean;
+      hsva: boolean;
+      cmyk: boolean;
+      input: boolean;
+      clear: boolean;
+      save: boolean;
+    };
+  };
+  position: string;
+  closeOnScroll: boolean;
+  appClass: string;
 }
 
 // Styled Components (matching original design)
@@ -34,15 +71,6 @@ const EditorTool = styled(Box)(({ theme }) => ({
   transition: 'all 0.3s ease',
 }));
 
-const EditorTitle = styled('h1')(({ theme }) => ({
-  fontFamily: 'Cinzel, serif',
-  fontSize: '1.5em',
-  fontWeight: 600,
-  color: theme.palette.primary.main,
-  textAlign: 'center',
-  marginBottom: '1.5rem',
-  letterSpacing: '0.02em',
-}));
 
 const Toolbar = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -270,59 +298,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   },
 }));
 
-// Dark mode styles for Pickr - added to component scope
-const pickrDarkModeStyles = `
-  .eso-pickr-app .pcr-app.dark-mode {
-    background: #1e1e1e !important;
-    border: 1px solid #444444 !important;
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-interaction {
-    background: #2d2d2d !important;
-    border-color: #444444 !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-interaction input {
-    background: #2d2d2d !important;
-    color: #ffffff !important;
-    border-color: #555555 !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-interaction .pcr-result {
-    color: #ffffff !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-interaction .pcr-btn {
-    background: #3d3d3d !important;
-    color: #ffffff !important;
-    border-color: #555555 !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-interaction .pcr-btn:hover {
-    background: #4d4d4d !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-palette,
-  .eso-pickr-app .pcr-app.dark-mode .pcr-slider {
-    background: #2d2d2d !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-palette .pcr-palette-color {
-    border-color: #444444 !important;
-  }
-
-  .eso-pickr-app .pcr-app.dark-mode .pcr-slider .pcr-slider-label {
-    color: #ffffff !important;
-  }
-`;
 
 // Utility Functions
-const hexToEsoColor = (hex: string): string => {
-  // Convert hex to ESO format with full alpha (FF prefix)
-  const cleanHex = hex.replace('#', '').toUpperCase();
-  return cleanHex.length === 6 ? `FF${cleanHex}` : cleanHex;
-};
 
 // Predefined colors (matching original)
 const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF'];
@@ -339,7 +316,7 @@ export const TextEditor: React.FC = () => {
   const [copyFeedback, setCopyFeedback] = useState('');
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const pickrRef = useRef<any>(null);
+  const pickrRef = useRef<PickrInstance | null>(null);
   const pickrAnchorRef = useRef<HTMLDivElement>(null);
 
   const maxHistory = 50;
@@ -361,55 +338,8 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Inject dark mode styles for Pickr
-  useEffect(() => {
-    // Create and inject the dark mode styles
-    const styleElement = document.createElement('style');
-    styleElement.id = 'pickr-dark-mode-styles';
-    styleElement.textContent = pickrDarkModeStyles;
-    document.head.appendChild(styleElement);
-
-    // Cleanup function to remove styles when component unmounts
-    return () => {
-      const style = document.getElementById('pickr-dark-mode-styles');
-      if (style) {
-        style.remove();
-      }
-    };
-  }, []);
-
-  // Setup dark mode switching for Pickr
-  useEffect(() => {
-    const updatePickrTheme = () => {
-      // Check if we're in dark mode
-      const isDarkMode = document.documentElement.classList.contains('dark') ||
-                        document.body.classList.contains('dark') ||
-                        theme.palette.mode === 'dark';
-
-      // Find the Pickr app container
-      const pickrApp = document.querySelector('.eso-pickr-app .pcr-app');
-      if (!pickrApp) return;
-
-      // Apply theme by adding/removing dark class
-      if (isDarkMode) {
-        pickrApp.classList.add('dark-mode');
-      } else {
-        pickrApp.classList.remove('dark-mode');
-      }
-    };
-
-    // Initial theme setup
-    updatePickrTheme();
-
-    // Set up a simple interval to check for theme changes
-    const interval = setInterval(updatePickrTheme, 1000);
-
-    return () => {
-      clearInterval(interval);
-    };
-  }, [theme.palette.mode]);
-
-  // Initialize Pickr
+  
+  // Initialize Pickr with theme switching
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
 
@@ -417,9 +347,23 @@ export const TextEditor: React.FC = () => {
       try {
         const Pickr = (await import('@simonwep/pickr')).default;
 
-        pickrRef.current = Pickr.create({
-          el: pickrAnchorRef.current!,
-          theme: 'classic', // We'll override this with our custom CSS
+        // Determine Pickr skin based on light/dark mode
+        const isDarkMode = theme.palette.mode === 'dark' ||
+                          document.documentElement.classList.contains('dark') ||
+                          document.body.classList.contains('dark');
+        const pickrTheme = isDarkMode ? 'monolith' : 'classic';
+
+        // Ensure <body> has .dark-mode when isDarkMode is true
+        if (isDarkMode) {
+          document.body.classList.add('dark-mode');
+        } else {
+          document.body.classList.remove('dark-mode');
+        }
+
+        if (pickrAnchorRef.current) {
+          pickrRef.current = (Pickr as PickrInstance).create({
+            el: pickrAnchorRef.current,
+            theme: pickrTheme,
           default: '#ffffff',
           swatches: [
             '#FFFFFF',
@@ -460,9 +404,10 @@ export const TextEditor: React.FC = () => {
           closeOnScroll: true,
           appClass: 'eso-pickr-app',
         });
+        }
 
         if (pickrRef.current) {
-          pickrRef.current.on('save', (color: any) => {
+          pickrRef.current.on('save', (color: PickrColor) => {
             if (color) {
               const hexColor = color.toHEXA().toString().substring(1, 7);
               applyColorToSelection(hexColor);
@@ -487,7 +432,7 @@ export const TextEditor: React.FC = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile]);
+  }, [isMobile, theme.palette.mode]);
 
   const positionPickr = useCallback((): void => {
     const appEl = document.querySelector('.pcr-app');

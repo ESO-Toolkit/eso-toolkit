@@ -62,3 +62,12 @@ body {
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
+
+/* Pickr theme CSS variables */
+:root {
+  --site-bg: #121212;
+  --site-fg: #e0e0e0;
+  --site-accent: #7289da;
+  --site-border: #333333;
+  --site-shadow: rgba(0, 0, 0, 0.8);
+}
