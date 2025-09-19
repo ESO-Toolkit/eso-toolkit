@@ -20,6 +20,7 @@ export enum TabId {
   CRITICAL_DAMAGE = 'critical-damage',
   PENETRATION = 'penetration',
   DAMAGE_REDUCTION = 'damage-reduction',
+  DASHBOARD = 'dashboard',
   LOCATION_HEATMAP = 'location-heatmap',
   RAW_EVENTS = 'raw-events',
   TARGET_EVENTS = 'target-events',

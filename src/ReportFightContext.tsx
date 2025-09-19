@@ -53,16 +53,17 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
         5: TabId.CRITICAL_DAMAGE,
         6: TabId.PENETRATION,
         7: TabId.DAMAGE_REDUCTION,
-        8: TabId.LOCATION_HEATMAP,
-        9: TabId.RAW_EVENTS,
-        10: TabId.TARGET_EVENTS,
-        11: TabId.DIAGNOSTICS,
-        12: TabId.ACTORS,
-        13: TabId.TALENTS,
-        14: TabId.ROTATION_ANALYSIS,
-        15: TabId.AURAS_OVERVIEW,
-        16: TabId.BUFFS_OVERVIEW,
-        17: TabId.DEBUFFS_OVERVIEW,
+        // 8: TabId.DASHBOARD, // Removed - dashboard is now standalone
+        9: TabId.LOCATION_HEATMAP,
+        10: TabId.RAW_EVENTS,
+        11: TabId.TARGET_EVENTS,
+        12: TabId.DIAGNOSTICS,
+        13: TabId.ACTORS,
+        14: TabId.TALENTS,
+        15: TabId.ROTATION_ANALYSIS,
+        16: TabId.AURAS_OVERVIEW,
+        17: TabId.BUFFS_OVERVIEW,
+        18: TabId.DEBUFFS_OVERVIEW,
       };
       const mappedTab = legacyMapping[numericId];
       if (mappedTab) {

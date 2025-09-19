@@ -1,4 +1,5 @@
 // Third-party imports
+import DashboardIcon from '@mui/icons-material/Dashboard';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import {
   Box,
@@ -13,6 +14,7 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Button,
 } from '@mui/material';
 import React from 'react';
 import { useSelector } from 'react-redux';
@@ -980,22 +982,43 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           overflow: 'visible',
         }}
       >
-        <Typography
-          variant="h5"
+        <Box
           sx={{
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-            lineHeight: 1.334,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
             mb: { xs: '1.5rem', sm: '2rem' },
-            mt: { xs: 0, sm: '-2.7rem' },
-            textAlign: { xs: 'center', sm: 'left' },
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            px: 0,
           }}
         >
-          {reportData?.title || 'Report Details'}
-        </Typography>
+          <Typography
+            variant="h5"
+            sx={{
+              fontSize: { xs: '1.5rem', sm: '2rem' },
+              lineHeight: 1.334,
+              mt: { xs: 0, sm: '-2.7rem' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+              flex: 1,
+              minWidth: 0,
+            }}
+          >
+            {reportData?.title || 'Report Details'}
+          </Typography>
+
+          <Button
+            variant="outlined"
+            startIcon={<DashboardIcon />}
+            onClick={() => navigate(`/report/${reportId}/dashboard`)}
+            sx={{
+              ml: 2,
+              textTransform: 'none',
+              flexShrink: 0,
+            }}
+          >
+            Live Dashboard
+          </Button>
+        </Box>
 
         {encounters.length === 0 && <Typography> No Fights Found </Typography>}
         <Box data-testid="fight-list">

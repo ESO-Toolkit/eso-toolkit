@@ -56,6 +56,11 @@ const Logs = React.lazy(() =>
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
+const ReportDashboard = React.lazy(() =>
+  import('./features/raid_dashboard/ReportDashboard').then((module) => ({
+    default: module.ReportDashboard,
+  })),
+);
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
@@ -239,6 +244,18 @@ const AppRoutes: React.FC = () => {
                   <ErrorBoundary>
                     <Suspense fallback={<LoadingFallback />}>
                       <ReportFights />
+                    </Suspense>
+                  </ErrorBoundary>
+                </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/report/:reportId/dashboard"
+              element={
+                <AuthenticatedRoute>
+                  <ErrorBoundary>
+                    <Suspense fallback={<LoadingFallback />}>
+                      <ReportDashboard />
                     </Suspense>
                   </ErrorBoundary>
                 </AuthenticatedRoute>

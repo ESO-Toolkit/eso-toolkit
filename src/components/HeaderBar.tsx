@@ -444,7 +444,7 @@ export const HeaderBar: React.FC = () => {
   const handleLogin = React.useCallback((): void => {
     startPKCEAuth();
     setMobileOpen(false);
-  }, []);
+  }, [setMobileOpen]);
 
   const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
