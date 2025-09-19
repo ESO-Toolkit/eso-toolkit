@@ -928,6 +928,87 @@ body.mode-pvp .header h1::before {
   }
 }
 
+/* Extra small mobile devices (320-380px) */
+@media (max-width: 380px) {
+  .container {
+    padding: 16px 8px 28px;
+  }
+  .header h1 {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+  .header .subtitle {
+    font-size: 12px;
+  }
+  .tabs [role='tab'] {
+    padding: 6px 10px;
+    font-size: 12px;
+    min-height: 40px;
+  }
+  .calculator__controls {
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .btn {
+    padding: 6px 8px;
+    font-size: 11px;
+    min-height: 36px;
+  }
+  .calculator__content {
+    padding: 6px 8px 2px;
+  }
+  .calculator__section-title {
+    margin: 6px 2px 4px;
+    font-size: 12px;
+  }
+  .calculator__item {
+    grid-template-columns: auto 1fr auto;
+    gap: 4px;
+    padding: 6px 6px;
+  }
+  .calculator__item-qty {
+    width: 40px;
+    padding: 4px 6px;
+    font-size: 12px;
+  }
+  .calculator__item-checkbox {
+    width: 16px;
+    height: 16px;
+  }
+  .calculator__item-name {
+    font-size: 12px;
+    line-height: 1.3;
+  }
+  .calculator__item-value {
+    font-size: 13px;
+  }
+  /* Extra small screen totals */
+  .calculator__total > span:first-child {
+    font-size: 18px;
+  }
+  .calculator__total-value {
+    font-size: 24px;
+  }
+  .calculator__cap-status {
+    font-size: 11px;
+  }
+  /* Per-calculator total label sizing for extra small screens */
+  .calculator--penetration .calculator__total > span:first-child {
+    font-size: 18px;
+  }
+  .calculator--critical .calculator__total > span:first-child {
+    font-size: 16px;
+  }
+  /* Compact sticky footer for extra small screens */
+  .calculator__total-section {
+    padding: 10px 12px;
+    gap: 4px;
+  }
+  .calculator__total {
+    min-height: 40px;
+  }
+}
+
 /* ========================
    Rich tooltip styles (active)
    ======================== */

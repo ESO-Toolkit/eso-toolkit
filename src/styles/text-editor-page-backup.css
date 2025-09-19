@@ -1,0 +1,91 @@
+/* Mobile transparency optimizations */
+@media (max-width: 768px) {
+  body.text-editor-page {
+    background-attachment: scroll; /* Better performance on mobile */
+  }
+
+  /* Reduce blur intensity on mobile for performance */
+  body.text-editor-page .EditorTool {
+    backdrop-filter: var(--backdrop-blur-medium) !important;
+    -webkit-backdrop-filter: var(--backdrop-blur-medium) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  }
+
+  body.text-editor-page .Toolbar {
+    backdrop-filter: var(--backdrop-blur-light) !important;
+    -webkit-backdrop-filter: var(--backdrop-blur-light) !important;
+  }
+
+  body.text-editor-page .TextInput,
+  body.text-editor-page .PreviewArea,
+  body.text-editor-page .StatusBar,
+  body.text-editor-page .ToolbarButton {
+    backdrop-filter: blur(2px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(2px) saturate(120%) !important;
+  }
+
+  /* Adjust transparency for better mobile readability */
+  body.text-editor-page:not(.dark-mode) .EditorTool {
+    background: rgba(255, 255, 255, 0.85) !important;
+  }
+
+  body.text-editor-page.dark-mode .EditorTool {
+    background: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  /* Further reduce blur intensity on very small screens */
+  @media (max-width: 480px) {
+    body.text-editor-page .EditorTool {
+      backdrop-filter: blur(4px) saturate(140%) !important;
+      -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
+    }
+
+    body.text-editor-page .Toolbar,
+    body.text-editor-page .TextInput,
+    body.text-editor-page .PreviewArea,
+    body.text-editor-page .StatusBar,
+    body.text-editor-page .ToolbarButton {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur()) {
+  body.text-editor-page .EditorTool {
+    background: var(--bg) !important;
+  }
+
+  body.text-editor-page .Toolbar {
+    background: var(--panel-2) !important;
+  }
+
+  body.text-editor-page .TextInput,
+  body.text-editor-page .PreviewArea,
+  body.text-editor-page .StatusBar,
+  body.text-editor-page .ToolbarButton {
+    background: var(--panel) !important;
+  }
+
+  /* Solid fallbacks for better compatibility */
+  body.text-editor-page:not(.dark-mode) .EditorTool {
+    background: rgba(255, 255, 255, 0.95) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  }
+
+  body.text-editor-page.dark-mode .EditorTool {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  body.text-editor-page:not(.dark-mode) .Toolbar {
+    background: rgba(255, 255, 255, 0.98) !important;
+    border: 1px solid rgba(0, 0, 0, 0.05) !important;
+  }
+
+  body.text-editor-page.dark-mode .Toolbar {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
+}

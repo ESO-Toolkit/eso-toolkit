@@ -1,65 +1,139 @@
 import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
-import '@simonwep/pickr/dist/themes/classic.min.css';
 
+import '../styles/pickr-theme.css';
+import '../styles/pickr-radius.css';
+import '../styles/pickr-background.css';
+import '../styles/text-editor-page-background.css';
+import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
+import { usePageBackground } from '../hooks/usePageBackground';
+
+// Types
+declare global {
+  interface Window {
+    Pickr: unknown;
+  }
+}
+
+interface PickrColor {
+  toHEXA: () => { toString: () => string };
+}
+
+interface PickrInstance {
+  create: (options: PickrOptions) => PickrInstance;
+  on: (event: string, callback: (color: PickrColor) => void) => PickrInstance;
+  show: () => PickrInstance;
+  hide: () => PickrInstance;
+  destroy: () => void;
+}
+
+interface PickrOptions {
+  el: HTMLElement;
+  theme: 'classic' | 'monolith';
+  default: string;
+  swatches: string[];
+  components: {
+    preview: boolean;
+    opacity: boolean;
+    hue: boolean;
+    interaction: {
+      hex: boolean;
+      rgba: boolean;
+      hsla: boolean;
+      hsva: boolean;
+      cmyk: boolean;
+      input: boolean;
+      clear: boolean;
+      save: boolean;
+    };
+  };
+  position: string;
+  closeOnScroll: boolean;
+  appClass: string;
+}
+
+// Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
-  backgroundColor: theme.palette.background.default,
+  backgroundColor: 'transparent',
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: 'var(--page-bg-image)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    zIndex: -2,
+  },
+  '&::after': {
+    content: '""',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor:
+      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+    zIndex: -1,
+  },
 }));
 
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.paper
-      : alpha(theme.palette.background.paper, 0.95),
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.7)',
   padding: '24px',
   borderRadius: '14px',
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   color: theme.palette.text.primary,
-  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
+  backdropFilter: 'blur(12px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+  position: 'relative',
+  zIndex: 1,
+  // Mobile styles
+  [theme.breakpoints.down('sm')]: {
+    display: 'grid',
+    gridTemplateRows: 'auto auto',
+    gap: '16px',
+    margin: '1rem',
+    backdropFilter: 'blur(8px) saturate(160%)',
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.8)',
+  },
 }));
 
-const EditorTitle = styled('h1')(({ theme }) => ({
-  fontFamily: 'Cinzel, serif',
-  fontSize: '1.5em',
-  fontWeight: 600,
-  color: theme.palette.primary.main,
-  textAlign: 'center',
-  marginBottom: '1.5rem',
-  letterSpacing: '0.02em',
-}));
-
+// Desktop: Simple horizontal toolbar (from previous commit)
 const Toolbar = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
   borderRadius: '12px',
-  border: `1px solid ${theme.palette.divider}`,
-  flexWrap: 'nowrap',
+  border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  boxShadow:
+    theme.palette.mode === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
   overflowX: 'auto',
+  backdropFilter: 'blur(8px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
-    flexDirection: 'column',
-    gap: '8px',
-    rowGap: '12px',
-    padding: '12px',
-    flexWrap: 'wrap',
-    overflowX: 'hidden',
+    display: 'none', // Hide on mobile, use grid containers instead
   },
 }));
 
@@ -95,7 +169,7 @@ const ToolbarButton = styled('button')(({ theme }) => ({
     opacity: 1,
     cursor: 'not-allowed',
   },
-  // Mobile styles
+  // Mobile styles (from latest commit)
   [theme.breakpoints.down('sm')]: {
     padding: '10px 14px',
     fontSize: '14px',
@@ -109,7 +183,7 @@ const ToolbarButton = styled('button')(({ theme }) => ({
 const UndoRedoGroup = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
-  // Mobile styles
+  // Mobile styles (from latest commit)
   [theme.breakpoints.down('sm')]: {
     gap: '6px',
     order: 1,
@@ -118,10 +192,59 @@ const UndoRedoGroup = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Mobile-specific components (from latest commit)
+const FormatContainer = styled(Box)(({ theme }) => ({
+  display: 'none', // Hidden on desktop
+  flexDirection: 'column',
+  gap: '8px',
+  marginBottom: '20px',
+  // Mobile styles - position in grid
+  [theme.breakpoints.down('sm')]: {
+    display: 'flex',
+    gridRow: 2,
+  },
+}));
+
+const FormatRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: '8px',
+  padding: '12px',
+  background:
+    theme.palette.mode === 'dark'
+      ? theme.palette.background.default
+      : alpha(theme.palette.background.default, 0.8),
+  borderRadius: '12px',
+  border: `1px solid ${theme.palette.divider}`,
+  alignItems: 'center',
+  flexWrap: 'nowrap',
+}));
+
+const ColorSection = styled(Box)(({ theme }) => ({
+  display: 'none', // Hidden on desktop
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '40px',
+  marginBottom: '4px',
+  // Mobile styles - position in grid (move to top)
+  [theme.breakpoints.down('sm')]: {
+    display: 'flex',
+    gridRow: 1,
+    marginBottom: '2px',
+  },
+}));
+
+// Desktop color components (from previous commit)
 const PresetColors = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '4px',
   marginLeft: '8px',
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    gap: '8px',
+    width: '100%',
+    justifyContent: 'space-between',
+    marginLeft: 0,
+  },
 }));
 
 const PresetColor = styled('button')(({ theme }) => ({
@@ -130,6 +253,16 @@ const PresetColor = styled('button')(({ theme }) => ({
   borderRadius: '3px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    width: 'calc(16.666% - 7px)',
+    height: '40px',
+    borderRadius: '6px',
+    border: `1px solid ${theme.palette.divider}`,
+    '&:hover': {
+      transform: 'scale(1.05)',
+    },
+  },
   '&:hover': {
     transform: 'scale(1.1)',
   },
@@ -140,6 +273,11 @@ const ColorPickerWrapper = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   gap: '8px',
   marginLeft: 'auto',
+  // Mobile styles (from latest commit)
+  [theme.breakpoints.down('sm')]: {
+    justifyContent: 'center',
+    marginLeft: 0,
+  },
 }));
 
 const EmojiButton = styled('button')(({ theme }) => ({
@@ -167,9 +305,9 @@ const TextInput = styled('textarea')(({ theme }) => ({
   width: '100%',
   height: '280px',
   padding: '20px',
-  background: theme.palette.background.paper,
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
   color: theme.palette.text.primary,
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   borderRadius: '12px 12px 0 0',
   fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace',
   resize: 'vertical',
@@ -179,6 +317,8 @@ const TextInput = styled('textarea')(({ theme }) => ({
   boxSizing: 'border-box',
   transition: 'all 0.15s ease-in-out',
   boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
+  backdropFilter: 'blur(6px) saturate(140%)',
+  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '&:focus': {
     outline: 'none',
     borderColor: theme.palette.primary.main,
@@ -191,17 +331,16 @@ const StatusBar = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
-  border: `1px solid ${theme.palette.divider}`,
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
   borderBottomRightRadius: '12px',
   fontSize: '14px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
+  backdropFilter: 'blur(8px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
 }));
 
 const CharCounter = styled(Typography)(({ theme }) => ({
@@ -239,11 +378,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
-  border: `1px solid ${theme.palette.divider}`,
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   fontSize: '1rem',
   lineHeight: '1.6',
   boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -251,6 +387,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   zIndex: 0,
   transition: 'all 0.15s ease-in-out',
+  backdropFilter: 'blur(6px) saturate(140%)',
+  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '& span': {
     textShadow: 'none',
   },
@@ -262,8 +400,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   },
 }));
 
+// Utility Functions
 const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF'];
 
+// Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
   const [text, setText] = useState('');
@@ -273,8 +413,20 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
+  // Apply page background when component mounts and react to theme changes
+  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
+
+  // Set background image via CSS variable for better path resolution
+  useEffect(() => {
+    document.documentElement.style.setProperty('--page-bg-image', `url(${backgroundImage})`);
+
+    return () => {
+      document.documentElement.style.removeProperty('--page-bg-image');
+    };
+  }, [backgroundImage]);
+
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const pickrRef = useRef<any>(null);
+  const pickrRef = useRef<PickrInstance | null>(null);
   const pickrAnchorRef = useRef<HTMLDivElement>(null);
 
   const maxHistory = 50;
@@ -296,7 +448,7 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  // Initialize Pickr
+  // Initialize Pickr with theme switching
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
 
@@ -304,52 +456,61 @@ export const TextEditor: React.FC = () => {
       try {
         const Pickr = (await import('@simonwep/pickr')).default;
 
-        pickrRef.current = Pickr.create({
-          el: pickrAnchorRef.current!,
-          theme: 'classic',
-          default: '#ffffff',
-          swatches: [
-            '#FFFFFF',
-            '#CCCCCC',
-            '#999999',
-            '#666666',
-            '#333333',
-            '#000000',
-            '#FFFF00',
-            '#FFD700',
-            '#FF0000',
-            '#FF4500',
-            '#FF8000',
-            '#FFA500',
-            '#00FF00',
-            '#32CD32',
-            '#0080FF',
-            '#0000FF',
-            '#8A2BE2',
-            '#FF00FF',
-          ],
-          components: {
-            preview: true,
-            opacity: false,
-            hue: true,
-            interaction: {
-              hex: true,
-              rgba: false,
-              hsla: false,
-              hsva: false,
-              cmyk: false,
-              input: true,
-              clear: false,
-              save: true,
+        // Determine Pickr skin based on light/dark mode
+        const isDarkMode =
+          theme.palette.mode === 'dark' ||
+          document.documentElement.classList.contains('dark') ||
+          document.body.classList.contains('dark');
+        const pickrTheme = isDarkMode ? 'monolith' : 'classic';
+
+        if (pickrAnchorRef.current) {
+          pickrRef.current = (Pickr as unknown as PickrInstance).create({
+            el: pickrAnchorRef.current,
+            theme: pickrTheme,
+            default: '#ffffff',
+            swatches: [
+              '#FFFFFF',
+              '#CCCCCC',
+              '#999999',
+              '#666666',
+              '#333333',
+              '#000000',
+              '#FFFF00',
+              '#FFD700',
+              '#FF0000',
+              '#FF4500',
+              '#FF8000',
+              '#FFA500',
+              '#00FF00',
+              '#32CD32',
+              '#0080FF',
+              '#0000FF',
+              '#8A2BE2',
+              '#FF00FF',
+            ],
+            components: {
+              preview: true,
+              opacity: false,
+              hue: true,
+              interaction: {
+                hex: true,
+                rgba: false,
+                hsla: false,
+                hsva: false,
+                cmyk: false,
+                input: true,
+                clear: false,
+                save: true,
+              },
             },
-          },
-          position: 'bottom-middle',
-          closeOnScroll: true,
-          appClass: 'eso-pickr-app',
-        });
+            position: 'bottom-middle',
+            closeOnScroll: true,
+            appClass: 'eso-pickr-app',
+          });
+        }
 
         if (pickrRef.current) {
-          pickrRef.current.on('save', (color: any) => {
+          pickrRef.current.on('save', (color: PickrColor) => {
             if (color) {
               const hexColor = color.toHEXA().toString().substring(1, 7);
               applyColorToSelection(hexColor);
@@ -374,7 +535,7 @@ export const TextEditor: React.FC = () => {
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile]);
+  }, [isMobile, theme.palette.mode]);
 
   const positionPickr = useCallback((): void => {
     const appEl = document.querySelector('.pcr-app');
@@ -427,6 +588,7 @@ export const TextEditor: React.FC = () => {
     saveToHistory(exampleText);
   }, [saveToHistory]);
 
+  // Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const newText = e.target.value;
     setText(newText);
@@ -573,33 +735,8 @@ export const TextEditor: React.FC = () => {
   return (
     <TextEditorContainer>
       <Container maxWidth="lg">
-        <EditorTitle
-          sx={{
-            fontWeight: 700,
-            mb: 3,
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
-                : 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-          }}
-        >
-          📝 Text Editor
-        </EditorTitle>
-        <Typography
-          variant="body1"
-          sx={{
-            textAlign: 'center',
-            color: 'text.secondary',
-            mb: 3,
-          }}
-        >
-          ESO/WoW Text Preview Tool - Format your text with colors and see a live preview
-        </Typography>
-
         <EditorTool>
+          {/* Desktop Layout (from previous commit f1071c2) */}
           <Toolbar>
             <UndoRedoGroup>
               <ToolbarButton
@@ -662,6 +799,79 @@ export const TextEditor: React.FC = () => {
               />
             </ColorPickerWrapper>
           </Toolbar>
+
+          {/* Mobile Layout (from latest commit d94de66) */}
+          <FormatContainer>
+            {/* Row 1: Undo/Redo */}
+            <FormatRow>
+              <UndoRedoGroup>
+                <ToolbarButton
+                  onClick={undo}
+                  disabled={historyIndex <= 0}
+                  aria-label="Undo last change"
+                >
+                  Undo
+                </ToolbarButton>
+                <ToolbarButton
+                  onClick={redo}
+                  disabled={historyIndex >= history.length - 1}
+                  aria-label="Redo last change"
+                >
+                  Redo
+                </ToolbarButton>
+              </UndoRedoGroup>
+            </FormatRow>
+
+            {/* Row 2: Clear/Remove Format */}
+            <FormatRow>
+              <ToolbarButton onClick={clearFormatting} aria-label="Clear all formatting from text">
+                Clear All
+              </ToolbarButton>
+              <ToolbarButton
+                onClick={removeFormatFromSelection}
+                aria-label="Remove formatting from selection"
+              >
+                Remove Format
+              </ToolbarButton>
+            </FormatRow>
+          </FormatContainer>
+
+          {/* Color section with emoji above swatches */}
+          <ColorSection>
+            <ColorPickerWrapper>
+              <EmojiButton
+                id="eso-native-emoji-btn-mobile"
+                type="button"
+                onClick={handleEmojiClick}
+                aria-label="Choose custom color"
+              >
+                🎨
+              </EmojiButton>
+              <div
+                ref={pickrAnchorRef}
+                id="eso-pickr-anchor-mobile"
+                style={{
+                  position: 'absolute',
+                  left: '-9999px',
+                  width: '0',
+                  height: '0',
+                  overflow: 'hidden',
+                }}
+              />
+            </ColorPickerWrapper>
+
+            <PresetColors role="group" aria-label="Quick color choices">
+              {presetColors.map((color, index) => (
+                <PresetColor
+                  key={index}
+                  type="button"
+                  style={{ background: color }}
+                  onClick={() => applyQuickColor(color.substring(1))}
+                  aria-label={`Apply ${color} color`}
+                />
+              ))}
+            </PresetColors>
+          </ColorSection>
 
           <TextInput
             ref={textAreaRef}

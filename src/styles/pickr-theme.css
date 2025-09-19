@@ -1,0 +1,153 @@
+/*
+  pickr-theme.css
+
+  Purpose:
+  - Import Pickr's built-in light (classic) and dark (monolith) skins.
+  - Apply custom dark-mode overrides scoped under the .dark-mode class on <body>.
+  - Use CSS variables to align colors with your site design system.
+
+  Usage:
+  1. Place this file at src/styles/pickr-theme.css.
+  2. Ensure your bundler resolves ~@simonwep/pickr imports (e.g., Webpack alias).
+  3. Include this CSS in your React entry/component:
+     import '../styles/pickr-theme.css';
+  4. Toggle dark mode by adding/removing dark-mode on <body>.
+
+  Required CSS Variables (define in global or :root):
+    --site-bg         (background color for dark mode)   default #121212
+    --site-fg         (text color for dark mode)         default #e0e0e0
+    --site-accent     (accent color for pointers/buttons) default #6200ee
+    --site-border     (border color for inputs/swatches)  default #333333
+    --site-shadow     (shadow color for popover)         default rgba(0,0,0,0.8)
+*/
+
+/* Import both built-in themes */
+@import '@simonwep/pickr/dist/themes/classic.min.css';
+@import '@simonwep/pickr/dist/themes/monolith.min.css';
+
+/* Light mode background - not pure white */
+:not(.dark-mode) .pcr-app {
+  background: #f8f9fa !important;
+  color: #2d3748 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-selection {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-interaction {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-swatches {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-swatches .pcr-swatch {
+  background: transparent !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+/* Dark-mode overrides */
+.dark-mode .pcr-app {
+  background: #1a1a2e !important;
+  color: var(--site-fg, #e0e0e0) !important;
+  box-shadow: 0 0 12px var(--site-shadow, rgba(0, 0, 0, 0.8)) !important;
+}
+
+.dark-mode .pcr-widget .pcr-selection,
+.dark-mode .pcr-widget .pcr-xy-indicator {
+  border-color: var(--site-border, #333333) !important;
+}
+
+.dark-mode .pcr-widget .pcr-color {
+  background: var(--site-bg, #121212) !important;
+}
+
+.dark-mode .pcr-widget .pcr-hue,
+.dark-mode .pcr-widget .pcr-opacity {
+  background: rgba(18, 18, 18, 0.9) !important;
+}
+
+.dark-mode .pcr-widget .pcr-hue .pcr-pointer,
+.dark-mode .pcr-widget .pcr-opacity .pcr-pointer {
+  background: var(--site-accent, #6200ee) !important;
+  box-shadow: 0 0 2px #000 !important;
+}
+
+.dark-mode .pcr-widget input,
+.dark-mode .pcr-widget .pcr-btn {
+  background: var(--site-bg, #121212) !important;
+  color: var(--site-fg, #e0e0e0) !important;
+  border: 1px solid var(--site-border, #333333) !important;
+}
+
+.dark-mode .pcr-widget .pcr-btn:hover {
+  background: #1f1f1f !important;
+}
+
+.dark-mode .pcr-widget .pcr-swatches .pcr-swatch {
+  border: 1px solid var(--site-border, #333333) !important;
+}
+
+/* App-specific dark mode overrides for Material-UI integration */
+.dark-mode .pcr-app {
+  background: #1e1e1e !important;
+  color: #ffffff !important;
+  border: 1px solid #444444 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
+}
+
+.dark-mode .pcr-widget .pcr-selection {
+  background: #2d2d2d !important;
+  border: 1px solid #444444 !important;
+}
+
+.dark-mode .pcr-widget .pcr-interaction {
+  background: #2d2d2d !important;
+  border: 1px solid #444444 !important;
+}
+
+.dark-mode .pcr-widget input {
+  background: #3d3d3d !important;
+  color: #ffffff !important;
+  border: 1px solid #555555 !important;
+}
+
+.dark-mode .pcr-widget input:focus {
+  border-color: #7289da !important;
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(114, 137, 218, 0.2) !important;
+}
+
+.dark-mode .pcr-widget .pcr-btn {
+  background: #7289da !important;
+  color: #ffffff !important;
+  border: none !important;
+}
+
+.dark-mode .pcr-widget .pcr-btn:hover {
+  background: #5b74c4 !important;
+}
+
+.dark-mode .pcr-widget .pcr-swatches {
+  background: #2d2d2d !important;
+  border: 1px solid #444444 !important;
+}
+
+.dark-mode .pcr-widget .pcr-swatches .pcr-swatch {
+  background: transparent !important;
+  border: 1px solid #444444 !important;
+}

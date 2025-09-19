@@ -816,6 +816,7 @@ const Calculator: React.FC = React.memo(() => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
+  const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
@@ -1129,32 +1130,82 @@ const Calculator: React.FC = React.memo(() => {
         perDisplay = (item.per || 0) + (item.isPercent ? '%' : '');
       }
 
-      // Pre-calculate common styles with better mobile touch targets
+      // Enhanced mobile touch targets and accessibility
       const checkboxStyles = {
         '& .MuiSvgIcon-root': {
-          fontSize: liteMode ? '1.1rem' : isMobile ? '1.4rem' : '1.2rem',
+          fontSize: liteMode ? '1.2rem' : isExtraSmall ? '1.6rem' : isMobile ? '1.4rem' : '1.2rem',
         },
-        padding: liteMode ? '6px' : isMobile ? '10px' : '4px',
+        padding: liteMode ? '8px' : isExtraSmall ? '14px' : isMobile ? '12px' : '4px',
+        minWidth: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
+        minHeight: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         '&.Mui-checked': {
           color: '#38bdf8',
         },
+        // Enhanced touch feedback
+        '&:hover': {
+          backgroundColor: isMobile ? 'rgba(56, 189, 248, 0.08)' : 'transparent',
+          borderRadius: '8px',
+        },
+        '&:active': {
+          backgroundColor: isMobile ? 'rgba(56, 189, 248, 0.12)' : 'transparent',
+          transform: isMobile ? 'scale(0.95)' : 'none',
+        },
       };
 
-      // Improved text input styling for mobile
+      // Optimized text input styling for all mobile sizes
       const textFieldStyles = {
-        width: liteMode ? 40 : isMobile ? 56 : 60,
+        width: liteMode ? 44 : isExtraSmall ? 48 : isMobile ? 56 : 60,
         '& .MuiInputBase-root': {
-          fontSize: liteMode ? '0.7rem' : isMobile ? '0.8rem' : '0.8rem',
-          padding: liteMode ? '4px 8px' : isMobile ? '6px 10px' : '4px 8px',
-          height: liteMode ? '28px' : isMobile ? '36px' : '32px',
-          minHeight: liteMode ? '28px' : isMobile ? '36px' : '32px',
+          fontSize: liteMode
+            ? '0.75rem'
+            : isExtraSmall
+              ? '0.8rem'
+              : isMobile
+                ? '0.85rem'
+                : '0.8rem',
+          padding: liteMode
+            ? '6px 8px'
+            : isExtraSmall
+              ? '8px 10px'
+              : isMobile
+                ? '8px 12px'
+                : '4px 8px',
+          height: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
+          minHeight: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
           boxSizing: 'border-box',
           marginLeft: liteMode ? 0 : '-8px !important',
+          borderRadius: '8px',
+          // Better mobile field styling
+          border: isMobile ? '1px solid rgba(56, 189, 248, 0.3)' : '1px solid transparent',
+          backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.6)' : 'transparent',
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            borderColor: isMobile ? 'rgba(56, 189, 248, 0.5)' : 'transparent',
+            backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.8)' : 'transparent',
+          },
+          '&.Mui-focused': {
+            borderColor: '#38bdf8',
+            backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.9)' : 'transparent',
+            boxShadow: isMobile ? '0 0 0 2px rgba(56, 189, 248, 0.2)' : 'none',
+          },
         },
         '& .MuiInputBase-input': {
-          padding: liteMode ? '4px 6px' : isMobile ? '4px 8px' : '2px 4px',
+          padding: liteMode
+            ? '6px 8px'
+            : isExtraSmall
+              ? '8px 12px'
+              : isMobile
+                ? '8px 12px'
+                : '2px 4px',
           textAlign: 'center',
-          fontSize: liteMode ? '0.7rem' : isMobile ? '0.8rem' : '0.75rem',
+          fontSize: liteMode
+            ? '0.75rem'
+            : isExtraSmall
+              ? '0.85rem'
+              : isMobile
+                ? '0.9rem'
+                : '0.75rem',
+          fontWeight: 500,
           // Hide spin buttons for a cleaner look
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
             '-webkit-appearance': 'none',
@@ -1165,7 +1216,8 @@ const Calculator: React.FC = React.memo(() => {
           },
         },
         '& .MuiInputLabel-root': {
-          fontSize: isMobile ? '0.95rem' : '0.875rem',
+          fontSize: isExtraSmall ? '1rem' : isMobile ? '0.95rem' : '0.875rem',
+          fontWeight: 500,
         },
         '& .MuiOutlinedInput-notchedOutline': {
           borderWidth: liteMode ? '1px' : '1px',
@@ -1495,7 +1547,21 @@ const Calculator: React.FC = React.memo(() => {
       <CalculatorContainer liteMode={liteMode}>
         <Container
           maxWidth={liteMode ? false : 'lg'}
-          sx={{ py: 2, px: liteMode ? 1 : isMobile ? 0 : 2, overflowX: 'hidden' }}
+          sx={{
+            py: liteMode ? 1 : isMobile ? 1.5 : 2,
+            px: liteMode ? 0.5 : isExtraSmall ? 0.5 : isMobile ? 1 : 2,
+            overflowX: 'hidden',
+            // Enhanced mobile padding and spacing
+            '& .MuiTabs-root': {
+              minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
+            },
+            '& .MuiTab-root': {
+              minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
+              fontSize: isExtraSmall ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
+              padding: isExtraSmall ? '6px 8px' : isMobile ? '8px 12px' : '12px 16px',
+              minWidth: isExtraSmall ? 'auto' : isMobile ? '80px' : 'auto',
+            },
+          }}
         >
           {/* Header */}
           <Box sx={{ textAlign: 'center', mb: liteMode ? 2 : 6 }}>
@@ -1574,10 +1640,10 @@ const Calculator: React.FC = React.memo(() => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                mb: liteMode ? 2 : 4,
+                mb: liteMode ? 2 : isMobile ? 3 : 4,
                 flexWrap: 'wrap',
-                gap: liteMode ? 1 : 3,
-                p: liteMode ? 2.5 : isMobile ? 1 : 4,
+                gap: liteMode ? 1 : isMobile ? 2 : 3,
+                p: liteMode ? 2 : isExtraSmall ? 1.5 : isMobile ? 2 : 4,
                 borderBottom: liteMode ? 'none' : '1px solid',
                 borderColor: liteMode
                   ? 'transparent'
@@ -1595,6 +1661,12 @@ const Calculator: React.FC = React.memo(() => {
                 backdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 WebkitBackdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 position: 'relative',
+                // Enhanced mobile responsiveness
+                '@media (max-width: 380px)': {
+                  flexDirection: 'column',
+                  alignItems: 'stretch',
+                  gap: 1.5,
+                },
                 '&::before': liteMode
                   ? {
                       content: '""',
@@ -1675,7 +1747,7 @@ const Calculator: React.FC = React.memo(() => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Typography
                         sx={{
-                          fontSize: '0.95rem',
+                          fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.95rem',
                           fontWeight: 600,
                           color:
                             theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
@@ -1696,7 +1768,9 @@ const Calculator: React.FC = React.memo(() => {
                 }}
               >
                 <ButtonGroup
-                  size={liteMode ? 'small' : 'medium'}
+                  size={
+                    isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
+                  }
                   variant="outlined"
                   sx={{
                     '& .MuiButton-root': {
@@ -1709,8 +1783,13 @@ const Calculator: React.FC = React.memo(() => {
                           : '1px solid rgb(99 102 241 / 25%)',
                       backdropFilter: 'blur(10px)',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                      // Enhanced mobile touch targets
+                      minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
+                      minWidth: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
+                      fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
+                      px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
                       '&:hover': {
-                        transform: liteMode ? 'translateY(-1px)' : 'none',
+                        transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
                         borderColor: liteMode
                           ? gameMode === 'pve'
                             ? 'rgb(34 197 94 / 80%)'
@@ -1719,16 +1798,39 @@ const Calculator: React.FC = React.memo(() => {
                               : 'rgb(152 131 227 / 80%)'
                           : 'rgb(110 170 240 / 80%)',
                       },
+                      '&:active': {
+                        transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
+                      },
                     },
                   }}
                 >
                   <Button
                     variant={gameMode === 'pve' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('pve')}
-                    startIcon={<Typography fontSize={liteMode ? '0.8rem' : '1rem'}>🗡️</Typography>}
+                    startIcon={
+                      <Typography
+                        fontSize={
+                          isExtraSmall
+                            ? '0.75rem'
+                            : liteMode
+                              ? '0.8rem'
+                              : isMobile
+                                ? '0.9rem'
+                                : '1rem'
+                        }
+                      >
+                        🗡️
+                      </Typography>
+                    }
                     sx={{
-                      fontSize: liteMode ? '0.8rem' : '0.9rem',
-                      px: liteMode ? 1 : 1.5,
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
+                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pve'
@@ -1745,10 +1847,30 @@ const Calculator: React.FC = React.memo(() => {
                   <Button
                     variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('pvp')}
-                    startIcon={<Typography fontSize={liteMode ? '0.8rem' : '1rem'}>🛡️</Typography>}
+                    startIcon={
+                      <Typography
+                        fontSize={
+                          isExtraSmall
+                            ? '0.75rem'
+                            : liteMode
+                              ? '0.8rem'
+                              : isMobile
+                                ? '0.9rem'
+                                : '1rem'
+                        }
+                      >
+                        🛡️
+                      </Typography>
+                    }
                     sx={{
-                      fontSize: liteMode ? '0.8rem' : '0.9rem',
-                      px: liteMode ? 1 : 1.5,
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
+                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pvp'
@@ -1766,8 +1888,14 @@ const Calculator: React.FC = React.memo(() => {
                     variant={gameMode === 'both' ? 'contained' : 'outlined'}
                     onClick={() => setGameMode('both')}
                     sx={{
-                      fontSize: liteMode ? '0.8rem' : '0.9rem',
-                      px: liteMode ? 1 : 1.5,
+                      fontSize: isExtraSmall
+                        ? '0.75rem'
+                        : liteMode
+                          ? '0.8rem'
+                          : isMobile
+                            ? '0.85rem'
+                            : '0.9rem',
+                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'both'
@@ -1816,10 +1944,10 @@ const Calculator: React.FC = React.memo(() => {
                   onChange={(e, newValue) => setSelectedTab(newValue)}
                   sx={{
                     '& .MuiTab-root': {
-                      fontSize: '1rem',
+                      fontSize: isTablet ? '0.9rem' : '1rem',
                       fontWeight: 600,
-                      minHeight: 48,
-                      padding: '12px 24px',
+                      minHeight: isTablet ? 44 : 48,
+                      padding: isTablet ? '10px 16px' : '12px 24px',
                       textTransform: 'none',
                       borderRadius: '8px 8px 0 0',
                       color:
@@ -1828,6 +1956,8 @@ const Calculator: React.FC = React.memo(() => {
                       border: '1px solid transparent',
                       borderBottom: 'none',
                       marginRight: 1,
+                      // Enhanced tablet and mobile touch targets
+                      minWidth: isTablet ? '100px' : 'auto',
                       '&:hover': {
                         color:
                           theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
