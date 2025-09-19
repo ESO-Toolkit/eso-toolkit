@@ -1,6 +1,6 @@
 import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '@simonwep/pickr/dist/themes/classic.min.css';
 
 const TextEditorContainer = styled(Box)(({ theme }) => ({
@@ -279,24 +279,9 @@ export const TextEditor: React.FC = () => {
 
   const maxHistory = 50;
 
-  // Initialize with example text
-  useEffect(() => {
-    const exampleText = `|cFFFF00What We Offer:|r
-
-|c00FF00Progressive Raiding & Teaching:|r Whether you're a seasoned veteran or new to trials, our experienced raiders are eager to teach, share strategies, and grow together. We run regular end-game content like veteran trials, arenas, and dungeons—focusing on fun, improvement, and epic loot!
-
-|c00FF00Fully Equipped Guild Hall:|r Dive into @PatrickFoo's Hall of the Lunar Champion, our ultimate hub featuring:
-- All crafting stations for seamless gear upgrades.
-- Mundus stones for build optimization.
-- Target dummies to hone your DPS, healing, and tanking skills.`;
-
-    setText(exampleText);
-    saveToHistory(exampleText);
-  }, []);
-
   // Detect mobile device
   useEffect(() => {
-    const checkMobile = () => {
+    const checkMobile = (): void => {
       const userAgent = navigator.userAgent.toLowerCase();
       const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
         userAgent,
@@ -315,7 +300,7 @@ export const TextEditor: React.FC = () => {
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
 
-    const initPickr = async () => {
+    const initPickr = async (): Promise<void> => {
       try {
         const Pickr = (await import('@simonwep/pickr')).default;
 
@@ -377,7 +362,7 @@ export const TextEditor: React.FC = () => {
           });
         }
       } catch (error) {
-        console.warn('Failed to initialize Pickr:', error);
+        // Failed to initialize Pickr - color picker will not be available
       }
     };
 
@@ -388,9 +373,10 @@ export const TextEditor: React.FC = () => {
         pickrRef.current.destroy();
       }
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isMobile]);
 
-  const positionPickr = () => {
+  const positionPickr = useCallback((): void => {
     const appEl = document.querySelector('.pcr-app');
     const emoji = document.getElementById('eso-native-emoji-btn');
     if (!emoji || !appEl) return;
@@ -406,31 +392,49 @@ export const TextEditor: React.FC = () => {
       z-index: 99999 !important;
     `,
     );
-  };
+  }, []);
 
-  const saveToHistory = (newText: string) => {
-    setHistory((prev) => {
-      const newHistory = prev.slice(0, historyIndex + 1);
-      if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-        const updatedHistory = [...newHistory, newText];
-        if (updatedHistory.length > maxHistory) {
-          updatedHistory.shift();
+  const saveToHistory = useCallback(
+    (newText: string): void => {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
+          const updatedHistory = [...newHistory, newText];
+          if (updatedHistory.length > maxHistory) {
+            updatedHistory.shift();
+          }
+          setHistoryIndex(updatedHistory.length - 1);
+          return updatedHistory;
         }
-        setHistoryIndex(updatedHistory.length - 1);
-        return updatedHistory;
-      }
-      return prev;
-    });
-  };
+        return prev;
+      });
+    },
+    [historyIndex, maxHistory],
+  );
 
-  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+  // Initialize with example text
+  useEffect(() => {
+    const exampleText = `|cFFFF00What We Offer:|r
+
+|c00FF00Progressive Raiding & Teaching:|r Whether you're a seasoned veteran or new to trials, our experienced raiders are eager to teach, share strategies, and grow together. We run regular end-game content like veteran trials, arenas, and dungeons—focusing on fun, improvement, and epic loot!
+
+|c00FF00Fully Equipped Guild Hall:|r Dive into @PatrickFoo's Hall of the Lunar Champion, our ultimate hub featuring:
+- All crafting stations for seamless gear upgrades.
+- Mundus stones for build optimization.
+- Target dummies to hone your DPS, healing, and tanking skills.`;
+
+    setText(exampleText);
+    saveToHistory(exampleText);
+  }, [saveToHistory]);
+
+  const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const newText = e.target.value;
     setText(newText);
     setCharCount(newText.length);
     saveToHistory(newText);
   };
 
-  const undo = () => {
+  const undo = (): void => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
@@ -438,7 +442,7 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  const redo = () => {
+  const redo = (): void => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
@@ -446,7 +450,7 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  const getSelectedText = () => {
+  const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
     if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
     const start = textAreaRef.current.selectionStart;
     const end = textAreaRef.current.selectionEnd;
@@ -455,39 +459,42 @@ export const TextEditor: React.FC = () => {
       start,
       end,
     };
-  };
+  }, [text]);
 
-  const applyColorToSelection = (colorHex: string) => {
-    const selection = getSelectedText();
-    if (selection.text.length === 0) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    const beforeText = text.substring(0, selection.start);
-    const afterText = text.substring(selection.end);
-    const newColoredText = `|c${colorHex}${selection.text}|r`;
-    const newText = beforeText + newColoredText + afterText;
-
-    setText(newText);
-    saveToHistory(newText);
-
-    // Keep selection
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        const newStart = selection.start;
-        const newEnd = newStart + newColoredText.length;
-        textAreaRef.current.setSelectionRange(newStart, newEnd);
-        textAreaRef.current.focus();
+  const applyColorToSelection = useCallback(
+    (colorHex: string): void => {
+      const selection = getSelectedText();
+      if (selection.text.length === 0) {
+        alert('Please select some text first!');
+        return;
       }
-    }, 0);
-  };
 
-  const applyQuickColor = (colorHex: string) => {
+      const beforeText = text.substring(0, selection.start);
+      const afterText = text.substring(selection.end);
+      const newColoredText = `|c${colorHex}${selection.text}|r`;
+      const newText = beforeText + newColoredText + afterText;
+
+      setText(newText);
+      saveToHistory(newText);
+
+      // Keep selection
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          const newStart = selection.start;
+          const newEnd = newStart + newColoredText.length;
+          textAreaRef.current.setSelectionRange(newStart, newEnd);
+          textAreaRef.current.focus();
+        }
+      }, 0);
+    },
+    [text, getSelectedText, setText, saveToHistory],
+  );
+
+  const applyQuickColor = (colorHex: string): void => {
     applyColorToSelection(colorHex);
   };
 
-  const removeFormatFromSelection = () => {
+  const removeFormatFromSelection = (): void => {
     const selection = getSelectedText();
     if (selection.text.length === 0) {
       alert('Please select some text first!');
@@ -503,21 +510,22 @@ export const TextEditor: React.FC = () => {
     saveToHistory(newText);
   };
 
-  const clearFormatting = () => {
+  const clearFormatting = (): void => {
     const cleanText = text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
     setText(cleanText);
     saveToHistory(cleanText);
   };
 
-  const copyToClipboard = async () => {
+  const copyToClipboard = async (): Promise<void> => {
     try {
       await navigator.clipboard.writeText(text);
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
     } catch (err) {
-      // Fallback
+      // Fallback for older browsers
       if (textAreaRef.current) {
         textAreaRef.current.select();
+        // eslint-disable-next-line deprecation/deprecation
         document.execCommand('copy');
         setCopyFeedback('✓ Copied!');
         setTimeout(() => setCopyFeedback(''), 1500);
@@ -525,7 +533,7 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  const handleEmojiClick = () => {
+  const handleEmojiClick = (): void => {
     if (isMobile) {
       // Use native color picker on mobile
       const input = document.createElement('input');
@@ -541,7 +549,7 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  const renderPreview = () => {
+  const renderPreview = (): JSX.Element => {
     if (!text.trim()) {
       return (
         <span style={{ color: '#888', fontStyle: 'italic' }}>
