@@ -22,8 +22,8 @@
 */
 
 /* Import both built-in themes */
-@import "/node_modules/@simonwep/pickr/dist/themes/classic.min.css";
-@import "/node_modules/@simonwep/pickr/dist/themes/monolith.min.css";
+@import '@simonwep/pickr/dist/themes/classic.min.css';
+@import '@simonwep/pickr/dist/themes/monolith.min.css';
 
 /* Light mode background - not pure white */
 :not(.dark-mode) .pcr-app {
@@ -57,7 +57,7 @@
 .dark-mode .pcr-app {
   background: #1a1a2e !important;
   color: var(--site-fg, #e0e0e0) !important;
-  box-shadow: 0 0 12px var(--site-shadow, rgba(0,0,0,0.8)) !important;
+  box-shadow: 0 0 12px var(--site-shadow, rgba(0, 0, 0, 0.8)) !important;
 }
 
 .dark-mode .pcr-widget .pcr-selection,
@@ -71,7 +71,7 @@
 
 .dark-mode .pcr-widget .pcr-hue,
 .dark-mode .pcr-widget .pcr-opacity {
-  background: rgba(18,18,18,0.9) !important;
+  background: rgba(18, 18, 18, 0.9) !important;
 }
 
 .dark-mode .pcr-widget .pcr-hue .pcr-pointer,
@@ -101,7 +101,13 @@
   color: #ffffff !important;
   border: 1px solid #444444 !important;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
-  font-family: 'Inter', system-ui, -apple-system, "Segoe UI", Roboto, sans-serif !important;
+  font-family:
+    'Inter',
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    Roboto,
+    sans-serif !important;
 }
 
 .dark-mode .pcr-widget .pcr-selection {

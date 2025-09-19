@@ -1,12 +1,13 @@
 import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
+
 import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
 import '../styles/text-editor-page-background.css';
-import { usePageBackground } from '../hooks/usePageBackground';
 import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
+import { usePageBackground } from '../hooks/usePageBackground';
 
 // Types
 declare global {
@@ -58,27 +59,59 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
   backgroundColor: 'transparent',
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: 'var(--page-bg-image)',
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundAttachment: 'fixed',
+    zIndex: -2,
+  },
+  '&::after': {
+    content: '""',
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor:
+      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+    zIndex: -1,
+  },
 }));
 
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(0, 0, 0, 0.85)'
-    : 'rgba(255, 255, 255, 0.9)',
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.7)',
   padding: '24px',
   borderRadius: '14px',
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
   color: theme.palette.text.primary,
-  boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 8px 30px rgba(0, 0, 0, 0.6)'
+      : '0 8px 30px rgba(0, 0, 0, 0.15)',
   transition: 'all 0.3s ease',
-  backdropFilter: 'blur(2px)',
-  // Mobile styles - use grid for reordering (from latest commit)
+  backdropFilter: 'blur(12px) saturate(180%)',
+  WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+  position: 'relative',
+  zIndex: 1,
+  // Mobile styles
   [theme.breakpoints.down('sm')]: {
     display: 'grid',
     gridTemplateRows: 'auto auto',
     gap: '16px',
+    margin: '1rem',
+    backdropFilter: 'blur(8px) saturate(160%)',
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.8)',
   },
 }));
 
@@ -88,16 +121,16 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(0, 0, 0, 0.9)'
-    : 'rgba(255, 255, 255, 0.95)',
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
   borderRadius: '12px',
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
-  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+  boxShadow:
+    theme.palette.mode === 'dark' ? '0 2px 8px rgba(0, 0, 0, 0.4)' : '0 2px 8px rgba(0, 0, 0, 0.1)',
   overflowX: 'auto',
-  backdropFilter: 'blur(4px)',
+  backdropFilter: 'blur(8px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     display: 'none', // Hide on mobile, use grid containers instead
@@ -272,11 +305,9 @@ const TextInput = styled('textarea')(({ theme }) => ({
   width: '100%',
   height: '280px',
   padding: '20px',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(0, 0, 0, 0.85)'
-    : 'rgba(255, 255, 255, 0.95)',
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
   color: theme.palette.text.primary,
-  border: `1px solid ${theme.palette.divider}`,
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   borderRadius: '12px 12px 0 0',
   fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace',
   resize: 'vertical',
@@ -286,7 +317,8 @@ const TextInput = styled('textarea')(({ theme }) => ({
   boxSizing: 'border-box',
   transition: 'all 0.15s ease-in-out',
   boxShadow: 'inset 0 1px 3px rgba(0, 0, 0, 0.1)',
-  backdropFilter: 'blur(2px)',
+  backdropFilter: 'blur(6px) saturate(140%)',
+  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '&:focus': {
     outline: 'none',
     borderColor: theme.palette.primary.main,
@@ -299,17 +331,16 @@ const StatusBar = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(0, 0, 0, 0.85)'
-    : 'rgba(255, 255, 255, 0.95)',
-  border: `1px solid ${theme.palette.divider}`,
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
   borderBottomRightRadius: '12px',
   fontSize: '14px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
-  backdropFilter: 'blur(2px)',
+  backdropFilter: 'blur(8px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
 }));
 
 const CharCounter = styled(Typography)(({ theme }) => ({
@@ -347,10 +378,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background: theme.palette.mode === 'dark'
-    ? 'rgba(0, 0, 0, 0.8)'
-    : 'rgba(255, 255, 255, 0.9)',
-  border: `1px solid ${theme.palette.divider}`,
+  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
+  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
   fontSize: '1rem',
   lineHeight: '1.6',
   boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.1)',
@@ -358,7 +387,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   zIndex: 0,
   transition: 'all 0.15s ease-in-out',
-  backdropFilter: 'blur(2px)',
+  backdropFilter: 'blur(6px) saturate(140%)',
+  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '& span': {
     textShadow: 'none',
   },
@@ -390,15 +420,6 @@ export const TextEditor: React.FC = () => {
   useEffect(() => {
     document.documentElement.style.setProperty('--page-bg-image', `url(${backgroundImage})`);
 
-    // Debug: log to verify the hook is working
-    console.log('TextEditor mounted, setting background image:', backgroundImage);
-    console.log('Body classes after mount:', document.body.className);
-    console.log('CSS variable set:', document.documentElement.style.getPropertyValue('--page-bg-image'));
-
-    // Test if CSS is loaded by checking if we can find our styles
-    const styles = document.styleSheets;
-    console.log('Total stylesheets loaded:', styles.length);
-
     return () => {
       document.documentElement.style.removeProperty('--page-bg-image');
     };
@@ -427,7 +448,6 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  
   // Initialize Pickr with theme switching
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
@@ -437,55 +457,56 @@ export const TextEditor: React.FC = () => {
         const Pickr = (await import('@simonwep/pickr')).default;
 
         // Determine Pickr skin based on light/dark mode
-        const isDarkMode = theme.palette.mode === 'dark' ||
-                          document.documentElement.classList.contains('dark') ||
-                          document.body.classList.contains('dark');
+        const isDarkMode =
+          theme.palette.mode === 'dark' ||
+          document.documentElement.classList.contains('dark') ||
+          document.body.classList.contains('dark');
         const pickrTheme = isDarkMode ? 'monolith' : 'classic';
 
         if (pickrAnchorRef.current) {
-          pickrRef.current = (Pickr as PickrInstance).create({
+          pickrRef.current = (Pickr as unknown as PickrInstance).create({
             el: pickrAnchorRef.current,
             theme: pickrTheme,
-          default: '#ffffff',
-          swatches: [
-            '#FFFFFF',
-            '#CCCCCC',
-            '#999999',
-            '#666666',
-            '#333333',
-            '#000000',
-            '#FFFF00',
-            '#FFD700',
-            '#FF0000',
-            '#FF4500',
-            '#FF8000',
-            '#FFA500',
-            '#00FF00',
-            '#32CD32',
-            '#0080FF',
-            '#0000FF',
-            '#8A2BE2',
-            '#FF00FF',
-          ],
-          components: {
-            preview: true,
-            opacity: false,
-            hue: true,
-            interaction: {
-              hex: true,
-              rgba: false,
-              hsla: false,
-              hsva: false,
-              cmyk: false,
-              input: true,
-              clear: false,
-              save: true,
+            default: '#ffffff',
+            swatches: [
+              '#FFFFFF',
+              '#CCCCCC',
+              '#999999',
+              '#666666',
+              '#333333',
+              '#000000',
+              '#FFFF00',
+              '#FFD700',
+              '#FF0000',
+              '#FF4500',
+              '#FF8000',
+              '#FFA500',
+              '#00FF00',
+              '#32CD32',
+              '#0080FF',
+              '#0000FF',
+              '#8A2BE2',
+              '#FF00FF',
+            ],
+            components: {
+              preview: true,
+              opacity: false,
+              hue: true,
+              interaction: {
+                hex: true,
+                rgba: false,
+                hsla: false,
+                hsva: false,
+                cmyk: false,
+                input: true,
+                clear: false,
+                save: true,
+              },
             },
-          },
-          position: 'bottom-middle',
-          closeOnScroll: true,
-          appClass: 'eso-pickr-app',
-        });
+            position: 'bottom-middle',
+            closeOnScroll: true,
+            appClass: 'eso-pickr-app',
+          });
         }
 
         if (pickrRef.current) {

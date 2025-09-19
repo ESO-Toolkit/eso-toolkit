@@ -1,11 +1,46 @@
 /*
-  text-editor-page-background.css - FIXED VERSION
+  text-editor-page-background.css - ENHANCED TRANSPARENCY VERSION
 
   Purpose:
   - Apply background image to entire page body on text-editor page
   - Remove all solid backgrounds that hide the image
   - Ensure background image is visible in both light and dark modes
+  - Implement glass morphism effects with proper transparency
 */
+
+/* Enhanced CSS Variables for Transparency */
+:root {
+  /* Light mode transparency variables */
+  --panel-bg-light: rgba(255, 255, 255, 0.92);
+  --panel-secondary-light: rgba(255, 255, 255, 0.96);
+  --backdrop-overlay-light: rgba(255, 255, 255, 0.05);
+
+  /* Dark mode transparency variables */
+  --panel-bg-dark: rgba(0, 0, 0, 0.4);
+  --panel-secondary-dark: rgba(0, 0, 0, 0.6);
+  --backdrop-overlay-dark: rgba(0, 0, 0, 0.3);
+
+  /* Backdrop filter settings */
+  --backdrop-blur-strong: blur(12px) saturate(180%);
+  --backdrop-blur-medium: blur(8px) saturate(160%);
+  --backdrop-blur-light: blur(4px) saturate(140%);
+}
+
+/* Light mode */
+body.text-editor-page:not(.dark-mode) {
+  --panel: var(--panel-bg-light);
+  --panel2: var(--panel-secondary-light);
+  --backdrop-overlay: var(--backdrop-overlay-light);
+  --backdrop-filter: var(--backdrop-blur-strong);
+}
+
+/* Dark mode */
+body.text-editor-page.dark-mode {
+  --panel: var(--panel-bg-dark);
+  --panel2: var(--panel-secondary-dark);
+  --backdrop-overlay: var(--backdrop-overlay-dark);
+  --backdrop-filter: var(--backdrop-blur-strong);
+}
 
 /* Remove default body background when on text-editor page */
 body.text-editor-page {
@@ -34,8 +69,7 @@ body.text-editor-page::before {
   pointer-events: none;
 }
 
-/* Remove the overlay initially to test background visibility */
-/*
+/* Enhanced overlay for better contrast with transparency */
 body.text-editor-page::after {
   content: '';
   position: fixed;
@@ -43,15 +77,30 @@ body.text-editor-page::after {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(255, 255, 255, 0.3);
+  background: var(--backdrop-overlay);
   z-index: -1;
   pointer-events: none;
 }
 
-body.text-editor-page.dark-mode::after {
-  background: rgba(0, 0, 0, 0.4);
+/* Enhanced light mode overlay */
+body.text-editor-page:not(.dark-mode)::after {
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.02) 0%,
+    rgba(255, 255, 255, 0.05) 50%,
+    rgba(255, 255, 255, 0.02) 100%
+  );
 }
-*/
+
+/* Enhanced dark mode overlay */
+body.text-editor-page.dark-mode::after {
+  background: linear-gradient(
+    135deg,
+    rgba(0, 0, 0, 0.2) 0%,
+    rgba(0, 0, 0, 0.4) 50%,
+    rgba(0, 0, 0, 0.2) 100%
+  );
+}
 
 /* Remove solid backgrounds from common elements */
 body.text-editor-page #root {
@@ -77,10 +126,10 @@ body.text-editor-page .container {
 /* Make content containers semi-transparent instead of solid */
 body.text-editor-page .text-editor,
 body.text-editor-page .editor-container {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(1px);
   border-radius: var(--site-radius, 8px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 body.text-editor-page.dark-mode .text-editor,
@@ -92,10 +141,10 @@ body.text-editor-page.dark-mode .editor-container {
 
 /* Calculator container should also be semi-transparent */
 body.text-editor-page .calculator-container {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(1px);
   border-radius: var(--site-radius, 8px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 body.text-editor-page.dark-mode .calculator-container {
@@ -109,78 +158,163 @@ body.text-editor-page .TextEditorContainer {
   background: transparent !important;
 }
 
-/* OBVIOUS TEST STYLES - Should see these if CSS is working */
+/* Enhanced glass effect for main components using CSS variables */
 body.text-editor-page .EditorTool {
-  border: 5px solid red !important;
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
+  background: var(--panel) !important;
+  backdrop-filter: var(--backdrop-filter) !important;
+  -webkit-backdrop-filter: var(--backdrop-filter) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
 }
 
-body.text-editor-page .TextInput {
-  border: 5px solid blue !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(2px);
+/* Add glass edge effect */
+body.text-editor-page .EditorTool::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  z-index: 1;
 }
 
+/* Enhanced toolbar transparency */
 body.text-editor-page .Toolbar {
-  border: 5px solid green !important;
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(4px);
+  background: var(--panel2) !important;
+  backdrop-filter: var(--backdrop-blur-medium) !important;
+  -webkit-backdrop-filter: var(--backdrop-blur-medium) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 12px;
 }
 
-body.text-editor-page.dark-mode .EditorTool {
-  background: rgba(0, 0, 0, 0.85) !important;
-}
-
-/* Toolbar styling */
-body.text-editor-page .Toolbar {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(4px);
-}
-
-body.text-editor-page.dark-mode .Toolbar {
-  background: rgba(0, 0, 0, 0.9) !important;
-}
-
-/* Text input area */
+/* Text input with transparency */
 body.text-editor-page .TextInput {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(2px);
+  background: var(--panel) !important;
+  backdrop-filter: var(--backdrop-blur-light) !important;
+  -webkit-backdrop-filter: var(--backdrop-blur-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 8px;
 }
 
-body.text-editor-page.dark-mode .TextInput {
-  background: rgba(0, 0, 0, 0.85) !important;
-  color: #e0e0e0 !important;
-}
-
-/* Status bar */
-body.text-editor-page .StatusBar {
-  background: rgba(255, 255, 255, 0.95) !important;
-  backdrop-filter: blur(2px);
-}
-
-body.text-editor-page.dark-mode .StatusBar {
-  background: rgba(0, 0, 0, 0.85) !important;
-}
-
-/* Preview area */
+/* Preview area with transparency */
 body.text-editor-page .PreviewArea {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
+  background: var(--panel2) !important;
+  backdrop-filter: var(--backdrop-blur-light) !important;
+  -webkit-backdrop-filter: var(--backdrop-blur-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-radius: 8px;
 }
 
-body.text-editor-page.dark-mode .PreviewArea {
-  background: rgba(0, 0, 0, 0.8) !important;
-  color: #e0e0e0 !important;
+/* Status bar transparency */
+body.text-editor-page .StatusBar {
+  background: var(--panel2) !important;
+  backdrop-filter: var(--backdrop-blur-medium) !important;
+  -webkit-backdrop-filter: var(--backdrop-blur-medium) !important;
+  border: 1px solid rgba(255, 255, 255, 0.15) !important;
+  border-top: none;
+  border-radius: 8px 8px 0 0;
 }
 
-/* Button styling */
+/* Button styling with transparency */
 body.text-editor-page .ToolbarButton {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
+  background: var(--panel) !important;
+  backdrop-filter: var(--backdrop-blur-light) !important;
+  -webkit-backdrop-filter: var(--backdrop-blur-light) !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  border-radius: 6px;
 }
 
-body.text-editor-page.dark-mode .ToolbarButton {
-  background: rgba(0, 0, 0, 0.8) !important;
-  color: #e0e0e0 !important;
+/* Mobile transparency optimizations */
+@media (max-width: 768px) {
+  body.text-editor-page {
+    background-attachment: scroll; /* Better performance on mobile */
+  }
+
+  /* Reduce blur intensity on mobile for performance */
+  body.text-editor-page .EditorTool {
+    backdrop-filter: var(--backdrop-blur-medium) !important;
+    -webkit-backdrop-filter: var(--backdrop-blur-medium) !important;
+    border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  }
+
+  body.text-editor-page .Toolbar {
+    backdrop-filter: var(--backdrop-blur-light) !important;
+    -webkit-backdrop-filter: var(--backdrop-blur-light) !important;
+  }
+
+  body.text-editor-page .TextInput,
+  body.text-editor-page .PreviewArea,
+  body.text-editor-page .StatusBar,
+  body.text-editor-page .ToolbarButton {
+    backdrop-filter: blur(2px) saturate(120%) !important;
+    -webkit-backdrop-filter: blur(2px) saturate(120%) !important;
+  }
+
+  /* Adjust transparency for better mobile readability */
+  body.text-editor-page:not(.dark-mode) .EditorTool {
+    background: rgba(255, 255, 255, 0.94) !important;
+  }
+
+  body.text-editor-page.dark-mode .EditorTool {
+    background: rgba(0, 0, 0, 0.5) !important;
+  }
+
+  /* Further reduce blur intensity on very small screens */
+  @media (max-width: 480px) {
+    body.text-editor-page .EditorTool {
+      backdrop-filter: blur(4px) saturate(140%) !important;
+      -webkit-backdrop-filter: blur(4px) saturate(140%) !important;
+    }
+
+    body.text-editor-page .Toolbar,
+    body.text-editor-page .TextInput,
+    body.text-editor-page .PreviewArea,
+    body.text-editor-page .StatusBar,
+    body.text-editor-page .ToolbarButton {
+      backdrop-filter: none !important;
+      -webkit-backdrop-filter: none !important;
+    }
+  }
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not (backdrop-filter: blur()) {
+  body.text-editor-page .EditorTool {
+    background: var(--bg) !important;
+  }
+
+  body.text-editor-page .Toolbar {
+    background: var(--panel-2) !important;
+  }
+
+  body.text-editor-page .TextInput,
+  body.text-editor-page .PreviewArea,
+  body.text-editor-page .StatusBar,
+  body.text-editor-page .ToolbarButton {
+    background: var(--panel) !important;
+  }
+
+  /* Solid fallbacks for better compatibility */
+  body.text-editor-page:not(.dark-mode) .EditorTool {
+    background: rgba(255, 255, 255, 0.97) !important;
+    border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  }
+
+  body.text-editor-page.dark-mode .EditorTool {
+    background: rgba(0, 0, 0, 0.9) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  }
+
+  body.text-editor-page:not(.dark-mode) .Toolbar {
+    background: rgba(255, 255, 255, 0.99) !important;
+    border: 1px solid rgba(0, 0, 0, 0.03) !important;
+  }
+
+  body.text-editor-page.dark-mode .Toolbar {
+    background: rgba(0, 0, 0, 0.95) !important;
+    border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  }
 }

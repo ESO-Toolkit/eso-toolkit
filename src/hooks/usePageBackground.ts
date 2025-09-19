@@ -4,7 +4,7 @@
 
 import { useEffect } from 'react';
 
-export function usePageBackground(pageClass: string, isDarkMode: boolean = false) {
+export function usePageBackground(pageClass: string, isDarkMode = false): void {
   useEffect(() => {
     // Add page-specific class
     document.body.classList.add(pageClass);
