@@ -1,0 +1,69 @@
+/*
+  pickr-radius.css
+
+  Purpose:
+  - Override default border-radius for Pickr UI components to match site design tokens.
+  - Applies globally in both light and dark modes.
+
+  Usage:
+  1. Place this file at `src/styles/pickr-radius.css`.
+  2. Import after `pickr-theme.css` in your components or global entry:
+     ```ts
+     import '../styles/pickr-theme.css';
+     import '../styles/pickr-radius.css';
+     ```
+  3. Define `--site-radius` CSS variable in your global styles (e.g., :root).
+     - Example: `--site-radius: 8px;`
+*/
+
+:root {
+  /* Default border radius if not defined elsewhere */
+  --site-radius: 8px;
+}
+
+/* Ensure proper desktop sizing */
+.pcr-app {
+  min-width: 280px !important;
+  width: auto !important;
+  padding: 16px !important;
+}
+
+.pcr-widget {
+  min-width: 250px !important;
+}
+
+/* Override container and widget */
+.pcr-app,
+.pcr-widget {
+  border-radius: var(--site-radius) !important;
+}
+
+/* Round color preview & selection circles */
+.pcr-widget .pcr-color,
+.pcr-widget .pcr-selection {
+  border-radius: 50% !important;
+}
+
+/* Sliders and interaction elements */
+.pcr-widget .pcr-hue,
+.pcr-widget .pcr-opacity,
+.pcr-widget .pcr-xy {
+  border-radius: var(--site-radius) !important;
+  min-height: 120px !important;
+}
+.pcr-widget .pcr-pointer {
+  border-radius: 50% !important;
+}
+
+/* Inputs and buttons */
+.pcr-widget input,
+.pcr-widget .pcr-btn {
+  border-radius: calc(var(--site-radius) / 2) !important;
+}
+
+/* Swatch previews */
+.pcr-widget .pcr-swatches .pcr-swatch {
+  border-radius: calc(var(--site-radius) / 2) !important;
+  margin: 2px !important;
+  box-shadow: none !important;
+}

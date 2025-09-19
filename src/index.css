@@ -70,4 +70,5 @@ code {
   --site-accent: #7289da;
   --site-border: #333333;
   --site-shadow: rgba(0, 0, 0, 0.8);
+  --site-radius: 8px;
 }

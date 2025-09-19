@@ -2,6 +2,7 @@ import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '../styles/pickr-theme.css';
+import '../styles/pickr-radius.css';
 
 // Types
 declare global {
@@ -69,14 +70,20 @@ const EditorTool = styled(Box)(({ theme }) => ({
   color: theme.palette.text.primary,
   boxShadow: '0 8px 30px rgba(0, 0, 0, 0.25)',
   transition: 'all 0.3s ease',
+  // Mobile styles - use grid for reordering
+  [theme.breakpoints.down('sm')]: {
+    display: 'grid',
+    gridTemplateRows: 'auto auto',
+    gap: '16px',
+  },
 }));
 
 
 const Toolbar = styled(Box)(({ theme }) => ({
   display: 'flex',
-  gap: '12px',
+  gap: '8px',
   marginBottom: '20px',
-  padding: '16px',
+  padding: '12px',
   background:
     theme.palette.mode === 'dark'
       ? theme.palette.background.default
@@ -87,7 +94,7 @@ const Toolbar = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-  overflowX: 'auto',
+  overflowX: 'hidden',
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
@@ -104,12 +111,14 @@ const ToolbarButton = styled('button')(({ theme }) => ({
   color: theme.palette.text.primary,
   border: `1px solid ${theme.palette.divider}`,
   borderRadius: '8px',
-  padding: '10px 16px',
+  padding: '6px 10px',
   cursor: 'pointer',
-  fontSize: '13px',
+  fontSize: '11px',
   fontWeight: 500,
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+  flexShrink: 0,
+  whiteSpace: 'nowrap',
   '&:hover': {
     background: theme.palette.primary.main,
     borderColor: theme.palette.primary.main,
@@ -145,6 +154,7 @@ const ToolbarButton = styled('button')(({ theme }) => ({
 const UndoRedoGroup = styled(Box)(({ theme }) => ({
   display: 'flex',
   gap: '8px',
+  flexShrink: 0,
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
     gap: '6px',
@@ -154,28 +164,67 @@ const UndoRedoGroup = styled(Box)(({ theme }) => ({
   },
 }));
 
+const FormatContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  gap: '8px',
+  marginBottom: '20px',
+  // Mobile styles - position in grid
+  [theme.breakpoints.down('sm')]: {
+    gridRow: 2,
+  },
+}));
+
+const FormatRow = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  gap: '8px',
+  padding: '12px',
+  background:
+    theme.palette.mode === 'dark'
+      ? theme.palette.background.default
+      : alpha(theme.palette.background.default, 0.8),
+  borderRadius: '12px',
+  border: `1px solid ${theme.palette.divider}`,
+  alignItems: 'center',
+  flexWrap: 'nowrap',
+}));
+
+const ColorSection = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '40px',
+  marginBottom: '4px',
+  // Mobile styles - position in grid (move to top)
+  [theme.breakpoints.down('sm')]: {
+    gridRow: 1,
+    marginBottom: '2px',
+  },
+}));
+
 const PresetColors = styled(Box)(({ theme }) => ({
   display: 'flex',
-  gap: '4px',
-  marginLeft: '8px',
+  gap: '8px',
+  width: '100%',
+  justifyContent: 'space-between',
 }));
 
 const PresetColor = styled('button')(({ theme }) => ({
-  width: '24px',
-  height: '24px',
-  borderRadius: '3px',
+  width: 'calc(16.666% - 7px)', // 6 colors with 8px gap = 100% - 40px gap = 60px ÷ 6 = ~10px each
+  height: '40px',
+  borderRadius: '6px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
+  border: `1px solid ${theme.palette.divider}`,
   '&:hover': {
-    transform: 'scale(1.1)',
+    transform: 'scale(1.05)',
   },
 }));
 
 const ColorPickerWrapper = styled(Box)(({ theme }) => ({
   display: 'flex',
   alignItems: 'center',
-  gap: '8px',
-  marginLeft: 'auto',
+  justifyContent: 'center',
 }));
 
 const EmojiButton = styled('button')(({ theme }) => ({
@@ -634,46 +683,44 @@ export const TextEditor: React.FC = () => {
       <Container maxWidth="lg">
         
         <EditorTool>
-          <Toolbar>
-            <UndoRedoGroup>
-              <ToolbarButton
-                onClick={undo}
-                disabled={historyIndex <= 0}
-                aria-label="Undo last change"
-              >
-                Undo
+          {/* Format controls container */}
+          <FormatContainer>
+            {/* Row 1: Undo/Redo */}
+            <FormatRow>
+              <UndoRedoGroup>
+                <ToolbarButton
+                  onClick={undo}
+                  disabled={historyIndex <= 0}
+                  aria-label="Undo last change"
+                >
+                  Undo
+                </ToolbarButton>
+                <ToolbarButton
+                  onClick={redo}
+                  disabled={historyIndex >= history.length - 1}
+                  aria-label="Redo last change"
+                >
+                  Redo
+                </ToolbarButton>
+              </UndoRedoGroup>
+            </FormatRow>
+
+            {/* Row 2: Clear/Remove Format */}
+            <FormatRow>
+              <ToolbarButton onClick={clearFormatting} aria-label="Clear all formatting from text">
+                Clear All
               </ToolbarButton>
               <ToolbarButton
-                onClick={redo}
-                disabled={historyIndex >= history.length - 1}
-                aria-label="Redo last change"
+                onClick={removeFormatFromSelection}
+                aria-label="Remove formatting from selection"
               >
-                Redo
+                Remove Format
               </ToolbarButton>
-            </UndoRedoGroup>
+            </FormatRow>
+          </FormatContainer>
 
-            <ToolbarButton onClick={clearFormatting} aria-label="Clear all formatting from text">
-              Clear All Formatting
-            </ToolbarButton>
-            <ToolbarButton
-              onClick={removeFormatFromSelection}
-              aria-label="Remove formatting from selection"
-            >
-              Remove Format
-            </ToolbarButton>
-
-            <PresetColors role="group" aria-label="Quick color choices">
-              {presetColors.map((color, index) => (
-                <PresetColor
-                  key={index}
-                  type="button"
-                  style={{ background: color }}
-                  onClick={() => applyQuickColor(color.substring(1))}
-                  aria-label={`Apply ${color} color`}
-                />
-              ))}
-            </PresetColors>
-
+          {/* Color section container with emoji above swatches */}
+          <ColorSection>
             <ColorPickerWrapper>
               <EmojiButton
                 id="eso-native-emoji-btn"
@@ -695,7 +742,19 @@ export const TextEditor: React.FC = () => {
                 }}
               />
             </ColorPickerWrapper>
-          </Toolbar>
+
+            <PresetColors role="group" aria-label="Quick color choices">
+              {presetColors.map((color, index) => (
+                <PresetColor
+                  key={index}
+                  type="button"
+                  style={{ background: color }}
+                  onClick={() => applyQuickColor(color.substring(1))}
+                  aria-label={`Apply ${color} color`}
+                />
+              ))}
+            </PresetColors>
+          </ColorSection>
 
           <TextInput
             ref={textAreaRef}

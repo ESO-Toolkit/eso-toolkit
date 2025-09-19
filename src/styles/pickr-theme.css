@@ -22,12 +22,40 @@
 */
 
 /* Import both built-in themes */
-@import "@simonwep/pickr/dist/themes/classic.min.css";
-@import "@simonwep/pickr/dist/themes/monolith.min.css";
+@import "/node_modules/@simonwep/pickr/dist/themes/classic.min.css";
+@import "/node_modules/@simonwep/pickr/dist/themes/monolith.min.css";
+
+/* Light mode background - not pure white */
+:not(.dark-mode) .pcr-app {
+  background: #f8f9fa !important;
+  color: #2d3748 !important;
+  border: 1px solid #e2e8f0 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-selection {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-interaction {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-swatches {
+  background: #ffffff !important;
+  border: 1px solid #e2e8f0 !important;
+}
+
+:not(.dark-mode) .pcr-widget .pcr-swatches .pcr-swatch {
+  background: transparent !important;
+  border: 1px solid #e2e8f0 !important;
+}
 
 /* Dark-mode overrides */
 .dark-mode .pcr-app {
-  background: var(--site-bg, #121212) !important;
+  background: #1a1a2e !important;
   color: var(--site-fg, #e0e0e0) !important;
   box-shadow: 0 0 12px var(--site-shadow, rgba(0,0,0,0.8)) !important;
 }
