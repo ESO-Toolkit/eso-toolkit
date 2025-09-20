@@ -94,8 +94,26 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
     (newTabId: TabId) => {
       if (!reportId || !fightId) return;
 
-      // Preserve experimental search param if it exists
-      const experimentalParam = showExperimentalTabs ? '?experimental=true' : '';
+      // Define experimental tabs array
+      const experimentalTabs: TabId[] = [
+        TabId.LOCATION_HEATMAP,
+        TabId.RAW_EVENTS,
+        TabId.TARGET_EVENTS,
+        TabId.DIAGNOSTICS,
+        TabId.ACTORS,
+        TabId.TALENTS,
+        TabId.ROTATION_ANALYSIS,
+        TabId.AURAS_OVERVIEW,
+        TabId.BUFFS_OVERVIEW,
+        TabId.DEBUFFS_OVERVIEW,
+      ];
+
+      // If selecting an experimental tab, automatically enable experimental tabs
+      // If selecting a non-experimental tab, preserve current experimental setting
+      const isExperimentalTab = experimentalTabs.includes(newTabId);
+      const shouldShowExperimental = isExperimentalTab || showExperimentalTabs;
+
+      const experimentalParam = shouldShowExperimental ? '?experimental=true' : '';
       navigate(`/report/${reportId}/fight/${fightId}/${newTabId}${experimentalParam}`);
     },
     [navigate, reportId, fightId, showExperimentalTabs],
@@ -105,10 +123,28 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
     (enabled: boolean) => {
       if (!reportId || !fightId) return;
 
-      // Keep current tab or default to insights
-      const currentTab = selectedTabId || TabId.INSIGHTS;
+      // Define experimental tabs array
+      const experimentalTabs: TabId[] = [
+        TabId.LOCATION_HEATMAP,
+        TabId.RAW_EVENTS,
+        TabId.TARGET_EVENTS,
+        TabId.DIAGNOSTICS,
+        TabId.ACTORS,
+        TabId.TALENTS,
+        TabId.ROTATION_ANALYSIS,
+        TabId.AURAS_OVERVIEW,
+        TabId.BUFFS_OVERVIEW,
+        TabId.DEBUFFS_OVERVIEW,
+      ];
+
+      // If disabling experimental tabs and currently on an experimental tab, switch to insights
+      let targetTab = selectedTabId || TabId.INSIGHTS;
+      if (!enabled && experimentalTabs.includes(targetTab)) {
+        targetTab = TabId.INSIGHTS;
+      }
+
       const experimentalParam = enabled ? '?experimental=true' : '';
-      navigate(`/report/${reportId}/fight/${fightId}/${currentTab}${experimentalParam}`);
+      navigate(`/report/${reportId}/fight/${fightId}/${targetTab}${experimentalParam}`);
     },
     [navigate, reportId, fightId, selectedTabId],
   );
