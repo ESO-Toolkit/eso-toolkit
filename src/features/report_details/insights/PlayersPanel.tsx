@@ -313,54 +313,6 @@ export const PlayersPanel: React.FC = () => {
     return counts;
   }, [castEvents]);
 
-  // Calculate all auras per player from combatantinfo events
-  const aurasByPlayer = React.useMemo(() => {
-    const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
-
-    // Initialize arrays for each player
-    if (playerData) {
-      Object.values(playerData.playersById).forEach((actor) => {
-        if (actor?.id) {
-          const playerId = String(actor.id);
-          result[playerId] = [];
-
-          // Find the latest combatantinfo event for this player
-          const combatantInfoEventsForPlayer = combatantInfoEvents
-            .filter((event): event is CombatantInfoEvent => {
-              return (
-                event.type === 'combatantinfo' &&
-                'sourceID' in event &&
-                String(event.sourceID) === playerId
-              );
-            })
-            .sort((a, b) => {
-              return (b.timestamp || 0) - (a.timestamp || 0);
-            }); // Most recent first
-
-          const latestCombatantInfo = combatantInfoEventsForPlayer[0];
-          if (latestCombatantInfo && latestCombatantInfo.auras) {
-            // Get all auras for this player
-            latestCombatantInfo.auras.forEach((aura) => {
-              const ability = abilitiesById[aura.ability];
-              const auraName = ability?.name || aura.name || `Unknown Aura (${aura.ability})`;
-
-              result[playerId].push({
-                name: auraName,
-                id: aura.ability,
-                stacks: aura.stacks,
-              });
-            });
-
-            // Sort auras by name for consistent display
-            result[playerId].sort((a, b) => a.name.localeCompare(b.name));
-          }
-        }
-      });
-    }
-
-    return result;
-  }, [combatantInfoEvents, abilitiesById, playerData]);
-
   const playerGear = React.useMemo(() => {
     const result: Record<number, PlayerGearSetRecord[]> = {};
 
@@ -478,7 +430,7 @@ export const PlayersPanel: React.FC = () => {
         friendlyBuffLookup || emptyBuffLookup,
         fight.startTime,
         fight.endTime,
-        aurasByPlayer[playerId] || [],
+        [],
         player.role,
       );
 
@@ -486,13 +438,7 @@ export const PlayersPanel: React.FC = () => {
     });
 
     return result;
-  }, [
-    playerData?.playersById,
-    friendlyBuffLookup,
-    fight?.startTime,
-    fight?.endTime,
-    aurasByPlayer,
-  ]);
+  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime]);
 
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {
@@ -824,7 +770,6 @@ export const PlayersPanel: React.FC = () => {
       playerActors={playerData?.playersById}
       mundusBuffsByPlayer={mundusBuffsByPlayer}
       championPointsByPlayer={championPointsByPlayer}
-      aurasByPlayer={aurasByPlayer}
       scribingSkillsByPlayer={scribingSkillsByPlayer}
       buildIssuesByPlayer={buildIssuesByPlayer}
       classAnalysisByPlayer={classAnalysisByPlayer}

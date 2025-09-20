@@ -46,7 +46,6 @@ interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
-  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -113,7 +112,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     player,
     mundusBuffs,
     championPoints,
-    auras,
     scribingSkills,
     buildIssues,
     classAnalysis,
@@ -159,7 +157,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
 
-    const foodAura = detectFoodFromAuras(auras);
+    const foodAura = detectFoodFromAuras([]);
 
     // Memoize tooltip props lookup to avoid repeated function calls
     const tooltipPropsLookup = React.useMemo(() => {
@@ -1110,40 +1108,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             </Typography>
                           </Box>
                         )}
-                      </Box>
-                    </Box>
-                  )}
-
-                  {auras.length > 0 && (
-                    <Box sx={{}}>
-                      <Typography
-                        variant="body2"
-                        fontWeight="bold"
-                        sx={{ mb: 1, fontFamily: 'Space Grotesk, sans-serif' }}
-                      >
-                        Notable Auras
-                      </Typography>
-                      <Box display="flex" flexWrap="wrap" gap={1} sx={{ minHeight: 40 }}>
-                        {auras
-                          .slice()
-                          .sort((a, b) => a.name.localeCompare(b.name))
-                          .slice(0, 3)
-                          .map((aura, idx) => (
-                            <Chip
-                              key={idx}
-                              label={
-                                aura.stacks && aura.stacks > 1
-                                  ? `${aura.name} (${aura.stacks})`
-                                  : aura.name
-                              }
-                              size="small"
-                              title={`Ability ID: ${aura.id}${aura.stacks ? ` | Stacks: ${aura.stacks}` : ''}`}
-                              sx={{
-                                ...buildVariantSx('indigo', theme),
-                                '& .MuiChip-label': { fontSize: '0.58rem' },
-                              }}
-                            />
-                          ))}
                       </Box>
                     </Box>
                   )}
