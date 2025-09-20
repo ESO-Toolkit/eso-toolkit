@@ -142,12 +142,12 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   // Ensure we have a valid selectedTabId based on what tabs are actually rendered
   const getValidTabId = (tabId: TabId | undefined): TabId => {
     if (!tabId) return TabId.INSIGHTS;
-    
+
     // If experimental tabs are disabled and the selected tab is experimental, use INSIGHTS
     if (!showExperimentalTabs && experimentalTabs.includes(tabId)) {
       return TabId.INSIGHTS;
     }
-    
+
     return tabId;
   };
 
@@ -607,10 +607,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
         >
           <FormControlLabel
             control={
-              <Switch 
-                checked={showExperimentalTabs} 
+              <Switch
+                checked={showExperimentalTabs}
                 onChange={(e) => onToggleExperimentalTabs(e.target.checked)}
-                size="small" 
+                size="small"
               />
             }
             label={

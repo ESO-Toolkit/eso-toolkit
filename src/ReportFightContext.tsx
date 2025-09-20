@@ -112,7 +112,7 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
       // If selecting a non-experimental tab, preserve current experimental setting
       const isExperimentalTab = experimentalTabs.includes(newTabId);
       const shouldShowExperimental = isExperimentalTab || showExperimentalTabs;
-      
+
       const experimentalParam = shouldShowExperimental ? '?experimental=true' : '';
       navigate(`/report/${reportId}/fight/${fightId}/${newTabId}${experimentalParam}`);
     },
