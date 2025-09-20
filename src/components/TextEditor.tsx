@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
-import '../styles/text-editor-page-background.css';
+// import '../styles/text-editor-page-background.css'; // Commenting out - conflicts with component transparency
 import '../styles/texteditor-theme-bridge.css';
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
