@@ -380,8 +380,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     backgroundRepeat: 'no-repeat',
     backgroundAttachment: 'fixed',
     opacity: 0.3, // KEY: 30% opacity makes it visible but not overpowering
-    zIndex: -1,
+    zIndex: -2,
     pointerEvents: 'none',
+    display: 'block !important',
+    visibility: 'visible !important',
   },
 
   // Semi-transparent overlay for text readability
@@ -395,6 +397,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     zIndex: -1,
     pointerEvents: 'none',
+    display: 'block !important',
+    visibility: 'visible !important',
   },
 
   '& span': {
