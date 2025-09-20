@@ -21,12 +21,13 @@ export function usePageBackground(pageClass: string, isDarkMode = false): void {
     document.body.style.backgroundRepeat = 'no-repeat';
     document.body.style.backgroundAttachment = 'fixed';
 
-    // Make any covering elements transparent
-    const coveringElements = document.querySelectorAll('.css-1bjd1tz, .css-1u9mni1');
-    coveringElements.forEach(el => {
-      (el as HTMLElement).style.backgroundColor = 'transparent';
-      (el as HTMLElement).style.background = 'transparent';
-    });
+    // Make the main covering container transparent
+    setTimeout(() => {
+      const mainCover = document.querySelector('.css-1u9mni1');
+      if (mainCover) {
+        (mainCover as HTMLElement).style.backgroundColor = 'transparent';
+      }
+    }, 100);
 
     // Cleanup when component unmounts or page changes
     return () => {

@@ -129,3 +129,9 @@ body.text-editor-page .css-1qo4x57,
 body.text-editor-page .css-1qo4x57 * {
   background: transparent !important;
 }
+
+/* Simple approach: Just ensure preview area is transparent */
+body.text-editor-page .css-cplt40 {
+  background: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+}
