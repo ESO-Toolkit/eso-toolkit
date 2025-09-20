@@ -76,7 +76,6 @@ body.text-editor-page .editor-container:not(.EditorTool) {
   border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
-
 body.text-editor-page.dark-mode .text-editor:not(.EditorTool),
 body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   background: rgba(0, 0, 0, 0.8) !important;

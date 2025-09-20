@@ -392,7 +392,6 @@ export const TextEditor: React.FC = () => {
   // Apply page background when component mounts and react to theme changes
   usePageBackground('text-editor-page', theme.palette.mode === 'dark');
 
-  
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
     const root = document.documentElement;

@@ -15,14 +15,14 @@
 }
 
 /* Light mode overrides */
-[data-theme="light"] {
+[data-theme='light'] {
   --panel: rgba(255, 255, 255, 0.9);
   --panel2: rgba(255, 255, 255, 0.95);
   --bg-overlay: rgba(255, 255, 255, 0.1);
 }
 
 /* Dark mode overrides */
-[data-theme="dark"] {
+[data-theme='dark'] {
   --panel: rgba(0, 0, 0, 0.7);
   --panel2: rgba(0, 0, 0, 0.8);
   --bg-overlay: rgba(0, 0, 0, 0.3);
