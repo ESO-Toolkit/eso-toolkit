@@ -354,20 +354,26 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   minHeight: '120px',
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.2)'
+      : '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: '#ffffff',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
 
   // Remove all pseudo-elements - let the page background show through
   // No ::before or ::after needed for true transparency
 
   '& span': {
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+    textShadow:
+      theme.palette.mode === 'dark'
+        ? '0 1px 2px rgba(0, 0, 0, 0.8)'
+        : '0 1px 2px rgba(255, 255, 255, 0.8)',
     position: 'relative',
     zIndex: 2,
   },
@@ -378,12 +384,21 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   },
 
   '& span[style*="color: #888"], & span[style*="italic"]': {
-    color: 'rgba(255, 255, 255, 0.7) !important',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
+    color:
+      theme.palette.mode === 'dark'
+        ? 'rgba(255, 255, 255, 0.7) !important'
+        : 'rgba(0, 0, 0, 0.7) !important',
+    textShadow:
+      theme.palette.mode === 'dark'
+        ? '0 1px 2px rgba(0, 0, 0, 0.9) !important'
+        : '0 1px 2px rgba(255, 255, 255, 0.9) !important',
   },
 
   '& span[style*="color: #"]': {
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    textShadow:
+      theme.palette.mode === 'dark'
+        ? '0 1px 2px rgba(0, 0, 0, 0.9)'
+        : '0 1px 2px rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
   },
 

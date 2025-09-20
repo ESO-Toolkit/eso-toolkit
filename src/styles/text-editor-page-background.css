@@ -120,45 +120,9 @@ body.text-editor-page .TextEditorContainer {
   /* Let CSS variables handle the background */
 }
 
-/* Preview area - Make only this transparent as requested */
-body.text-editor-page .PreviewArea,
-body.text-editor-page .PreviewArea * {
-  background: transparent !important;
-  backdrop-filter: blur(1px) !important;
-  color: inherit !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
+/* Preview area - Let component handle its own transparency */
 
-body.text-editor-page.dark-mode .PreviewArea,
-body.text-editor-page.dark-mode .PreviewArea * {
-  background: transparent !important;
-  backdrop-filter: blur(1px) !important;
-  color: inherit !important;
-  border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* Light mode preview area transparency */
-body.text-editor-page:not(.dark-mode) .PreviewArea,
-body.text-editor-page:not(.dark-mode) .PreviewArea * {
-  background: transparent !important;
-  backdrop-filter: blur(1px) !important;
-  color: inherit !important;
-  border: 1px solid rgba(0, 0, 0, 0.1) !important;
-  position: relative !important;
-  z-index: 1 !important;
-}
-
-/* Make sure the preview area stays transparent */
-body.text-editor-page .css-1qo4x57,
-body.text-editor-page .css-1qo4x57 *,
-body.text-editor-page:not(.dark-mode) .css-1qo4x57,
-body.text-editor-page:not(.dark-mode) .css-1qo4x57 * {
-  background: transparent !important;
-}
+/* Preview area transparency handled by component */
 
 /* Create a dedicated background layer */
 body.text-editor-page::before {
