@@ -84,16 +84,6 @@ const PlayerCardLoadingFallback: React.FC = () => (
           <Skeleton variant="text" height={16} width="40%" />
         </Box>
 
-        {/* Notable auras */}
-        <Box sx={{ mb: 1 }}>
-          <Skeleton variant="text" height={16} width="35%" sx={{ mb: 1 }} />
-          <Box sx={{ display: 'flex', gap: 1, minHeight: 24 }}>
-            <Skeleton variant="rounded" height={24} width={70} />
-            <Skeleton variant="rounded" height={24} width={80} />
-            <Skeleton variant="rounded" height={24} width={60} />
-          </Box>
-        </Box>
-
         {/* Champion points */}
         <Box>
           <Skeleton variant="text" height={16} width="40%" sx={{ mb: 1 }} />
@@ -112,7 +102,6 @@ export interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
-  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
