@@ -1,4 +1,14 @@
-import { Box, Card, CardContent, Chip, Divider, Stack, Typography, useTheme } from '@mui/material';
+import {
+  Box,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Stack,
+  Typography,
+  useTheme,
+  Theme,
+} from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import React from 'react';
 
@@ -8,6 +18,24 @@ export interface SkillStat {
   label: string;
   value: string;
   color?: 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'inherit';
+}
+
+export interface ScribedSkillEffect {
+  /** The ability ID of the effect */
+  abilityId: number;
+  /** The name of the effect */
+  abilityName: string;
+  /** Type of effect: buff, debuff, damage, heal, aura, or resource */
+  type: 'buff' | 'debuff' | 'damage' | 'heal' | 'aura' | 'resource';
+  /** Number of times this effect was applied/triggered */
+  count: number;
+}
+
+export interface ScribedSkillData {
+  /** The grimoire this scribed skill belongs to */
+  grimoireName: string;
+  /** List of effects this scribed skill produces */
+  effects: ScribedSkillEffect[];
 }
 
 export interface SkillTooltipProps {
@@ -29,9 +57,50 @@ export interface SkillTooltipProps {
   stats?: SkillStat[];
   // Rich description body; accept ReactNode so callers can colorize parts
   description: React.ReactNode;
+  // Optional scribed skill data for enhanced tooltips
+  scribedSkillData?: ScribedSkillData;
 }
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
+
+// Utility functions for scribed skill effects
+const getEffectTypeColor = (type: string, theme: Theme): string => {
+  switch (type) {
+    case 'buff':
+      return theme.palette.success.main;
+    case 'debuff':
+      return theme.palette.error.main;
+    case 'damage':
+      return theme.palette.warning.main;
+    case 'heal':
+      return theme.palette.info.main;
+    case 'aura':
+      return theme.palette.secondary.main;
+    case 'resource':
+      return theme.palette.primary.main;
+    default:
+      return theme.palette.text.secondary;
+  }
+};
+
+const getEffectTypeIcon = (type: string): string => {
+  switch (type) {
+    case 'buff':
+      return '⬆️';
+    case 'debuff':
+      return '⬇️';
+    case 'damage':
+      return '⚔️';
+    case 'heal':
+      return '❤️';
+    case 'aura':
+      return '🔮';
+    case 'resource':
+      return '⚡';
+    default:
+      return '◯';
+  }
+};
 
 function inferPaletteFromStat(label: string, value: string): PaletteKey {
   const v = value.toLowerCase();
@@ -57,6 +126,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   morphOf,
   stats,
   description,
+  scribedSkillData,
 }) => {
   const theme = useTheme();
   const logger = useLogger();
@@ -371,6 +441,64 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                 : alpha(theme.palette.common.black, 0.08),
           })}
         />
+
+        {scribedSkillData && (
+          <>
+            <Box sx={{ mb: 1.5 }}>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: 'text.secondary',
+                  fontWeight: 600,
+                  letterSpacing: '.02em',
+                  fontSize: '0.72rem',
+                  mb: 0.75,
+                  display: 'block',
+                }}
+              >
+                Grimoire: {scribedSkillData.grimoireName}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                {scribedSkillData.effects.map((effect, index) => (
+                  <Chip
+                    key={index}
+                    size="small"
+                    icon={
+                      <span style={{ fontSize: '0.7rem' }}>{getEffectTypeIcon(effect.type)}</span>
+                    }
+                    label={`${effect.abilityName} (${effect.count})`}
+                    variant="outlined"
+                    sx={(theme) => ({
+                      fontSize: '0.65rem',
+                      height: '22px',
+                      color: getEffectTypeColor(effect.type, theme),
+                      borderColor: alpha(getEffectTypeColor(effect.type, theme), 0.3),
+                      backgroundColor: alpha(getEffectTypeColor(effect.type, theme), 0.05),
+                      '& .MuiChip-label': {
+                        px: 0.5,
+                        fontSize: '0.65rem',
+                        lineHeight: 1.2,
+                      },
+                      '& .MuiChip-icon': {
+                        marginLeft: '4px',
+                        marginRight: '-2px',
+                      },
+                    })}
+                  />
+                ))}
+              </Box>
+            </Box>
+            <Divider
+              sx={(theme) => ({
+                my: 1,
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? alpha(theme.palette.common.white, 0.08)
+                    : alpha(theme.palette.common.black, 0.08),
+              })}
+            />
+          </>
+        )}
 
         <Typography
           variant="body2"

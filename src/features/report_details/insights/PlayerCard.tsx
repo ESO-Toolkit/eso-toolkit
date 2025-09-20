@@ -25,7 +25,8 @@ import { GearSetTooltip } from '../../../components/GearSetTooltip';
 import { LazySkillTooltip as SkillTooltip } from '../../../components/LazySkillTooltip';
 import { OneLineAutoFit } from '../../../components/OneLineAutoFit';
 import { PlayerIcon } from '../../../components/PlayerIcon';
-import { ScribingSkillsDisplay, GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
+import { ScribedSkillData } from '../../../components/SkillTooltip';
 import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
@@ -165,20 +166,36 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       const lookup = new Map<number, ReturnType<typeof buildTooltipProps>>();
       const clsKey = toClassKey(player.type);
 
+      // Create a lookup map for scribed skills data by talent name
+      const scribedSkillsLookup = new Map<string, ScribedSkillData>();
+      scribingSkills.forEach((grimoire) => {
+        grimoire.skills.forEach((skill) => {
+          // Use the actual talent name as the key for mapping
+          scribedSkillsLookup.set(skill.skillName, {
+            grimoireName: grimoire.grimoireName,
+            effects: skill.effects,
+          });
+        });
+      });
+
       talents.forEach((talent) => {
         const key = talent.guid;
         if (!lookup.has(key)) {
+          // Check if this talent is a scribed skill by looking for it in our scribed skills data
+          const scribedSkillData = scribedSkillsLookup.get(talent.name);
+
           const tooltipProps = buildTooltipProps({
             abilityId: talent.guid,
             abilityName: talent.name,
             classKey: clsKey,
+            scribedSkillData,
           });
           lookup.set(key, tooltipProps);
         }
       });
 
       return lookup;
-    }, [talents, player.type]);
+    }, [talents, player.type, scribingSkills]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -1161,12 +1178,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           />
                         ))}
                       </Box>
-                    </Box>
-                  )}
-
-                  {scribingSkills.length > 0 && (
-                    <Box sx={{ mt: 1 }}>
-                      <ScribingSkillsDisplay grimoires={scribingSkills} />
                     </Box>
                   )}
                 </Box>
