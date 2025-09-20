@@ -63,7 +63,6 @@ body.text-editor-page:not(.dark-mode)::before {
   background-image: url('/text-editor/text-editor-bg-light.jpg');
 }
 
-
 /* Remove solid backgrounds from common elements */
 body.text-editor-page #root {
   background: transparent !important;
@@ -229,7 +228,6 @@ body.text-editor-page .css-cplt40 *,
 body.text-editor-page:not(.dark-mode) .css-cplt40 * {
   background: transparent !important;
 }
-
 
 /* Force the covering container to be completely transparent */
 body.text-editor-page .css-1u9mni1 {

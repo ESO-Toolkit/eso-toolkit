@@ -354,7 +354,10 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   minHeight: '120px',
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
-  border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid rgba(0, 0, 0, 0.1)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.2)'
+      : '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
@@ -443,7 +446,10 @@ export const TextEditor: React.FC = () => {
     console.log('=== COMPREHENSIVE DEBUG ===');
 
     // Determine which background image to use based on theme
-    const bgImage = theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg';
+    const bgImage =
+      theme.palette.mode === 'dark'
+        ? '/text-editor/text-editor-bg-dark.jpg'
+        : '/text-editor/text-editor-bg-light.jpg';
 
     // 1. Check if image file actually exists
     const img = new Image();
@@ -460,11 +466,15 @@ export const TextEditor: React.FC = () => {
     // 2. Test different image paths
     const testPaths = [
       bgImage,
-      theme.palette.mode === 'dark' ? '/public/text-editor/text-editor-bg-dark.jpg' : '/public/text-editor/text-editor-bg-light.jpg',
-      theme.palette.mode === 'dark' ? '/images/text-editor-bg-dark.jpg' : '/images/text-editor-bg-light.jpg',
+      theme.palette.mode === 'dark'
+        ? '/public/text-editor/text-editor-bg-dark.jpg'
+        : '/public/text-editor/text-editor-bg-light.jpg',
+      theme.palette.mode === 'dark'
+        ? '/images/text-editor-bg-dark.jpg'
+        : '/images/text-editor-bg-light.jpg',
     ];
 
-    testPaths.forEach(path => {
+    testPaths.forEach((path) => {
       const testImg = new Image();
       testImg.onload = () => {
         // eslint-disable-next-line no-console
@@ -562,14 +572,20 @@ export const TextEditor: React.FC = () => {
         const allDivs = body.querySelectorAll('div');
         allDivs.forEach((div, index) => {
           const styles = window.getComputedStyle(div);
-          if (styles.backgroundColor !== 'rgba(0, 0, 0, 0)' && styles.backgroundColor !== 'transparent') {
+          if (
+            styles.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+            styles.backgroundColor !== 'transparent'
+          ) {
             // eslint-disable-next-line no-console
-            console.log(`Div ${index} has background:`, styles.backgroundColor, styles.backgroundImage);
+            console.log(
+              `Div ${index} has background:`,
+              styles.backgroundColor,
+              styles.backgroundImage,
+            );
           }
         });
       }
     }, 1000);
-
   }, []);
 
   // Add this useEffect AFTER your existing theme/background useEffects
@@ -613,7 +629,11 @@ export const TextEditor: React.FC = () => {
 
     // Force inspect the usePageBackground hook
     // eslint-disable-next-line no-console
-    console.log('usePageBackground should have been called with:', 'text-editor-page', theme.palette.mode === 'dark');
+    console.log(
+      'usePageBackground should have been called with:',
+      'text-editor-page',
+      theme.palette.mode === 'dark',
+    );
   }, [theme.palette.mode]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
