@@ -124,14 +124,105 @@ body.text-editor-page.dark-mode .PreviewArea * {
   z-index: 1 !important;
 }
 
+/* Light mode preview area transparency */
+body.text-editor-page:not(.dark-mode) .PreviewArea,
+body.text-editor-page:not(.dark-mode) .PreviewArea * {
+  background: transparent !important;
+  backdrop-filter: blur(1px) !important;
+  color: inherit !important;
+  border: 1px solid rgba(0, 0, 0, 0.1) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
 /* Make sure the preview area stays transparent */
 body.text-editor-page .css-1qo4x57,
-body.text-editor-page .css-1qo4x57 * {
+body.text-editor-page .css-1qo4x57 *,
+body.text-editor-page:not(.dark-mode) .css-1qo4x57,
+body.text-editor-page:not(.dark-mode) .css-1qo4x57 * {
   background: transparent !important;
 }
 
-/* Simple approach: Just ensure preview area is transparent */
+/* Create a dedicated background layer */
+body.text-editor-page::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/eso-ss-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* Make the preview area show through to the background */
 body.text-editor-page .css-cplt40 {
   background: transparent !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Override any light mode backgrounds that might be applied */
+body.text-editor-page:not(.dark-mode) .css-cplt40 {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  position: relative !important;
+}
+
+/* Add background image directly to light mode preview area using ::before */
+body.text-editor-page:not(.dark-mode) .css-cplt40::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/eso-ss-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 1 !important;
+}
+
+/* Make sure preview area content is also transparent */
+body.text-editor-page .css-cplt40 *,
+body.text-editor-page:not(.dark-mode) .css-cplt40 * {
+  background: transparent !important;
+}
+
+/* Add background image directly to preview area using ::before */
+body.text-editor-page .css-cplt40::before,
+body.text-editor-page:not(.dark-mode) .css-cplt40::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/images/eso-ss-1.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  z-index: -1;
+  pointer-events: none;
+  opacity: 1 !important;
+}
+
+/* Force the covering container to be completely transparent */
+body.text-editor-page .css-1u9mni1 {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  position: relative !important;
 }
