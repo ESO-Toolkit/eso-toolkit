@@ -1,8 +1,9 @@
 import React from 'react';
 
-import { SkillStat, SkillTooltipProps } from '../components/SkillTooltip';
+import { SkillStat, SkillTooltipProps, ScribedSkillData } from '../components/SkillTooltip';
 
 import { abilityIdMapper } from './abilityIdMapper';
+import { GRIMOIRE_NAME_PATTERNS, getAllGrimoires, SCRIBING_BLACKLIST } from './Scribing';
 import { findSkillByName, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
@@ -42,6 +43,7 @@ export type MapSkillOptions = {
   iconUrl?: string;
   headerBadge?: string; // e.g., 'Active' | 'Passive' | 'Ultimate'
   morphOfName?: string; // optional explicit morphOf text
+  scribedSkillData?: ScribedSkillData; // optional scribed skill data
 };
 
 export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps {
@@ -55,6 +57,7 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     iconUrl,
     headerBadge,
     morphOfName,
+    scribedSkillData,
   } = opts;
 
   // Resolve fields, letting the node override parent inheritFrom
@@ -119,12 +122,29 @@ export function mapSkillToTooltipProps(opts: MapSkillOptions): SkillTooltipProps
     morphOf: morphOfName,
     stats,
     description: descriptionNode,
+    scribedSkillData,
   };
 }
 
 function capitalCase(s: string): string {
   if (!s) return s;
   return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
+// Detect if an ability name is a scribed skill and return grimoire name
+function detectScribedSkillGrimoire(abilityName: string): string | null {
+  if (!abilityName || SCRIBING_BLACKLIST.has(abilityName)) {
+    return null;
+  }
+
+  for (const grimoireType of getAllGrimoires()) {
+    const pattern = GRIMOIRE_NAME_PATTERNS[grimoireType];
+    if (pattern.test(abilityName)) {
+      return grimoireType;
+    }
+  }
+
+  return null;
 }
 
 // Normalize ability names to handle elemental staff variants
@@ -190,11 +210,25 @@ function createWeaponAbilityFallback(abilityName: string): SkillTooltipProps | n
 }
 
 // Public helper: build rich SkillTooltipProps from ability ID
-export function buildTooltipPropsFromAbilityId(abilityId: number): SkillTooltipProps | null {
+export function buildTooltipPropsFromAbilityId(
+  abilityId: number,
+  scribedSkillData?: ScribedSkillData,
+): SkillTooltipProps | null {
   const abilityData = abilityIdMapper.getAbilityById(abilityId);
   if (!abilityData) {
     return null;
   }
+
+  // Check if this is a scribed skill and use provided data or detect grimoire
+  const detectedGrimoire = abilityData.name ? detectScribedSkillGrimoire(abilityData.name) : null;
+  const finalScribedSkillData =
+    scribedSkillData ||
+    (detectedGrimoire
+      ? {
+          grimoireName: detectedGrimoire,
+          effects: [],
+        }
+      : undefined);
 
   // Try to find detailed skill data by name
   const found = abilityData.name ? findSkillByName(abilityData.name) : null;
@@ -210,6 +244,7 @@ export function buildTooltipPropsFromAbilityId(abilityId: number): SkillTooltipP
       morphOfName: parent?.name,
       abilityId,
       iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
+      scribedSkillData: finalScribedSkillData,
     });
   }
 
@@ -219,8 +254,9 @@ export function buildTooltipPropsFromAbilityId(abilityId: number): SkillTooltipP
     description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
     abilityId,
     iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
-    lineText: 'Unknown Skill Line',
+    lineText: detectedGrimoire ? 'Scribing' : 'Unknown Skill Line',
     stats: [],
+    scribedSkillData: finalScribedSkillData,
   };
 }
 
@@ -228,7 +264,19 @@ export function buildTooltipPropsFromAbilityId(abilityId: number): SkillTooltipP
 export function buildTooltipPropsFromClassAndName(
   classKey: string,
   abilityName: string,
+  scribedSkillData?: ScribedSkillData,
 ): SkillTooltipProps | null {
+  // Check if this is a scribed skill and use provided data or detect grimoire
+  const detectedGrimoire = detectScribedSkillGrimoire(abilityName);
+  const finalScribedSkillData =
+    scribedSkillData ||
+    (detectedGrimoire
+      ? {
+          grimoireName: detectedGrimoire,
+          effects: [],
+        }
+      : undefined);
+
   // First try to find by name in skill lines
   const found = findSkillByName(abilityName);
   if (found) {
@@ -248,11 +296,31 @@ export function buildTooltipPropsFromClassAndName(
       iconUrl: abilityData?.gameID
         ? abilityIdMapper.getIconUrl(abilityData.gameID) || undefined
         : undefined,
+      scribedSkillData: finalScribedSkillData,
     });
   }
 
   // Fallback to weapon ability fallback
-  return createWeaponAbilityFallback(abilityName);
+  const weaponFallback = createWeaponAbilityFallback(abilityName);
+  if (weaponFallback) {
+    return {
+      ...weaponFallback,
+      scribedSkillData: finalScribedSkillData,
+    };
+  }
+
+  // If this is a scribed skill but not found in skill lines, create a basic scribed skill tooltip
+  if (detectedGrimoire) {
+    return {
+      name: abilityName,
+      description: `${abilityName} - A scribed skill from the ${detectedGrimoire} grimoire.`,
+      lineText: 'Scribing',
+      stats: [],
+      scribedSkillData: finalScribedSkillData,
+    };
+  }
+
+  return null;
 }
 
 // Enhanced function that can work with either ID or name
@@ -260,17 +328,18 @@ export function buildTooltipProps(options: {
   abilityId?: number;
   abilityName?: string;
   classKey?: string;
+  scribedSkillData?: ScribedSkillData;
 }): SkillTooltipProps | null {
-  const { abilityId, abilityName, classKey } = options;
+  const { abilityId, abilityName, classKey, scribedSkillData } = options;
 
   // Prefer ID-based lookup if available
   if (abilityId) {
-    return buildTooltipPropsFromAbilityId(abilityId);
+    return buildTooltipPropsFromAbilityId(abilityId, scribedSkillData);
   }
 
   // Fall back to name-based lookup
   if (abilityName) {
-    return buildTooltipPropsFromClassAndName(classKey || '', abilityName);
+    return buildTooltipPropsFromClassAndName(classKey || '', abilityName, scribedSkillData);
   }
 
   return null;

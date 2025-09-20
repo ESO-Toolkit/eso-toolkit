@@ -618,14 +618,10 @@ export const PlayersPanel: React.FC = () => {
         });
 
         // Add this skill to the grimoire
-        // Find the original talent info for proper skill ID and name
-        const playerId = parseInt(playerIdStr);
-
-        // For now, we'll use a generic name since we're grouping by grimoire
-        // In the future, we could enhance this by tracking individual talent names
+        // Use the original talent name for proper skill identification
         grimoireData.skills.push({
-          skillId: playerId, // Using player ID as a unique identifier
-          skillName: `${skillAnalysis.grimoire} Scribing Skill`,
+          skillId: skillAnalysis.talentGuid, // Use the talent GUID as unique identifier
+          skillName: skillAnalysis.talentName, // Use the original talent name
           effects: skillEffects,
         });
       });

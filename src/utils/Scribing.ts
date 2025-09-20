@@ -237,6 +237,8 @@ export interface Effect {
 export interface ScribingSkillAnalysis {
   grimoire: Grimoire;
   effects: Effect[];
+  talentName: string;
+  talentGuid: number;
 }
 
 /**
@@ -526,6 +528,8 @@ export function analyzeScribingSkillEffects(
       return {
         grimoire: grimoireType,
         effects: Array.from(effectsByAbility.values()),
+        talentName: talent.name,
+        talentGuid: talent.guid,
       };
     }
   }
