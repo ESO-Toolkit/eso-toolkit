@@ -1,0 +1,34 @@
+/* Bridge Material UI theme to standalone CSS variables */
+.text-editor-page {
+  /* Map MUI theme colors to standalone variables */
+  --bg: transparent; /* Let body background image show through */
+  --text: var(--mui-palette-text-primary, #fff);
+  --panel: var(--mui-palette-background-paper, rgba(0, 0, 0, 0.8));
+  --panel2: var(--mui-palette-background-default, rgba(0, 0, 0, 0.9));
+  --border: var(--mui-palette-divider, rgba(255, 255, 255, 0.12));
+  --accent: var(--mui-palette-primary-main, #38bdf8);
+  --accent2: var(--mui-palette-primary-dark, #0284c7);
+  --muted: var(--mui-palette-text-secondary, rgba(255, 255, 255, 0.7));
+}
+
+/* Light mode specific overrides */
+.text-editor-page:not(.dark-mode) {
+  --text: var(--mui-palette-text-primary, #000);
+  --panel: var(--mui-palette-background-paper, rgba(255, 255, 255, 0.95));
+  --panel2: var(--mui-palette-background-default, rgba(255, 255, 255, 0.98));
+  --border: var(--mui-palette-divider, rgba(0, 0, 0, 0.12));
+  --accent: var(--mui-palette-primary-main, #38bdf8);
+  --accent2: var(--mui-palette-primary-dark, #0284c7);
+  --muted: var(--mui-palette-text-secondary, rgba(0, 0, 0, 0.6));
+}
+
+/* Dark mode specific overrides */
+.text-editor-page.dark-mode {
+  --text: var(--mui-palette-text-primary, #fff);
+  --panel: var(--mui-palette-background-paper, rgba(0, 0, 0, 0.8));
+  --panel2: var(--mui-palette-background-default, rgba(0, 0, 0, 0.9));
+  --border: var(--mui-palette-divider, rgba(255, 255, 255, 0.2));
+  --accent: var(--mui-palette-primary-main, #38bdf8);
+  --accent2: var(--mui-palette-primary-dark, #0284c7);
+  --muted: var(--mui-palette-text-secondary, rgba(255, 255, 255, 0.7));
+}

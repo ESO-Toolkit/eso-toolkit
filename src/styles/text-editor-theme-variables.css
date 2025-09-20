@@ -1,0 +1,29 @@
+/* Text Editor Theme Variables - Maps Material UI to standalone CSS system */
+:root {
+  /* Base theme mapping from standalone reference */
+  --bg: var(--mui-palette-background-default);
+  --text: var(--mui-palette-text-primary);
+  --panel: var(--mui-palette-background-paper);
+  --panel2: var(--mui-palette-background-default);
+  --border: var(--mui-palette-divider);
+  --accent: var(--mui-palette-primary-main);
+  --accent2: var(--mui-palette-primary-dark);
+  --muted: var(--mui-palette-text-secondary);
+
+  /* Background image variable */
+  --page-bg-image: none;
+}
+
+/* Light mode overrides */
+[data-theme='light'] {
+  --panel: rgba(255, 255, 255, 0.9);
+  --panel2: rgba(255, 255, 255, 0.95);
+  --bg-overlay: rgba(255, 255, 255, 0.1);
+}
+
+/* Dark mode overrides */
+[data-theme='dark'] {
+  --panel: rgba(0, 0, 0, 0.7);
+  --panel2: rgba(0, 0, 0, 0.8);
+  --bg-overlay: rgba(0, 0, 0, 0.3);
+}
