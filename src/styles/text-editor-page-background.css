@@ -19,10 +19,17 @@ body.text-editor-page {
 }
 
 /* Force background image for both light and dark mode */
-body.text-editor-page,
-body.text-editor-page.dark-mode,
 body.text-editor-page:not(.dark-mode) {
-  background-image: url('/images/eso-ss-1.jpg') !important;
+  background-image: url('/text-editor/text-editor-bg-light.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-color: transparent !important;
+}
+
+body.text-editor-page.dark-mode {
+  background-image: url('/text-editor/text-editor-bg-dark.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -38,7 +45,7 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/images/eso-ss-1.jpg');
+  background-image: url('/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -48,14 +55,14 @@ body.text-editor-page::before {
   pointer-events: none;
 }
 
-/* Also apply background directly to body for fallback */
-body.text-editor-page {
-  background-image: url('/images/eso-ss-1.jpg') !important;
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-  background-attachment: fixed !important;
+body.text-editor-page.dark-mode::before {
+  background-image: url('/text-editor/text-editor-bg-dark.jpg');
 }
+
+body.text-editor-page:not(.dark-mode)::before {
+  background-image: url('/text-editor/text-editor-bg-light.jpg');
+}
+
 
 /* Remove solid backgrounds from common elements */
 body.text-editor-page #root {
@@ -162,13 +169,21 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/images/eso-ss-1.jpg');
+  background-image: url('/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
   background-attachment: fixed;
   z-index: -2;
   pointer-events: none;
+}
+
+body.text-editor-page.dark-mode::before {
+  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+}
+
+body.text-editor-page:not(.dark-mode)::before {
+  background-image: url('/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Make the preview area show through to the background */
@@ -195,7 +210,7 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/images/eso-ss-1.jpg');
+  background-image: url('/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -203,6 +218,10 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
   z-index: -1;
   pointer-events: none;
   opacity: 1 !important;
+}
+
+body.text-editor-page.dark-mode .css-cplt40::before {
+  background-image: url('/text-editor/text-editor-bg-dark.jpg');
 }
 
 /* Make sure preview area content is also transparent */
@@ -211,24 +230,6 @@ body.text-editor-page:not(.dark-mode) .css-cplt40 * {
   background: transparent !important;
 }
 
-/* Add background image directly to preview area using ::before */
-body.text-editor-page .css-cplt40::before,
-body.text-editor-page:not(.dark-mode) .css-cplt40::before {
-  content: '';
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-image: url('/images/eso-ss-1.jpg');
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-  background-attachment: fixed;
-  z-index: -1;
-  pointer-events: none;
-  opacity: 1 !important;
-}
 
 /* Force the covering container to be completely transparent */
 body.text-editor-page .css-1u9mni1 {

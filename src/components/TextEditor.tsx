@@ -7,8 +7,8 @@ import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
-import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
 import { usePageBackground } from '../hooks/usePageBackground';
+// The background image is located in public/text-editor/text-editor-bg-light.jpg
 
 // Types
 declare global {
@@ -363,41 +363,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // Force background image with fallback paths
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    // Try multiple background image paths as fallbacks
-    backgroundImage: [
-      `url(${backgroundImage})`,
-      `url('/images/eso-ss-1.jpg')`,
-      `url('/src/assets/text-editor/eso-ss-1.jpg')`,
-      `url('./assets/text-editor/eso-ss-1.jpg')`
-    ].join(', '),
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed',
-    opacity: 1,
-    zIndex: -1,
-    pointerEvents: 'none',
-    // Force the pseudo-element to exist
-    display: 'block',
-    width: '100%',
-    height: '100%',
-  },
-
-  // Alternative: Also set background on the container itself as fallback
-  backgroundImage: `url(${backgroundImage})`,
-  backgroundSize: 'cover',
-  backgroundPosition: 'center',
-  backgroundRepeat: 'no-repeat',
-  backgroundAttachment: 'fixed',
-
+  
   '& span': {
     textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
     position: 'relative',
@@ -432,6 +398,8 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
+  // Apply page-specific background and theme management
+  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
   const [text, setText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -441,33 +409,47 @@ export const TextEditor: React.FC = () => {
 
   // Comprehensive debug to check everything
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('=== COMPREHENSIVE DEBUG ===');
+
+    // Determine which background image to use based on theme
+    const bgImage = theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg';
 
     // 1. Check if image file actually exists
     const img = new Image();
-    img.onload = () => console.log('✅ Image loaded successfully:', backgroundImage);
-    img.onerror = () => console.log('❌ Image FAILED to load:', backgroundImage);
-    img.src = backgroundImage;
+    img.onload = () => {
+      // eslint-disable-next-line no-console
+      console.log('✅ Image loaded successfully:', bgImage);
+    };
+    img.onerror = () => {
+      // eslint-disable-next-line no-console
+      console.log('❌ Image FAILED to load:', bgImage);
+    };
+    img.src = bgImage;
 
     // 2. Test different image paths
     const testPaths = [
-      backgroundImage,
-      '/images/eso-ss-1.jpg',
-      '/public/images/eso-ss-1.jpg',
-      './src/assets/text-editor/eso-ss-1.jpg',
-      '/src/assets/text-editor/eso-ss-1.jpg'
+      bgImage,
+      theme.palette.mode === 'dark' ? '/public/text-editor/text-editor-bg-dark.jpg' : '/public/text-editor/text-editor-bg-light.jpg',
+      theme.palette.mode === 'dark' ? '/images/text-editor-bg-dark.jpg' : '/images/text-editor-bg-light.jpg',
     ];
 
     testPaths.forEach(path => {
       const testImg = new Image();
-      testImg.onload = () => console.log('✅ Path works:', path);
-      testImg.onerror = () => console.log('❌ Path fails:', path);
+      testImg.onload = () => {
+        // eslint-disable-next-line no-console
+        console.log('✅ Path works:', path);
+      };
+      testImg.onerror = () => {
+        // eslint-disable-next-line no-console
+        console.log('❌ Path fails:', path);
+      };
       testImg.src = path;
     });
 
     // 3. Check if the file exists in the file system
-    console.log('Current backgroundImage import:', backgroundImage);
-    console.log('Type of backgroundImage:', typeof backgroundImage);
+    // eslint-disable-next-line no-console
+    console.log('Current backgroundImage path:', bgImage);
 
     // 4. Nuclear option - apply to html element with highest priority
     const html = document.documentElement;
@@ -475,7 +457,7 @@ export const TextEditor: React.FC = () => {
     const root = document.getElementById('root');
 
     // Apply to html element (highest priority)
-    html.style.setProperty('background-image', `url(${backgroundImage})`, 'important');
+    html.style.setProperty('background-image', `url(${bgImage})`, 'important');
     html.style.setProperty('background-size', 'cover', 'important');
     html.style.setProperty('background-position', 'center', 'important');
     html.style.setProperty('background-repeat', 'no-repeat', 'important');
@@ -499,13 +481,14 @@ export const TextEditor: React.FC = () => {
     // Target both problematic CSS classes that have solid backgrounds
     const problematicDivs = [
       body.querySelector('.css-1j69n08'),
-      body.querySelector('.css-1u9mni1')
+      body.querySelector('.css-1u9mni1'),
     ];
 
-    problematicDivs.forEach((div, index) => {
-      if (div) {
+    problematicDivs.forEach((div) => {
+      if (div instanceof HTMLElement) {
         div.style.setProperty('background-color', 'transparent', 'important');
         div.style.setProperty('background', 'transparent', 'important');
+        // eslint-disable-next-line no-console
         console.log(`Found and fixed element with class: ${div.className}`);
       }
     });
@@ -517,24 +500,32 @@ export const TextEditor: React.FC = () => {
       if (styles.backgroundColor === 'rgb(248, 250, 252)' || styles.backgroundColor === '#f8fafc') {
         div.style.setProperty('background-color', 'transparent', 'important');
         div.style.setProperty('background', 'transparent', 'important');
+        // eslint-disable-next-line no-console
         console.log('Fixed div with light gray background:', div.className);
       }
     });
 
+    // eslint-disable-next-line no-console
     console.log('Applied nuclear option - background to html element');
 
     setTimeout(() => {
       const computedStyle = window.getComputedStyle(body);
+      // eslint-disable-next-line no-console
       console.log('Final computed background-image:', computedStyle.backgroundImage);
+      // eslint-disable-next-line no-console
       console.log('Final computed background-color:', computedStyle.backgroundColor);
+      // eslint-disable-next-line no-console
       console.log('Body innerHTML (first 100 chars):', body.innerHTML.substring(0, 100));
 
       // Check what's covering the body
       const root = document.getElementById('root');
       if (root) {
         const rootStyles = window.getComputedStyle(root);
+        // eslint-disable-next-line no-console
         console.log('Root element background:', rootStyles.background);
+        // eslint-disable-next-line no-console
         console.log('Root element background-color:', rootStyles.backgroundColor);
+        // eslint-disable-next-line no-console
         console.log('Root element background-image:', rootStyles.backgroundImage);
 
         // Check all divs in body
@@ -542,6 +533,7 @@ export const TextEditor: React.FC = () => {
         allDivs.forEach((div, index) => {
           const styles = window.getComputedStyle(div);
           if (styles.backgroundColor !== 'rgba(0, 0, 0, 0)' && styles.backgroundColor !== 'transparent') {
+            // eslint-disable-next-line no-console
             console.log(`Div ${index} has background:`, styles.backgroundColor, styles.backgroundImage);
           }
         });
@@ -566,22 +558,31 @@ export const TextEditor: React.FC = () => {
 
   // Debug useEffect for background loading issue
   useEffect(() => {
+    // eslint-disable-next-line no-console
     console.log('=== DEBUG INFO ===');
+    // eslint-disable-next-line no-console
     console.log('Theme mode:', theme.palette.mode);
+    // eslint-disable-next-line no-console
     console.log('Body classes:', document.body.className);
+    // eslint-disable-next-line no-console
     console.log('HTML classes:', document.documentElement.className);
-    console.log('Background image import:', backgroundImage);
+    // eslint-disable-next-line no-console
+    console.log('Background image path:', '/text-editor/text-editor-bg-light.jpg');
 
     // Check computed styles
     const bodyStyles = window.getComputedStyle(document.body);
+    // eslint-disable-next-line no-console
     console.log('Body background-image:', bodyStyles.backgroundImage);
+    // eslint-disable-next-line no-console
     console.log('Body background-size:', bodyStyles.backgroundSize);
 
     // Check if CSS files are loaded
     const stylesheets = Array.from(document.styleSheets);
+    // eslint-disable-next-line no-console
     console.log('Loaded stylesheets:', stylesheets.length);
 
     // Force inspect the usePageBackground hook
+    // eslint-disable-next-line no-console
     console.log('usePageBackground should have been called with:', 'text-editor-page', theme.palette.mode === 'dark');
   }, [theme.palette.mode]);
 
