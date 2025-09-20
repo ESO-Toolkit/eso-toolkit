@@ -352,22 +352,21 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-
-  // Container transparent
   background: 'transparent !important',
-  backgroundColor: 'transparent !important',
-
-  // Styling
-  border: '1px solid rgba(255, 255, 255, 0.2)',
+  backgroundColor: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.2)'
+      : '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: '#ffffff',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
 
-  // Use ::before to "punch through" to show page background
+  // THIS IS THE KEY - ::before with background image at 0.3 opacity
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -375,12 +374,17 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'transparent',
-    zIndex: -2,
+    backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
+    opacity: 0.3, // KEY: 30% opacity makes it visible but not overpowering
+    zIndex: -1,
     pointerEvents: 'none',
   },
 
-  // Use ::after for text readability without blocking transparency
+  // Semi-transparent overlay for text readability
   '&::after': {
     content: '""',
     position: 'absolute',
@@ -388,38 +392,32 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: 'transparent',
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     zIndex: -1,
     pointerEvents: 'none',
   },
 
-  // Text styling
   '& span': {
-    textShadow: '0 2px 4px rgba(0, 0, 0, 0.9)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
     position: 'relative',
-    zIndex: 10,
-    background: 'transparent !important',
+    zIndex: 2,
   },
 
-  // Force all child elements transparent
   '& *': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
   },
 
-  // Placeholder text
   '& span[style*="color: #888"], & span[style*="italic"]': {
     color: 'rgba(255, 255, 255, 0.7) !important',
-    textShadow: '0 2px 4px rgba(0, 0, 0, 1) !important',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
   },
 
-  // ESO colored text
   '& span[style*="color: #"]': {
-    textShadow: '0 2px 4px rgba(0, 0, 0, 1)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
     fontWeight: '500',
   },
 
-  // Mobile styles
   [theme.breakpoints.down('sm')]: {
     padding: '16px',
     minHeight: '100px',
