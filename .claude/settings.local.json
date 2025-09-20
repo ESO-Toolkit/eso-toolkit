@@ -45,7 +45,9 @@
       "Read(//c/**)",
       "Bash(gh pr create:*)",
       "Bash(npm test:*)",
-      "WebFetch(domain:raw.githubusercontent.com)"
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(findstr:*)",
+      "Bash(start:*)"
     ],
     "deny": [],
     "ask": []

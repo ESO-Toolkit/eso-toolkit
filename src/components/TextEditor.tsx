@@ -6,6 +6,7 @@ import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
 import '../styles/text-editor-page-background.css';
+import '../styles/texteditor-theme-bridge.css';
 import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
 import { usePageBackground } from '../hooks/usePageBackground';
 
@@ -60,41 +61,17 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
   position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundImage: 'var(--page-bg-image)',
-    backgroundSize: 'cover',
-    backgroundPosition: 'center',
-    backgroundAttachment: 'fixed',
-    zIndex: -2,
-  },
-  '&::after': {
-    content: '""',
-    position: 'fixed',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor:
-      theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.1)',
-    zIndex: -1,
-  },
 }));
 
 const EditorTool = styled(Box)(({ theme }) => ({
   maxWidth: 900,
   margin: '2rem auto 2rem auto',
-  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.4)' : 'rgba(255, 255, 255, 0.7)',
+  background: 'var(--panel)',
   padding: '24px',
   borderRadius: '14px',
-  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+  border: '1px solid var(--border)',
   fontFamily: 'Inter, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif',
-  color: theme.palette.text.primary,
+  color: 'var(--text)',
   boxShadow:
     theme.palette.mode === 'dark'
       ? '0 8px 30px rgba(0, 0, 0, 0.6)'
@@ -111,7 +88,7 @@ const EditorTool = styled(Box)(({ theme }) => ({
     gap: '16px',
     margin: '1rem',
     backdropFilter: 'blur(8px) saturate(160%)',
-    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.8)',
+    background: 'var(--panel)',
   },
 }));
 
@@ -121,9 +98,9 @@ const Toolbar = styled(Box)(({ theme }) => ({
   gap: '12px',
   marginBottom: '20px',
   padding: '16px',
-  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
+  background: 'var(--panel2)',
   borderRadius: '12px',
-  border: `1px solid ${alpha(theme.palette.divider, 0.4)}`,
+  border: '1px solid var(--border)',
   alignItems: 'center',
   transition: 'all 0.15s ease-in-out',
   boxShadow:
@@ -137,10 +114,10 @@ const Toolbar = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ToolbarButton = styled('button')(({ theme }) => ({
-  background: theme.palette.background.paper,
-  color: theme.palette.text.primary,
-  border: `1px solid ${theme.palette.divider}`,
+const ToolbarButton = styled('button')({
+  background: 'var(--panel)',
+  color: 'var(--text)',
+  border: '1px solid var(--border)',
   borderRadius: '8px',
   padding: '10px 16px',
   cursor: 'pointer',
@@ -149,28 +126,28 @@ const ToolbarButton = styled('button')(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   '&:hover': {
-    background: theme.palette.primary.main,
-    borderColor: theme.palette.primary.main,
-    color: theme.palette.background.default,
+    background: 'var(--accent)',
+    borderColor: 'var(--accent)',
+    color: 'var(--bg)',
     transform: 'translateY(-1px)',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
   },
   '&:active': {
-    background: theme.palette.primary.dark,
-    borderColor: theme.palette.primary.dark,
-    color: theme.palette.background.default,
+    background: 'var(--accent2)',
+    borderColor: 'var(--accent2)',
+    color: 'var(--bg)',
     transform: 'translateY(0px)',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
   '&:disabled': {
     background: 'transparent',
-    color: theme.palette.text.disabled,
-    borderColor: theme.palette.divider,
+    color: 'var(--muted)',
+    borderColor: 'var(--border)',
     opacity: 1,
     cursor: 'not-allowed',
   },
-  // Mobile styles (from latest commit)
-  [theme.breakpoints.down('sm')]: {
+  // Mobile styles
+  '@media (max-width: 768px)': {
     padding: '10px 14px',
     fontSize: '14px',
     order: 3,
@@ -178,87 +155,84 @@ const ToolbarButton = styled('button')(({ theme }) => ({
     maxWidth: 'calc(50% - 12px)',
     minHeight: '44px',
   },
-}));
+});
 
-const UndoRedoGroup = styled(Box)(({ theme }) => ({
+const UndoRedoGroup = styled(Box)({
   display: 'flex',
   gap: '8px',
-  // Mobile styles (from latest commit)
-  [theme.breakpoints.down('sm')]: {
+  // Mobile styles
+  '@media (max-width: 768px)': {
     gap: '6px',
     order: 1,
     justifyContent: 'center',
     width: '100%',
   },
-}));
+});
 
-// Mobile-specific components (from latest commit)
-const FormatContainer = styled(Box)(({ theme }) => ({
+// Mobile-specific components
+const FormatContainer = styled(Box)({
   display: 'none', // Hidden on desktop
   flexDirection: 'column',
   gap: '8px',
   marginBottom: '20px',
   // Mobile styles - position in grid
-  [theme.breakpoints.down('sm')]: {
+  '@media (max-width: 768px)': {
     display: 'flex',
     gridRow: 2,
   },
-}));
+});
 
-const FormatRow = styled(Box)(({ theme }) => ({
+const FormatRow = styled(Box)({
   display: 'flex',
   gap: '8px',
   padding: '12px',
-  background:
-    theme.palette.mode === 'dark'
-      ? theme.palette.background.default
-      : alpha(theme.palette.background.default, 0.8),
+  background: 'var(--panel2)',
   borderRadius: '12px',
-  border: `1px solid ${theme.palette.divider}`,
+  border: '1px solid var(--border)',
   alignItems: 'center',
   flexWrap: 'nowrap',
-}));
+});
 
-const ColorSection = styled(Box)(({ theme }) => ({
+const ColorSection = styled(Box)({
   display: 'none', // Hidden on desktop
   flexDirection: 'column',
   alignItems: 'center',
   gap: '40px',
   marginBottom: '4px',
   // Mobile styles - position in grid (move to top)
-  [theme.breakpoints.down('sm')]: {
+  '@media (max-width: 768px)': {
     display: 'flex',
     gridRow: 1,
     marginBottom: '2px',
   },
-}));
+});
 
 // Desktop color components (from previous commit)
-const PresetColors = styled(Box)(({ theme }) => ({
+const PresetColors = styled(Box)({
   display: 'flex',
   gap: '4px',
   marginLeft: '8px',
-  // Mobile styles (from latest commit)
-  [theme.breakpoints.down('sm')]: {
+  // Mobile styles
+  '@media (max-width: 768px)': {
     gap: '8px',
     width: '100%',
     justifyContent: 'space-between',
     marginLeft: 0,
   },
-}));
+});
 
-const PresetColor = styled('button')(({ theme }) => ({
+const PresetColor = styled('button')({
   width: '24px',
   height: '24px',
   borderRadius: '3px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
-  // Mobile styles (from latest commit)
-  [theme.breakpoints.down('sm')]: {
+  // Mobile styles
+  '@media (max-width: 768px)': {
     width: 'calc(16.666% - 7px)',
     height: '40px',
     borderRadius: '6px',
-    border: `1px solid ${theme.palette.divider}`,
+    border: '1px solid var(--border)',
     '&:hover': {
       transform: 'scale(1.05)',
     },
@@ -266,21 +240,21 @@ const PresetColor = styled('button')(({ theme }) => ({
   '&:hover': {
     transform: 'scale(1.1)',
   },
-}));
+});
 
-const ColorPickerWrapper = styled(Box)(({ theme }) => ({
+const ColorPickerWrapper = styled(Box)({
   display: 'flex',
   alignItems: 'center',
   gap: '8px',
   marginLeft: 'auto',
-  // Mobile styles (from latest commit)
-  [theme.breakpoints.down('sm')]: {
+  // Mobile styles
+  '@media (max-width: 768px)': {
     justifyContent: 'center',
     marginLeft: 0,
   },
-}));
+});
 
-const EmojiButton = styled('button')(({ theme }) => ({
+const EmojiButton = styled('button')({
   display: 'inline-flex',
   alignItems: 'center',
   justifyContent: 'center',
@@ -299,15 +273,15 @@ const EmojiButton = styled('button')(({ theme }) => ({
   '&:hover': {
     transform: 'scale(1.05)',
   },
-}));
+});
 
 const TextInput = styled('textarea')(({ theme }) => ({
   width: '100%',
   height: '280px',
   padding: '20px',
-  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
-  color: theme.palette.text.primary,
-  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+  background: 'var(--panel)',
+  color: 'var(--text)',
+  border: '1px solid var(--border)',
   borderRadius: '12px 12px 0 0',
   fontFamily: '"SF Mono", "Monaco", "Inconsolata", "Roboto Mono", monospace',
   resize: 'vertical',
@@ -321,7 +295,7 @@ const TextInput = styled('textarea')(({ theme }) => ({
   WebkitBackdropFilter: 'blur(6px) saturate(140%)',
   '&:focus': {
     outline: 'none',
-    borderColor: theme.palette.primary.main,
+    borderColor: 'var(--accent)',
     boxShadow: `inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
 }));
@@ -331,8 +305,8 @@ const StatusBar = styled(Box)(({ theme }) => ({
   justifyContent: 'space-between',
   alignItems: 'center',
   padding: '16px 20px',
-  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.8)',
-  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+  background: 'var(--panel2)',
+  border: '1px solid var(--border)',
   borderTop: 'none',
   borderBottomLeftRadius: '12px',
   borderBottomRightRadius: '12px',
@@ -378,19 +352,21 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.5)' : 'rgba(255, 255, 255, 0.75)',
-  border: `1px solid ${alpha(theme.palette.divider, 0.3)}`,
+  background: 'transparent !important',
+  border: `1px solid ${theme.palette.divider}`,
   fontSize: '1rem',
   lineHeight: '1.6',
-  boxShadow: 'inset 0 2px 8px rgba(0, 0, 0, 0.1)',
   position: 'relative',
   overflow: 'hidden',
-  zIndex: 0,
+  zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  backdropFilter: 'blur(6px) saturate(140%)',
-  WebkitBackdropFilter: 'blur(6px) saturate(140%)',
+  color: theme.palette.text.primary,
   '& span': {
     textShadow: 'none',
+  },
+  // Force transparency for all child elements
+  '& *': {
+    background: 'transparent !important',
   },
   // Mobile styles
   [theme.breakpoints.down('sm')]: {
@@ -416,14 +392,20 @@ export const TextEditor: React.FC = () => {
   // Apply page background when component mounts and react to theme changes
   usePageBackground('text-editor-page', theme.palette.mode === 'dark');
 
-  // Set background image via CSS variable for better path resolution
+  
+  // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
-    document.documentElement.style.setProperty('--page-bg-image', `url(${backgroundImage})`);
+    const root = document.documentElement;
 
-    return () => {
-      document.documentElement.style.removeProperty('--page-bg-image');
-    };
-  }, [backgroundImage]);
+    // Map Material UI theme values to CSS variables
+    root.style.setProperty('--mui-palette-background-default', theme.palette.background.default);
+    root.style.setProperty('--mui-palette-background-paper', theme.palette.background.paper);
+    root.style.setProperty('--mui-palette-text-primary', theme.palette.text.primary);
+    root.style.setProperty('--mui-palette-text-secondary', theme.palette.text.secondary);
+    root.style.setProperty('--mui-palette-primary-main', theme.palette.primary.main);
+    root.style.setProperty('--mui-palette-primary-dark', theme.palette.primary.dark);
+    root.style.setProperty('--mui-palette-divider', theme.palette.divider);
+  }, [theme]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const pickrRef = useRef<PickrInstance | null>(null);

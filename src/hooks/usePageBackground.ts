@@ -6,47 +6,36 @@ import { useEffect } from 'react';
 
 export function usePageBackground(pageClass: string, isDarkMode = false): void {
   useEffect(() => {
-    // Add page-specific class
+    // Apply theme class to body
     document.body.classList.add(pageClass);
-
-    // Force remove any conflicting styles
-    const root = document.getElementById('root');
-    if (root) {
-      root.style.background = 'transparent';
-      root.style.backgroundColor = 'transparent';
-    }
-
-    // Force body background transparency
-    document.body.style.background = 'transparent';
-    document.body.style.backgroundColor = 'transparent';
-
-    // Add/remove dark mode class
     if (isDarkMode) {
       document.body.classList.add('dark-mode');
     } else {
       document.body.classList.remove('dark-mode');
     }
+
+    // Apply background image to body
+    document.body.style.backgroundImage = 'url("/images/eso-ss-1.jpg")';
+    document.body.style.backgroundSize = 'cover';
+    document.body.style.backgroundPosition = 'center';
+    document.body.style.backgroundRepeat = 'no-repeat';
+    document.body.style.backgroundAttachment = 'fixed';
+
+    // Make any covering elements transparent
+    const coveringElements = document.querySelectorAll('.css-1bjd1tz, .css-1u9mni1');
+    coveringElements.forEach(el => {
+      (el as HTMLElement).style.backgroundColor = 'transparent';
+      (el as HTMLElement).style.background = 'transparent';
+    });
 
     // Cleanup when component unmounts or page changes
     return () => {
-      document.body.classList.remove(pageClass);
-      document.body.classList.remove('dark-mode');
-      // Restore default background if needed
-      if (root) {
-        root.style.background = '';
-        root.style.backgroundColor = '';
-      }
-      document.body.style.background = '';
-      document.body.style.backgroundColor = '';
+      document.body.classList.remove(pageClass, 'dark-mode');
+      document.body.style.backgroundImage = '';
+      document.body.style.backgroundSize = '';
+      document.body.style.backgroundPosition = '';
+      document.body.style.backgroundRepeat = '';
+      document.body.style.backgroundAttachment = '';
     };
   }, [pageClass, isDarkMode]);
-
-  // Update dark mode class when it changes
-  useEffect(() => {
-    if (isDarkMode) {
-      document.body.classList.add('dark-mode');
-    } else {
-      document.body.classList.remove('dark-mode');
-    }
-  }, [isDarkMode]);
 }
