@@ -353,22 +353,72 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
   background: 'transparent !important',
-  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: 'transparent !important',
+  border: '1px solid rgba(255, 255, 255, 0.2)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: theme.palette.text.primary,
-  '& span': {
-    textShadow: 'none',
+  color: '#ffffff',
+
+  // Force background image with fallback paths
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    // Try multiple background image paths as fallbacks
+    backgroundImage: [
+      `url(${backgroundImage})`,
+      `url('/images/eso-ss-1.jpg')`,
+      `url('/src/assets/text-editor/eso-ss-1.jpg')`,
+      `url('./assets/text-editor/eso-ss-1.jpg')`
+    ].join(', '),
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
+    opacity: 1,
+    zIndex: -1,
+    pointerEvents: 'none',
+    // Force the pseudo-element to exist
+    display: 'block',
+    width: '100%',
+    height: '100%',
   },
-  // Force transparency for all child elements
+
+  // Alternative: Also set background on the container itself as fallback
+  backgroundImage: `url(${backgroundImage})`,
+  backgroundSize: 'cover',
+  backgroundPosition: 'center',
+  backgroundRepeat: 'no-repeat',
+  backgroundAttachment: 'fixed',
+
+  '& span': {
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+    position: 'relative',
+    zIndex: 2,
+  },
+
   '& *': {
     background: 'transparent !important',
+    backgroundColor: 'transparent !important',
   },
-  // Mobile styles
+
+  '& span[style*="color: #888"], & span[style*="italic"]': {
+    color: 'rgba(255, 255, 255, 0.7) !important',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
+  },
+
+  '& span[style*="color: #"]': {
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    fontWeight: '500',
+  },
+
   [theme.breakpoints.down('sm')]: {
     padding: '16px',
     minHeight: '100px',
@@ -389,8 +439,116 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Apply page background when component mounts and react to theme changes
-  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
+  // Comprehensive debug to check everything
+  useEffect(() => {
+    console.log('=== COMPREHENSIVE DEBUG ===');
+
+    // 1. Check if image file actually exists
+    const img = new Image();
+    img.onload = () => console.log('✅ Image loaded successfully:', backgroundImage);
+    img.onerror = () => console.log('❌ Image FAILED to load:', backgroundImage);
+    img.src = backgroundImage;
+
+    // 2. Test different image paths
+    const testPaths = [
+      backgroundImage,
+      '/images/eso-ss-1.jpg',
+      '/public/images/eso-ss-1.jpg',
+      './src/assets/text-editor/eso-ss-1.jpg',
+      '/src/assets/text-editor/eso-ss-1.jpg'
+    ];
+
+    testPaths.forEach(path => {
+      const testImg = new Image();
+      testImg.onload = () => console.log('✅ Path works:', path);
+      testImg.onerror = () => console.log('❌ Path fails:', path);
+      testImg.src = path;
+    });
+
+    // 3. Check if the file exists in the file system
+    console.log('Current backgroundImage import:', backgroundImage);
+    console.log('Type of backgroundImage:', typeof backgroundImage);
+
+    // 4. Nuclear option - apply to html element with highest priority
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+
+    // Apply to html element (highest priority)
+    html.style.setProperty('background-image', `url(${backgroundImage})`, 'important');
+    html.style.setProperty('background-size', 'cover', 'important');
+    html.style.setProperty('background-position', 'center', 'important');
+    html.style.setProperty('background-repeat', 'no-repeat', 'important');
+    html.style.setProperty('background-attachment', 'fixed', 'important');
+    html.style.setProperty('background-color', 'transparent', 'important');
+    html.style.setProperty('min-height', '100vh', 'important');
+    html.style.setProperty('margin', '0', 'important');
+    html.style.setProperty('padding', '0', 'important');
+
+    // Make body and root completely transparent
+    body.style.setProperty('background', 'transparent', 'important');
+    body.style.setProperty('background-color', 'transparent', 'important');
+    body.style.setProperty('background-image', 'none', 'important');
+
+    if (root) {
+      root.style.setProperty('background', 'transparent', 'important');
+      root.style.setProperty('background-color', 'transparent', 'important');
+      root.style.setProperty('background-image', 'none', 'important');
+    }
+
+    // Target both problematic CSS classes that have solid backgrounds
+    const problematicDivs = [
+      body.querySelector('.css-1j69n08'),
+      body.querySelector('.css-1u9mni1')
+    ];
+
+    problematicDivs.forEach((div, index) => {
+      if (div) {
+        div.style.setProperty('background-color', 'transparent', 'important');
+        div.style.setProperty('background', 'transparent', 'important');
+        console.log(`Found and fixed element with class: ${div.className}`);
+      }
+    });
+
+    // Also try to find it by inline styles
+    const allDivs = body.querySelectorAll('div');
+    allDivs.forEach((div) => {
+      const styles = window.getComputedStyle(div);
+      if (styles.backgroundColor === 'rgb(248, 250, 252)' || styles.backgroundColor === '#f8fafc') {
+        div.style.setProperty('background-color', 'transparent', 'important');
+        div.style.setProperty('background', 'transparent', 'important');
+        console.log('Fixed div with light gray background:', div.className);
+      }
+    });
+
+    console.log('Applied nuclear option - background to html element');
+
+    setTimeout(() => {
+      const computedStyle = window.getComputedStyle(body);
+      console.log('Final computed background-image:', computedStyle.backgroundImage);
+      console.log('Final computed background-color:', computedStyle.backgroundColor);
+      console.log('Body innerHTML (first 100 chars):', body.innerHTML.substring(0, 100));
+
+      // Check what's covering the body
+      const root = document.getElementById('root');
+      if (root) {
+        const rootStyles = window.getComputedStyle(root);
+        console.log('Root element background:', rootStyles.background);
+        console.log('Root element background-color:', rootStyles.backgroundColor);
+        console.log('Root element background-image:', rootStyles.backgroundImage);
+
+        // Check all divs in body
+        const allDivs = body.querySelectorAll('div');
+        allDivs.forEach((div, index) => {
+          const styles = window.getComputedStyle(div);
+          if (styles.backgroundColor !== 'rgba(0, 0, 0, 0)' && styles.backgroundColor !== 'transparent') {
+            console.log(`Div ${index} has background:`, styles.backgroundColor, styles.backgroundImage);
+          }
+        });
+      }
+    }, 1000);
+
+  }, []);
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
@@ -405,6 +563,27 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-primary-dark', theme.palette.primary.dark);
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
+
+  // Debug useEffect for background loading issue
+  useEffect(() => {
+    console.log('=== DEBUG INFO ===');
+    console.log('Theme mode:', theme.palette.mode);
+    console.log('Body classes:', document.body.className);
+    console.log('HTML classes:', document.documentElement.className);
+    console.log('Background image import:', backgroundImage);
+
+    // Check computed styles
+    const bodyStyles = window.getComputedStyle(document.body);
+    console.log('Body background-image:', bodyStyles.backgroundImage);
+    console.log('Body background-size:', bodyStyles.backgroundSize);
+
+    // Check if CSS files are loaded
+    const stylesheets = Array.from(document.styleSheets);
+    console.log('Loaded stylesheets:', stylesheets.length);
+
+    // Force inspect the usePageBackground hook
+    console.log('usePageBackground should have been called with:', 'text-editor-page', theme.palette.mode === 'dark');
+  }, [theme.palette.mode]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const pickrRef = useRef<PickrInstance | null>(null);

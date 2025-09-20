@@ -18,6 +18,18 @@ body.text-editor-page {
   background-color: transparent !important;
 }
 
+/* Force background image for both light and dark mode */
+body.text-editor-page,
+body.text-editor-page.dark-mode,
+body.text-editor-page:not(.dark-mode) {
+  background-image: url('/images/eso-ss-1.jpg') !important;
+  background-size: cover !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-attachment: fixed !important;
+  background-color: transparent !important;
+}
+
 /* Background image layer - VISIBLE */
 body.text-editor-page::before {
   content: '';
@@ -220,6 +232,14 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
 
 /* Force the covering container to be completely transparent */
 body.text-editor-page .css-1u9mni1 {
+  background: transparent !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  position: relative !important;
+}
+
+/* Also target the light mode container that might be getting a solid background */
+body.text-editor-page .css-1j69n08 {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;
