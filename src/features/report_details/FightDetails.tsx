@@ -6,7 +6,7 @@ import { useSelectedReportAndFight } from '../../ReportFightContext';
 import { FightDetailsView } from './FightDetailsView';
 
 export const FightDetails: React.FC = () => {
-  const { selectedTabId, showExperimentalTabs, setSelectedTab } = useSelectedReportAndFight();
+  const { selectedTabId, showExperimentalTabs, setSelectedTab, setShowExperimentalTabs } = useSelectedReportAndFight();
   const { fight, isFightLoading } = useCurrentFight();
 
   // Show loading state while fight is loading
@@ -51,6 +51,7 @@ export const FightDetails: React.FC = () => {
       fight={fight}
       onTabChange={setSelectedTab}
       showExperimentalTabs={showExperimentalTabs}
+      onToggleExperimentalTabs={setShowExperimentalTabs}
       isLoading={false}
     />
   );

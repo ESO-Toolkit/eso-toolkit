@@ -115,6 +115,7 @@ interface FightDetailsViewProps {
   isLoading: boolean;
   onTabChange: (tabId: TabId) => void;
   showExperimentalTabs: boolean;
+  onToggleExperimentalTabs: (enabled: boolean) => void;
 }
 
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
@@ -122,6 +123,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   selectedTabId,
   onTabChange,
   showExperimentalTabs,
+  onToggleExperimentalTabs,
 }) => {
   // Ensure we always have a valid selectedTabId
   const validSelectedTabId = selectedTabId || TabId.INSIGHTS;
@@ -572,7 +574,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           }
         >
           <FormControlLabel
-            control={<Switch checked={showExperimentalTabs} size="small" />}
+            control={
+              <Switch 
+                checked={showExperimentalTabs} 
+                onChange={(e) => onToggleExperimentalTabs(e.target.checked)}
+                size="small" 
+              />
+            }
             label={
               <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
                 🧪
