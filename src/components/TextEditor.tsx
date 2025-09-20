@@ -353,11 +353,11 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
 
-  // CRITICAL: Make container completely transparent - no internal background image
+  // CRITICAL: Make completely transparent - no internal backgrounds
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
 
-  // Styling
+  // Border styling
   border: '1px solid rgba(255, 255, 255, 0.2)',
   fontSize: '1rem',
   lineHeight: '1.6',
@@ -367,21 +367,17 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // REMOVE the ::before background image - we want to see THROUGH to page background
-  // NO ::before pseudo-element with background image
+  // NO ::before pseudo-element - we want transparency
+  // NO ::after pseudo-element - we want transparency
 
-  // REMOVE the ::after overlay - it blocks transparency
-  // NO ::after pseudo-element with overlay
-
-  // Text styling for readability over the page background that shows through
+  // Text styling for readability over page background
   '& span': {
-    textShadow: '0 2px 4px rgba(0, 0, 0, 0.9)', // Strong shadow for readability
+    textShadow: '0 2px 4px rgba(0, 0, 0, 1)', // Very strong shadow for white text
     position: 'relative',
     zIndex: 2,
-    background: 'transparent !important',
   },
 
-  // Force all child elements to be transparent
+  // Force all child elements transparent
   '& *': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
@@ -393,9 +389,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     textShadow: '0 2px 4px rgba(0, 0, 0, 1) !important',
   },
 
-  // ESO colored text
+  // ESO colored text with strong shadows
   '& span[style*="color: #"]': {
-    textShadow: '0 2px 4px rgba(0, 0, 0, 1)', // Very strong shadow for colored text
+    textShadow: '0 2px 4px rgba(0, 0, 0, 1)',
     fontWeight: '500',
   },
 
