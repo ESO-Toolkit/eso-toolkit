@@ -14,8 +14,12 @@ export function usePageBackground(pageClass: string, isDarkMode = false): void {
       document.body.classList.remove('dark-mode');
     }
 
-    // Apply background image to body
-    document.body.style.backgroundImage = 'url("/images/eso-ss-1.jpg")';
+    // Apply background image to body based on theme
+    const backgroundImage = isDarkMode
+      ? 'url("/text-editor/text-editor-bg-dark.jpg")'
+      : 'url("/text-editor/text-editor-bg-light.jpg")';
+
+    document.body.style.backgroundImage = backgroundImage;
     document.body.style.backgroundSize = 'cover';
     document.body.style.backgroundPosition = 'center';
     document.body.style.backgroundRepeat = 'no-repeat';

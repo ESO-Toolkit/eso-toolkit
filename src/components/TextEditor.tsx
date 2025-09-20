@@ -7,8 +7,8 @@ import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
-import backgroundImage from '../assets/text-editor/eso-ss-1.jpg';
 import { usePageBackground } from '../hooks/usePageBackground';
+// The background image is located in public/text-editor/text-editor-bg-light.jpg
 
 // Types
 declare global {
@@ -353,22 +353,71 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
   background: 'transparent !important',
-  border: `1px solid ${theme.palette.divider}`,
+  backgroundColor: 'transparent !important',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(255, 255, 255, 0.2)'
+      : '1px solid rgba(0, 0, 0, 0.1)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: theme.palette.text.primary,
-  '& span': {
-    textShadow: 'none',
+  color: '#ffffff',
+
+  // Add background image to show through transparent preview area
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundImage: `url(${theme.palette.mode === 'dark' ? '/text-editor/text-editor-bg-dark.jpg' : '/text-editor/text-editor-bg-light.jpg'})`,
+    backgroundSize: 'cover',
+    backgroundPosition: 'center',
+    backgroundRepeat: 'no-repeat',
+    backgroundAttachment: 'fixed',
+    opacity: 0.3,
+    zIndex: -1,
+    pointerEvents: 'none',
   },
-  // Force transparency for all child elements
+
+  // Add semi-transparent overlay for better text readability in light mode
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+    zIndex: -1,
+    pointerEvents: 'none',
+  },
+
+  '& span': {
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.8)',
+    position: 'relative',
+    zIndex: 2,
+  },
+
   '& *': {
     background: 'transparent !important',
+    backgroundColor: 'transparent !important',
   },
-  // Mobile styles
+
+  '& span[style*="color: #888"], & span[style*="italic"]': {
+    color: 'rgba(255, 255, 255, 0.7) !important',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
+  },
+
+  '& span[style*="color: #"]': {
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    fontWeight: '500',
+  },
+
   [theme.breakpoints.down('sm')]: {
     padding: '16px',
     minHeight: '100px',
@@ -382,6 +431,8 @@ const presetColors = ['#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#F
 // Main Component
 export const TextEditor: React.FC = () => {
   const theme = useTheme();
+  // Apply page-specific background and theme management
+  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
   const [text, setText] = useState('');
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
@@ -389,8 +440,153 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Apply page background when component mounts and react to theme changes
-  usePageBackground('text-editor-page', theme.palette.mode === 'dark');
+  // Comprehensive debug to check everything
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('=== COMPREHENSIVE DEBUG ===');
+
+    // Determine which background image to use based on theme
+    const bgImage =
+      theme.palette.mode === 'dark'
+        ? '/text-editor/text-editor-bg-dark.jpg'
+        : '/text-editor/text-editor-bg-light.jpg';
+
+    // 1. Check if image file actually exists
+    const img = new Image();
+    img.onload = () => {
+      // eslint-disable-next-line no-console
+      console.log('✅ Image loaded successfully:', bgImage);
+    };
+    img.onerror = () => {
+      // eslint-disable-next-line no-console
+      console.log('❌ Image FAILED to load:', bgImage);
+    };
+    img.src = bgImage;
+
+    // 2. Test different image paths
+    const testPaths = [
+      bgImage,
+      theme.palette.mode === 'dark'
+        ? '/public/text-editor/text-editor-bg-dark.jpg'
+        : '/public/text-editor/text-editor-bg-light.jpg',
+      theme.palette.mode === 'dark'
+        ? '/images/text-editor-bg-dark.jpg'
+        : '/images/text-editor-bg-light.jpg',
+    ];
+
+    testPaths.forEach((path) => {
+      const testImg = new Image();
+      testImg.onload = () => {
+        // eslint-disable-next-line no-console
+        console.log('✅ Path works:', path);
+      };
+      testImg.onerror = () => {
+        // eslint-disable-next-line no-console
+        console.log('❌ Path fails:', path);
+      };
+      testImg.src = path;
+    });
+
+    // 3. Check if the file exists in the file system
+    // eslint-disable-next-line no-console
+    console.log('Current backgroundImage path:', bgImage);
+
+    // 4. Nuclear option - apply to html element with highest priority
+    const html = document.documentElement;
+    const body = document.body;
+    const root = document.getElementById('root');
+
+    // Apply to html element (highest priority)
+    html.style.setProperty('background-image', `url(${bgImage})`, 'important');
+    html.style.setProperty('background-size', 'cover', 'important');
+    html.style.setProperty('background-position', 'center', 'important');
+    html.style.setProperty('background-repeat', 'no-repeat', 'important');
+    html.style.setProperty('background-attachment', 'fixed', 'important');
+    html.style.setProperty('background-color', 'transparent', 'important');
+    html.style.setProperty('min-height', '100vh', 'important');
+    html.style.setProperty('margin', '0', 'important');
+    html.style.setProperty('padding', '0', 'important');
+
+    // Make body and root completely transparent
+    body.style.setProperty('background', 'transparent', 'important');
+    body.style.setProperty('background-color', 'transparent', 'important');
+    body.style.setProperty('background-image', 'none', 'important');
+
+    if (root) {
+      root.style.setProperty('background', 'transparent', 'important');
+      root.style.setProperty('background-color', 'transparent', 'important');
+      root.style.setProperty('background-image', 'none', 'important');
+    }
+
+    // Target both problematic CSS classes that have solid backgrounds
+    const problematicDivs = [
+      body.querySelector('.css-1j69n08'),
+      body.querySelector('.css-1u9mni1'),
+    ];
+
+    problematicDivs.forEach((div) => {
+      if (div instanceof HTMLElement) {
+        div.style.setProperty('background-color', 'transparent', 'important');
+        div.style.setProperty('background', 'transparent', 'important');
+        // eslint-disable-next-line no-console
+        console.log(`Found and fixed element with class: ${div.className}`);
+      }
+    });
+
+    // Also try to find it by inline styles
+    const allDivs = body.querySelectorAll('div');
+    allDivs.forEach((div) => {
+      const styles = window.getComputedStyle(div);
+      if (styles.backgroundColor === 'rgb(248, 250, 252)' || styles.backgroundColor === '#f8fafc') {
+        div.style.setProperty('background-color', 'transparent', 'important');
+        div.style.setProperty('background', 'transparent', 'important');
+        // eslint-disable-next-line no-console
+        console.log('Fixed div with light gray background:', div.className);
+      }
+    });
+
+    // eslint-disable-next-line no-console
+    console.log('Applied nuclear option - background to html element');
+
+    setTimeout(() => {
+      const computedStyle = window.getComputedStyle(body);
+      // eslint-disable-next-line no-console
+      console.log('Final computed background-image:', computedStyle.backgroundImage);
+      // eslint-disable-next-line no-console
+      console.log('Final computed background-color:', computedStyle.backgroundColor);
+      // eslint-disable-next-line no-console
+      console.log('Body innerHTML (first 100 chars):', body.innerHTML.substring(0, 100));
+
+      // Check what's covering the body
+      const root = document.getElementById('root');
+      if (root) {
+        const rootStyles = window.getComputedStyle(root);
+        // eslint-disable-next-line no-console
+        console.log('Root element background:', rootStyles.background);
+        // eslint-disable-next-line no-console
+        console.log('Root element background-color:', rootStyles.backgroundColor);
+        // eslint-disable-next-line no-console
+        console.log('Root element background-image:', rootStyles.backgroundImage);
+
+        // Check all divs in body
+        const allDivs = body.querySelectorAll('div');
+        allDivs.forEach((div, index) => {
+          const styles = window.getComputedStyle(div);
+          if (
+            styles.backgroundColor !== 'rgba(0, 0, 0, 0)' &&
+            styles.backgroundColor !== 'transparent'
+          ) {
+            // eslint-disable-next-line no-console
+            console.log(
+              `Div ${index} has background:`,
+              styles.backgroundColor,
+              styles.backgroundImage,
+            );
+          }
+        });
+      }
+    }, 1000);
+  }, []);
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
@@ -405,6 +601,40 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-primary-dark', theme.palette.primary.dark);
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
+
+  // Debug useEffect for background loading issue
+  useEffect(() => {
+    // eslint-disable-next-line no-console
+    console.log('=== DEBUG INFO ===');
+    // eslint-disable-next-line no-console
+    console.log('Theme mode:', theme.palette.mode);
+    // eslint-disable-next-line no-console
+    console.log('Body classes:', document.body.className);
+    // eslint-disable-next-line no-console
+    console.log('HTML classes:', document.documentElement.className);
+    // eslint-disable-next-line no-console
+    console.log('Background image path:', '/text-editor/text-editor-bg-light.jpg');
+
+    // Check computed styles
+    const bodyStyles = window.getComputedStyle(document.body);
+    // eslint-disable-next-line no-console
+    console.log('Body background-image:', bodyStyles.backgroundImage);
+    // eslint-disable-next-line no-console
+    console.log('Body background-size:', bodyStyles.backgroundSize);
+
+    // Check if CSS files are loaded
+    const stylesheets = Array.from(document.styleSheets);
+    // eslint-disable-next-line no-console
+    console.log('Loaded stylesheets:', stylesheets.length);
+
+    // Force inspect the usePageBackground hook
+    // eslint-disable-next-line no-console
+    console.log(
+      'usePageBackground should have been called with:',
+      'text-editor-page',
+      theme.palette.mode === 'dark',
+    );
+  }, [theme.palette.mode]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const pickrRef = useRef<PickrInstance | null>(null);
