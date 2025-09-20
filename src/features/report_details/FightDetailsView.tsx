@@ -115,6 +115,7 @@ interface FightDetailsViewProps {
   isLoading: boolean;
   onTabChange: (tabId: TabId) => void;
   showExperimentalTabs: boolean;
+  onToggleExperimentalTabs: (enabled: boolean) => void;
 }
 
 export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
@@ -122,9 +123,35 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   selectedTabId,
   onTabChange,
   showExperimentalTabs,
+  onToggleExperimentalTabs,
 }) => {
-  // Ensure we always have a valid selectedTabId
-  const validSelectedTabId = selectedTabId || TabId.INSIGHTS;
+  // Define experimental tabs array
+  const experimentalTabs: TabId[] = [
+    TabId.LOCATION_HEATMAP,
+    TabId.RAW_EVENTS,
+    TabId.TARGET_EVENTS,
+    TabId.DIAGNOSTICS,
+    TabId.ACTORS,
+    TabId.TALENTS,
+    TabId.ROTATION_ANALYSIS,
+    TabId.AURAS_OVERVIEW,
+    TabId.BUFFS_OVERVIEW,
+    TabId.DEBUFFS_OVERVIEW,
+  ];
+
+  // Ensure we have a valid selectedTabId based on what tabs are actually rendered
+  const getValidTabId = (tabId: TabId | undefined): TabId => {
+    if (!tabId) return TabId.INSIGHTS;
+
+    // If experimental tabs are disabled and the selected tab is experimental, use INSIGHTS
+    if (!showExperimentalTabs && experimentalTabs.includes(tabId)) {
+      return TabId.INSIGHTS;
+    }
+
+    return tabId;
+  };
+
+  const validSelectedTabId = getValidTabId(selectedTabId);
 
   // Get navigation data and functions
   const {
@@ -468,95 +495,102 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
           />
 
-          {showExperimentalTabs && (
-            <>
-              <Tab
-                value={TabId.LOCATION_HEATMAP}
-                icon={
-                  <Tooltip title="Location Heatmap">
-                    <MapIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.RAW_EVENTS}
-                icon={
-                  <Tooltip title="Raw Events">
-                    <ListIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.TARGET_EVENTS}
-                icon={
-                  <Tooltip title="Target Events">
-                    <GpsFixedIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.DIAGNOSTICS}
-                icon={
-                  <Tooltip title="Diagnostics">
-                    <BugReportIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.ACTORS}
-                icon={
-                  <Tooltip title="Actors">
-                    <Person />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.TALENTS}
-                icon={
-                  <Tooltip title="Talents">
-                    <StarIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.ROTATION_ANALYSIS}
-                icon={
-                  <Tooltip title="Rotation Analysis">
-                    <RepeatIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.AURAS_OVERVIEW}
-                icon={
-                  <Tooltip title="Auras Overview">
-                    <AutoAwesomeIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.BUFFS_OVERVIEW}
-                icon={
-                  <Tooltip title="Buffs Overview">
-                    <FlareIcon />
-                  </Tooltip>
-                }
-              />
-              <Tab
-                value={TabId.DEBUFFS_OVERVIEW}
-                icon={
-                  <Tooltip title="Debuffs Overview">
-                    <Icon
-                      baseClassName="material-symbols-outlined"
-                      sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
-                    >
-                      shield_with_heart
-                    </Icon>
-                  </Tooltip>
-                }
-              />
-            </>
-          )}
+          {/* Always render experimental tabs, but hide them when disabled */}
+          <Tab
+            value={TabId.LOCATION_HEATMAP}
+            icon={
+              <Tooltip title="Location Heatmap">
+                <MapIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.RAW_EVENTS}
+            icon={
+              <Tooltip title="Raw Events">
+                <ListIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.TARGET_EVENTS}
+            icon={
+              <Tooltip title="Target Events">
+                <GpsFixedIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.DIAGNOSTICS}
+            icon={
+              <Tooltip title="Diagnostics">
+                <BugReportIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.ACTORS}
+            icon={
+              <Tooltip title="Actors">
+                <Person />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.TALENTS}
+            icon={
+              <Tooltip title="Talents">
+                <StarIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.ROTATION_ANALYSIS}
+            icon={
+              <Tooltip title="Rotation Analysis">
+                <RepeatIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.AURAS_OVERVIEW}
+            icon={
+              <Tooltip title="Auras Overview">
+                <AutoAwesomeIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.BUFFS_OVERVIEW}
+            icon={
+              <Tooltip title="Buffs Overview">
+                <FlareIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
+          <Tab
+            value={TabId.DEBUFFS_OVERVIEW}
+            icon={
+              <Tooltip title="Debuffs Overview">
+                <Icon
+                  baseClassName="material-symbols-outlined"
+                  sx={{ fontVariationSettings: '"FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24' }}
+                >
+                  shield_with_heart
+                </Icon>
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -572,7 +606,13 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           }
         >
           <FormControlLabel
-            control={<Switch checked={showExperimentalTabs} size="small" />}
+            control={
+              <Switch
+                checked={showExperimentalTabs}
+                onChange={(e) => onToggleExperimentalTabs(e.target.checked)}
+                size="small"
+              />
+            }
             label={
               <Box component="span" sx={{ display: 'flex', alignItems: 'center' }}>
                 🧪
