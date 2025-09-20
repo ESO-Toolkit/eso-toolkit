@@ -376,7 +376,20 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     backgroundPosition: 'center',
     backgroundRepeat: 'no-repeat',
     backgroundAttachment: 'fixed',
-    opacity: 1,
+    opacity: 0.3,
+    zIndex: -1,
+    pointerEvents: 'none',
+  },
+
+  // Add semi-transparent overlay for better text readability in light mode
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
     zIndex: -1,
     pointerEvents: 'none',
   },
