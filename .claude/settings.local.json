@@ -47,7 +47,8 @@
       "Bash(npm test:*)",
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(findstr:*)",
-      "Bash(start:*)"
+      "Bash(start:*)",
+      "Bash(git merge:*)"
     ],
     "deny": [],
     "ask": []
