@@ -361,7 +361,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+  color: '#ffffff',
 
   // Add background image to show through transparent preview area
   '&::before': {
