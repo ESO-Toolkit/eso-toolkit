@@ -353,11 +353,11 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
 
-  // CRITICAL: Make completely transparent - no internal backgrounds
+  // Container transparent
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
 
-  // Border styling
+  // Styling
   border: '1px solid rgba(255, 255, 255, 0.2)',
   fontSize: '1rem',
   lineHeight: '1.6',
@@ -367,14 +367,38 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // NO ::before pseudo-element - we want transparency
-  // NO ::after pseudo-element - we want transparency
+  // Use ::before to "punch through" to show page background
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'transparent',
+    zIndex: -2,
+    pointerEvents: 'none',
+  },
 
-  // Text styling for readability over page background
+  // Use ::after for text readability without blocking transparency
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'transparent',
+    zIndex: -1,
+    pointerEvents: 'none',
+  },
+
+  // Text styling
   '& span': {
-    textShadow: '0 2px 4px rgba(0, 0, 0, 1)', // Very strong shadow for white text
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.9)',
     position: 'relative',
-    zIndex: 2,
+    zIndex: 10,
+    background: 'transparent !important',
   },
 
   // Force all child elements transparent
@@ -383,13 +407,13 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     backgroundColor: 'transparent !important',
   },
 
-  // Placeholder text styling
+  // Placeholder text
   '& span[style*="color: #888"], & span[style*="italic"]': {
     color: 'rgba(255, 255, 255, 0.7) !important',
     textShadow: '0 2px 4px rgba(0, 0, 0, 1) !important',
   },
 
-  // ESO colored text with strong shadows
+  // ESO colored text
   '& span[style*="color: #"]': {
     textShadow: '0 2px 4px rgba(0, 0, 0, 1)',
     fontWeight: '500',
