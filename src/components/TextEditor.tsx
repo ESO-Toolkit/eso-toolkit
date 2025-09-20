@@ -353,7 +353,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
 
-  // Make the container itself have no background
+  // CRITICAL: Make container completely transparent - no internal background image
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
 
@@ -367,43 +367,21 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   transition: 'all 0.15s ease-in-out',
   color: '#ffffff',
 
-  // Use ::before to punch a hole for transparency
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'transparent !important',
-    backgroundColor: 'transparent !important',
-    zIndex: -2,
-    pointerEvents: 'none',
-  },
+  // REMOVE the ::before background image - we want to see THROUGH to page background
+  // NO ::before pseudo-element with background image
 
-  // Use ::after as the content layer (transparent but above background)
-  '&::after': {
-    content: '""',
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    background: 'transparent !important',
-    backgroundColor: 'transparent !important',
-    zIndex: -1,
-    pointerEvents: 'none',
-  },
+  // REMOVE the ::after overlay - it blocks transparency
+  // NO ::after pseudo-element with overlay
 
-  // Text styling for readability over ESO background
+  // Text styling for readability over the page background that shows through
   '& span': {
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    textShadow: '0 2px 4px rgba(0, 0, 0, 0.9)', // Strong shadow for readability
     position: 'relative',
-    zIndex: 10,
+    zIndex: 2,
     background: 'transparent !important',
   },
 
-  // Force all child elements transparent
+  // Force all child elements to be transparent
   '& *': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
@@ -412,12 +390,12 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   // Placeholder text styling
   '& span[style*="color: #888"], & span[style*="italic"]': {
     color: 'rgba(255, 255, 255, 0.7) !important',
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
+    textShadow: '0 2px 4px rgba(0, 0, 0, 1) !important',
   },
 
   // ESO colored text
   '& span[style*="color: #"]': {
-    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    textShadow: '0 2px 4px rgba(0, 0, 0, 1)', // Very strong shadow for colored text
     fontWeight: '500',
   },
 
