@@ -352,56 +352,76 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
+
+  // Make the container itself have no background
   background: 'transparent !important',
   backgroundColor: 'transparent !important',
-  border:
-    theme.palette.mode === 'dark'
-      ? '1px solid rgba(255, 255, 255, 0.2)'
-      : '1px solid rgba(0, 0, 0, 0.1)',
+
+  // Styling
+  border: '1px solid rgba(255, 255, 255, 0.2)',
   fontSize: '1rem',
   lineHeight: '1.6',
   position: 'relative',
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+  color: '#ffffff',
 
-  // Remove all pseudo-elements - let the page background show through
-  // No ::before or ::after needed for true transparency
-
-  '& span': {
-    textShadow:
-      theme.palette.mode === 'dark'
-        ? '0 1px 2px rgba(0, 0, 0, 0.8)'
-        : '0 1px 2px rgba(255, 255, 255, 0.8)',
-    position: 'relative',
-    zIndex: 2,
+  // Use ::before to punch a hole for transparency
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'transparent !important',
+    backgroundColor: 'transparent !important',
+    zIndex: -2,
+    pointerEvents: 'none',
   },
 
+  // Use ::after as the content layer (transparent but above background)
+  '&::after': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    background: 'transparent !important',
+    backgroundColor: 'transparent !important',
+    zIndex: -1,
+    pointerEvents: 'none',
+  },
+
+  // Text styling for readability over ESO background
+  '& span': {
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
+    position: 'relative',
+    zIndex: 10,
+    background: 'transparent !important',
+  },
+
+  // Force all child elements transparent
   '& *': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
   },
 
+  // Placeholder text styling
   '& span[style*="color: #888"], & span[style*="italic"]': {
-    color:
-      theme.palette.mode === 'dark'
-        ? 'rgba(255, 255, 255, 0.7) !important'
-        : 'rgba(0, 0, 0, 0.7) !important',
-    textShadow:
-      theme.palette.mode === 'dark'
-        ? '0 1px 2px rgba(0, 0, 0, 0.9) !important'
-        : '0 1px 2px rgba(255, 255, 255, 0.9) !important',
+    color: 'rgba(255, 255, 255, 0.7) !important',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9) !important',
   },
 
+  // ESO colored text
   '& span[style*="color: #"]': {
-    textShadow:
-      theme.palette.mode === 'dark'
-        ? '0 1px 2px rgba(0, 0, 0, 0.9)'
-        : '0 1px 2px rgba(255, 255, 255, 0.9)',
+    textShadow: '0 1px 2px rgba(0, 0, 0, 0.9)',
     fontWeight: '500',
   },
 
+  // Mobile styles
   [theme.breakpoints.down('sm')]: {
     padding: '16px',
     minHeight: '100px',
