@@ -465,6 +465,12 @@ export const TextEditor: React.FC = () => {
   const [charCount, setCharCount] = useState(0);
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
+  const [isColorPickerOpen, setIsColorPickerOpen] = useState(false);
+  const [savedSelection, setSavedSelection] = useState<{
+    start: number;
+    end: number;
+    text: string;
+  } | null>(null);
 
   // Simple fix for light mode background loading
   useEffect(() => {
@@ -579,14 +585,14 @@ export const TextEditor: React.FC = () => {
   }, []); // Remove text dependency
 
   // Simple debounce utility
-  function debounce<T extends (...args: any[]) => any>(
+  function debounce<T extends (arg: string) => void>(
     func: T,
     wait: number,
-  ): (...args: Parameters<T>) => void {
+  ): (arg: string) => void {
     let timeoutId: NodeJS.Timeout | undefined;
-    return (...args: Parameters<T>) => {
+    return (arg: string) => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), wait);
+      timeoutId = setTimeout(() => func(arg), wait);
     };
   }
 
@@ -608,6 +614,49 @@ export const TextEditor: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobileDevice]);
+
+  // Enhanced selection highlighting
+  const highlightSelectedText = useCallback((): void => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+    const selection = getSelectedText();
+
+    if (selection.text.length > 0) {
+      // Save selection
+      setSavedSelection(selection);
+      setIsColorPickerOpen(true);
+
+      // Add visual highlighting with stronger styles
+      textarea.style.boxShadow = '0 0 0 3px #3b82f6, inset 0 0 0 2px #60a5fa';
+      textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+      textarea.style.transition = 'all 0.2s ease';
+
+      console.log('✨ Highlighted selection:', selection.text);
+    }
+  }, [getSelectedText]);
+
+  const restoreSelection = useCallback((): void => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    // Remove highlighting
+    textarea.style.boxShadow = '';
+    textarea.style.backgroundColor = '';
+    setIsColorPickerOpen(false);
+
+    // Restore selection if saved
+    if (savedSelection) {
+      setTimeout(() => {
+        textarea.setSelectionRange(savedSelection.start, savedSelection.end);
+        textarea.focus();
+        console.log('🔄 Restored selection');
+      }, 100);
+    }
+
+    setSavedSelection(null);
+  }, [savedSelection]);
 
   // Debounced history saving
   const debouncedSaveHistory = useCallback(
@@ -637,20 +686,36 @@ export const TextEditor: React.FC = () => {
     return true;
   }, [getSelectedText]);
 
-  // Enhanced color application logic
+  // Enhanced color application logic that uses saved selection
   const applyColorToSelection = useCallback(
     (colorHex: string): void => {
       if (!textAreaRef.current) return;
 
       const textarea = textAreaRef.current;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
-      const selectedText = textarea.value.substring(start, end);
+      let start: number, end: number, selectedText: string;
+
+      // Use saved selection if available, otherwise get current
+      if (savedSelection && savedSelection.text.length > 0) {
+        start = savedSelection.start;
+        end = savedSelection.end;
+        selectedText = savedSelection.text;
+        // eslint-disable-next-line no-console
+        console.log('Using saved selection:', selectedText);
+      } else {
+        start = textarea.selectionStart;
+        end = textarea.selectionEnd;
+        selectedText = textarea.value.substring(start, end);
+        // eslint-disable-next-line no-console
+        console.log('Using current selection:', selectedText);
+      }
 
       if (selectedText.length === 0) {
         alert('Please select some text first!');
         return;
       }
+
+      // Clear visual indication
+      restoreSelection();
 
       const beforeText = textarea.value.substring(0, start);
       const afterText = textarea.value.substring(end);
@@ -670,7 +735,7 @@ export const TextEditor: React.FC = () => {
       setText(newText);
       debouncedSaveHistory(newText);
 
-      // Restore selection
+      // Restore selection to the newly colored text
       setTimeout(() => {
         const newStart = start;
         const newEnd = newStart + newColoredText.length;
@@ -678,31 +743,35 @@ export const TextEditor: React.FC = () => {
         textarea.focus();
       }, 0);
     },
-    [debouncedSaveHistory],
+    [debouncedSaveHistory, savedSelection],
   );
 
-  // Native color picker setup for mobile
+  // Native color picker setup for mobile only
   const setupNativeColorPicker = useCallback((): void => {
     if (!isMobile) return;
 
-    // Create hidden native color input
-    let colorInput = document.getElementById('native-color-input') as HTMLInputElement;
-    if (!colorInput) {
-      colorInput = document.createElement('input');
-      colorInput.type = 'color';
-      colorInput.id = 'native-color-input';
-      colorInput.value = '#ffffff';
-      colorInput.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: auto;
-      `;
-      document.body.appendChild(colorInput);
+    // Remove any existing desktop color input
+    const existingInput = document.getElementById('native-color-input');
+    if (existingInput) {
+      existingInput.remove();
     }
+
+    // Create hidden native color input for mobile only
+    const colorInput = document.createElement('input');
+    colorInput.type = 'color';
+    colorInput.id = 'native-color-input';
+    colorInput.value = '#ffffff';
+    colorInput.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 1px;
+      height: 1px;
+      opacity: 0;
+      pointer-events: auto;
+      visibility: hidden;
+    `;
+    document.body.appendChild(colorInput);
 
     colorInput.addEventListener('change', (e) => {
       const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
@@ -712,10 +781,16 @@ export const TextEditor: React.FC = () => {
     });
   }, [isMobile, validateSelection, applyColorToSelection]);
 
-  // Setup native color picker for mobile
+  // Setup native color picker for mobile only
   useEffect(() => {
     if (isMobile) {
       setupNativeColorPicker();
+    } else {
+      // Remove native color input on desktop
+      const colorInput = document.getElementById('native-color-input');
+      if (colorInput) {
+        colorInput.remove();
+      }
     }
 
     return () => {
@@ -733,8 +808,20 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  // Unified color picker handler
+  // Updated color picker click handler with validation and highlighting
   const handleColorPickerClick = useCallback((): void => {
+    console.log('🎨 Color picker clicked');
+
+    // Validate selection first
+    const selection = getSelectedText();
+    if (selection.text.length === 0) {
+      alert('Please select some text first!');
+      return;
+    }
+
+    // Highlight the selection
+    highlightSelectedText();
+
     if (isMobile) {
       // Mobile: Use native color picker
       const colorInput = document.getElementById('native-color-input') as HTMLInputElement;
@@ -746,34 +833,62 @@ export const TextEditor: React.FC = () => {
             colorInput.click();
           }
         } catch (error) {
+          console.warn('Native color picker failed:', error);
           colorInput.click();
         }
+      } else {
+        console.warn('Native color input not found');
       }
     } else {
-      // Desktop: Use Pickr or fallback
+      // Desktop: Use Pickr
       if (pickrRef.current) {
         try {
+          console.log('📱 Opening Pickr...');
           pickrRef.current.show();
         } catch (error) {
-          // Fallback to native picker on desktop too
-          const fallbackColorInput = document.createElement('input');
-          fallbackColorInput.type = 'color';
-          fallbackColorInput.style.cssText = 'position: fixed; top: -9999px; opacity: 0;';
-          document.body.appendChild(fallbackColorInput);
-
-          fallbackColorInput.addEventListener('change', (e) => {
-            const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
-            if (validateSelection()) {
-              applyColorToSelection(hex);
-            }
-            document.body.removeChild(fallbackColorInput);
-          });
-
-          fallbackColorInput.click();
+          console.error('❌ Failed to open Pickr:', error);
+          createFallbackColorPicker();
         }
+      } else {
+        console.warn('⚠️ Pickr not ready, using fallback');
+        createFallbackColorPicker();
       }
     }
-  }, [isMobile, applyColorToSelection, validateSelection]);
+  }, [isMobile, getSelectedText, highlightSelectedText]);
+
+  // Add fallback color picker function
+  const createFallbackColorPicker = useCallback((): void => {
+    const fallbackColorInput = document.createElement('input');
+    fallbackColorInput.type = 'color';
+    fallbackColorInput.value = '#ffffff';
+    fallbackColorInput.style.cssText = `
+      position: fixed;
+      top: -9999px;
+      opacity: 0;
+      pointer-events: auto;
+    `;
+    document.body.appendChild(fallbackColorInput);
+
+    fallbackColorInput.addEventListener('change', (e) => {
+      const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
+      if (validateSelection()) {
+        applyColorToSelection(hex);
+      }
+      document.body.removeChild(fallbackColorInput);
+    });
+
+    try {
+      if (typeof fallbackColorInput.showPicker === 'function') {
+        fallbackColorInput.showPicker();
+      } else {
+        fallbackColorInput.click();
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.warn('Fallback color picker failed:', error);
+      fallbackColorInput.click();
+    }
+  }, [validateSelection, applyColorToSelection]);
 
   // Remove format from selection (with validation)
   const removeFormatFromSelection = (): void => {
@@ -804,20 +919,40 @@ export const TextEditor: React.FC = () => {
     textarea.focus();
   };
 
-  // Improved Pickr initialization with better error handling
+  // Enhanced Pickr initialization with proper error handling
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
 
     let mounted = true;
+    let pickrInstance: PickrInstance | null = null;
 
     const initPickr = async (): Promise<void> => {
       try {
-        const Pickr = (await import('@simonwep/pickr')).default;
+        console.log('🚀 Initializing Pickr...');
+
+        // Load Pickr library
+        const PickrModule = await import('@simonwep/pickr');
+        const Pickr = PickrModule.default;
 
         if (!mounted || !pickrAnchorRef.current) return;
 
-        const pickrInstance = (Pickr as unknown as PickrInstance).create({
-          el: pickrAnchorRef.current,
+        // Ensure anchor element is ready and visible
+        const anchor = pickrAnchorRef.current;
+        if (!anchor.isConnected) {
+          throw new Error('Anchor element not in DOM');
+        }
+
+        // Hide anchor element to prevent visual issues
+        anchor.style.position = 'absolute';
+        anchor.style.left = '-9999px';
+        anchor.style.top = '-9999px';
+        anchor.style.width = '1px';
+        anchor.style.height = '1px';
+        anchor.style.overflow = 'hidden';
+        anchor.style.visibility = 'hidden';
+
+        pickrInstance = (Pickr as unknown as PickrInstance).create({
+          el: anchor,
           theme: theme.palette.mode === 'dark' ? 'monolith' : 'classic',
           default: '#ffffff',
           swatches: [
@@ -851,7 +986,7 @@ export const TextEditor: React.FC = () => {
               hsva: false,
               cmyk: false,
               input: true,
-              clear: false,
+              clear: true,  // ✅ Enable clear button
               save: true,
             },
           },
@@ -860,33 +995,71 @@ export const TextEditor: React.FC = () => {
           appClass: 'eso-pickr-app',
         });
 
-        pickrInstance.on('save', (color: PickrColor) => {
-          if (color && mounted) {
-            const hexColor = color.toHEXA().toString().substring(1, 7);
-            if (validateSelection()) {
+        if (pickrInstance) {
+          // Color selection handler
+          pickrInstance.on('save', (color: PickrColor) => {
+            if (color && mounted) {
+              const hexColor = color.toHEXA().toString().substring(1, 7);
+              console.log('✅ Color selected:', hexColor);
               applyColorToSelection(hexColor);
+              pickrInstance?.hide();
             }
-            pickrInstance.hide();
-          }
-        });
+          });
 
-        pickrInstance.on('show', () => {
-          if (mounted) {
-            setTimeout(() => positionPickr(), 0);
-          }
-        });
+          // Clear/cancel handler
+          pickrInstance.on('clear', () => {
+            console.log('❌ Color picker cancelled');
+            pickrInstance?.hide();
+            restoreSelection();
+          });
 
-        if (mounted) {
+          // Show handler
+          pickrInstance.on('show', () => {
+            if (mounted) {
+              console.log('👁️ Pickr opening...');
+              // Position with multiple attempts
+              setTimeout(() => positionPickr(), 10);
+              setTimeout(() => positionPickr(), 100);
+              setTimeout(() => positionPickr(), 250);
+
+              // Add escape key handler
+              const handleEscape = (e: KeyboardEvent) => {
+                if (e.key === 'Escape') {
+                  console.log('⚡ Escape pressed, closing Pickr');
+                  pickrInstance?.hide();
+                  document.removeEventListener('keydown', handleEscape);
+                }
+              };
+              document.addEventListener('keydown', handleEscape);
+            }
+          });
+
+          // Hide handler
+          pickrInstance.on('hide', () => {
+            if (mounted) {
+              console.log('👋 Pickr closed');
+              restoreSelection();
+            }
+          });
+
+          pickrInstance.on('init', () => {
+            console.log('✅ Pickr initialized successfully');
+          });
+        }
+
+        if (mounted && pickrInstance) {
           pickrRef.current = pickrInstance;
-        } else {
+          console.log('✅ Pickr initialized successfully');
+        } else if (pickrInstance) {
           pickrInstance.destroy();
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn('Pickr initialization failed, using fallback');
+        console.error('❌ Pickr initialization failed:', error);
+        console.log('⚠️ Will use fallback color picker');
       }
     };
 
+    // Start initialization
     initPickr();
 
     return () => {
@@ -894,30 +1067,76 @@ export const TextEditor: React.FC = () => {
       if (pickrRef.current) {
         try {
           pickrRef.current.destroy();
+          // eslint-disable-next-line no-console
+          console.log('Pickr destroyed');
         } catch (error) {
-          // Ignore cleanup errors
+          // eslint-disable-next-line no-console
+          console.warn('Error destroying Pickr:', error);
         }
         pickrRef.current = null;
       }
     };
-  }, [isMobile, theme.palette.mode, validateSelection, applyColorToSelection]);
+  }, [isMobile, theme.palette.mode, applyColorToSelection]);
 
+  // Emergency fix positioning - center picker below emoji and keep on screen
   const positionPickr = useCallback((): void => {
-    const appEl = document.querySelector('.pcr-app');
+    const appEl = document.querySelector('.pcr-app') as HTMLElement;
     const emoji = document.getElementById('eso-native-emoji-btn');
-    if (!emoji || !appEl) return;
+
+    if (!emoji || !appEl) {
+      console.warn('Cannot position Pickr - missing elements');
+      return;
+    }
 
     const rect = emoji.getBoundingClientRect();
-    const gap = 8;
-    appEl.setAttribute(
-      'style',
-      `
-      position: fixed !important;
-      left: ${Math.max(8, Math.min(window.innerWidth - 320 - 8, rect.right - 320))}px !important;
-      top: ${rect.bottom + gap + 260 > window.innerHeight - 8 ? Math.max(8, rect.top - 260 - gap) : rect.bottom + gap}px !important;
-      z-index: 99999 !important;
-    `,
-    );
+    const gap = 12;
+
+    // Force Pickr to be visible first
+    appEl.style.display = 'block';
+    appEl.style.visibility = 'visible';
+
+    // Use standard Pickr dimensions
+    const pickrWidth = 320;  // Standard Pickr width
+    const pickrHeight = 280; // Standard Pickr height
+
+    // Calculate position - CENTER the picker below the emoji
+    let left = rect.left + (rect.width / 2) - (pickrWidth / 2);
+    let top = rect.bottom + gap;
+
+    // Keep within viewport bounds
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+
+    // Adjust horizontal position
+    if (left < gap) {
+      left = gap; // Too far left
+    } else if (left + pickrWidth > viewportWidth - gap) {
+      left = viewportWidth - pickrWidth - gap; // Too far right
+    }
+
+    // Adjust vertical position
+    if (top + pickrHeight > viewportHeight - gap) {
+      // Try positioning above the emoji
+      top = rect.top - pickrHeight - gap;
+
+      // If still doesn't fit, place in center of screen
+      if (top < gap) {
+        top = (viewportHeight - pickrHeight) / 2;
+        left = (viewportWidth - pickrWidth) / 2;
+      }
+    }
+
+    // Apply positioning with important flags
+    appEl.style.position = 'fixed';
+    appEl.style.left = `${Math.max(0, left)}px`;
+    appEl.style.top = `${Math.max(0, top)}px`;
+    appEl.style.zIndex = '999999';
+    appEl.style.maxWidth = 'none';
+    appEl.style.maxHeight = 'none';
+    appEl.style.margin = '0';
+    appEl.style.transform = 'none';
+
+    console.log(`✅ Positioned Pickr at ${left}, ${top} (viewport: ${viewportWidth}x${viewportHeight})`);
   }, []);
 
   // Initialize with example text - fix the useEffect
@@ -968,6 +1187,32 @@ export const TextEditor: React.FC = () => {
       }
     }
   };
+
+  // Add emergency close handler for Pickr
+  useEffect(() => {
+    const handlePickrClose = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      // Check if click is on the emergency close button
+      if (target.closest('.pcr-app') && e.target instanceof Element && e.target.classList.contains('pcr-app')) {
+        // Check if the click is near the top-right corner (emergency close area)
+        const rect = (e.target as HTMLElement).getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+
+        // If click is in top-right corner area
+        if (x > rect.width - 40 && y < 40) {
+          console.log('⚡ Emergency close triggered');
+          if (pickrRef.current) {
+            pickrRef.current.hide();
+            restoreSelection();
+          }
+        }
+      }
+    };
+
+    document.addEventListener('click', handlePickrClose);
+    return () => document.removeEventListener('click', handlePickrClose);
+  }, []);
 
   const undo = (): void => {
     if (historyIndex > 0) {
@@ -1020,8 +1265,12 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  // Update emoji button handler to use unified handler
+  // Update emoji button handler to use unified handler with debug logging
   const handleEmojiClick = (): void => {
+    // eslint-disable-next-line no-console
+    console.log('🎨 Emoji clicked!');
+    // eslint-disable-next-line no-console
+    console.log('Current selection:', getSelectedText());
     handleColorPickerClick();
   };
 

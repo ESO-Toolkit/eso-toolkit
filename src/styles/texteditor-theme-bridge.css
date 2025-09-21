@@ -38,3 +38,59 @@
   --accent2: var(--mui-palette-primary-dark, #0284c7);
   --muted: var(--mui-palette-text-secondary, rgba(255, 255, 255, 0.7));
 }
+
+/* Emergency close for Pickr */
+.pcr-app::before {
+  content: "×";
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1000001;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+
+.pcr-app::before:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Ensure Pickr stays on screen */
+.pcr-app {
+  max-width: 320px !important;
+  max-height: 400px !important;
+  overflow: visible !important;
+}
+
+/* Hide any native color inputs that might be visible */
+input[type="color"] {
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Hide the Pickr anchor element */
+#eso-pickr-anchor {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
