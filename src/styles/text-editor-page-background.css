@@ -101,18 +101,7 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   color: #e0e0e0;
 }
 
-/* Calculator container should also be semi-transparent */
-body.text-editor-page .calculator-container {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
-  border-radius: var(--site-radius, 8px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-body.text-editor-page.dark-mode .calculator-container {
-  background: rgba(0, 0, 0, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
+/* Calculator container uses --panel variable which now has transparency */
 
 /* Make TextEditor component container use CSS variables */
 body.text-editor-page .MuiBox-root,
@@ -267,14 +256,23 @@ body.text-editor-page .css-cm1l3d {
     background: rgb(0 0 0 / 40%) !important;
   }
 
-  /* Hide .pickr element next to .css-fcvuav on mobile */
+  /* Hide .pickr element next to emoji buttons on both mobile and desktop */
   body.text-editor-page .css-fcvuav + .pickr,
   body.text-editor-page .pickr:has(+ .css-fcvuav),
-  body.text-editor-page .pickr:has(~ .css-fcvuav) {
+  body.text-editor-page .pickr:has(~ .css-fcvuav),
+  body.text-editor-page .pickr {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
   }
+}
+
+/* Hide all Pickr-generated white buttons on text editor page */
+body.text-editor-page .pickr .pcr-button,
+body.text-editor-page .pcr-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 /* Remove border radius from nav header on mobile for text editor page */
@@ -365,11 +363,12 @@ body.text-editor-page footer img[src*='ESOHelpers-logo-icon'] {
   box-shadow: none !important;
 }
 
-/* Add single background overlay behind the entire logo section for better readability */
-body.text-editor-page footer .MuiBox-root:has(img[src*='ESOHelpers-logo-icon']) {
+/* Style footer container and remove space between text editor and footer */
+body.text-editor-page footer {
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.1)) !important;
   border-radius: 12px !important;
   padding: 8px !important;
   backdrop-filter: blur(2px) !important;
   -webkit-backdrop-filter: blur(2px) !important;
+  margin-top: 0 !important;
 }
