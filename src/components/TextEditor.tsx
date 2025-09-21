@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
-// import '../styles/text-editor-page-background.css'; // Commenting out - conflicts with component transparency
+import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
@@ -444,31 +444,22 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Set up page background for transparency
+  // Simple fix for light mode background loading
   useEffect(() => {
-    const html = document.documentElement;
-    const bgImage =
-      theme.palette.mode === 'dark'
-        ? '/text-editor/text-editor-bg-dark.jpg'
-        : '/text-editor/text-editor-bg-light.jpg';
-
-    html.style.setProperty('background-image', `url(${bgImage})`, 'important');
-    html.style.setProperty('background-size', 'cover', 'important');
-    html.style.setProperty('background-position', 'center', 'important');
-    html.style.setProperty('background-repeat', 'no-repeat', 'important');
-    html.style.setProperty('background-attachment', 'fixed', 'important');
-
-    // Make body transparent to show html background
-    document.body.style.setProperty('background', 'transparent', 'important');
-
-    return () => {
-      html.style.removeProperty('background-image');
-      html.style.removeProperty('background-size');
-      html.style.removeProperty('background-position');
-      html.style.removeProperty('background-repeat');
-      html.style.removeProperty('background-attachment');
-      document.body.style.removeProperty('background');
-    };
+    // Simple fix for light mode background loading
+    if (theme.palette.mode === 'light') {
+      const body = document.body;
+      // Force light mode background image
+      setTimeout(() => {
+        body.style.backgroundImage = 'url("/text-editor/text-editor-bg-light.jpg")';
+        body.style.backgroundSize = 'cover';
+        body.style.backgroundPosition = 'center';
+        body.style.backgroundRepeat = 'no-repeat';
+        body.style.backgroundAttachment = 'fixed';
+        // eslint-disable-next-line no-console
+        console.log('Force applied light mode background');
+      }, 100); // Small delay to ensure it applies
+    }
   }, [theme.palette.mode]);
 
   // Add this useEffect AFTER your existing theme/background useEffects

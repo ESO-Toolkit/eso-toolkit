@@ -202,7 +202,10 @@ body.text-editor-page .css-1u9mni1 {
 }
 
 /* Also target the light mode container that might be getting a solid background */
-body.text-editor-page .css-1j69n08 {
+body.text-editor-page .css-1j69n08,
+body.text-editor-page:not(.dark-mode) .css-1j69n08,
+body.text-editor-page .MuiBox-root.css-1j69n08,
+body.text-editor-page .MuiPaper-root.css-1j69n08 {
   background: transparent !important;
   background-color: transparent !important;
   background-image: none !important;

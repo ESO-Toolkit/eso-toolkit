@@ -1,13 +1,11 @@
-/**
- * Custom hook to manage page-specific body classes and background
- */
-
 import { useEffect } from 'react';
 
 export function usePageBackground(pageClass: string, isDarkMode = false): void {
   useEffect(() => {
-    // Apply theme class to body
+    // Add page class
     document.body.classList.add(pageClass);
+
+    // Add/remove dark mode class
     if (isDarkMode) {
       document.body.classList.add('dark-mode');
     } else {
@@ -25,17 +23,9 @@ export function usePageBackground(pageClass: string, isDarkMode = false): void {
     document.body.style.backgroundRepeat = 'no-repeat';
     document.body.style.backgroundAttachment = 'fixed';
 
-    // Make the main covering container transparent
-    setTimeout(() => {
-      const mainCover = document.querySelector('.css-1u9mni1');
-      if (mainCover) {
-        (mainCover as HTMLElement).style.backgroundColor = 'transparent';
-      }
-    }, 100);
-
-    // Cleanup when component unmounts or page changes
     return () => {
-      document.body.classList.remove(pageClass, 'dark-mode');
+      document.body.classList.remove(pageClass);
+      document.body.classList.remove('dark-mode');
       document.body.style.backgroundImage = '';
       document.body.style.backgroundSize = '';
       document.body.style.backgroundPosition = '';

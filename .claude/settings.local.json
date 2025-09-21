@@ -48,7 +48,9 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(findstr:*)",
       "Bash(start:*)",
-      "Bash(git merge:*)"
+      "Bash(git merge:*)",
+      "Bash(git ls-tree:*)",
+      "Bash(grep:*)"
     ],
     "deny": [],
     "ask": []
