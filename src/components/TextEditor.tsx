@@ -435,9 +435,14 @@ export const TextEditor: React.FC = () => {
   } | null>(null);
   const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [pickerPosition, setPickerPosition] = useState({ x: 20, y: 120 });
+  const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Set initial picker position to center of viewport
+  useEffect(() => {
+    resetPickerPosition();
+  }, []);
 
   // Simple fix for light mode background loading
   useEffect(() => {
@@ -686,9 +691,17 @@ export const TextEditor: React.FC = () => {
     }
   }, [selectedTextInfo, restoreTextSelection]);
 
-  // Reset picker position to default
+  // Reset picker position to center of viewport
   const resetPickerPosition = (): void => {
-    setPickerPosition({ x: 20, y: 120 });
+    const pickerWidth = 320;
+    const pickerHeight = 500;
+    const centerX = (window.innerWidth - pickerWidth) / 2;
+    const centerY = (window.innerHeight - pickerHeight) / 2;
+
+    setPickerPosition({
+      x: Math.max(0, centerX),
+      y: Math.max(0, centerY),
+    });
   };
 
   // Keyboard navigation for color picker
@@ -878,9 +891,11 @@ export const TextEditor: React.FC = () => {
     const newX = e.clientX - dragOffset.x;
     const newY = e.clientY - dragOffset.y;
 
-    // Keep picker within viewport bounds
-    const maxX = window.innerWidth - 320; // picker width
-    const maxY = window.innerHeight - 500; // approximate picker height
+    // Keep picker within full viewport bounds (not just text editor container)
+    const pickerWidth = 320; // picker width
+    const pickerHeight = 500; // approximate picker height
+    const maxX = window.innerWidth - pickerWidth;
+    const maxY = window.innerHeight - pickerHeight;
 
     setPickerPosition({
       x: Math.max(0, Math.min(newX, maxX)),
@@ -892,6 +907,24 @@ export const TextEditor: React.FC = () => {
     setIsDragging(false);
   };
 
+  // Handle window resize to keep picker in viewport
+  useEffect(() => {
+    const handleResize = (): void => {
+      const pickerWidth = 320;
+      const pickerHeight = 500;
+      const maxX = window.innerWidth - pickerWidth;
+      const maxY = window.innerHeight - pickerHeight;
+
+      setPickerPosition(prev => ({
+        x: Math.max(0, Math.min(prev.x, maxX)),
+        y: Math.max(0, Math.min(prev.y, maxY)),
+      }));
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   // Add global event listeners for dragging
   useEffect(() => {
     if (isDragging) {
@@ -902,7 +935,7 @@ export const TextEditor: React.FC = () => {
         document.removeEventListener('mouseup', handleDragEnd);
       };
     }
-  }, [isDragging, dragOffset]);
+  }, [isDragging, dragOffset, handleDrag]);
 
   // Close color picker
   const closeColorPicker = (): void => {
@@ -1334,7 +1367,7 @@ export const TextEditor: React.FC = () => {
                   backdropFilter: 'blur(12px) saturate(180%)',
                   minWidth: theme.breakpoints.down('sm') ? '300px' : '280px',
                   maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
-                  maxHeight: 'calc(100vh - 140px)',
+                  maxHeight: '90vh',
                   overflowY: 'auto',
                   transform: isDragging ? 'scale(1.02)' : 'scale(1)',
                   opacity: 1,
