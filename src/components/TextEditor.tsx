@@ -451,7 +451,8 @@ export const TextEditor: React.FC = () => {
       const body = document.body;
       // Force light mode background image
       setTimeout(() => {
-        body.style.backgroundImage = 'url("/eso-log-aggregator/text-editor/text-editor-bg-light.jpg")';
+        body.style.backgroundImage =
+          'url("/eso-log-aggregator/text-editor/text-editor-bg-light.jpg")';
         body.style.backgroundSize = 'cover';
         body.style.backgroundPosition = 'center';
         body.style.backgroundRepeat = 'no-repeat';
@@ -487,7 +488,10 @@ export const TextEditor: React.FC = () => {
     // eslint-disable-next-line no-console
     console.log('HTML classes:', document.documentElement.className);
     // eslint-disable-next-line no-console
-    console.log('Background image path:', '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
+    console.log(
+      'Background image path:',
+      '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg',
+    );
 
     // Check computed styles
     const bodyStyles = window.getComputedStyle(document.body);
