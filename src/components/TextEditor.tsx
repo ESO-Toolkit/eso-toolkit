@@ -291,6 +291,13 @@ const TextInput = styled('textarea')(({ theme }) => ({
     borderColor: 'var(--accent)',
     boxShadow: `inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
+  '&:disabled': {
+    opacity: 0.7,
+    cursor: 'not-allowed',
+    backgroundColor: theme.palette.mode === 'dark'
+      ? 'rgba(255, 255, 255, 0.05)'
+      : 'rgba(0, 0, 0, 0.05)',
+  },
 }));
 
 const StatusBar = styled(Box)(({ theme }) => ({
@@ -1412,6 +1419,7 @@ export const TextEditor: React.FC = () => {
             onKeyDown={handleKeyDown}
             placeholder="Type your text here or paste ESO/WoW formatted text. Select text and use the buttons above to format."
             aria-describedby="char-count"
+            disabled={showColorPicker}
           />
 
           <StatusBar>
