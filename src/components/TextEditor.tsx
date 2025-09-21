@@ -1459,6 +1459,7 @@ export const TextEditor: React.FC = () => {
                           display: 'flex',
                           alignItems: 'center',
                           height: '100%',
+                          marginBottom: '-4px',
                         }}
                       >
                         ⠿
