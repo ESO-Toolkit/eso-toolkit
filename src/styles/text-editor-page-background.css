@@ -255,3 +255,8 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
     pointer-events: none;
   }
 }
+
+/* Fix for specific Material-UI generated class */
+body.text-editor-page .css-cm1l3d {
+  background-color: #000000 !important;
+}
