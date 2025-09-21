@@ -1514,7 +1514,13 @@ export const TextEditor: React.FC = () => {
                   role="dialog"
                   aria-modal="true"
                   aria-labelledby="color-picker-title"
-                  onMouseDown={handleDragStart}
+                  onMouseDown={(e) => {
+                    // Don't start drag if clicking on the hex input
+                    if ((e.target as HTMLElement).tagName === 'INPUT') {
+                      return;
+                    }
+                    handleDragStart(e);
+                  }}
                 >
                   {/* Header */}
                   <Box
@@ -1674,6 +1680,9 @@ export const TextEditor: React.FC = () => {
                       onFocus={(e) => {
                         e.stopPropagation();
                         e.target.select(); // Select all text when focused
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Prevent drag when clicking on input
                       }}
                     />
                   </Box>
