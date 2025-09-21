@@ -795,11 +795,11 @@ export const TextEditor: React.FC = () => {
 
     const text = selectedTextInfo.text;
 
-    // Remove color formatting codes: |cFFFFFF and |r
+    // Remove all ESO formatting codes: |cFFFFFF (color), |r (reset), and any other | codes
     const cleanText = text
-      .replace(/^\|c[0-9A-Fa-f]{6}/, '') // Remove starting color code
-      .replace(/\|r$/, '') // Remove ending reset code
-      .replace(/\|c[0-9A-Fa-f]{6}/g, ''); // Remove any inline color codes
+      .replace(/\|c[0-9A-Fa-f]{6}/g, '') // Remove all color codes
+      .replace(/\|r/g, '') // Remove all reset codes
+      .replace(/\|[a-zA-Z]/g, ''); // Remove any other formatting codes
 
     // Truncate if necessary
     return cleanText.length > 30 ? cleanText.substring(0, 30) + '...' : cleanText;
