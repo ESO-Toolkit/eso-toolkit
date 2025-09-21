@@ -61,6 +61,12 @@ const TextEditorContainer = styled(Box)(({ theme }) => ({
   paddingTop: theme.spacing(3),
   paddingBottom: theme.spacing(3),
   position: 'relative',
+
+  // Remove padding on mobile for full-width
+  [theme.breakpoints.down('sm')]: {
+    paddingTop: 0,
+    paddingBottom: 0,
+  },
 }));
 
 const EditorTool = styled(Box)(({ theme }) => ({
@@ -81,14 +87,20 @@ const EditorTool = styled(Box)(({ theme }) => ({
   WebkitBackdropFilter: 'blur(12px) saturate(180%)',
   position: 'relative',
   zIndex: 1,
-  // Mobile styles
+
+  // Mobile styles - full width, no margins/borders
   [theme.breakpoints.down('sm')]: {
     display: 'grid',
     gridTemplateRows: 'auto auto',
     gap: '16px',
-    margin: '1rem',
+    margin: '0', // Remove all margins
+    padding: '16px', // Reduce padding
+    borderRadius: '0', // Remove border radius for full-width
+    border: 'none', // Remove border
     backdropFilter: 'blur(8px) saturate(160%)',
     background: 'var(--panel)',
+    minHeight: '100vh', // Full height on mobile
+    maxWidth: '100%', // Full width
   },
 }));
 
@@ -353,7 +365,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   borderRadius: '12px',
   minHeight: '120px',
   background: 'transparent !important',
-  backgroundColor: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
+  backgroundColor: 'transparent !important',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -364,9 +376,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   overflow: 'hidden',
   zIndex: 1,
   transition: 'all 0.15s ease-in-out',
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
+  color: '#ffffff',
 
-  // THIS IS THE KEY - ::before with background image at 0.3 opacity
+  // Background image with mobile optimizations
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -376,14 +388,12 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     bottom: 0,
     backgroundImage: `url(${theme.palette.mode === 'dark' ? '/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg' : '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg'})`,
     backgroundSize: 'cover',
-    backgroundPosition: 'center',
+    backgroundPosition: 'center', // Back to original center positioning
     backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'fixed',
-    opacity: 0.3, // KEY: 30% opacity makes it visible but not overpowering
-    zIndex: -2,
+    backgroundAttachment: 'fixed', // Back to original fixed
+    opacity: 0.3,
+    zIndex: -1,
     pointerEvents: 'none',
-    display: 'block !important',
-    visibility: 'visible !important',
   },
 
   // Semi-transparent overlay for text readability
@@ -397,8 +407,6 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     zIndex: -1,
     pointerEvents: 'none',
-    display: 'block !important',
-    visibility: 'visible !important',
   },
 
   '& span': {
@@ -422,10 +430,24 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     fontWeight: '500',
   },
 
+  // Mobile specific adjustments
   [theme.breakpoints.down('sm')]: {
     padding: '16px',
     minHeight: '100px',
     fontSize: '0.9rem',
+    borderRadius: '8px',
+    margin: '16px 0',
+
+    // Adjust background position for mobile
+    '&::before': {
+      backgroundPosition: 'center', // Keep center positioning
+      backgroundAttachment: 'scroll',
+    },
+
+    // RESTORE ORIGINAL OVERLAY on mobile too
+    '&::after': {
+      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+    },
   },
 }));
 
@@ -823,7 +845,17 @@ export const TextEditor: React.FC = () => {
 
   return (
     <TextEditorContainer>
-      <Container maxWidth="lg">
+      <Container
+        maxWidth="lg"
+        sx={{
+          // Remove container padding on mobile
+          [theme.breakpoints.down('sm')]: {
+            padding: '0 !important',
+            margin: '0 !important',
+            maxWidth: '100% !important',
+          },
+        }}
+      >
         <EditorTool>
           {/* Desktop Layout (from previous commit f1071c2) */}
           <Toolbar>

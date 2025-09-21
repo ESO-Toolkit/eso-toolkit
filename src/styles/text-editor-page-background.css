@@ -20,7 +20,7 @@ body.text-editor-page {
 
 /* Force background image for both light and dark mode */
 body.text-editor-page:not(.dark-mode) {
-  background-image: url('/text-editor/text-editor-bg-light.jpg') !important;
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -29,7 +29,7 @@ body.text-editor-page:not(.dark-mode) {
 }
 
 body.text-editor-page.dark-mode {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg') !important;
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -45,7 +45,7 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -56,11 +56,11 @@ body.text-editor-page::before {
 }
 
 body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Remove solid backgrounds from common elements */
@@ -132,7 +132,7 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -142,11 +142,11 @@ body.text-editor-page::before {
 }
 
 body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Make the preview area show through to the background */
@@ -173,7 +173,7 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -184,7 +184,7 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
 }
 
 body.text-editor-page.dark-mode .css-cplt40::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 /* Make sure preview area content is also transparent */
@@ -210,4 +210,166 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
   background-color: transparent !important;
   background-image: none !important;
   position: relative !important;
+}
+
+/* Improve mobile background positioning */
+@media (max-width: 768px) {
+  body.text-editor-page {
+    background-attachment: scroll !important; /* Fixed backgrounds can cause issues on mobile */
+    background-position: center top !important; /* Better positioning for mobile */
+    background-size: cover !important;
+  }
+
+  body.text-editor-page::before {
+    background-attachment: scroll !important;
+    background-position: center top !important;
+    background-size: cover !important;
+  }
+
+  /* Light mode specific mobile adjustments */
+  body.text-editor-page:not(.dark-mode) {
+    background-position: center 20% !important; /* Adjust for better light mode visibility */
+  }
+
+  body.text-editor-page:not(.dark-mode)::before {
+    background-position: center 20% !important;
+  }
+}
+
+/* Enhance mobile text readability */
+@media (max-width: 768px) {
+  body.text-editor-page:not(.dark-mode) {
+    /* Add subtle overlay for better text readability on mobile light mode */
+    position: relative;
+  }
+
+  body.text-editor-page:not(.dark-mode)::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1); /* Very light overlay for text readability */
+    z-index: -1;
+    pointer-events: none;
+  }
+}
+
+/* Fix for specific Material-UI generated class */
+body.text-editor-page .css-cm1l3d {
+  background-color: #000000 !important;
+}
+
+/* Override mobile CSS rule for .css-cm1l3d::after */
+@media (max-width: 599.95px) {
+  body.text-editor-page .css-cm1l3d::after {
+    background: rgb(0 0 0 / 40%) !important;
+  }
+
+  /* Hide .pickr element next to .css-fcvuav on mobile */
+  body.text-editor-page .css-fcvuav + .pickr,
+  body.text-editor-page .pickr:has(+ .css-fcvuav),
+  body.text-editor-page .pickr:has(~ .css-fcvuav) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+}
+
+/* Remove border radius from nav header on mobile for text editor page */
+@media (max-width: 768px) {
+  body.text-editor-page .MuiAppBar-root {
+    border-radius: 0 !important;
+  }
+
+  /* Also target any header/app bar with common Material-UI classes */
+  body.text-editor-page header,
+  body.text-editor-page .MuiAppBar-positionStatic,
+  body.text-editor-page .MuiAppBar-colorTransparent {
+    border-radius: 0 !important;
+  }
+}
+
+/* Force footer to use dark mode colors on text editor page for both light and dark mode */
+body.text-editor-page footer {
+  /* Force dark mode background gradient */
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(15, 23, 42, 0.4) 50%,
+    rgba(3, 7, 18, 0.8) 100%
+  ) !important;
+  background-image: none !important;
+}
+
+/* Force footer text colors to dark mode */
+body.text-editor-page footer .MuiTypography-root,
+body.text-editor-page footer .MuiTypography-body1,
+body.text-editor-page footer .MuiTypography-body2,
+body.text-editor-page footer .MuiTypography-h5,
+body.text-editor-page footer .MuiTypography-h6,
+body.text-editor-page footer .MuiTypography-caption {
+  color: #ffffff !important;
+}
+
+body.text-editor-page footer .MuiTypography-colorTextSecondary {
+  color: #f8fafc !important;
+}
+
+body.text-editor-page footer .MuiTypography-colorTextPrimary {
+  color: #ffffff !important;
+}
+
+/* Force footer links and interactive elements */
+body.text-editor-page footer a,
+body.text-editor-page footer .MuiTypography-root {
+  color: #f8fafc !important;
+}
+
+body.text-editor-page footer a:hover {
+  color: #38bdf8 !important;
+}
+
+/* Force footer decorative elements */
+body.text-editor-page footer .MuiBox-root::before,
+body.text-editor-page footer .MuiBox-root .MuiBox-root::before {
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent) !important;
+}
+
+body.text-editor-page footer .MuiBox-root::after,
+body.text-editor-page footer .MuiBox-root .MuiBox-root::after {
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.15), transparent) !important;
+}
+
+/* Force footer box backgrounds - more specific to avoid breaking layout */
+body.text-editor-page footer .MuiBox-root .MuiBox-root:not(:has(img))[style*='background'] {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1)) !important;
+  border: 1px solid rgba(56, 189, 248, 0.2) !important;
+}
+
+/* Force text gradients to dark mode - more specific targeting */
+body.text-editor-page footer .MuiTypography-root[style*='background: linear-gradient'],
+body.text-editor-page footer .MuiTypography-root[style*='WebkitBackgroundClip'],
+body.text-editor-page footer .css-1npj6wl-MuiTypography-root,
+body.text-editor-page footer .MuiTypography-h5[style*='letter-spacing'] {
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
+}
+
+/* Remove logo filters to let it show naturally */
+body.text-editor-page footer img[src*='ESOHelpers-logo-icon'] {
+  filter: none !important;
+  box-shadow: none !important;
+}
+
+/* Add single background overlay behind the entire logo section for better readability */
+body.text-editor-page footer .MuiBox-root:has(img[src*='ESOHelpers-logo-icon']) {
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.1)) !important;
+  border-radius: 12px !important;
+  padding: 8px !important;
+  backdrop-filter: blur(2px) !important;
+  -webkit-backdrop-filter: blur(2px) !important;
 }

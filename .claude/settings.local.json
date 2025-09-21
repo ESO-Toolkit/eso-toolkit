@@ -50,7 +50,8 @@
       "Bash(start:*)",
       "Bash(git merge:*)",
       "Bash(git ls-tree:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(git revert:*)"
     ],
     "deny": [],
     "ask": []
