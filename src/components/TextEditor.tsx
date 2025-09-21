@@ -3,7 +3,6 @@ import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
-
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 
 import { usePageBackground } from '../hooks/usePageBackground';
