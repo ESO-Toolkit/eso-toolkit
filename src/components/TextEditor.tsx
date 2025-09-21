@@ -742,7 +742,10 @@ export const TextEditor: React.FC = () => {
     const match = selectedText.match(colorFormatRegex);
 
     const colorHex = previewColor.replace('#', '').toUpperCase();
-    const newColoredText = match ? `|c${colorHex}${match[1]}|r` : `|c${colorHex}${selectedText}|r`;
+
+    // Extract the actual text content without existing color codes
+    const textContent = match ? match[2] : selectedText;
+    const newColoredText = `|c${colorHex}${textContent}|r`;
 
     const newText = beforeText + newColoredText + afterText;
 
@@ -919,9 +922,10 @@ export const TextEditor: React.FC = () => {
         const cleanColorHex = colorHex.replace('#', '').toUpperCase();
         const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
         const match = selectedText.match(colorFormatRegex);
-        const newColoredText = match
-          ? `|c${cleanColorHex}${match[1]}|r`
-          : `|c${cleanColorHex}${selectedText}|r`;
+
+        // Extract the actual text content without existing color codes
+        const textContent = match ? match[1] : selectedText;
+        const newColoredText = `|c${cleanColorHex}${textContent}|r`;
 
         return beforeText + newColoredText + afterText;
       }
