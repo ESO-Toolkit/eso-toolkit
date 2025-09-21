@@ -39,10 +39,20 @@ The nightly tests run automatically via GitHub Actions:
 
 Configure these secrets in your repository settings:
 
+**OAuth Configuration (for authenticated tests):**
 - `OAUTH_CLIENT_ID`: ESO Logs OAuth client ID
 - `OAUTH_CLIENT_SECRET`: ESO Logs OAuth client secret
 - `ESO_LOGS_TEST_EMAIL`: Test user email (optional)
 - `ESO_LOGS_TEST_PASSWORD`: Test user password (optional)
+
+**Sentry Integration (for failure notifications):**
+- `SENTRY_DSN`: Sentry Data Source Name (DSN) from your project settings
+
+The DSN is the primary configuration for Sentry integration. You can find it in your Sentry project under **Settings > Client Keys (DSN)**.
+
+Example DSN format: `https://your-key@o123456.ingest.sentry.io/123456`
+
+When nightly tests fail, a Sentry issue is automatically created via the DSN with detailed information about the failure, including links to the workflow run and test artifacts. This approach is simpler and more reliable than API token-based reporting.
 
 ## Manual Local Runs
 
@@ -206,3 +216,23 @@ When adding new tests:
 - Browser caching is optimized for faster runs
 - Network idle timeouts are tuned for real API responses
 - Screenshots are minimized to reduce execution time
+
+## Error Reporting
+
+### Sentry Integration
+
+When nightly tests fail during scheduled runs, detailed issues are automatically created in Sentry with:
+
+- Direct links to failed workflow runs
+- Test artifacts and logs
+- Rich metadata for filtering and tracking
+- Automatic grouping and deduplication
+
+**📖 For detailed information about the Sentry integration, see [SENTRY_NIGHTLY_INTEGRATION.md](SENTRY_NIGHTLY_INTEGRATION.md)**
+
+### Testing Sentry Integration
+
+```bash
+# Test Sentry issue creation (dry run)
+npm run test:nightly:sentry-issue
+```

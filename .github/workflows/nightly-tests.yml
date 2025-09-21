@@ -441,66 +441,75 @@ jobs:
     if: failure() && github.event_name == 'schedule'
 
     steps:
-      - name: Send notification on scheduled failure
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 1
+
+      - name: Create Sentry Issue for Test Failure
+        run: |
+          # Prepare issue details
+          TITLE="🚨 Nightly Tests Failed - $(date -u +%Y-%m-%d)"
+          DESCRIPTION="The nightly regression tests have failed on $(date -u -Iseconds).
+
+          **Workflow Details:**
+          - Workflow: ${{ github.workflow }}
+          - Run ID: ${{ github.run_id }}
+          - Branch: ${{ github.ref }}
+          - Trigger: Scheduled run
+          - Shards: ${{ needs.setup.outputs.total_shards }}
+
+          **Test Environment:**
+          - Base URL: https://bkrupa.github.io/eso-log-aggregator/
+          - CI Environment: GitHub Actions
+          - Runner: ubuntu-latest
+
+          **Investigation Required:**
+          This indicates either a regression in the production website or test infrastructure issues.
+          Please investigate the failure logs and production site status."
+
+          WORKFLOW_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ARTIFACTS_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
+
+          # Create the Sentry issue using DSN-based reporting
+          node scripts/create-sentry-issue-dsn.js \
+            --title "$TITLE" \
+            --description "$DESCRIPTION" \
+            --workflow-url "$WORKFLOW_URL" \
+            --artifacts-url "$ARTIFACTS_URL" \
+            --run-id "${{ github.run_id }}"
+        env:
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          SENTRY_ENVIRONMENT: 'nightly-tests'
+          SENTRY_RELEASE: ${{ github.ref_name }}-${{ github.run_number }}
+
+      - name: Log Sentry Issue Creation
+        if: success()
+        run: |
+          echo "✅ Sentry issue created successfully via DSN"
+          echo "🔗 Check Sentry dashboard for the new issue"
+          echo "📊 Run details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      - name: Fallback GitHub Comment on Failure
+        if: failure()
         uses: actions/github-script@v8
         with:
           script: |
-            // Create an issue for failed nightly tests
-            const title = `🚨 Nightly Tests Failed - ${new Date().toISOString().split('T')[0]}`;
-            const body = `## Nightly Test Failure Report
-
-            **Date:** ${new Date().toISOString()}
-            **Workflow:** ${context.workflow}
-            **Run ID:** ${context.runId}
-            **Branch:** ${context.ref}
-
-            The nightly regression tests have failed. Please check the workflow logs and test results.
-
-            **Links:**
-            - [Workflow Run](${context.payload.repository.html_url}/actions/runs/${context.runId})
-            - [Test Results Artifact](${context.payload.repository.html_url}/actions/runs/${context.runId}#artifacts)
-
-            **Next Steps:**
-            1. Review the test failure logs
-            2. Check if this is a legitimate regression or test flakiness
-            3. Fix any identified issues
-            4. Close this issue once resolved
-
-            ---
-            *This issue was automatically created by the nightly tests workflow.*`;
-
-            // Check if an issue already exists for today
-            const today = new Date().toISOString().split('T')[0];
-            const { data: issues } = await github.rest.issues.listForRepo({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              labels: 'nightly-test-failure',
-              per_page: 100
-            });
-
-            const existingIssue = issues.find(issue => 
-              issue.title.includes(today) && issue.title.includes('Nightly Tests Failed')
-            );
-
-            if (!existingIssue) {
-              const { data: issue } = await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: title,
-                body: body,
-                labels: ['nightly-test-failure', 'automated', 'bug']
-              });
-              
-              console.log(`Created issue #${issue.number} for nightly test failure`);
-            } else {
-              console.log(`Issue already exists for today's nightly test failure: #${existingIssue.number}`);
-              
-              // Add a comment to the existing issue
-              await github.rest.issues.createComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                issue_number: existingIssue.number,
-                body: `Another nightly test failure occurred at ${new Date().toISOString()}\n\n[View Run](${context.payload.repository.html_url}/actions/runs/${context.runId})`
-              });
-            }
+            // If Sentry issue creation fails, log the error but don't fail the workflow
+            console.log('⚠️ Failed to create Sentry issue via DSN - this may indicate:');
+            console.log('- Missing SENTRY_DSN secret');
+            console.log('- Invalid Sentry DSN configuration');
+            console.log('- Network connectivity issues');
+            console.log('');
+            console.log('🔧 To fix this, ensure the following is configured:');
+            console.log('- SENTRY_DSN: Valid Sentry Data Source Name from your project settings');
+            console.log('  Example: https://your-key@o123456.ingest.sentry.io/123456');
+            console.log('');
+            console.log('💡 DSN-based reporting is simpler and more reliable than API tokens');
+            console.log('📋 Test failure details logged above for manual review');
+            console.log('');
+            console.log('📋 Failed nightly test details:');
+            console.log(`- Run ID: ${{ github.run_id }}`);
+            console.log(`- Workflow: ${{ github.workflow }}`);
+            console.log(`- Timestamp: ${new Date().toISOString()}`);
+            console.log(`- URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}`);
