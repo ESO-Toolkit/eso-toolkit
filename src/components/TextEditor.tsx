@@ -456,6 +456,7 @@ export const TextEditor: React.FC = () => {
         body.style.backgroundPosition = 'center';
         body.style.backgroundRepeat = 'no-repeat';
         body.style.backgroundAttachment = 'fixed';
+        // eslint-disable-next-line no-console
         console.log('Force applied light mode background');
       }, 100); // Small delay to ensure it applies
     }
