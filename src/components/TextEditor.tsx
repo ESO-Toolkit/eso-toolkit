@@ -293,9 +293,8 @@ const TextInput = styled('textarea')(({ theme }) => ({
   },
   '&.color-picker-open': {
     cursor: 'not-allowed',
-    backgroundColor: theme.palette.mode === 'dark'
-      ? 'rgba(255, 255, 255, 0.02)'
-      : 'rgba(0, 0, 0, 0.02)',
+    backgroundColor:
+      theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.02)',
     '&::selection': {
       backgroundColor: alpha(theme.palette.primary.main, 0.3),
     },
@@ -1099,26 +1098,39 @@ export const TextEditor: React.FC = () => {
       return;
     }
 
-    // Store selection info before applying color
     const selectedText = textarea.value.substring(start, end);
-    setSelectedTextInfo({
-      start,
-      end,
-      text: selectedText,
-      originalText: textarea.value,
-    });
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
 
-    // Apply the color with a slight delay to ensure selection is maintained
+    // Check if already formatted - more robust regex
+    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+    const match = selectedText.match(colorFormatRegex);
+    let newColoredText;
+
+    if (match) {
+      // Already has color formatting, replace the color code but keep the text
+      newColoredText = `|c${colorHex}${match[2]}|r`;
+    } else {
+      // No existing color formatting, add it
+      newColoredText = `|c${colorHex}${selectedText}|r`;
+    }
+
+    const newText = beforeText + newColoredText + afterText;
+
+    // Update text
+    textarea.value = newText;
+    setText(newText);
+    debouncedSaveHistory(newText);
+
+    // Restore selection with visual feedback
+    const newStart = start;
+    const newEnd = newStart + newColoredText.length;
+
     setTimeout(() => {
-      applySelectedColor(colorHex);
-
-      // Ensure selection is maintained after application
-      setTimeout(() => {
-        if (textAreaRef.current) {
-          textAreaRef.current.focus();
-          textAreaRef.current.setSelectionRange(start, end);
-        }
-      }, 50);
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+        textAreaRef.current.setSelectionRange(newStart, newEnd);
+      }
     }, 10);
   };
 
