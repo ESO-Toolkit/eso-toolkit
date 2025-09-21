@@ -605,7 +605,7 @@ export const TextEditor: React.FC = () => {
           if (updatedHistory.length > maxHistory) {
             updatedHistory.shift();
           } else {
-            setHistoryIndex(prev => prev + 1);
+            setHistoryIndex((prev) => prev + 1);
           }
           return updatedHistory;
         }
