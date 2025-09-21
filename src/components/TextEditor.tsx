@@ -404,7 +404,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)', // Stronger overlay for light mode
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)', // Original overlay for light mode
     zIndex: -1,
     pointerEvents: 'none',
   },
@@ -444,9 +444,9 @@ const PreviewArea = styled(Box)(({ theme }) => ({
       backgroundAttachment: 'scroll',
     },
 
-    // Stronger overlay for mobile light mode
+    // Original overlay for mobile light mode
     '&::after': {
-      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.6)',
+      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.2)',
     },
   },
 }));
