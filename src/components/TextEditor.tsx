@@ -1581,12 +1581,12 @@ export const TextEditor: React.FC = () => {
                       aria-label="Close color picker"
                       sx={{
                         opacity: 1,
-                        color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                        color: theme.palette.mode === 'dark' ? '#cccccc' : '#333333',
                         backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.1)'
-                            : 'rgba(0, 0, 0, 0.08)',
-                        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'}`,
+                            ? 'rgba(0, 0, 0, 0.4)'
+                            : 'rgba(0, 0, 0, 0.06)',
+                        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`,
                         minWidth: '32px',
                         minHeight: '32px',
                         width: '32px',
@@ -1594,24 +1594,27 @@ export const TextEditor: React.FC = () => {
                         padding: '4px',
                         '&:hover': {
                           opacity: 1,
-                          color: theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000',
+                          color: theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000',
                           backgroundColor:
                             theme.palette.mode === 'dark'
-                              ? 'rgba(255, 68, 68, 0.2)'
-                              : 'rgba(204, 0, 0, 0.1)',
-                          borderColor: theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000',
+                              ? 'rgba(255, 102, 102, 0.15)'
+                              : 'rgba(204, 0, 0, 0.08)',
+                          borderColor: theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000',
                           transform: 'scale(1.05)',
-                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 2px 12px rgba(255, 102, 102, 0.3)'
+                              : '0 2px 8px rgba(0, 0, 0, 0.2)',
                         },
                         '&:active': {
                           transform: 'scale(0.95)',
                           backgroundColor:
                             theme.palette.mode === 'dark'
-                              ? 'rgba(255, 68, 68, 0.3)'
-                              : 'rgba(204, 0, 0, 0.15)',
+                              ? 'rgba(255, 102, 102, 0.25)'
+                              : 'rgba(204, 0, 0, 0.12)',
                         },
                         '&:focus-visible': {
-                          outline: `2px solid ${theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000'}`,
+                          outline: `2px solid ${theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000'}`,
                           outlineOffset: '2px',
                         },
                         transition: 'all 0.2s ease',
