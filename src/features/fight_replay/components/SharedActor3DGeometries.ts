@@ -25,7 +25,6 @@ class SharedActor3DGeometries {
     }
   > = new Map();
 
-  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
   static getInstance(): SharedActor3DGeometries {

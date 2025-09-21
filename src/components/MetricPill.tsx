@@ -15,6 +15,7 @@ export interface MetricPillProps {
   tooltip?: string;
   ariaLabel?: string;
   sx?: SxProps<Theme>;
+  _sx?: SxProps<Theme>; // Unused sx prop
 }
 
 const intentStyles = (
@@ -89,7 +90,7 @@ export const MetricPill: React.FC<MetricPillProps> = ({
   variant = 'solid',
   tooltip,
   ariaLabel,
-  sx,
+  _sx,
 }) => {
   const theme = useTheme();
   const content = (

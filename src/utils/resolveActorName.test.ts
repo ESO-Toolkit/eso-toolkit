@@ -67,10 +67,10 @@ describe('resolveActorName', () => {
       expect(result).toBe('string-id');
     });
 
-    it('should return "undefined" when all fallbacks are unavailable', () => {
+    it('should return "Unknown" when all fallbacks are unavailable', () => {
       const actor = createMockActor(undefined, undefined);
       const result = resolveActorName(actor as ReportActor);
-      expect(result).toBe('undefined');
+      expect(result).toBe('Unknown');
     });
 
     it('should handle null fallbackId', () => {
@@ -97,14 +97,14 @@ describe('resolveActorName', () => {
       expect(result).toBe('123');
     });
 
-    it('should return "undefined" when actor is undefined and no fallbacks', () => {
+    it('should return "Unknown" when actor is undefined and no fallbacks', () => {
       const result = resolveActorName(undefined);
-      expect(result).toBe('undefined');
+      expect(result).toBe('Unknown');
     });
 
     it('should handle all parameters as undefined/null', () => {
       const result = resolveActorName(undefined, null, null);
-      expect(result).toBe('null');
+      expect(result).toBe('Unknown');
     });
   });
 
@@ -162,7 +162,7 @@ describe('resolveActorName', () => {
       expect(resolveActorName(fallbackIdOnly as ReportActor, 123)).toBe('123');
 
       const noneProvided = createMockActor('nil', undefined);
-      expect(resolveActorName(noneProvided as ReportActor)).toBe('undefined');
+      expect(resolveActorName(noneProvided as ReportActor)).toBe('Unknown');
     });
   });
 });

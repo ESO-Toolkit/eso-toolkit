@@ -104,7 +104,7 @@ const MobileMenuOverlay = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
   },
 }));
 
-const MobileMenuContent = styled(Box)<{ open: boolean }>(({ theme, open }) => ({
+const MobileMenuContent = styled(Box)<{ open: boolean }>(({ theme: _theme, open }) => ({
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -441,17 +441,17 @@ export const HeaderBar: React.FC = () => {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  const handleLogin = (): void => {
+  const handleLogin = React.useCallback((): void => {
     startPKCEAuth();
     setMobileOpen(false);
-  };
+  }, []);
 
-  const handleLogout = (): void => {
+  const handleLogout = React.useCallback((): void => {
     localStorage.removeItem(LOCAL_STORAGE_ACCESS_TOKEN_KEY);
     rebindAccessToken();
     navigate('/');
     setMobileOpen(false);
-  };
+  }, [rebindAccessToken, navigate]);
 
   const handleDrawerToggle = (): void => {
     setMobileOpen(!mobileOpen);
@@ -990,7 +990,7 @@ export const HeaderBar: React.FC = () => {
             <MobileNavButton
               key={item.text}
               href={item.href}
-              onClick={(e: React.MouseEvent) => {
+              onClick={(_e: React.MouseEvent) => {
                 window.open(item.href, '_blank', 'noopener,noreferrer');
                 handleDrawerToggle();
               }}

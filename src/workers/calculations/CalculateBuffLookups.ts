@@ -1,7 +1,7 @@
-import { OnProgressCallback } from '../Utils';
-
 import { BuffEvent, DebuffEvent } from '@/types/combatlogEvents';
 import { BuffLookupData, createBuffLookup, createDebuffLookup } from '@/utils/BuffLookupUtils';
+
+import { OnProgressCallback } from '../Utils';
 
 export interface BuffCalculationTask {
   buffEvents: (BuffEvent | DebuffEvent)[];

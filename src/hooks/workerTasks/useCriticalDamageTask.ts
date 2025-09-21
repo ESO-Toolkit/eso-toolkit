@@ -1,6 +1,9 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
+import { SharedWorkerResultType } from '@/workers/SharedWorker';
+
 import { FightFragment } from '../../graphql/generated';
 import {
   selectCriticalDamageResult,
@@ -14,9 +17,6 @@ import { usePlayerData } from '../usePlayerData';
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
-
-import { executeCriticalDamageTask, criticalDamageActions } from '@/store/worker_results';
-import { SharedWorkerResultType } from '@/workers/SharedWorker';
 
 // Hook for critical damage calculation
 export function useCriticalDamageTask(): {

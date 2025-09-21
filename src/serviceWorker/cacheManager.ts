@@ -132,20 +132,15 @@ async function handleFetch(event: FetchEvent): Promise<Response> {
   }
 
   // Not in cache, fetch from network
-  try {
-    const response = await fetch(request);
+  const response = await fetch(request);
 
-    // Cache successful responses
-    if (response.ok && request.method === 'GET') {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-
-    return response;
-  } catch (error) {
-    // For asset requests, we might want to provide a fallback
-    throw error;
+  // Cache successful responses
+  if (response.ok && request.method === 'GET') {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
   }
+
+  return response;
 }
 
 // Service Worker Event Listeners

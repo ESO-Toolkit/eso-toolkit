@@ -122,7 +122,6 @@ export const EventsGrid: React.FC<EventsGridProps> = ({
               textarea.value = JSON.stringify(props.row.original.originalEvent, null, 2);
               document.body.appendChild(textarea);
               textarea.select();
-              // eslint-disable-next-line deprecation/deprecation
               document.execCommand('copy');
               document.body.removeChild(textarea);
             }

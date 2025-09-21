@@ -121,7 +121,7 @@ interface PlayerCriticalDamageDetailsViewProps {
 
 export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetailsViewProps> = ({
   id,
-  name,
+  name: _name,
   expanded,
   isLoading,
   criticalDamageData,

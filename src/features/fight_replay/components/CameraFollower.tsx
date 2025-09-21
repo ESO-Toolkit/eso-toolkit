@@ -2,8 +2,10 @@ import { useFrame, useThree } from '@react-three/fiber';
 import { useRef } from 'react';
 import { type Controls, Vector3 } from 'three';
 
-import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
-import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
+import {
+  TimestampPositionLookup,
+  getActorPositionAtClosestTimestamp,
+} from '../../../workers/calculations/CalculateActorPositions';
 import { RenderPriority } from '../constants/renderPriorities';
 
 // Default camera offset from the look-at point (camera starts at [30, 12, 30], looking at [50, 50, 0])

@@ -1,5 +1,3 @@
-import { OnProgressCallback } from '../Utils';
-
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '@/types/combatlogEvents';
 import { BuffLookupData } from '@/utils/BuffLookupUtils';
@@ -9,6 +7,8 @@ import {
   CriticalDamageSourceWithActiveState,
   getAllCriticalDamageSourcesWithActiveState,
 } from '@/utils/CritDamageUtils';
+
+import { OnProgressCallback } from '../Utils';
 
 export interface CriticalDamageCalculationTask {
   fight: {

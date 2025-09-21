@@ -48,7 +48,7 @@ export const fetchDamageEvents = createAsyncThunk(
       fight,
       client,
     }: { reportCode: string; fight: FightFragment; client: EsoLogsClient },
-    { getState, rejectWithValue },
+    { getState: _getState, rejectWithValue: _rejectWithValue },
   ) => {
     // Fetch both friendly and enemy damage events
     const hostilityTypes = [HostilityType.Friendlies, HostilityType.Enemies];

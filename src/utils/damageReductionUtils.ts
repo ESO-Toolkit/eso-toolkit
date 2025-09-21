@@ -460,7 +460,7 @@ export function isGearSourceActive(
 export function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   source: DamageReductionComputedSource | DamageReductionNotImplementedSource,
-  playerData: PlayerDetailsWithRole,
+  _playerData: PlayerDetailsWithRole,
 ): boolean {
   if (source.source === 'not_implemented') {
     return false;

@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { FightFragment } from '@/graphql/generated';
+
 import {
   useDeathEvents,
   useDamageEvents,
@@ -15,8 +17,6 @@ import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
 import { DeathEventPanelView } from './DeathEventPanelView';
-
-import { FightFragment } from '@/graphql/generated';
 
 interface DeathEventPanelProps {
   fight: FightFragment;

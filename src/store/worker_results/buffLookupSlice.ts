@@ -3,7 +3,7 @@ import { v4 as uuidV4 } from 'uuid';
 
 import { createWorkerTaskSlice } from './workerTaskSliceFactory';
 
-const computeBuffLookupHash = memoizeOne((...args) => {
+const computeBuffLookupHash = memoizeOne((..._args) => {
   return `${uuidV4()}-${Date.now().toLocaleString()}`;
 });
 

@@ -118,7 +118,7 @@ export function detectCustomPhaseTransitions(
       return detectLordFalgravnPhases(buffEvents, fightStartTime, fightEndTime);
 
     // Add other encounters here as needed
-    default:
+    default: {
       // Check if we can detect Lord Falgravn by looking for the specific abilities
       const hasLordFalgravnAbilities = buffEvents.some(
         (event) =>
@@ -136,6 +136,7 @@ export function detectCustomPhaseTransitions(
           startTime: fightStartTime,
         },
       ];
+    }
   }
 }
 

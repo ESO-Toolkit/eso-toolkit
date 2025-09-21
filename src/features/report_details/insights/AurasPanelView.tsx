@@ -17,8 +17,8 @@ interface AurasPanelViewProps {
 export const AurasPanelView: React.FC<AurasPanelViewProps> = ({
   aurasData,
   isLoading,
-  reportId,
-  fightId,
+  reportId: _reportId,
+  fightId: _fightId,
 }) => {
   const [tooltipAnchor, setTooltipAnchor] = React.useState<{
     element: HTMLElement;

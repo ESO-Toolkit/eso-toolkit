@@ -740,7 +740,7 @@ export const DataGrid = <T extends Record<string, unknown>>({
 
           <TableBody>
             {table.getRowModel().rows.length > 0 ? (
-              table.getRowModel().rows.map((row, index) => (
+              table.getRowModel().rows.map((row, _index) => (
                 <TableRow key={row.id} sx={styles.tableRow}>
                   {row.getVisibleCells().map((cell) => (
                     <TableCell

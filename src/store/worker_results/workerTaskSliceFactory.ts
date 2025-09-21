@@ -1,13 +1,13 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { RootState } from '../storeWithHistory';
-
 import { workerManager } from '@/workers';
 import {
   SharedComputationWorkerTaskType,
   SharedWorkerInputType,
   SharedWorkerResultType,
 } from '@/workers/SharedWorker';
+
+import { RootState } from '../storeWithHistory';
 
 export interface WorkerTaskState<T> {
   result: T | null;

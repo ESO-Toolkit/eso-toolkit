@@ -11,9 +11,7 @@ import {
   Checkbox,
   ListItemText,
   Chip,
-  Grow,
 } from '@mui/material';
-import type { TransitionProps } from '@mui/material/transitions';
 import React from 'react';
 import { useSelector } from 'react-redux';
 
@@ -26,29 +24,6 @@ import { useAppDispatch } from '../../../store/useAppDispatch';
 
 const ALL_BOSSES_SENTINEL = ALL_TARGETS_SENTINEL.toString();
 const ALL_ENEMIES_SENTINEL_STR = ALL_ENEMIES_SENTINEL.toString();
-
-// Custom fast transition for immediate responsiveness
-const FastTransition = React.forwardRef<
-  HTMLDivElement,
-  TransitionProps & { children: React.ReactElement }
->(function FastTransition(props, ref) {
-  return (
-    <Grow
-      ref={ref}
-      in={props.in ?? false}
-      timeout={{
-        enter: 100, // Very fast enter
-        exit: 50, // Even faster exit
-      }}
-      easing={{
-        enter: 'cubic-bezier(0.0, 0, 0.2, 1)', // Fast ease-out
-        exit: 'cubic-bezier(0.4, 0, 1, 1)', // Sharp exit
-      }}
-    >
-      {props.children}
-    </Grow>
-  );
-});
 
 const TargetSelectorComponent: React.FC = () => {
   const dispatch = useAppDispatch();

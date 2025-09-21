@@ -19,14 +19,14 @@ import {
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 
+import type { EsoLogsClient } from '@/esologsClient';
+
 import { eventsReducer } from './events_data';
 import masterDataReducer from './master_data/masterDataSlice';
 import playerDataReducer from './player_data/playerDataSlice';
 import reportReducer from './report/reportSlice';
 import uiReducer from './ui/uiSlice';
 import { workerResultsReducer } from './worker_results';
-
-import type { EsoLogsClient } from '@/esologsClient';
 
 // Create history
 export const history = createBrowserHistory();

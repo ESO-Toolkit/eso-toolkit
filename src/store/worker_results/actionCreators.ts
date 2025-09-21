@@ -1,3 +1,5 @@
+import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
+
 import {
   actorPositionsActions,
   buffLookupActions,
@@ -23,8 +25,6 @@ import {
   elementalWeaknessStacksActions,
   executeElementalWeaknessStacksTask,
 } from './workerResultsSlice';
-
-import { SharedComputationWorkerTaskType, SharedWorkerInputType } from '@/workers/SharedWorker';
 
 // Map task names to their corresponding actions - requires all task types as keys
 const taskActionsMap = {

@@ -1,13 +1,13 @@
 import { Box, Typography, Alert } from '@mui/material';
 import React, { useMemo } from 'react';
 
+import { useCurrentFight } from '@/hooks';
+
 import { useFriendlyBuffEvents } from '../../hooks/events/useFriendlyBuffEvents';
 import { useHostileBuffEvents } from '../../hooks/events/useHostileBuffEvents';
 import { useActorPositionsTask } from '../../hooks/workerTasks/useActorPositionsTask';
 
 import { FightReplay3D } from './components/FightReplay3D';
-
-import { useCurrentFight } from '@/hooks';
 
 export const FightReplay: React.FC = () => {
   const { lookup, isActorPositionsLoading, actorPositionsError } = useActorPositionsTask();

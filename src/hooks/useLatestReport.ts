@@ -58,7 +58,7 @@ export const useLatestReport = (): LatestReportState & { refetch: () => Promise<
         loading: false,
         error: null,
       });
-    } catch (error) {
+    } catch {
       setState({
         report: null,
         loading: false,

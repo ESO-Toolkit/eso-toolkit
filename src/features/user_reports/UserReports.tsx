@@ -401,7 +401,7 @@ export const UserReports: React.FC = () => {
             No reports found
           </Typography>
           <Typography variant="body2" color="text.secondary">
-            You haven't uploaded any reports yet, or they may not be visible with your current
+            You haven&apos;t uploaded any reports yet, or they may not be visible with your current
             permissions.
           </Typography>
         </Box>

@@ -2,6 +2,8 @@ import { Box, Typography } from '@mui/material';
 import React, { useMemo } from 'react';
 import { useSelector } from 'react-redux';
 
+import { useSelectedFight } from '@/hooks/useSelectedFight';
+
 import { DamageDoneTableSkeleton } from '../../../components/DamageDoneTableSkeleton';
 import {
   useDamageEventsLookup,
@@ -17,8 +19,6 @@ import { calculateActivePercentages } from '../../../utils/activePercentageUtils
 import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
-
-import { useSelectedFight } from '@/hooks/useSelectedFight';
 
 /**
  * Smart component that handles data processing and state management for damage done panel

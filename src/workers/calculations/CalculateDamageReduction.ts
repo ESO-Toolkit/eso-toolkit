@@ -1,5 +1,3 @@
-import { OnProgressCallback } from '../Utils';
-
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '@/types/combatlogEvents';
 import { isBuffActiveOnTarget, BuffLookupData } from '@/utils/BuffLookupUtils';
@@ -12,6 +10,8 @@ import {
   isComputedSourceActive,
   resistanceToDamageReduction,
 } from '@/utils/damageReductionUtils';
+
+import { OnProgressCallback } from '../Utils';
 
 export interface DamageReductionDataPoint {
   timestamp: number;
@@ -115,7 +115,7 @@ export function calculateDamageReductionData(
             }
             break;
           case 'buff':
-          case 'debuff':
+          case 'debuff': {
             // Dynamic sources - check if they were active for this specific player during any part of the fight
             const lookup =
               source.source === 'buff'
@@ -124,6 +124,7 @@ export function calculateDamageReductionData(
             // Check if this buff/debuff was ever active for this player during the fight
             isActive = isBuffActiveOnTarget(lookup, source.ability, undefined, player.id);
             break;
+          }
         }
 
         return {

@@ -162,7 +162,6 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
               textarea.value = JSON.stringify(info.row.original.rawTalentData, null, 2);
               document.body.appendChild(textarea);
               textarea.select();
-              // eslint-disable-next-line deprecation/deprecation
               document.execCommand('copy');
               document.body.removeChild(textarea);
             }

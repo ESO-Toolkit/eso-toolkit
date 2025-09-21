@@ -142,7 +142,9 @@ const MARTIAL_DAMAGE_TYPES = Object.freeze(
   ]),
 );
 
-export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({ fight }) => {
+export const DamageTypeBreakdownPanel: React.FC<DamageTypeBreakdownPanelProps> = ({
+  fight: _fight,
+}) => {
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 

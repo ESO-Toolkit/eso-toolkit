@@ -547,11 +547,12 @@ export function getCritDamageFromComputedSource(
         return CriticalDamageValues.FATED_FORTUNE;
       }
       return 0;
-    case ComputedCriticalDamageSources.SUL_XAN_TORMENT:
+    case ComputedCriticalDamageSources.SUL_XAN_TORMENT: {
       // Check if player has 5 pieces of Sul-Xan's Torment equipped
       const hasFullSet = isGearSourceActive(combatantInfo, KnownSetIDs.SUL_XAN_TORMENT_SET, 5);
       return hasFullSet ? CriticalDamageValues.SUL_XAN_TORMENT : 0;
-    case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS:
+    }
+    case ComputedCriticalDamageSources.MORA_SCRIBE_THESIS: {
       // Check if player has 5 pieces of Mora Scribe's Thesis equipped
       const hasFullMoraSet = isGearSourceActive(
         combatantInfo,
@@ -559,11 +560,13 @@ export function getCritDamageFromComputedSource(
         5,
       );
       return hasFullMoraSet ? CriticalDamageValues.MORA_SCRIBE_THESIS : 0;
-    case ComputedCriticalDamageSources.HARPOONER_WADING_KILT:
+    }
+    case ComputedCriticalDamageSources.HARPOONER_WADING_KILT: {
       // Check if player has Harpooner's Wading Kilt equipped
       const hasKilt = isGearSourceActive(combatantInfo, KnownSetIDs.HARPOONER_WADING_KILT_SET, 1);
       return hasKilt ? CriticalDamageValues.HARPOONER_WADING_KILT : 0;
-    case ComputedCriticalDamageSources.ADVANCED_SPECIES:
+    }
+    case ComputedCriticalDamageSources.ADVANCED_SPECIES: {
       // Count Animal Companions abilities on front bar
       if (!playerData) return 0;
       const animalCompanionAbilities = playerData.combatantInfo.talents.slice(0, 6).filter((t) =>
@@ -574,17 +577,21 @@ export function getCritDamageFromComputedSource(
           .some((a) => a?.name === t.name),
       );
       return animalCompanionAbilities.length * CriticalDamageValues.ANIMAL_COMPANIONS_PER_ABILITY;
-    case ComputedCriticalDamageSources.DUAL_WIELD_AXES:
+    }
+    case ComputedCriticalDamageSources.DUAL_WIELD_AXES: {
       const axeCount = countAxesInWeaponSlots(combatantInfo);
       return axeCount * CriticalDamageValues.DUAL_WIELD_AXES;
-    case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE:
+    }
+    case ComputedCriticalDamageSources.TWO_HANDED_BATTLE_AXE: {
       return hasTwoHandedAxeEquipped(combatantInfo)
         ? CriticalDamageValues.TWO_HANDED_BATTLE_AXE
         : 0;
-    case ComputedCriticalDamageSources.BACKSTABBER:
+    }
+    case ComputedCriticalDamageSources.BACKSTABBER: {
       // Always active as requested
       return CriticalDamageValues.BACKSTABBER;
-    case ComputedCriticalDamageSources.ELEMENTAL_CATALYST:
+    }
+    case ComputedCriticalDamageSources.ELEMENTAL_CATALYST: {
       // Calculate damage based on active elemental weakness debuffs
       if (!debuffLookup || timestamp === undefined) return 0;
 
@@ -602,6 +609,7 @@ export function getCritDamageFromComputedSource(
       }
 
       return activeWeaknessCount * CriticalDamageValues.ELEMENTAL_CATALYST_PER_WEAKNESS;
+    }
   }
 }
 
@@ -610,10 +618,12 @@ export function getCritDamageFromAlwaysOnSource(
   combatantInfo: CombatantInfoEvent | null,
 ): number {
   switch (source.key) {
-    case AlwaysOnCriticalDamageSources.DEXTERITY:
+    case AlwaysOnCriticalDamageSources.DEXTERITY: {
       const medPieces = combatantInfo?.gear?.filter((item) => item.type === ArmorType.MEDIUM);
       return (medPieces?.length || 0) * CriticalDamageValues.DEXTERITY_PER_PIECE;
-    case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE:
+    }
+    case AlwaysOnCriticalDamageSources.FIGHTING_FINESSE: {
       return CriticalDamageValues.FIGHTING_FINESSE;
+    }
   }
 }

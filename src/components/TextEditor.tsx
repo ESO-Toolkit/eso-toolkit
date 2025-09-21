@@ -301,7 +301,7 @@ const TextInput = styled('textarea')(({ theme }) => ({
   },
 }));
 
-const StatusBar = styled(Box)(({ theme }) => ({
+const StatusBar = styled(Box)(({ theme: _theme }) => ({
   display: 'flex',
   justifyContent: 'space-between',
   alignItems: 'center',
@@ -623,21 +623,22 @@ export const TextEditor: React.FC = () => {
 
   // Debounced history saving
   const debouncedSaveHistory = useCallback(
-    debounce((newText: string) => {
-      setHistory((prev) => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-          const updatedHistory = [...newHistory, newText];
-          if (updatedHistory.length > maxHistory) {
-            updatedHistory.shift();
-          } else {
-            setHistoryIndex((prev) => prev + 1);
+    (newText: string) =>
+      debounce(() => {
+        setHistory((prev) => {
+          const newHistory = prev.slice(0, historyIndex + 1);
+          if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
+            const updatedHistory = [...newHistory, newText];
+            if (updatedHistory.length > maxHistory) {
+              updatedHistory.shift();
+            } else {
+              setHistoryIndex((prev) => prev + 1);
+            }
+            return updatedHistory;
           }
-          return updatedHistory;
-        }
-        return prev;
-      });
-    }, 500),
+          return prev;
+        });
+      }, 500),
     [historyIndex, maxHistory],
   );
 
@@ -847,65 +848,6 @@ export const TextEditor: React.FC = () => {
   //   return true;
   // }, [getSelectedText]);
 
-  // Simple color application function
-  const applySelectedColor = useCallback(
-    (color: string): void => {
-      if (!textAreaRef.current || !selectedTextInfo) {
-        return;
-      }
-
-      const textarea = textAreaRef.current;
-      const { start, end, text: selectedText } = selectedTextInfo;
-
-      if (selectedText.length === 0) {
-        alert('Please select some text first!');
-        return;
-      }
-
-      // Check if current text at positions matches what we saved
-      const currentTextAtPosition = textarea.value.substring(start, end);
-
-      // Use the current text at the position (in case it changed)
-      const textToColor = currentTextAtPosition;
-
-      const beforeText = textarea.value.substring(0, start);
-      const afterText = textarea.value.substring(end);
-
-      // Check if already formatted - more robust regex
-      const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
-      const match = textToColor.match(colorFormatRegex);
-
-      let newColoredText;
-      if (match) {
-        // Already has color formatting, replace the color code but keep the text
-        newColoredText = `|c${color}${match[2]}|r`;
-      } else {
-        // No existing color formatting, add it
-        newColoredText = `|c${color}${textToColor}|r`;
-      }
-
-      const newText = beforeText + newColoredText + afterText;
-
-      // Update text
-      textarea.value = newText;
-      setText(newText);
-      debouncedSaveHistory(newText);
-
-      // Close color picker after applying
-      setShowColorPicker(false);
-      setSelectedTextInfo(null);
-
-      // Calculate new selection bounds and restore with visual feedback
-      const newStart = start;
-      const newEnd = newStart + newColoredText.length;
-
-      setTimeout(() => {
-        restoreTextSelection(newStart, newEnd, true);
-      }, 50);
-    },
-    [selectedTextInfo, debouncedSaveHistory, restoreTextSelection],
-  );
-
   // Create preview text with live color
   const createPreviewText = useCallback(
     (colorHex?: string): string => {
@@ -967,7 +909,10 @@ export const TextEditor: React.FC = () => {
 
       // Calculate optimal position
       const anchorElement = event.currentTarget;
-      const position = calculateOptimalPosition(anchorElement);
+      if (!anchorElement) {
+        return;
+      }
+      const position = calculateOptimalPosition(anchorElement as HTMLElement);
 
       setColorPickerAnchor(anchorElement as HTMLElement);
       setColorPickerPosition(position);
@@ -1264,10 +1209,9 @@ export const TextEditor: React.FC = () => {
       await navigator.clipboard.writeText(textToCopy);
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
-    } catch (err) {
+    } catch {
       // Fallback for older browsers
       textAreaRef.current.select();
-      // eslint-disable-next-line deprecation/deprecation
       document.execCommand('copy');
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
@@ -1643,7 +1587,7 @@ export const TextEditor: React.FC = () => {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      "{getCleanPreviewText()}"
+                      &quot;{getCleanPreviewText()}&quot;
                     </Typography>
                   </Box>
 

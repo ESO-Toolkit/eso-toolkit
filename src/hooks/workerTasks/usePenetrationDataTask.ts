@@ -1,6 +1,9 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { useAppDispatch } from '@/store/useAppDispatch';
+import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
+
 import { FightFragment } from '../../graphql/generated';
 import {
   selectPenetrationDataResult,
@@ -15,9 +18,6 @@ import { useSelectedTargetIds } from '../useSelectedTargetIds';
 
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
-
-import { useAppDispatch } from '@/store/useAppDispatch';
-import { executePenetrationDataTask, penetrationDataActions } from '@/store/worker_results';
 
 // Hook for penetration data calculation
 export function usePenetrationDataTask(): {

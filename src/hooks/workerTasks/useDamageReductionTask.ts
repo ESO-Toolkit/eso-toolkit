@@ -1,6 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { executeDamageReductionTask, damageReductionActions } from '@/store/worker_results';
+
 import { FightFragment } from '../../graphql/generated';
 import {
   selectDamageReductionResult,
@@ -14,8 +16,6 @@ import { usePlayerData } from '../usePlayerData';
 import { useBuffLookupTask } from './useBuffLookupTask';
 import { useDebuffLookupTask } from './useDebuffLookupTask';
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
-
-import { executeDamageReductionTask, damageReductionActions } from '@/store/worker_results';
 
 // Hook for damage reduction calculation
 export function useDamageReductionTask(): {

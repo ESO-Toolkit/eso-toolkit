@@ -75,8 +75,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     fightId,
     isLoading,
     playerGear,
-    fightStartTime,
-    fightEndTime,
+    fightStartTime: _fightStartTime,
+    fightEndTime: _fightEndTime,
   }) => {
     const [searchTerm, setSearchTerm] = useState('');
     const [sortOption, setSortOption] = useState<SortOption>('alphabetical');
@@ -412,3 +412,5 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     );
   },
 );
+
+PlayersPanelView.displayName = 'PlayersPanelView';

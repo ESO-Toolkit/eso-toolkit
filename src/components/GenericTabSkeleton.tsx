@@ -1,8 +1,9 @@
 import { Box, Paper, Skeleton } from '@mui/material';
 import React from 'react';
 
-interface GenericTabSkeletonProps {
+export interface GenericTabSkeletonProps {
   title?: string;
+  _title?: string; // Unused title prop
   showChart?: boolean;
   chartHeight?: number;
   showTable?: boolean;
@@ -10,7 +11,7 @@ interface GenericTabSkeletonProps {
 }
 
 export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
-  title = 'Loading...',
+  _title = 'Loading...',
   showChart = false,
   chartHeight = 300,
   showTable = true,

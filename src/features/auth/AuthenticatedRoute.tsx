@@ -1,10 +1,10 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
+import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
+
 import { setIntendedDestination } from './auth';
 import { useAuth } from './AuthContext';
-
-import { useEsoLogsClientContext } from '@/EsoLogsClientContext';
 
 interface AuthenticatedRouteProps {
   children: React.ReactNode;

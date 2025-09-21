@@ -1,6 +1,8 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
+
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { FightFragment } from '../../graphql/generated';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
@@ -13,8 +15,6 @@ import {
 import { useAppDispatch } from '../../store/useAppDispatch';
 import { DamageEvent } from '../../types/combatlogEvents';
 import { useReportMasterData } from '../useReportMasterData';
-
-import { selectDamageEventsByPlayer } from '@/store/events_data/damageEventsSelectors';
 
 export function useDamageEvents(): {
   damageEvents: DamageEvent[];

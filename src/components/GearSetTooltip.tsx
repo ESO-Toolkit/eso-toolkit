@@ -35,6 +35,8 @@ export interface GearSetTooltipProps {
   itemCount?: string;
   // Individual gear pieces with detailed info
   gearPieces?: GearPieceInfo[];
+  // Individual gear pieces with detailed info (unused)
+  _gearPieces?: GearPieceInfo[];
 }
 
 /**
@@ -49,7 +51,7 @@ export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
   setBonuses,
   description,
   itemCount,
-  gearPieces,
+  _gearPieces,
 }) => {
   const theme = useTheme();
 

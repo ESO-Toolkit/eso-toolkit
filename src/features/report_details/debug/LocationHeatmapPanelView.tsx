@@ -110,7 +110,7 @@ export const LocationHeatmapPanelView: React.FC<LocationHeatmapPanelViewProps> =
   locationData,
   playerActors,
   fightPhases,
-  filteredLocationData,
+  filteredLocationData: _filteredLocationData,
   heatmapVoxels,
   elmsMarkers,
   mapBounds,
