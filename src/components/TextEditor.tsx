@@ -396,7 +396,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     pointerEvents: 'none',
   },
 
-  // RESTORE ORIGINAL OVERLAY - this was changed
+  // Semi-transparent overlay for text readability
   '&::after': {
     content: '""',
     position: 'absolute',
@@ -404,8 +404,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    // RESTORE ORIGINAL: 0.2 for dark, 0.4 for light
-    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     zIndex: -1,
     pointerEvents: 'none',
   },
