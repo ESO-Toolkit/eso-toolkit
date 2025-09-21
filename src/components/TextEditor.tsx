@@ -795,11 +795,11 @@ export const TextEditor: React.FC = () => {
 
     const text = selectedTextInfo.text;
 
-    // Remove color formatting codes: |cFFFFFF and |r
+    // Remove all ESO formatting codes: |cFFFFFF (color), |r (reset), and any other | codes
     const cleanText = text
-      .replace(/^\|c[0-9A-Fa-f]{6}/, '') // Remove starting color code
-      .replace(/\|r$/, '') // Remove ending reset code
-      .replace(/\|c[0-9A-Fa-f]{6}/g, ''); // Remove any inline color codes
+      .replace(/\|c[0-9A-Fa-f]{6}/g, '') // Remove all color codes
+      .replace(/\|r/g, '') // Remove all reset codes
+      .replace(/\|[a-zA-Z]/g, ''); // Remove any other formatting codes
 
     // Truncate if necessary
     return cleanText.length > 30 ? cleanText.substring(0, 30) + '...' : cleanText;
@@ -1580,16 +1580,42 @@ export const TextEditor: React.FC = () => {
                       onClick={cancelColorSelection}
                       aria-label="Close color picker"
                       sx={{
-                        opacity: 0.7,
-                        color: theme.palette.text.secondary,
-                        backgroundColor: 'transparent',
-                        border: '1px solid transparent',
+                        opacity: 1,
+                        color: theme.palette.mode === 'dark' ? '#cccccc' : '#333333',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(0, 0, 0, 0.4)'
+                            : 'rgba(0, 0, 0, 0.06)',
+                        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)'}`,
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        width: '32px',
+                        height: '32px',
+                        padding: '4px',
                         '&:hover': {
                           opacity: 1,
-                          color: theme.palette.error.main,
-                          backgroundColor: theme.palette.action.hover,
-                          borderColor: theme.palette.error.main,
-                          transform: 'scale(1.1)',
+                          color: theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 102, 102, 0.15)'
+                              : 'rgba(204, 0, 0, 0.08)',
+                          borderColor: theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000',
+                          transform: 'scale(1.05)',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 2px 12px rgba(255, 102, 102, 0.3)'
+                              : '0 2px 8px rgba(0, 0, 0, 0.2)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.95)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 102, 102, 0.25)'
+                              : 'rgba(204, 0, 0, 0.12)',
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${theme.palette.mode === 'dark' ? '#ff6666' : '#cc0000'}`,
+                          outlineOffset: '2px',
                         },
                         transition: 'all 0.2s ease',
                       }}
