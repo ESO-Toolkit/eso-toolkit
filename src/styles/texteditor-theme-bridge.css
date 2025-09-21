@@ -41,7 +41,7 @@
 
 /* Emergency close for Pickr */
 .pcr-app::before {
-  content: "×";
+  content: '×';
   position: absolute;
   top: -10px;
   right: -10px;
@@ -57,7 +57,7 @@
   font-weight: bold;
   cursor: pointer;
   z-index: 1000001;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
 .pcr-app::before:hover {
@@ -73,7 +73,7 @@
 }
 
 /* Hide any native color inputs that might be visible */
-input[type="color"] {
+input[type='color'] {
   position: fixed !important;
   top: -9999px !important;
   left: -9999px !important;
@@ -96,7 +96,8 @@ input[type="color"] {
 }
 
 /* TEMPORARY DEBUG CSS - Force interactions */
-.pcr-app, .pcr-app * {
+.pcr-app,
+.pcr-app * {
   pointer-events: auto !important;
   z-index: 999999 !important;
 }
@@ -124,4 +125,41 @@ input[type="color"] {
   /* Ensure palette has proper background */
   background-image: none !important;
   background-color: var(--panel2) !important;
+}
+
+/* Override the checkered pattern in classic theme */
+.pcr-app[data-theme='classic'] .pcr-selection .pcr-color-palette .pcr-palette::before {
+  display: none !important;
+}
+
+/* Let Pickr's native color spectrum work properly */
+.pcr-selection .pcr-color-palette .pcr-palette {
+  /* Remove our overrides to let Pickr's native gradients work */
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* Canvas fixes for checkered/blank spectrum */
+.pcr-app .pcr-palette {
+  width: 200px !important;
+  height: 200px !important;
+  position: relative !important;
+}
+
+.pcr-app .pcr-palette canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Force remove ALL filters from Pickr that might break canvas */
+.pcr-app,
+.pcr-app * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
 }

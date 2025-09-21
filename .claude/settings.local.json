@@ -51,7 +51,8 @@
       "Bash(git merge:*)",
       "Bash(git ls-tree:*)",
       "Bash(grep:*)",
-      "Bash(git revert:*)"
+      "Bash(git revert:*)",
+      "Bash(timeout:*)"
     ],
     "deny": [],
     "ask": []
