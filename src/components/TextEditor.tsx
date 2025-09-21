@@ -1584,12 +1584,20 @@ export const TextEditor: React.FC = () => {
                         color: theme.palette.text.secondary,
                         backgroundColor: 'transparent',
                         border: '1px solid transparent',
+                        minWidth: '32px',
+                        minHeight: '32px',
+                        width: '32px',
+                        height: '32px',
+                        padding: '4px',
                         '&:hover': {
                           opacity: 1,
                           color: theme.palette.error.main,
                           backgroundColor: theme.palette.action.hover,
                           borderColor: theme.palette.error.main,
-                          transform: 'scale(1.1)',
+                          transform: 'scale(1.05)',
+                        },
+                        '&:active': {
+                          transform: 'scale(0.95)',
                         },
                         transition: 'all 0.2s ease',
                       }}
