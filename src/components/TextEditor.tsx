@@ -5,7 +5,7 @@ import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 import '../styles/pickr-theme.css';
 import '../styles/pickr-radius.css';
 import '../styles/pickr-background.css';
-// import '../styles/text-editor-page-background.css'; // Commenting out - conflicts with component transparency
+import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
@@ -444,22 +444,36 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Set up page background for transparency
+  // Nuclear option - Force background image for both light and dark mode
   useEffect(() => {
     const html = document.documentElement;
-    const bgImage =
-      theme.palette.mode === 'dark'
-        ? '/text-editor/text-editor-bg-dark.jpg'
-        : '/text-editor/text-editor-bg-light.jpg';
+    const body = document.body;
 
+    // Force background image based on current theme
+    const bgImage = theme.palette.mode === 'dark'
+      ? '/text-editor/text-editor-bg-dark.jpg'
+      : '/text-editor/text-editor-bg-light.jpg';
+
+    // Nuclear option - force background with highest specificity
     html.style.setProperty('background-image', `url(${bgImage})`, 'important');
     html.style.setProperty('background-size', 'cover', 'important');
     html.style.setProperty('background-position', 'center', 'important');
     html.style.setProperty('background-repeat', 'no-repeat', 'important');
     html.style.setProperty('background-attachment', 'fixed', 'important');
 
-    // Make body transparent to show html background
-    document.body.style.setProperty('background', 'transparent', 'important');
+    // Make body completely transparent to show HTML background
+    body.style.setProperty('background', 'transparent', 'important');
+    body.style.setProperty('background-color', 'transparent', 'important');
+    body.style.setProperty('background-image', 'none', 'important');
+
+    // Also apply to body as fallback
+    body.style.setProperty('background-image', `url(${bgImage})`, 'important');
+    body.style.setProperty('background-size', 'cover', 'important');
+    body.style.setProperty('background-position', 'center', 'important');
+    body.style.setProperty('background-repeat', 'no-repeat', 'important');
+    body.style.setProperty('background-attachment', 'fixed', 'important');
+
+    console.log('Nuclear option applied background:', bgImage);
 
     return () => {
       html.style.removeProperty('background-image');
@@ -467,9 +481,16 @@ export const TextEditor: React.FC = () => {
       html.style.removeProperty('background-position');
       html.style.removeProperty('background-repeat');
       html.style.removeProperty('background-attachment');
-      document.body.style.removeProperty('background');
+
+      body.style.removeProperty('background');
+      body.style.removeProperty('background-color');
+      body.style.removeProperty('background-image');
+      body.style.removeProperty('background-size');
+      body.style.removeProperty('background-position');
+      body.style.removeProperty('background-repeat');
+      body.style.removeProperty('background-attachment');
     };
-  }, [theme.palette.mode]);
+  }, [theme.palette.mode]); // Re-run when theme changes
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
