@@ -292,11 +292,13 @@ const TextInput = styled('textarea')(({ theme }) => ({
     boxShadow: `inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
   '&:disabled': {
-    opacity: 0.7,
     cursor: 'not-allowed',
     backgroundColor: theme.palette.mode === 'dark'
-      ? 'rgba(255, 255, 255, 0.05)'
-      : 'rgba(0, 0, 0, 0.05)',
+      ? 'rgba(255, 255, 255, 0.02)'
+      : 'rgba(0, 0, 0, 0.02)',
+    '&::selection': {
+      backgroundColor: alpha(theme.palette.primary.main, 0.3),
+    },
   },
 }));
 
@@ -700,6 +702,29 @@ export const TextEditor: React.FC = () => {
       textarea.classList.remove('color-picking');
     };
   }, [isPreviewMode]);
+
+  // Ensure selection is visible when color picker is open (even though textarea is disabled)
+  useEffect(() => {
+    if (!textAreaRef.current || !showColorPicker || !selectedTextInfo) return;
+
+    const textarea = textAreaRef.current;
+    const { start, end } = selectedTextInfo;
+
+    // Set the selection range to ensure it's visible
+    const ensureSelection = (): void => {
+      textarea.setSelectionRange(start, end);
+    };
+
+    // Set selection immediately
+    ensureSelection();
+
+    // Also set selection after a short delay to ensure it's applied
+    const timeoutId = setTimeout(ensureSelection, 50);
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
+  }, [showColorPicker, selectedTextInfo]);
 
   // Apply the selected color
   const applyPreviewColor = useCallback((): void => {
