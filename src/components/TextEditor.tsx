@@ -907,7 +907,7 @@ export const TextEditor: React.FC = () => {
   // Create preview text with live color
   const createPreviewText = useCallback(
     (colorHex?: string): string => {
-      if (!selectedTextInfo || !isPreviewMode) return text;
+      if (!selectedTextInfo || !isPreviewMode) return text || '';
 
       const { start, end, originalText } = selectedTextInfo;
       const beforeText = originalText.substring(0, start);
@@ -1208,20 +1208,20 @@ export const TextEditor: React.FC = () => {
   };
 
   const undo = (): void => {
-    if (historyIndex > 0) {
+    if (historyIndex > 0 && history[historyIndex - 1] !== undefined) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      const newText = history[newIndex];
+      const newText = history[newIndex] || '';
       setText(newText);
       // Character count will be updated by the useEffect above
     }
   };
 
   const redo = (): void => {
-    if (historyIndex < history.length - 1) {
+    if (historyIndex < history.length - 1 && history[historyIndex + 1] !== undefined) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      const newText = history[newIndex];
+      const newText = history[newIndex] || '';
       setText(newText);
       // Character count will be updated by the useEffect above
     }
@@ -1262,7 +1262,7 @@ export const TextEditor: React.FC = () => {
     // Use preview text if in preview mode, otherwise use actual text
     const displayText = isPreviewMode ? createPreviewText(previewColor) : text;
 
-    if (!displayText.trim()) {
+    if (!displayText || !displayText.trim()) {
       return (
         <span style={{ color: '#888', fontStyle: 'italic' }}>
           Your formatted text will appear here...
