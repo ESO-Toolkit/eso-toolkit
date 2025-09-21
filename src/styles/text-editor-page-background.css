@@ -267,14 +267,23 @@ body.text-editor-page .css-cm1l3d {
     background: rgb(0 0 0 / 40%) !important;
   }
 
-  /* Hide .pickr element next to .css-fcvuav on mobile */
+  /* Hide .pickr element next to emoji buttons on both mobile and desktop */
   body.text-editor-page .css-fcvuav + .pickr,
   body.text-editor-page .pickr:has(+ .css-fcvuav),
-  body.text-editor-page .pickr:has(~ .css-fcvuav) {
+  body.text-editor-page .pickr:has(~ .css-fcvuav),
+  body.text-editor-page .pickr {
     display: none !important;
     visibility: hidden !important;
     opacity: 0 !important;
   }
+}
+
+/* Hide all Pickr-generated white buttons on text editor page */
+body.text-editor-page .pickr .pcr-button,
+body.text-editor-page .pcr-button {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 /* Remove border radius from nav header on mobile for text editor page */
