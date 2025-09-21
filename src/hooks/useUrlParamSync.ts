@@ -4,13 +4,13 @@ import { push, replace } from 'redux-first-history';
 
 import { RootState } from '../store/storeWithHistory';
 import {
-  selectSelectedTargetId,
+  selectSelectedTargetIds,
   selectSelectedPlayerId,
   selectSelectedTabId,
   selectShowExperimentalTabs,
 } from '../store/ui/uiSelectors';
 import {
-  setSelectedTargetId,
+  setSelectedTargetIds,
   setSelectedPlayerId,
   setSelectedTabId,
   setShowExperimentalTabs,
@@ -18,7 +18,7 @@ import {
 import { useAppDispatch } from '../store/useAppDispatch';
 
 export interface UrlParams {
-  selectedTargetId: number | null;
+  selectedTargetIds: number[];
   selectedPlayerId: number | null;
   selectedTab: number | null;
   showExperimentalTabs: boolean;
@@ -40,12 +40,19 @@ function parseUrlParams(location: { search: string; hash: string }): Partial<Url
 
   const searchParams = new URLSearchParams(searchString);
 
-  // Parse selectedTargetId
-  const targetId = searchParams.get('selectedTargetId');
-  if (targetId !== null) {
-    const parsed = Number(targetId);
-    if (!isNaN(parsed)) {
-      params.selectedTargetId = parsed;
+  // Parse selectedTargetIds (comma-separated string)
+  const targetIds = searchParams.get('selectedTargetIds');
+  if (targetIds !== null) {
+    try {
+      const parsed = targetIds
+        .split(',')
+        .map((id) => Number(id.trim()))
+        .filter((id) => !isNaN(id));
+      if (parsed.length > 0) {
+        params.selectedTargetIds = parsed;
+      }
+    } catch {
+      // If parsing fails, ignore
     }
   }
 
@@ -82,8 +89,8 @@ function parseUrlParams(location: { search: string; hash: string }): Partial<Url
 function buildUrlParams(params: Partial<UrlParams>): string {
   const searchParams = new URLSearchParams();
 
-  if (params.selectedTargetId !== null && params.selectedTargetId !== undefined) {
-    searchParams.set('selectedTargetId', params.selectedTargetId.toString());
+  if (params.selectedTargetIds && params.selectedTargetIds.length > 0) {
+    searchParams.set('selectedTargetIds', params.selectedTargetIds.join(','));
   }
 
   if (params.selectedPlayerId !== null && params.selectedPlayerId !== undefined) {
@@ -115,11 +122,11 @@ function updateUrl(
   const currentSearchParams = new URLSearchParams(currentSearchString);
 
   // Update our tracked params
-  if (newParams.selectedTargetId !== undefined) {
-    if (newParams.selectedTargetId === null) {
-      currentSearchParams.delete('selectedTargetId');
+  if (newParams.selectedTargetIds !== undefined) {
+    if (newParams.selectedTargetIds.length === 0) {
+      currentSearchParams.delete('selectedTargetIds');
     } else {
-      currentSearchParams.set('selectedTargetId', newParams.selectedTargetId.toString());
+      currentSearchParams.set('selectedTargetIds', newParams.selectedTargetIds.join(','));
     }
   }
 
@@ -159,11 +166,11 @@ function updateUrl(
  * - Debounced URL parsing to prevent excessive updates
  */
 export function useUrlParamSync(): {
-  selectedTargetId: number | null;
+  selectedTargetIds: number[];
   selectedPlayerId: number | null;
   selectedTabId: number | null;
   showExperimentalTabs: boolean;
-  updateSelectedTargetId: (targetId: number | null, replaceHistory?: boolean) => void;
+  updateSelectedTargetIds: (targetIds: number[], replaceHistory?: boolean) => void;
   updateSelectedPlayerId: (playerId: number | null, replaceHistory?: boolean) => void;
   updateSelectedTab: (tab: number | null, replaceHistory?: boolean) => void;
   updateShowExperimentalTabs: (show: boolean, replaceHistory?: boolean) => void;
@@ -175,7 +182,7 @@ export function useUrlParamSync(): {
   const location = useSelector((state: RootState) => state.router.location);
 
   // Get current Redux state
-  const selectedTargetId = useSelector(selectSelectedTargetId);
+  const selectedTargetIds = useSelector(selectSelectedTargetIds);
   const selectedPlayerId = useSelector(selectSelectedPlayerId);
   const selectedTabId = useSelector(selectSelectedTabId);
   const showExperimentalTabs = useSelector(selectShowExperimentalTabs);
@@ -198,9 +205,9 @@ export function useUrlParamSync(): {
 
         // Always apply URL params on initial load/location change
         // Don't compare to Redux state to avoid timing issues
-        if (urlParams.selectedTargetId !== undefined) {
-          const value = urlParams.selectedTargetId;
-          updates.push(() => dispatch(setSelectedTargetId(value)));
+        if (urlParams.selectedTargetIds !== undefined) {
+          const value = urlParams.selectedTargetIds;
+          updates.push(() => dispatch(setSelectedTargetIds(value)));
           setHasInitialSync(true);
         }
 
@@ -232,16 +239,20 @@ export function useUrlParamSync(): {
   }, [location, dispatch, hasInitialSync, setHasInitialSync]);
 
   // Update functions - optimized with change detection
-  const updateSelectedTargetId = React.useCallback(
-    (targetId: number | null, replaceHistory = true) => {
-      // Only update if value actually changed
-      if (targetId !== selectedTargetId && location) {
-        dispatch(setSelectedTargetId(targetId));
-        const newUrl = updateUrl(location, { selectedTargetId: targetId });
+  const updateSelectedTargetIds = React.useCallback(
+    (targetIds: number[], replaceHistory = true) => {
+      // Only update if value actually changed (deep comparison for array)
+      const areEqual =
+        targetIds.length === selectedTargetIds.length &&
+        targetIds.every((id, index) => id === selectedTargetIds[index]);
+
+      if (!areEqual && location) {
+        dispatch(setSelectedTargetIds(targetIds));
+        const newUrl = updateUrl(location, { selectedTargetIds: targetIds });
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedTargetId],
+    [dispatch, location, selectedTargetIds],
   );
 
   const updateSelectedPlayerId = React.useCallback(
@@ -283,9 +294,14 @@ export function useUrlParamSync(): {
       let hasChanges = false;
 
       // Check what actually changed and batch Redux updates
-      if (params.selectedTargetId !== undefined && params.selectedTargetId !== selectedTargetId) {
-        dispatch(setSelectedTargetId(params.selectedTargetId));
-        hasChanges = true;
+      if (params.selectedTargetIds !== undefined) {
+        const areEqual =
+          params.selectedTargetIds.length === selectedTargetIds.length &&
+          params.selectedTargetIds.every((id, index) => id === selectedTargetIds[index]);
+        if (!areEqual) {
+          dispatch(setSelectedTargetIds(params.selectedTargetIds));
+          hasChanges = true;
+        }
       }
       if (params.selectedPlayerId !== undefined && params.selectedPlayerId !== selectedPlayerId) {
         dispatch(setSelectedPlayerId(params.selectedPlayerId));
@@ -309,7 +325,7 @@ export function useUrlParamSync(): {
         dispatch(replaceHistory ? replace(newUrl) : push(newUrl));
       }
     },
-    [dispatch, location, selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs],
+    [dispatch, location, selectedTargetIds, selectedPlayerId, selectedTabId, showExperimentalTabs],
   );
 
   // Helper functions
@@ -323,13 +339,13 @@ export function useUrlParamSync(): {
 
   return {
     // Current values (from Redux state)
-    selectedTargetId,
+    selectedTargetIds,
     selectedPlayerId,
     selectedTabId,
     showExperimentalTabs,
 
     // Update functions
-    updateSelectedTargetId,
+    updateSelectedTargetIds,
     updateSelectedPlayerId,
     updateSelectedTab,
     updateShowExperimentalTabs,
@@ -346,18 +362,18 @@ export function useUrlParamSync(): {
  * This is more performant for components that only read values
  */
 export function useUrlParams(): UrlParams {
-  const selectedTargetId = useSelector(selectSelectedTargetId);
+  const selectedTargetIds = useSelector(selectSelectedTargetIds);
   const selectedPlayerId = useSelector(selectSelectedPlayerId);
   const selectedTabId = useSelector(selectSelectedTabId);
   const showExperimentalTabs = useSelector(selectShowExperimentalTabs);
 
   return React.useMemo(
     () => ({
-      selectedTargetId,
+      selectedTargetIds,
       selectedPlayerId,
       selectedTab: selectedTabId,
       showExperimentalTabs,
     }),
-    [selectedTargetId, selectedPlayerId, selectedTabId, showExperimentalTabs],
+    [selectedTargetIds, selectedPlayerId, selectedTabId, showExperimentalTabs],
   );
 }

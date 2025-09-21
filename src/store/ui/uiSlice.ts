@@ -4,7 +4,7 @@ export interface UIState {
   darkMode: boolean;
   selectedPlayerId: number | null;
   selectedTabId: number | null;
-  selectedTargetId: number | null;
+  selectedTargetIds: number[]; // Changed from single ID to array of IDs
   showExperimentalTabs: boolean;
   sidebarOpen: boolean;
 }
@@ -13,7 +13,7 @@ const initialState: UIState = {
   darkMode: true, // Default to dark mode
   selectedPlayerId: null,
   selectedTabId: null,
-  selectedTargetId: null,
+  selectedTargetIds: [], // Initialize as empty array
   showExperimentalTabs: false,
   sidebarOpen: false,
 };
@@ -42,8 +42,16 @@ const uiSlice = createSlice({
     setSelectedTabId: (state, action: PayloadAction<number | null>) => {
       state.selectedTabId = action.payload;
     },
+    setSelectedTargetIds: (state, action: PayloadAction<number[]>) => {
+      state.selectedTargetIds = action.payload;
+    },
+    // Compatibility action for components that set a single target ID
     setSelectedTargetId: (state, action: PayloadAction<number | null>) => {
-      state.selectedTargetId = action.payload;
+      if (action.payload === null) {
+        state.selectedTargetIds = [];
+      } else {
+        state.selectedTargetIds = [action.payload];
+      }
     },
     setShowExperimentalTabs: (state, action: PayloadAction<boolean>) => {
       state.showExperimentalTabs = action.payload;
@@ -63,7 +71,7 @@ export const {
   syncWithSystemTheme,
   setSelectedPlayerId,
   setSelectedTabId,
-  setSelectedTargetId,
+  setSelectedTargetIds,
   setShowExperimentalTabs,
   setSidebarOpen,
   toggleSidebar,

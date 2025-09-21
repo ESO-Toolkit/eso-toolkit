@@ -8,7 +8,7 @@ import {
   selectWorkerTaskError,
   selectWorkerTaskProgress,
 } from '../../store/worker_results/selectors';
-import { useCombatantInfoRecord } from '../events';
+import { useCombatantInfoRecord } from '../events/useCombatantInfoRecord';
 import { useCurrentFight } from '../useCurrentFight';
 import { usePlayerData } from '../usePlayerData';
 import { useSelectedTargetIds } from '../useSelectedTargetIds';

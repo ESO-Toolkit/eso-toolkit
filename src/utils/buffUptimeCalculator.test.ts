@@ -148,7 +148,7 @@ describe('buffUptimeCalculator', () => {
       expect(result).toHaveLength(1);
       // Should average: (50% + 30%) / 2 = 40%
       expect(result[0].uptimePercentage).toBeCloseTo(40, 1);
-      expect(result[0].applications).toBe(1); // Average of 1 + 1 = 1
+      expect(result[0].applications).toBe(2); // Sum of 1 + 1 = 2 (applications should be summed across targets)
     });
 
     it('should clip intervals to fight bounds', () => {

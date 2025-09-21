@@ -11,8 +11,15 @@ export const selectSidebarOpen = (state: RootState): RootState['ui']['sidebarOpe
 export const selectShowExperimentalTabs = (
   state: RootState,
 ): RootState['ui']['showExperimentalTabs'] => state.ui.showExperimentalTabs;
-export const selectSelectedTargetId = (state: RootState): RootState['ui']['selectedTargetId'] =>
-  state.ui.selectedTargetId;
+export const selectSelectedTargetIds = (state: RootState): RootState['ui']['selectedTargetIds'] =>
+  state.ui.selectedTargetIds || [];
+
+// Compatibility selector for components that still expect a single target ID
+export const selectSelectedTargetId = (state: RootState): number | null => {
+  const targetIds = state.ui.selectedTargetIds;
+  // Return the first selected target ID, or null if none selected
+  return targetIds && targetIds.length > 0 ? targetIds[0] : null;
+};
 export const selectSelectedPlayerId = (state: RootState): RootState['ui']['selectedPlayerId'] =>
   state.ui.selectedPlayerId;
 export const selectSelectedTabId = (state: RootState): RootState['ui']['selectedTabId'] =>
@@ -23,7 +30,8 @@ export const selectCombinedUIState = createSelector([selectUI], (ui) => ({
   darkMode: ui.darkMode,
   sidebarOpen: ui.sidebarOpen,
   showExperimentalTabs: ui.showExperimentalTabs,
-  selectedTargetId: ui.selectedTargetId,
+  selectedTargetIds: ui.selectedTargetIds,
+  selectedTargetId: ui.selectedTargetIds.length > 0 ? ui.selectedTargetIds[0] : null, // Compatibility
   selectedPlayerId: ui.selectedPlayerId,
   selectedTabId: ui.selectedTabId,
 }));

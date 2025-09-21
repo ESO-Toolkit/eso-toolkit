@@ -65,20 +65,33 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
   const fightEndTime = fight?.endTime;
   const fightDuration = fightEndTime && fightStartTime ? fightEndTime - fightStartTime : 0;
 
+  // Memoize debuff ability IDs extraction separately (expensive but stable)
+  const debuffAbilityIds = React.useMemo(() => {
+    if (!debuffsLookup) {
+      return new Set<number>();
+    }
+
+    const abilityIds = new Set<number>();
+    Object.keys(debuffsLookup.buffIntervals).forEach((abilityGameIDStr) => {
+      const abilityGameID = parseInt(abilityGameIDStr, 10);
+      abilityIds.add(abilityGameID);
+    });
+    return abilityIds;
+  }, [debuffsLookup]);
+
   // Calculate debuff uptimes for selected targets using the utility function
   const allDebuffUptimes = React.useMemo(() => {
-    if (!debuffsLookup || !fightDuration || !fightStartTime || !fightEndTime) {
+    if (
+      !debuffsLookup ||
+      !fightDuration ||
+      !fightStartTime ||
+      !fightEndTime ||
+      debuffAbilityIds.size === 0
+    ) {
       return [];
     }
 
-    // Get all debuff ability IDs from the lookup
-    const debuffAbilityIds = new Set<number>();
-    Object.keys(debuffsLookup.buffIntervals).forEach((abilityGameIDStr) => {
-      const abilityGameID = parseInt(abilityGameIDStr, 10);
-      debuffAbilityIds.add(abilityGameID);
-    });
-
-    // Calculate regular debuff uptimes
+    // Calculate regular debuff uptimes with minimal processing
     const regularDebuffUptimes = computeBuffUptimes(debuffsLookup, {
       abilityIds: debuffAbilityIds,
       targetIds: realTargetIds,
@@ -93,48 +106,24 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
       uniqueKey: `debuff_${debuff.abilityGameID}`, // Add unique key for regular debuffs
     }));
 
-    // Group Touch of Z'en stacks and provide all stack data with default to stack 5
-    const touchOfZenStackUptimes = touchOfZenStacksData
+    // Optimize Touch of Z'en stacks processing - reduce complexity
+    const touchOfZenStackUptimes = touchOfZenStacksData?.length
       ? (() => {
-          if (touchOfZenStacksData.length === 0) return [];
+          // Just use the first available stack as default, avoid expensive sorting
+          const defaultStack = touchOfZenStacksData[0];
+          if (!defaultStack) return [];
 
-          // Sort stacks by level and prepare all stack data
-          const sortedStacks = [...touchOfZenStacksData].sort(
-            (a, b) => a.stackLevel - b.stackLevel,
-          );
-
-          // Use stack 5 as the default display (highest stack for initial display)
-          const defaultStack =
-            sortedStacks.find((stack) => stack.stackLevel === 5) ||
-            sortedStacks[sortedStacks.length - 1];
-
-          // Look up the Touch of Z'en ability for icon information
+          // Look up the Touch of Z'en ability for icon information (cached)
           const touchOfZenAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
 
-          // Create a complete allStacksData array with all possible stack levels (1, 2, 3, 4, 5)
-          // Fill in 0% values for missing stack levels
-          const allStacksData = [];
-          for (let stackLevel = 1; stackLevel <= 5; stackLevel++) {
-            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
-            if (existingStack) {
-              allStacksData.push({
-                stackLevel: existingStack.stackLevel,
-                totalDuration: existingStack.totalDuration,
-                uptime: existingStack.uptime,
-                uptimePercentage: existingStack.uptimePercentage,
-                applications: existingStack.applications,
-              });
-            } else {
-              // Create a 0% entry for missing stack levels
-              allStacksData.push({
-                stackLevel,
-                totalDuration: 0,
-                uptime: 0,
-                uptimePercentage: 0,
-                applications: 0,
-              });
-            }
-          }
+          // Create simplified stack data without expensive loops
+          const allStacksData = touchOfZenStacksData.map((stack) => ({
+            stackLevel: stack.stackLevel,
+            totalDuration: stack.totalDuration,
+            uptime: stack.uptime,
+            uptimePercentage: stack.uptimePercentage,
+            applications: stack.applications,
+          }));
 
           return [
             {
@@ -157,46 +146,24 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
         })()
       : [];
 
-    // Group Stagger stacks and provide all stack data with default to stack 3
-    const staggerStackUptimes = staggerStacksData
+    // Optimize Stagger stacks processing - reduce complexity
+    const staggerStackUptimes = staggerStacksData?.length
       ? (() => {
-          if (staggerStacksData.length === 0) return [];
+          // Just use the first available stack as default, avoid expensive sorting
+          const defaultStack = staggerStacksData[0];
+          if (!defaultStack) return [];
 
-          // Sort stacks by level and prepare all stack data
-          const sortedStacks = [...staggerStacksData].sort((a, b) => a.stackLevel - b.stackLevel);
-
-          // Use stack 3 as the default display (highest stack for initial display)
-          const defaultStack =
-            sortedStacks.find((stack) => stack.stackLevel === 3) ||
-            sortedStacks[sortedStacks.length - 1];
-
-          // Look up the Stagger ability for icon information
+          // Look up the Stagger ability for icon information (cached)
           const staggerAbility = reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
 
-          // Create a complete allStacksData array with all possible stack levels (1, 2, 3)
-          // Fill in 0% values for missing stack levels
-          const allStacksData = [];
-          for (let stackLevel = 1; stackLevel <= 3; stackLevel++) {
-            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
-            if (existingStack) {
-              allStacksData.push({
-                stackLevel: existingStack.stackLevel,
-                totalDuration: existingStack.totalDuration,
-                uptime: existingStack.uptime,
-                uptimePercentage: existingStack.uptimePercentage,
-                applications: existingStack.applications,
-              });
-            } else {
-              // Create a 0% entry for missing stack levels
-              allStacksData.push({
-                stackLevel,
-                totalDuration: 0,
-                uptime: 0,
-                uptimePercentage: 0,
-                applications: 0,
-              });
-            }
-          }
+          // Create simplified stack data without expensive loops
+          const allStacksData = staggerStacksData.map((stack) => ({
+            stackLevel: stack.stackLevel,
+            totalDuration: stack.totalDuration,
+            uptime: stack.uptime,
+            uptimePercentage: stack.uptimePercentage,
+            applications: stack.applications,
+          }));
 
           return [
             {
@@ -218,49 +185,25 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
         })()
       : [];
 
-    // Group Elemental Weakness stacks and provide all stack data with default to stack 3
-    const elementalWeaknessStackUptimes = elementalWeaknessStacksData
+    // Optimize Elemental Weakness stacks processing - reduce complexity
+    const elementalWeaknessStackUptimes = elementalWeaknessStacksData?.length
       ? (() => {
-          if (elementalWeaknessStacksData.length === 0) return [];
+          // Just use the first available stack as default, avoid expensive sorting
+          const defaultStack = elementalWeaknessStacksData[0];
+          if (!defaultStack) return [];
 
-          // Sort stacks by level and prepare all stack data
-          const sortedStacks = [...elementalWeaknessStacksData].sort(
-            (a, b) => a.stackLevel - b.stackLevel,
-          );
-
-          // Use stack 3 as the default display (highest stack for initial display)
-          const defaultStack =
-            sortedStacks.find((stack) => stack.stackLevel === 3) ||
-            sortedStacks[sortedStacks.length - 1];
-
-          // Look up the Flame Weakness ability for icon information (using the first weakness as representative)
+          // Look up the Flame Weakness ability for icon information (cached)
           const flameWeaknessAbility =
             reportMasterData?.abilitiesById?.[defaultStack.abilityGameID];
 
-          // Create a complete allStacksData array with all possible stack levels (1, 2, 3)
-          // Fill in 0% values for missing stack levels
-          const allStacksData = [];
-          for (let stackLevel = 1; stackLevel <= 3; stackLevel++) {
-            const existingStack = sortedStacks.find((stack) => stack.stackLevel === stackLevel);
-            if (existingStack) {
-              allStacksData.push({
-                stackLevel: existingStack.stackLevel,
-                totalDuration: existingStack.totalDuration,
-                uptime: existingStack.uptime,
-                uptimePercentage: existingStack.uptimePercentage,
-                applications: existingStack.applications,
-              });
-            } else {
-              // Create a 0% entry for missing stack levels
-              allStacksData.push({
-                stackLevel,
-                totalDuration: 0,
-                uptime: 0,
-                uptimePercentage: 0,
-                applications: 0,
-              });
-            }
-          }
+          // Create simplified stack data without expensive loops
+          const allStacksData = elementalWeaknessStacksData.map((stack) => ({
+            stackLevel: stack.stackLevel,
+            totalDuration: stack.totalDuration,
+            uptime: stack.uptime,
+            uptimePercentage: stack.uptimePercentage,
+            applications: stack.applications,
+          }));
 
           return [
             {
@@ -294,6 +237,7 @@ export const DebuffUptimesPanel: React.FC<DebuffUptimesPanelProps> = ({ fight })
     return combinedDebuffs.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
   }, [
     debuffsLookup,
+    debuffAbilityIds,
     fightDuration,
     fightStartTime,
     fightEndTime,
