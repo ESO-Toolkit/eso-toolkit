@@ -291,7 +291,7 @@ const TextInput = styled('textarea')(({ theme }) => ({
     borderColor: 'var(--accent)',
     boxShadow: `inset 0 1px 3px rgba(0, 0, 0, 0.1), 0 0 0 3px ${alpha(theme.palette.primary.main, 0.2)}`,
   },
-  '&:disabled': {
+  '&.color-picker-open': {
     cursor: 'not-allowed',
     backgroundColor: theme.palette.mode === 'dark'
       ? 'rgba(255, 255, 255, 0.02)'
@@ -1165,6 +1165,11 @@ export const TextEditor: React.FC = () => {
 
   // Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    // Prevent text changes when color picker is open
+    if (showColorPicker) {
+      e.preventDefault();
+      return;
+    }
     const newText = e.target.value;
     setText(newText);
     debouncedSaveHistory(newText);
@@ -1172,6 +1177,12 @@ export const TextEditor: React.FC = () => {
 
   // Add keyboard shortcuts
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    // Prevent all keyboard input when color picker is open
+    if (showColorPicker) {
+      e.preventDefault();
+      return;
+    }
+
     if (e.ctrlKey || e.metaKey) {
       switch (e.key.toLowerCase()) {
         case 'z':
@@ -1442,9 +1453,24 @@ export const TextEditor: React.FC = () => {
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
+            onPaste={(e) => {
+              if (showColorPicker) {
+                e.preventDefault();
+              }
+            }}
+            onCut={(e) => {
+              if (showColorPicker) {
+                e.preventDefault();
+              }
+            }}
+            onDrop={(e) => {
+              if (showColorPicker) {
+                e.preventDefault();
+              }
+            }}
             placeholder="Type your text here or paste ESO/WoW formatted text. Select text and use the buttons above to format."
             aria-describedby="char-count"
-            disabled={showColorPicker}
+            className={showColorPicker ? 'color-picker-open' : ''}
           />
 
           <StatusBar>
