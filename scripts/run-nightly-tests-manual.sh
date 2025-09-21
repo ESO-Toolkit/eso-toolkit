@@ -2,6 +2,9 @@
 
 # Run nightly regression tests manually with various options
 #
+# By default, tests run against the production website (https://bkrupa.github.io/eso-log-aggregator/).
+# To test against a local development server, set the NIGHTLY_BASE_URL environment variable.
+#
 # Usage:
 #   ./run-nightly-tests-manual.sh [options]
 #
@@ -9,13 +12,13 @@
 #   -s, --suite <suite>    Test suite to run (all, chromium, firefox, webkit, mobile, auth-only)
 #   -h, --headed          Run tests in headed mode (for debugging)
 #   -d, --debug           Enable debug mode (single failure, more verbose)
-#   -b, --build           Build the application before running tests
+#   -b, --build           Build the application before running tests (only useful for local testing)
 #   --help                Show this help message
 #
 # Examples:
 #   ./run-nightly-tests-manual.sh
 #   ./run-nightly-tests-manual.sh --suite chromium --headed
-#   ./run-nightly-tests-manual.sh --suite auth-only --debug --build
+#   NIGHTLY_BASE_URL="http://localhost:3000" ./run-nightly-tests-manual.sh --suite auth-only --debug --build
 
 set -e
 

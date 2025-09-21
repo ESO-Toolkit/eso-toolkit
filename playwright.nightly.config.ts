@@ -3,10 +3,15 @@ import { defineConfig, devices } from '@playwright/test';
 /**
  * Playwright configuration specifically for nightly regression tests
  *
- * This configuration is optimized for running against real ESO Logs data
+ * This configuration is optimized for running against the production website
  * and includes longer timeouts, retry logic, comprehensive reporting, and authentication.
  *
  * Run with: npx playwright test --config=playwright.nightly.config.ts
+ *
+ * Production Testing:
+ * - Tests run against https://bkrupa.github.io/eso-log-aggregator/ by default
+ * - No local web server is started - tests use the live production site
+ * - To test against a local development server, set NIGHTLY_BASE_URL=http://localhost:3000
  *
  * Sharding Support:
  * - Run with shards: npm run test:nightly:sharded (3 parallel shards)
@@ -18,7 +23,7 @@ import { defineConfig, devices } from '@playwright/test';
  * - OAUTH_CLIENT_SECRET: ESO Logs OAuth client secret (optional)
  * - ESO_LOGS_TEST_EMAIL: Test user email for browser-based auth (optional)
  * - ESO_LOGS_TEST_PASSWORD: Test user password for browser-based auth (optional)
- * - NIGHTLY_BASE_URL: Base URL for testing (defaults to http://localhost:3000)
+ * - NIGHTLY_BASE_URL: Override base URL (defaults to production: https://bkrupa.github.io/eso-log-aggregator/)
  */
 export default defineConfig({
   testDir: './tests',
@@ -62,10 +67,10 @@ export default defineConfig({
     ['line'],
   ],
 
-  /* Base URL - use environment variable or default */
+  /* Base URL - use environment variable or default to production */
   use: {
-    /* Base URL - should point to dev server or staging */
-    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'http://localhost:3000',
+    /* Base URL - now points to production website */
+    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://bkrupa.github.io/eso-log-aggregator/',
 
     /* Extended navigation timeout for real API calls */
     navigationTimeout: 60000,
@@ -85,15 +90,7 @@ export default defineConfig({
     },
   },
 
-  /* Web server configuration - let Playwright manage the server lifecycle */
-  webServer: {
-    command: 'npm run preview',
-    url: 'http://localhost:3000',
-    reuseExistingServer: !!process.env.CI, // Reuse existing server in CI
-    timeout: 120000, // 2 minutes to start
-    stdout: 'pipe',
-    stderr: 'pipe',
-  },
+  /* No web server needed - testing against production website */
 
   /* Test projects for different browsers and authentication scenarios */
   projects: [

@@ -14,6 +14,8 @@ The nightly regression tests are comprehensive end-to-end tests that ensure the 
 - Performance monitoring
 - Data consistency
 
+**Important**: The nightly tests run against the **production website** (`https://bkrupa.github.io/eso-log-aggregator/`) to ensure real-world functionality. They do not start a local development server.
+
 ## Automated Runs
 
 ### GitHub Actions Workflow
@@ -54,6 +56,14 @@ Configure these secrets in your repository settings:
    export ESO_LOGS_TEST_EMAIL="test@example.com"
    export ESO_LOGS_TEST_PASSWORD="test_password"
    ```
+
+**Note**: By default, the nightly tests run against the production website (`https://bkrupa.github.io/eso-log-aggregator/`). To test against a local development server, set the `NIGHTLY_BASE_URL` environment variable:
+
+```bash
+export NIGHTLY_BASE_URL="http://localhost:3000"
+npm run start  # Start your local dev server in another terminal
+npm run test:nightly:all
+```
 
 ### Using npm Scripts
 
