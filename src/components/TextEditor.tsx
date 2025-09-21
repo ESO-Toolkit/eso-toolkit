@@ -542,111 +542,304 @@ export const TextEditor: React.FC = () => {
 
   const maxHistory = 50;
 
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = (): void => {
-      const userAgent = navigator.userAgent.toLowerCase();
-      const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-        userAgent,
-      );
-      const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-      const isSmallScreen = window.innerWidth <= 768;
-      setIsMobile(isMobileUA || (hasTouch && isSmallScreen));
-    };
+  // Core utility functions - moved here to resolve dependency issues
+  const saveToHistory = useCallback(
+    (newText: string): void => {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
+          const updatedHistory = [...newHistory, newText];
+          if (updatedHistory.length > maxHistory) {
+            updatedHistory.shift();
+          }
+          setHistoryIndex(updatedHistory.length - 1);
+          return updatedHistory;
+        }
+        return prev;
+      });
+    },
+    [historyIndex, maxHistory],
+  );
 
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
+  const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
+    if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
+    const start = textAreaRef.current.selectionStart;
+    const end = textAreaRef.current.selectionEnd;
+    return {
+      text: text.substring(start, end),
+      start,
+      end,
+    };
+  }, [text]);
+
+  // Simplified device detection logic
+  const isMobileDevice = useCallback((): boolean => {
+    const userAgent = navigator.userAgent.toLowerCase();
+    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
+      userAgent,
+    );
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+    const isSmallScreen = window.innerWidth <= 768;
+    return isMobileUA || (hasTouch && isSmallScreen);
   }, []);
 
-  // Initialize Pickr with theme switching
+  // State for mobile detection
+  useEffect(() => {
+    setIsMobile(isMobileDevice());
+    const handleResize = (): void => setIsMobile(isMobileDevice());
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [isMobileDevice]);
+
+  // Selection validation
+  const validateSelection = useCallback((): boolean => {
+    const selection = getSelectedText();
+    if (!selection.text || selection.text.length === 0) {
+      alert('Please select some text first!');
+      return false;
+    }
+    return true;
+  }, [getSelectedText]);
+
+  // Enhanced color application logic
+  const applyColorToSelection = useCallback(
+    (colorHex: string): void => {
+      const selection = getSelectedText();
+      if (!selection.text) return;
+
+      const beforeText = text.substring(0, selection.start);
+      const afterText = text.substring(selection.end);
+
+      // Check if already formatted
+      const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+      const match = selection.text.match(colorFormatRegex);
+
+      const newColoredText = match
+        ? `|c${colorHex}${match[1]}|r` // Replace existing color
+        : `|c${colorHex}${selection.text}|r`; // Add new color
+
+      const newText = beforeText + newColoredText + afterText;
+      setText(newText);
+      saveToHistory(newText);
+
+      // Restore selection
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          const newStart = selection.start;
+          const newEnd = newStart + newColoredText.length;
+          textAreaRef.current.setSelectionRange(newStart, newEnd);
+          textAreaRef.current.focus();
+        }
+      }, 0);
+    },
+    [text, getSelectedText, saveToHistory],
+  );
+
+  // Native color picker setup for mobile
+  const setupNativeColorPicker = useCallback((): void => {
+    if (!isMobile) return;
+
+    // Create hidden native color input
+    let colorInput = document.getElementById('native-color-input') as HTMLInputElement;
+    if (!colorInput) {
+      colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.id = 'native-color-input';
+      colorInput.value = '#ffffff';
+      colorInput.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+        pointer-events: auto;
+      `;
+      document.body.appendChild(colorInput);
+    }
+
+    colorInput.addEventListener('change', (e) => {
+      const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
+      if (validateSelection()) {
+        applyColorToSelection(hex);
+      }
+    });
+  }, [isMobile, validateSelection, applyColorToSelection]);
+
+  // Setup native color picker for mobile
+  useEffect(() => {
+    if (isMobile) {
+      setupNativeColorPicker();
+    }
+
+    return () => {
+      const colorInput = document.getElementById('native-color-input');
+      if (colorInput) {
+        colorInput.remove();
+      }
+    };
+  }, [isMobile, setupNativeColorPicker]);
+
+  // Apply quick color (wrapper for applyColorToSelection)
+  const applyQuickColor = (colorHex: string): void => {
+    if (validateSelection()) {
+      applyColorToSelection(colorHex);
+    }
+  };
+
+  // Unified color picker handler
+  const handleColorPickerClick = useCallback((): void => {
+    if (isMobile) {
+      // Mobile: Use native color picker
+      const colorInput = document.getElementById('native-color-input') as HTMLInputElement;
+      if (colorInput) {
+        try {
+          if (typeof colorInput.showPicker === 'function') {
+            colorInput.showPicker();
+          } else {
+            colorInput.click();
+          }
+        } catch (error) {
+          colorInput.click();
+        }
+      }
+    } else {
+      // Desktop: Use Pickr or fallback
+      if (pickrRef.current) {
+        try {
+          pickrRef.current.show();
+        } catch (error) {
+          // Fallback to native picker on desktop too
+          const fallbackColorInput = document.createElement('input');
+          fallbackColorInput.type = 'color';
+          fallbackColorInput.style.cssText = 'position: fixed; top: -9999px; opacity: 0;';
+          document.body.appendChild(fallbackColorInput);
+
+          fallbackColorInput.addEventListener('change', (e) => {
+            const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
+            if (validateSelection()) {
+              applyColorToSelection(hex);
+            }
+            document.body.removeChild(fallbackColorInput);
+          });
+
+          fallbackColorInput.click();
+        }
+      }
+    }
+  }, [isMobile, applyColorToSelection, validateSelection]);
+
+  // Remove format from selection (with validation)
+  const removeFormatFromSelection = (): void => {
+    if (!validateSelection()) return;
+
+    const selection = getSelectedText();
+    const cleanText = selection.text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
+    const beforeText = text.substring(0, selection.start);
+    const afterText = text.substring(selection.end);
+    const newText = beforeText + cleanText + afterText;
+
+    setText(newText);
+    saveToHistory(newText);
+  };
+
+  // Improved Pickr initialization with better error handling
   useEffect(() => {
     if (isMobile || !pickrAnchorRef.current) return;
+
+    let mounted = true;
 
     const initPickr = async (): Promise<void> => {
       try {
         const Pickr = (await import('@simonwep/pickr')).default;
 
-        // Determine Pickr skin based on light/dark mode
-        const isDarkMode =
-          theme.palette.mode === 'dark' ||
-          document.documentElement.classList.contains('dark') ||
-          document.body.classList.contains('dark');
-        const pickrTheme = isDarkMode ? 'monolith' : 'classic';
+        if (!mounted || !pickrAnchorRef.current) return;
 
-        if (pickrAnchorRef.current) {
-          pickrRef.current = (Pickr as unknown as PickrInstance).create({
-            el: pickrAnchorRef.current,
-            theme: pickrTheme,
-            default: '#ffffff',
-            swatches: [
-              '#FFFFFF',
-              '#CCCCCC',
-              '#999999',
-              '#666666',
-              '#333333',
-              '#000000',
-              '#FFFF00',
-              '#FFD700',
-              '#FF0000',
-              '#FF4500',
-              '#FF8000',
-              '#FFA500',
-              '#00FF00',
-              '#32CD32',
-              '#0080FF',
-              '#0000FF',
-              '#8A2BE2',
-              '#FF00FF',
-            ],
-            components: {
-              preview: true,
-              opacity: false,
-              hue: true,
-              interaction: {
-                hex: true,
-                rgba: false,
-                hsla: false,
-                hsva: false,
-                cmyk: false,
-                input: true,
-                clear: false,
-                save: true,
-              },
+        const pickrInstance = (Pickr as unknown as PickrInstance).create({
+          el: pickrAnchorRef.current,
+          theme: theme.palette.mode === 'dark' ? 'monolith' : 'classic',
+          default: '#ffffff',
+          swatches: [
+            '#FFFFFF',
+            '#CCCCCC',
+            '#999999',
+            '#666666',
+            '#333333',
+            '#000000',
+            '#FFFF00',
+            '#FFD700',
+            '#FF0000',
+            '#FF4500',
+            '#FF8000',
+            '#FFA500',
+            '#00FF00',
+            '#32CD32',
+            '#0080FF',
+            '#0000FF',
+            '#8A2BE2',
+            '#FF00FF',
+          ],
+          components: {
+            preview: true,
+            opacity: false,
+            hue: true,
+            interaction: {
+              hex: true,
+              rgba: false,
+              hsla: false,
+              hsva: false,
+              cmyk: false,
+              input: true,
+              clear: false,
+              save: true,
             },
-            position: 'bottom-middle',
-            closeOnScroll: true,
-            appClass: 'eso-pickr-app',
-          });
-        }
+          },
+          position: 'bottom-middle',
+          closeOnScroll: true,
+          appClass: 'eso-pickr-app',
+        });
 
-        if (pickrRef.current) {
-          pickrRef.current.on('save', (color: PickrColor) => {
-            if (color) {
-              const hexColor = color.toHEXA().toString().substring(1, 7);
+        pickrInstance.on('save', (color: PickrColor) => {
+          if (color && mounted) {
+            const hexColor = color.toHEXA().toString().substring(1, 7);
+            if (validateSelection()) {
               applyColorToSelection(hexColor);
-              pickrRef.current?.hide();
             }
-          });
+            pickrInstance.hide();
+          }
+        });
 
-          pickrRef.current.on('show', () => {
+        pickrInstance.on('show', () => {
+          if (mounted) {
             setTimeout(() => positionPickr(), 0);
-          });
+          }
+        });
+
+        if (mounted) {
+          pickrRef.current = pickrInstance;
+        } else {
+          pickrInstance.destroy();
         }
       } catch (error) {
-        // Failed to initialize Pickr - color picker will not be available
+        // eslint-disable-next-line no-console
+        console.warn('Pickr initialization failed, using fallback');
       }
     };
 
     initPickr();
 
     return () => {
+      mounted = false;
       if (pickrRef.current) {
-        pickrRef.current.destroy();
+        try {
+          pickrRef.current.destroy();
+        } catch (error) {
+          // Ignore cleanup errors
+        }
+        pickrRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isMobile, theme.palette.mode]);
+  }, [isMobile, theme.palette.mode, validateSelection, applyColorToSelection]);
 
   const positionPickr = useCallback((): void => {
     const appEl = document.querySelector('.pcr-app');
@@ -665,24 +858,6 @@ export const TextEditor: React.FC = () => {
     `,
     );
   }, []);
-
-  const saveToHistory = useCallback(
-    (newText: string): void => {
-      setHistory((prev) => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-          const updatedHistory = [...newHistory, newText];
-          if (updatedHistory.length > maxHistory) {
-            updatedHistory.shift();
-          }
-          setHistoryIndex(updatedHistory.length - 1);
-          return updatedHistory;
-        }
-        return prev;
-      });
-    },
-    [historyIndex, maxHistory],
-  );
 
   // Initialize with example text
   useEffect(() => {
@@ -723,66 +898,6 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
-    if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
-    const start = textAreaRef.current.selectionStart;
-    const end = textAreaRef.current.selectionEnd;
-    return {
-      text: text.substring(start, end),
-      start,
-      end,
-    };
-  }, [text]);
-
-  const applyColorToSelection = useCallback(
-    (colorHex: string): void => {
-      const selection = getSelectedText();
-      if (selection.text.length === 0) {
-        alert('Please select some text first!');
-        return;
-      }
-
-      const beforeText = text.substring(0, selection.start);
-      const afterText = text.substring(selection.end);
-      const newColoredText = `|c${colorHex}${selection.text}|r`;
-      const newText = beforeText + newColoredText + afterText;
-
-      setText(newText);
-      saveToHistory(newText);
-
-      // Keep selection
-      setTimeout(() => {
-        if (textAreaRef.current) {
-          const newStart = selection.start;
-          const newEnd = newStart + newColoredText.length;
-          textAreaRef.current.setSelectionRange(newStart, newEnd);
-          textAreaRef.current.focus();
-        }
-      }, 0);
-    },
-    [text, getSelectedText, setText, saveToHistory],
-  );
-
-  const applyQuickColor = (colorHex: string): void => {
-    applyColorToSelection(colorHex);
-  };
-
-  const removeFormatFromSelection = (): void => {
-    const selection = getSelectedText();
-    if (selection.text.length === 0) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    const cleanText = selection.text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
-    const beforeText = text.substring(0, selection.start);
-    const afterText = text.substring(selection.end);
-    const newText = beforeText + cleanText + afterText;
-
-    setText(newText);
-    saveToHistory(newText);
-  };
-
   const clearFormatting = (): void => {
     const cleanText = text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
     setText(cleanText);
@@ -806,20 +921,9 @@ export const TextEditor: React.FC = () => {
     }
   };
 
+  // Update emoji button handler to use unified handler
   const handleEmojiClick = (): void => {
-    if (isMobile) {
-      // Use native color picker on mobile
-      const input = document.createElement('input');
-      input.type = 'color';
-      input.value = '#ffffff';
-      input.onchange = (e) => {
-        const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
-        applyColorToSelection(hex);
-      };
-      input.click();
-    } else if (pickrRef.current) {
-      pickrRef.current.show();
-    }
+    handleColorPickerClick();
   };
 
   const renderPreview = (): JSX.Element => {
@@ -968,17 +1072,6 @@ export const TextEditor: React.FC = () => {
               >
                 🎨
               </EmojiButton>
-              <div
-                ref={pickrAnchorRef}
-                id="eso-pickr-anchor-mobile"
-                style={{
-                  position: 'absolute',
-                  left: '-9999px',
-                  width: '0',
-                  height: '0',
-                  overflow: 'hidden',
-                }}
-              />
             </ColorPickerWrapper>
 
             <PresetColors role="group" aria-label="Quick color choices">
