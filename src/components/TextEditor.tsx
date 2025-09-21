@@ -388,15 +388,15 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     bottom: 0,
     backgroundImage: `url(${theme.palette.mode === 'dark' ? '/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg' : '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg'})`,
     backgroundSize: 'cover',
-    backgroundPosition: theme.palette.mode === 'dark' ? 'center' : 'center 20%', // Better positioning for light mode
+    backgroundPosition: 'center', // Back to original center positioning
     backgroundRepeat: 'no-repeat',
-    backgroundAttachment: 'scroll', // Use scroll instead of fixed for better mobile performance
+    backgroundAttachment: 'fixed', // Back to original fixed
     opacity: 0.3,
     zIndex: -1,
     pointerEvents: 'none',
   },
 
-  // Enhanced overlay for mobile readability
+  // RESTORE ORIGINAL OVERLAY - this was changed
   '&::after': {
     content: '""',
     position: 'absolute',
@@ -404,7 +404,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     left: 0,
     right: 0,
     bottom: 0,
-    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)', // Original overlay for light mode
+    // RESTORE ORIGINAL: 0.2 for dark, 0.4 for light
+    background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
     zIndex: -1,
     pointerEvents: 'none',
   },
@@ -440,13 +441,13 @@ const PreviewArea = styled(Box)(({ theme }) => ({
 
     // Adjust background position for mobile
     '&::before': {
-      backgroundPosition: theme.palette.mode === 'dark' ? 'center' : 'center 30%',
+      backgroundPosition: 'center', // Keep center positioning
       backgroundAttachment: 'scroll',
     },
 
-    // Original overlay for mobile light mode
+    // RESTORE ORIGINAL OVERLAY on mobile too
     '&::after': {
-      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.2)',
+      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
     },
   },
 }));
