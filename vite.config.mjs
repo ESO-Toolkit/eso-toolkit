@@ -17,7 +17,7 @@ export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
 
   return {
-    base: '/',
+    base: '/eso-log-aggregator/',
     plugins: [
       svgr({
         svgrOptions: {
