@@ -542,37 +542,41 @@ export const TextEditor: React.FC = () => {
 
   const maxHistory = 50;
 
-  // Core utility functions - moved here to resolve dependency issues
-  const saveToHistory = useCallback(
-    (newText: string): void => {
-      setHistory((prev) => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-          const updatedHistory = [...newHistory, newText];
-          if (updatedHistory.length > maxHistory) {
-            updatedHistory.shift();
-          }
-          setHistoryIndex(updatedHistory.length - 1);
-          return updatedHistory;
-        }
-        return prev;
-      });
-    },
-    [historyIndex, maxHistory],
-  );
+  // Update character count whenever text changes
+  useEffect(() => {
+    setCharCount(text.length);
+  }, [text]);
 
   const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
     if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
-    const start = textAreaRef.current.selectionStart;
-    const end = textAreaRef.current.selectionEnd;
+
+    const textarea = textAreaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    // Use the actual textarea value instead of state
+    const actualText = textarea.value;
+
     return {
-      text: text.substring(start, end),
+      text: actualText.substring(start, end),
       start,
       end,
     };
-  }, [text]);
+  }, []); // Remove text dependency
 
-  // Simplified device detection logic
+  // Simple debounce utility
+  function debounce<T extends (...args: any[]) => any>(
+    func: T,
+    wait: number,
+  ): (...args: Parameters<T>) => void {
+    let timeoutId: NodeJS.Timeout | undefined;
+    return (...args: Parameters<T>) => {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func(...args), wait);
+    };
+  }
+
+  // Selection validation
   const isMobileDevice = useCallback((): boolean => {
     const userAgent = navigator.userAgent.toLowerCase();
     const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
@@ -591,7 +595,25 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobileDevice]);
 
-  // Selection validation
+  // Debounced history saving
+  const debouncedSaveHistory = useCallback(
+    debounce((newText: string) => {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
+          const updatedHistory = [...newHistory, newText];
+          if (updatedHistory.length > maxHistory) {
+            updatedHistory.shift();
+          } else {
+            setHistoryIndex(prev => prev + 1);
+          }
+          return updatedHistory;
+        }
+        return prev;
+      });
+    }, 500),
+    [historyIndex, maxHistory],
+  );
   const validateSelection = useCallback((): boolean => {
     const selection = getSelectedText();
     if (!selection.text || selection.text.length === 0) {
@@ -604,35 +626,45 @@ export const TextEditor: React.FC = () => {
   // Enhanced color application logic
   const applyColorToSelection = useCallback(
     (colorHex: string): void => {
-      const selection = getSelectedText();
-      if (!selection.text) return;
+      if (!textAreaRef.current) return;
 
-      const beforeText = text.substring(0, selection.start);
-      const afterText = text.substring(selection.end);
+      const textarea = textAreaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+
+      if (selectedText.length === 0) {
+        alert('Please select some text first!');
+        return;
+      }
+
+      const beforeText = textarea.value.substring(0, start);
+      const afterText = textarea.value.substring(end);
 
       // Check if already formatted
       const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
-      const match = selection.text.match(colorFormatRegex);
+      const match = selectedText.match(colorFormatRegex);
 
       const newColoredText = match
-        ? `|c${colorHex}${match[1]}|r` // Replace existing color
-        : `|c${colorHex}${selection.text}|r`; // Add new color
+        ? `|c${colorHex}${match[1]}|r`
+        : `|c${colorHex}${selectedText}|r`;
 
       const newText = beforeText + newColoredText + afterText;
+
+      // Update both textarea and state
+      textarea.value = newText;
       setText(newText);
-      saveToHistory(newText);
+      debouncedSaveHistory(newText);
 
       // Restore selection
       setTimeout(() => {
-        if (textAreaRef.current) {
-          const newStart = selection.start;
-          const newEnd = newStart + newColoredText.length;
-          textAreaRef.current.setSelectionRange(newStart, newEnd);
-          textAreaRef.current.focus();
-        }
+        const newStart = start;
+        const newEnd = newStart + newColoredText.length;
+        textarea.setSelectionRange(newStart, newEnd);
+        textarea.focus();
       }, 0);
     },
-    [text, getSelectedText, saveToHistory],
+    [debouncedSaveHistory],
   );
 
   // Native color picker setup for mobile
@@ -731,16 +763,31 @@ export const TextEditor: React.FC = () => {
 
   // Remove format from selection (with validation)
   const removeFormatFromSelection = (): void => {
-    if (!validateSelection()) return;
+    if (!textAreaRef.current) return;
 
-    const selection = getSelectedText();
-    const cleanText = selection.text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
-    const beforeText = text.substring(0, selection.start);
-    const afterText = text.substring(selection.end);
+    const textarea = textAreaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = textarea.value.substring(start, end);
+
+    if (selectedText.length === 0) {
+      alert('Please select some text first!');
+      return;
+    }
+
+    const cleanText = selectedText.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
+    const beforeText = textarea.value.substring(0, start);
+    const afterText = textarea.value.substring(end);
     const newText = beforeText + cleanText + afterText;
 
+    textarea.value = newText;
     setText(newText);
-    saveToHistory(newText);
+    debouncedSaveHistory(newText);
+
+    // Restore cursor position
+    const newCursorPos = start + cleanText.length;
+    textarea.setSelectionRange(newCursorPos, newCursorPos);
+    textarea.focus();
   };
 
   // Improved Pickr initialization with better error handling
@@ -859,7 +906,7 @@ export const TextEditor: React.FC = () => {
     );
   }, []);
 
-  // Initialize with example text
+  // Initialize with example text - fix the useEffect
   useEffect(() => {
     const exampleText = `|cFFFF00What We Offer:|r
 
@@ -871,22 +918,50 @@ export const TextEditor: React.FC = () => {
 - Target dummies to hone your DPS, healing, and tanking skills.`;
 
     setText(exampleText);
-    saveToHistory(exampleText);
-  }, [saveToHistory]);
+    setHistory([exampleText]);
+    setHistoryIndex(0);
+  }, []); // Empty dependency array - only run once
 
   // Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
     const newText = e.target.value;
     setText(newText);
-    setCharCount(newText.length);
-    saveToHistory(newText);
+    debouncedSaveHistory(newText);
+  };
+
+  // Add keyboard shortcuts
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>): void => {
+    if (e.ctrlKey || e.metaKey) {
+      switch (e.key.toLowerCase()) {
+        case 'z':
+          if (e.shiftKey) {
+            e.preventDefault();
+            redo();
+          } else {
+            e.preventDefault();
+            undo();
+          }
+          break;
+        case 'y':
+          e.preventDefault();
+          redo();
+          break;
+        case 'a':
+          // Allow default Ctrl+A behavior
+          break;
+        default:
+          break;
+      }
+    }
   };
 
   const undo = (): void => {
     if (historyIndex > 0) {
       const newIndex = historyIndex - 1;
       setHistoryIndex(newIndex);
-      setText(history[newIndex]);
+      const newText = history[newIndex];
+      setText(newText);
+      // Character count will be updated by the useEffect above
     }
   };
 
@@ -894,30 +969,40 @@ export const TextEditor: React.FC = () => {
     if (historyIndex < history.length - 1) {
       const newIndex = historyIndex + 1;
       setHistoryIndex(newIndex);
-      setText(history[newIndex]);
+      const newText = history[newIndex];
+      setText(newText);
+      // Character count will be updated by the useEffect above
     }
   };
 
   const clearFormatting = (): void => {
-    const cleanText = text.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+    const cleanText = textarea.value.replace(/\|c[0-9A-Fa-f]{6}(.*?)\|r/g, '$1');
+
+    textarea.value = cleanText;
     setText(cleanText);
-    saveToHistory(cleanText);
+    debouncedSaveHistory(cleanText);
+    textarea.focus();
   };
 
   const copyToClipboard = async (): Promise<void> => {
+    if (!textAreaRef.current) return;
+
+    const textToCopy = textAreaRef.current.value;
+
     try {
-      await navigator.clipboard.writeText(text);
+      await navigator.clipboard.writeText(textToCopy);
       setCopyFeedback('✓ Copied!');
       setTimeout(() => setCopyFeedback(''), 1500);
     } catch (err) {
       // Fallback for older browsers
-      if (textAreaRef.current) {
-        textAreaRef.current.select();
-        // eslint-disable-next-line deprecation/deprecation
-        document.execCommand('copy');
-        setCopyFeedback('✓ Copied!');
-        setTimeout(() => setCopyFeedback(''), 1500);
-      }
+      textAreaRef.current.select();
+      // eslint-disable-next-line deprecation/deprecation
+      document.execCommand('copy');
+      setCopyFeedback('✓ Copied!');
+      setTimeout(() => setCopyFeedback(''), 1500);
     }
   };
 
@@ -1092,7 +1177,9 @@ export const TextEditor: React.FC = () => {
             id="eso-input"
             value={text}
             onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
             placeholder="Type your text here or paste ESO/WoW formatted text. Select text and use the buttons above to format."
+            aria-describedby="char-count"
           />
 
           <StatusBar>
