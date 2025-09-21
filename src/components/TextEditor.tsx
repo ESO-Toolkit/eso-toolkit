@@ -738,6 +738,24 @@ export const TextEditor: React.FC = () => {
     }
   }, [selectedTextInfo, restoreTextSelection]);
 
+  // Get clean preview text (remove color formatting codes)
+  const getCleanPreviewText = (): string => {
+    if (!selectedTextInfo?.text) return '';
+
+    const text = selectedTextInfo.text;
+
+    // Remove color formatting codes: |cFFFFFF and |r
+    const cleanText = text
+      .replace(/^\|c[0-9A-Fa-f]{6}/, '') // Remove starting color code
+      .replace(/\|r$/, '') // Remove ending reset code
+      .replace(/\|c[0-9A-Fa-f]{6}/g, ''); // Remove any inline color codes
+
+    // Truncate if necessary
+    return cleanText.length > 30
+      ? cleanText.substring(0, 30) + '...'
+      : cleanText;
+  };
+
   // Reset picker position to center of viewport
   const resetPickerPosition = (): void => {
     const pickerWidth = 320;
@@ -1521,7 +1539,7 @@ export const TextEditor: React.FC = () => {
                         whiteSpace: 'nowrap',
                       }}
                     >
-                      "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}{selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
+                      "{getCleanPreviewText()}"
                     </Typography>
                   </Box>
 
