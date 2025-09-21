@@ -21,8 +21,11 @@ interface PickrColor {
   toHEXA: () => { toString: () => string };
 }
 
-interface PickrInstance {
+interface PickrStatic {
   create: (options: PickrOptions) => PickrInstance;
+}
+
+interface PickrInstance {
   on: (event: string, callback: (color: PickrColor) => void) => PickrInstance;
   show: () => PickrInstance;
   hide: () => PickrInstance;
@@ -559,6 +562,7 @@ export const TextEditor: React.FC = () => {
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
   const pickrRef = useRef<PickrInstance | null>(null);
   const pickrAnchorRef = useRef<HTMLDivElement>(null);
+  const [isPickrInitializing, setIsPickrInitializing] = useState(false);
 
   const maxHistory = 50;
 
@@ -689,9 +693,14 @@ export const TextEditor: React.FC = () => {
   // Enhanced color application logic that uses saved selection
   const applyColorToSelection = useCallback(
     (colorHex: string): void => {
-      if (!textAreaRef.current) return;
+      console.log('🎯 applyColorToSelection called with:', colorHex);
+      if (!textAreaRef.current) {
+        console.error('❌ No textarea ref');
+        return;
+      }
 
       const textarea = textAreaRef.current;
+      console.log('📝 Current textarea value length:', textarea.value.length);
       let start: number, end: number, selectedText: string;
 
       // Use saved selection if available, otherwise get current
@@ -699,17 +708,16 @@ export const TextEditor: React.FC = () => {
         start = savedSelection.start;
         end = savedSelection.end;
         selectedText = savedSelection.text;
-        // eslint-disable-next-line no-console
-        console.log('Using saved selection:', selectedText);
+        console.log('🎯 Using saved selection:', { start, end, text: selectedText });
       } else {
         start = textarea.selectionStart;
         end = textarea.selectionEnd;
         selectedText = textarea.value.substring(start, end);
-        // eslint-disable-next-line no-console
-        console.log('Using current selection:', selectedText);
+        console.log('🎯 Using current selection:', { start, end, text: selectedText });
       }
 
       if (selectedText.length === 0) {
+        console.error('❌ No text selected');
         alert('Please select some text first!');
         return;
       }
@@ -728,9 +736,17 @@ export const TextEditor: React.FC = () => {
         ? `|c${colorHex}${match[1]}|r`
         : `|c${colorHex}${selectedText}|r`;
 
+      console.log('🔄 Building new text:', {
+        beforeLength: beforeText.length,
+        coloredLength: newColoredText.length,
+        afterLength: afterText.length,
+        newColoredText
+      });
+
       const newText = beforeText + newColoredText + afterText;
 
       // Update both textarea and state
+      console.log('💾 Updating textarea and state');
       textarea.value = newText;
       setText(newText);
       debouncedSaveHistory(newText);
@@ -741,6 +757,7 @@ export const TextEditor: React.FC = () => {
         const newEnd = newStart + newColoredText.length;
         textarea.setSelectionRange(newStart, newEnd);
         textarea.focus();
+        console.log('✅ Color applied successfully');
       }, 0);
     },
     [debouncedSaveHistory, savedSelection],
@@ -850,7 +867,7 @@ export const TextEditor: React.FC = () => {
           createFallbackColorPicker();
         }
       } else {
-        console.warn('⚠️ Pickr not ready, using fallback');
+        console.warn('⚠️ Pickr not initialized, this should not happen');
         createFallbackColorPicker();
       }
     }
@@ -927,6 +944,8 @@ export const TextEditor: React.FC = () => {
     let pickrInstance: PickrInstance | null = null;
 
     const initPickr = async (): Promise<void> => {
+      console.log('🔧 initPickr called, mounted:', mounted);
+      setIsPickrInitializing(true);
       try {
         console.log('🚀 Initializing Pickr...');
 
@@ -951,58 +970,98 @@ export const TextEditor: React.FC = () => {
         anchor.style.overflow = 'hidden';
         anchor.style.visibility = 'hidden';
 
-        pickrInstance = (Pickr as unknown as PickrInstance).create({
-          el: anchor,
-          theme: theme.palette.mode === 'dark' ? 'monolith' : 'classic',
-          default: '#ffffff',
-          swatches: [
-            '#FFFFFF',
-            '#CCCCCC',
-            '#999999',
-            '#666666',
-            '#333333',
-            '#000000',
-            '#FFFF00',
-            '#FFD700',
-            '#FF0000',
-            '#FF4500',
-            '#FF8000',
-            '#FFA500',
-            '#00FF00',
-            '#32CD32',
-            '#0080FF',
-            '#0000FF',
-            '#8A2BE2',
-            '#FF00FF',
-          ],
-          components: {
-            preview: true,
-            opacity: false,
-            hue: true,
-            interaction: {
-              hex: true,
-              rgba: false,
-              hsla: false,
-              hsva: false,
-              cmyk: false,
-              input: true,
-              clear: true,  // ✅ Enable clear button
-              save: true,
+        console.log('📦 Pickr module loaded:', typeof Pickr);
+        console.log('🎯 Creating Pickr instance with anchor:', anchor);
+
+        try {
+          pickrInstance = (Pickr as PickrStatic).create({
+            el: anchor,
+            theme: theme.palette.mode === 'dark' ? 'monolith' : 'classic',
+            default: '#ffffff',
+            swatches: [
+              '#FFFFFF',
+              '#CCCCCC',
+              '#999999',
+              '#666666',
+              '#333333',
+              '#000000',
+              '#FFFF00',
+              '#FFD700',
+              '#FF0000',
+              '#FF4500',
+              '#FF8000',
+              '#FFA500',
+              '#00FF00',
+              '#32CD32',
+              '#0080FF',
+              '#0000FF',
+              '#8A2BE2',
+              '#FF00FF',
+            ],
+            components: {
+              preview: true,
+              opacity: false,
+              hue: true,
+              interaction: {
+                hex: true,
+                rgba: false,
+                hsla: false,
+                hsva: false,
+                cmyk: false,
+                input: true,
+                clear: true,  // ✅ Enable clear button
+                save: true,
+              },
             },
-          },
-          position: 'bottom-middle',
-          closeOnScroll: true,
-          appClass: 'eso-pickr-app',
-        });
+            position: 'bottom-middle',
+            closeOnScroll: true,
+            appClass: 'eso-pickr-app',
+          });
+        } catch (createError) {
+          console.error('❌ Pickr create() failed:', createError);
+          throw createError;
+        }
+
+        console.log('✅ Pickr instance created:', pickrInstance ? 'SUCCESS' : 'FAILED');
 
         if (pickrInstance) {
-          // Color selection handler
+          // DEBUG VERSION - Color selection handler
           pickrInstance.on('save', (color: PickrColor) => {
+            console.log('🎨 Pickr save event triggered!', color);
             if (color && mounted) {
-              const hexColor = color.toHEXA().toString().substring(1, 7);
-              console.log('✅ Color selected:', hexColor);
-              applyColorToSelection(hexColor);
+              let hexColor: string;
+              try {
+                const hexa = color.toHEXA();
+                console.log('🎨 HEXA object:', hexa);
+                const fullHex = hexa.toString();
+                console.log('🎨 Full hex string:', fullHex);
+                hexColor = fullHex.substring(1, 7); // Remove # prefix
+                console.log('✅ Color extracted:', hexColor);
+              } catch (colorError) {
+                console.error('❌ Error extracting color:', colorError);
+                // Fallback to white
+                hexColor = 'FFFFFF';
+              }
+              console.log('📝 Current savedSelection:', savedSelection);
+
+              // Force apply color even if selection seems empty
+              if (savedSelection && savedSelection.text) {
+                console.log('🎯 Applying color to saved selection');
+                applyColorToSelection(hexColor);
+              } else {
+                console.log('⚠️ No saved selection, trying current selection');
+                const currentSelection = getSelectedText();
+                if (currentSelection.text) {
+                  applyColorToSelection(hexColor);
+                } else {
+                  console.error('❌ No text selected at all!');
+                  alert('No text selected! Please select text first.');
+                }
+              }
+
               pickrInstance?.hide();
+            } else {
+              console.error('❌ No color received or component unmounted');
             }
           });
 
@@ -1013,25 +1072,35 @@ export const TextEditor: React.FC = () => {
             restoreSelection();
           });
 
-          // Show handler
+          // DEBUG VERSION - Show handler with click debugging
           pickrInstance.on('show', () => {
-            if (mounted) {
-              console.log('👁️ Pickr opening...');
-              // Position with multiple attempts
-              setTimeout(() => positionPickr(), 10);
-              setTimeout(() => positionPickr(), 100);
-              setTimeout(() => positionPickr(), 250);
+            console.log('👁️ Pickr shown');
+            // Add click listeners to debug
+            setTimeout(() => {
+              const swatches = document.querySelectorAll('.pcr-swatches button');
+              console.log('🎨 Found', swatches.length, 'color swatches');
 
-              // Add escape key handler
-              const handleEscape = (e: KeyboardEvent) => {
-                if (e.key === 'Escape') {
-                  console.log('⚡ Escape pressed, closing Pickr');
-                  pickrInstance?.hide();
-                  document.removeEventListener('keydown', handleEscape);
-                }
-              };
-              document.addEventListener('keydown', handleEscape);
-            }
+              swatches.forEach((swatch, index) => {
+                swatch.addEventListener('click', (e) => {
+                  console.log(`🎨 Swatch ${index} clicked!`, e);
+                });
+              });
+            }, 100);
+
+            // Position with multiple attempts
+            setTimeout(() => positionPickr(), 10);
+            setTimeout(() => positionPickr(), 100);
+            setTimeout(() => positionPickr(), 250);
+
+            // Add escape key handler
+            const handleEscape = (e: KeyboardEvent) => {
+              if (e.key === 'Escape') {
+                console.log('⚡ Escape pressed, closing Pickr');
+                pickrInstance?.hide();
+                document.removeEventListener('keydown', handleEscape);
+              }
+            };
+            document.addEventListener('keydown', handleEscape);
           });
 
           // Hide handler
@@ -1050,8 +1119,12 @@ export const TextEditor: React.FC = () => {
         if (mounted && pickrInstance) {
           pickrRef.current = pickrInstance;
           console.log('✅ Pickr initialized successfully');
+          console.log('📝 pickrRef.current set:', pickrRef.current ? 'YES' : 'NO');
         } else if (pickrInstance) {
+          console.log('❌ Component not mounted, destroying Pickr');
           pickrInstance.destroy();
+        } else {
+          console.log('❌ No pickrInstance to store in ref');
         }
       } catch (error) {
         console.error('❌ Pickr initialization failed:', error);
@@ -1063,7 +1136,9 @@ export const TextEditor: React.FC = () => {
     initPickr();
 
     return () => {
+      console.log('🧹 Cleanup called, destroying existing Pickr');
       mounted = false;
+      setIsPickrInitializing(false);
       if (pickrRef.current) {
         try {
           pickrRef.current.destroy();
@@ -1076,7 +1151,7 @@ export const TextEditor: React.FC = () => {
         pickrRef.current = null;
       }
     };
-  }, [isMobile, theme.palette.mode, applyColorToSelection]);
+  }, [isMobile]); // Removed theme.palette.mode to prevent unnecessary recreation
 
   // Emergency fix positioning - center picker below emoji and keep on screen
   const positionPickr = useCallback((): void => {
@@ -1139,6 +1214,16 @@ export const TextEditor: React.FC = () => {
     console.log(`✅ Positioned Pickr at ${left}, ${top} (viewport: ${viewportWidth}x${viewportHeight})`);
   }, []);
 
+  // Handle theme changes without destroying Pickr
+  useEffect(() => {
+    if (pickrRef.current) {
+      console.log('🎨 Theme changed, updating Pickr theme to:', theme.palette.mode);
+      // For now, we'll just update the positioning since Pickr doesn't support dynamic theme changes
+      // The user will need to close and reopen the picker to see the new theme
+      positionPickr();
+    }
+  }, [theme.palette.mode, positionPickr]);
+
   // Initialize with example text - fix the useEffect
   useEffect(() => {
     const exampleText = `|cFFFF00What We Offer:|r
@@ -1155,8 +1240,23 @@ export const TextEditor: React.FC = () => {
     setHistoryIndex(0);
   }, []); // Empty dependency array - only run once
 
-  // Event Handlers
+  // DEBUG VERSION - Monitor text state
+  useEffect(() => {
+    console.log('📝 Text state changed:', text.length, 'characters');
+    if (textAreaRef.current) {
+      const actual = textAreaRef.current.value;
+      if (actual !== text) {
+        console.warn('⚠️ State/DOM mismatch!', {
+          state: text.length,
+          dom: actual.length
+        });
+      }
+    }
+  }, [text]);
+
+  // DEBUG VERSION - Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
+    console.log('⌨️ Text change event:', e.target.value.length, 'characters');
     const newText = e.target.value;
     setText(newText);
     debouncedSaveHistory(newText);
@@ -1188,31 +1288,31 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  // Add emergency close handler for Pickr
-  useEffect(() => {
-    const handlePickrClose = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      // Check if click is on the emergency close button
-      if (target.closest('.pcr-app') && e.target instanceof Element && e.target.classList.contains('pcr-app')) {
-        // Check if the click is near the top-right corner (emergency close area)
-        const rect = (e.target as HTMLElement).getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
+  // TEMPORARILY DISABLED - emergency close handler for Pickr (debugging)
+  // useEffect(() => {
+  //   const handlePickrClose = (e: MouseEvent) => {
+  //     const target = e.target as HTMLElement;
+  //     // Check if click is on the emergency close button
+  //     if (target.closest('.pcr-app') && e.target instanceof Element && e.target.classList.contains('pcr-app')) {
+  //       // Check if the click is near the top-right corner (emergency close area)
+  //       const rect = (e.target as HTMLElement).getBoundingClientRect();
+  //       const x = e.clientX - rect.left;
+  //       const y = e.clientY - rect.top;
 
-        // If click is in top-right corner area
-        if (x > rect.width - 40 && y < 40) {
-          console.log('⚡ Emergency close triggered');
-          if (pickrRef.current) {
-            pickrRef.current.hide();
-            restoreSelection();
-          }
-        }
-      }
-    };
+  //       // If click is in top-right corner area
+  //       if (x > rect.width - 40 && y < 40) {
+  //         console.log('⚡ Emergency close triggered');
+  //         if (pickrRef.current) {
+  //           pickrRef.current.hide();
+  //           restoreSelection();
+  //         }
+  //       }
+  //     }
+  //   };
 
-    document.addEventListener('click', handlePickrClose);
-    return () => document.removeEventListener('click', handlePickrClose);
-  }, []);
+  //   document.addEventListener('click', handlePickrClose);
+  //   return () => document.removeEventListener('click', handlePickrClose);
+  // }, []);
 
   const undo = (): void => {
     if (historyIndex > 0) {

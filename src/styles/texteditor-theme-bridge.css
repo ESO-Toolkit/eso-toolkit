@@ -94,3 +94,34 @@ input[type="color"] {
   overflow: hidden !important;
   visibility: hidden !important;
 }
+
+/* TEMPORARY DEBUG CSS - Force interactions */
+.pcr-app, .pcr-app * {
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+}
+
+/* Force textarea to be interactive */
+#eso-input {
+  pointer-events: auto !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Remove any blocking overlays */
+.text-editor-page::before,
+.text-editor-page::after {
+  pointer-events: none !important;
+}
+
+/* Fix Pickr checkered pattern - ensure proper background loading */
+.pcr-app {
+  /* Remove any transparency that might cause checkered pattern */
+  background-color: var(--panel) !important;
+}
+
+.pcr-palette {
+  /* Ensure palette has proper background */
+  background-image: none !important;
+  background-color: var(--panel2) !important;
+}
