@@ -212,30 +212,4 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
   position: relative !important;
 }
 
-/* Additional override for light mode solid backgrounds */
-body.text-editor-page:not(.dark-mode) [class*="css-"].css-1j69n08,
-body.text-editor-page:not(.dark-mode) .MuiBox-root:not([style*="background"]),
-body.text-editor-page:not(.dark-mode) [style*="background-color: #f8fafc"],
-body.text-editor-page:not(.dark-mode) [style*="background-color: rgb(248, 250, 252)"] {
-  background-color: transparent !important;
-  background: transparent !important;
-}
 
-/* Force transparency on all Material-UI root containers in light mode */
-body.text-editor-page:not(.dark-mode) .MuiBox-root,
-body.text-editor-page:not(.dark-mode) .MuiContainer-root,
-body.text-editor-page:not(.dark-mode) .MuiPaper-root,
-body.text-editor-page:not(.dark-mode) [class*="MuiBox-root"],
-body.text-editor-page:not(.dark-mode) [class*="MuiContainer-root"],
-body.text-editor-page:not(.dark-mode) [class*="MuiPaper-root"] {
-  background-color: transparent !important;
-  background: transparent !important;
-}
-
-/* Specific override for the main layout container */
-body.text-editor-page:not(.dark-mode) > div,
-body.text-editor-page:not(.dark-mode) > div > div,
-body.text-editor-page:not(.dark-mode) .css-1j69n08 {
-  background-color: transparent !important;
-  background: transparent !important;
-}
