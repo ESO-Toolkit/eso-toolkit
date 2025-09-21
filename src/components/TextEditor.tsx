@@ -14,7 +14,7 @@ import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
-import { HexColorPicker, HexColorInput } from 'react-colorful';
+import { HexColorPicker } from 'react-colorful';
 
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
@@ -1637,11 +1637,19 @@ export const TextEditor: React.FC = () => {
 
                   {/* Hex Input */}
                   <Box sx={{ px: 2, pb: 2 }}>
-                    <HexColorInput
-                      color={previewColor}
-                      onChange={handleColorPreview}
-                      prefixed
-                      placeholder="Enter hex color"
+                    <input
+                      type="text"
+                      value={previewColor}
+                      onChange={(e) => {
+                        // Validate and update hex color
+                        const value = e.target.value;
+                        if (value.startsWith('#') && /^[#0-9A-Fa-f]{0,7}$/.test(value)) {
+                          handleColorPreview(value);
+                        } else if (value === '') {
+                          handleColorPreview('#ffffff');
+                        }
+                      }}
+                      placeholder="#RRGGBB"
                       style={{
                         width: '100%',
                         padding: '10px 12px',
@@ -1652,6 +1660,7 @@ export const TextEditor: React.FC = () => {
                         backgroundColor: theme.palette.background.default,
                         color: theme.palette.text.primary,
                         outline: 'none',
+                        boxSizing: 'border-box',
                       }}
                       aria-label="Hex color input"
                       onKeyDown={(e) => {
@@ -1664,11 +1673,7 @@ export const TextEditor: React.FC = () => {
                       }}
                       onFocus={(e) => {
                         e.stopPropagation();
-                        if (textAreaRef.current && selectedTextInfo) {
-                          const { start, end } = selectedTextInfo;
-                          textAreaRef.current.focus();
-                          textAreaRef.current.setSelectionRange(start, end);
-                        }
+                        e.target.select(); // Select all text when focused
                       }}
                     />
                   </Box>
