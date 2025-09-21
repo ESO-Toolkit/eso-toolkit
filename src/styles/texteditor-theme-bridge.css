@@ -38,3 +38,150 @@
   --accent2: var(--mui-palette-primary-dark, #0284c7);
   --muted: var(--mui-palette-text-secondary, rgba(255, 255, 255, 0.7));
 }
+
+/* Emergency close for Pickr */
+.pcr-app::before {
+  content: '×';
+  position: absolute;
+  top: -10px;
+  right: -10px;
+  width: 24px;
+  height: 24px;
+  background: #ef4444;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 1000001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.pcr-app::before:hover {
+  background: #dc2626;
+  transform: scale(1.1);
+}
+
+/* Ensure Pickr stays on screen */
+.pcr-app {
+  max-width: 320px !important;
+  max-height: 400px !important;
+  overflow: visible !important;
+}
+
+/* Hide any native color inputs that might be visible */
+input[type='color'] {
+  position: fixed !important;
+  top: -9999px !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Hide the Pickr anchor element */
+#eso-pickr-anchor {
+  position: absolute !important;
+  left: -9999px !important;
+  top: -9999px !important;
+  width: 0 !important;
+  height: 0 !important;
+  overflow: hidden !important;
+  visibility: hidden !important;
+}
+
+/* TEMPORARY DEBUG CSS - Force interactions */
+.pcr-app,
+.pcr-app * {
+  pointer-events: auto !important;
+  z-index: 999999 !important;
+}
+
+/* Force textarea to be interactive */
+#eso-input {
+  pointer-events: auto !important;
+  z-index: 1 !important;
+  position: relative !important;
+}
+
+/* Remove any blocking overlays */
+.text-editor-page::before,
+.text-editor-page::after {
+  pointer-events: none !important;
+}
+
+/* Fix Pickr checkered pattern - ensure proper background loading */
+.pcr-app {
+  /* Remove any transparency that might cause checkered pattern */
+  background-color: var(--panel) !important;
+}
+
+.pcr-palette {
+  /* Ensure palette has proper background */
+  background-image: none !important;
+  background-color: var(--panel2) !important;
+}
+
+/* Override the checkered pattern in classic theme */
+.pcr-app[data-theme='classic'] .pcr-selection .pcr-color-palette .pcr-palette::before {
+  display: none !important;
+}
+
+/* Let Pickr's native color spectrum work properly */
+.pcr-selection .pcr-color-palette .pcr-palette {
+  /* Remove our overrides to let Pickr's native gradients work */
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+/* Canvas fixes for checkered/blank spectrum */
+.pcr-app .pcr-palette {
+  width: 200px !important;
+  height: 200px !important;
+  position: relative !important;
+}
+
+.pcr-app .pcr-palette canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+/* Force remove ALL filters from Pickr that might break canvas */
+.pcr-app,
+.pcr-app * {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  filter: none !important;
+  transform: none !important;
+}
+
+/* Enhanced selection visibility */
+.text-editor-page textarea:focus {
+  outline: none !important;
+}
+
+/* Custom selection highlighting for better visibility */
+.text-editor-page textarea::selection {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+.text-editor-page textarea::-moz-selection {
+  background-color: #3b82f6 !important;
+  color: white !important;
+}
+
+/* Highlight during color picking */
+.text-editor-page textarea.color-picking {
+  box-shadow: 0 0 0 2px #3b82f6 !important;
+  background-color: rgba(59, 130, 246, 0.1) !important;
+}

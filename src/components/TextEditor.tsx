@@ -1,58 +1,12 @@
-import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Container, useTheme, alpha, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
-
-import '../styles/pickr-theme.css';
-import '../styles/pickr-radius.css';
-import '../styles/pickr-background.css';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
+
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
-
-// Types
-declare global {
-  interface Window {
-    Pickr: unknown;
-  }
-}
-
-interface PickrColor {
-  toHEXA: () => { toString: () => string };
-}
-
-interface PickrInstance {
-  create: (options: PickrOptions) => PickrInstance;
-  on: (event: string, callback: (color: PickrColor) => void) => PickrInstance;
-  show: () => PickrInstance;
-  hide: () => PickrInstance;
-  destroy: () => void;
-}
-
-interface PickrOptions {
-  el: HTMLElement;
-  theme: 'classic' | 'monolith';
-  default: string;
-  swatches: string[];
-  components: {
-    preview: boolean;
-    opacity: boolean;
-    hue: boolean;
-    interaction: {
-      hex: boolean;
-      rgba: boolean;
-      hsla: boolean;
-      hsva: boolean;
-      cmyk: boolean;
-      input: boolean;
-      clear: boolean;
-      save: boolean;
-    };
-  };
-  position: string;
-  closeOnScroll: boolean;
-  appClass: string;
-}
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
@@ -239,6 +193,14 @@ const PresetColor = styled('button')({
   borderRadius: '3px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
+  // Prevent focus outline while maintaining accessibility
+  '&:focus': {
+    outline: '2px solid #3b82f6',
+    outlineOffset: '2px',
+  },
+  '&:focus:not(:focus-visible)': {
+    outline: 'none',
+  },
   // Mobile styles
   '@media (max-width: 768px)': {
     width: 'calc(16.666% - 7px)',
@@ -463,8 +425,16 @@ export const TextEditor: React.FC = () => {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [charCount, setCharCount] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
+  const [showColorPicker, setShowColorPicker] = useState(false);
+  const [selectedTextInfo, setSelectedTextInfo] = useState<{
+    start: number;
+    end: number;
+    text: string;
+    originalText: string; // Store original text for cancel
+  } | null>(null);
+  const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
   // Simple fix for light mode background loading
   useEffect(() => {
@@ -479,8 +449,6 @@ export const TextEditor: React.FC = () => {
         body.style.backgroundPosition = 'center';
         body.style.backgroundRepeat = 'no-repeat';
         body.style.backgroundAttachment = 'fixed';
-        // eslint-disable-next-line no-console
-        console.log('Force applied light mode background');
       }, 100); // Small delay to ensure it applies
     }
   }, [theme.palette.mode]);
@@ -513,46 +481,7 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
 
-  // Debug useEffect for background loading issue
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('=== DEBUG INFO ===');
-    // eslint-disable-next-line no-console
-    console.log('Theme mode:', theme.palette.mode);
-    // eslint-disable-next-line no-console
-    console.log('Body classes:', document.body.className);
-    // eslint-disable-next-line no-console
-    console.log('HTML classes:', document.documentElement.className);
-    // eslint-disable-next-line no-console
-    console.log(
-      'Background image path:',
-      '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg',
-    );
-
-    // Check computed styles
-    const bodyStyles = window.getComputedStyle(document.body);
-    // eslint-disable-next-line no-console
-    console.log('Body background-image:', bodyStyles.backgroundImage);
-    // eslint-disable-next-line no-console
-    console.log('Body background-size:', bodyStyles.backgroundSize);
-
-    // Check if CSS files are loaded
-    const stylesheets = Array.from(document.styleSheets);
-    // eslint-disable-next-line no-console
-    console.log('Loaded stylesheets:', stylesheets.length);
-
-    // Force inspect the usePageBackground hook
-    // eslint-disable-next-line no-console
-    console.log(
-      'usePageBackground should have been called with:',
-      'text-editor-page',
-      theme.palette.mode === 'dark',
-    );
-  }, [theme.palette.mode]);
-
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
-  const pickrRef = useRef<PickrInstance | null>(null);
-  const pickrAnchorRef = useRef<HTMLDivElement>(null);
 
   const maxHistory = 50;
 
@@ -561,53 +490,56 @@ export const TextEditor: React.FC = () => {
     setCharCount(text.length);
   }, [text]);
 
-  const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
-    if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    // Use the actual textarea value instead of state
-    const actualText = textarea.value;
-
-    return {
-      text: actualText.substring(start, end),
-      start,
-      end,
-    };
-  }, []); // Remove text dependency
+  // Remove unused functions - these are handled by the textAreaRef and existing state
+  // const getSelectedText is removed as it's unused
+  // const isMobileDevice is removed as it's unused
 
   // Simple debounce utility
-  function debounce<T extends (...args: any[]) => any>(
-    func: T,
-    wait: number,
-  ): (...args: Parameters<T>) => void {
+  function debounce(func: (arg: string) => void, wait: number): (arg: string) => void {
     let timeoutId: NodeJS.Timeout | undefined;
-    return (...args: Parameters<T>) => {
+    return (arg: string) => {
       clearTimeout(timeoutId);
-      timeoutId = setTimeout(() => func(...args), wait);
+      timeoutId = setTimeout(() => func(arg), wait);
     };
   }
 
-  // Selection validation
-  const isMobileDevice = useCallback((): boolean => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-      userAgent,
-    );
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isSmallScreen = window.innerWidth <= 768;
-    return isMobileUA || (hasTouch && isSmallScreen);
-  }, []);
+  // Enhanced selection restoration with visual feedback
+  const restoreTextSelection = useCallback(
+    (start: number, end: number, forceVisual = true): void => {
+      if (!textAreaRef.current) return;
 
-  // State for mobile detection
-  useEffect(() => {
-    setIsMobile(isMobileDevice());
-    const handleResize = (): void => setIsMobile(isMobileDevice());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isMobileDevice]);
+      const textarea = textAreaRef.current;
+
+      // Ensure textarea is focused first
+      textarea.focus();
+
+      // Small delay to ensure focus is established
+      setTimeout(() => {
+        // Set the selection range
+        textarea.setSelectionRange(start, end);
+
+        if (forceVisual) {
+          // Force visual highlight by briefly blurring and refocusing
+          textarea.blur();
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start, end);
+
+            // Additional visual feedback with CSS
+            textarea.style.outline = '2px solid #3b82f6';
+            textarea.style.outlineOffset = '2px';
+
+            // Remove CSS highlight after a moment
+            setTimeout(() => {
+              textarea.style.outline = '';
+              textarea.style.outlineOffset = '';
+            }, 300);
+          }, 10);
+        }
+      }, 10);
+    },
+    [textAreaRef],
+  );
 
   // Debounced history saving
   const debouncedSaveHistory = useCallback(
@@ -628,19 +560,254 @@ export const TextEditor: React.FC = () => {
     }, 500),
     [historyIndex, maxHistory],
   );
-  const validateSelection = useCallback((): boolean => {
-    const selection = getSelectedText();
-    if (!selection.text || selection.text.length === 0) {
-      alert('Please select some text first!');
-      return false;
-    }
-    return true;
-  }, [getSelectedText]);
 
-  // Enhanced color application logic
-  const applyColorToSelection = useCallback(
-    (colorHex: string): void => {
-      if (!textAreaRef.current) return;
+  // Add visual feedback for selected text during preview
+  useEffect(() => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    if (isPreviewMode && selectedTextInfo) {
+      // Highlight selected text area
+      textarea.style.boxShadow = '0 0 0 2px #3b82f6';
+      textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+
+      // Force maintain selection even when focus is lost
+      const maintainSelection = (): void => {
+        if (selectedTextInfo && isPreviewMode) {
+          const { start, end } = selectedTextInfo;
+          // Only restore if textarea doesn't currently have a selection
+          if (textarea.selectionStart === textarea.selectionEnd) {
+            textarea.setSelectionRange(start, end);
+          }
+        }
+      };
+
+      // Maintain selection periodically and on focus events
+      const selectionInterval = setInterval(maintainSelection, 100);
+      textarea.addEventListener('focus', maintainSelection);
+
+      return () => {
+        clearInterval(selectionInterval);
+        textarea.removeEventListener('focus', maintainSelection);
+        textarea.style.boxShadow = '';
+        textarea.style.backgroundColor = '';
+      };
+    } else {
+      // Remove highlighting
+      textarea.style.boxShadow = '';
+      textarea.style.backgroundColor = '';
+    }
+
+    return () => {
+      textarea.style.boxShadow = '';
+      textarea.style.backgroundColor = '';
+    };
+  }, [isPreviewMode, selectedTextInfo]);
+
+  // Manage visual states with CSS classes
+  useEffect(() => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    if (isPreviewMode) {
+      textarea.classList.add('color-picking');
+    } else {
+      textarea.classList.remove('color-picking');
+    }
+
+    return () => {
+      textarea.classList.remove('color-picking');
+    };
+  }, [isPreviewMode]);
+
+  // Apply the selected color
+  const applyPreviewColor = useCallback((): void => {
+    if (!textAreaRef.current || !selectedTextInfo) return;
+
+    const textarea = textAreaRef.current;
+    const { start, end } = selectedTextInfo;
+    const selectedText = selectedTextInfo.originalText.substring(start, end);
+
+    const beforeText = selectedTextInfo.originalText.substring(0, start);
+    const afterText = selectedTextInfo.originalText.substring(end);
+
+    // Check if already formatted
+    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+    const match = selectedText.match(colorFormatRegex);
+
+    const colorHex = previewColor.replace('#', '').toUpperCase();
+    const newColoredText = match ? `|c${colorHex}${match[1]}|r` : `|c${colorHex}${selectedText}|r`;
+
+    const newText = beforeText + newColoredText + afterText;
+
+    // Apply to actual text
+    textarea.value = newText;
+    setText(newText);
+    debouncedSaveHistory(newText);
+
+    // Calculate new selection bounds for the colored text
+    const newStart = start;
+    const newEnd = newStart + newColoredText.length;
+
+    // Close color picker first
+    closeColorPicker();
+
+    // Restore selection with visual feedback
+    setTimeout(() => {
+      restoreTextSelection(newStart, newEnd, true);
+    }, 50);
+  }, [selectedTextInfo, previewColor, debouncedSaveHistory, restoreTextSelection]);
+
+  // Cancel color selection
+  const cancelColorSelection = useCallback((): void => {
+    if (selectedTextInfo && textAreaRef.current) {
+      const textarea = textAreaRef.current;
+
+      // Restore original text
+      textarea.value = selectedTextInfo.originalText;
+      setText(selectedTextInfo.originalText);
+
+      // Restore original selection
+      const { start, end } = selectedTextInfo;
+
+      closeColorPicker();
+
+      // Restore selection with visual feedback
+      setTimeout(() => {
+        restoreTextSelection(start, end, true);
+      }, 50);
+    } else {
+      closeColorPicker();
+    }
+  }, [selectedTextInfo, restoreTextSelection]);
+
+  // Keyboard navigation for color picker
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (showColorPicker) {
+        if (event.key === 'Escape') {
+          cancelColorSelection();
+        } else if (event.key === 'Enter') {
+          applyPreviewColor();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showColorPicker, applyPreviewColor, cancelColorSelection]);
+
+  // Enhanced selection restoration with visual feedback
+  // Duplicate functions removed - moved above to avoid use-before-define errors
+  // const validateSelection = useCallback((): boolean => {
+  //   const selection = getSelectedText();
+  //   if (!selection.text || selection.text.length === 0) {
+  //     alert('Please select some text first!');
+  //     return false;
+  //   }
+  //   return true;
+  // }, [getSelectedText]);
+
+  // Simple color application function
+  const applySelectedColor = useCallback(
+    (color: string): void => {
+      if (!textAreaRef.current || !selectedTextInfo) {
+        return;
+      }
+
+      const textarea = textAreaRef.current;
+      const { start, end, text: selectedText } = selectedTextInfo;
+
+      if (selectedText.length === 0) {
+        alert('Please select some text first!');
+        return;
+      }
+
+      // Check if current text at positions matches what we saved
+      const currentTextAtPosition = textarea.value.substring(start, end);
+
+      // Use the current text at the position (in case it changed)
+      const textToColor = currentTextAtPosition;
+
+      const beforeText = textarea.value.substring(0, start);
+      const afterText = textarea.value.substring(end);
+
+      // Check if already formatted - more robust regex
+      const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+      const match = textToColor.match(colorFormatRegex);
+
+      let newColoredText;
+      if (match) {
+        // Already has color formatting, replace the color code but keep the text
+        newColoredText = `|c${color}${match[2]}|r`;
+      } else {
+        // No existing color formatting, add it
+        newColoredText = `|c${color}${textToColor}|r`;
+      }
+
+      const newText = beforeText + newColoredText + afterText;
+
+      // Update text
+      textarea.value = newText;
+      setText(newText);
+      debouncedSaveHistory(newText);
+
+      // Close color picker after applying
+      setShowColorPicker(false);
+      setSelectedTextInfo(null);
+
+      // Calculate new selection bounds and restore with visual feedback
+      const newStart = start;
+      const newEnd = newStart + newColoredText.length;
+
+      setTimeout(() => {
+        restoreTextSelection(newStart, newEnd, true);
+      }, 50);
+    },
+    [selectedTextInfo, debouncedSaveHistory, restoreTextSelection],
+  );
+
+  // Create preview text with live color
+  const createPreviewText = useCallback(
+    (colorHex?: string): string => {
+      if (!selectedTextInfo || !isPreviewMode) return text;
+
+      const { start, end, originalText } = selectedTextInfo;
+      const beforeText = originalText.substring(0, start);
+      const afterText = originalText.substring(end);
+      const selectedText = originalText.substring(start, end);
+
+      if (colorHex) {
+        // Apply preview color
+        const cleanColorHex = colorHex.replace('#', '').toUpperCase();
+        const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+        const match = selectedText.match(colorFormatRegex);
+        const newColoredText = match
+          ? `|c${cleanColorHex}${match[1]}|r`
+          : `|c${cleanColorHex}${selectedText}|r`;
+
+        return beforeText + newColoredText + afterText;
+      }
+
+      return originalText;
+    },
+    [text, selectedTextInfo, isPreviewMode],
+  );
+
+  // Handle color change for preview (not applied yet)
+  const handleColorPreview = (color: string): void => {
+    const hexColor = color.replace('#', '').toUpperCase();
+    setPreviewColor(hexColor);
+  };
+
+  // Handle color picker open
+  const openColorPicker = useCallback(
+    (event: React.MouseEvent): void => {
+      if (!textAreaRef.current) {
+        return;
+      }
 
       const textarea = textAreaRef.current;
       const start = textarea.selectionStart;
@@ -652,128 +819,93 @@ export const TextEditor: React.FC = () => {
         return;
       }
 
-      const beforeText = textarea.value.substring(0, start);
-      const afterText = textarea.value.substring(end);
+      // Save original text for cancel functionality
+      setSelectedTextInfo({
+        start,
+        end,
+        text: selectedText,
+        originalText: textarea.value, // Store complete original text
+      });
 
-      // Check if already formatted
-      const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+      // Check if selected text already has a color and use it as default
+      const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
       const match = selectedText.match(colorFormatRegex);
+      const defaultColor = match ? `#${match[1]}` : '#ffffff';
+      setPreviewColor(defaultColor);
+      setIsPreviewMode(true);
+      setShowColorPicker(true);
 
-      const newColoredText = match
-        ? `|c${colorHex}${match[1]}|r`
-        : `|c${colorHex}${selectedText}|r`;
-
-      const newText = beforeText + newColoredText + afterText;
-
-      // Update both textarea and state
-      textarea.value = newText;
-      setText(newText);
-      debouncedSaveHistory(newText);
-
-      // Restore selection
+      // Maintain visual selection during picker open
       setTimeout(() => {
-        const newStart = start;
-        const newEnd = newStart + newColoredText.length;
-        textarea.setSelectionRange(newStart, newEnd);
-        textarea.focus();
-      }, 0);
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          textAreaRef.current.setSelectionRange(start, end);
+
+          // Add persistent visual indicator during color picking
+          textAreaRef.current.style.boxShadow = '0 0 0 2px #3b82f6';
+          textAreaRef.current.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        }
+      }, 100);
     },
-    [debouncedSaveHistory],
+    [textAreaRef],
   );
 
-  // Native color picker setup for mobile
-  const setupNativeColorPicker = useCallback((): void => {
-    if (!isMobile) return;
-
-    // Create hidden native color input
-    let colorInput = document.getElementById('native-color-input') as HTMLInputElement;
-    if (!colorInput) {
-      colorInput = document.createElement('input');
-      colorInput.type = 'color';
-      colorInput.id = 'native-color-input';
-      colorInput.value = '#ffffff';
-      colorInput.style.cssText = `
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 1px;
-        height: 1px;
-        opacity: 0;
-        pointer-events: auto;
-      `;
-      document.body.appendChild(colorInput);
+  // Close color picker
+  const closeColorPicker = (): void => {
+    // Remove visual indicators first
+    if (textAreaRef.current) {
+      textAreaRef.current.style.boxShadow = '';
+      textAreaRef.current.style.backgroundColor = '';
     }
 
-    colorInput.addEventListener('change', (e) => {
-      const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
-      if (validateSelection()) {
-        applyColorToSelection(hex);
+    setShowColorPicker(false);
+    setSelectedTextInfo(null);
+    setPreviewColor('#ffffff');
+    setIsPreviewMode(false);
+
+    // Ensure textarea regains focus
+    setTimeout(() => {
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
       }
-    });
-  }, [isMobile, validateSelection, applyColorToSelection]);
-
-  // Setup native color picker for mobile
-  useEffect(() => {
-    if (isMobile) {
-      setupNativeColorPicker();
-    }
-
-    return () => {
-      const colorInput = document.getElementById('native-color-input');
-      if (colorInput) {
-        colorInput.remove();
-      }
-    };
-  }, [isMobile, setupNativeColorPicker]);
-
-  // Apply quick color (wrapper for applyColorToSelection)
-  const applyQuickColor = (colorHex: string): void => {
-    if (validateSelection()) {
-      applyColorToSelection(colorHex);
-    }
+    }, 10);
   };
 
-  // Unified color picker handler
-  const handleColorPickerClick = useCallback((): void => {
-    if (isMobile) {
-      // Mobile: Use native color picker
-      const colorInput = document.getElementById('native-color-input') as HTMLInputElement;
-      if (colorInput) {
-        try {
-          if (typeof colorInput.showPicker === 'function') {
-            colorInput.showPicker();
-          } else {
-            colorInput.click();
-          }
-        } catch (error) {
-          colorInput.click();
-        }
-      }
-    } else {
-      // Desktop: Use Pickr or fallback
-      if (pickrRef.current) {
-        try {
-          pickrRef.current.show();
-        } catch (error) {
-          // Fallback to native picker on desktop too
-          const fallbackColorInput = document.createElement('input');
-          fallbackColorInput.type = 'color';
-          fallbackColorInput.style.cssText = 'position: fixed; top: -9999px; opacity: 0;';
-          document.body.appendChild(fallbackColorInput);
+  // Enhanced quick color function for toolbar swatches with selection persistence
+  const handleQuickColorClick = (colorHex: string): void => {
+    if (!textAreaRef.current) return;
 
-          fallbackColorInput.addEventListener('change', (e) => {
-            const hex = (e.target as HTMLInputElement).value.replace('#', '').toUpperCase();
-            if (validateSelection()) {
-              applyColorToSelection(hex);
-            }
-            document.body.removeChild(fallbackColorInput);
-          });
+    const textarea = textAreaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
 
-          fallbackColorInput.click();
-        }
-      }
+    if (start === end) {
+      alert('Please select some text first!');
+      return;
     }
-  }, [isMobile, applyColorToSelection, validateSelection]);
+
+    // Store selection info before applying color
+    const selectedText = textarea.value.substring(start, end);
+    setSelectedTextInfo({
+      start,
+      end,
+      text: selectedText,
+      originalText: textarea.value,
+    });
+
+    // Apply the color with a slight delay to ensure selection is maintained
+    setTimeout(() => {
+      applySelectedColor(colorHex);
+
+      // Ensure selection is maintained after application
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          textAreaRef.current.setSelectionRange(start, end);
+        }
+      }, 50);
+    }, 10);
+  };
 
   // Remove format from selection (with validation)
   const removeFormatFromSelection = (): void => {
@@ -803,122 +935,6 @@ export const TextEditor: React.FC = () => {
     textarea.setSelectionRange(newCursorPos, newCursorPos);
     textarea.focus();
   };
-
-  // Improved Pickr initialization with better error handling
-  useEffect(() => {
-    if (isMobile || !pickrAnchorRef.current) return;
-
-    let mounted = true;
-
-    const initPickr = async (): Promise<void> => {
-      try {
-        const Pickr = (await import('@simonwep/pickr')).default;
-
-        if (!mounted || !pickrAnchorRef.current) return;
-
-        const pickrInstance = (Pickr as unknown as PickrInstance).create({
-          el: pickrAnchorRef.current,
-          theme: theme.palette.mode === 'dark' ? 'monolith' : 'classic',
-          default: '#ffffff',
-          swatches: [
-            '#FFFFFF',
-            '#CCCCCC',
-            '#999999',
-            '#666666',
-            '#333333',
-            '#000000',
-            '#FFFF00',
-            '#FFD700',
-            '#FF0000',
-            '#FF4500',
-            '#FF8000',
-            '#FFA500',
-            '#00FF00',
-            '#32CD32',
-            '#0080FF',
-            '#0000FF',
-            '#8A2BE2',
-            '#FF00FF',
-          ],
-          components: {
-            preview: true,
-            opacity: false,
-            hue: true,
-            interaction: {
-              hex: true,
-              rgba: false,
-              hsla: false,
-              hsva: false,
-              cmyk: false,
-              input: true,
-              clear: false,
-              save: true,
-            },
-          },
-          position: 'bottom-middle',
-          closeOnScroll: true,
-          appClass: 'eso-pickr-app',
-        });
-
-        pickrInstance.on('save', (color: PickrColor) => {
-          if (color && mounted) {
-            const hexColor = color.toHEXA().toString().substring(1, 7);
-            if (validateSelection()) {
-              applyColorToSelection(hexColor);
-            }
-            pickrInstance.hide();
-          }
-        });
-
-        pickrInstance.on('show', () => {
-          if (mounted) {
-            setTimeout(() => positionPickr(), 0);
-          }
-        });
-
-        if (mounted) {
-          pickrRef.current = pickrInstance;
-        } else {
-          pickrInstance.destroy();
-        }
-      } catch (error) {
-        // eslint-disable-next-line no-console
-        console.warn('Pickr initialization failed, using fallback');
-      }
-    };
-
-    initPickr();
-
-    return () => {
-      mounted = false;
-      if (pickrRef.current) {
-        try {
-          pickrRef.current.destroy();
-        } catch (error) {
-          // Ignore cleanup errors
-        }
-        pickrRef.current = null;
-      }
-    };
-  }, [isMobile, theme.palette.mode, validateSelection, applyColorToSelection]);
-
-  const positionPickr = useCallback((): void => {
-    const appEl = document.querySelector('.pcr-app');
-    const emoji = document.getElementById('eso-native-emoji-btn');
-    if (!emoji || !appEl) return;
-
-    const rect = emoji.getBoundingClientRect();
-    const gap = 8;
-    appEl.setAttribute(
-      'style',
-      `
-      position: fixed !important;
-      left: ${Math.max(8, Math.min(window.innerWidth - 320 - 8, rect.right - 320))}px !important;
-      top: ${rect.bottom + gap + 260 > window.innerHeight - 8 ? Math.max(8, rect.top - 260 - gap) : rect.bottom + gap}px !important;
-      z-index: 99999 !important;
-    `,
-    );
-  }, []);
 
   // Initialize with example text - fix the useEffect
   useEffect(() => {
@@ -1020,13 +1036,11 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  // Update emoji button handler to use unified handler
-  const handleEmojiClick = (): void => {
-    handleColorPickerClick();
-  };
+  const renderPreview = (): React.ReactElement => {
+    // Use preview text if in preview mode, otherwise use actual text
+    const displayText = isPreviewMode ? createPreviewText(previewColor) : text;
 
-  const renderPreview = (): JSX.Element => {
-    if (!text.trim()) {
+    if (!displayText.trim()) {
       return (
         <span style={{ color: '#888', fontStyle: 'italic' }}>
           Your formatted text will appear here...
@@ -1034,7 +1048,7 @@ export const TextEditor: React.FC = () => {
       );
     }
 
-    const previewText = text
+    const previewText = displayText
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -1095,7 +1109,21 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
-                  onClick={() => applyQuickColor(color.substring(1))}
+                  onClick={() => handleQuickColorClick(color.substring(1))}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current) {
+                      const textarea = textAreaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      if (start !== end) {
+                        textarea.focus();
+                        textarea.setSelectionRange(start, end);
+                      }
+                    }
+                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
@@ -1105,22 +1133,15 @@ export const TextEditor: React.FC = () => {
               <EmojiButton
                 id="eso-native-emoji-btn"
                 type="button"
-                onClick={handleEmojiClick}
+                onClick={openColorPicker}
                 aria-label="Choose custom color"
+                style={{
+                  backgroundColor: showColorPicker ? '#3b82f6' : 'transparent',
+                  color: showColorPicker ? 'white' : 'inherit',
+                }}
               >
                 🎨
               </EmojiButton>
-              <div
-                ref={pickrAnchorRef}
-                id="eso-pickr-anchor"
-                style={{
-                  position: 'absolute',
-                  left: '-9999px',
-                  width: '0',
-                  height: '0',
-                  overflow: 'hidden',
-                }}
-              />
             </ColorPickerWrapper>
           </Toolbar>
 
@@ -1166,8 +1187,12 @@ export const TextEditor: React.FC = () => {
               <EmojiButton
                 id="eso-native-emoji-btn-mobile"
                 type="button"
-                onClick={handleEmojiClick}
+                onClick={openColorPicker}
                 aria-label="Choose custom color"
+                style={{
+                  backgroundColor: showColorPicker ? '#3b82f6' : 'transparent',
+                  color: showColorPicker ? 'white' : 'inherit',
+                }}
               >
                 🎨
               </EmojiButton>
@@ -1179,7 +1204,21 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
-                  onClick={() => applyQuickColor(color.substring(1))}
+                  onClick={() => handleQuickColorClick(color.substring(1))}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current) {
+                      const textarea = textAreaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      if (start !== end) {
+                        textarea.focus();
+                        textarea.setSelectionRange(start, end);
+                      }
+                    }
+                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
@@ -1205,6 +1244,310 @@ export const TextEditor: React.FC = () => {
           </StatusBar>
 
           <PreviewArea id="eso-preview">{renderPreview()}</PreviewArea>
+
+          {/* Modern Color Picker with react-colorful */}
+          {showColorPicker && (
+            <>
+              {/* Backdrop */}
+              <Box
+                sx={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  zIndex: 999998,
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
+                }}
+                onClick={cancelColorSelection}
+              />
+
+              {/* Color Picker Container */}
+              <Box
+                sx={{
+                  position: 'fixed',
+                  right: theme.breakpoints.down('sm') ? '10px' : '20px',
+                  top: '120px',
+                  zIndex: 999999,
+                  borderRadius: '12px',
+                  overflow: 'visible',
+                  backgroundColor: theme.palette.background.paper,
+                  border: `1px solid ${theme.palette.divider}`,
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 12px 48px rgba(0, 0, 0, 0.7)'
+                      : '0 12px 48px rgba(0, 0, 0, 0.2)',
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  minWidth: theme.breakpoints.down('sm') ? '300px' : '280px',
+                  maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
+                  maxHeight: 'calc(100vh - 140px)',
+                  overflowY: 'auto',
+                  transform: 'scale(1)',
+                  opacity: 1,
+                  transition: 'all 0.2s ease-out',
+                  animation: 'scaleIn 0.2s ease-out',
+                  '@keyframes scaleIn': {
+                    '0%': {
+                      transform: 'scale(0.95)',
+                      opacity: 0,
+                    },
+                    '100%': {
+                      transform: 'scale(1)',
+                      opacity: 1,
+                    },
+                  },
+                }}
+              >
+                {/* Header */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+                  >
+                    Choose Text Color
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      fontFamily: 'monospace',
+                      fontSize: '11px',
+                      mt: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}
+                    {selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
+                  </Typography>
+                </Box>
+
+                {/* Color Picker Section */}
+                <Box
+                  sx={{ p: 3 }}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking on color picker controls
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current && selectedTextInfo) {
+                      const { start, end } = selectedTextInfo;
+                      textAreaRef.current.focus();
+                      textAreaRef.current.setSelectionRange(start, end);
+                    }
+                  }}
+                >
+                  <HexColorPicker
+                    color={previewColor}
+                    onChange={handleColorPreview}
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                    }}
+                  />
+
+                  {/* Hex Input */}
+                  <Box sx={{ mt: 3, mb: 2 }}>
+                    <HexColorInput
+                      color={previewColor}
+                      onChange={handleColorPreview}
+                      prefixed
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.background.default,
+                        color: theme.palette.text.primary,
+                        fontFamily: theme.typography.fontFamily,
+                        fontSize: '14px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                      }}
+                      placeholder="Enter hex color"
+                      onFocus={(e) => {
+                        // Prevent focus theft and maintain textarea selection
+                        e.preventDefault();
+                        if (textAreaRef.current && selectedTextInfo) {
+                          const { start, end } = selectedTextInfo;
+                          textAreaRef.current.focus();
+                          textAreaRef.current.setSelectionRange(start, end);
+                        }
+                      }}
+                    />
+                  </Box>
+                </Box>
+
+                {/* Preset Colors */}
+                <Box
+                  sx={{ px: 3, pb: 3 }}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking on preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current && selectedTextInfo) {
+                      const { start, end } = selectedTextInfo;
+                      textAreaRef.current.focus();
+                      textAreaRef.current.setSelectionRange(start, end);
+                    }
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      mb: 2,
+                      display: 'block',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Quick Colors
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(6, 1fr)',
+                      gap: '8px',
+                    }}
+                  >
+                    {[
+                      '#FFFF00',
+                      '#00FF00',
+                      '#FF0000',
+                      '#0080FF',
+                      '#FF8000',
+                      '#FF00FF',
+                      '#FFFFFF',
+                      '#CCCCCC',
+                      '#999999',
+                      '#666666',
+                      '#333333',
+                      '#000000',
+                      '#FFD700',
+                      '#FF4500',
+                      '#FFA500',
+                      '#32CD32',
+                      '#8A2BE2',
+                      '#4169E1',
+                    ].map((color, index) => (
+                      <Box
+                        key={index}
+                        onClick={() => handleColorPreview(color)}
+                        sx={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '6px',
+                          backgroundColor: color,
+                          border: `2px solid ${theme.palette.divider}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            borderColor: theme.palette.primary.main,
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                          },
+                          '&:focus': {
+                            outline: `2px solid ${theme.palette.primary.main}`,
+                            outlineOffset: '2px',
+                          },
+                        }}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleColorPreview(color);
+                          }
+                        }}
+                        aria-label={`Apply color ${color}`}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Action Buttons */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderTop: `1px solid ${theme.palette.divider}`,
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'rgba(0, 0, 0, 0.02)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Current Color Indicator */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '4px',
+                        backgroundColor: previewColor,
+                        border: `1px solid ${theme.palette.divider}`,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        fontFamily: 'monospace',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {previewColor.toUpperCase()}
+                    </Typography>
+                  </Box>
+
+                  {/* Buttons */}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={cancelColorSelection}
+                      sx={{
+                        minWidth: 80,
+                        color: theme.palette.text.primary,
+                        borderColor: theme.palette.divider,
+                        '&:hover': {
+                          borderColor: theme.palette.primary.main,
+                          backgroundColor: theme.palette.action.hover,
+                        },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={applyPreviewColor}
+                      sx={{
+                        minWidth: 80,
+                        backgroundColor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
+                        '&:hover': {
+                          backgroundColor: theme.palette.primary.dark,
+                        },
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  </Box>
+                </Box>
+              </Box>
+            </>
+          )}
         </EditorTool>
       </Container>
     </TextEditorContainer>
