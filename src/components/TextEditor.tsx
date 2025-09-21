@@ -1654,6 +1654,14 @@ export const TextEditor: React.FC = () => {
                         outline: 'none',
                       }}
                       aria-label="Hex color input"
+                      onKeyDown={(e) => {
+                        // Allow all keyboard input for hex color input
+                        e.stopPropagation();
+                      }}
+                      onPaste={(e) => {
+                        // Allow pasting for hex color input
+                        e.stopPropagation();
+                      }}
                       onFocus={(e) => {
                         e.stopPropagation();
                         if (textAreaRef.current && selectedTextInfo) {
