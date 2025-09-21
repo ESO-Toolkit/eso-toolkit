@@ -582,6 +582,28 @@ export const TextEditor: React.FC = () => {
       // Highlight selected text area
       textarea.style.boxShadow = '0 0 0 2px #3b82f6';
       textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+
+      // Force maintain selection even when focus is lost
+      const maintainSelection = () => {
+        if (selectedTextInfo && isPreviewMode) {
+          const { start, end } = selectedTextInfo;
+          // Only restore if textarea doesn't currently have a selection
+          if (textarea.selectionStart === textarea.selectionEnd) {
+            textarea.setSelectionRange(start, end);
+          }
+        }
+      };
+
+      // Maintain selection periodically and on focus events
+      const selectionInterval = setInterval(maintainSelection, 100);
+      textarea.addEventListener('focus', maintainSelection);
+
+      return () => {
+        clearInterval(selectionInterval);
+        textarea.removeEventListener('focus', maintainSelection);
+        textarea.style.boxShadow = '';
+        textarea.style.backgroundColor = '';
+      };
     } else {
       // Remove highlighting
       textarea.style.boxShadow = '';
@@ -1389,7 +1411,19 @@ export const TextEditor: React.FC = () => {
                 </Box>
 
                 {/* Color Picker Section */}
-                <Box sx={{ p: 3 }}>
+                <Box
+                  sx={{ p: 3 }}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking on color picker controls
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current && selectedTextInfo) {
+                      const { start, end } = selectedTextInfo;
+                      textAreaRef.current.focus();
+                      textAreaRef.current.setSelectionRange(start, end);
+                    }
+                  }}
+                >
                   <HexColorPicker
                     color={previewColor}
                     onChange={handleColorPreview}
@@ -1420,12 +1454,33 @@ export const TextEditor: React.FC = () => {
                         transition: 'border-color 0.2s',
                       }}
                       placeholder="Enter hex color"
+                      onFocus={(e) => {
+                        // Prevent focus theft and maintain textarea selection
+                        e.preventDefault();
+                        if (textAreaRef.current && selectedTextInfo) {
+                          const { start, end } = selectedTextInfo;
+                          textAreaRef.current.focus();
+                          textAreaRef.current.setSelectionRange(start, end);
+                        }
+                      }}
                     />
                   </Box>
                 </Box>
 
                 {/* Preset Colors */}
-                <Box sx={{ px: 3, pb: 3 }}>
+                <Box
+                  sx={{ px: 3, pb: 3 }}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking on preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current && selectedTextInfo) {
+                      const { start, end } = selectedTextInfo;
+                      textAreaRef.current.focus();
+                      textAreaRef.current.setSelectionRange(start, end);
+                    }
+                  }}
+                >
                   <Typography
                     variant="caption"
                     sx={{
