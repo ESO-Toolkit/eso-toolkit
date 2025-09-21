@@ -1,14 +1,13 @@
 import { Box, Typography, Container, useTheme, alpha, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
-import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
-
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
+
 import { HexColorPicker, HexColorInput } from 'react-colorful';
 
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
-
 
 // Styled Components
 const TextEditorContainer = styled(Box)(({ theme }) => ({
@@ -427,7 +426,6 @@ export const TextEditor: React.FC = () => {
   const [history, setHistory] = useState<string[]>([]);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [charCount, setCharCount] = useState(0);
-  const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
   const [selectedTextInfo, setSelectedTextInfo] = useState<{
@@ -436,12 +434,9 @@ export const TextEditor: React.FC = () => {
     text: string;
     originalText: string; // Store original text for cancel
   } | null>(null);
-  const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 });
-  const [isApplyingColor, setIsApplyingColor] = useState(false);
   const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
   const [isPreviewMode, setIsPreviewMode] = useState(false);
 
-  
   // Simple fix for light mode background loading
   useEffect(() => {
     // Simple fix for light mode background loading
@@ -455,8 +450,6 @@ export const TextEditor: React.FC = () => {
         body.style.backgroundPosition = 'center';
         body.style.backgroundRepeat = 'no-repeat';
         body.style.backgroundAttachment = 'fixed';
-        // eslint-disable-next-line no-console
-        console.log('Force applied light mode background');
       }, 100); // Small delay to ensure it applies
     }
   }, [theme.palette.mode]);
@@ -489,43 +482,6 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
 
-  // Debug useEffect for background loading issue
-  useEffect(() => {
-    // eslint-disable-next-line no-console
-    console.log('=== DEBUG INFO ===');
-    // eslint-disable-next-line no-console
-    console.log('Theme mode:', theme.palette.mode);
-    // eslint-disable-next-line no-console
-    console.log('Body classes:', document.body.className);
-    // eslint-disable-next-line no-console
-    console.log('HTML classes:', document.documentElement.className);
-    // eslint-disable-next-line no-console
-    console.log(
-      'Background image path:',
-      '/eso-log-aggregator/text-editor/text-editor-bg-light.jpg',
-    );
-
-    // Check computed styles
-    const bodyStyles = window.getComputedStyle(document.body);
-    // eslint-disable-next-line no-console
-    console.log('Body background-image:', bodyStyles.backgroundImage);
-    // eslint-disable-next-line no-console
-    console.log('Body background-size:', bodyStyles.backgroundSize);
-
-    // Check if CSS files are loaded
-    const stylesheets = Array.from(document.styleSheets);
-    // eslint-disable-next-line no-console
-    console.log('Loaded stylesheets:', stylesheets.length);
-
-    // Force inspect the usePageBackground hook
-    // eslint-disable-next-line no-console
-    console.log(
-      'usePageBackground should have been called with:',
-      'text-editor-page',
-      theme.palette.mode === 'dark',
-    );
-  }, [theme.palette.mode]);
-
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
   const maxHistory = 50;
@@ -535,25 +491,12 @@ export const TextEditor: React.FC = () => {
     setCharCount(text.length);
   }, [text]);
 
-  const getSelectedText = useCallback((): { text: string; start: number; end: number } => {
-    if (!textAreaRef.current) return { text: '', start: 0, end: 0 };
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    // Use the actual textarea value instead of state
-    const actualText = textarea.value;
-
-    return {
-      text: actualText.substring(start, end),
-      start,
-      end,
-    };
-  }, []); // Remove text dependency
+  // Remove unused functions - these are handled by the textAreaRef and existing state
+  // const getSelectedText is removed as it's unused
+  // const isMobileDevice is removed as it's unused
 
   // Simple debounce utility
-  function debounce<T extends (arg: string) => void>(func: T, wait: number): (arg: string) => void {
+  function debounce(func: (arg: string) => void, wait: number): (arg: string) => void {
     let timeoutId: NodeJS.Timeout | undefined;
     return (arg: string) => {
       clearTimeout(timeoutId);
@@ -561,24 +504,63 @@ export const TextEditor: React.FC = () => {
     };
   }
 
-  // Selection validation
-  const isMobileDevice = useCallback((): boolean => {
-    const userAgent = navigator.userAgent.toLowerCase();
-    const isMobileUA = /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(
-      userAgent,
-    );
-    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
-    const isSmallScreen = window.innerWidth <= 768;
-    return isMobileUA || (hasTouch && isSmallScreen);
-  }, []);
+  // Enhanced selection restoration with visual feedback
+  const restoreTextSelection = useCallback(
+    (start: number, end: number, forceVisual = true): void => {
+      if (!textAreaRef.current) return;
 
-  // State for mobile detection
-  useEffect(() => {
-    setIsMobile(isMobileDevice());
-    const handleResize = (): void => setIsMobile(isMobileDevice());
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [isMobileDevice]);
+      const textarea = textAreaRef.current;
+
+      // Ensure textarea is focused first
+      textarea.focus();
+
+      // Small delay to ensure focus is established
+      setTimeout(() => {
+        // Set the selection range
+        textarea.setSelectionRange(start, end);
+
+        if (forceVisual) {
+          // Force visual highlight by briefly blurring and refocusing
+          textarea.blur();
+          setTimeout(() => {
+            textarea.focus();
+            textarea.setSelectionRange(start, end);
+
+            // Additional visual feedback with CSS
+            textarea.style.outline = '2px solid #3b82f6';
+            textarea.style.outlineOffset = '2px';
+
+            // Remove CSS highlight after a moment
+            setTimeout(() => {
+              textarea.style.outline = '';
+              textarea.style.outlineOffset = '';
+            }, 300);
+          }, 10);
+        }
+      }, 10);
+    },
+    [textAreaRef],
+  );
+
+  // Debounced history saving
+  const debouncedSaveHistory = useCallback(
+    debounce((newText: string) => {
+      setHistory((prev) => {
+        const newHistory = prev.slice(0, historyIndex + 1);
+        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
+          const updatedHistory = [...newHistory, newText];
+          if (updatedHistory.length > maxHistory) {
+            updatedHistory.shift();
+          } else {
+            setHistoryIndex((prev) => prev + 1);
+          }
+          return updatedHistory;
+        }
+        return prev;
+      });
+    }, 500),
+    [historyIndex, maxHistory],
+  );
 
   // Add visual feedback for selected text during preview
   useEffect(() => {
@@ -592,7 +574,7 @@ export const TextEditor: React.FC = () => {
       textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
 
       // Force maintain selection even when focus is lost
-      const maintainSelection = () => {
+      const maintainSelection = (): void => {
         if (selectedTextInfo && isPreviewMode) {
           const { start, end } = selectedTextInfo;
           // Only restore if textarea doesn't currently have a selection
@@ -641,6 +623,67 @@ export const TextEditor: React.FC = () => {
     };
   }, [isPreviewMode]);
 
+  // Apply the selected color
+  const applyPreviewColor = useCallback((): void => {
+    if (!textAreaRef.current || !selectedTextInfo) return;
+
+    const textarea = textAreaRef.current;
+    const { start, end } = selectedTextInfo;
+    const selectedText = selectedTextInfo.originalText.substring(start, end);
+
+    const beforeText = selectedTextInfo.originalText.substring(0, start);
+    const afterText = selectedTextInfo.originalText.substring(end);
+
+    // Check if already formatted
+    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+    const match = selectedText.match(colorFormatRegex);
+
+    const colorHex = previewColor.replace('#', '').toUpperCase();
+    const newColoredText = match ? `|c${colorHex}${match[1]}|r` : `|c${colorHex}${selectedText}|r`;
+
+    const newText = beforeText + newColoredText + afterText;
+
+    // Apply to actual text
+    textarea.value = newText;
+    setText(newText);
+    debouncedSaveHistory(newText);
+
+    // Calculate new selection bounds for the colored text
+    const newStart = start;
+    const newEnd = newStart + newColoredText.length;
+
+    // Close color picker first
+    closeColorPicker();
+
+    // Restore selection with visual feedback
+    setTimeout(() => {
+      restoreTextSelection(newStart, newEnd, true);
+    }, 50);
+  }, [selectedTextInfo, previewColor, debouncedSaveHistory, restoreTextSelection]);
+
+  // Cancel color selection
+  const cancelColorSelection = useCallback((): void => {
+    if (selectedTextInfo && textAreaRef.current) {
+      const textarea = textAreaRef.current;
+
+      // Restore original text
+      textarea.value = selectedTextInfo.originalText;
+      setText(selectedTextInfo.originalText);
+
+      // Restore original selection
+      const { start, end } = selectedTextInfo;
+
+      closeColorPicker();
+
+      // Restore selection with visual feedback
+      setTimeout(() => {
+        restoreTextSelection(start, end, true);
+      }, 50);
+    } else {
+      closeColorPicker();
+    }
+  }, [selectedTextInfo, restoreTextSelection]);
+
   // Keyboard navigation for color picker
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -655,87 +698,28 @@ export const TextEditor: React.FC = () => {
 
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [showColorPicker]);
+  }, [showColorPicker, applyPreviewColor, cancelColorSelection]);
 
   // Enhanced selection restoration with visual feedback
-  const restoreTextSelection = useCallback((start: number, end: number, forceVisual: boolean = true) => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-
-    // Ensure textarea is focused first
-    textarea.focus();
-
-    // Small delay to ensure focus is established
-    setTimeout(() => {
-      // Set the selection range
-      textarea.setSelectionRange(start, end);
-
-      if (forceVisual) {
-        // Force visual highlight by briefly blurring and refocusing
-        textarea.blur();
-        setTimeout(() => {
-          textarea.focus();
-          textarea.setSelectionRange(start, end);
-
-          // Additional visual feedback with CSS
-          textarea.style.outline = '2px solid #3b82f6';
-          textarea.style.outlineOffset = '2px';
-
-          // Remove CSS highlight after a moment
-          setTimeout(() => {
-            textarea.style.outline = '';
-            textarea.style.outlineOffset = '';
-          }, 300);
-        }, 10);
-      }
-    }, 10);
-  }, []);
-
-  // Debounced history saving
-  const debouncedSaveHistory = useCallback(
-    debounce((newText: string) => {
-      setHistory((prev) => {
-        const newHistory = prev.slice(0, historyIndex + 1);
-        if (newHistory.length === 0 || newHistory[newHistory.length - 1] !== newText) {
-          const updatedHistory = [...newHistory, newText];
-          if (updatedHistory.length > maxHistory) {
-            updatedHistory.shift();
-          } else {
-            setHistoryIndex((prev) => prev + 1);
-          }
-          return updatedHistory;
-        }
-        return prev;
-      });
-    }, 500),
-    [historyIndex, maxHistory],
-  );
-  const validateSelection = useCallback((): boolean => {
-    const selection = getSelectedText();
-    if (!selection.text || selection.text.length === 0) {
-      alert('Please select some text first!');
-      return false;
-    }
-    return true;
-  }, [getSelectedText]);
+  // Duplicate functions removed - moved above to avoid use-before-define errors
+  // const validateSelection = useCallback((): boolean => {
+  //   const selection = getSelectedText();
+  //   if (!selection.text || selection.text.length === 0) {
+  //     alert('Please select some text first!');
+  //     return false;
+  //   }
+  //   return true;
+  // }, [getSelectedText]);
 
   // Simple color application function
   const applySelectedColor = useCallback(
     (color: string): void => {
-      console.log('🎨 applySelectedColor called:', { color, selectedTextInfo });
-
       if (!textAreaRef.current || !selectedTextInfo) {
-        console.log('❌ Missing ref or selection info');
         return;
       }
 
       const textarea = textAreaRef.current;
       const { start, end, text: selectedText } = selectedTextInfo;
-
-      console.log('📝 Current textarea value:', textarea.value);
-      console.log('📍 Selection positions:', { start, end });
-      console.log('📄 Saved selected text:', selectedText);
 
       if (selectedText.length === 0) {
         alert('Please select some text first!');
@@ -744,7 +728,6 @@ export const TextEditor: React.FC = () => {
 
       // Check if current text at positions matches what we saved
       const currentTextAtPosition = textarea.value.substring(start, end);
-      console.log('🔄 Current text at saved position:', currentTextAtPosition);
 
       // Use the current text at the position (in case it changed)
       const textToColor = currentTextAtPosition;
@@ -767,13 +750,6 @@ export const TextEditor: React.FC = () => {
 
       const newText = beforeText + newColoredText + afterText;
 
-      console.log('🎨 Applying color:', {
-        originalText: textToColor,
-        color,
-        newColoredText,
-        newText,
-      });
-
       // Update text
       textarea.value = newText;
       setText(newText);
@@ -789,108 +765,91 @@ export const TextEditor: React.FC = () => {
 
       setTimeout(() => {
         restoreTextSelection(newStart, newEnd, true);
-        console.log('✅ Quick color applied and selection restored:', color);
       }, 50);
     },
-    [selectedTextInfo, debouncedSaveHistory],
+    [selectedTextInfo, debouncedSaveHistory, restoreTextSelection],
   );
 
   // Create preview text with live color
-  const createPreviewText = useCallback((colorHex?: string): string => {
-    if (!selectedTextInfo || !isPreviewMode) return text;
+  const createPreviewText = useCallback(
+    (colorHex?: string): string => {
+      if (!selectedTextInfo || !isPreviewMode) return text;
 
-    const { start, end, originalText } = selectedTextInfo;
-    const beforeText = originalText.substring(0, start);
-    const afterText = originalText.substring(end);
-    const selectedText = originalText.substring(start, end);
+      const { start, end, originalText } = selectedTextInfo;
+      const beforeText = originalText.substring(0, start);
+      const afterText = originalText.substring(end);
+      const selectedText = originalText.substring(start, end);
 
-    if (colorHex) {
-      // Apply preview color
-      const cleanColorHex = colorHex.replace('#', '').toUpperCase();
-      const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
-      const match = selectedText.match(colorFormatRegex);
-      const newColoredText = match
-        ? `|c${cleanColorHex}${match[1]}|r`
-        : `|c${cleanColorHex}${selectedText}|r`;
+      if (colorHex) {
+        // Apply preview color
+        const cleanColorHex = colorHex.replace('#', '').toUpperCase();
+        const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+        const match = selectedText.match(colorFormatRegex);
+        const newColoredText = match
+          ? `|c${cleanColorHex}${match[1]}|r`
+          : `|c${cleanColorHex}${selectedText}|r`;
 
-      return beforeText + newColoredText + afterText;
-    }
+        return beforeText + newColoredText + afterText;
+      }
 
-    return originalText;
-  }, [text, selectedTextInfo, isPreviewMode]);
+      return originalText;
+    },
+    [text, selectedTextInfo, isPreviewMode],
+  );
 
   // Handle color change for preview (not applied yet)
   const handleColorPreview = (color: string): void => {
     const hexColor = color.replace('#', '').toUpperCase();
     setPreviewColor(hexColor);
-
-    // Don't apply to actual text yet, just store for preview
-    console.log('🎨 Previewing color:', hexColor);
   };
 
-  
   // Handle color picker open
-  const openColorPicker = useCallback((event: React.MouseEvent): void => {
-    console.log('🎨 openColorPicker called');
-    if (!textAreaRef.current) {
-      console.log('❌ No textarea ref');
-      return;
-    }
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = textarea.value.substring(start, end);
-
-    console.log('📝 Selection:', {
-      start,
-      end,
-      selectedText: selectedText.length > 0 ? selectedText : '[empty]',
-    });
-
-    if (selectedText.length === 0) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    // Save original text for cancel functionality
-    setSelectedTextInfo({
-      start,
-      end,
-      text: selectedText,
-      originalText: textarea.value, // Store complete original text
-    });
-
-    // Calculate position for color picker
-    const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
-    const position = {
-      x: buttonRect.left,
-      y: buttonRect.bottom + 8,
-    };
-    setColorPickerPosition(position);
-
-    // Check if selected text already has a color and use it as default
-    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
-    const match = selectedText.match(colorFormatRegex);
-    const defaultColor = match ? `#${match[1]}` : '#ffffff';
-    setPreviewColor(defaultColor);
-    setIsPreviewMode(true);
-    setShowColorPicker(true);
-
-    // Maintain visual selection during picker open
-    setTimeout(() => {
-      if (textAreaRef.current) {
-        textAreaRef.current.focus();
-        textAreaRef.current.setSelectionRange(start, end);
-
-        // Add persistent visual indicator during color picking
-        textAreaRef.current.style.boxShadow = '0 0 0 2px #3b82f6';
-        textAreaRef.current.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+  const openColorPicker = useCallback(
+    (event: React.MouseEvent): void => {
+      if (!textAreaRef.current) {
+        return;
       }
-    }, 100);
 
-    console.log('✅ Color picker opened, selection maintained');
-  }, []);
+      const textarea = textAreaRef.current;
+      const start = textarea.selectionStart;
+      const end = textarea.selectionEnd;
+      const selectedText = textarea.value.substring(start, end);
+
+      if (selectedText.length === 0) {
+        alert('Please select some text first!');
+        return;
+      }
+
+      // Save original text for cancel functionality
+      setSelectedTextInfo({
+        start,
+        end,
+        text: selectedText,
+        originalText: textarea.value, // Store complete original text
+      });
+
+      // Check if selected text already has a color and use it as default
+      const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+      const match = selectedText.match(colorFormatRegex);
+      const defaultColor = match ? `#${match[1]}` : '#ffffff';
+      setPreviewColor(defaultColor);
+      setIsPreviewMode(true);
+      setShowColorPicker(true);
+
+      // Maintain visual selection during picker open
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          textAreaRef.current.setSelectionRange(start, end);
+
+          // Add persistent visual indicator during color picking
+          textAreaRef.current.style.boxShadow = '0 0 0 2px #3b82f6';
+          textAreaRef.current.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+        }
+      }, 100);
+    },
+    [textAreaRef],
+  );
 
   // Close color picker
   const closeColorPicker = (): void => {
@@ -911,71 +870,6 @@ export const TextEditor: React.FC = () => {
         textAreaRef.current.focus();
       }
     }, 10);
-  };
-
-  // Apply the selected color
-  const applyPreviewColor = (): void => {
-    if (!textAreaRef.current || !selectedTextInfo) return;
-
-    const textarea = textAreaRef.current;
-    const { start, end } = selectedTextInfo;
-    const selectedText = selectedTextInfo.originalText.substring(start, end);
-
-    const beforeText = selectedTextInfo.originalText.substring(0, start);
-    const afterText = selectedTextInfo.originalText.substring(end);
-
-    // Check if already formatted
-    const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
-    const match = selectedText.match(colorFormatRegex);
-
-    const colorHex = previewColor.replace('#', '').toUpperCase();
-    const newColoredText = match
-      ? `|c${colorHex}${match[1]}|r`
-      : `|c${colorHex}${selectedText}|r`;
-
-    const newText = beforeText + newColoredText + afterText;
-
-    // Apply to actual text
-    textarea.value = newText;
-    setText(newText);
-    debouncedSaveHistory(newText);
-
-    // Calculate new selection bounds for the colored text
-    const newStart = start;
-    const newEnd = newStart + newColoredText.length;
-
-    // Close color picker first
-    closeColorPicker();
-
-    // Restore selection with visual feedback
-    setTimeout(() => {
-      restoreTextSelection(newStart, newEnd, true);
-      console.log('✅ Color applied and selection restored:', previewColor);
-    }, 50);
-  };
-
-  // Cancel color selection
-  const cancelColorSelection = (): void => {
-    if (selectedTextInfo && textAreaRef.current) {
-      const textarea = textAreaRef.current;
-
-      // Restore original text
-      textarea.value = selectedTextInfo.originalText;
-      setText(selectedTextInfo.originalText);
-
-      // Restore original selection
-      const { start, end } = selectedTextInfo;
-
-      closeColorPicker();
-
-      // Restore selection with visual feedback
-      setTimeout(() => {
-        restoreTextSelection(start, end, true);
-        console.log('❌ Color selection cancelled, original selection restored');
-      }, 50);
-    } else {
-      closeColorPicker();
-    }
   };
 
   // Enhanced quick color function for toolbar swatches with selection persistence
@@ -1012,30 +906,6 @@ export const TextEditor: React.FC = () => {
         }
       }, 50);
     }, 10);
-  };
-
-  // Updated quick color function for React Color
-  const applyQuickColor = (colorHex: string): void => {
-    if (!textAreaRef.current) return;
-
-    const textarea = textAreaRef.current;
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-
-    if (start === end) {
-      alert('Please select some text first!');
-      return;
-    }
-
-    // Set selection info and apply color directly
-    setSelectedTextInfo({
-      start,
-      end,
-      text: textarea.value.substring(start, end),
-      originalText: textarea.value,
-    });
-
-    applySelectedColor(colorHex);
   };
 
   // Remove format from selection (with validation)
@@ -1083,23 +953,8 @@ export const TextEditor: React.FC = () => {
     setHistoryIndex(0);
   }, []); // Empty dependency array - only run once
 
-  // DEBUG VERSION - Monitor text state
-  useEffect(() => {
-    console.log('📝 Text state changed:', text.length, 'characters');
-    if (textAreaRef.current) {
-      const actual = textAreaRef.current.value;
-      if (actual !== text) {
-        console.warn('⚠️ State/DOM mismatch!', {
-          state: text.length,
-          dom: actual.length,
-        });
-      }
-    }
-  }, [text]);
-
-  // DEBUG VERSION - Event Handlers
+  // Event Handlers
   const handleTextChange = (e: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    console.log('⌨️ Text change event:', e.target.value.length, 'characters');
     const newText = e.target.value;
     setText(newText);
     debouncedSaveHistory(newText);
@@ -1182,18 +1037,9 @@ export const TextEditor: React.FC = () => {
     }
   };
 
-  // Update emoji button handler to use unified handler with debug logging
-  const handleEmojiClick = (event: React.MouseEvent): void => {
-    console.log('🎨 Emoji clicked!');
-    console.log('Current selection:', getSelectedText());
-    openColorPicker(event);
-  };
-
-  const renderPreview = (): JSX.Element => {
+  const renderPreview = (): React.ReactElement => {
     // Use preview text if in preview mode, otherwise use actual text
-    const displayText = isPreviewMode
-      ? createPreviewText(previewColor)
-      : text;
+    const displayText = isPreviewMode ? createPreviewText(previewColor) : text;
 
     if (!displayText.trim()) {
       return (
@@ -1428,9 +1274,10 @@ export const TextEditor: React.FC = () => {
                   overflow: 'visible',
                   backgroundColor: theme.palette.background.paper,
                   border: `1px solid ${theme.palette.divider}`,
-                  boxShadow: theme.palette.mode === 'dark'
-                    ? '0 12px 48px rgba(0, 0, 0, 0.7)'
-                    : '0 12px 48px rgba(0, 0, 0, 0.2)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 12px 48px rgba(0, 0, 0, 0.7)'
+                      : '0 12px 48px rgba(0, 0, 0, 0.2)',
                   backdropFilter: 'blur(12px) saturate(180%)',
                   minWidth: theme.breakpoints.down('sm') ? '300px' : '280px',
                   maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
@@ -1457,9 +1304,10 @@ export const TextEditor: React.FC = () => {
                   sx={{
                     p: 2,
                     borderBottom: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.02)'
-                      : 'rgba(0, 0, 0, 0.02)',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'rgba(0, 0, 0, 0.02)',
                   }}
                 >
                   <Typography
@@ -1478,7 +1326,8 @@ export const TextEditor: React.FC = () => {
                       display: 'block',
                     }}
                   >
-                    "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}{selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
+                    "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}
+                    {selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
                   </Typography>
                 </Box>
 
@@ -1572,9 +1421,24 @@ export const TextEditor: React.FC = () => {
                     }}
                   >
                     {[
-                      '#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF',
-                      '#FFFFFF', '#CCCCCC', '#999999', '#666666', '#333333', '#000000',
-                      '#FFD700', '#FF4500', '#FFA500', '#32CD32', '#8A2BE2', '#4169E1',
+                      '#FFFF00',
+                      '#00FF00',
+                      '#FF0000',
+                      '#0080FF',
+                      '#FF8000',
+                      '#FF00FF',
+                      '#FFFFFF',
+                      '#CCCCCC',
+                      '#999999',
+                      '#666666',
+                      '#333333',
+                      '#000000',
+                      '#FFD700',
+                      '#FF4500',
+                      '#FFA500',
+                      '#32CD32',
+                      '#8A2BE2',
+                      '#4169E1',
                     ].map((color, index) => (
                       <Box
                         key={index}
@@ -1615,9 +1479,10 @@ export const TextEditor: React.FC = () => {
                   sx={{
                     p: 2,
                     borderTop: `1px solid ${theme.palette.divider}`,
-                    backgroundColor: theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.02)'
-                      : 'rgba(0, 0, 0, 0.02)',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.02)'
+                        : 'rgba(0, 0, 0, 0.02)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',

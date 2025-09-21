@@ -52,7 +52,10 @@
       "Bash(git ls-tree:*)",
       "Bash(grep:*)",
       "Bash(git revert:*)",
-      "Bash(timeout:*)"
+      "Bash(timeout:*)",
+      "Bash(npx:*)",
+      "mcp__pointer__get-pointed-element",
+      "Bash(npm run type-check:*)"
     ],
     "deny": [],
     "ask": []
