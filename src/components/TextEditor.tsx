@@ -489,9 +489,22 @@ export const TextEditor: React.FC = () => {
   useEffect(() => {
     const root = document.documentElement;
 
+    // Convert hex to rgba with transparency for background paper
+    const hexToRgba = (hex: string, alpha: number): string => {
+      const r = parseInt(hex.slice(1, 3), 16);
+      const g = parseInt(hex.slice(3, 5), 16);
+      const b = parseInt(hex.slice(5, 7), 16);
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+
+    // Apply transparency to background paper based on theme mode
+    const backgroundPaper = theme.palette.mode === 'dark'
+      ? hexToRgba(theme.palette.background.paper, 0.709804) // #0f172ab5
+      : hexToRgba(theme.palette.background.paper, 0.741176); // #ffffffbd
+
     // Map Material UI theme values to CSS variables
     root.style.setProperty('--mui-palette-background-default', theme.palette.background.default);
-    root.style.setProperty('--mui-palette-background-paper', theme.palette.background.paper);
+    root.style.setProperty('--mui-palette-background-paper', backgroundPaper);
     root.style.setProperty('--mui-palette-text-primary', theme.palette.text.primary);
     root.style.setProperty('--mui-palette-text-secondary', theme.palette.text.secondary);
     root.style.setProperty('--mui-palette-primary-main', theme.palette.primary.main);

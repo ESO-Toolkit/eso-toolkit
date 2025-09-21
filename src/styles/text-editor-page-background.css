@@ -101,18 +101,7 @@ body.text-editor-page.dark-mode .editor-container:not(.EditorTool) {
   color: #e0e0e0;
 }
 
-/* Calculator container should also be semi-transparent */
-body.text-editor-page .calculator-container {
-  background: rgba(255, 255, 255, 0.9) !important;
-  backdrop-filter: blur(2px);
-  border-radius: var(--site-radius, 8px);
-  border: 1px solid rgba(0, 0, 0, 0.1);
-}
-
-body.text-editor-page.dark-mode .calculator-container {
-  background: rgba(0, 0, 0, 0.8) !important;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
+/* Calculator container uses --panel variable which now has transparency */
 
 /* Make TextEditor component container use CSS variables */
 body.text-editor-page .MuiBox-root,
