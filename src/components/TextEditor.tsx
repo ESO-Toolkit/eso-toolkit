@@ -1456,6 +1456,9 @@ export const TextEditor: React.FC = () => {
                           fontSize: '14px',
                           color: theme.palette.text.secondary,
                           opacity: 0.6,
+                          display: 'flex',
+                          alignItems: 'center',
+                          height: '100%',
                         }}
                       >
                         ⠿
