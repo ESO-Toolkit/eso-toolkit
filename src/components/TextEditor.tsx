@@ -435,6 +435,9 @@ export const TextEditor: React.FC = () => {
   } | null>(null);
   const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
   const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [pickerPosition, setPickerPosition] = useState({ x: 20, y: 120 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
 
   // Simple fix for light mode background loading
   useEffect(() => {
@@ -683,6 +686,11 @@ export const TextEditor: React.FC = () => {
     }
   }, [selectedTextInfo, restoreTextSelection]);
 
+  // Reset picker position to default
+  const resetPickerPosition = (): void => {
+    setPickerPosition({ x: 20, y: 120 });
+  };
+
   // Keyboard navigation for color picker
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -691,6 +699,9 @@ export const TextEditor: React.FC = () => {
           cancelColorSelection();
         } else if (event.key === 'Enter') {
           applyPreviewColor();
+        } else if (event.key === 'r' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          resetPickerPosition();
         }
       }
     };
@@ -849,6 +860,49 @@ export const TextEditor: React.FC = () => {
     },
     [textAreaRef],
   );
+
+  // Drag handlers for color picker
+  const handleDragStart = (e: React.MouseEvent<HTMLDivElement>): void => {
+    setIsDragging(true);
+    const rect = e.currentTarget.getBoundingClientRect();
+    setDragOffset({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top,
+    });
+    e.preventDefault();
+  };
+
+  const handleDrag = useCallback((e: MouseEvent): void => {
+    if (!isDragging) return;
+
+    const newX = e.clientX - dragOffset.x;
+    const newY = e.clientY - dragOffset.y;
+
+    // Keep picker within viewport bounds
+    const maxX = window.innerWidth - 320; // picker width
+    const maxY = window.innerHeight - 500; // approximate picker height
+
+    setPickerPosition({
+      x: Math.max(0, Math.min(newX, maxX)),
+      y: Math.max(0, Math.min(newY, maxY)),
+    });
+  }, [isDragging, dragOffset]);
+
+  const handleDragEnd = (): void => {
+    setIsDragging(false);
+  };
+
+  // Add global event listeners for dragging
+  useEffect(() => {
+    if (isDragging) {
+      document.addEventListener('mousemove', handleDrag);
+      document.addEventListener('mouseup', handleDragEnd);
+      return () => {
+        document.removeEventListener('mousemove', handleDrag);
+        document.removeEventListener('mouseup', handleDragEnd);
+      };
+    }
+  }, [isDragging, dragOffset]);
 
   // Close color picker
   const closeColorPicker = (): void => {
@@ -1266,8 +1320,8 @@ export const TextEditor: React.FC = () => {
               <Box
                 sx={{
                   position: 'fixed',
-                  right: theme.breakpoints.down('sm') ? '10px' : '20px',
-                  top: '120px',
+                  left: `${pickerPosition.x}px`,
+                  top: `${pickerPosition.y}px`,
                   zIndex: 999999,
                   borderRadius: '12px',
                   overflow: 'visible',
@@ -1282,10 +1336,11 @@ export const TextEditor: React.FC = () => {
                   maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
                   maxHeight: 'calc(100vh - 140px)',
                   overflowY: 'auto',
-                  transform: 'scale(1)',
+                  transform: isDragging ? 'scale(1.02)' : 'scale(1)',
                   opacity: 1,
-                  transition: 'all 0.2s ease-out',
+                  transition: isDragging ? 'none' : 'all 0.2s ease-out',
                   animation: 'scaleIn 0.2s ease-out',
+                  cursor: isDragging ? 'grabbing' : 'grab',
                   '@keyframes scaleIn': {
                     '0%': {
                       transform: 'scale(0.95)',
@@ -1297,6 +1352,7 @@ export const TextEditor: React.FC = () => {
                     },
                   },
                 }}
+                onMouseDown={handleDragStart}
               >
                 {/* Header */}
                 <Box
@@ -1307,14 +1363,57 @@ export const TextEditor: React.FC = () => {
                       theme.palette.mode === 'dark'
                         ? 'rgba(255, 255, 255, 0.02)'
                         : 'rgba(0, 0, 0, 0.02)',
+                    cursor: 'grab',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    '&:active': {
+                      cursor: 'grabbing',
+                    },
                   }}
+                  onMouseDown={handleDragStart}
                 >
-                  <Typography
-                    variant="subtitle2"
-                    sx={{ fontWeight: 600, color: theme.palette.text.primary }}
-                  >
-                    Choose Text Color
-                  </Typography>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Box
+                      sx={{
+                        fontSize: '14px',
+                        color: theme.palette.text.secondary,
+                        opacity: 0.6,
+                        cursor: 'grab',
+                        '&:active': {
+                          cursor: 'grabbing',
+                        },
+                      }}
+                    >
+                      ⠿
+                    </Box>
+                    <Typography
+                      variant="subtitle2"
+                      sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+                    >
+                      Choose Text Color
+                    </Typography>
+                    <Box
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        resetPickerPosition();
+                      }}
+                      sx={{
+                        fontSize: '12px',
+                        color: theme.palette.text.secondary,
+                        opacity: 0.7,
+                        cursor: 'pointer',
+                        '&:hover': {
+                          opacity: 1,
+                          color: theme.palette.primary.main,
+                        },
+                        ml: 1,
+                      }}
+                      title="Reset position (Ctrl+R)"
+                    >
+                      ↺
+                    </Box>
+                  </Box>
                   <Typography
                     variant="caption"
                     sx={{
@@ -1336,6 +1435,7 @@ export const TextEditor: React.FC = () => {
                   onMouseDown={(e) => {
                     // Prevent focus loss when clicking on color picker controls
                     e.preventDefault();
+                    e.stopPropagation();
                     // Maintain textarea selection
                     if (textAreaRef.current && selectedTextInfo) {
                       const { start, end } = selectedTextInfo;
@@ -1377,6 +1477,7 @@ export const TextEditor: React.FC = () => {
                       onFocus={(e) => {
                         // Prevent focus theft and maintain textarea selection
                         e.preventDefault();
+                        e.stopPropagation();
                         if (textAreaRef.current && selectedTextInfo) {
                           const { start, end } = selectedTextInfo;
                           textAreaRef.current.focus();
@@ -1393,6 +1494,7 @@ export const TextEditor: React.FC = () => {
                   onMouseDown={(e) => {
                     // Prevent focus loss when clicking on preset colors
                     e.preventDefault();
+                    e.stopPropagation();
                     // Maintain textarea selection
                     if (textAreaRef.current && selectedTextInfo) {
                       const { start, end } = selectedTextInfo;
