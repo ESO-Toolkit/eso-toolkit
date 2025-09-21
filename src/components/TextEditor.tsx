@@ -486,11 +486,7 @@ export const TextEditor: React.FC = () => {
     return { x, y };
   }, []);
 
-  // Set initial picker position to center of viewport
-  useEffect(() => {
-    resetPickerPosition();
-  }, []);
-
+  
   // Simple fix for light mode background loading
   useEffect(() => {
     // Simple fix for light mode background loading
@@ -756,19 +752,7 @@ export const TextEditor: React.FC = () => {
       : cleanText;
   };
 
-  // Reset picker position to center of viewport
-  const resetPickerPosition = (): void => {
-    const pickerWidth = 320;
-    const pickerHeight = 500;
-    const centerX = (window.innerWidth - pickerWidth) / 2;
-    const centerY = (window.innerHeight - pickerHeight) / 2;
-
-    setColorPickerPosition({
-      x: Math.max(16, centerX),
-      y: Math.max(16, centerY),
-    });
-  };
-
+  
   // Handle window resize to reposition picker
   useEffect(() => {
     if (!showColorPicker || !colorPickerAnchor) return;
@@ -792,9 +776,6 @@ export const TextEditor: React.FC = () => {
           cancelColorSelection();
         } else if (event.key === 'Enter') {
           applyPreviewColor();
-        } else if (event.key === 'r' && (event.ctrlKey || event.metaKey)) {
-          event.preventDefault();
-          resetPickerPosition();
         }
       }
     };
@@ -1486,26 +1467,6 @@ export const TextEditor: React.FC = () => {
                       >
                         Choose Text Color
                       </Typography>
-                      <Box
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          resetPickerPosition();
-                        }}
-                        sx={{
-                          fontSize: '12px',
-                          color: theme.palette.text.secondary,
-                          opacity: 0.7,
-                          cursor: 'pointer',
-                          '&:hover': {
-                            opacity: 1,
-                            color: theme.palette.primary.main,
-                          },
-                          ml: 1,
-                        }}
-                        title="Reset position (Ctrl+R)"
-                      >
-                        ↺
-                      </Box>
                     </Box>
                     <IconButton
                       size="small"
