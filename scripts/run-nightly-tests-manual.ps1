@@ -7,6 +7,9 @@
     This script provides an easy way to run the nightly regression tests
     with various configuration options, similar to the GitHub Actions workflow.
     
+    By default, tests run against the production website (https://bkrupa.github.io/eso-log-aggregator/).
+    To test against a local development server, set the NIGHTLY_BASE_URL environment variable.
+    
 .PARAMETER TestSuite
     The test suite to run (all, chromium, firefox, webkit, mobile, auth-only)
     
@@ -17,19 +20,20 @@
     Enable debug mode (single failure, more verbose)
     
 .PARAMETER BuildFirst
-    Build the application before running tests
+    Build the application before running tests (only useful for local testing)
     
 .EXAMPLE
     .\run-nightly-tests-manual.ps1
-    # Runs all tests
+    # Runs all tests against production website
     
 .EXAMPLE
     .\run-nightly-tests-manual.ps1 -TestSuite chromium -Headed
-    # Runs chromium tests in headed mode
+    # Runs chromium tests in headed mode against production
     
 .EXAMPLE
+    $env:NIGHTLY_BASE_URL = "http://localhost:3000"
     .\run-nightly-tests-manual.ps1 -TestSuite auth-only -Debug -BuildFirst
-    # Runs auth tests in debug mode with fresh build
+    # Runs auth tests against local server with fresh build
 #>
 
 param(

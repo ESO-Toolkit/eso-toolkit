@@ -159,30 +159,7 @@ jobs:
             exit 1
           fi
 
-      - name: Build Application
-        run: |
-          echo "🔨 Building application for nightly tests..."
-          npm run build
-        env:
-          # Disable source maps for faster builds in nightly tests
-          GENERATE_SOURCEMAP: false
-          # CI environment flags
-          CI: 'true'
-          # Node.js memory optimization
-          NODE_OPTIONS: '--max_old_space_size=8192'
-
-      - name: Verify Build Output
-        run: |
-          echo "✅ Verifying build output..."
-          if [ ! -d "build" ]; then
-            echo "❌ Build directory not found"
-            exit 1
-          fi
-          if [ ! -f "build/index.html" ]; then
-            echo "❌ Build index.html not found"
-            exit 1
-          fi
-          echo "✅ Build verification passed"
+      # No build step needed - testing against production website
 
       - name: Determine Test Command
         id: test-command
@@ -254,8 +231,8 @@ jobs:
           SHARD_TOTAL: ${{ steps.test-command.outputs.TOTAL_SHARDS }}
           # CI environment flags
           CI: 'true'
-          # Base URL for Playwright tests - let Playwright manage the server
-          BASE_URL: 'http://localhost:3000'
+          # Base URL for Playwright tests - production website
+          BASE_URL: 'https://bkrupa.github.io/eso-log-aggregator/'
           # Node.js memory optimization
           NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
           # ESO Logs OAuth credentials for authenticated tests
