@@ -444,53 +444,37 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Nuclear option - Force background image for both light and dark mode
+  // Fix ONLY the page background loading issue
   useEffect(() => {
-    const html = document.documentElement;
     const body = document.body;
 
-    // Force background image based on current theme
-    const bgImage = theme.palette.mode === 'dark'
+    // Determine background image based on theme
+    const backgroundImage = theme.palette.mode === 'dark'
       ? '/text-editor/text-editor-bg-dark.jpg'
       : '/text-editor/text-editor-bg-light.jpg';
 
-    // Nuclear option - force background with highest specificity
-    html.style.setProperty('background-image', `url(${bgImage})`, 'important');
-    html.style.setProperty('background-size', 'cover', 'important');
-    html.style.setProperty('background-position', 'center', 'important');
-    html.style.setProperty('background-repeat', 'no-repeat', 'important');
-    html.style.setProperty('background-attachment', 'fixed', 'important');
+    // Apply background image to body only (don't touch other elements)
+    body.style.backgroundImage = `url(${backgroundImage})`;
+    body.style.backgroundSize = 'cover';
+    body.style.backgroundPosition = 'center';
+    body.style.backgroundRepeat = 'no-repeat';
+    body.style.backgroundAttachment = 'fixed';
 
-    // Make body completely transparent to show HTML background
-    body.style.setProperty('background', 'transparent', 'important');
-    body.style.setProperty('background-color', 'transparent', 'important');
-    body.style.setProperty('background-image', 'none', 'important');
-
-    // Also apply to body as fallback
-    body.style.setProperty('background-image', `url(${bgImage})`, 'important');
-    body.style.setProperty('background-size', 'cover', 'important');
-    body.style.setProperty('background-position', 'center', 'important');
-    body.style.setProperty('background-repeat', 'no-repeat', 'important');
-    body.style.setProperty('background-attachment', 'fixed', 'important');
-
-    console.log('Nuclear option applied background:', bgImage);
+    // FORCE it to apply in light mode by using setTimeout
+    setTimeout(() => {
+      body.style.backgroundImage = `url(${backgroundImage})`;
+      console.log('Applied background:', backgroundImage);
+    }, 0);
 
     return () => {
-      html.style.removeProperty('background-image');
-      html.style.removeProperty('background-size');
-      html.style.removeProperty('background-position');
-      html.style.removeProperty('background-repeat');
-      html.style.removeProperty('background-attachment');
-
-      body.style.removeProperty('background');
-      body.style.removeProperty('background-color');
-      body.style.removeProperty('background-image');
-      body.style.removeProperty('background-size');
-      body.style.removeProperty('background-position');
-      body.style.removeProperty('background-repeat');
-      body.style.removeProperty('background-attachment');
+      // Clean up ONLY body background
+      body.style.backgroundImage = '';
+      body.style.backgroundSize = '';
+      body.style.backgroundPosition = '';
+      body.style.backgroundRepeat = '';
+      body.style.backgroundAttachment = '';
     };
-  }, [theme.palette.mode]); // Re-run when theme changes
+  }, [theme.palette.mode]);
 
   // Add this useEffect AFTER your existing theme/background useEffects
   useEffect(() => {
