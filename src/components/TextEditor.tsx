@@ -91,14 +91,14 @@ const ToolbarButton = styled('button')({
   fontWeight: 500,
   transition: 'all 0.2s ease-in-out',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
-  '&:hover': {
+  '&:not(:disabled):hover': {
     background: 'var(--accent)',
     borderColor: 'var(--accent)',
     color: 'white !important',
     transform: 'translateY(-1px)',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
   },
-  '&:active': {
+  '&:not(:disabled):active': {
     background: 'var(--accent2)',
     borderColor: 'var(--accent2)',
     color: 'white !important',
@@ -111,6 +111,13 @@ const ToolbarButton = styled('button')({
     borderColor: 'var(--border)',
     opacity: 1,
     cursor: 'not-allowed',
+    '&:hover': {
+      background: 'rgba(0, 0, 0, 0.05)',
+      borderColor: 'var(--border)',
+      color: 'var(--text)',
+      transform: 'none',
+      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+    },
   },
   // Mobile styles
   '@media (max-width: 768px)': {
