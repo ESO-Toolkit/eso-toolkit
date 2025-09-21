@@ -1,4 +1,15 @@
-import { Box, Typography, Container, useTheme, alpha, Button, Portal, IconButton, Divider, ClickAwayListener } from '@mui/material';
+import {
+  Box,
+  Typography,
+  Container,
+  useTheme,
+  alpha,
+  Button,
+  Portal,
+  IconButton,
+  Divider,
+  ClickAwayListener,
+} from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
@@ -320,9 +331,10 @@ const CopyButton = styled('button')(({ theme }) => ({
     borderColor: theme.palette.primary.dark,
     color: theme.palette.background.default,
     transform: 'translateY(-1px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
-      : '0 4px 16px rgba(0, 0, 0, 0.2)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+        : '0 4px 16px rgba(0, 0, 0, 0.2)',
   },
   '&:active': {
     background: theme.palette.primary.main,
@@ -496,7 +508,6 @@ export const TextEditor: React.FC = () => {
     return { x, y };
   }, []);
 
-  
   // Simple fix for light mode background loading
   useEffect(() => {
     // Simple fix for light mode background loading
@@ -757,12 +768,9 @@ export const TextEditor: React.FC = () => {
       .replace(/\|c[0-9A-Fa-f]{6}/g, ''); // Remove any inline color codes
 
     // Truncate if necessary
-    return cleanText.length > 30
-      ? cleanText.substring(0, 30) + '...'
-      : cleanText;
+    return cleanText.length > 30 ? cleanText.substring(0, 30) + '...' : cleanText;
   };
 
-  
   // Handle window resize to reposition picker
   useEffect(() => {
     if (!showColorPicker || !colorPickerAnchor) return;
@@ -937,7 +945,6 @@ export const TextEditor: React.FC = () => {
       setIsPreviewMode(true);
       setShowColorPicker(true);
 
-      
       // Maintain visual selection during picker open
       setTimeout(() => {
         if (textAreaRef.current) {
@@ -964,23 +971,26 @@ export const TextEditor: React.FC = () => {
     e.preventDefault();
   };
 
-  const handleDrag = useCallback((e: MouseEvent): void => {
-    if (!isDragging) return;
+  const handleDrag = useCallback(
+    (e: MouseEvent): void => {
+      if (!isDragging) return;
 
-    const newX = e.clientX - dragOffset.x;
-    const newY = e.clientY - dragOffset.y;
+      const newX = e.clientX - dragOffset.x;
+      const newY = e.clientY - dragOffset.y;
 
-    // Keep picker within full viewport bounds (not just text editor container)
-    const pickerWidth = 320; // picker width
-    const pickerHeight = 500; // approximate picker height
-    const maxX = window.innerWidth - pickerWidth;
-    const maxY = window.innerHeight - pickerHeight;
+      // Keep picker within full viewport bounds (not just text editor container)
+      const pickerWidth = 320; // picker width
+      const pickerHeight = 500; // approximate picker height
+      const maxX = window.innerWidth - pickerWidth;
+      const maxY = window.innerHeight - pickerHeight;
 
-    setColorPickerPosition({
-      x: Math.max(0, Math.min(newX, maxX)),
-      y: Math.max(0, Math.min(newY, maxY)),
-    });
-  }, [isDragging, dragOffset]);
+      setColorPickerPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY)),
+      });
+    },
+    [isDragging, dragOffset],
+  );
 
   const handleDragEnd = (): void => {
     setIsDragging(false);
@@ -996,7 +1006,7 @@ export const TextEditor: React.FC = () => {
       const maxX = window.innerWidth - pickerWidth;
       const maxY = window.innerHeight - pickerHeight;
 
-      setColorPickerPosition(prev => ({
+      setColorPickerPosition((prev) => ({
         x: Math.max(0, Math.min(prev.x, maxX)),
         y: Math.max(0, Math.min(prev.y, maxY)),
       }));
@@ -1427,9 +1437,10 @@ export const TextEditor: React.FC = () => {
                     bgcolor: theme.palette.background.paper,
                     border: `1px solid ${theme.palette.divider}`,
                     borderRadius: 2,
-                    boxShadow: theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.6)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.2)',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 8px 32px rgba(0, 0, 0, 0.6)'
+                        : '0 8px 32px rgba(0, 0, 0, 0.2)',
                     width: 280,
                     maxHeight: '90vh', // Prevent cutting off on small screens
                     overflow: 'hidden',
@@ -1447,18 +1458,19 @@ export const TextEditor: React.FC = () => {
                   onMouseDown={handleDragStart}
                 >
                   {/* Header */}
-                  <Box sx={{
-                    p: 2,
-                    pb: 1,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    cursor: 'grab',
-                    '&:active': {
-                      cursor: 'grabbing',
-                    },
-                  }}
-                  onMouseDown={handleDragStart}
+                  <Box
+                    sx={{
+                      p: 2,
+                      pb: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'grab',
+                      '&:active': {
+                        cursor: 'grabbing',
+                      },
+                    }}
+                    onMouseDown={handleDragStart}
                   >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                       <Box
@@ -1531,39 +1543,37 @@ export const TextEditor: React.FC = () => {
                   <Divider />
 
                   {/* Color Picker */}
-                  <Box sx={{
-                    p: 2,
-                    '& .react-colorful': {
-                      width: '100% !important',
-                      height: '180px !important',
-                    },
-                    '& .react-colorful__saturation': {
-                      borderRadius: '6px 6px 0 0 !important',
-                    },
-                    '& .react-colorful__hue': {
-                      height: '20px !important',
-                      borderRadius: '0 0 6px 6px !important',
-                    },
-                    '& .react-colorful__pointer': {
-                      width: '16px !important',
-                      height: '16px !important',
-                      border: '2px solid white !important',
-                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3) !important',
-                    },
-                  }}
-                  onMouseDown={(e) => {
-                    e.stopPropagation();
-                    if (textAreaRef.current && selectedTextInfo) {
-                      const { start, end } = selectedTextInfo;
-                      textAreaRef.current.focus();
-                      textAreaRef.current.setSelectionRange(start, end);
-                    }
-                  }}
+                  <Box
+                    sx={{
+                      p: 2,
+                      '& .react-colorful': {
+                        width: '100% !important',
+                        height: '180px !important',
+                      },
+                      '& .react-colorful__saturation': {
+                        borderRadius: '6px 6px 0 0 !important',
+                      },
+                      '& .react-colorful__hue': {
+                        height: '20px !important',
+                        borderRadius: '0 0 6px 6px !important',
+                      },
+                      '& .react-colorful__pointer': {
+                        width: '16px !important',
+                        height: '16px !important',
+                        border: '2px solid white !important',
+                        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3) !important',
+                      },
+                    }}
+                    onMouseDown={(e) => {
+                      e.stopPropagation();
+                      if (textAreaRef.current && selectedTextInfo) {
+                        const { start, end } = selectedTextInfo;
+                        textAreaRef.current.focus();
+                        textAreaRef.current.setSelectionRange(start, end);
+                      }
+                    }}
                   >
-                    <HexColorPicker
-                      color={previewColor}
-                      onChange={handleColorPreview}
-                    />
+                    <HexColorPicker color={previewColor} onChange={handleColorPreview} />
                   </Box>
 
                   {/* Hex Input */}
@@ -1599,15 +1609,18 @@ export const TextEditor: React.FC = () => {
                   <Divider />
 
                   {/* Action Buttons */}
-                  <Box sx={{
-                    p: 2,
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    bgcolor: theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.02)'
-                      : 'rgba(0, 0, 0, 0.02)',
-                  }}>
+                  <Box
+                    sx={{
+                      p: 2,
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      bgcolor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(255, 255, 255, 0.02)'
+                          : 'rgba(0, 0, 0, 0.02)',
+                    }}
+                  >
                     <Typography
                       variant="caption"
                       sx={{
@@ -1634,9 +1647,10 @@ export const TextEditor: React.FC = () => {
                             backgroundColor: theme.palette.action.hover,
                             color: theme.palette.primary.main,
                             transform: 'translateY(-1px)',
-                            boxShadow: theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
-                              : '0 4px 12px rgba(0, 0, 0, 0.15)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                                : '0 4px 12px rgba(0, 0, 0, 0.15)',
                           },
                           transition: 'all 0.2s ease',
                         }}
@@ -1654,9 +1668,10 @@ export const TextEditor: React.FC = () => {
                           '&:hover': {
                             backgroundColor: theme.palette.primary.dark,
                             transform: 'translateY(-1px)',
-                            boxShadow: theme.palette.mode === 'dark'
-                              ? '0 4px 16px rgba(0, 0, 0, 0.4)'
-                              : '0 4px 16px rgba(0, 0, 0, 0.2)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+                                : '0 4px 16px rgba(0, 0, 0, 0.2)',
                           },
                           transition: 'all 0.2s ease',
                         }}
