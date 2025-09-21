@@ -594,6 +594,23 @@ export const TextEditor: React.FC = () => {
     };
   }, [isPreviewMode, selectedTextInfo]);
 
+  // Manage visual states with CSS classes
+  useEffect(() => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    if (isPreviewMode) {
+      textarea.classList.add('color-picking');
+    } else {
+      textarea.classList.remove('color-picking');
+    }
+
+    return () => {
+      textarea.classList.remove('color-picking');
+    };
+  }, [isPreviewMode]);
+
   // Keyboard navigation for color picker
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
@@ -609,6 +626,41 @@ export const TextEditor: React.FC = () => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [showColorPicker]);
+
+  // Enhanced selection restoration with visual feedback
+  const restoreTextSelection = useCallback((start: number, end: number, forceVisual: boolean = true) => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    // Ensure textarea is focused first
+    textarea.focus();
+
+    // Small delay to ensure focus is established
+    setTimeout(() => {
+      // Set the selection range
+      textarea.setSelectionRange(start, end);
+
+      if (forceVisual) {
+        // Force visual highlight by briefly blurring and refocusing
+        textarea.blur();
+        setTimeout(() => {
+          textarea.focus();
+          textarea.setSelectionRange(start, end);
+
+          // Additional visual feedback with CSS
+          textarea.style.outline = '2px solid #3b82f6';
+          textarea.style.outlineOffset = '2px';
+
+          // Remove CSS highlight after a moment
+          setTimeout(() => {
+            textarea.style.outline = '';
+            textarea.style.outlineOffset = '';
+          }, 300);
+        }, 10);
+      }
+    }, 10);
+  }, []);
 
   // Debounced history saving
   const debouncedSaveHistory = useCallback(
@@ -701,14 +753,14 @@ export const TextEditor: React.FC = () => {
       setShowColorPicker(false);
       setSelectedTextInfo(null);
 
-      // Restore selection
+      // Calculate new selection bounds and restore with visual feedback
+      const newStart = start;
+      const newEnd = newStart + newColoredText.length;
+
       setTimeout(() => {
-        const newStart = start;
-        const newEnd = newStart + newColoredText.length;
-        textarea.setSelectionRange(newStart, newEnd);
-        textarea.focus();
-        console.log('✅ Selection restored:', { newStart, newEnd });
-      }, 0);
+        restoreTextSelection(newStart, newEnd, true);
+        console.log('✅ Quick color applied and selection restored:', color);
+      }, 50);
     },
     [selectedTextInfo, debouncedSaveHistory],
   );
@@ -794,15 +846,41 @@ export const TextEditor: React.FC = () => {
     setPreviewColor(defaultColor);
     setIsPreviewMode(true);
     setShowColorPicker(true);
-    console.log('✅ React Color picker should open:', { position, showColorPicker: true });
+
+    // Maintain visual selection during picker open
+    setTimeout(() => {
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+        textAreaRef.current.setSelectionRange(start, end);
+
+        // Add persistent visual indicator during color picking
+        textAreaRef.current.style.boxShadow = '0 0 0 2px #3b82f6';
+        textAreaRef.current.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+      }
+    }, 100);
+
+    console.log('✅ Color picker opened, selection maintained');
   }, []);
 
   // Close color picker
   const closeColorPicker = (): void => {
+    // Remove visual indicators first
+    if (textAreaRef.current) {
+      textAreaRef.current.style.boxShadow = '';
+      textAreaRef.current.style.backgroundColor = '';
+    }
+
     setShowColorPicker(false);
     setSelectedTextInfo(null);
     setPreviewColor('#ffffff');
     setIsPreviewMode(false);
+
+    // Ensure textarea regains focus
+    setTimeout(() => {
+      if (textAreaRef.current) {
+        textAreaRef.current.focus();
+      }
+    }, 10);
   };
 
   // Apply the selected color
@@ -832,28 +910,42 @@ export const TextEditor: React.FC = () => {
     setText(newText);
     debouncedSaveHistory(newText);
 
-    // Restore selection
-    setTimeout(() => {
-      const newStart = start;
-      const newEnd = newStart + newColoredText.length;
-      textarea.setSelectionRange(newStart, newEnd);
-      textarea.focus();
-    }, 0);
+    // Calculate new selection bounds for the colored text
+    const newStart = start;
+    const newEnd = newStart + newColoredText.length;
 
-    // Clean up preview state
+    // Close color picker first
     closeColorPicker();
-    console.log('✅ Color applied:', previewColor);
+
+    // Restore selection with visual feedback
+    setTimeout(() => {
+      restoreTextSelection(newStart, newEnd, true);
+      console.log('✅ Color applied and selection restored:', previewColor);
+    }, 50);
   };
 
   // Cancel color selection
   const cancelColorSelection = (): void => {
-    // Restore original text
     if (selectedTextInfo && textAreaRef.current) {
+      const textarea = textAreaRef.current;
+
+      // Restore original text
+      textarea.value = selectedTextInfo.originalText;
       setText(selectedTextInfo.originalText);
-      textAreaRef.current.value = selectedTextInfo.originalText;
+
+      // Restore original selection
+      const { start, end } = selectedTextInfo;
+
+      closeColorPicker();
+
+      // Restore selection with visual feedback
+      setTimeout(() => {
+        restoreTextSelection(start, end, true);
+        console.log('❌ Color selection cancelled, original selection restored');
+      }, 50);
+    } else {
+      closeColorPicker();
     }
-    closeColorPicker();
-    console.log('❌ Color selection cancelled');
   };
 
   // Updated quick color function for React Color
