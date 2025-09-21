@@ -20,7 +20,7 @@ body.text-editor-page {
 
 /* Force background image for both light and dark mode */
 body.text-editor-page:not(.dark-mode) {
-  background-image: url('/text-editor/text-editor-bg-light.jpg') !important;
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -29,7 +29,7 @@ body.text-editor-page:not(.dark-mode) {
 }
 
 body.text-editor-page.dark-mode {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg') !important;
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg') !important;
   background-size: cover !important;
   background-position: center !important;
   background-repeat: no-repeat !important;
@@ -45,7 +45,7 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -56,11 +56,11 @@ body.text-editor-page::before {
 }
 
 body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Remove solid backgrounds from common elements */
@@ -132,7 +132,7 @@ body.text-editor-page::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -142,11 +142,11 @@ body.text-editor-page::before {
 }
 
 body.text-editor-page.dark-mode::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 body.text-editor-page:not(.dark-mode)::before {
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
 }
 
 /* Make the preview area show through to the background */
@@ -173,7 +173,7 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
   left: 0;
   right: 0;
   bottom: 0;
-  background-image: url('/text-editor/text-editor-bg-light.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-light.jpg');
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -184,7 +184,7 @@ body.text-editor-page:not(.dark-mode) .css-cplt40::before {
 }
 
 body.text-editor-page.dark-mode .css-cplt40::before {
-  background-image: url('/text-editor/text-editor-bg-dark.jpg');
+  background-image: url('/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg');
 }
 
 /* Make sure preview area content is also transparent */
@@ -210,4 +210,48 @@ body.text-editor-page .MuiPaper-root.css-1j69n08 {
   background-color: transparent !important;
   background-image: none !important;
   position: relative !important;
+}
+
+/* Improve mobile background positioning */
+@media (max-width: 768px) {
+  body.text-editor-page {
+    background-attachment: scroll !important; /* Fixed backgrounds can cause issues on mobile */
+    background-position: center top !important; /* Better positioning for mobile */
+    background-size: cover !important;
+  }
+
+  body.text-editor-page::before {
+    background-attachment: scroll !important;
+    background-position: center top !important;
+    background-size: cover !important;
+  }
+
+  /* Light mode specific mobile adjustments */
+  body.text-editor-page:not(.dark-mode) {
+    background-position: center 20% !important; /* Adjust for better light mode visibility */
+  }
+
+  body.text-editor-page:not(.dark-mode)::before {
+    background-position: center 20% !important;
+  }
+}
+
+/* Enhance mobile text readability */
+@media (max-width: 768px) {
+  body.text-editor-page:not(.dark-mode) {
+    /* Add subtle overlay for better text readability on mobile light mode */
+    position: relative;
+  }
+
+  body.text-editor-page:not(.dark-mode)::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.1); /* Very light overlay for text readability */
+    z-index: -1;
+    pointer-events: none;
+  }
 }
