@@ -540,7 +540,7 @@ export const HeaderBar: React.FC = () => {
     },
     {
       text: 'Calculator',
-      icon: <Calculator size="18" />,
+      icon: <Calculator size="24" />,
       path: '/calculator',
     },
     {
