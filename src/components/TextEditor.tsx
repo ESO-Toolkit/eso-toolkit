@@ -500,6 +500,67 @@ export const TextEditor: React.FC = () => {
     root.style.setProperty('--mui-palette-divider', theme.palette.divider);
   }, [theme]);
 
+  // Force override preview area styling
+  useEffect(() => {
+    const previewElement = document.getElementById('eso-preview');
+    if (previewElement) {
+      // Create style element with ultra-high specificity
+      const styleElement = document.createElement('style');
+      styleElement.id = 'preview-area-override';
+
+      const isLight = theme.palette.mode === 'light';
+      const afterBackground = isLight ? 'rgba(255, 255, 255, 0.4)' : 'rgba(0, 0, 0, 0.2)';
+
+      styleElement.textContent = `
+        #eso-preview::after {
+          content: "" !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          background: ${afterBackground} !important;
+          z-index: -1 !important;
+          pointer-events: none !important;
+        }
+
+        #eso-preview::before {
+          content: "" !important;
+          position: absolute !important;
+          top: 0 !important;
+          left: 0 !important;
+          right: 0 !important;
+          bottom: 0 !important;
+          background-image: url(${isLight ? '/text-editor/text-editor-bg-light.jpg' : '/text-editor/text-editor-bg-dark.jpg'}) !important;
+          background-size: cover !important;
+          background-position: center !important;
+          background-repeat: no-repeat !important;
+          background-attachment: fixed !important;
+          opacity: 0.3 !important;
+          z-index: -2 !important;
+          pointer-events: none !important;
+        }
+      `;
+
+      // Remove existing override if present
+      const existing = document.getElementById('preview-area-override');
+      if (existing) {
+        existing.remove();
+      }
+
+      document.head.appendChild(styleElement);
+      // eslint-disable-next-line no-console
+      console.log('Applied preview area override for', theme.palette.mode, 'mode');
+
+      return () => {
+        const element = document.getElementById('preview-area-override');
+        if (element) {
+          element.remove();
+        }
+      };
+    }
+  }, [theme.palette.mode]);
+
   // Debug useEffect for background loading issue
   useEffect(() => {
     // eslint-disable-next-line no-console
@@ -535,6 +596,26 @@ export const TextEditor: React.FC = () => {
       'text-editor-page',
       theme.palette.mode === 'dark',
     );
+
+    // Debug preview area styles
+    const previewElement = document.getElementById('eso-preview');
+    if (previewElement) {
+      const beforeStyles = window.getComputedStyle(previewElement, '::before');
+      const afterStyles = window.getComputedStyle(previewElement, '::after');
+
+      // eslint-disable-next-line no-console
+      console.log('=== PREVIEW AREA DEBUG ===');
+      // eslint-disable-next-line no-console
+      console.log('Theme mode:', theme.palette.mode);
+      // eslint-disable-next-line no-console
+      console.log('::before opacity:', beforeStyles.opacity);
+      // eslint-disable-next-line no-console
+      console.log('::before background-image:', beforeStyles.backgroundImage);
+      // eslint-disable-next-line no-console
+      console.log('::after background:', afterStyles.background);
+      // eslint-disable-next-line no-console
+      console.log('::after background-color:', afterStyles.backgroundColor);
+    }
   }, [theme.palette.mode]);
 
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
