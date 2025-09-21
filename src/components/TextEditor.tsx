@@ -94,14 +94,14 @@ const ToolbarButton = styled('button')({
   '&:hover': {
     background: 'var(--accent)',
     borderColor: 'var(--accent)',
-    color: 'var(--bg)',
+    color: 'white !important',
     transform: 'translateY(-1px)',
     boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
   },
   '&:active': {
     background: 'var(--accent2)',
     borderColor: 'var(--accent2)',
-    color: 'var(--bg)',
+    color: 'white !important',
     transform: 'translateY(0px)',
     boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   },
