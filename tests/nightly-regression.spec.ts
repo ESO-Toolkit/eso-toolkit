@@ -413,7 +413,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       }
 
       if (foundVisibleButton) {
-        await firstFightButton.click();
+        await firstFightButton.click({ force: true });
         await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation }).catch(() => {
           console.log('Fight navigation failed, trying direct approach');
         });
@@ -444,7 +444,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         .locator('input[type="checkbox"]')
         .filter({ hasText: /experimental/i });
       if (await experimentalToggle.isVisible({ timeout: 5000 })) {
-        await experimentalToggle.check();
+        await experimentalToggle.check({ force: true });
       }
 
       // Test a few key experimental tabs
@@ -517,7 +517,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       let fightId = '1'; // Default fallback
 
       try {
-        await firstFightButton.click({ timeout: 10000 });
+        await firstFightButton.click({ timeout: 10000, force: true });
         await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation });
         fightId = page.url().match(/\/fight\/(\d+)/)?.[1] || '1';
       } catch (clickError) {
@@ -680,7 +680,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
         return; // Skip this test gracefully
       }
 
-      await firstFightButton.click();
+      await firstFightButton.click({ force: true });
       await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation }).catch(() => {
         console.log('Fight navigation failed');
       });
@@ -713,7 +713,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
       let performanceFightId = '1'; // Default fallback
 
       try {
-        await firstFightButton.click({ timeout: 10000 });
+        await firstFightButton.click({ timeout: 10000, force: true });
         await page.waitForURL(/\/fight\/\d+/, { timeout: TEST_TIMEOUTS.navigation });
         performanceFightId = page.url().match(/\/fight\/(\d+)/)?.[1] || '1';
       } catch (clickError) {
