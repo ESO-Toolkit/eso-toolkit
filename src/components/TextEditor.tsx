@@ -444,36 +444,21 @@ export const TextEditor: React.FC = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState('');
 
-  // Fix ONLY the page background loading issue
+  // Simple fix for light mode background loading
   useEffect(() => {
-    const body = document.body;
-
-    // Determine background image based on theme
-    const backgroundImage = theme.palette.mode === 'dark'
-      ? '/text-editor/text-editor-bg-dark.jpg'
-      : '/text-editor/text-editor-bg-light.jpg';
-
-    // Apply background image to body only (don't touch other elements)
-    body.style.backgroundImage = `url(${backgroundImage})`;
-    body.style.backgroundSize = 'cover';
-    body.style.backgroundPosition = 'center';
-    body.style.backgroundRepeat = 'no-repeat';
-    body.style.backgroundAttachment = 'fixed';
-
-    // FORCE it to apply in light mode by using setTimeout
-    setTimeout(() => {
-      body.style.backgroundImage = `url(${backgroundImage})`;
-      console.log('Applied background:', backgroundImage);
-    }, 0);
-
-    return () => {
-      // Clean up ONLY body background
-      body.style.backgroundImage = '';
-      body.style.backgroundSize = '';
-      body.style.backgroundPosition = '';
-      body.style.backgroundRepeat = '';
-      body.style.backgroundAttachment = '';
-    };
+    // Simple fix for light mode background loading
+    if (theme.palette.mode === 'light') {
+      const body = document.body;
+      // Force light mode background image
+      setTimeout(() => {
+        body.style.backgroundImage = 'url("/text-editor/text-editor-bg-light.jpg")';
+        body.style.backgroundSize = 'cover';
+        body.style.backgroundPosition = 'center';
+        body.style.backgroundRepeat = 'no-repeat';
+        body.style.backgroundAttachment = 'fixed';
+        console.log('Force applied light mode background');
+      }, 100); // Small delay to ensure it applies
+    }
   }, [theme.palette.mode]);
 
   // Add this useEffect AFTER your existing theme/background useEffects
