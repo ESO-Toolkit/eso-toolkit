@@ -1,10 +1,10 @@
-import { Box, Typography, Container, useTheme, alpha } from '@mui/material';
+import { Box, Typography, Container, useTheme, alpha, Button } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback, JSX } from 'react';
 
 import '../styles/text-editor-page-background.css';
 import '../styles/texteditor-theme-bridge.css';
-import { SketchPicker, ColorResult } from 'react-color';
+import { HexColorPicker, HexColorInput } from 'react-colorful';
 
 import { usePageBackground } from '../hooks/usePageBackground';
 // The background image is located in public/text-editor/text-editor-bg-light.jpg
@@ -426,10 +426,14 @@ export const TextEditor: React.FC = () => {
     start: number;
     end: number;
     text: string;
+    originalText: string; // Store original text for cancel
   } | null>(null);
   const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 });
   const [isApplyingColor, setIsApplyingColor] = useState(false);
+  const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
 
+  
   // Simple fix for light mode background loading
   useEffect(() => {
     // Simple fix for light mode background loading
@@ -568,6 +572,44 @@ export const TextEditor: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, [isMobileDevice]);
 
+  // Add visual feedback for selected text during preview
+  useEffect(() => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+
+    if (isPreviewMode && selectedTextInfo) {
+      // Highlight selected text area
+      textarea.style.boxShadow = '0 0 0 2px #3b82f6';
+      textarea.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+    } else {
+      // Remove highlighting
+      textarea.style.boxShadow = '';
+      textarea.style.backgroundColor = '';
+    }
+
+    return () => {
+      textarea.style.boxShadow = '';
+      textarea.style.backgroundColor = '';
+    };
+  }, [isPreviewMode, selectedTextInfo]);
+
+  // Keyboard navigation for color picker
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent): void => {
+      if (showColorPicker) {
+        if (event.key === 'Escape') {
+          cancelColorSelection();
+        } else if (event.key === 'Enter') {
+          applyPreviewColor();
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [showColorPicker]);
+
   // Debounced history saving
   const debouncedSaveHistory = useCallback(
     debounce((newText: string) => {
@@ -671,21 +713,40 @@ export const TextEditor: React.FC = () => {
     [selectedTextInfo, debouncedSaveHistory],
   );
 
-  // Handle color change from React Color
-  const handleColorChange = (color: ColorResult): void => {
-    console.log('🌈 handleColorChange called:', color);
-    const hexColor = color.hex.replace('#', '').toUpperCase();
-    console.log('🎨 Extracted hex color:', hexColor);
+  // Create preview text with live color
+  const createPreviewText = useCallback((colorHex?: string): string => {
+    if (!selectedTextInfo || !isPreviewMode) return text;
 
-    // Prevent multiple rapid calls
-    if (!isApplyingColor) {
-      setIsApplyingColor(true);
-      applySelectedColor(hexColor);
-      // Reset flag after a short delay
-      setTimeout(() => setIsApplyingColor(false), 100);
+    const { start, end, originalText } = selectedTextInfo;
+    const beforeText = originalText.substring(0, start);
+    const afterText = originalText.substring(end);
+    const selectedText = originalText.substring(start, end);
+
+    if (colorHex) {
+      // Apply preview color
+      const cleanColorHex = colorHex.replace('#', '').toUpperCase();
+      const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+      const match = selectedText.match(colorFormatRegex);
+      const newColoredText = match
+        ? `|c${cleanColorHex}${match[1]}|r`
+        : `|c${cleanColorHex}${selectedText}|r`;
+
+      return beforeText + newColoredText + afterText;
     }
+
+    return originalText;
+  }, [text, selectedTextInfo, isPreviewMode]);
+
+  // Handle color change for preview (not applied yet)
+  const handleColorPreview = (color: string): void => {
+    const hexColor = color.replace('#', '').toUpperCase();
+    setPreviewColor(hexColor);
+
+    // Don't apply to actual text yet, just store for preview
+    console.log('🎨 Previewing color:', hexColor);
   };
 
+  
   // Handle color picker open
   const openColorPicker = useCallback((event: React.MouseEvent): void => {
     console.log('🎨 openColorPicker called');
@@ -710,8 +771,13 @@ export const TextEditor: React.FC = () => {
       return;
     }
 
-    // Save selection info
-    setSelectedTextInfo({ start, end, text: selectedText });
+    // Save original text for cancel functionality
+    setSelectedTextInfo({
+      start,
+      end,
+      text: selectedText,
+      originalText: textarea.value, // Store complete original text
+    });
 
     // Calculate position for color picker
     const buttonRect = (event.target as HTMLElement).getBoundingClientRect();
@@ -721,6 +787,12 @@ export const TextEditor: React.FC = () => {
     };
     setColorPickerPosition(position);
 
+    // Check if selected text already has a color and use it as default
+    const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
+    const match = selectedText.match(colorFormatRegex);
+    const defaultColor = match ? `#${match[1]}` : '#ffffff';
+    setPreviewColor(defaultColor);
+    setIsPreviewMode(true);
     setShowColorPicker(true);
     console.log('✅ React Color picker should open:', { position, showColorPicker: true });
   }, []);
@@ -729,6 +801,59 @@ export const TextEditor: React.FC = () => {
   const closeColorPicker = (): void => {
     setShowColorPicker(false);
     setSelectedTextInfo(null);
+    setPreviewColor('#ffffff');
+    setIsPreviewMode(false);
+  };
+
+  // Apply the selected color
+  const applyPreviewColor = (): void => {
+    if (!textAreaRef.current || !selectedTextInfo) return;
+
+    const textarea = textAreaRef.current;
+    const { start, end } = selectedTextInfo;
+    const selectedText = selectedTextInfo.originalText.substring(start, end);
+
+    const beforeText = selectedTextInfo.originalText.substring(0, start);
+    const afterText = selectedTextInfo.originalText.substring(end);
+
+    // Check if already formatted
+    const colorFormatRegex = /^\|c[0-9A-Fa-f]{6}(.*?)\|r$/;
+    const match = selectedText.match(colorFormatRegex);
+
+    const colorHex = previewColor.replace('#', '').toUpperCase();
+    const newColoredText = match
+      ? `|c${colorHex}${match[1]}|r`
+      : `|c${colorHex}${selectedText}|r`;
+
+    const newText = beforeText + newColoredText + afterText;
+
+    // Apply to actual text
+    textarea.value = newText;
+    setText(newText);
+    debouncedSaveHistory(newText);
+
+    // Restore selection
+    setTimeout(() => {
+      const newStart = start;
+      const newEnd = newStart + newColoredText.length;
+      textarea.setSelectionRange(newStart, newEnd);
+      textarea.focus();
+    }, 0);
+
+    // Clean up preview state
+    closeColorPicker();
+    console.log('✅ Color applied:', previewColor);
+  };
+
+  // Cancel color selection
+  const cancelColorSelection = (): void => {
+    // Restore original text
+    if (selectedTextInfo && textAreaRef.current) {
+      setText(selectedTextInfo.originalText);
+      textAreaRef.current.value = selectedTextInfo.originalText;
+    }
+    closeColorPicker();
+    console.log('❌ Color selection cancelled');
   };
 
   // Updated quick color function for React Color
@@ -749,6 +874,7 @@ export const TextEditor: React.FC = () => {
       start,
       end,
       text: textarea.value.substring(start, end),
+      originalText: textarea.value,
     });
 
     applySelectedColor(colorHex);
@@ -906,7 +1032,12 @@ export const TextEditor: React.FC = () => {
   };
 
   const renderPreview = (): JSX.Element => {
-    if (!text.trim()) {
+    // Use preview text if in preview mode, otherwise use actual text
+    const displayText = isPreviewMode
+      ? createPreviewText(previewColor)
+      : text;
+
+    if (!displayText.trim()) {
       return (
         <span style={{ color: '#888', fontStyle: 'italic' }}>
           Your formatted text will appear here...
@@ -914,7 +1045,7 @@ export const TextEditor: React.FC = () => {
       );
     }
 
-    const previewText = text
+    const previewText = displayText
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
@@ -1083,13 +1214,9 @@ export const TextEditor: React.FC = () => {
 
           <PreviewArea id="eso-preview">{renderPreview()}</PreviewArea>
 
-          {/* React Color Picker Overlay */}
+          {/* Modern Color Picker with react-colorful */}
           {showColorPicker && (
             <>
-              {console.log('🎨 Rendering color picker overlay', {
-                showColorPicker,
-                colorPickerPosition,
-              })}
               {/* Backdrop */}
               <Box
                 sx={{
@@ -1099,50 +1226,242 @@ export const TextEditor: React.FC = () => {
                   right: 0,
                   bottom: 0,
                   zIndex: 999998,
-                  backgroundColor: 'rgba(0, 0, 0, 0.3)', // Make backdrop visible
+                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
                 }}
-                onClick={closeColorPicker}
+                onClick={cancelColorSelection}
               />
 
-              {/* Color Picker */}
+              {/* Color Picker Container */}
               <Box
                 sx={{
                   position: 'fixed',
-                  left: '559.731934px',
-                  top: '117.811764px',
+                  right: theme.breakpoints.down('sm') ? '10px' : '20px',
+                  top: '120px',
                   zIndex: 999999,
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
-                  borderRadius: '8px',
-                  overflow: 'hidden',
-                  backgroundColor: 'white', // Ensure background is visible
+                  borderRadius: '12px',
+                  overflow: 'visible',
+                  backgroundColor: theme.palette.background.paper,
+                  border: `1px solid ${theme.palette.divider}`,
+                  boxShadow: theme.palette.mode === 'dark'
+                    ? '0 12px 48px rgba(0, 0, 0, 0.7)'
+                    : '0 12px 48px rgba(0, 0, 0, 0.2)',
+                  backdropFilter: 'blur(12px) saturate(180%)',
+                  minWidth: theme.breakpoints.down('sm') ? '300px' : '280px',
+                  maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
+                  maxHeight: 'calc(100vh - 140px)',
+                  overflowY: 'auto',
+                  transform: 'scale(1)',
+                  opacity: 1,
+                  transition: 'all 0.2s ease-out',
+                  animation: 'scaleIn 0.2s ease-out',
+                  '@keyframes scaleIn': {
+                    '0%': {
+                      transform: 'scale(0.95)',
+                      opacity: 0,
+                    },
+                    '100%': {
+                      transform: 'scale(1)',
+                      opacity: 1,
+                    },
+                  },
                 }}
               >
-                <SketchPicker
-                  color="#ffffff"
-                  onChange={handleColorChange}
-                  onChangeComplete={handleColorChange}
-                  disableAlpha={true}
-                  presetColors={[
-                    '#FFFFFF',
-                    '#CCCCCC',
-                    '#999999',
-                    '#666666',
-                    '#333333',
-                    '#000000',
-                    '#FFFF00',
-                    '#FFD700',
-                    '#FF0000',
-                    '#FF4500',
-                    '#FF8000',
-                    '#FFA500',
-                    '#00FF00',
-                    '#32CD32',
-                    '#0080FF',
-                    '#0000FF',
-                    '#8A2BE2',
-                    '#FF00FF',
-                  ]}
-                />
+                {/* Header */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderBottom: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.02)'
+                      : 'rgba(0, 0, 0, 0.02)',
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    sx={{ fontWeight: 600, color: theme.palette.text.primary }}
+                  >
+                    Choose Text Color
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      fontFamily: 'monospace',
+                      fontSize: '11px',
+                      mt: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}{selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
+                  </Typography>
+                </Box>
+
+                {/* Color Picker Section */}
+                <Box sx={{ p: 3 }}>
+                  <HexColorPicker
+                    color={previewColor}
+                    onChange={handleColorPreview}
+                    style={{
+                      width: '100%',
+                      height: '200px',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                    }}
+                  />
+
+                  {/* Hex Input */}
+                  <Box sx={{ mt: 3, mb: 2 }}>
+                    <HexColorInput
+                      color={previewColor}
+                      onChange={handleColorPreview}
+                      prefixed
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: `1px solid ${theme.palette.divider}`,
+                        backgroundColor: theme.palette.background.default,
+                        color: theme.palette.text.primary,
+                        fontFamily: theme.typography.fontFamily,
+                        fontSize: '14px',
+                        outline: 'none',
+                        transition: 'border-color 0.2s',
+                      }}
+                      placeholder="Enter hex color"
+                    />
+                  </Box>
+                </Box>
+
+                {/* Preset Colors */}
+                <Box sx={{ px: 3, pb: 3 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: theme.palette.text.secondary,
+                      mb: 2,
+                      display: 'block',
+                      fontWeight: 500,
+                    }}
+                  >
+                    Quick Colors
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: 'grid',
+                      gridTemplateColumns: 'repeat(6, 1fr)',
+                      gap: '8px',
+                    }}
+                  >
+                    {[
+                      '#FFFF00', '#00FF00', '#FF0000', '#0080FF', '#FF8000', '#FF00FF',
+                      '#FFFFFF', '#CCCCCC', '#999999', '#666666', '#333333', '#000000',
+                      '#FFD700', '#FF4500', '#FFA500', '#32CD32', '#8A2BE2', '#4169E1',
+                    ].map((color, index) => (
+                      <Box
+                        key={index}
+                        onClick={() => handleColorPreview(color)}
+                        sx={{
+                          width: '32px',
+                          height: '32px',
+                          borderRadius: '6px',
+                          backgroundColor: color,
+                          border: `2px solid ${theme.palette.divider}`,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            transform: 'scale(1.1)',
+                            borderColor: theme.palette.primary.main,
+                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
+                          },
+                          '&:focus': {
+                            outline: `2px solid ${theme.palette.primary.main}`,
+                            outlineOffset: '2px',
+                          },
+                        }}
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleColorPreview(color);
+                          }
+                        }}
+                        aria-label={`Apply color ${color}`}
+                      />
+                    ))}
+                  </Box>
+                </Box>
+
+                {/* Action Buttons */}
+                <Box
+                  sx={{
+                    p: 2,
+                    borderTop: `1px solid ${theme.palette.divider}`,
+                    backgroundColor: theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.02)'
+                      : 'rgba(0, 0, 0, 0.02)',
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                  }}
+                >
+                  {/* Current Color Indicator */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: '24px',
+                        height: '24px',
+                        borderRadius: '4px',
+                        backgroundColor: previewColor,
+                        border: `1px solid ${theme.palette.divider}`,
+                      }}
+                    />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        fontFamily: 'monospace',
+                        fontWeight: 500,
+                      }}
+                    >
+                      {previewColor.toUpperCase()}
+                    </Typography>
+                  </Box>
+
+                  {/* Buttons */}
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={cancelColorSelection}
+                      sx={{
+                        minWidth: 80,
+                        color: theme.palette.text.primary,
+                        borderColor: theme.palette.divider,
+                        '&:hover': {
+                          borderColor: theme.palette.primary.main,
+                          backgroundColor: theme.palette.action.hover,
+                        },
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="small"
+                      onClick={applyPreviewColor}
+                      sx={{
+                        minWidth: 80,
+                        backgroundColor: theme.palette.primary.main,
+                        color: theme.palette.primary.contrastText,
+                        '&:hover': {
+                          backgroundColor: theme.palette.primary.dark,
+                        },
+                      }}
+                    >
+                      Apply
+                    </Button>
+                  </Box>
+                </Box>
               </Box>
             </>
           )}
