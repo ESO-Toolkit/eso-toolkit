@@ -83,16 +83,18 @@ export function createMockStore(options: MockStoreOptions = {}): EnhancedStore {
       playerData: playerDataReducer,
       report: reportReducer,
     },
-    middleware: (getDefaultMiddleware) =>
-      getDefaultMiddleware({
+    middleware: (getDefaultMiddleware) => {
+      const defaultMiddleware = getDefaultMiddleware({
         serializableCheck: serializableCheckConfig,
-      }).concat(routerMiddleware), // Include router middleware like production
+      });
+      return defaultMiddleware.concat(routerMiddleware);
+    },
     preloadedState: {
       ui: {
         darkMode: true,
         sidebarOpen: false,
         showExperimentalTabs: false,
-        selectedTargetId: null,
+        selectedTargetIds: [],
         selectedPlayerId: null,
         selectedTabId: null,
         ...(initialState.ui || {}),
@@ -109,7 +111,7 @@ export const defaultMockUIState: UIState = {
   darkMode: true,
   sidebarOpen: false,
   showExperimentalTabs: false,
-  selectedTargetId: null,
+  selectedTargetIds: [],
   selectedPlayerId: null,
   selectedTabId: null,
 };

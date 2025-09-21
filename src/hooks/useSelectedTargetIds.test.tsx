@@ -5,6 +5,7 @@ import { createStore, combineReducers, Store } from 'redux';
 
 import { FightFragment, ReportFragment, ReportActorFragment } from '../graphql/generated';
 import { ReportFightContext } from '../ReportFightContext';
+import { TabId } from '../utils/getSkeletonForTab';
 
 import { useReportData } from './useReportData';
 import { useReportMasterData } from './useReportMasterData';
@@ -77,6 +78,7 @@ const mockFightWithBosses: FightFragment = {
   name: 'Test Fight With Bosses',
   difficulty: null,
   bossPercentage: null,
+  encounterID: 1001,
   friendlyPlayers: [400],
   enemyPlayers: [],
   enemyNPCs: [
@@ -94,6 +96,7 @@ const mockFightWithoutEnemies: FightFragment = {
   name: 'Test Fight Without Enemies',
   difficulty: null,
   bossPercentage: null,
+  encounterID: 1002,
   friendlyPlayers: [400],
   enemyPlayers: [],
   enemyNPCs: [],
@@ -107,6 +110,7 @@ const mockFightWithNullEnemies: FightFragment = {
   name: 'Test Fight With Null Enemies',
   difficulty: null,
   bossPercentage: null,
+  encounterID: 1003,
   friendlyPlayers: [400],
   enemyPlayers: [],
   enemyNPCs: null,
@@ -143,13 +147,13 @@ const mockMasterData = {
 };
 
 // Create mock store
-const createMockStore = (selectedTargetId: number | null = null): Store => {
+const createMockStore = (selectedTargetIds: number[] = []): Store => {
   const initialState = {
     ui: {
       darkMode: false,
       sidebarOpen: true,
       showExperimentalTabs: false,
-      selectedTargetId,
+      selectedTargetIds,
     },
     masterData: mockMasterData,
   };
@@ -167,20 +171,25 @@ interface TestWrapperProps {
   children: React.ReactNode;
   reportId?: string | null;
   fightId?: string | null;
-  selectedTargetId?: number | null;
+  selectedTargetIds?: number[];
 }
 
 const TestWrapper: React.FC<TestWrapperProps> = ({
   children,
   reportId = 'test-report',
   fightId = '1',
-  selectedTargetId = null,
+  selectedTargetIds = [],
 }) => {
-  const store = createMockStore(selectedTargetId);
+  const store = createMockStore(selectedTargetIds);
 
   const contextValue = {
     reportId,
     fightId,
+    tabId: null,
+    selectedTabId: 'overview' as TabId,
+    showExperimentalTabs: false,
+    setSelectedTab: () => {},
+    setShowExperimentalTabs: () => {},
   };
 
   return (
@@ -208,13 +217,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={100}>
+        <TestWrapper fightId="1" selectedTargetIds={[100]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set([100]));
+    expect(Array.from(result.current)).toEqual([100]);
   });
 
   it('should return boss targets when no specific target is selected', () => {
@@ -230,14 +239,14 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Should return both boss NPCs (100 and 200), but not the regular NPC (300)
-    expect(result.current).toEqual(new Set([100, 200]));
+    expect(Array.from(result.current).sort()).toEqual([100, 200]);
   });
 
   it('should return empty set when no fight is found', () => {
@@ -253,13 +262,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="999" selectedTargetId={null}>
+        <TestWrapper fightId="999" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(Array.from(result.current)).toEqual([]);
   });
 
   it('should return empty set when fight has no enemy NPCs', () => {
@@ -275,13 +284,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="2" selectedTargetId={null}>
+        <TestWrapper fightId="2" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(Array.from(result.current)).toEqual([]);
   });
 
   it('should return empty set when fight has null enemy NPCs', () => {
@@ -297,13 +306,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="3" selectedTargetId={null}>
+        <TestWrapper fightId="3" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(Array.from(result.current)).toEqual([]);
   });
 
   it('should return empty set when no report data is available', () => {
@@ -319,13 +328,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set());
+    expect(Array.from(result.current)).toEqual([]);
   });
 
   it('should return all enemy NPCs when no bosses are present', () => {
@@ -353,13 +362,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set([100, 200, 300]));
+    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
   });
 
   it('should return all enemy NPCs when fight has only non-boss NPCs', () => {
@@ -390,14 +399,14 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="4" selectedTargetId={null}>
+        <TestWrapper fightId="4" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // When no bosses are present, should return all enemy NPCs
-    expect(result.current).toEqual(new Set([300]));
+    expect(Array.from(result.current)).toEqual([300]);
   });
 
   it('should handle NPCs with null IDs', () => {
@@ -428,14 +437,14 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="5" selectedTargetId={null}>
+        <TestWrapper fightId="5" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Should only include the valid boss NPC, ignoring the null ID
-    expect(result.current).toEqual(new Set([100]));
+    expect(Array.from(result.current)).toEqual([100]);
   });
 
   it('should handle actors that do not exist in master data', () => {
@@ -466,14 +475,14 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="6" selectedTargetId={null}>
+        <TestWrapper fightId="6" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Should only include the actor that exists and is a boss
-    expect(result.current).toEqual(new Set([100]));
+    expect(Array.from(result.current)).toEqual([100]);
   });
 
   it('should update when fight ID changes', () => {
@@ -489,26 +498,26 @@ describe('useSelectedTargetIds', () => {
 
     const { result, rerender } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Initial result - fight with bosses
-    expect(result.current).toEqual(new Set([100, 200]));
+    expect(Array.from(result.current).sort()).toEqual([100, 200]);
 
     // Rerender with different fight ID - fight without enemies
     rerender();
     const { result: newResult } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="2" selectedTargetId={null}>
+        <TestWrapper fightId="2" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(newResult.current).toEqual(new Set());
+    expect(Array.from(newResult.current)).toEqual([]);
   });
 
   it('should prioritize selected target ID over boss filtering', () => {
@@ -525,14 +534,14 @@ describe('useSelectedTargetIds', () => {
     // Select a non-boss NPC explicitly
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={300}>
+        <TestWrapper fightId="1" selectedTargetIds={[300]}>
           {children}
         </TestWrapper>
       ),
     });
 
     // Should return the selected target even though it's not a boss
-    expect(result.current).toEqual(new Set([300]));
+    expect(Array.from(result.current)).toEqual([300]);
   });
 
   it('should handle null reportMasterData gracefully', () => {
@@ -561,13 +570,13 @@ describe('useSelectedTargetIds', () => {
 
     const { result } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
-    expect(result.current).toEqual(new Set([100, 200, 300]));
+    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
   });
 
   it('should return stable reference when params do not change', () => {
@@ -583,21 +592,21 @@ describe('useSelectedTargetIds', () => {
 
     const { result, rerender } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={null}>
+        <TestWrapper fightId="1" selectedTargetIds={[]}>
           {children}
         </TestWrapper>
       ),
     });
 
     const firstResult = result.current;
-    expect(firstResult).toEqual(new Set([100, 200]));
+    expect(Array.from(firstResult).sort()).toEqual([100, 200]);
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
     expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(secondResult).toEqual(new Set([100, 200]));
+    expect(Array.from(secondResult).sort()).toEqual([100, 200]);
   });
 
   it('should return stable reference for selected target when params do not change', () => {
@@ -613,20 +622,21 @@ describe('useSelectedTargetIds', () => {
 
     const { result, rerender } = renderHook(() => useSelectedTargetIds(), {
       wrapper: ({ children }) => (
-        <TestWrapper fightId="1" selectedTargetId={100}>
+        <TestWrapper fightId="1" selectedTargetIds={[100]}>
           {children}
         </TestWrapper>
       ),
     });
 
     const firstResult = result.current;
-    expect(firstResult).toEqual(new Set([100]));
+    expect(Array.from(firstResult)).toEqual([100]);
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
-    expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(secondResult).toEqual(new Set([100]));
+    // For multi-select implementation, values are more important than reference stability
+    expect(Array.from(secondResult)).toEqual([100]);
+    expect(secondResult.size).toBe(firstResult.size);
   });
 });

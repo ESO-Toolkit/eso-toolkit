@@ -58,10 +58,10 @@ export function useStatusEffectUptimesTask(): {
   }, [
     dispatch,
     selectedFight,
-    hostileBuffLookupData,
-    debuffLookupData,
     isHostileBuffLookupLoading,
+    hostileBuffLookupData,
     isDebuffLookupLoading,
+    debuffLookupData,
   ]);
 
   const statusEffectUptimesData = useSelector(selectStatusEffectUptimesResult);

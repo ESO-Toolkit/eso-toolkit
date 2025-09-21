@@ -10,7 +10,7 @@ import {
 } from '../../store/worker_results/selectors';
 import { executeHostileBuffLookupTask } from '../../store/worker_results/taskSlices';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
-import { useHostileBuffEvents } from '../events';
+import { useHostileBuffEvents } from '../events/useHostileBuffEvents';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 

@@ -7,7 +7,7 @@ import uiReducer, {
   syncWithSystemTheme,
   setSelectedPlayerId,
   setSelectedTabId,
-  setSelectedTargetId,
+  setSelectedTargetIds,
   setShowExperimentalTabs,
   setSidebarOpen,
   toggleSidebar,
@@ -31,7 +31,7 @@ describe('uiSlice', () => {
         darkMode: true,
         selectedPlayerId: null,
         selectedTabId: null,
-        selectedTargetId: null,
+        selectedTargetIds: [],
         showExperimentalTabs: false,
         sidebarOpen: false,
       });
@@ -187,25 +187,25 @@ describe('uiSlice', () => {
     });
   });
 
-  describe('setSelectedTargetId', () => {
-    it('should set target id to a number', () => {
-      store.dispatch(setSelectedTargetId(789));
+  describe('setSelectedTargetIds', () => {
+    it('should set target ids to an array', () => {
+      store.dispatch(setSelectedTargetIds([789]));
       const state = store.getState() as { ui: UIState };
-      expect(state.ui.selectedTargetId).toBe(789);
+      expect(state.ui.selectedTargetIds).toEqual([789]);
     });
 
-    it('should set target id to null', () => {
-      store.dispatch(setSelectedTargetId(789));
-      store.dispatch(setSelectedTargetId(null));
+    it('should set target ids to empty array', () => {
+      store.dispatch(setSelectedTargetIds([789]));
+      store.dispatch(setSelectedTargetIds([]));
       const state = store.getState() as { ui: UIState };
-      expect(state.ui.selectedTargetId).toBeNull();
+      expect(state.ui.selectedTargetIds).toEqual([]);
     });
 
-    it('should update target id correctly', () => {
-      store.dispatch(setSelectedTargetId(100));
-      store.dispatch(setSelectedTargetId(200));
+    it('should update target ids correctly', () => {
+      store.dispatch(setSelectedTargetIds([100]));
+      store.dispatch(setSelectedTargetIds([200]));
       const state = store.getState() as { ui: UIState };
-      expect(state.ui.selectedTargetId).toBe(200);
+      expect(state.ui.selectedTargetIds).toEqual([200]);
     });
   });
 
@@ -288,7 +288,7 @@ describe('uiSlice', () => {
         darkMode: false,
         selectedPlayerId: 123,
         selectedTabId: 2,
-        selectedTargetId: null,
+        selectedTargetIds: [],
         showExperimentalTabs: true,
         sidebarOpen: true,
       });
@@ -297,7 +297,7 @@ describe('uiSlice', () => {
     it('should maintain state consistency when toggling various properties', () => {
       // Set some initial values
       store.dispatch(setSelectedPlayerId(456));
-      store.dispatch(setSelectedTargetId(789));
+      store.dispatch(setSelectedTargetIds([789]));
 
       // Toggle some properties
       store.dispatch(toggleDarkMode());
@@ -307,7 +307,7 @@ describe('uiSlice', () => {
 
       // Non-toggled values should remain
       expect(state.ui.selectedPlayerId).toBe(456);
-      expect(state.ui.selectedTargetId).toBe(789);
+      expect(state.ui.selectedTargetIds).toEqual([789]);
       expect(state.ui.showExperimentalTabs).toBe(false); // initial value
 
       // Toggled values should have changed

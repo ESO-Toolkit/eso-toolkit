@@ -125,7 +125,7 @@ export function computeBuffUptimes(
       // Determine the denominator for averaging
       const targetCount = targetIds ? targetIds.size : targetUptimes.size;
       const averageUptimePercentage = totalUptimeSum / Math.max(targetCount, 1);
-      const averageApplications = Math.round(totalApplicationsSum / Math.max(targetCount, 1));
+      const summedApplications = totalApplicationsSum; // Sum applications across targets
       const averageTotalDuration = (averageUptimePercentage / 100) * fightDuration;
 
       if (averageUptimePercentage > 0) {
@@ -138,7 +138,7 @@ export function computeBuffUptimes(
           totalDuration: averageTotalDuration,
           uptime: averageTotalDuration / 1000, // Convert to seconds
           uptimePercentage: averageUptimePercentage,
-          applications: averageApplications,
+          applications: summedApplications,
           isDebuff,
           hostilityType,
           uniqueKey: `${abilityGameID}-${hostilityType}`,

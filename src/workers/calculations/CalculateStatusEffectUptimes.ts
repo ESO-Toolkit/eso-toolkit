@@ -23,26 +23,34 @@ export interface StatusEffectUptimesCalculationTask {
   hostileBuffsLookup: BuffLookupData;
   fightStartTime?: number;
   fightEndTime?: number;
+  // Remove selectedTargetIds - we'll compute for all targets and filter on main thread
+}
+
+export interface StatusEffectUptimesByTarget {
+  abilityGameID: string;
+  abilityName: string;
+  icon?: string;
+  isDebuff: boolean;
+  hostilityType: 0 | 1;
+  uniqueKey: string;
+  targetData: {
+    [targetId: number]: {
+      totalDuration: number;
+      uptime: number;
+      uptimePercentage: number;
+      applications: number;
+    };
+  };
+  // Remove aggregate values - will be calculated on main thread
 }
 
 /**
- * Calculate status effect uptimes for specific abilities
+ * Calculate status effect uptimes segmented by target with averaging capability
  */
 export function calculateStatusEffectUptimes(
   data: StatusEffectUptimesCalculationTask,
   onProgress?: OnProgressCallback,
-): Array<{
-  abilityGameID: string;
-  abilityName: string;
-  icon?: string;
-  totalDuration: number;
-  uptime: number;
-  uptimePercentage: number;
-  applications: number;
-  isDebuff: boolean;
-  uniqueKey: string;
-  hostilityType: 0 | 1;
-}> {
+): StatusEffectUptimesByTarget[] {
   const { debuffsLookup, hostileBuffsLookup, fightStartTime, fightEndTime } = data;
 
   if (!fightStartTime || !fightEndTime) {
@@ -50,29 +58,26 @@ export function calculateStatusEffectUptimes(
   }
 
   const fightDuration = fightEndTime - fightStartTime;
-
-  const results: Array<{
-    abilityGameID: string;
-    abilityName: string;
-    icon?: string;
-    totalDuration: number;
-    uptime: number;
-    uptimePercentage: number;
-    applications: number;
-    isDebuff: boolean;
-    uniqueKey: string;
-    hostilityType: 0 | 1;
-  }> = [];
+  const results = new Map<string, StatusEffectUptimesByTarget>();
 
   // Report progress for debuff calculations
   onProgress?.(0);
 
-  // Calculate debuff uptimes
+  // Calculate debuff uptimes segmented by target
   for (const abilityId of STATUS_EFFECT_DEBUFF_ABILITIES) {
     const intervals = debuffsLookup.buffIntervals[abilityId.toString()];
     if (intervals && intervals.length > 0) {
-      let totalUptime = 0;
-      let applications = 0;
+      const abilityKey = abilityId.toString();
+
+      // Group intervals by target
+      const targetData: {
+        [targetId: number]: {
+          totalDuration: number;
+          uptime: number;
+          uptimePercentage: number;
+          applications: number;
+        };
+      } = {};
 
       for (const interval of intervals) {
         // Clip interval to fight bounds
@@ -80,22 +85,38 @@ export function calculateStatusEffectUptimes(
         const clippedEnd = Math.min(interval.end, fightEndTime);
 
         if (clippedEnd > clippedStart) {
-          totalUptime += clippedEnd - clippedStart;
-          applications += 1;
+          const duration = clippedEnd - clippedStart;
+
+          if (!targetData[interval.targetID]) {
+            targetData[interval.targetID] = {
+              totalDuration: 0,
+              uptime: 0,
+              uptimePercentage: 0,
+              applications: 0,
+            };
+          }
+
+          targetData[interval.targetID].totalDuration += duration;
+          targetData[interval.targetID].uptime += duration / 1000; // Convert to seconds
+          targetData[interval.targetID].applications += 1;
         }
       }
 
-      if (totalUptime > 0) {
-        results.push({
-          abilityGameID: abilityId.toString(),
+      // Calculate uptime percentages for each target
+      for (const targetId in targetData) {
+        targetData[Number(targetId)].uptimePercentage =
+          (targetData[Number(targetId)].totalDuration / fightDuration) * 100;
+      }
+
+      // Only create entry if we have data for at least one target
+      if (Object.keys(targetData).length > 0) {
+        results.set(abilityKey, {
+          abilityGameID: abilityKey,
           abilityName: `Ability ${abilityId}`, // Will be resolved by UI layer
-          totalDuration: totalUptime,
-          uptime: totalUptime / 1000, // Convert to seconds
-          uptimePercentage: (totalUptime / fightDuration) * 100,
-          applications,
           isDebuff: true,
-          uniqueKey: `${abilityId}-status-effect`,
           hostilityType: 1,
+          uniqueKey: `${abilityId}-status-effect`,
+          targetData,
         });
       }
     }
@@ -104,12 +125,21 @@ export function calculateStatusEffectUptimes(
   // Report progress for buff calculations
   onProgress?.(0.5);
 
-  // Calculate friendly buff uptimes
+  // Calculate friendly buff uptimes segmented by target
   for (const abilityId of STATUS_EFFECT_BUFF_ABILITIES) {
     const intervals = hostileBuffsLookup.buffIntervals[abilityId.toString()];
     if (intervals && intervals.length > 0) {
-      let totalUptime = 0;
-      let applications = 0;
+      const abilityKey = abilityId.toString();
+
+      // Group intervals by target
+      const targetData: {
+        [targetId: number]: {
+          totalDuration: number;
+          uptime: number;
+          uptimePercentage: number;
+          applications: number;
+        };
+      } = {};
 
       for (const interval of intervals) {
         // Clip interval to fight bounds
@@ -117,22 +147,38 @@ export function calculateStatusEffectUptimes(
         const clippedEnd = Math.min(interval.end, fightEndTime);
 
         if (clippedEnd > clippedStart) {
-          totalUptime += clippedEnd - clippedStart;
-          applications += 1;
+          const duration = clippedEnd - clippedStart;
+
+          if (!targetData[interval.targetID]) {
+            targetData[interval.targetID] = {
+              totalDuration: 0,
+              uptime: 0,
+              uptimePercentage: 0,
+              applications: 0,
+            };
+          }
+
+          targetData[interval.targetID].totalDuration += duration;
+          targetData[interval.targetID].uptime += duration / 1000; // Convert to seconds
+          targetData[interval.targetID].applications += 1;
         }
       }
 
-      if (totalUptime > 0) {
-        results.push({
-          abilityGameID: abilityId.toString(),
+      // Calculate uptime percentages for each target
+      for (const targetId in targetData) {
+        targetData[Number(targetId)].uptimePercentage =
+          (targetData[Number(targetId)].totalDuration / fightDuration) * 100;
+      }
+
+      // Only create entry if we have data for at least one target
+      if (Object.keys(targetData).length > 0) {
+        results.set(abilityKey, {
+          abilityGameID: abilityKey,
           abilityName: `Ability ${abilityId}`, // Will be resolved by UI layer
-          totalDuration: totalUptime,
-          uptime: totalUptime / 1000, // Convert to seconds
-          uptimePercentage: (totalUptime / fightDuration) * 100,
-          applications,
           isDebuff: false,
           hostilityType: 1,
           uniqueKey: `${abilityId}-status-effect`,
+          targetData,
         });
       }
     }
@@ -141,10 +187,11 @@ export function calculateStatusEffectUptimes(
   // Report progress for final sorting
   onProgress?.(0.9);
 
-  // Sort by uptime percentage descending
-  results.sort((a, b) => b.uptimePercentage - a.uptimePercentage);
+  // Convert Map to Array and sort by total target count (most targets affected first)
+  const resultArray = Array.from(results.values());
+  resultArray.sort((a, b) => Object.keys(b.targetData).length - Object.keys(a.targetData).length);
 
   onProgress?.(1);
 
-  return results;
+  return resultArray;
 }

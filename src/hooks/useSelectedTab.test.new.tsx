@@ -36,7 +36,7 @@ const createMockStore = (
       darkMode: true,
       sidebarOpen: false,
       showExperimentalTabs: false,
-      selectedTargetId: null,
+      selectedTargetIds: [],
       selectedPlayerId: null,
       selectedTabId: null,
       ...(initialState.ui || {}),

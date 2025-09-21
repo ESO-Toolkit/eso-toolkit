@@ -10,7 +10,7 @@ import {
 } from '../../store/worker_results/selectors';
 import { executeDebuffLookupTask } from '../../store/worker_results/taskSlices';
 import { BuffLookupData } from '../../utils/BuffLookupUtils';
-import { useDebuffEvents } from '../events';
+import { useDebuffEvents } from '../events/useDebuffEvents';
 
 import { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
 
