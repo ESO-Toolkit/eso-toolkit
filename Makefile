@@ -1,6 +1,9 @@
 # ESO Log Aggregator Makefile
 # This Makefile provides convenient commands for common development tasks
-# Cross-platform compatible (Windows, Linux, macOS)
+# Cross-platform compatible (Windows, Linux, macOS) with colorized output
+
+# Cross-platform colorization utility
+COLOR := node scripts/colorize.js
 
 # Detect OS for cross-platform compatibility
 ifeq ($(OS),Windows_NT)
@@ -19,70 +22,82 @@ endif
 
 # Default target
 help:
-	@echo "Available commands:"
-	@echo "  help          - Show this help message"
-	@echo "  os-info       - Show detected operating system"
-	@echo "  install       - Install dependencies"
-	@echo "  build         - Build the project for production"
-	@echo "  test          - Run tests"
-	@echo "  test-watch    - Run tests in watch mode"
-	@echo "  lint          - Run ESLint to check code quality"
-	@echo "  lint-fix      - Run ESLint and automatically fix issues"
-	@echo "  format        - Format code with Prettier"
-	@echo "  fmt           - Alias for format"
-	@echo "  dev           - Start development server"
-	@echo "  clean         - Clean build artifacts"
-	@echo "  clean-cache   - Clear npm cache"
-	@echo "  clean-modules - Remove node_modules"
-	@echo "  clean-all     - Remove all generated files"
-	@echo "  reinstall     - Clean and reinstall dependencies"
-	@echo "  codegen       - Generate GraphQL types"
-	@echo "  fetch-abilities - Fetch abilities data"
-	@echo "  typecheck     - Run TypeScript type checking"
-	@echo "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
-	@echo "  pc            - Alias for pre-commit"
-	@echo "  check         - Quick code quality checks (lint + test)"
-	@echo "  prod-build    - Production build with optimizations"
-	@echo "  setup         - Initial project setup for new developers"
-	@echo "  all           - Run clean, install, lint, test, and build"
+	@$(COLOR) header "ESO Log Aggregator - Available Commands"
+	@$(COLOR) info "Development Commands:"
+	@$(COLOR) color brightCyan "  help          - Show this help message"
+	@$(COLOR) color brightCyan "  os-info       - Show detected operating system"
+	@$(COLOR) color brightCyan "  dev           - Start development server"
+	@$(COLOR) color brightCyan "  test          - Run tests"
+	@$(COLOR) color brightCyan "  test-watch    - Run tests in watch mode"
+	@$(COLOR) color brightCyan "  typecheck     - Run TypeScript type checking"
+	@$(COLOR) info "Code Quality Commands:"
+	@$(COLOR) color brightYellow "  lint          - Run ESLint to check code quality"
+	@$(COLOR) color brightYellow "  lint-fix      - Run ESLint and automatically fix issues"
+	@$(COLOR) color brightYellow "  format        - Format code with Prettier"
+	@$(COLOR) color brightYellow "  fmt           - Alias for format"
+	@$(COLOR) color brightYellow "  check         - Quick code quality checks (lint + test)"
+	@$(COLOR) color brightYellow "  pre-commit    - Run full CI pipeline (lint-fix, format, typecheck)"
+	@$(COLOR) color brightYellow "  pc            - Alias for pre-commit"
+	@$(COLOR) info "Build Commands:"
+	@$(COLOR) color brightGreen "  install       - Install dependencies"
+	@$(COLOR) color brightGreen "  build         - Build the project for production"
+	@$(COLOR) color brightGreen "  prod-build    - Production build with optimizations"
+	@$(COLOR) color brightGreen "  codegen       - Generate GraphQL types"
+	@$(COLOR) color brightGreen "  fetch-abilities - Fetch abilities data"
+	@$(COLOR) info "Cleanup Commands:"
+	@$(COLOR) color brightRed "  clean         - Clean build artifacts"
+	@$(COLOR) color brightRed "  clean-cache   - Clear npm cache"
+	@$(COLOR) color brightRed "  clean-modules - Remove node_modules"
+	@$(COLOR) color brightRed "  clean-all     - Remove all generated files"
+	@$(COLOR) color brightRed "  reinstall     - Clean and reinstall dependencies"
+	@$(COLOR) info "Workflow Commands:"
+	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
+	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
 
 # Show detected OS
 os-info:
-	@echo "Detected OS: $(DETECTED_OS)"
+	@$(COLOR) info "Detected Operating System: $(DETECTED_OS)"
 
 # Install dependencies
 install:
-	@echo "Installing dependencies..."
+	@$(COLOR) subheader "Installing Dependencies"
+	@$(COLOR) info "Running npm ci..."
 	npm ci
 
 # Build the project
 build:
-	@echo "Building project..."
+	@$(COLOR) subheader "Building Project"
+	@$(COLOR) info "Running production build..."
 	npm run build
 
 # Run tests (non-interactive)
 test:
-	@echo "Running tests..."
+	@$(COLOR) subheader "Running Tests"
+	@$(COLOR) info "Executing test suite..."
 	npm run test
 
 # Run tests in watch mode
 test-watch:
-	@echo "Running tests in watch mode..."
+	@$(COLOR) subheader "Running Tests in Watch Mode"
+	@$(COLOR) info "Starting test watcher..."
 	npm test
 
 # Run linting
 lint:
-	@echo "Running ESLint..."
+	@$(COLOR) subheader "Running ESLint"
+	@$(COLOR) info "Checking code quality..."
 	npm run lint
 
 # Run linting with auto-fix
 lint-fix:
-	@echo "Running ESLint with auto-fix..."
+	@$(COLOR) subheader "Running ESLint with Auto-fix"
+	@$(COLOR) info "Fixing code quality issues..."
 	npm run lint:fix
 
 # Format code with Prettier
 format:
-	@echo "Formatting code with Prettier..."
+	@$(COLOR) subheader "Formatting Code"
+	@$(COLOR) info "Running Prettier formatter..."
 	npm run format
 
 # Alias for format
@@ -93,53 +108,60 @@ pc: pre-commit
 
 # Start development server
 dev:
-	@echo "Starting development server..."
+	@$(COLOR) subheader "Starting Development Server"
+	@$(COLOR) info "Launching local development environment..."
 	npm start
 
 # Clean build artifacts
 clean:
-	@echo "Cleaning build artifacts..."
-	@echo "Detected OS: $(DETECTED_OS)"
+	@$(COLOR) subheader "Cleaning Build Artifacts"
+	@$(COLOR) info "Detected OS: $(DETECTED_OS)"
+	@$(COLOR) warning "Removing build files, cache, and lint artifacts..."
 	$(RM_CMD)
 	$(RM_CACHE)
 	$(RM_ESLINT)
 
 # Generate GraphQL types
 codegen:
-	@echo "Generating GraphQL types..."
+	@$(COLOR) subheader "Generating GraphQL Types"
+	@$(COLOR) info "Running code generation..."
 	npm run codegen
 
 # Fetch abilities data
 fetch-abilities:
-	@echo "Fetching abilities data..."
+	@$(COLOR) subheader "Fetching Abilities Data"
+	@$(COLOR) info "Downloading latest abilities data..."
 	npm run fetch-abilities
 
-# Fetch abilities data
+# Run TypeScript type checking
 typecheck:
+	@$(COLOR) subheader "Running TypeScript Type Check"
+	@$(COLOR) info "Validating TypeScript types..."
 	npm run typecheck
 
 # Run full CI pipeline
 pre-commit: 
-	@echo "Running pre-commit checks..."
-	@echo "1/3 - Running ESLint with auto-fix..."
+	@$(COLOR) header "Running Pre-Commit Pipeline"
+	@$(COLOR) step 1 3 "Running ESLint with auto-fix..."
 	npm run lint:fix
-	@echo "2/3 - Running type check..."
+	@$(COLOR) step 2 3 "Running TypeScript type check..."
 	npm run typecheck
-	@echo "3/3 - Running formatter ..."
+	@$(COLOR) step 3 3 "Running Prettier formatter..."
 	npm run format
-	@echo "✅ All pre-commit tasks completed successfully!"
+	@$(COLOR) success "All pre-commit tasks completed successfully!"
 
 # Run full CI pipeline
 all: clean install lint test build
-	@echo "✅ All tasks completed successfully!"
+	@$(COLOR) success "All tasks completed successfully!"
 
 # Development workflow - quick checks before committing
 check: lint test
-	@echo "✅ Code quality checks passed!"
+	@$(COLOR) success "Code quality checks passed!"
 
 # Production build with optimizations
 prod-build: clean install
-	@echo "Building for production..."
+	@$(COLOR) subheader "Production Build"
+	@$(COLOR) info "Building for production with optimizations..."
 ifeq ($(OS),Windows_NT)
 	set NODE_ENV=production && npm run build
 else
@@ -148,16 +170,19 @@ endif
 
 # Quick start for new developers
 setup: install codegen fetch-abilities
-	@echo "✅ Project setup complete! Run 'make dev' to start development server."
+	@$(COLOR) header "Project Setup Complete"
+	@$(COLOR) success "Setup complete! Run 'make dev' to start development server."
 
 # Cross-platform npm cache clear
 clear-cache:
-	@echo "Clearing npm cache..."
+	@$(COLOR) subheader "Clearing NPM Cache"
+	@$(COLOR) warning "Forcing npm cache clean..."
 	npm cache clean --force
 
 # Cross-platform node_modules cleanup
 clean-modules:
-	@echo "Removing node_modules..."
+	@$(COLOR) subheader "Removing Node Modules"
+	@$(COLOR) warning "Deleting node_modules directory..."
 ifeq ($(OS),Windows_NT)
 	if exist node_modules rmdir /s /q node_modules
 else
@@ -166,8 +191,8 @@ endif
 
 # Full clean - removes all generated files
 clean-all: clean clean-modules
-	@echo "✅ All generated files removed!"
+	@$(COLOR) success "All generated files removed!"
 
 # Reinstall everything from scratch
 reinstall: clean-modules install
-	@echo "✅ Dependencies reinstalled!"
+	@$(COLOR) success "Dependencies reinstalled!"
