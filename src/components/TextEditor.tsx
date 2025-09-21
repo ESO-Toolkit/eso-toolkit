@@ -1580,10 +1580,13 @@ export const TextEditor: React.FC = () => {
                       onClick={cancelColorSelection}
                       aria-label="Close color picker"
                       sx={{
-                        opacity: 0.7,
-                        color: theme.palette.text.secondary,
-                        backgroundColor: 'transparent',
-                        border: '1px solid transparent',
+                        opacity: 1,
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.1)'
+                            : 'rgba(0, 0, 0, 0.08)',
+                        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)'}`,
                         minWidth: '32px',
                         minHeight: '32px',
                         width: '32px',
@@ -1591,13 +1594,25 @@ export const TextEditor: React.FC = () => {
                         padding: '4px',
                         '&:hover': {
                           opacity: 1,
-                          color: theme.palette.error.main,
-                          backgroundColor: theme.palette.action.hover,
-                          borderColor: theme.palette.error.main,
+                          color: theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 68, 68, 0.2)'
+                              : 'rgba(204, 0, 0, 0.1)',
+                          borderColor: theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000',
                           transform: 'scale(1.05)',
+                          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.2)',
                         },
                         '&:active': {
                           transform: 'scale(0.95)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(255, 68, 68, 0.3)'
+                              : 'rgba(204, 0, 0, 0.15)',
+                        },
+                        '&:focus-visible': {
+                          outline: `2px solid ${theme.palette.mode === 'dark' ? '#ff4444' : '#cc0000'}`,
+                          outlineOffset: '2px',
                         },
                         transition: 'all 0.2s ease',
                       }}
