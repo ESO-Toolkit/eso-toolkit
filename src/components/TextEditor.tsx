@@ -195,6 +195,14 @@ const PresetColor = styled('button')({
   borderRadius: '3px',
   cursor: 'pointer',
   transition: 'transform 0.1s',
+  // Prevent focus outline while maintaining accessibility
+  '&:focus': {
+    outline: '2px solid #3b82f6',
+    outlineOffset: '2px',
+  },
+  '&:focus:not(:focus-visible)': {
+    outline: 'none',
+  },
   // Mobile styles
   '@media (max-width: 768px)': {
     width: 'calc(16.666% - 7px)',
@@ -970,6 +978,42 @@ export const TextEditor: React.FC = () => {
     }
   };
 
+  // Enhanced quick color function for toolbar swatches with selection persistence
+  const handleQuickColorClick = (colorHex: string): void => {
+    if (!textAreaRef.current) return;
+
+    const textarea = textAreaRef.current;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    if (start === end) {
+      alert('Please select some text first!');
+      return;
+    }
+
+    // Store selection info before applying color
+    const selectedText = textarea.value.substring(start, end);
+    setSelectedTextInfo({
+      start,
+      end,
+      text: selectedText,
+      originalText: textarea.value,
+    });
+
+    // Apply the color with a slight delay to ensure selection is maintained
+    setTimeout(() => {
+      applySelectedColor(colorHex);
+
+      // Ensure selection is maintained after application
+      setTimeout(() => {
+        if (textAreaRef.current) {
+          textAreaRef.current.focus();
+          textAreaRef.current.setSelectionRange(start, end);
+        }
+      }, 50);
+    }, 10);
+  };
+
   // Updated quick color function for React Color
   const applyQuickColor = (colorHex: string): void => {
     if (!textAreaRef.current) return;
@@ -1220,7 +1264,21 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
-                  onClick={() => applyQuickColor(color.substring(1))}
+                  onClick={() => handleQuickColorClick(color.substring(1))}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current) {
+                      const textarea = textAreaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      if (start !== end) {
+                        textarea.focus();
+                        textarea.setSelectionRange(start, end);
+                      }
+                    }
+                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
@@ -1301,7 +1359,21 @@ export const TextEditor: React.FC = () => {
                   key={index}
                   type="button"
                   style={{ background: color }}
-                  onClick={() => applyQuickColor(color.substring(1))}
+                  onClick={() => handleQuickColorClick(color.substring(1))}
+                  onMouseDown={(e) => {
+                    // Prevent focus loss when clicking preset colors
+                    e.preventDefault();
+                    // Maintain textarea selection
+                    if (textAreaRef.current) {
+                      const textarea = textAreaRef.current;
+                      const start = textarea.selectionStart;
+                      const end = textarea.selectionEnd;
+                      if (start !== end) {
+                        textarea.focus();
+                        textarea.setSelectionRange(start, end);
+                      }
+                    }
+                  }}
                   aria-label={`Apply ${color} color`}
                 />
               ))}
