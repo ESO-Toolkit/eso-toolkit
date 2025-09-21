@@ -1,4 +1,4 @@
-import { Box, Typography, Container, useTheme, alpha, Button } from '@mui/material';
+import { Box, Typography, Container, useTheme, alpha, Button, Portal, IconButton, Divider, ClickAwayListener } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import '../styles/text-editor-page-background.css';
@@ -427,6 +427,8 @@ export const TextEditor: React.FC = () => {
   const [charCount, setCharCount] = useState(0);
   const [copyFeedback, setCopyFeedback] = useState('');
   const [showColorPicker, setShowColorPicker] = useState(false);
+  const [colorPickerAnchor, setColorPickerAnchor] = useState<HTMLElement | null>(null);
+  const [colorPickerPosition, setColorPickerPosition] = useState({ x: 0, y: 0 });
   const [selectedTextInfo, setSelectedTextInfo] = useState<{
     start: number;
     end: number;
@@ -435,9 +437,54 @@ export const TextEditor: React.FC = () => {
   } | null>(null);
   const [previewColor, setPreviewColor] = useState<string>('#ffffff'); // Live preview color
   const [isPreviewMode, setIsPreviewMode] = useState(false);
-  const [pickerPosition, setPickerPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+
+  // Calculate optimal position for color picker
+  const calculateOptimalPosition = useCallback((anchorElement: Element) => {
+    const anchorRect = (anchorElement as HTMLElement).getBoundingClientRect();
+    const pickerWidth = 320;
+    const pickerHeight = 500;
+    const padding = 16;
+
+    const viewport = {
+      width: window.innerWidth,
+      height: window.innerHeight,
+    };
+
+    let x = anchorRect.left;
+    let y = anchorRect.bottom + 8;
+
+    // Horizontal positioning
+    if (x + pickerWidth > viewport.width - padding) {
+      // Try positioning to the left of anchor
+      x = anchorRect.right - pickerWidth;
+
+      // If still doesn't fit, position at right edge of viewport
+      if (x < padding) {
+        x = viewport.width - pickerWidth - padding;
+      }
+    }
+
+    // Ensure minimum left padding
+    x = Math.max(padding, x);
+
+    // Vertical positioning
+    if (y + pickerHeight > viewport.height - padding) {
+      // Try positioning above anchor
+      y = anchorRect.top - pickerHeight - 8;
+
+      // If still doesn't fit, center vertically
+      if (y < padding) {
+        y = (viewport.height - pickerHeight) / 2;
+      }
+    }
+
+    // Ensure minimum top padding
+    y = Math.max(padding, y);
+
+    return { x, y };
+  }, []);
 
   // Set initial picker position to center of viewport
   useEffect(() => {
@@ -698,11 +745,26 @@ export const TextEditor: React.FC = () => {
     const centerX = (window.innerWidth - pickerWidth) / 2;
     const centerY = (window.innerHeight - pickerHeight) / 2;
 
-    setPickerPosition({
-      x: Math.max(0, centerX),
-      y: Math.max(0, centerY),
+    setColorPickerPosition({
+      x: Math.max(16, centerX),
+      y: Math.max(16, centerY),
     });
   };
+
+  // Handle window resize to reposition picker
+  useEffect(() => {
+    if (!showColorPicker || !colorPickerAnchor) return;
+
+    const handleResize = (): void => {
+      if (colorPickerAnchor) {
+        const newPosition = calculateOptimalPosition(colorPickerAnchor);
+        setColorPickerPosition(newPosition);
+      }
+    };
+
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, [showColorPicker, colorPickerAnchor, calculateOptimalPosition]);
 
   // Keyboard navigation for color picker
   useEffect(() => {
@@ -851,6 +913,13 @@ export const TextEditor: React.FC = () => {
         originalText: textarea.value, // Store complete original text
       });
 
+      // Calculate optimal position
+      const anchorElement = event.currentTarget;
+      const position = calculateOptimalPosition(anchorElement);
+
+      setColorPickerAnchor(anchorElement as HTMLElement);
+      setColorPickerPosition(position);
+
       // Check if selected text already has a color and use it as default
       const colorFormatRegex = /^\|c([0-9A-Fa-f]{6})(.*?)\|r$/;
       const match = selectedText.match(colorFormatRegex);
@@ -859,6 +928,7 @@ export const TextEditor: React.FC = () => {
       setIsPreviewMode(true);
       setShowColorPicker(true);
 
+      
       // Maintain visual selection during picker open
       setTimeout(() => {
         if (textAreaRef.current) {
@@ -871,7 +941,7 @@ export const TextEditor: React.FC = () => {
         }
       }, 100);
     },
-    [textAreaRef],
+    [textAreaRef, calculateOptimalPosition],
   );
 
   // Drag handlers for color picker
@@ -897,7 +967,7 @@ export const TextEditor: React.FC = () => {
     const maxX = window.innerWidth - pickerWidth;
     const maxY = window.innerHeight - pickerHeight;
 
-    setPickerPosition({
+    setColorPickerPosition({
       x: Math.max(0, Math.min(newX, maxX)),
       y: Math.max(0, Math.min(newY, maxY)),
     });
@@ -907,15 +977,17 @@ export const TextEditor: React.FC = () => {
     setIsDragging(false);
   };
 
-  // Handle window resize to keep picker in viewport
+  // Handle window resize to keep picker in viewport when dragging
   useEffect(() => {
+    if (!isDragging) return;
+
     const handleResize = (): void => {
       const pickerWidth = 320;
       const pickerHeight = 500;
       const maxX = window.innerWidth - pickerWidth;
       const maxY = window.innerHeight - pickerHeight;
 
-      setPickerPosition(prev => ({
+      setColorPickerPosition(prev => ({
         x: Math.max(0, Math.min(prev.x, maxX)),
         y: Math.max(0, Math.min(prev.y, maxY)),
       }));
@@ -923,7 +995,7 @@ export const TextEditor: React.FC = () => {
 
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
-  }, []);
+  }, [isDragging]);
 
   // Add global event listeners for dragging
   useEffect(() => {
@@ -946,6 +1018,7 @@ export const TextEditor: React.FC = () => {
     }
 
     setShowColorPicker(false);
+    setColorPickerAnchor(null);
     setSelectedTextInfo(null);
     setPreviewColor('#ffffff');
     setIsPreviewMode(false);
@@ -1332,184 +1405,184 @@ export const TextEditor: React.FC = () => {
 
           <PreviewArea id="eso-preview">{renderPreview()}</PreviewArea>
 
-          {/* Modern Color Picker with react-colorful */}
+          {/* Portal-Based Color Picker */}
           {showColorPicker && (
-            <>
-              {/* Backdrop */}
-              <Box
-                sx={{
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  zIndex: 999998,
-                  backgroundColor: 'rgba(0, 0, 0, 0.1)',
-                }}
-                onClick={cancelColorSelection}
-              />
-
-              {/* Color Picker Container */}
-              <Box
-                sx={{
-                  position: 'fixed',
-                  left: `${pickerPosition.x}px`,
-                  top: `${pickerPosition.y}px`,
-                  zIndex: 999999,
-                  borderRadius: '12px',
-                  overflow: 'visible',
-                  backgroundColor: theme.palette.background.paper,
-                  border: `1px solid ${theme.palette.divider}`,
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 12px 48px rgba(0, 0, 0, 0.7)'
-                      : '0 12px 48px rgba(0, 0, 0, 0.2)',
-                  backdropFilter: 'blur(12px) saturate(180%)',
-                  minWidth: theme.breakpoints.down('sm') ? '300px' : '280px',
-                  maxWidth: theme.breakpoints.down('sm') ? '300px' : '320px',
-                  maxHeight: '90vh',
-                  overflowY: 'auto',
-                  transform: isDragging ? 'scale(1.02)' : 'scale(1)',
-                  opacity: 1,
-                  transition: isDragging ? 'none' : 'all 0.2s ease-out',
-                  animation: 'scaleIn 0.2s ease-out',
-                  cursor: isDragging ? 'grabbing' : 'grab',
-                  '@keyframes scaleIn': {
-                    '0%': {
-                      transform: 'scale(0.95)',
-                      opacity: 0,
-                    },
-                    '100%': {
-                      transform: 'scale(1)',
-                      opacity: 1,
-                    },
-                  },
-                }}
-                onMouseDown={handleDragStart}
-              >
-                {/* Header */}
+            <Portal>
+              <ClickAwayListener onClickAway={cancelColorSelection}>
                 <Box
                   sx={{
+                    position: 'fixed',
+                    left: `${colorPickerPosition.x}px`,
+                    top: `${colorPickerPosition.y}px`,
+                    zIndex: theme.zIndex.modal + 100, // Ensure it's above everything
+                    bgcolor: theme.palette.background.paper,
+                    border: `1px solid ${theme.palette.divider}`,
+                    borderRadius: 2,
+                    boxShadow: theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.6)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.2)',
+                    width: 280,
+                    maxHeight: '90vh', // Prevent cutting off on small screens
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(12px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(12px) saturate(180%)',
+                    // Animation
+                    animation: 'colorPickerFadeIn 0.2s ease-out',
+                    cursor: isDragging ? 'grabbing' : 'grab',
+                    transform: isDragging ? 'scale(1.02)' : 'scale(1)',
+                    transition: isDragging ? 'none' : 'all 0.2s ease-out',
+                  }}
+                  role="dialog"
+                  aria-modal="true"
+                  aria-labelledby="color-picker-title"
+                  onMouseDown={handleDragStart}
+                >
+                  {/* Header */}
+                  <Box sx={{
                     p: 2,
-                    borderBottom: `1px solid ${theme.palette.divider}`,
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.02)'
-                        : 'rgba(0, 0, 0, 0.02)',
-                    cursor: 'grab',
+                    pb: 1,
                     display: 'flex',
-                    justifyContent: 'space-between',
                     alignItems: 'center',
+                    justifyContent: 'space-between',
+                    cursor: 'grab',
                     '&:active': {
                       cursor: 'grabbing',
                     },
                   }}
                   onMouseDown={handleDragStart}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Box
-                      sx={{
-                        fontSize: '14px',
-                        color: theme.palette.text.secondary,
-                        opacity: 0.6,
-                        cursor: 'grab',
-                        '&:active': {
-                          cursor: 'grabbing',
-                        },
-                      }}
-                    >
-                      ⠿
-                    </Box>
-                    <Typography
-                      variant="subtitle2"
-                      sx={{ fontWeight: 600, color: theme.palette.text.primary }}
-                    >
-                      Choose Text Color
-                    </Typography>
-                    <Box
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        resetPickerPosition();
-                      }}
-                      sx={{
-                        fontSize: '12px',
-                        color: theme.palette.text.secondary,
-                        opacity: 0.7,
-                        cursor: 'pointer',
-                        '&:hover': {
-                          opacity: 1,
-                          color: theme.palette.primary.main,
-                        },
-                        ml: 1,
-                      }}
-                      title="Reset position (Ctrl+R)"
-                    >
-                      ↺
-                    </Box>
-                  </Box>
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: theme.palette.text.secondary,
-                      fontFamily: 'monospace',
-                      fontSize: '11px',
-                      mt: 0.5,
-                      display: 'block',
-                    }}
                   >
-                    "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}
-                    {selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
-                  </Typography>
-                </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Box
+                        sx={{
+                          fontSize: '14px',
+                          color: theme.palette.text.secondary,
+                          opacity: 0.6,
+                        }}
+                      >
+                        ⠿
+                      </Box>
+                      <Typography
+                        id="color-picker-title"
+                        variant="subtitle1"
+                        sx={{ fontWeight: 600 }}
+                      >
+                        Choose Text Color
+                      </Typography>
+                      <Box
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          resetPickerPosition();
+                        }}
+                        sx={{
+                          fontSize: '12px',
+                          color: theme.palette.text.secondary,
+                          opacity: 0.7,
+                          cursor: 'pointer',
+                          '&:hover': {
+                            opacity: 1,
+                            color: theme.palette.primary.main,
+                          },
+                          ml: 1,
+                        }}
+                        title="Reset position (Ctrl+R)"
+                      >
+                        ↺
+                      </Box>
+                    </Box>
+                    <IconButton
+                      size="small"
+                      onClick={cancelColorSelection}
+                      aria-label="Close color picker"
+                      sx={{
+                        opacity: 0.7,
+                        '&:hover': { opacity: 1 },
+                      }}
+                    >
+                      ✕
+                    </IconButton>
+                  </Box>
 
-                {/* Color Picker Section */}
-                <Box
-                  sx={{ p: 3 }}
+                  {/* Selected Text Preview */}
+                  <Box sx={{ px: 2, pb: 2 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        bgcolor: theme.palette.background.default,
+                        px: 1.5,
+                        py: 0.5,
+                        borderRadius: 1,
+                        fontFamily: 'monospace',
+                        fontSize: '0.75rem',
+                        display: 'inline-block',
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      "{selectedTextInfo?.text ? selectedTextInfo.text.substring(0, 30) : ''}{selectedTextInfo?.text && selectedTextInfo.text.length > 30 ? '...' : ''}"
+                    </Typography>
+                  </Box>
+
+                  <Divider />
+
+                  {/* Color Picker */}
+                  <Box sx={{
+                    p: 2,
+                    '& .react-colorful': {
+                      width: '100% !important',
+                      height: '180px !important',
+                    },
+                    '& .react-colorful__saturation': {
+                      borderRadius: '6px 6px 0 0 !important',
+                    },
+                    '& .react-colorful__hue': {
+                      height: '20px !important',
+                      borderRadius: '0 0 6px 6px !important',
+                    },
+                    '& .react-colorful__pointer': {
+                      width: '16px !important',
+                      height: '16px !important',
+                      border: '2px solid white !important',
+                      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3) !important',
+                    },
+                  }}
                   onMouseDown={(e) => {
-                    // Prevent focus loss when clicking on color picker controls
-                    e.preventDefault();
                     e.stopPropagation();
-                    // Maintain textarea selection
                     if (textAreaRef.current && selectedTextInfo) {
                       const { start, end } = selectedTextInfo;
                       textAreaRef.current.focus();
                       textAreaRef.current.setSelectionRange(start, end);
                     }
                   }}
-                >
-                  <HexColorPicker
-                    color={previewColor}
-                    onChange={handleColorPreview}
-                    style={{
-                      width: '100%',
-                      height: '200px',
-                      borderRadius: '8px',
-                      cursor: 'pointer',
-                    }}
-                  />
+                  >
+                    <HexColorPicker
+                      color={previewColor}
+                      onChange={handleColorPreview}
+                    />
+                  </Box>
 
                   {/* Hex Input */}
-                  <Box sx={{ mt: 3, mb: 2 }}>
+                  <Box sx={{ px: 2, pb: 2 }}>
                     <HexColorInput
                       color={previewColor}
                       onChange={handleColorPreview}
                       prefixed
+                      placeholder="Enter hex color"
                       style={{
                         width: '100%',
-                        padding: '12px',
-                        borderRadius: '8px',
+                        padding: '10px 12px',
+                        fontSize: '14px',
+                        fontFamily: 'monospace',
                         border: `1px solid ${theme.palette.divider}`,
+                        borderRadius: '6px',
                         backgroundColor: theme.palette.background.default,
                         color: theme.palette.text.primary,
-                        fontFamily: theme.typography.fontFamily,
-                        fontSize: '14px',
                         outline: 'none',
-                        transition: 'border-color 0.2s',
                       }}
-                      placeholder="Enter hex color"
+                      aria-label="Hex color input"
                       onFocus={(e) => {
-                        // Prevent focus theft and maintain textarea selection
-                        e.preventDefault();
                         e.stopPropagation();
                         if (textAreaRef.current && selectedTextInfo) {
                           const { start, end } = selectedTextInfo;
@@ -1519,169 +1592,52 @@ export const TextEditor: React.FC = () => {
                       }}
                     />
                   </Box>
-                </Box>
 
-                {/* Preset Colors */}
-                <Box
-                  sx={{ px: 3, pb: 3 }}
-                  onMouseDown={(e) => {
-                    // Prevent focus loss when clicking on preset colors
-                    e.preventDefault();
-                    e.stopPropagation();
-                    // Maintain textarea selection
-                    if (textAreaRef.current && selectedTextInfo) {
-                      const { start, end } = selectedTextInfo;
-                      textAreaRef.current.focus();
-                      textAreaRef.current.setSelectionRange(start, end);
-                    }
-                  }}
-                >
-                  <Typography
-                    variant="caption"
-                    sx={{
-                      color: theme.palette.text.secondary,
-                      mb: 2,
-                      display: 'block',
-                      fontWeight: 500,
-                    }}
-                  >
-                    Quick Colors
-                  </Typography>
-                  <Box
-                    sx={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(6, 1fr)',
-                      gap: '8px',
-                    }}
-                  >
-                    {[
-                      '#FFFF00',
-                      '#00FF00',
-                      '#FF0000',
-                      '#0080FF',
-                      '#FF8000',
-                      '#FF00FF',
-                      '#FFFFFF',
-                      '#CCCCCC',
-                      '#999999',
-                      '#666666',
-                      '#333333',
-                      '#000000',
-                      '#FFD700',
-                      '#FF4500',
-                      '#FFA500',
-                      '#32CD32',
-                      '#8A2BE2',
-                      '#4169E1',
-                    ].map((color, index) => (
-                      <Box
-                        key={index}
-                        onClick={() => handleColorPreview(color)}
-                        sx={{
-                          width: '32px',
-                          height: '32px',
-                          borderRadius: '6px',
-                          backgroundColor: color,
-                          border: `2px solid ${theme.palette.divider}`,
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          '&:hover': {
-                            transform: 'scale(1.1)',
-                            borderColor: theme.palette.primary.main,
-                            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.3)',
-                          },
-                          '&:focus': {
-                            outline: `2px solid ${theme.palette.primary.main}`,
-                            outlineOffset: '2px',
-                          },
-                        }}
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            e.preventDefault();
-                            handleColorPreview(color);
-                          }
-                        }}
-                        aria-label={`Apply color ${color}`}
-                      />
-                    ))}
-                  </Box>
-                </Box>
+                  <Divider />
 
-                {/* Action Buttons */}
-                <Box
-                  sx={{
+                  {/* Action Buttons */}
+                  <Box sx={{
                     p: 2,
-                    borderTop: `1px solid ${theme.palette.divider}`,
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.02)'
-                        : 'rgba(0, 0, 0, 0.02)',
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                  }}
-                >
-                  {/* Current Color Indicator */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: '24px',
-                        height: '24px',
-                        borderRadius: '4px',
-                        backgroundColor: previewColor,
-                        border: `1px solid ${theme.palette.divider}`,
-                      }}
-                    />
+                    bgcolor: theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.02)'
+                      : 'rgba(0, 0, 0, 0.02)',
+                  }}>
                     <Typography
                       variant="caption"
                       sx={{
                         color: theme.palette.text.secondary,
                         fontFamily: 'monospace',
-                        fontWeight: 500,
+                        fontSize: '0.75rem',
                       }}
                     >
-                      {previewColor.toUpperCase()}
+                      Preview: {previewColor.toUpperCase()}
                     </Typography>
-                  </Box>
 
-                  {/* Buttons */}
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={cancelColorSelection}
-                      sx={{
-                        minWidth: 80,
-                        color: theme.palette.text.primary,
-                        borderColor: theme.palette.divider,
-                        '&:hover': {
-                          borderColor: theme.palette.primary.main,
-                          backgroundColor: theme.palette.action.hover,
-                        },
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      variant="contained"
-                      size="small"
-                      onClick={applyPreviewColor}
-                      sx={{
-                        minWidth: 80,
-                        backgroundColor: theme.palette.primary.main,
-                        color: theme.palette.primary.contrastText,
-                        '&:hover': {
-                          backgroundColor: theme.palette.primary.dark,
-                        },
-                      }}
-                    >
-                      Apply
-                    </Button>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={cancelColorSelection}
+                        sx={{ minWidth: 70 }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="contained"
+                        size="small"
+                        onClick={applyPreviewColor}
+                        sx={{ minWidth: 70 }}
+                      >
+                        Apply
+                      </Button>
+                    </Box>
                   </Box>
                 </Box>
-              </Box>
-            </>
+              </ClickAwayListener>
+            </Portal>
           )}
         </EditorTool>
       </Container>
