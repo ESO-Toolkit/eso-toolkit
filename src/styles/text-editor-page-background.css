@@ -266,6 +266,15 @@ body.text-editor-page .css-cm1l3d {
   body.text-editor-page .css-cm1l3d::after {
     background: rgb(0 0 0 / 40%) !important;
   }
+
+  /* Hide .pickr element next to .css-fcvuav on mobile */
+  body.text-editor-page .css-fcvuav + .pickr,
+  body.text-editor-page .pickr:has(+ .css-fcvuav),
+  body.text-editor-page .pickr:has(~ .css-fcvuav) {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
 }
 
 /* Remove border radius from nav header on mobile for text editor page */
@@ -285,7 +294,12 @@ body.text-editor-page .css-cm1l3d {
 /* Force footer to use dark mode colors on text editor page for both light and dark mode */
 body.text-editor-page footer {
   /* Force dark mode background gradient */
-  background: linear-gradient(180deg, transparent 0%, rgba(15,23,42,0.4) 50%, rgba(3,7,18,0.8) 100%) !important;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(15, 23, 42, 0.4) 50%,
+    rgba(3, 7, 18, 0.8) 100%
+  ) !important;
   background-image: none !important;
 }
 
@@ -329,16 +343,16 @@ body.text-editor-page footer .MuiBox-root .MuiBox-root::after {
 }
 
 /* Force footer box backgrounds - more specific to avoid breaking layout */
-body.text-editor-page footer .MuiBox-root .MuiBox-root:not(:has(img))[style*="background"] {
+body.text-editor-page footer .MuiBox-root .MuiBox-root:not(:has(img))[style*='background'] {
   background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1)) !important;
   border: 1px solid rgba(56, 189, 248, 0.2) !important;
 }
 
 /* Force text gradients to dark mode - more specific targeting */
-body.text-editor-page footer .MuiTypography-root[style*="background: linear-gradient"],
-body.text-editor-page footer .MuiTypography-root[style*="WebkitBackgroundClip"],
+body.text-editor-page footer .MuiTypography-root[style*='background: linear-gradient'],
+body.text-editor-page footer .MuiTypography-root[style*='WebkitBackgroundClip'],
 body.text-editor-page footer .css-1npj6wl-MuiTypography-root,
-body.text-editor-page footer .MuiTypography-h5[style*="letter-spacing"] {
+body.text-editor-page footer .MuiTypography-h5[style*='letter-spacing'] {
   background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -346,13 +360,13 @@ body.text-editor-page footer .MuiTypography-h5[style*="letter-spacing"] {
 }
 
 /* Remove logo filters to let it show naturally */
-body.text-editor-page footer img[src*="ESOHelpers-logo-icon"] {
+body.text-editor-page footer img[src*='ESOHelpers-logo-icon'] {
   filter: none !important;
   box-shadow: none !important;
 }
 
 /* Add single background overlay behind the entire logo section for better readability */
-body.text-editor-page footer .MuiBox-root:has(img[src*="ESOHelpers-logo-icon"]) {
+body.text-editor-page footer .MuiBox-root:has(img[src*='ESOHelpers-logo-icon']) {
   background: linear-gradient(135deg, rgba(0, 0, 0, 0.25), rgba(0, 0, 0, 0.1)) !important;
   border-radius: 12px !important;
   padding: 8px !important;
