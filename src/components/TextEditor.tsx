@@ -89,14 +89,14 @@ const ToolbarButton = styled('button')({
   cursor: 'pointer',
   fontSize: '13px',
   fontWeight: 500,
-  transition: 'all 0.15s ease-in-out',
+  transition: 'all 0.2s ease-in-out',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   '&:hover': {
     background: 'var(--accent)',
     borderColor: 'var(--accent)',
     color: 'var(--bg)',
     transform: 'translateY(-1px)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)',
   },
   '&:active': {
     background: 'var(--accent2)',
@@ -243,9 +243,10 @@ const EmojiButton = styled('button')({
   cursor: 'pointer',
   fontSize: '46px !important',
   lineHeight: '1',
-  transition: 'transform 0.1s',
+  transition: 'all 0.2s ease-in-out',
   '&:hover': {
-    transform: 'scale(1.05)',
+    transform: 'scale(1.1)',
+    filter: 'drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2))',
   },
 });
 
@@ -304,7 +305,7 @@ const CopyButton = styled('button')(({ theme }) => ({
   cursor: 'pointer',
   fontSize: '14px',
   fontWeight: 500,
-  transition: 'all 0.15s ease-in-out',
+  transition: 'all 0.2s ease-in-out',
   marginLeft: 'auto',
   boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
   '&:hover': {
@@ -312,7 +313,9 @@ const CopyButton = styled('button')(({ theme }) => ({
     borderColor: theme.palette.primary.dark,
     color: theme.palette.background.default,
     transform: 'translateY(-1px)',
-    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+    boxShadow: theme.palette.mode === 'dark'
+      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+      : '0 4px 16px rgba(0, 0, 0, 0.2)',
   },
   '&:active': {
     background: theme.palette.primary.main,
@@ -1478,7 +1481,17 @@ export const TextEditor: React.FC = () => {
                       aria-label="Close color picker"
                       sx={{
                         opacity: 0.7,
-                        '&:hover': { opacity: 1 },
+                        color: theme.palette.text.secondary,
+                        backgroundColor: 'transparent',
+                        border: '1px solid transparent',
+                        '&:hover': {
+                          opacity: 1,
+                          color: theme.palette.error.main,
+                          backgroundColor: theme.palette.action.hover,
+                          borderColor: theme.palette.error.main,
+                          transform: 'scale(1.1)',
+                        },
+                        transition: 'all 0.2s ease',
                       }}
                     >
                       ✕
@@ -1604,7 +1617,22 @@ export const TextEditor: React.FC = () => {
                         variant="outlined"
                         size="small"
                         onClick={cancelColorSelection}
-                        sx={{ minWidth: 70 }}
+                        sx={{
+                          minWidth: 70,
+                          borderColor: theme.palette.divider,
+                          color: theme.palette.text.primary,
+                          backgroundColor: theme.palette.background.default,
+                          '&:hover': {
+                            borderColor: theme.palette.primary.main,
+                            backgroundColor: theme.palette.action.hover,
+                            color: theme.palette.primary.main,
+                            transform: 'translateY(-1px)',
+                            boxShadow: theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                              : '0 4px 12px rgba(0, 0, 0, 0.15)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
                       >
                         Cancel
                       </Button>
@@ -1612,7 +1640,19 @@ export const TextEditor: React.FC = () => {
                         variant="contained"
                         size="small"
                         onClick={applyPreviewColor}
-                        sx={{ minWidth: 70 }}
+                        sx={{
+                          minWidth: 70,
+                          backgroundColor: theme.palette.primary.main,
+                          color: theme.palette.primary.contrastText,
+                          '&:hover': {
+                            backgroundColor: theme.palette.primary.dark,
+                            transform: 'translateY(-1px)',
+                            boxShadow: theme.palette.mode === 'dark'
+                              ? '0 4px 16px rgba(0, 0, 0, 0.4)'
+                              : '0 4px 16px rgba(0, 0, 0, 0.2)',
+                          },
+                          transition: 'all 0.2s ease',
+                        }}
                       >
                         Apply
                       </Button>
