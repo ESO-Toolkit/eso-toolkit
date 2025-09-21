@@ -14,7 +14,10 @@
 /* Light mode specific overrides */
 .text-editor-page:not(.dark-mode) {
   --text: var(--mui-palette-text-primary, #000);
-  --panel: var(--mui-palette-background-paper, rgba(255, 255, 255, 0.741176)); /* #ffffffbd = 74.12% opacity */
+  --panel: var(
+    --mui-palette-background-paper,
+    rgba(255, 255, 255, 0.741176)
+  ); /* #ffffffbd = 74.12% opacity */
   --panel2: var(--mui-palette-background-default, rgba(255, 255, 255, 0.98));
   --border: var(--mui-palette-divider, rgba(0, 0, 0, 0.12));
   --accent: var(--mui-palette-primary-main, #38bdf8);
@@ -25,7 +28,10 @@
 /* Dark mode specific overrides */
 .text-editor-page.dark-mode {
   --text: var(--mui-palette-text-primary, #fff);
-  --panel: var(--mui-palette-background-paper, rgba(15, 23, 42, 0.709804)); /* #0f172ab5 = 70.98% opacity */
+  --panel: var(
+    --mui-palette-background-paper,
+    rgba(15, 23, 42, 0.709804)
+  ); /* #0f172ab5 = 70.98% opacity */
   --panel2: var(--mui-palette-background-default, rgba(0, 0, 0, 0.9));
   --border: var(--mui-palette-divider, rgba(255, 255, 255, 0.2));
   --accent: var(--mui-palette-primary-main, #38bdf8);

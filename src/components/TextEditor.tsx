@@ -498,9 +498,10 @@ export const TextEditor: React.FC = () => {
     };
 
     // Apply transparency to background paper based on theme mode
-    const backgroundPaper = theme.palette.mode === 'dark'
-      ? hexToRgba(theme.palette.background.paper, 0.709804) // #0f172ab5
-      : hexToRgba(theme.palette.background.paper, 0.741176); // #ffffffbd
+    const backgroundPaper =
+      theme.palette.mode === 'dark'
+        ? hexToRgba(theme.palette.background.paper, 0.709804) // #0f172ab5
+        : hexToRgba(theme.palette.background.paper, 0.741176); // #ffffffbd
 
     // Map Material UI theme values to CSS variables
     root.style.setProperty('--mui-palette-background-default', theme.palette.background.default);
