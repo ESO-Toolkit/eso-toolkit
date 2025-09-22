@@ -1236,10 +1236,10 @@ const Calculator: React.FC = React.memo(() => {
       };
 
       const valueStyles = {
-        color: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
+        color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
         fontWeight: 700,
         fontFamily: 'monospace',
-        textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(59,130,246,0.25)' : 'none',
+        textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
         minWidth: liteMode ? '3ch' : isMobile ? '4ch' : '4ch',
         textAlign: 'right',
         fontSize: liteMode ? '0.7rem' : isMobile ? '0.85rem' : '0.875rem',
@@ -1278,10 +1278,10 @@ const Calculator: React.FC = React.memo(() => {
             py: liteMode ? 1 : isMobile ? 1.25 : 1,
             pl: liteMode ? 1 : 0.5,
             background: item.enabled && liteMode
-              ? 'linear-gradient(135deg, rgb(171 140 237 / 12%) 0%, rgb(233 85 255 / 8%) 100%) !important'
+              ? 'linear-gradient(135deg, rgb(140 182 237 / 12%) 0%, rgb(85 159 255 / 8%) 100%) !important'
               : undefined,
             border: item.enabled && liteMode
-              ? '1px solid rgb(180 105 255 / 30%) !important'
+              ? '1px solid rgb(105 162 255 / 30%) !important'
               : undefined,
           }}
           onClick={item.locked ? undefined : handleItemClick}
@@ -1298,16 +1298,28 @@ const Calculator: React.FC = React.memo(() => {
                 return {
                   ...checkboxStyles,
                   '&.Mui-checked': {
-                    color: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                    color:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
                   },
                   '&.Mui-checked .MuiSvgIcon-root': {
-                    color: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                    color:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
                   },
                   '&.Mui-checked .MuiSvgIcon-root path': {
-                    fill: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                    fill:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
                   },
                   svg: {
-                    color: !liteMode && item.enabled && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                    color:
+                      theme.palette.mode === 'light' && item.enabled
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
                   },
                 };
               }}
