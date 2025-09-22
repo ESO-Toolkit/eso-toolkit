@@ -1549,75 +1549,7 @@ const Calculator: React.FC = React.memo(() => {
             },
           }}
         >
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: liteMode ? 2 : 6 }}>
-            <Typography
-              variant={liteMode ? 'h4' : 'h1'}
-              sx={{
-                fontWeight: 900,
-                fontFamily: 'Space Grotesk, Inter, sans-serif',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #ffffff 0%, rgb(128 211 255 / 90%) 25%, rgb(56 189 248 / 85%) 50%, rgb(40 145 200 / 80%) 75%, rgb(40 145 200 / 90%) 100%)'
-                    : 'linear-gradient(135deg, #1e293b 0%, rgb(40 145 200 / 95%) 25%, rgb(56 189 248 / 90%) 50%, rgb(128 211 255 / 85%) 75%, rgb(128 211 255 / 90%) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                mb: liteMode ? 1 : 2,
-                fontSize: liteMode ? '1.75rem' : { xs: '2.75rem', md: '3.5rem' },
-                letterSpacing: '-0.02em',
-                textShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 0 40px rgb(128 211 255 / 40%), 0 0 60px rgb(56 189 248 / 25%)'
-                    : '0 4px 12px rgb(40 145 200 / 25%)',
-                position: 'relative',
-                filter:
-                  theme.palette.mode === 'dark'
-                    ? 'drop-shadow(0 0 20px rgb(128 211 255 / 35%))'
-                    : 'drop-shadow(0 0 15px rgb(40 145 200 / 30%))',
-                '&::after': liteMode
-                  ? {
-                      content: '" — Lite"',
-                      background:
-                        'linear-gradient(135deg, rgb(128 211 255 / 90%) 0%, rgb(56 189 248 / 85%) 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      fontWeight: 700,
-                      letterSpacing: '0.5px',
-                      fontSize: '0.85rem',
-                      position: 'absolute',
-                      top: '12px',
-                      right: '-65px',
-                      filter: 'drop-shadow(0 0 8px rgb(128 211 255 / 45%))',
-                    }
-                  : {},
-              }}
-            >
-              ⚔️ ESO Calculator
-            </Typography>
-            <Typography
-              variant={liteMode ? 'body1' : 'h6'}
-              sx={{
-                color: theme.palette.text.secondary,
-                fontWeight: 500,
-                mb: liteMode ? 1 : 3,
-                fontSize: liteMode ? '0.9rem' : { xs: '1.1rem', md: '1.3rem' },
-                letterSpacing: '0.02em',
-                opacity: 0.85,
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgb(128 211 255 / 80%) 30%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 70%, rgba(255, 255, 255, 0.8) 100%)'
-                    : 'linear-gradient(90deg, rgba(30, 41, 59, 0.9) 0%, rgb(40 145 200 / 85%) 30%, rgb(56 189 248 / 85%) 50%, rgb(128 211 255 / 85%) 70%, rgba(30, 41, 59, 0.9) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Penetration & Critical Damage Optimizer — U47
-            </Typography>
-          </Box>
-
+          
           {/* Main Calculator */}
           <CalculatorCard liteMode={liteMode}>
             {/* Controls */}
@@ -1673,12 +1605,12 @@ const Calculator: React.FC = React.memo(() => {
                       top: 0,
                       left: 16,
                       right: 16,
-                      height: '2px',
+                      height: '1px',
                       background:
                         theme.palette.mode === 'dark'
-                          ? 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)'
-                          : 'linear-gradient(90deg, rgb(40 145 200 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(128 211 255 / 80%) 100%)',
-                      borderRadius: '2px',
+                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                      opacity: 0.7,
                     },
               }}
             >
@@ -1923,6 +1855,7 @@ const Calculator: React.FC = React.memo(() => {
                   backdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   WebkitBackdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   position: 'relative',
+                  borderRadius: liteMode ? 0 : '8px 8px 0 0',
                 }}
               >
                 <Tabs
@@ -1981,7 +1914,7 @@ const Calculator: React.FC = React.memo(() => {
                   display: 'flex',
                   gap: 2,
                   p: 2,
-                  pt: 1,
+                  alignItems: 'center',
                   backgroundColor: liteMode
                     ? theme.palette.mode === 'dark'
                       ? 'rgba(15, 23, 42, 0.4)'
@@ -2272,7 +2205,7 @@ const Calculator: React.FC = React.memo(() => {
                     sx={{
                       position: 'relative',
                       p: liteMode ? 2 : 3,
-                      borderRadius: liteMode ? 8 : 12,
+                      borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
@@ -2311,11 +2244,13 @@ const Calculator: React.FC = React.memo(() => {
                         right: liteMode ? 0 : 12,
                         height: liteMode ? 2 : 3,
                         background:
-                          penStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : penStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)',
+                          liteMode
+                            ? (penStatus === 'at-cap'
+                                ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                                : penStatus === 'over-cap'
+                                  ? 'linear-gradient(90deg, #fb923c, #f97316)'
+                                  : 'linear-gradient(90deg, #ef4444, #dc2626)')
+                            : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                         borderRadius: liteMode ? 0 : '2px 2px 0 0',
                       },
                     }}
@@ -2519,7 +2454,7 @@ const Calculator: React.FC = React.memo(() => {
                     sx={{
                       position: 'relative',
                       p: liteMode ? 2 : 3,
-                      borderRadius: liteMode ? 8 : 12,
+                      borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
@@ -2558,11 +2493,13 @@ const Calculator: React.FC = React.memo(() => {
                         right: liteMode ? 0 : 12,
                         height: liteMode ? 2 : 3,
                         background:
-                          critStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : critStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)',
+                          liteMode
+                            ? (critStatus === 'at-cap'
+                                ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                                : critStatus === 'over-cap'
+                                  ? 'linear-gradient(90deg, #fb923c, #f97316)'
+                                  : 'linear-gradient(90deg, #ef4444, #dc2626)')
+                            : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                         borderRadius: liteMode ? 0 : '2px 2px 0 0',
                       },
                     }}
