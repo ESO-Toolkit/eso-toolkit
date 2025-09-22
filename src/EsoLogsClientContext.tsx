@@ -19,7 +19,7 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
   const logger = useLogger('EsoLogsClient');
 
   // We want a singleton here - create client once and update token via methods
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+
   const client = useMemo(() => {
     logger.info('Creating new EsoLogsClient instance');
     return new EsoLogsClient(''); // Start with empty token

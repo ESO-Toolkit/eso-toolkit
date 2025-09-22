@@ -382,7 +382,7 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-const ToolsGrid = styled(Box)(({ theme }) => ({
+const ToolsGrid = styled(Box)(({ theme: _theme }) => ({
   display: 'grid',
   gap: '1.5rem',
   marginTop: '3rem',
@@ -832,8 +832,8 @@ export const LandingPage: React.FC = () => {
             <Typography
               sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
             >
-              Optimize your character's stats with our comprehensive calculator. Track penetration,
-              critical damage, and armor to hit those crucial caps.
+              Optimize your character&apos;s stats with our comprehensive calculator. Track
+              penetration, critical damage, and armor to hit those crucial caps.
             </Typography>
             <ToolFeatures>
               <li>

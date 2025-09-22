@@ -1,12 +1,12 @@
 import React from 'react';
 
+import { APPLICATION_NAME } from '@/Constants';
+
 import { DynamicMetaTags, generateReportMetaTags } from '../../components/DynamicMetaTags';
 import { useReportData } from '../../hooks';
 import { useSelectedReportAndFight } from '../../ReportFightContext';
 
 import { ReportFightDetailsView } from './ReportFightDetailsView';
-
-import { APPLICATION_NAME } from '@/Constants';
 
 export const ReportFightDetails: React.FC = () => {
   // Get current selected report and fight from context

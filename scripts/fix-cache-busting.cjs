@@ -13,7 +13,7 @@ console.log('🔧 Fixing cache busting version mismatch...');
 try {
   // Generate fresh version information
   console.log('📝 Generating version information...');
-  execSync('node scripts/generate-version.js', {
+  execSync('node scripts/generate-version.cjs', {
     cwd: path.join(__dirname, '..'),
     stdio: 'inherit',
   });

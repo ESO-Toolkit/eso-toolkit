@@ -9,9 +9,11 @@ import {
   PlayerDamageReductionDetails,
 } from './PlayerDamageReductionDetails';
 
-interface DamageReductionPanelProps {
-  players: PlayerDetailsWithRole[];
+interface DamageReductionPanelViewProps {
+  reportId: string;
+  fightId: number;
   fight: FightFragment;
+  players: PlayerDetailsWithRole[];
   expandedPanels: Record<string, boolean>;
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
   damageReductionData: Record<number, PlayerDamageReductionData> | null;
@@ -21,9 +23,11 @@ interface DamageReductionPanelProps {
 /**
  * Dumb component that only handles rendering the damage reduction panel UI
  */
-export const DamageReductionPanelView: React.FC<DamageReductionPanelProps> = ({
+export const DamageReductionPanelView: React.FC<DamageReductionPanelViewProps> = ({
+  reportId: _reportId,
+  fightId: _fightId,
+  fight: _fight,
   players,
-  fight,
   expandedPanels,
   onExpandChange,
   damageReductionData,

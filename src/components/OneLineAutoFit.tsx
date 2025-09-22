@@ -61,3 +61,5 @@ export const OneLineAutoFit: React.FC<OneLineAutoFitProps> = React.memo(
     );
   },
 );
+
+OneLineAutoFit.displayName = 'OneLineAutoFit';

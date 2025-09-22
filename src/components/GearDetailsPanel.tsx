@@ -6,7 +6,7 @@ import ShieldIcon from '@mui/icons-material/Shield';
 import SportsMmaIcon from '@mui/icons-material/SportsMma';
 import StarIcon from '@mui/icons-material/Star';
 import { Box, Typography, useTheme, IconButton, Dialog, DialogContent } from '@mui/material';
-import type { ColumnDef } from '@tanstack/react-table';
+import type { ColumnDef, CellContext } from '@tanstack/react-table';
 import React from 'react';
 
 import { useRoleColors } from '../hooks/useRoleColors';
@@ -76,7 +76,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
 
   // Animation state
   const [isTransitioning, setIsTransitioning] = React.useState(false);
-  const [transitionDirection, setTransitionDirection] = React.useState<'left' | 'right'>('right');
+  const [_transitionDirection, setTransitionDirection] = React.useState<'left' | 'right'>('right');
   const [displayedPlayerId, setDisplayedPlayerId] = React.useState(currentPlayerId);
   const [fadeStage, setFadeStage] = React.useState<'in' | 'out' | 'none'>('none');
 
@@ -162,7 +162,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'CP',
         accessorKey: 'championPoints',
         size: 55,
-        cell: (info: any) => {
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => {
           const cp = info.getValue() as number;
           const color = cp >= 160 ? '#4caf50' : cp >= 150 ? '#ff9800' : '#f44336';
           return (
@@ -244,7 +244,7 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
           return getTypeLabel((row as unknown as PlayerGear).type);
         },
         size: 80,
-        cell: (info: any) => (
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => (
           <Typography
             variant="caption"
             sx={{
@@ -268,8 +268,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         accessorFn: (row: Record<string, unknown>) =>
           getSlotName((row as unknown as PlayerGear).slot),
         size: 100,
-        cell: (info: any) => {
-          const piece = info.row.original as PlayerGear;
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => {
+          const piece = info.row.original as unknown as PlayerGear;
           return (
             <Box
               sx={{
@@ -302,8 +302,8 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         header: 'Item',
         accessorFn: (row: Record<string, unknown>) => (row as unknown as PlayerGear).name || '',
         size: 200,
-        cell: (info: any) => {
-          const piece = info.row.original as PlayerGear;
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => {
+          const piece = info.row.original as unknown as PlayerGear;
           const getQualityKey = (
             q: number,
           ): 'normal' | 'fine' | 'superior' | 'epic' | 'legendary' | 'mythic' => {
@@ -388,14 +388,14 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         accessorFn: (row: Record<string, unknown>) =>
           ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
         size: 130,
-        cell: (info: any) => (
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => (
           <Typography
             variant="caption"
             sx={{
               fontWeight: roleColors.isDarkMode ? 100 : 300,
               color: getEnchantmentColor(
-                (info.row.original as PlayerGear).enchantType,
-                (info.row.original as PlayerGear).enchantQuality,
+                (info.row.original as unknown as PlayerGear).enchantType,
+                (info.row.original as unknown as PlayerGear).enchantQuality,
               ),
               fontSize: '0.7rem',
               px: 0.2,
@@ -413,12 +413,12 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
         accessorFn: (row: Record<string, unknown>) =>
           TRAIT_NAMES[(row as unknown as PlayerGear).trait] || '',
         size: 90,
-        cell: (info: any) => (
+        cell: (info: CellContext<Record<string, unknown>, unknown>) => (
           <Typography
             variant="caption"
             sx={{
               fontWeight: roleColors.isDarkMode ? 100 : 300,
-              color: getTraitColor((info.row.original as PlayerGear).trait),
+              color: getTraitColor((info.row.original as unknown as PlayerGear).trait),
               fontSize: '0.7rem',
               px: 0.2,
               py: 0.5,

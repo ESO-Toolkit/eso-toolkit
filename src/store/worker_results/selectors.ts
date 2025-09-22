@@ -1,10 +1,10 @@
 import { createSelector } from '@reduxjs/toolkit';
 
+import { SharedComputationWorkerTaskType, SharedWorkerResultType } from '@/workers/SharedWorker';
+
 import { RootState } from '../storeWithHistory';
 
 import { WorkerTaskState } from './workerTaskSliceFactory';
-
-import { SharedComputationWorkerTaskType, SharedWorkerResultType } from '@/workers/SharedWorker';
 
 // Base selector for worker results state
 export const selectWorkerResults = (state: RootState): typeof state.workerResults =>

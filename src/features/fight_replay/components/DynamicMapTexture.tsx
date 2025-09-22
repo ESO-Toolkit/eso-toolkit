@@ -2,12 +2,12 @@ import { useFrame } from '@react-three/fiber';
 import { useRef, useMemo, useEffect } from 'react';
 import * as THREE from 'three';
 
+import { useLogger } from '@/contexts/LoggerContext';
+
 import { useCurrentFight } from '../../../hooks/useCurrentFight';
 import { fightTimeToTimestamp } from '../../../utils/fightTimeUtils';
 import { getMapAtTimestamp, MapTimeline } from '../../../utils/mapTimelineUtils';
 import { RenderPriority } from '../constants/renderPriorities';
-
-import { useLogger } from '@/contexts/LoggerContext';
 
 interface DynamicMapTextureProps {
   mapTimeline: MapTimeline;
@@ -141,7 +141,7 @@ export const DynamicMapTexture: React.FC<DynamicMapTextureProps> = ({
             currentMapFileRef.current = firstMapFile;
           }
         })
-        .catch((error) => {
+        .catch((_error) => {
           // Use default material if loading fails
           currentMapFileRef.current = null;
         });

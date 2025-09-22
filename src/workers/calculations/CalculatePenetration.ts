@@ -1,5 +1,3 @@
-import { OnProgressCallback } from '../Utils';
-
 import { PlayerDetailsWithRole } from '@/store/player_data/playerDataSlice';
 import { CombatantInfoEvent } from '@/types/combatlogEvents';
 import { BuffLookupData } from '@/utils/BuffLookupUtils';
@@ -9,6 +7,8 @@ import {
   getAllPenetrationSourcesWithActiveState,
   PenetrationSourceWithActiveState,
 } from '@/utils/PenetrationUtils';
+
+import { OnProgressCallback } from '../Utils';
 
 const PENETRATION_CAP = 18200;
 const VOXEL_SIZE_SECONDS = 1;

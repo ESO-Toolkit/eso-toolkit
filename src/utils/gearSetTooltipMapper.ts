@@ -16,7 +16,7 @@ import type { PlayerGear } from '../types/playerDetails';
 import type { PlayerGearSetRecord } from './gearUtilities';
 
 // Create a normalized name lookup map
-const GEAR_SET_REGISTRY = new Map<string, any>();
+const GEAR_SET_REGISTRY = new Map<string, unknown>();
 
 // Helper function to normalize gear set names for lookup
 const normalizeGearSetName = (name: string): string => {
@@ -30,16 +30,26 @@ const normalizeGearSetName = (name: string): string => {
 };
 
 // Helper function to extract set name from gear set data (handles both old and new formats)
-const getSetNameFromGearSet = (gearSet: any): string => {
+interface UnknownGearSet {
+  name?: string;
+  setType?: string;
+  bonuses?: string[];
+  skillLines?: Record<string, { name?: string }>;
+  weapon?: string;
+}
+
+const getSetNameFromGearSet = (gearSet: unknown): string => {
+  const setData = gearSet as UnknownGearSet;
+
   // Check if it's the new format
-  if (gearSet.name && gearSet.setType && gearSet.bonuses) {
-    return gearSet.name;
+  if (setData?.name && setData?.setType && setData?.bonuses) {
+    return setData.name;
   }
 
   // Check if it's the old SkillsetData format
-  if (gearSet.skillLines) {
-    const skillLines = gearSet.skillLines;
-    const firstSkillLine = Object.values(skillLines)[0] as any;
+  if (setData?.skillLines) {
+    const skillLines = setData.skillLines;
+    const firstSkillLine = Object.values(skillLines)[0];
     return firstSkillLine?.name || '';
   }
 
@@ -72,15 +82,17 @@ const populateGearSetRegistry = (): void => {
 populateGearSetRegistry();
 
 // Helper function to determine set type from gear set data (handles both old and new formats)
-const getSetTypeFromGearSet = (gearSet: any): string => {
+const getSetTypeFromGearSet = (gearSet: unknown): string => {
+  const setData = gearSet as UnknownGearSet;
+
   // Check if it's the new format
-  if (gearSet.name && gearSet.setType && gearSet.bonuses) {
-    return gearSet.setType;
+  if (setData?.name && setData?.setType && setData?.bonuses) {
+    return setData.setType;
   }
 
-  // Check if it's the old SkillsetData format
-  if (gearSet.weapon) {
-    return gearSet.weapon;
+  // Check if it's the old SkillsetData format with weapon property
+  if (setData?.weapon) {
+    return setData.weapon;
   }
 
   return 'Unknown';
@@ -136,13 +148,14 @@ const getCategoryBadge = (setName: string, setType: string): string => {
 };
 
 // Convert skillset passives to gear set bonuses (old format)
-const convertPassivesToBonuses = (passives: any[], equippedCount: number): GearSetBonus[] => {
+const convertPassivesToBonuses = (passives: unknown[], equippedCount: number): GearSetBonus[] => {
   if (!passives) return [];
 
   return passives.map((passive) => {
-    const pieces = passive.name || '';
-    const effect = passive.description || '';
-    const requirement = passive.requirement || undefined;
+    const passiveObj = passive as { name?: string; description?: string; requirement?: string };
+    const pieces = passiveObj.name || '';
+    const effect = passiveObj.description || '';
+    const requirement = passiveObj.requirement || undefined;
 
     // Determine if this bonus is active based on equipped count
     const pieceMatch = pieces.match(/\((\d+)\s*items?\)/i);
@@ -194,9 +207,9 @@ export function createGearSetTooltipProps(
 ): GearSetTooltipProps | null {
   const setName = gearRecord.labelName;
   const normalizedName = normalizeGearSetName(setName);
-  const setData = GEAR_SET_REGISTRY.get(normalizedName);
+  const registryData = GEAR_SET_REGISTRY.get(normalizedName);
 
-  if (!setData) {
+  if (!registryData) {
     // Return a basic tooltip if we don't have detailed data
     return {
       headerBadge: 'Unknown Set',
@@ -212,6 +225,7 @@ export function createGearSetTooltipProps(
     };
   }
 
+  const setData = registryData as UnknownGearSet;
   const setType = getSetTypeFromGearSet(setData);
 
   // Handle both old and new formats for bonuses
@@ -221,7 +235,7 @@ export function createGearSetTooltipProps(
 
   if (setData.bonuses && Array.isArray(setData.bonuses)) {
     // New format
-    setBonuses = convertBonusesToTooltipFormat(setData.bonuses, gearRecord.count);
+    setBonuses = convertBonusesToTooltipFormat(setData.bonuses as string[], gearRecord.count);
 
     // Find individual gear pieces for this set
     const setGearPieces =
@@ -246,7 +260,7 @@ export function createGearSetTooltipProps(
   } else if (setData.skillLines) {
     // Old format (SkillsetData)
     const skillLines = setData.skillLines;
-    const firstSkillLine = Object.values(skillLines)[0] as any;
+    const firstSkillLine = Object.values(skillLines)[0] as { passives?: unknown[] };
     const passives = firstSkillLine?.passives || [];
     setBonuses = convertPassivesToBonuses(passives, gearRecord.count);
     iconUrl = undefined; // Old format doesn't have icons
@@ -294,12 +308,13 @@ export function getGearSetTooltipPropsByName(
   equippedCount = 0,
 ): GearSetTooltipProps | null {
   const normalizedName = normalizeGearSetName(setName);
-  const setData = GEAR_SET_REGISTRY.get(normalizedName);
+  const registryData = GEAR_SET_REGISTRY.get(normalizedName);
 
-  if (!setData) {
+  if (!registryData) {
     return null;
   }
 
+  const setData = registryData as UnknownGearSet;
   const setType = getSetTypeFromGearSet(setData);
 
   // Handle both old and new formats for bonuses
@@ -309,13 +324,13 @@ export function getGearSetTooltipPropsByName(
 
   if (setData.bonuses && Array.isArray(setData.bonuses)) {
     // New format
-    setBonuses = convertBonusesToTooltipFormat(setData.bonuses, equippedCount);
+    setBonuses = convertBonusesToTooltipFormat(setData.bonuses as string[], equippedCount);
     // Gear sets don't have individual icons like gear items do
     iconUrl = undefined;
   } else if (setData.skillLines) {
     // Old format (SkillsetData)
     const skillLines = setData.skillLines;
-    const firstSkillLine = Object.values(skillLines)[0] as any;
+    const firstSkillLine = Object.values(skillLines)[0] as { passives?: unknown[] };
     const passives = firstSkillLine?.passives || [];
     setBonuses = convertPassivesToBonuses(passives, equippedCount);
     iconUrl = undefined; // Old format doesn't have icons

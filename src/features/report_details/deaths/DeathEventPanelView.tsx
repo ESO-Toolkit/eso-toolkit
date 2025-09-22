@@ -12,11 +12,11 @@ import {
 import React from 'react';
 import { Link } from 'react-router-dom';
 
+import { timestampToFightTime } from '@/utils/fightTimeUtils';
+
 import { FightFragment, ReportActorFragment } from '../../../graphql/generated';
 import { useRoleColors } from '../../../hooks';
 import { resolveActorName } from '../../../utils/resolveActorName';
-
-import { timestampToFightTime } from '@/utils/fightTimeUtils';
 
 interface AttackEvent {
   abilityName?: string | null;

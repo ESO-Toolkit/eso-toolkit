@@ -1,6 +1,5 @@
 import { KnownAbilities } from '../types/abilities';
-import { DeathEvent } from '../types/combatlogEvents';
-import { UnifiedCastEvent } from '../types/combatlogEvents';
+import { DeathEvent, UnifiedCastEvent } from '../types/combatlogEvents';
 
 export interface DeathDuration {
   playerId: number;

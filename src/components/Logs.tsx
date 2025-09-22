@@ -76,8 +76,8 @@ export const Logs: React.FC = () => {
               mx: 'auto',
             }}
           >
-            This logs page is currently under development. We're working on bringing you advanced
-            logging features for better analysis and debugging of your ESO game data.
+            This logs page is currently under development. We&apos;re working on bringing you
+            advanced logging features for better analysis and debugging of your ESO game data.
           </Typography>
 
           <Alert severity="info" sx={{ maxWidth: 600, mx: 'auto' }}>

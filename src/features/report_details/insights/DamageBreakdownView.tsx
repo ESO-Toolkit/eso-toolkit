@@ -267,3 +267,5 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
     );
   },
 );
+
+DamageBreakdownView.displayName = 'DamageBreakdownView';

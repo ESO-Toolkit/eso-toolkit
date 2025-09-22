@@ -43,16 +43,15 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (playerData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(playerData, null, 2));
-        } catch (err) {
+        } catch {
           // Fallback: create a temporary textarea element
           const textArea = document.createElement('textarea');
           textArea.value = JSON.stringify(playerData, null, 2);
           document.body.appendChild(textArea);
           textArea.select();
           try {
-            // eslint-disable-next-line deprecation/deprecation
             document.execCommand('copy');
-          } catch (err) {
+          } catch {
             // Copy command failed - fallback already created textarea
           }
           document.body.removeChild(textArea);
@@ -73,16 +72,15 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
       if (actorData) {
         try {
           await navigator.clipboard.writeText(JSON.stringify(actorData, null, 2));
-        } catch (err) {
+        } catch {
           // Fallback: create a temporary textarea element
           const textArea = document.createElement('textarea');
           textArea.value = JSON.stringify(actorData, null, 2);
           document.body.appendChild(textArea);
           textArea.select();
           try {
-            // eslint-disable-next-line deprecation/deprecation
             document.execCommand('copy');
-          } catch (err) {
+          } catch {
             // Copy command failed - fallback already created textarea
           }
           document.body.removeChild(textArea);
@@ -106,16 +104,15 @@ export const ActorsPanelView: React.FC<ActorsPanelViewProps> = ({
 
       try {
         await navigator.clipboard.writeText(JSON.stringify(playerCombatantInfoEvents, null, 2));
-      } catch (err) {
+      } catch {
         // Fallback: create a temporary textarea element
         const textArea = document.createElement('textarea');
         textArea.value = JSON.stringify(playerCombatantInfoEvents, null, 2);
         document.body.appendChild(textArea);
         textArea.select();
         try {
-          // eslint-disable-next-line deprecation/deprecation
           document.execCommand('copy');
-        } catch (err) {
+        } catch {
           // Copy command failed - fallback already created textarea
         }
         document.body.removeChild(textArea);

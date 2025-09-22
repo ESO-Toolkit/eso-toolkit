@@ -80,7 +80,7 @@ class Logger implements ILogger {
           this.config.level = level;
         }
       }
-    } catch (error) {
+    } catch {
       // localStorage might not be available
     }
   }
@@ -88,7 +88,7 @@ class Logger implements ILogger {
   private saveLevel(): void {
     try {
       localStorage.setItem('eso-logger-level', this.config.level.toString());
-    } catch (error) {
+    } catch {
       // localStorage might not be available
     }
   }

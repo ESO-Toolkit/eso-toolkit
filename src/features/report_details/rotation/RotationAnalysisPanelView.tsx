@@ -82,7 +82,7 @@ interface RotationAnalysisPanelViewProps {
 
 export const RotationAnalysisPanelView: React.FC<RotationAnalysisPanelViewProps> = ({
   rotationAnalyses,
-  fight,
+  fight: _fight,
 }) => {
   if (!rotationAnalyses.length) {
     return (

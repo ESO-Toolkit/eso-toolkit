@@ -73,16 +73,6 @@ export function getDamageTypesFromFlags(
 }
 
 /**
- * Ability interface for general ability data
- */
-export interface Ability {
-  id: number;
-  name?: string;
-  icon?: string;
-  // Add other fields as needed from the API
-}
-
-/**
  * Lookup type for abilities by string key
  */
 export type AbilitiesLookup = Record<string, Ability>;
@@ -185,7 +175,8 @@ export enum KnownAbilities {
 
   // Legacy Scribed Skills (kept for compatibility)
   SHOCKING_BANNER = 217706,
-  SHATTERING_KNIFE = 217699,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+  SHATTERING_KNIFE = 217699, // Same ID as BANNER_BEARER (legacy compatibility)
 
   // Status Effects
   BURNING = 18084,
@@ -270,7 +261,8 @@ export enum KnownAbilities {
   DESTRUCTIVE_TOUCH = 23208,
   DIVE = 118011,
   ELEMENTAL_BLOCKADE = 75752,
-  ELEMENTAL_DRAIN = 183006,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+  ELEMENTAL_DRAIN = 183006, // Same ID as CEPHALIARCHS_FLAIL
   ELEMENTAL_DRAIN_2 = 29806,
   ELEMENTAL_RAGE = 181331,
   ELEMENTAL_RING = 126633,
@@ -333,7 +325,8 @@ export enum KnownAbilities {
   WINTERS_REVENGE = 62912,
 
   // Specific Named Buffs and Debuffs
-  CRUSHER = 17906,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+  CRUSHER = 17906, // Same ID as CRUSHER_ENCHANT
   EMPOWER = 61737,
   ENGULFING_FLAMES_BUFF = 31104,
   ENLIVENING_OVERFLOW_BUFF = 156011,
@@ -343,7 +336,8 @@ export enum KnownAbilities {
   POWERFUL_ASSAULT = 61771,
   STAGGER = 134336,
   STONE_GIANT = 133027,
-  TOUCH_OF_ZEN = 126597,
+  // eslint-disable-next-line @typescript-eslint/no-duplicate-enum-values
+  TOUCH_OF_ZEN = 126597, // Same ID as FORCE_OF_NATURE_PASSIVE (TODO: verify correct IDs)
 
   // Major Buffs and Debuffs
   MAJOR_BERSERK = 61745,
@@ -415,7 +409,9 @@ export enum PenetrationComputedSourceKey {
 
 /**
  * Penetration values for different effects
+ * Note: Duplicate values are intentional - multiple sources can provide the same penetration amount
  */
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 export enum PenetrationValues {
   // Major Breach provides 5948 penetration
   MAJOR_BREACH = 5948,
@@ -525,7 +521,9 @@ export enum PenetrationValues {
 
 /**
  * Critical damage values for different effects (in percentage)
+ * Note: Duplicate values are intentional - multiple sources can provide the same percentage bonus
  */
+/* eslint-disable @typescript-eslint/no-duplicate-enum-values */
 export enum CriticalDamageValues {
   // Lucent Echoes provides 11% critical damage
   LUCENT_ECHOES = 11,

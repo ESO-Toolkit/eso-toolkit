@@ -32,7 +32,7 @@ const loadVersionInfo = async (): Promise<typeof FALLBACK_VERSION_INFO> => {
       cacheBuster = versionData.cacheBuster;
       return versionData;
     }
-  } catch (error) {
+  } catch {
     // Fall back to default version only if fetch fails
     // eslint-disable-next-line no-console
     console.debug('Could not load version.json, using fallback');

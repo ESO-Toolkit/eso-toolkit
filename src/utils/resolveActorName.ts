@@ -5,12 +5,18 @@ export function resolveActorName(
   fallbackId?: string | number | null,
   fallbackName?: string | null,
 ): string {
-  if (!actor) return fallbackName || String(fallbackId) || 'Unknown';
+  if (!actor) {
+    return (
+      fallbackName ||
+      (fallbackId !== null && fallbackId !== undefined ? String(fallbackId) : '') ||
+      'Unknown'
+    );
+  }
   return (
     (actor.displayName !== 'nil' ? actor.displayName : undefined) ??
     actor.name ??
     fallbackName ??
-    String(fallbackId) ??
+    (fallbackId !== null && fallbackId !== undefined ? String(fallbackId) : null) ??
     'Unknown'
   );
 }

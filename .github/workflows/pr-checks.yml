@@ -188,8 +188,8 @@ jobs:
       - name: Generate version files for cache busting
         run: |
           echo "Generating version files for e2e tests..."
-          node scripts/generate-version.js
-          node scripts/update-manifest.js
+          node scripts/generate-version.cjs
+          node scripts/update-manifest.cjs
       - name: Run Playwright smoke tests
         run: |
           echo "Running Playwright smoke tests..."

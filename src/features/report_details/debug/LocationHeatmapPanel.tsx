@@ -509,7 +509,7 @@ export const LocationHeatmapPanel: React.FC<LocationHeatmapPanelProps> = ({ figh
       new Set(elmsMarkers.map((marker) => marker.tankId).filter(Boolean)),
     );
 
-    elmsMarkers.forEach((marker, index) => {
+    elmsMarkers.forEach((marker, _index) => {
       let color = 'red'; // default color
 
       if (marker.role === 'tank' && marker.tankId) {

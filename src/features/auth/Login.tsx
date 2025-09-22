@@ -139,7 +139,7 @@ export const Login: React.FC = () => {
                   <strong>Does not collect or store</strong> any personal data on our servers
                 </Typography>
                 <Typography component="li" variant="body2">
-                  <strong>Stores all data locally</strong> in your browser's local storage
+                  <strong>Stores all data locally</strong> in your browser&apos;s local storage
                 </Typography>
               </Box>
             </Alert>

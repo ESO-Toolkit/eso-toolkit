@@ -2,16 +2,16 @@ import { Paper } from '@mui/material';
 import React, { useCallback, useRef, useState } from 'react';
 import { useSearchParams, useParams } from 'react-router-dom';
 
+import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
+import { usePlaybackAnimation } from '@/hooks/usePlaybackAnimation';
+import { useScrubbingMode } from '@/hooks/useScrubbingMode';
+
 import { FightFragment } from '../../../graphql/generated';
 import { usePhaseBasedMap } from '../../../hooks/usePhaseBasedMap';
 import { BuffEvent } from '../../../types/combatlogEvents';
 
 import { Arena3D } from './Arena3D';
 import { PlaybackControls } from './PlaybackControls';
-
-import { useAnimationTimeRef } from '@/hooks/useAnimationTimeRef';
-import { usePlaybackAnimation } from '@/hooks/usePlaybackAnimation';
-import { useScrubbingMode } from '@/hooks/useScrubbingMode';
 
 interface FightReplay3DProps {
   selectedFight: FightFragment;

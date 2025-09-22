@@ -34,7 +34,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import { styled, useTheme, alpha } from '@mui/material/styles';
+import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 
 import {
@@ -494,7 +494,7 @@ type GameMode = 'pve' | 'pvp' | 'both';
 // Styled components
 const CalculatorContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
-})<{ liteMode?: boolean }>(({ theme, liteMode }) => ({
+})<{ liteMode?: boolean }>(({ theme, liteMode: _liteMode }) => ({
   minHeight: '100vh',
   background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
   position: 'relative',
@@ -558,9 +558,11 @@ const CalculatorCard = styled(Paper, {
 
 // CSS handles sticky positioning - no custom hook needed
 
-const TotalSection = styled(Box)<{ isLiteMode: boolean }>(({ theme, isLiteMode }) => ({
-  position: 'relative',
-}));
+const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
+  ({ theme: _theme, isLiteMode: _isLiteMode }) => ({
+    position: 'relative',
+  }),
+);
 
 const StickyFooter = styled(Box)<{ isLiteMode: boolean }>(({ theme, isLiteMode }) => ({
   position: 'sticky',
@@ -614,13 +616,13 @@ function a11yProps(index: number): { id: string; 'aria-controls': string } {
 }
 
 // Custom styled alert component that matches the glassmorphism design
-const StyledAlert = styled(Alert)(
+const _StyledAlert = styled(Alert)(
   ({
     theme,
     severity,
     liteMode,
   }: {
-    theme: any;
+    theme: Theme;
     severity: 'success' | 'warning' | 'error' | 'info';
     liteMode: boolean;
   }) => ({
@@ -785,7 +787,7 @@ const Calculator: React.FC = React.memo(() => {
     }
   }, []);
 
-  const calculateTotalValue = useCallback(
+  const _calculateTotalValue = useCallback(
     (data: CalculatorData): number => {
       let total = 0;
       Object.values(data).forEach((section) => {
@@ -955,7 +957,7 @@ const Calculator: React.FC = React.memo(() => {
 
   // Memoize expensive calculations and styles
   // Pre-calculate common style values to prevent recreation on every render
-  const baseStyles = React.useMemo(
+  const _baseStyles = React.useMemo(
     () => ({
       enabledBg:
         theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.12)' : 'rgba(59, 130, 246, 0.05)',
@@ -1479,7 +1481,14 @@ const Calculator: React.FC = React.memo(() => {
         </ListItem>
       );
     },
-    [getCalculatorItemStyles, liteMode, isMobile, theme.palette.mode, theme.palette.text.secondary],
+    [
+      getCalculatorItemStyles,
+      liteMode,
+      isMobile,
+      isExtraSmall,
+      theme.palette.mode,
+      theme.palette.text.secondary,
+    ],
   );
 
   // Render section
@@ -2194,7 +2203,7 @@ const Calculator: React.FC = React.memo(() => {
                     // Lite mode: render all penetration items in a single flattened list
                     <List sx={{ p: 0, overflowX: 'hidden' }}>
                       {Object.values(filteredPenData).flatMap((items, categoryIndex) =>
-                        items.map((item: any, itemIndex: number) =>
+                        items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
                             itemIndex,
@@ -2433,7 +2442,7 @@ const Calculator: React.FC = React.memo(() => {
                     // Lite mode: render all critical items in a single flattened list
                     <List sx={{ p: 0, overflowX: 'hidden' }}>
                       {Object.values(filteredCritData).flatMap((items, categoryIndex) =>
-                        items.map((item: any, itemIndex: number) =>
+                        items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
                             itemIndex,
@@ -2703,5 +2712,7 @@ const Calculator: React.FC = React.memo(() => {
     </>
   );
 });
+
+Calculator.displayName = 'Calculator';
 
 export { Calculator };

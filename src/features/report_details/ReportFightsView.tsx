@@ -698,7 +698,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     });
 
     // Calculate trial difficulty for each individual run based on its own fights
-    const finalizedTrialRuns = updatedTrialRuns.map((run, index) => {
+    const finalizedTrialRuns = updatedTrialRuns.map((run, _index) => {
       const baseName = run.name.replace(/#\d+/, '').trim(); // Remove run number for calculation
       const trialDifficulty = calculateTrialDifficulty(run.fights, baseName);
 
@@ -779,7 +779,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
     );
   }
 
-  const renderFightCard = (fight: FightFragment, idx: number): React.ReactNode => {
+  const renderFightCard = (fight: FightFragment, _idx: number): React.ReactNode => {
     // Handle both boss fights and trash fights
     const isBossFight = fight.difficulty != null;
 

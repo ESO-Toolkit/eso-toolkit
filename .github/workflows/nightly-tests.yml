@@ -472,7 +472,7 @@ jobs:
           ARTIFACTS_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}#artifacts"
 
           # Create the Sentry issue using DSN-based reporting
-          node scripts/create-sentry-issue-dsn.js \
+          node scripts/create-sentry-issue-dsn.cjs \
             --title "$TITLE" \
             --description "$DESCRIPTION" \
             --workflow-url "$WORKFLOW_URL" \

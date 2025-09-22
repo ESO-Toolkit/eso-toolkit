@@ -113,11 +113,9 @@ export const useCacheInvalidation = (
           return Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
         })
         .finally(() => {
-          // eslint-disable-next-line no-restricted-globals
           location.reload();
         });
     } else {
-      // eslint-disable-next-line no-restricted-globals
       location.reload();
     }
   }, []);

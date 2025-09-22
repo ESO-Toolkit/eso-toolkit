@@ -6,13 +6,14 @@ interface StableLoadingProps {
   width?: number | string;
   variant?: 'chart' | 'table' | 'card' | 'panel';
   title?: string;
+  _title?: string; // Unused title prop
 }
 
 export const StableLoading: React.FC<StableLoadingProps> = ({
   height = 400,
   width = '100%',
   variant = 'panel',
-  title = 'Loading...',
+  _title = 'Loading...',
 }) => {
   const getContent = (): React.ReactElement => {
     switch (variant) {

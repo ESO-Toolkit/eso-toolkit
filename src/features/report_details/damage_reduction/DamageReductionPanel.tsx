@@ -58,6 +58,8 @@ export const DamageReductionPanel: React.FC<DamageReductionPanelProps> = ({ figh
 
   return (
     <DamageReductionPanelView
+      reportId={''} // TODO: Get report ID from context
+      fightId={fight.id}
       players={players}
       fight={fight}
       expandedPanels={expandedPanels}

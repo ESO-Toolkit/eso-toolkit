@@ -1,3 +1,4 @@
+/* eslint-disable react/display-name */
 import { ApolloProvider } from '@apollo/client';
 import CssBaseline from '@mui/material/CssBaseline';
 import { ThemeProvider } from '@mui/material/styles';
@@ -6,14 +7,14 @@ import React from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 
+import { TabId } from '@/utils/getSkeletonForTab';
+
 import { EsoLogsClient } from '../../esologsClient';
 import { EsoLogsClientContext } from '../../EsoLogsClientContext';
 import { ReportFightContext } from '../../ReportFightContext';
 import { storybookDarkTheme } from '../themes/storybookThemes';
 import { createMockStore } from '../utils/createMockStore';
 import { MockData } from '../utils/mockDataSets';
-
-import { TabId } from '@/utils/getSkeletonForTab';
 
 // Mock data provider component
 const MockDataProvider: React.FC<{ children: React.ReactNode; mockData: MockData }> = ({
@@ -105,7 +106,7 @@ const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     () => ({
       client: mockClient, // We provide Apollo client directly for Storybook
       isReady: true, // Always ready in Storybook
-      setAuthToken: (token: string) => {
+      setAuthToken: (_token: string) => {
         // Mock implementation - no-op for Storybook
       },
       clearAuthToken: () => {
@@ -134,7 +135,7 @@ const MockEsoLogsClientProvider: React.FC<{ children: React.ReactNode }> = ({ ch
  * - Standard padding container
  */
 export const withEsoLogDecorators = (mockData: MockData): Decorator => {
-  return (Story, context) => (
+  return (Story, _context) => (
     <MockReduxProvider>
       <MockEsoLogsClientProvider>
         <ThemeProvider theme={storybookDarkTheme}>
@@ -160,7 +161,7 @@ export const withEsoLogDecoratorsAndLocalStorage = (
   mockData: MockData,
   localStorageValues: Record<string, string> = {},
 ): Decorator => {
-  return (Story, context) => (
+  return (Story, _context) => (
     <MockLocalStorageProvider localStorageValues={localStorageValues}>
       <MockReduxProvider>
         <MemoryRouter initialEntries={['/']}>

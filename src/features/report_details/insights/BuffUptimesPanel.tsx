@@ -71,18 +71,20 @@ export const BuffUptimesPanel: React.FC<BuffUptimesPanelProps> = ({ fight }) => 
 
     // If we have master data, use it to filter by type
     if (reportMasterData?.abilitiesById) {
-      Object.entries(friendlyBuffsLookup.buffIntervals).forEach(([abilityGameIDStr, intervals]) => {
-        const abilityGameID = parseInt(abilityGameIDStr, 10);
-        const ability = reportMasterData.abilitiesById[abilityGameID];
+      Object.entries(friendlyBuffsLookup.buffIntervals).forEach(
+        ([abilityGameIDStr, _intervals]) => {
+          const abilityGameID = parseInt(abilityGameIDStr, 10);
+          const ability = reportMasterData.abilitiesById[abilityGameID];
 
-        // Be more permissive: include if it's type '2' OR if we don't have type data but it's in our known important buffs
-        if (
-          ability?.type === '2' ||
-          (!ability?.type && IMPORTANT_BUFF_ABILITIES.has(abilityGameID))
-        ) {
-          buffAbilityIds.add(abilityGameID);
-        }
-      });
+          // Be more permissive: include if it's type '2' OR if we don't have type data but it's in our known important buffs
+          if (
+            ability?.type === '2' ||
+            (!ability?.type && IMPORTANT_BUFF_ABILITIES.has(abilityGameID))
+          ) {
+            buffAbilityIds.add(abilityGameID);
+          }
+        },
+      );
 
       // If no buffs found with type filtering, include all important buffs that exist in the data
       if (buffAbilityIds.size === 0) {

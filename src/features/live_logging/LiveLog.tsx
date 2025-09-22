@@ -3,12 +3,12 @@ import React from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
+import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
+
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/generated';
 import { ReportFightContext } from '../../ReportFightContext';
 import { TabId } from '../../utils/getSkeletonForTab';
-
-import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
 
 const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 

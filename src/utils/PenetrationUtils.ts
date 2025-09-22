@@ -366,12 +366,13 @@ function isComputedSourceActive(
     case PenetrationComputedSourceKey.ARMOR_SETS_3460:
     case PenetrationComputedSourceKey.ARMOR_SETS_1496:
     case PenetrationComputedSourceKey.ARMOR_SETS_1487:
-    case PenetrationComputedSourceKey.ARMOR_SETS_1190:
+    case PenetrationComputedSourceKey.ARMOR_SETS_1190: {
       if (!combatantInfo || !combatantInfo.gear) return false;
       const setsConfig = ARMOR_SET_PENETRATION_CONFIG[source.key];
       return setsConfig.some(
         ({ setId, requiredPieces }) => getSetCount(combatantInfo.gear, setId) >= requiredPieces,
       );
+    }
     // ========================================
     // INDIVIDUAL COMPUTED SOURCES
     // ========================================
@@ -381,7 +382,7 @@ function isComputedSourceActive(
         (aura: CombatantAura) =>
           aura.ability === KnownAbilities.CONCENTRATION || aura.name?.includes('Concentration'),
       );
-    case PenetrationComputedSourceKey.SPLINTERED_SECRETS:
+    case PenetrationComputedSourceKey.SPLINTERED_SECRETS: {
       if (!combatantInfo || !combatantInfo.auras || !playerData) return false;
       const splinteredSecretsAuras = combatantInfo.auras.filter(
         (aura: CombatantAura) =>
@@ -390,6 +391,7 @@ function isComputedSourceActive(
           aura.name?.includes('Splintered Secrets'),
       );
       return splinteredSecretsAuras.length > 0;
+    }
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
       // TODO: Implement proper status effect tracking - assume inactive until implemented
       return false;
@@ -442,7 +444,7 @@ function getPenetrationFromComputedSource(
     case PenetrationComputedSourceKey.ARMOR_SETS_3460:
     case PenetrationComputedSourceKey.ARMOR_SETS_1496:
     case PenetrationComputedSourceKey.ARMOR_SETS_1487:
-    case PenetrationComputedSourceKey.ARMOR_SETS_1190:
+    case PenetrationComputedSourceKey.ARMOR_SETS_1190: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const setsConfig = ARMOR_SET_PENETRATION_CONFIG[source.key];
       const penetrationValue = ARMOR_SET_PENETRATION_VALUES[source.key];
@@ -455,11 +457,12 @@ function getPenetrationFromComputedSource(
       }
 
       return activeSetCount * penetrationValue;
+    }
 
     // ========================================
     // INDIVIDUAL COMPUTED SOURCES
     // ========================================
-    case PenetrationComputedSourceKey.CONCENTRATION:
+    case PenetrationComputedSourceKey.CONCENTRATION: {
       if (!combatantInfo || !combatantInfo.auras || !combatantInfo.gear) return 0;
       const hasConcentration = combatantInfo.auras.some(
         (aura: CombatantAura) =>
@@ -469,8 +472,9 @@ function getPenetrationFromComputedSource(
       const lightArmorCount =
         combatantInfo.gear?.filter((gear: PlayerGear) => gear.type === 1).length || 0;
       return lightArmorCount * PenetrationValues.CONCENTRATION_PER_PIECE;
+    }
 
-    case PenetrationComputedSourceKey.SPLINTERED_SECRETS:
+    case PenetrationComputedSourceKey.SPLINTERED_SECRETS: {
       if (!combatantInfo || !combatantInfo.auras || !playerData) return 0;
       const splinteredSecretsAuras = combatantInfo.auras.filter(
         (aura: CombatantAura) =>
@@ -492,6 +496,7 @@ function getPenetrationFromComputedSource(
         slottedHeraldAbilities *
         PenetrationValues.SPLINTERED_SECRETS_PER_ABILITY
       );
+    }
 
     case PenetrationComputedSourceKey.FORCE_OF_NATURE:
       // TODO: Implement proper status effect counting
@@ -503,17 +508,19 @@ function getPenetrationFromComputedSource(
       // For now, assume always provides 700 penetration
       return PenetrationValues.PIERCING_PENETRATION;
 
-    case PenetrationComputedSourceKey.HEAVY_WEAPONS:
+    case PenetrationComputedSourceKey.HEAVY_WEAPONS: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasMaul = hasTwoHandedMaulEquipped(combatantInfo);
       return hasMaul ? PenetrationValues.HEAVY_WEAPONS_PENETRATION : 0;
+    }
 
-    case PenetrationComputedSourceKey.TWIN_BLADE_AND_BLUNT:
+    case PenetrationComputedSourceKey.TWIN_BLADE_AND_BLUNT: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const maceCount = countMacesInWeaponSlots(combatantInfo);
       return maceCount * PenetrationValues.TWIN_BLADE_AND_BLUNT_PER_MACE;
+    }
 
-    case PenetrationComputedSourceKey.CRYSTAL_WEAPON:
+    case PenetrationComputedSourceKey.CRYSTAL_WEAPON: {
       if (!combatantInfo || !combatantInfo.auras) return 0;
       // Check if Crystal Weapon buff is active
       const hasCrystalWeapon = combatantInfo.auras.some(
@@ -522,28 +529,33 @@ function getPenetrationFromComputedSource(
           aura.name?.includes('Crystal Weapon'),
       );
       return hasCrystalWeapon ? PenetrationValues.CRYSTAL_WEAPON : 0;
+    }
 
-    case PenetrationComputedSourceKey.BALORGH:
+    case PenetrationComputedSourceKey.BALORGH: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasBalorgh = getSetCount(combatantInfo.gear, KnownSetIDs.BALORGH_SET) >= 2;
       return hasBalorgh ? PenetrationValues.BALORGH_PENETRATION : 0;
+    }
 
-    case PenetrationComputedSourceKey.SHARPENED_1H:
+    case PenetrationComputedSourceKey.SHARPENED_1H: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const oneHandedSharpenedCount = countOneHandedSharpenedWeapons(combatantInfo);
       return oneHandedSharpenedCount * PenetrationValues.SHARPENED_1H_PER_WEAPON;
+    }
 
-    case PenetrationComputedSourceKey.SHARPENED_2H:
+    case PenetrationComputedSourceKey.SHARPENED_2H: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasSharpenedTwoHanded = hasTwoHandedSharpenedWeapon(combatantInfo);
       return hasSharpenedTwoHanded ? PenetrationValues.SHARPENED_2H_PENETRATION : 0;
+    }
 
-    case PenetrationComputedSourceKey.HEW_AND_SUNDER:
+    case PenetrationComputedSourceKey.HEW_AND_SUNDER: {
       if (!combatantInfo || !combatantInfo.gear) return 0;
       const hasHewAndSunder = getSetCount(combatantInfo.gear, KnownSetIDs.HEW_AND_SUNDER_SET) >= 5;
       // TODO: Count enemies within 8 meters of target
       // For now, assume 1 enemy when the set is equipped
       return hasHewAndSunder ? PenetrationValues.HEW_AND_SUNDER_PER_ENEMY * 1 : 0;
+    }
 
     default:
       return 0;

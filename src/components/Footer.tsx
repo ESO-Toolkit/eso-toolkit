@@ -303,3 +303,5 @@ export const Footer: React.FC = React.memo(() => {
     </Box>
   );
 });
+
+Footer.displayName = 'Footer';

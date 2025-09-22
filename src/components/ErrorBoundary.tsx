@@ -177,7 +177,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               </Typography>
 
               <Typography variant="body1" textAlign="center" color="text.secondary">
-                We're sorry, but an unexpected error occurred. The error has been automatically
+                We&apos;re sorry, but an unexpected error occurred. The error has been automatically
                 reported to our team. You can try refreshing the page or return to the previous
                 state.
               </Typography>

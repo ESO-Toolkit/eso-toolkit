@@ -49,6 +49,8 @@ export interface SkillTooltipProps {
   iconSlug?: string;
   // ESO Logs ability id for reference (icon resolution must be handled by caller)
   abilityId?: number;
+  // ESO Logs ability id for reference (unused)
+  _abilityId?: number;
   // Main skill name
   name: string;
   // Optional morph lineage text
@@ -121,7 +123,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   lineText,
   iconUrl,
   iconSlug,
-  abilityId,
+  _abilityId,
   name,
   morphOf,
   stats,
@@ -340,7 +342,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           <Box sx={{ mt: 0.5, mb: 1 }}>
             <Box
               ref={statsRowRef}
-              sx={(theme) => ({
+              sx={(_theme) => ({
                 display: 'grid',
                 gridTemplateColumns: wrapStats
                   ? 'repeat(auto-fit, minmax(120px, 1fr))'

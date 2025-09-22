@@ -32,7 +32,7 @@ export const useBrowserAwareDarkMode = (
 
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    const handleSystemThemeChange = (e: MediaQueryListEvent): void => {
+    const handleSystemThemeChange = (_e: MediaQueryListEvent): void => {
       // Only auto-sync if user hasn't made an explicit choice
       // We could add a flag to track this, but for simplicity, let's just provide the sync action
     };

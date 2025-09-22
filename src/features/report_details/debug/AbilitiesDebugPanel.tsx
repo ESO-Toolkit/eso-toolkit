@@ -10,7 +10,7 @@ interface AbilitiesDebugPanelProps {
   fight: FightFragment;
 }
 
-export const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight }) => {
+export const AbilitiesDebugPanel: React.FC<AbilitiesDebugPanelProps> = ({ fight: _fight }) => {
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
 
   // Process abilities data

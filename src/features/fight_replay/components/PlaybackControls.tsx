@@ -22,9 +22,9 @@ import {
 } from '@mui/material';
 import React, { useCallback, useState } from 'react';
 
-import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
-
 import { getBaseUrl } from '@/utils/envUtils';
+
+import { useOptimizedTimelineScrubbing } from '../../../hooks/useOptimizedTimelineScrubbing';
 
 interface PlaybackControlsProps {
   currentTime: number;
@@ -70,7 +70,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
   reportId,
   fightId,
   selectedActorIdRef,
-  fightStartTime,
+  fightStartTime: _fightStartTime,
 }) => {
   // Use optimized timeline scrubbing for better performance
   const {
@@ -176,7 +176,7 @@ export const PlaybackControls: React.FC<PlaybackControlsProps> = ({
 
         document.body.removeChild(textArea);
       }
-    } catch (error) {
+    } catch {
       // Show the URL in an alert as a final fallback
       alert('Unable to share. Please copy the current URL manually.');
     }

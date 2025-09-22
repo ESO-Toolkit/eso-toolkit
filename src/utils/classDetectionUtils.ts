@@ -8,6 +8,8 @@
  */
 
 // Import skillset data
+import { KnownAbilities } from '@/types/abilities';
+
 import { arcanistData } from '../data/skillsets/arcanist';
 import { dragonknightData } from '../data/skillsets/dragonknight';
 import { necromancerData } from '../data/skillsets/necromancer';
@@ -25,8 +27,6 @@ import {
   DebuffEvent,
 } from '../types/combatlogEvents';
 import { PlayerTalent } from '../types/playerDetails';
-
-import { KnownAbilities } from '@/types/abilities';
 
 /**
  * If a skill name is in this list, it must be the exact ability ID to count for that skill line

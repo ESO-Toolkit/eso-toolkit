@@ -1,14 +1,19 @@
 import React from 'react';
 
+import {
+  useStatusEffectUptimesTask,
+  useHostileBuffLookupTask,
+  useDebuffLookupTask,
+  useReportMasterData,
+  useSelectedTargetIds,
+} from '@/hooks';
+
 import { FightFragment } from '../../../graphql/generated';
-import { useReportMasterData } from '../../../hooks';
-import { useSelectedTargetIds, ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
+import { ALL_TARGETS_SENTINEL } from '../../../hooks/useSelectedTargetIds';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 
 import { BuffUptime } from './BuffUptimeProgressBar';
 import { StatusEffectUptimesView } from './StatusEffectUptimesView';
-
-import { useStatusEffectUptimesTask, useHostileBuffLookupTask, useDebuffLookupTask } from '@/hooks';
 
 interface StatusEffectUptimesPanelProps {
   fight: FightFragment;

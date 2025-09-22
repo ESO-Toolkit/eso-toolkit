@@ -18,6 +18,12 @@ import { useTheme } from '@mui/material/styles';
 import React, { useState } from 'react';
 import { useSelector } from 'react-redux';
 
+import { getArmorWeightCounts } from '@/utils/armorUtils';
+import { toClassKey } from '@/utils/classNameUtils';
+import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
+import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
+import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
+
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
@@ -35,12 +41,6 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
-
-import { getArmorWeightCounts } from '@/utils/armorUtils';
-import { toClassKey } from '@/utils/classNameUtils';
-import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodDetectionUtils';
-import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
-import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -2030,3 +2030,5 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     );
   },
 );
+
+PlayerCard.displayName = 'PlayerCard';

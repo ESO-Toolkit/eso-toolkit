@@ -9,7 +9,7 @@ const NetworkRequestBlocker: React.FC<{ children: React.ReactNode }> = ({ childr
     const originalXHR = window.XMLHttpRequest;
 
     // Override fetch to prevent any real network requests
-    window.fetch = (...args) => {
+    window.fetch = (..._args) => {
       return Promise.reject(
         new Error('Network requests are not allowed in Storybook. Use MSW mocks instead.'),
       );
