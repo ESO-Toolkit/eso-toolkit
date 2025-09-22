@@ -1236,6 +1236,7 @@ const Calculator: React.FC = React.memo(() => {
               disableRipple
               disableTouchRipple
               sx={(theme) => {
+                // eslint-disable-next-line no-console
                 console.log(
                   'Checkbox styling - liteMode:',
                   liteMode,
