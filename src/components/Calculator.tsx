@@ -987,7 +987,7 @@ const Calculator: React.FC = React.memo(() => {
         display: 'grid',
         gridTemplateColumns: gridColumns,
         alignItems: 'center',
-        gap: liteMode ? 0.125 : 2,
+        gap: liteMode ? 0.5 : 2,
         p: liteMode ? 0.125 : 1.5,
         background: item.enabled
           ? liteMode
@@ -998,14 +998,14 @@ const Calculator: React.FC = React.memo(() => {
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
           : liteMode
-            ? 'rgb(136 164 192 / 15%)'
+            ? 'rgb(200 210 220 / 8%)'
             : theme.palette.mode === 'dark'
               ? 'rgba(15, 23, 42, 0.6)'
               : 'rgba(241, 245, 249, 0.8)',
         border: item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
-              ? '1px solid rgb(105 162 255 / 50%) !important'
+              ? '1px solid rgb(105 162 255 / 29%) !important'
               : '1px solid rgb(105 162 255 / 40%) !important'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.8)'
@@ -1106,7 +1106,7 @@ const Calculator: React.FC = React.memo(() => {
 
       // Optimized text input styling for all mobile sizes
       const textFieldStyles = {
-        width: liteMode ? 44 : isExtraSmall ? 48 : isMobile ? 56 : 60,
+        width: liteMode ? 48 : isExtraSmall ? 48 : isMobile ? 56 : 60,
         '& .MuiInputBase-root': {
           fontSize: liteMode
             ? '0.75rem'
@@ -1116,7 +1116,7 @@ const Calculator: React.FC = React.memo(() => {
                 ? '0.85rem'
                 : '0.8rem',
           padding: liteMode
-            ? '6px 8px'
+            ? '6px 6px'
             : isExtraSmall
               ? '8px 10px'
               : isMobile
@@ -1143,7 +1143,7 @@ const Calculator: React.FC = React.memo(() => {
         },
         '& .MuiInputBase-input': {
           padding: liteMode
-            ? '6px 8px'
+            ? '6px 6px'
             : isExtraSmall
               ? '8px 12px'
               : isMobile
@@ -2275,21 +2275,25 @@ const Calculator: React.FC = React.memo(() => {
                       }),
                     }}
                   >
-                    {/* Clean mobile-optimized footer layout */}
+                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
+                        flexDirection: { xs: 'row', sm: 'row' },
                         alignItems: { xs: 'center', sm: 'center' },
-                        gap: { xs: 1.5, sm: 3 },
                         justifyContent: 'space-between',
+                        gap: { xs: 1, sm: 3 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
+                      pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
                       <Box
                         sx={{
-                          flex: 1,
-                          textAlign: { xs: 'center', sm: 'left' },
+                          textAlign: { xs: 'left', sm: 'left' },
+                          flex: { xs: 1, sm: 1 },
+                          pl: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Typography
@@ -2323,10 +2327,12 @@ const Calculator: React.FC = React.memo(() => {
                         sx={{
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: { xs: 'center', sm: 'flex-end' },
+                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
                           gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'center', sm: 'right' },
+                          textAlign: { xs: 'right', sm: 'right' },
                           minWidth: { xs: 'auto', sm: '200px' },
+                          flexShrink: 0,
+                          pr: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Box
@@ -2508,21 +2514,25 @@ const Calculator: React.FC = React.memo(() => {
                       }),
                     }}
                   >
-                    {/* Clean mobile-optimized footer layout */}
+                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
+                        flexDirection: { xs: 'row', sm: 'row' },
                         alignItems: { xs: 'center', sm: 'center' },
-                        gap: { xs: 1.5, sm: 3 },
                         justifyContent: 'space-between',
+                        gap: { xs: 1, sm: 3 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
+                      pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
                       <Box
                         sx={{
-                          flex: 1,
-                          textAlign: { xs: 'center', sm: 'left' },
+                          textAlign: { xs: 'left', sm: 'left' },
+                          flex: { xs: 1, sm: 1 },
+                          pl: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Typography
@@ -2556,10 +2566,12 @@ const Calculator: React.FC = React.memo(() => {
                         sx={{
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: { xs: 'center', sm: 'flex-end' },
+                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
                           gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'center', sm: 'right' },
+                          textAlign: { xs: 'right', sm: 'right' },
                           minWidth: { xs: 'auto', sm: '200px' },
+                          flexShrink: 0,
+                          pr: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Box
