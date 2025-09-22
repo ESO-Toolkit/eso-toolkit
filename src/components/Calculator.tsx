@@ -1190,14 +1190,14 @@ const Calculator: React.FC = React.memo(() => {
         textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
         minWidth: liteMode ? '3ch' : isMobile ? '4ch' : '4ch',
         textAlign: 'right',
-        fontSize: liteMode ? '0.6rem' : isMobile ? '0.85rem' : '0.875rem',
+        fontSize: liteMode ? '0.7rem' : isMobile ? '0.85rem' : '0.875rem',
         pr: liteMode ? 0.5 : 0,
       };
 
       const perDisplayStyles = {
         color: theme.palette.text.secondary,
         fontStyle: 'italic',
-        fontSize: liteMode ? '0.55rem' : isMobile ? '0.7rem' : '0.75rem',
+        fontSize: liteMode ? '0.65rem' : isMobile ? '0.7rem' : '0.75rem',
       };
 
       // Handle click on the entire list item
@@ -1229,7 +1229,7 @@ const Calculator: React.FC = React.memo(() => {
           }}
           onClick={item.locked ? undefined : handleItemClick}
         >
-          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : 0.75 }}>
+          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : isMobile ? 0 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
               disabled={item.locked}
@@ -1438,7 +1438,7 @@ const Calculator: React.FC = React.memo(() => {
                         }}
                         onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
                       >
-                        <InfoIcon sx={{ fontSize: liteMode ? 10 : isMobile ? 14 : 16 }} />
+                        <InfoIcon sx={{ fontSize: liteMode ? 14 : isMobile ? 14 : 16 }} />
                       </IconButton>
                     </Tooltip>
                   )}
@@ -1623,7 +1623,7 @@ const Calculator: React.FC = React.memo(() => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: liteMode ? 1 : 3,
+                  gap: 2,
                   flexWrap: 'wrap',
                 }}
               >
@@ -1636,50 +1636,30 @@ const Calculator: React.FC = React.memo(() => {
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           '&.Mui-checked': {
-                            color: theme.palette.mode === 'dark' ? '#818cf8' : '#4f46e5',
+                            color: '#10b981',
                             '& + .MuiSwitch-track': {
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(99, 102, 241, 0.3)'
-                                  : 'rgba(99, 102, 241, 0.2)',
+                              backgroundColor: 'rgba(16, 185, 129, 0.4)',
                             },
                           },
                         },
-                        '& .MuiSwitch-thumb': {
-                          backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
-                          boxShadow:
-                            theme.palette.mode === 'dark'
-                              ? '0 2px 4px rgba(0, 0, 0, 0.3)'
-                              : '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        },
                         '& .MuiSwitch-track': {
-                          backgroundColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.1)'
-                              : 'rgba(0, 0, 0, 0.1)',
-                          borderRadius: 12,
-                          border:
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(255, 255, 255, 0.1)'
-                              : '1px solid rgba(0, 0, 0, 0.1)',
+                          backgroundColor: '#e5e7eb',
+                          borderRadius: 20,
+                          border: '1px solid #d1d5db',
                         },
                       }}
                     />
                   }
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.95rem',
-                          fontWeight: 600,
-                          color:
-                            theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
-                          textTransform: 'none',
-                        }}
-                      >
-                        {liteMode ? 'Lite Mode' : 'Full Mode'}
-                      </Typography>
-                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.95rem',
+                        fontWeight: 600,
+                        color: theme.palette.text.primary,
+                      }}
+                    >
+                      {liteMode ? 'Lite Mode' : 'Full Mode'}
+                    </Typography>
                   }
                 />
               </Box>
