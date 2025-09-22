@@ -34,7 +34,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import { styled, useTheme, alpha } from '@mui/material/styles';
+import { styled, useTheme, alpha, GlobalStyles } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 
 import {
@@ -1026,7 +1026,7 @@ const Calculator: React.FC = React.memo(() => {
         theme.palette.mode === 'dark'
           ? '1px solid rgba(255, 255, 255, 0.1)'
           : '1px solid rgba(203, 213, 225, 0.3)',
-      accentColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6',
+      accentColor: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
       actionHover: theme.palette.action.hover,
     }),
     [theme.palette.mode, theme.palette.action.hover],
@@ -1050,7 +1050,9 @@ const Calculator: React.FC = React.memo(() => {
         background: item.enabled
           ? theme.palette.mode === 'dark'
             ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.08) 100%)'
-            : 'rgb(56 189 248 / 24%)'
+            : liteMode
+              ? 'linear-gradient(135deg, rgb(149 99 255 / 12%) 0%, rgb(233 85 255 / 8%) 100%) !important'
+              : 'rgb(56 189 248 / 24%)'
           : theme.palette.mode === 'dark'
             ? 'rgba(15, 23, 42, 0.6)'
             : liteMode
@@ -1059,7 +1061,9 @@ const Calculator: React.FC = React.memo(() => {
         border: item.enabled
           ? theme.palette.mode === 'dark'
             ? '1px solid rgba(56, 189, 248, 0.3)'
-            : '1px solid rgba(139, 92, 246, 0.25)'
+            : liteMode
+              ? 'rgb(222 200 244 / 30%) !important'
+              : '1px solid rgba(139, 92, 246, 0.25)'
           : theme.palette.mode === 'dark'
             ? '1px solid rgba(255, 255, 255, 0.08)'
             : '1px solid rgba(226, 232, 240, 0.5)',
@@ -1139,7 +1143,7 @@ const Calculator: React.FC = React.memo(() => {
         minWidth: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         minHeight: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         '&.Mui-checked': {
-          color: '#38bdf8',
+          color: liteMode ? '#4e26b1' : 'rgb(159 135 219)',
         },
         // Enhanced touch feedback
         '&:hover': {
@@ -1184,7 +1188,7 @@ const Calculator: React.FC = React.memo(() => {
             backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.8)' : 'transparent',
           },
           '&.Mui-focused': {
-            borderColor: '#38bdf8',
+            borderColor: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
             backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.9)' : 'transparent',
             boxShadow: isMobile ? '0 0 0 2px rgba(56, 189, 248, 0.2)' : 'none',
           },
@@ -1232,7 +1236,7 @@ const Calculator: React.FC = React.memo(() => {
       };
 
       const valueStyles = {
-        color: '#38bdf8',
+        color: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
         fontWeight: 700,
         fontFamily: 'monospace',
         textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(59,130,246,0.25)' : 'none',
@@ -1273,6 +1277,12 @@ const Calculator: React.FC = React.memo(() => {
             minHeight: liteMode ? 44 : isMobile ? 52 : 48,
             py: liteMode ? 1 : isMobile ? 1.25 : 1,
             pl: liteMode ? 1 : 0.5,
+            background: item.enabled && liteMode
+              ? 'linear-gradient(135deg, rgb(171 140 237 / 12%) 0%, rgb(233 85 255 / 8%) 100%) !important'
+              : undefined,
+            border: item.enabled && liteMode
+              ? '1px solid rgb(180 105 255 / 30%) !important'
+              : undefined,
           }}
           onClick={item.locked ? undefined : handleItemClick}
         >
@@ -1281,10 +1291,26 @@ const Calculator: React.FC = React.memo(() => {
               checked={item.enabled}
               disabled={item.locked}
               size={isMobile ? 'medium' : 'small'}
-              color="primary"
               disableRipple
               disableTouchRipple
-              sx={checkboxStyles}
+              sx={(theme) => {
+                console.log('Checkbox styling - liteMode:', liteMode, 'theme.mode:', theme.palette.mode);
+                return {
+                  ...checkboxStyles,
+                  '&.Mui-checked': {
+                    color: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                  },
+                  '&.Mui-checked .MuiSvgIcon-root': {
+                    color: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                  },
+                  '&.Mui-checked .MuiSvgIcon-root path': {
+                    fill: !liteMode && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                  },
+                  svg: {
+                    color: !liteMode && item.enabled && theme.palette.mode === 'light' ? '#4e26b1 !important' : 'rgb(159 135 219) !important',
+                  },
+                };
+              }}
               onChange={(e) => updateFunction(category, index, { enabled: e.target.checked })}
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
@@ -1543,7 +1569,6 @@ const Calculator: React.FC = React.memo(() => {
 
   return (
     <>
-      <GlobalStyles />
       <CalculatorContainer liteMode={liteMode}>
         <Container
           maxWidth={liteMode ? false : 'lg'}
