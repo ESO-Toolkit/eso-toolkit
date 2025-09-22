@@ -55,7 +55,8 @@
       "Bash(timeout:*)",
       "Bash(npx:*)",
       "mcp__pointer__get-pointed-element",
-      "Bash(npm run type-check:*)"
+      "Bash(npm run type-check:*)",
+      "Bash(pkill:*)"
     ],
     "deny": [],
     "ask": []

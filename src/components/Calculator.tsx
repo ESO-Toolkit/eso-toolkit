@@ -754,63 +754,6 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
-// Add global styles for animations
-const GlobalStyles = (): React.ReactElement => (
-  <style>
-    {`
-      @keyframes pulse {
-        0%, 100% { opacity: 0.8; }
-        50% { opacity: 0.4; }
-      }
-
-      /* Override any 120px border radius that might be applied */
-      [style*="border-radius: 120px"],
-      [style*="border-radius:120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Also target the specific CSS classes mentioned */
-      .css-142s2u9,
-      .css-r7rcg6 {
-        border-radius: 6px !important;
-      }
-
-      /* General rule to catch any element with 120px border radius */
-      *[style*="120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Specific rules for status badges */
-      .MuiBox-root[style*="border-radius"] {
-        border-radius: 6px !important;
-      }
-
-      /* Target elements with warning/orange background (over cap) */
-      [style*="rgba(251, 146, 60"],
-      [style*="rgb(251, 146, 60"] {
-        border-radius: 6px !important;
-      }
-
-      /* Super aggressive rule - target any styled box in the calculator */
-      .MuiBox-root {
-        border-radius: 6px !important;
-      }
-
-      /* Override for any element with border-radius that still shows 120px */
-      *[style*="border-radius: 120px"],
-      *[style*="border-radius:120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Final catch-all for any stubborn elements */
-      .css-r7rcg6,
-      .css-142s2u9,
-      [class*="css-"][style*="120px"] {
-        border-radius: 6px !important;
-      }
-    `}
-  </style>
-);
 
 const Calculator: React.FC = React.memo(() => {
   const theme = useTheme();
@@ -1048,25 +991,31 @@ const Calculator: React.FC = React.memo(() => {
         gap: liteMode ? 0.5 : 2,
         p: liteMode ? 0.5 : 1.5,
         background: item.enabled
-          ? theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.08) 100%)'
-            : liteMode
-              ? 'linear-gradient(135deg, rgb(149 99 255 / 12%) 0%, rgb(233 85 255 / 8%) 100%) !important'
-              : 'rgb(56 189 248 / 24%)'
-          : theme.palette.mode === 'dark'
-            ? 'rgba(15, 23, 42, 0.6)'
-            : liteMode
-              ? 'rgb(136 164 192 / 15%)'
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgb(140 182 237 / 25%) 0%, rgb(85 159 255 / 18%) 100%) !important'
+              : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%) !important'
+            : theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
+          : liteMode
+            ? 'rgb(136 164 192 / 15%)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.6)'
               : 'rgba(241, 245, 249, 0.8)',
         border: item.enabled
-          ? theme.palette.mode === 'dark'
-            ? '1px solid rgba(56, 189, 248, 0.3)'
-            : liteMode
-              ? 'rgb(222 200 244 / 30%) !important'
-              : '1px solid rgba(139, 92, 246, 0.25)'
-          : theme.palette.mode === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.08)'
-            : '1px solid rgba(226, 232, 240, 0.5)',
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? '1px solid rgb(105 162 255 / 50%) !important'
+              : '1px solid rgb(105 162 255 / 40%) !important'
+            : theme.palette.mode === 'dark'
+              ? '1px solid rgba(56, 189, 248, 0.8)'
+              : '1px solid rgb(40 145 200 / 35%)'
+          : liteMode
+            ? 'none'
+            : theme.palette.mode === 'dark'
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : '1px solid rgba(148, 163, 184, 0.6)',
         borderRadius: '8px !important',
         mb: liteMode ? 0.5 : 1,
         cursor: item.locked ? 'not-allowed' : 'pointer',
@@ -1079,21 +1028,21 @@ const Calculator: React.FC = React.memo(() => {
               transform: liteMode ? 'none' : 'translateY(-1px)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.5)'
-                  : '1px solid rgba(59, 130, 246, 0.3)',
+                  ? '1px solid rgba(56, 189, 248, 0.6)'
+                  : '1px solid rgb(40 145 200 / 50%)',
               boxShadow: liteMode
                 ? 'none'
                 : theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(56, 189, 248, 0.2)'
-                  : '0 4px 12px rgba(59, 130, 246, 0.1)',
+                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                  : '0 4px 12px rgb(40 145 200 / 25%)',
               '& .MuiCheckbox-root': {
                 backgroundColor: liteMode
                   ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgb(136 164 192 / 15%)'
-                  : theme.palette.mode === 'dark'
                     ? 'rgba(56, 189, 248, 0.1)'
-                    : 'rgba(59, 130, 246, 0.1)',
+                    : 'rgba(40 145 200, 0.08)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.12)'
+                    : 'rgba(40 145 200, 0.1)',
               },
             }
           : {},
@@ -1277,12 +1226,6 @@ const Calculator: React.FC = React.memo(() => {
             minHeight: liteMode ? 44 : isMobile ? 52 : 48,
             py: liteMode ? 1 : isMobile ? 1.25 : 1,
             pl: liteMode ? 1 : 0.5,
-            background: item.enabled && liteMode
-              ? 'linear-gradient(135deg, rgb(140 182 237 / 12%) 0%, rgb(85 159 255 / 8%) 100%) !important'
-              : undefined,
-            border: item.enabled && liteMode
-              ? '1px solid rgb(105 162 255 / 30%) !important'
-              : undefined,
           }}
           onClick={item.locked ? undefined : handleItemClick}
         >
@@ -1314,6 +1257,12 @@ const Calculator: React.FC = React.memo(() => {
                       theme.palette.mode === 'light'
                         ? 'rgb(40 145 200) !important'
                         : 'rgb(199 234 255) !important',
+                  },
+                  '&:not(.Mui-checked) .MuiSvgIcon-root path': {
+                    fill:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(182 199 223) !important'
+                        : 'rgb(156 163 175) !important',
                   },
                   svg: {
                     color:
