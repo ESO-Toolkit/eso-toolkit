@@ -992,7 +992,7 @@ const Calculator: React.FC = React.memo(() => {
         background: item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgb(140 182 237 / 25%) 0%, rgb(85 159 255 / 18%) 100%) !important'
+              ? 'linear-gradient(135deg, rgb(53 118 204 / 25%) 0%, rgb(85 159 255 / 18%) 100%) !important'
               : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%) !important'
             : theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
@@ -2297,22 +2297,18 @@ const Calculator: React.FC = React.memo(() => {
                       backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       transition: 'all 0.3s ease',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: liteMode ? 0 : 12,
-                        right: liteMode ? 0 : 12,
-                        height: liteMode ? 2 : 3,
-                        background: liteMode
-                          ? penStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : penStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)'
-                          : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
-                        borderRadius: liteMode ? 0 : '2px 2px 0 0',
-                      },
+                      ...(!liteMode && {
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 12,
+                          right: 12,
+                          height: 3,
+                          background: 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          borderRadius: '2px 2px 0 0',
+                        },
+                      }),
                     }}
                   >
                     {/* Clean mobile-optimized footer layout */}
@@ -2545,22 +2541,18 @@ const Calculator: React.FC = React.memo(() => {
                       backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       transition: 'all 0.3s ease',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: liteMode ? 0 : 12,
-                        right: liteMode ? 0 : 12,
-                        height: liteMode ? 2 : 3,
-                        background: liteMode
-                          ? critStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : critStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)'
-                          : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
-                        borderRadius: liteMode ? 0 : '2px 2px 0 0',
-                      },
+                      ...(!liteMode && {
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 12,
+                          right: 12,
+                          height: 3,
+                          background: 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          borderRadius: '2px 2px 0 0',
+                        },
+                      }),
                     }}
                   >
                     {/* Clean mobile-optimized footer layout */}
