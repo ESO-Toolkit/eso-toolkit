@@ -519,19 +519,19 @@ const CalculatorCard = styled(Paper, {
   background: liteMode
     ? theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)'
-      : 'linear-gradient(180deg, rgb(17 42 92 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)'
+      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)'
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
-      : 'linear-gradient(180deg, rgb(17 42 92 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
+      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
   backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   borderRadius: liteMode ? 12 : 14,
   border: liteMode
     ? theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.15)'
-      : '1px solid rgba(99, 102, 241, 0.2)'
+      ? '1px solid rgba(128, 211, 255, 0.15)'
+      : '1px solid rgba(40, 145, 200, 0.2)'
     : theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.2)'
+      ? '1px solid rgba(128, 211, 255, 0.2)'
       : '1px solid rgba(203, 213, 225, 0.3)',
   boxShadow: liteMode
     ? theme.palette.mode === 'dark'
@@ -573,7 +573,7 @@ const StickyFooter = styled(Box)<{ isLiteMode: boolean }>(({ theme, isLiteMode }
   borderTop: isLiteMode
     ? 'none'
     : theme.palette.mode === 'dark'
-      ? '1px solid rgba(56, 189, 248, 0.3)'
+      ? '1px solid rgba(128, 211, 255, 0.3)'
       : '1px solid rgba(203, 213, 225, 0.3)',
   borderRadius: isLiteMode ? 0 : '6px 6px 6px 6px',
   padding: isLiteMode ? theme.spacing(1.5) : theme.spacing(3),
@@ -753,64 +753,6 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
     </Card>
   );
 };
-
-// Add global styles for animations
-const GlobalStyles = (): React.ReactElement => (
-  <style>
-    {`
-      @keyframes pulse {
-        0%, 100% { opacity: 0.8; }
-        50% { opacity: 0.4; }
-      }
-
-      /* Override any 120px border radius that might be applied */
-      [style*="border-radius: 120px"],
-      [style*="border-radius:120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Also target the specific CSS classes mentioned */
-      .css-142s2u9,
-      .css-r7rcg6 {
-        border-radius: 6px !important;
-      }
-
-      /* General rule to catch any element with 120px border radius */
-      *[style*="120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Specific rules for status badges */
-      .MuiBox-root[style*="border-radius"] {
-        border-radius: 6px !important;
-      }
-
-      /* Target elements with warning/orange background (over cap) */
-      [style*="rgba(251, 146, 60"],
-      [style*="rgb(251, 146, 60"] {
-        border-radius: 6px !important;
-      }
-
-      /* Super aggressive rule - target any styled box in the calculator */
-      .MuiBox-root {
-        border-radius: 6px !important;
-      }
-
-      /* Override for any element with border-radius that still shows 120px */
-      *[style*="border-radius: 120px"],
-      *[style*="border-radius:120px"] {
-        border-radius: 6px !important;
-      }
-
-      /* Final catch-all for any stubborn elements */
-      .css-r7rcg6,
-      .css-142s2u9,
-      [class*="css-"][style*="120px"] {
-        border-radius: 6px !important;
-      }
-    `}
-  </style>
-);
 
 const Calculator: React.FC = React.memo(() => {
   const theme = useTheme();
@@ -1026,7 +968,7 @@ const Calculator: React.FC = React.memo(() => {
         theme.palette.mode === 'dark'
           ? '1px solid rgba(255, 255, 255, 0.1)'
           : '1px solid rgba(203, 213, 225, 0.3)',
-      accentColor: theme.palette.mode === 'dark' ? '#38bdf8' : '#3b82f6',
+      accentColor: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
       actionHover: theme.palette.action.hover,
     }),
     [theme.palette.mode, theme.palette.action.hover],
@@ -1046,25 +988,35 @@ const Calculator: React.FC = React.memo(() => {
         gridTemplateColumns: gridColumns,
         alignItems: 'center',
         gap: liteMode ? 0.5 : 2,
-        p: liteMode ? 0.5 : 1.5,
+        p: liteMode ? 0.125 : 1.5,
         background: item.enabled
-          ? theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.08) 100%)'
-            : 'rgb(56 189 248 / 24%)'
-          : theme.palette.mode === 'dark'
-            ? 'rgba(15, 23, 42, 0.6)'
-            : liteMode
-              ? 'rgb(136 164 192 / 15%)'
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgb(53 118 204 / 25%) 0%, rgb(85 159 255 / 18%) 100%) !important'
+              : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%) !important'
+            : theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
+          : liteMode
+            ? 'rgb(200 210 220 / 8%)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.6)'
               : 'rgba(241, 245, 249, 0.8)',
         border: item.enabled
-          ? theme.palette.mode === 'dark'
-            ? '1px solid rgba(56, 189, 248, 0.3)'
-            : '1px solid rgba(139, 92, 246, 0.25)'
-          : theme.palette.mode === 'dark'
-            ? '1px solid rgba(255, 255, 255, 0.08)'
-            : '1px solid rgba(226, 232, 240, 0.5)',
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? '1px solid rgb(105 162 255 / 29%) !important'
+              : '1px solid rgb(105 162 255 / 40%) !important'
+            : theme.palette.mode === 'dark'
+              ? '1px solid rgba(56, 189, 248, 0.8)'
+              : '1px solid rgb(40 145 200 / 35%)'
+          : liteMode
+            ? '1px solid transparent'
+            : theme.palette.mode === 'dark'
+              ? '1px solid rgba(255, 255, 255, 0.12)'
+              : '1px solid rgba(148, 163, 184, 0.6)',
         borderRadius: '8px !important',
-        mb: liteMode ? 0.5 : 1,
+        mb: liteMode ? 0.125 : 1,
         cursor: item.locked ? 'not-allowed' : 'pointer',
         opacity: item.locked ? 0.7 : 1,
         transition: liteMode ? 'none' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1075,21 +1027,21 @@ const Calculator: React.FC = React.memo(() => {
               transform: liteMode ? 'none' : 'translateY(-1px)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.5)'
-                  : '1px solid rgba(59, 130, 246, 0.3)',
+                  ? '1px solid rgba(56, 189, 248, 0.6)'
+                  : '1px solid rgb(40 145 200 / 50%)',
               boxShadow: liteMode
                 ? 'none'
                 : theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(56, 189, 248, 0.2)'
-                  : '0 4px 12px rgba(59, 130, 246, 0.1)',
+                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                  : '0 4px 12px rgb(40 145 200 / 25%)',
               '& .MuiCheckbox-root': {
                 backgroundColor: liteMode
                   ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.08)'
-                    : 'rgb(136 164 192 / 15%)'
-                  : theme.palette.mode === 'dark'
                     ? 'rgba(56, 189, 248, 0.1)'
-                    : 'rgba(59, 130, 246, 0.1)',
+                    : 'rgba(40 145 200, 0.08)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.12)'
+                    : 'rgba(40 145 200, 0.1)',
               },
             }
           : {},
@@ -1139,7 +1091,7 @@ const Calculator: React.FC = React.memo(() => {
         minWidth: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         minHeight: liteMode ? '32px' : isExtraSmall ? '48px' : isMobile ? '44px' : '32px',
         '&.Mui-checked': {
-          color: '#38bdf8',
+          color: liteMode ? '#4e26b1' : 'rgb(159 135 219)',
         },
         // Enhanced touch feedback
         '&:hover': {
@@ -1154,7 +1106,7 @@ const Calculator: React.FC = React.memo(() => {
 
       // Optimized text input styling for all mobile sizes
       const textFieldStyles = {
-        width: liteMode ? 44 : isExtraSmall ? 48 : isMobile ? 56 : 60,
+        width: liteMode ? 48 : isExtraSmall ? 48 : isMobile ? 56 : 60,
         '& .MuiInputBase-root': {
           fontSize: liteMode
             ? '0.75rem'
@@ -1164,7 +1116,7 @@ const Calculator: React.FC = React.memo(() => {
                 ? '0.85rem'
                 : '0.8rem',
           padding: liteMode
-            ? '6px 8px'
+            ? '6px 6px'
             : isExtraSmall
               ? '8px 10px'
               : isMobile
@@ -1184,14 +1136,14 @@ const Calculator: React.FC = React.memo(() => {
             backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.8)' : 'transparent',
           },
           '&.Mui-focused': {
-            borderColor: '#38bdf8',
+            borderColor: theme.palette.mode === 'dark' ? 'rgb(159 135 219)' : '#4e26b1',
             backgroundColor: isMobile ? 'rgba(15, 23, 42, 0.9)' : 'transparent',
             boxShadow: isMobile ? '0 0 0 2px rgba(56, 189, 248, 0.2)' : 'none',
           },
         },
         '& .MuiInputBase-input': {
           padding: liteMode
-            ? '6px 8px'
+            ? '6px 6px'
             : isExtraSmall
               ? '8px 12px'
               : isMobile
@@ -1226,19 +1178,20 @@ const Calculator: React.FC = React.memo(() => {
 
       const nameStyles = {
         color: item.enabled ? 'text.primary' : 'text.disabled',
-        fontSize: { xs: liteMode ? '0.8rem' : '0.95rem', sm: liteMode ? '0.75rem' : '0.9rem' },
+        fontSize: { xs: liteMode ? '0.7rem' : '0.95rem', sm: liteMode ? '0.65rem' : '0.9rem' },
         lineHeight: { xs: 1.4, sm: 1.2 },
         wordBreak: 'break-word' as const,
       };
 
       const valueStyles = {
-        color: '#38bdf8',
+        color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
         fontWeight: 700,
         fontFamily: 'monospace',
-        textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(59,130,246,0.25)' : 'none',
+        textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
         minWidth: liteMode ? '3ch' : isMobile ? '4ch' : '4ch',
         textAlign: 'right',
         fontSize: liteMode ? '0.7rem' : isMobile ? '0.85rem' : '0.875rem',
+        pr: liteMode ? 0.5 : 0,
       };
 
       const perDisplayStyles = {
@@ -1270,21 +1223,61 @@ const Calculator: React.FC = React.memo(() => {
           key={key}
           sx={{
             ...getCalculatorItemStyles(item),
-            minHeight: liteMode ? 44 : isMobile ? 52 : 48,
-            py: liteMode ? 1 : isMobile ? 1.25 : 1,
-            pl: liteMode ? 1 : 0.5,
+            minHeight: liteMode ? 36 : isMobile ? 52 : 48,
+            py: liteMode ? 0.5 : isMobile ? 1.25 : 1,
+            pl: liteMode ? 0.5 : 0.5,
           }}
           onClick={item.locked ? undefined : handleItemClick}
         >
-          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.5 : 0.75 }}>
+          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : isMobile ? 0 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
               disabled={item.locked}
               size={isMobile ? 'medium' : 'small'}
-              color="primary"
               disableRipple
               disableTouchRipple
-              sx={checkboxStyles}
+              sx={(theme) => {
+                // eslint-disable-next-line no-console
+                console.log(
+                  'Checkbox styling - liteMode:',
+                  liteMode,
+                  'theme.mode:',
+                  theme.palette.mode,
+                );
+                return {
+                  ...checkboxStyles,
+                  '&.Mui-checked': {
+                    color:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
+                  },
+                  '&.Mui-checked .MuiSvgIcon-root': {
+                    color:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
+                  },
+                  '&.Mui-checked .MuiSvgIcon-root path': {
+                    fill:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
+                  },
+                  '&:not(.Mui-checked) .MuiSvgIcon-root path': {
+                    fill:
+                      theme.palette.mode === 'light'
+                        ? 'rgb(182 199 223) !important'
+                        : 'rgb(156 163 175) !important',
+                  },
+                  svg: {
+                    color:
+                      theme.palette.mode === 'light' && item.enabled
+                        ? 'rgb(40 145 200) !important'
+                        : 'rgb(199 234 255) !important',
+                  },
+                };
+              }}
               onChange={(e) => updateFunction(category, index, { enabled: e.target.checked })}
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
@@ -1335,10 +1328,10 @@ const Calculator: React.FC = React.memo(() => {
                         ? 'rgb(136 164 192 / 15%)'
                         : 'rgba(241, 245, 249, 0.8)'
                     : theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.3)'
+                      ? 'rgba(56, 189, 248, 0.15)'
                       : liteMode
-                        ? 'rgb(136 164 192 / 8%)'
-                        : 'rgba(241, 245, 249, 0.6)',
+                        ? 'rgba(40 145 200, 0.12)'
+                        : 'rgba(40 145 200, 0.12)',
                   opacity: !hasQuantity ? 0.6 : 1,
                   '&:hover': {
                     backgroundColor: !hasQuantity
@@ -1348,10 +1341,10 @@ const Calculator: React.FC = React.memo(() => {
                           ? 'rgb(136 164 192 / 15%)'
                           : 'rgba(241, 245, 249, 0.8)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.5)'
+                        ? 'rgba(56, 189, 248, 0.25)'
                         : liteMode
-                          ? 'rgb(136 164 192 / 20%)'
-                          : 'rgba(241, 245, 249, 0.9)',
+                          ? 'rgba(40 145 200, 0.18)'
+                          : 'rgba(40 145 200, 0.18)',
                   },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -1361,20 +1354,20 @@ const Calculator: React.FC = React.memo(() => {
                       ? 'rgba(148, 163, 184, 0.3)'
                       : 'rgba(148, 163, 184, 0.4)'
                     : theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
+                      ? 'rgba(56, 189, 248, 0.4)'
                       : liteMode
-                        ? 'rgba(136, 164, 192, 0.3)'
-                        : 'rgba(148, 163, 184, 0.3)',
+                        ? 'rgba(40 145 200, 0.4)'
+                        : 'rgba(40 145 200, 0.4)',
                   '&:hover': {
                     borderColor: !hasQuantity
                       ? theme.palette.mode === 'dark'
                         ? 'rgba(148, 163, 184, 0.4)'
                         : 'rgba(148, 163, 184, 0.5)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.4)'
+                        ? 'rgba(56, 189, 248, 0.6)'
                         : liteMode
-                          ? 'rgba(99, 102, 241, 0.5)'
-                          : 'rgba(99, 102, 241, 0.4)',
+                          ? 'rgba(40 145 200, 0.6)'
+                          : 'rgba(40 145 200, 0.6)',
                   },
                 },
                 '& .MuiInputBase-input': {
@@ -1445,7 +1438,7 @@ const Calculator: React.FC = React.memo(() => {
                         }}
                         onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
                       >
-                        <InfoIcon sx={{ fontSize: liteMode ? 10 : isMobile ? 14 : 16 }} />
+                        <InfoIcon sx={{ fontSize: liteMode ? 14 : isMobile ? 14 : 16 }} />
                       </IconButton>
                     </Tooltip>
                   )}
@@ -1543,7 +1536,6 @@ const Calculator: React.FC = React.memo(() => {
 
   return (
     <>
-      <GlobalStyles />
       <CalculatorContainer liteMode={liteMode}>
         <Container
           maxWidth={liteMode ? false : 'lg'}
@@ -1563,75 +1555,6 @@ const Calculator: React.FC = React.memo(() => {
             },
           }}
         >
-          {/* Header */}
-          <Box sx={{ textAlign: 'center', mb: liteMode ? 2 : 6 }}>
-            <Typography
-              variant={liteMode ? 'h4' : 'h1'}
-              sx={{
-                fontWeight: 900,
-                fontFamily: 'Space Grotesk, Inter, sans-serif',
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, #ffffff 0%, rgb(110 170 240 / 90%) 25%, rgb(152 131 227 / 85%) 50%, rgb(173 192 255 / 80%) 75%, #a78bfa 100%)'
-                    : 'linear-gradient(135deg, #1e293b 0%, rgb(99 102 241 / 95%) 25%, rgb(139 92 246 / 90%) 50%, rgb(168 85 247 / 85%) 75%, #a855f7 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                mb: liteMode ? 1 : 2,
-                fontSize: liteMode ? '1.75rem' : { xs: '2.75rem', md: '3.5rem' },
-                letterSpacing: '-0.02em',
-                textShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 0 40px rgb(110 170 240 / 40%), 0 0 60px rgb(152 131 227 / 25%)'
-                    : '0 4px 12px rgb(99 102 241 / 25%)',
-                position: 'relative',
-                filter:
-                  theme.palette.mode === 'dark'
-                    ? 'drop-shadow(0 0 20px rgb(110 170 240 / 35%))'
-                    : 'drop-shadow(0 0 15px rgb(99 102 241 / 30%))',
-                '&::after': liteMode
-                  ? {
-                      content: '" — Lite"',
-                      background:
-                        'linear-gradient(135deg, rgb(110 170 240 / 90%) 0%, rgb(152 131 227 / 85%) 100%)',
-                      WebkitBackgroundClip: 'text',
-                      WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      fontWeight: 700,
-                      letterSpacing: '0.5px',
-                      fontSize: '0.85rem',
-                      position: 'absolute',
-                      top: '12px',
-                      right: '-65px',
-                      filter: 'drop-shadow(0 0 8px rgb(110 170 240 / 45%))',
-                    }
-                  : {},
-              }}
-            >
-              ⚔️ ESO Calculator
-            </Typography>
-            <Typography
-              variant={liteMode ? 'body1' : 'h6'}
-              sx={{
-                color: theme.palette.text.secondary,
-                fontWeight: 500,
-                mb: liteMode ? 1 : 3,
-                fontSize: liteMode ? '0.9rem' : { xs: '1.1rem', md: '1.3rem' },
-                letterSpacing: '0.02em',
-                opacity: 0.85,
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(90deg, rgba(255, 255, 255, 0.8) 0%, rgb(110 170 240 / 80%) 30%, rgb(152 131 227 / 80%) 50%, rgb(173 192 255 / 80%) 70%, rgba(255, 255, 255, 0.8) 100%)'
-                    : 'linear-gradient(90deg, rgba(30, 41, 59, 0.9) 0%, rgb(99 102 241 / 85%) 30%, rgb(139 92 246 / 85%) 50%, rgb(168 85 247 / 85%) 70%, rgba(30, 41, 59, 0.9) 100%)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-              }}
-            >
-              Penetration & Critical Damage Optimizer — U47
-            </Typography>
-          </Box>
-
           {/* Main Calculator */}
           <CalculatorCard liteMode={liteMode}>
             {/* Controls */}
@@ -1648,8 +1571,8 @@ const Calculator: React.FC = React.memo(() => {
                 borderColor: liteMode
                   ? 'transparent'
                   : theme.palette.mode === 'dark'
-                    ? 'rgb(110 170 240 / 20%)'
-                    : 'rgb(99 102 241 / 15%)',
+                    ? 'rgb(128 211 255 / 20%)'
+                    : 'rgb(40 145 200 / 15%)',
                 background: liteMode
                   ? theme.palette.mode === 'dark'
                     ? 'rgba(15, 23, 42, 0.8)'
@@ -1677,8 +1600,8 @@ const Calculator: React.FC = React.memo(() => {
                       height: '1px',
                       background:
                         theme.palette.mode === 'dark'
-                          ? 'linear-gradient(90deg, rgb(110 170 240 / 60%) 0%, rgb(152 131 227 / 60%) 50%, rgb(173 192 255 / 60%) 100%)'
-                          : 'linear-gradient(90deg, rgb(99 102 241 / 60%) 0%, rgb(139 92 246 / 60%) 50%, rgb(168 85 247 / 60%) 100%)',
+                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
                       opacity: 0.7,
                     }
                   : {
@@ -1687,12 +1610,12 @@ const Calculator: React.FC = React.memo(() => {
                       top: 0,
                       left: 16,
                       right: 16,
-                      height: '2px',
+                      height: '1px',
                       background:
                         theme.palette.mode === 'dark'
-                          ? 'linear-gradient(90deg, rgb(110 170 240 / 80%) 0%, rgb(152 131 227 / 80%) 50%, rgb(173 192 255 / 80%) 100%)'
-                          : 'linear-gradient(90deg, rgb(99 102 241 / 80%) 0%, rgb(139 92 246 / 80%) 50%, rgb(168 85 247 / 80%) 100%)',
-                      borderRadius: '2px',
+                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                      opacity: 0.7,
                     },
               }}
             >
@@ -1700,7 +1623,7 @@ const Calculator: React.FC = React.memo(() => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: liteMode ? 1.5 : 3,
+                  gap: 2,
                   flexWrap: 'wrap',
                 }}
               >
@@ -1713,50 +1636,30 @@ const Calculator: React.FC = React.memo(() => {
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           '&.Mui-checked': {
-                            color: theme.palette.mode === 'dark' ? '#818cf8' : '#4f46e5',
+                            color: '#10b981',
                             '& + .MuiSwitch-track': {
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(99, 102, 241, 0.3)'
-                                  : 'rgba(99, 102, 241, 0.2)',
+                              backgroundColor: 'rgba(16, 185, 129, 0.4)',
                             },
                           },
                         },
-                        '& .MuiSwitch-thumb': {
-                          backgroundColor: theme.palette.mode === 'dark' ? '#ffffff' : '#ffffff',
-                          boxShadow:
-                            theme.palette.mode === 'dark'
-                              ? '0 2px 4px rgba(0, 0, 0, 0.3)'
-                              : '0 2px 4px rgba(0, 0, 0, 0.2)',
-                        },
                         '& .MuiSwitch-track': {
-                          backgroundColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.1)'
-                              : 'rgba(0, 0, 0, 0.1)',
-                          borderRadius: 12,
-                          border:
-                            theme.palette.mode === 'dark'
-                              ? '1px solid rgba(255, 255, 255, 0.1)'
-                              : '1px solid rgba(0, 0, 0, 0.1)',
+                          backgroundColor: '#e5e7eb',
+                          borderRadius: 20,
+                          border: '1px solid #d1d5db',
                         },
                       }}
                     />
                   }
                   label={
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography
-                        sx={{
-                          fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.95rem',
-                          fontWeight: 600,
-                          color:
-                            theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
-                          textTransform: 'none',
-                        }}
-                      >
-                        {liteMode ? 'Lite Mode' : 'Full Mode'}
-                      </Typography>
-                    </Box>
+                    <Typography
+                      sx={{
+                        fontSize: isExtraSmall ? '0.85rem' : isMobile ? '0.9rem' : '0.95rem',
+                        fontWeight: 600,
+                        color: theme.palette.text.primary,
+                      }}
+                    >
+                      {liteMode ? 'Lite Mode' : 'Full Mode'}
+                    </Typography>
                   }
                 />
               </Box>
@@ -1776,11 +1679,11 @@ const Calculator: React.FC = React.memo(() => {
                     '& .MuiButton-root': {
                       border: liteMode
                         ? theme.palette.mode === 'dark'
-                          ? '1px solid rgb(110 170 240 / 25%)'
-                          : '1px solid rgb(99 102 241 / 20%)'
+                          ? '1px solid rgb(128 211 255 / 25%)'
+                          : '1px solid rgb(40 145 200 / 20%)'
                         : theme.palette.mode === 'dark'
-                          ? '1px solid rgb(110 170 240 / 30%)'
-                          : '1px solid rgb(99 102 241 / 25%)',
+                          ? '1px solid rgb(128 211 255 / 30%)'
+                          : '1px solid rgb(40 145 200 / 25%)',
                       backdropFilter: 'blur(10px)',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       // Enhanced mobile touch targets
@@ -1790,13 +1693,7 @@ const Calculator: React.FC = React.memo(() => {
                       px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
                       '&:hover': {
                         transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
-                        borderColor: liteMode
-                          ? gameMode === 'pve'
-                            ? 'rgb(34 197 94 / 80%)'
-                            : gameMode === 'pvp'
-                              ? 'rgb(239 68 68 / 80%)'
-                              : 'rgb(152 131 227 / 80%)'
-                          : 'rgb(110 170 240 / 80%)',
+                        borderColor: 'rgb(128 211 255 / 80%)',
                       },
                       '&:active': {
                         transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
@@ -1830,15 +1727,15 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pve'
                           ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(110 170 240 / 35%) 0%, rgb(152 131 227 / 35%) 50%, rgb(173 192 255 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(99 102 241 / 20%) 0%, rgb(139 92 246 / 20%) 50%, rgb(168 85 247 / 20%) 100%)'
+                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
                           : 'transparent',
-                      borderColor: gameMode === 'pve' ? 'rgb(110 170 240 / 80%)' : undefined,
+                      borderColor: gameMode === 'pve' ? 'rgb(128 211 255 / 80%)' : undefined,
                       color: gameMode === 'pve' ? 'inherit' : 'inherit',
                     }}
                   >
@@ -1870,15 +1767,15 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pvp'
                           ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(110 170 240 / 35%) 0%, rgb(152 131 227 / 35%) 50%, rgb(173 192 255 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(99 102 241 / 20%) 0%, rgb(139 92 246 / 20%) 50%, rgb(168 85 247 / 20%) 100%)'
+                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
                           : 'transparent',
-                      borderColor: gameMode === 'pvp' ? 'rgb(110 170 240 / 80%)' : undefined,
+                      borderColor: gameMode === 'pvp' ? 'rgb(128 211 255 / 80%)' : undefined,
                       color: gameMode === 'pvp' ? 'inherit' : 'inherit',
                     }}
                   >
@@ -1895,15 +1792,15 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'both'
                           ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(110 170 240 / 35%) 0%, rgb(152 131 227 / 35%) 50%, rgb(173 192 255 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(99 102 241 / 20%) 0%, rgb(139 92 246 / 20%) 50%, rgb(168 85 247 / 20%) 100%)'
+                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
                           : 'transparent',
-                      borderColor: gameMode === 'both' ? 'rgb(139 92 246 / 80%)' : undefined,
+                      borderColor: gameMode === 'both' ? 'rgb(56 189 248 / 80%)' : undefined,
                       color: gameMode === 'both' ? 'inherit' : 'inherit',
                     }}
                   >
@@ -1925,8 +1822,8 @@ const Calculator: React.FC = React.memo(() => {
                   borderBottom: '1px solid',
                   borderColor:
                     theme.palette.mode === 'dark'
-                      ? 'rgb(110 170 240 / 18%)'
-                      : 'rgb(99 102 241 / 15%)',
+                      ? 'rgb(128 211 255 / 18%)'
+                      : 'rgb(40 145 200 / 15%)',
                   background: liteMode
                     ? theme.palette.mode === 'dark'
                       ? 'rgba(15, 23, 42, 0.6)'
@@ -1937,6 +1834,7 @@ const Calculator: React.FC = React.memo(() => {
                   backdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   WebkitBackdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
                   position: 'relative',
+                  borderRadius: liteMode ? 0 : '8px 8px 0 0',
                 }}
               >
                 <Tabs
@@ -1973,10 +1871,11 @@ const Calculator: React.FC = React.memo(() => {
                           theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
                         backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'rgba(99, 102, 241, 0.15)'
-                            : 'rgba(99, 102, 241, 0.08)',
-                        border: '1px solid rgba(99, 102, 241, 0.5)',
+                            ? 'rgba(128, 211, 255, 0.15)'
+                            : 'rgba(40, 145, 200, 0.08)',
+                        border: '1px solid rgba(40, 145, 200, 0.5)',
                         borderBottom: 'none',
+                        borderRadius: '8px 8px 0 0',
                       },
                     },
                     '& .MuiTabs-indicator': {
@@ -1990,7 +1889,28 @@ const Calculator: React.FC = React.memo(() => {
                 </Tabs>
 
                 {/* Action buttons for current tab */}
-                <Box sx={{ display: 'flex', gap: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    p: 2,
+                    alignItems: 'center',
+                    backgroundColor: liteMode
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.4)'
+                        : 'rgba(255, 255, 255, 0.7)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.3)'
+                        : 'rgba(255, 255, 255, 0.5)',
+                    borderBottom: '1px solid',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgb(128 211 255 / 15%)'
+                        : 'rgb(40 145 200 / 12%)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
+                  }}
+                >
                   {selectedTab === 0 && (
                     <>
                       <Button
@@ -2000,7 +1920,10 @@ const Calculator: React.FC = React.memo(() => {
                           <CheckCircleIcon
                             sx={{
                               fontSize: 18,
-                              color: liteMode ? 'rgb(34 197 94 / 90%)' : 'rgb(34 197 94 / 80%)',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(128 211 255 / 90%)'
+                                  : 'rgb(40 145 200 / 90%)',
                             }}
                           />
                         }
@@ -2009,38 +1932,32 @@ const Calculator: React.FC = React.memo(() => {
                           fontSize: '0.875rem',
                           px: 2,
                           fontWeight: 600,
-                          borderColor: liteMode
-                            ? theme.palette.mode === 'dark'
-                              ? 'rgb(34 197 94 / 40%)'
-                              : 'rgb(34 197 94 / 30%)'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgb(34 197 94 / 30%)'
-                              : 'rgb(34 197 94 / 20%)',
-                          color: 'rgb(34 197 94 / 90%)',
-                          background: liteMode
-                            ? theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(34 197 94 / 10%) 0%, rgb(34 197 94 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(34 197 94 / 8%) 0%, rgb(34 197 94 / 4%) 100%)'
-                            : theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(34 197 94 / 10%) 0%, rgb(34 197 94 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(34 197 94 / 8%) 0%, rgb(34 197 94 / 4%) 100%)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 30%)'
+                              : 'rgb(40 145 200 / 30%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(40 145 200 / 90%)',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 8%) 0%, rgb(56 189 248 / 6%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 6%) 100%)',
                           '&:hover': {
-                            borderColor: '#22c55e',
-                            background: liteMode
-                              ? theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(34 197 94 / 15%) 0%, rgb(34 197 94 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(34 197 94 / 12%) 0%, rgb(34 197 94 / 6%) 100%)'
-                              : theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(34 197 94 / 15%) 0%, rgb(34 197 94 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(34 197 94 / 12%) 0%, rgb(34 197 94 / 6%) 100%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(128 211 255 / 60%)'
+                                : 'rgb(40 145 200 / 60%)',
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgb(128 211 255 / 12%) 0%, rgb(56 189 248 / 10%) 100%)'
+                                : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 10%) 100%)',
                             transform: 'translateY(-1px)',
-                            boxShadow: liteMode
-                              ? theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(34 197 94 / 40%)'
-                                : '0 4px 12px rgb(34 197 94 / 30%)'
-                              : theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(34 197 94 / 20%)'
-                                : '0 4px 12px rgb(34 197 94 / 10%)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgb(56 189 248 / 30%)'
+                                : '0 4px 12px rgb(40 145 200 / 25%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -2054,7 +1971,10 @@ const Calculator: React.FC = React.memo(() => {
                           <ErrorIcon
                             sx={{
                               fontSize: 18,
-                              color: liteMode ? 'rgb(239 68 68 / 90%)' : 'rgb(239 68 68 / 80%)',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(156 163 175 / 90%)'
+                                  : 'rgb(107 114 128 / 90%)',
                             }}
                           />
                         }
@@ -2063,38 +1983,32 @@ const Calculator: React.FC = React.memo(() => {
                           fontSize: '0.875rem',
                           px: 2,
                           fontWeight: 600,
-                          borderColor: liteMode
-                            ? theme.palette.mode === 'dark'
-                              ? 'rgb(239 68 68 / 40%)'
-                              : 'rgb(239 68 68 / 30%)'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgb(239 68 68 / 30%)'
-                              : 'rgb(239 68 68 / 20%)',
-                          color: 'rgb(239 68 68 / 90%)',
-                          background: liteMode
-                            ? theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(239 68 68 / 10%) 0%, rgb(239 68 68 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(239 68 68 / 8%) 0%, rgb(239 68 68 / 4%) 100%)'
-                            : theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(239 68 68 / 10%) 0%, rgb(239 68 68 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(239 68 68 / 8%) 0%, rgb(239 68 68 / 4%) 100%)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(156 163 175 / 30%)'
+                              : 'rgb(107 114 128 / 30%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(156 163 175 / 90%)'
+                              : 'rgb(107 114 128 / 90%)',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(156 163 175 / 8%) 0%, rgb(107 114 128 / 6%) 100%)'
+                              : 'linear-gradient(135deg, rgb(107 114 128 / 8%) 0%, rgb(156 163 175 / 6%) 100%)',
                           '&:hover': {
-                            borderColor: '#ef4444',
-                            background: liteMode
-                              ? theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(239 68 68 / 15%) 0%, rgb(239 68 68 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(239 68 68 / 12%) 0%, rgb(239 68 68 / 6%) 100%)'
-                              : theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(239 68 68 / 15%) 0%, rgb(239 68 68 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(239 68 68 / 12%) 0%, rgb(239 68 68 / 6%) 100%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(156 163 175 / 60%)'
+                                : 'rgb(107 114 128 / 60%)',
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgb(156 163 175 / 12%) 0%, rgb(107 114 128 / 10%) 100%)'
+                                : 'linear-gradient(135deg, rgb(107 114 128 / 12%) 0%, rgb(156 163 175 / 10%) 100%)',
                             transform: 'translateY(-1px)',
-                            boxShadow: liteMode
-                              ? theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(239 68 68 / 40%)'
-                                : '0 4px 12px rgb(239 68 68 / 30%)'
-                              : theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(239 68 68 / 20%)'
-                                : '0 4px 12px rgb(239 68 68 / 10%)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgb(156 163 175 / 30%)'
+                                : '0 4px 12px rgb(107 114 128 / 25%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -2109,7 +2023,15 @@ const Calculator: React.FC = React.memo(() => {
                         variant="outlined"
                         size="small"
                         startIcon={
-                          <CheckCircleIcon sx={{ fontSize: 18, color: 'rgb(34 197 94 / 80%)' }} />
+                          <CheckCircleIcon
+                            sx={{
+                              fontSize: 18,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(128 211 255 / 90%)'
+                                  : 'rgb(40 145 200 / 90%)',
+                            }}
+                          />
                         }
                         onClick={() => toggleAllCrit(true)}
                         sx={{
@@ -2118,24 +2040,30 @@ const Calculator: React.FC = React.memo(() => {
                           fontWeight: 600,
                           borderColor:
                             theme.palette.mode === 'dark'
-                              ? 'rgb(34 197 94 / 30%)'
-                              : 'rgb(34 197 94 / 20%)',
-                          color: 'rgb(34 197 94 / 80%)',
+                              ? 'rgb(128 211 255 / 30%)'
+                              : 'rgb(40 145 200 / 30%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(40 145 200 / 90%)',
                           background:
                             theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(34 197 94 / 10%) 0%, rgb(34 197 94 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(34 197 94 / 8%) 0%, rgb(34 197 94 / 4%) 100%)',
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 10%) 0%, rgb(56 189 248 / 5%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 4%) 100%)',
                           '&:hover': {
-                            borderColor: '#22c55e',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(128 211 255 / 60%)'
+                                : 'rgb(40 145 200 / 60%)',
                             background:
                               theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(34 197 94 / 15%) 0%, rgb(34 197 94 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(34 197 94 / 12%) 0%, rgb(34 197 94 / 6%) 100%)',
+                                ? 'linear-gradient(135deg, rgb(128 211 255 / 15%) 0%, rgb(56 189 248 / 8%) 100%)'
+                                : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 6%) 100%)',
                             transform: 'translateY(-1px)',
                             boxShadow:
                               theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(34 197 94 / 20%)'
-                                : '0 4px 12px rgb(34 197 94 / 10%)',
+                                ? '0 4px 12px rgb(56 189 248 / 20%)'
+                                : '0 4px 12px rgb(40 145 200 / 10%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -2146,7 +2074,15 @@ const Calculator: React.FC = React.memo(() => {
                         variant="outlined"
                         size="small"
                         startIcon={
-                          <ErrorIcon sx={{ fontSize: 18, color: 'rgb(239 68 68 / 80%)' }} />
+                          <ErrorIcon
+                            sx={{
+                              fontSize: 18,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(148 163 184 / 90%)'
+                                  : 'rgb(148 163 184 / 80%)',
+                            }}
+                          />
                         }
                         onClick={() => toggleAllCrit(false)}
                         sx={{
@@ -2155,24 +2091,30 @@ const Calculator: React.FC = React.memo(() => {
                           fontWeight: 600,
                           borderColor:
                             theme.palette.mode === 'dark'
-                              ? 'rgb(239 68 68 / 30%)'
-                              : 'rgb(239 68 68 / 20%)',
-                          color: 'rgb(239 68 68 / 80%)',
+                              ? 'rgb(148 163 184 / 30%)'
+                              : 'rgb(148 163 184 / 20%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(148 163 184 / 90%)'
+                              : 'rgb(148 163 184 / 80%)',
                           background:
                             theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(239 68 68 / 10%) 0%, rgb(239 68 68 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(239 68 68 / 8%) 0%, rgb(239 68 68 / 4%) 100%)',
+                              ? 'linear-gradient(135deg, rgb(148 163 184 / 10%) 0%, rgb(148 163 184 / 5%) 100%)'
+                              : 'linear-gradient(135deg, rgb(148 163 184 / 8%) 0%, rgb(148 163 184 / 4%) 100%)',
                           '&:hover': {
-                            borderColor: '#ef4444',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(148 163 184 / 60%)'
+                                : 'rgb(148 163 184 / 60%)',
                             background:
                               theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(239 68 68 / 15%) 0%, rgb(239 68 68 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(239 68 68 / 12%) 0%, rgb(239 68 68 / 6%) 100%)',
+                                ? 'linear-gradient(135deg, rgb(148 163 184 / 15%) 0%, rgb(148 163 184 / 8%) 100%)'
+                                : 'linear-gradient(135deg, rgb(148 163 184 / 12%) 0%, rgb(148 163 184 / 6%) 100%)',
                             transform: 'translateY(-1px)',
                             boxShadow:
                               theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(239 68 68 / 20%)'
-                                : '0 4px 12px rgb(239 68 68 / 10%)',
+                                ? '0 4px 12px rgb(148 163 184 / 20%)'
+                                : '0 4px 12px rgb(148 163 184 / 10%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -2224,10 +2166,11 @@ const Calculator: React.FC = React.memo(() => {
                           theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
                         backgroundColor:
                           theme.palette.mode === 'dark'
-                            ? 'rgba(99, 102, 241, 0.15)'
-                            : 'rgba(99, 102, 241, 0.08)',
-                        border: '1px solid rgba(99, 102, 241, 0.5)',
+                            ? 'rgba(128, 211, 255, 0.15)'
+                            : 'rgba(40, 145, 200, 0.08)',
+                        border: '1px solid rgba(40, 145, 200, 0.5)',
                         borderBottom: 'none',
+                        borderRadius: '8px 8px 0 0',
                       },
                     },
                     '& .MuiTabs-indicator': {
@@ -2297,70 +2240,60 @@ const Calculator: React.FC = React.memo(() => {
                     isLiteMode={liteMode}
                     sx={{
                       position: 'relative',
-                      p: liteMode ? 2 : 3,
-                      borderRadius: liteMode ? 8 : 12,
+                      p: liteMode ? 1 : 3,
+                      borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
                           : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
                         : theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
                           : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
                       border: liteMode
-                        ? `1px solid ${
-                            penStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.2)'
-                              : penStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.2)'
-                                : 'rgba(239, 68, 68, 0.2)'
-                          }`
+                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
                         : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
                       boxShadow: liteMode
-                        ? `0 4px 12px ${
-                            penStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.1)'
-                              : penStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.1)'
-                                : 'rgba(239, 68, 68, 0.1)'
-                          }`
+                        ? 'none'
                         : theme.palette.mode === 'dark'
                           ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
                           : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                       backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       transition: 'all 0.3s ease',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: liteMode ? 0 : 12,
-                        right: liteMode ? 0 : 12,
-                        height: liteMode ? 2 : 3,
-                        background:
-                          penStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : penStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)',
-                        borderRadius: liteMode ? 0 : '2px 2px 0 0',
-                      },
+                      ...(!liteMode && {
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 12,
+                          right: 12,
+                          height: 3,
+                          background:
+                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          borderRadius: '2px 2px 0 0',
+                        },
+                      }),
                     }}
                   >
-                    {/* Clean mobile-optimized footer layout */}
+                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
+                        flexDirection: { xs: 'row', sm: 'row' },
                         alignItems: { xs: 'center', sm: 'center' },
-                        gap: { xs: 1.5, sm: 3 },
                         justifyContent: 'space-between',
+                        gap: { xs: 1, sm: 3 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
+                        pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
                       <Box
                         sx={{
-                          flex: 1,
-                          textAlign: { xs: 'center', sm: 'left' },
+                          textAlign: { xs: 'left', sm: 'left' },
+                          flex: { xs: 1, sm: 1 },
+                          pl: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Typography
@@ -2394,10 +2327,12 @@ const Calculator: React.FC = React.memo(() => {
                         sx={{
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: { xs: 'center', sm: 'flex-end' },
+                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
                           gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'center', sm: 'right' },
+                          textAlign: { xs: 'right', sm: 'right' },
                           minWidth: { xs: 'auto', sm: '200px' },
+                          flexShrink: 0,
+                          pr: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Box
@@ -2544,70 +2479,60 @@ const Calculator: React.FC = React.memo(() => {
                     isLiteMode={liteMode}
                     sx={{
                       position: 'relative',
-                      p: liteMode ? 2 : 3,
-                      borderRadius: liteMode ? 8 : 12,
+                      p: liteMode ? 1 : 3,
+                      borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
                           : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
                         : theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
                           : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
                       border: liteMode
-                        ? `1px solid ${
-                            critStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.2)'
-                              : critStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.2)'
-                                : 'rgba(239, 68, 68, 0.2)'
-                          }`
+                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
                         : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
                       boxShadow: liteMode
-                        ? `0 4px 12px ${
-                            critStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.1)'
-                              : critStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.1)'
-                                : 'rgba(239, 68, 68, 0.1)'
-                          }`
+                        ? 'none'
                         : theme.palette.mode === 'dark'
                           ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
                           : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                       backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
                       transition: 'all 0.3s ease',
-                      '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: liteMode ? 0 : 12,
-                        right: liteMode ? 0 : 12,
-                        height: liteMode ? 2 : 3,
-                        background:
-                          critStatus === 'at-cap'
-                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                            : critStatus === 'over-cap'
-                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                              : 'linear-gradient(90deg, #ef4444, #dc2626)',
-                        borderRadius: liteMode ? 0 : '2px 2px 0 0',
-                      },
+                      ...(!liteMode && {
+                        '&::before': {
+                          content: '""',
+                          position: 'absolute',
+                          top: 0,
+                          left: 12,
+                          right: 12,
+                          height: 3,
+                          background:
+                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          borderRadius: '2px 2px 0 0',
+                        },
+                      }),
                     }}
                   >
-                    {/* Clean mobile-optimized footer layout */}
+                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
                     <Box
                       sx={{
                         display: 'flex',
-                        flexDirection: { xs: 'column', sm: 'row' },
+                        flexDirection: { xs: 'row', sm: 'row' },
                         alignItems: { xs: 'center', sm: 'center' },
-                        gap: { xs: 1.5, sm: 3 },
                         justifyContent: 'space-between',
+                        gap: { xs: 1, sm: 3 },
+                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
+                        pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
                       <Box
                         sx={{
-                          flex: 1,
-                          textAlign: { xs: 'center', sm: 'left' },
+                          textAlign: { xs: 'left', sm: 'left' },
+                          flex: { xs: 1, sm: 1 },
+                          pl: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Typography
@@ -2641,10 +2566,12 @@ const Calculator: React.FC = React.memo(() => {
                         sx={{
                           display: 'flex',
                           flexDirection: 'column',
-                          alignItems: { xs: 'center', sm: 'flex-end' },
+                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
                           gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'center', sm: 'right' },
+                          textAlign: { xs: 'right', sm: 'right' },
                           minWidth: { xs: 'auto', sm: '200px' },
+                          flexShrink: 0,
+                          pr: { xs: 0.5, sm: 0 },
                         }}
                       >
                         <Box
