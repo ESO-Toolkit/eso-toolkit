@@ -3,7 +3,7 @@
 # Cross-platform compatible (Windows, Linux, macOS) with colorized output
 
 # Cross-platform colorization utility
-COLOR := node scripts/colorize.js
+COLOR := node scripts/colorize.cjs
 
 # Detect OS for cross-platform compatibility
 ifeq ($(OS),Windows_NT)
