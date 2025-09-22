@@ -2263,7 +2263,7 @@ const Calculator: React.FC = React.memo(() => {
                       borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
                           : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
                         : theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
@@ -2507,7 +2507,7 @@ const Calculator: React.FC = React.memo(() => {
                       borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
                           : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
                         : theme.palette.mode === 'dark'
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
