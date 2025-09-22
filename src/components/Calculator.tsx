@@ -1712,13 +1712,7 @@ const Calculator: React.FC = React.memo(() => {
                       px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
                       '&:hover': {
                         transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
-                        borderColor: liteMode
-                          ? gameMode === 'pve'
-                            ? 'rgb(34 197 94 / 80%)'
-                            : gameMode === 'pvp'
-                              ? 'rgb(239 68 68 / 80%)'
-                              : 'rgb(56 189 248 / 80%)'
-                          : 'rgb(128 211 255 / 80%)',
+                        borderColor: 'rgb(128 211 255 / 80%)',
                       },
                       '&:active': {
                         transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
