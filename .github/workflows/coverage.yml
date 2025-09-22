@@ -47,7 +47,7 @@ jobs:
         if: always()
 
       - name: Upload Coverage to GitHub Gist
-        run: node scripts/upload-coverage-to-gist.js
+        run: node scripts/upload-coverage-to-gist.cjs
         if: github.ref == 'refs/heads/master'
         continue-on-error: true
         env:
