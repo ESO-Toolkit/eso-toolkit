@@ -34,7 +34,7 @@ import {
   AccordionSummary,
   AccordionDetails,
 } from '@mui/material';
-import { styled, useTheme, alpha, GlobalStyles } from '@mui/material/styles';
+import { styled, useTheme, alpha } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 
 import {
@@ -754,7 +754,6 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
-
 const Calculator: React.FC = React.memo(() => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -1237,7 +1236,12 @@ const Calculator: React.FC = React.memo(() => {
               disableRipple
               disableTouchRipple
               sx={(theme) => {
-                console.log('Checkbox styling - liteMode:', liteMode, 'theme.mode:', theme.palette.mode);
+                console.log(
+                  'Checkbox styling - liteMode:',
+                  liteMode,
+                  'theme.mode:',
+                  theme.palette.mode,
+                );
                 return {
                   ...checkboxStyles,
                   '&.Mui-checked': {
@@ -1549,7 +1553,6 @@ const Calculator: React.FC = React.memo(() => {
             },
           }}
         >
-          
           {/* Main Calculator */}
           <CalculatorCard liteMode={liteMode}>
             {/* Controls */}
@@ -1910,25 +1913,28 @@ const Calculator: React.FC = React.memo(() => {
                 </Tabs>
 
                 {/* Action buttons for current tab */}
-                <Box sx={{
-                  display: 'flex',
-                  gap: 2,
-                  p: 2,
-                  alignItems: 'center',
-                  backgroundColor: liteMode
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.4)'
-                      : 'rgba(255, 255, 255, 0.7)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.3)'
-                      : 'rgba(255, 255, 255, 0.5)',
-                  borderBottom: '1px solid',
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgb(128 211 255 / 15%)'
-                    : 'rgb(40 145 200 / 12%)',
-                  backdropFilter: 'blur(4px)',
-                  WebkitBackdropFilter: 'blur(4px)',
-                }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    gap: 2,
+                    p: 2,
+                    alignItems: 'center',
+                    backgroundColor: liteMode
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.4)'
+                        : 'rgba(255, 255, 255, 0.7)'
+                      : theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.3)'
+                        : 'rgba(255, 255, 255, 0.5)',
+                    borderBottom: '1px solid',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgb(128 211 255 / 15%)'
+                        : 'rgb(40 145 200 / 12%)',
+                    backdropFilter: 'blur(4px)',
+                    WebkitBackdropFilter: 'blur(4px)',
+                  }}
+                >
                   {selectedTab === 0 && (
                     <>
                       <Button
@@ -1938,7 +1944,10 @@ const Calculator: React.FC = React.memo(() => {
                           <CheckCircleIcon
                             sx={{
                               fontSize: 18,
-                              color: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 90%)' : 'rgb(40 145 200 / 90%)',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(128 211 255 / 90%)'
+                                  : 'rgb(40 145 200 / 90%)',
                             }}
                           />
                         }
@@ -1947,22 +1956,32 @@ const Calculator: React.FC = React.memo(() => {
                           fontSize: '0.875rem',
                           px: 2,
                           fontWeight: 600,
-                          borderColor: theme.palette.mode === 'dark'
-                            ? 'rgb(128 211 255 / 30%)'
-                            : 'rgb(40 145 200 / 30%)',
-                          color: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 90%)' : 'rgb(40 145 200 / 90%)',
-                          background: theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 8%) 0%, rgb(56 189 248 / 6%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 6%) 100%)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 30%)'
+                              : 'rgb(40 145 200 / 30%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(40 145 200 / 90%)',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 8%) 0%, rgb(56 189 248 / 6%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 6%) 100%)',
                           '&:hover': {
-                            borderColor: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 60%)' : 'rgb(40 145 200 / 60%)',
-                            background: theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(128 211 255 / 12%) 0%, rgb(56 189 248 / 10%) 100%)'
-                              : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 10%) 100%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(128 211 255 / 60%)'
+                                : 'rgb(40 145 200 / 60%)',
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgb(128 211 255 / 12%) 0%, rgb(56 189 248 / 10%) 100%)'
+                                : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 10%) 100%)',
                             transform: 'translateY(-1px)',
-                            boxShadow: theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgb(56 189 248 / 30%)'
-                              : '0 4px 12px rgb(40 145 200 / 25%)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgb(56 189 248 / 30%)'
+                                : '0 4px 12px rgb(40 145 200 / 25%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -1976,7 +1995,10 @@ const Calculator: React.FC = React.memo(() => {
                           <ErrorIcon
                             sx={{
                               fontSize: 18,
-                              color: theme.palette.mode === 'dark' ? 'rgb(156 163 175 / 90%)' : 'rgb(107 114 128 / 90%)',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(156 163 175 / 90%)'
+                                  : 'rgb(107 114 128 / 90%)',
                             }}
                           />
                         }
@@ -1985,22 +2007,32 @@ const Calculator: React.FC = React.memo(() => {
                           fontSize: '0.875rem',
                           px: 2,
                           fontWeight: 600,
-                          borderColor: theme.palette.mode === 'dark'
-                            ? 'rgb(156 163 175 / 30%)'
-                            : 'rgb(107 114 128 / 30%)',
-                          color: theme.palette.mode === 'dark' ? 'rgb(156 163 175 / 90%)' : 'rgb(107 114 128 / 90%)',
-                          background: theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(156 163 175 / 8%) 0%, rgb(107 114 128 / 6%) 100%)'
-                            : 'linear-gradient(135deg, rgb(107 114 128 / 8%) 0%, rgb(156 163 175 / 6%) 100%)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(156 163 175 / 30%)'
+                              : 'rgb(107 114 128 / 30%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(156 163 175 / 90%)'
+                              : 'rgb(107 114 128 / 90%)',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(156 163 175 / 8%) 0%, rgb(107 114 128 / 6%) 100%)'
+                              : 'linear-gradient(135deg, rgb(107 114 128 / 8%) 0%, rgb(156 163 175 / 6%) 100%)',
                           '&:hover': {
-                            borderColor: theme.palette.mode === 'dark' ? 'rgb(156 163 175 / 60%)' : 'rgb(107 114 128 / 60%)',
-                            background: theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(156 163 175 / 12%) 0%, rgb(107 114 128 / 10%) 100%)'
-                              : 'linear-gradient(135deg, rgb(107 114 128 / 12%) 0%, rgb(156 163 175 / 10%) 100%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(156 163 175 / 60%)'
+                                : 'rgb(107 114 128 / 60%)',
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgb(156 163 175 / 12%) 0%, rgb(107 114 128 / 10%) 100%)'
+                                : 'linear-gradient(135deg, rgb(107 114 128 / 12%) 0%, rgb(156 163 175 / 10%) 100%)',
                             transform: 'translateY(-1px)',
-                            boxShadow: theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgb(156 163 175 / 30%)'
-                              : '0 4px 12px rgb(107 114 128 / 25%)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgb(156 163 175 / 30%)'
+                                : '0 4px 12px rgb(107 114 128 / 25%)',
                           },
                           transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                         }}
@@ -2015,7 +2047,15 @@ const Calculator: React.FC = React.memo(() => {
                         variant="outlined"
                         size="small"
                         startIcon={
-                          <CheckCircleIcon sx={{ fontSize: 18, color: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 90%)' : 'rgb(40 145 200 / 90%)' }} />
+                          <CheckCircleIcon
+                            sx={{
+                              fontSize: 18,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(128 211 255 / 90%)'
+                                  : 'rgb(40 145 200 / 90%)',
+                            }}
+                          />
                         }
                         onClick={() => toggleAllCrit(true)}
                         sx={{
@@ -2026,13 +2066,19 @@ const Calculator: React.FC = React.memo(() => {
                             theme.palette.mode === 'dark'
                               ? 'rgb(128 211 255 / 30%)'
                               : 'rgb(40 145 200 / 30%)',
-                          color: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 90%)' : 'rgb(40 145 200 / 90%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(40 145 200 / 90%)',
                           background:
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(135deg, rgb(128 211 255 / 10%) 0%, rgb(56 189 248 / 5%) 100%)'
                               : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 4%) 100%)',
                           '&:hover': {
-                            borderColor: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 60%)' : 'rgb(40 145 200 / 60%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(128 211 255 / 60%)'
+                                : 'rgb(40 145 200 / 60%)',
                             background:
                               theme.palette.mode === 'dark'
                                 ? 'linear-gradient(135deg, rgb(128 211 255 / 15%) 0%, rgb(56 189 248 / 8%) 100%)'
@@ -2052,7 +2098,15 @@ const Calculator: React.FC = React.memo(() => {
                         variant="outlined"
                         size="small"
                         startIcon={
-                          <ErrorIcon sx={{ fontSize: 18, color: theme.palette.mode === 'dark' ? 'rgb(148 163 184 / 90%)' : 'rgb(148 163 184 / 80%)' }} />
+                          <ErrorIcon
+                            sx={{
+                              fontSize: 18,
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(148 163 184 / 90%)'
+                                  : 'rgb(148 163 184 / 80%)',
+                            }}
+                          />
                         }
                         onClick={() => toggleAllCrit(false)}
                         sx={{
@@ -2063,13 +2117,19 @@ const Calculator: React.FC = React.memo(() => {
                             theme.palette.mode === 'dark'
                               ? 'rgb(148 163 184 / 30%)'
                               : 'rgb(148 163 184 / 20%)',
-                          color: theme.palette.mode === 'dark' ? 'rgb(148 163 184 / 90%)' : 'rgb(148 163 184 / 80%)',
+                          color:
+                            theme.palette.mode === 'dark'
+                              ? 'rgb(148 163 184 / 90%)'
+                              : 'rgb(148 163 184 / 80%)',
                           background:
                             theme.palette.mode === 'dark'
                               ? 'linear-gradient(135deg, rgb(148 163 184 / 10%) 0%, rgb(148 163 184 / 5%) 100%)'
                               : 'linear-gradient(135deg, rgb(148 163 184 / 8%) 0%, rgb(148 163 184 / 4%) 100%)',
                           '&:hover': {
-                            borderColor: theme.palette.mode === 'dark' ? 'rgb(148 163 184 / 60%)' : 'rgb(148 163 184 / 60%)',
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(148 163 184 / 60%)'
+                                : 'rgb(148 163 184 / 60%)',
                             background:
                               theme.palette.mode === 'dark'
                                 ? 'linear-gradient(135deg, rgb(148 163 184 / 15%) 0%, rgb(148 163 184 / 8%) 100%)'
@@ -2243,14 +2303,13 @@ const Calculator: React.FC = React.memo(() => {
                         left: liteMode ? 0 : 12,
                         right: liteMode ? 0 : 12,
                         height: liteMode ? 2 : 3,
-                        background:
-                          liteMode
-                            ? (penStatus === 'at-cap'
-                                ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                                : penStatus === 'over-cap'
-                                  ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                                  : 'linear-gradient(90deg, #ef4444, #dc2626)')
-                            : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                        background: liteMode
+                          ? penStatus === 'at-cap'
+                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                            : penStatus === 'over-cap'
+                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
+                              : 'linear-gradient(90deg, #ef4444, #dc2626)'
+                          : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                         borderRadius: liteMode ? 0 : '2px 2px 0 0',
                       },
                     }}
@@ -2492,14 +2551,13 @@ const Calculator: React.FC = React.memo(() => {
                         left: liteMode ? 0 : 12,
                         right: liteMode ? 0 : 12,
                         height: liteMode ? 2 : 3,
-                        background:
-                          liteMode
-                            ? (critStatus === 'at-cap'
-                                ? 'linear-gradient(90deg, #22c55e, #16a34a)'
-                                : critStatus === 'over-cap'
-                                  ? 'linear-gradient(90deg, #fb923c, #f97316)'
-                                  : 'linear-gradient(90deg, #ef4444, #dc2626)')
-                            : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                        background: liteMode
+                          ? critStatus === 'at-cap'
+                            ? 'linear-gradient(90deg, #22c55e, #16a34a)'
+                            : critStatus === 'over-cap'
+                              ? 'linear-gradient(90deg, #fb923c, #f97316)'
+                              : 'linear-gradient(90deg, #ef4444, #dc2626)'
+                          : 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                         borderRadius: liteMode ? 0 : '2px 2px 0 0',
                       },
                     }}
