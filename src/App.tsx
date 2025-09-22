@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
 import { EsoLogsClientProvider } from './EsoLogsClientContext';
@@ -62,6 +63,9 @@ const LazyModernFeedbackFab = React.lazy(() =>
 
 // Loading fallback component - use skeleton for consistency
 const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+
+// Text Editor specific loading fallback
+const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
@@ -254,7 +258,7 @@ const AppRoutes: React.FC = () => {
               path="/text-editor"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<TextEditorLoadingFallback />}>
                     <TextEditor />
                   </Suspense>
                 </ErrorBoundary>
@@ -301,4 +305,5 @@ const AppRoutes: React.FC = () => {
   );
 };
 
+export { TextEditorSkeleton };
 export default App;
