@@ -2288,7 +2288,8 @@ const Calculator: React.FC = React.memo(() => {
                           left: 12,
                           right: 12,
                           height: 3,
-                          background: 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          background:
+                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                           borderRadius: '2px 2px 0 0',
                         },
                       }),
@@ -2520,7 +2521,8 @@ const Calculator: React.FC = React.memo(() => {
                           left: 12,
                           right: 12,
                           height: 3,
-                          background: 'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
+                          background:
+                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
                           borderRadius: '2px 2px 0 0',
                         },
                       }),
