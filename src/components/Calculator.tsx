@@ -760,7 +760,7 @@ const Calculator: React.FC = React.memo(() => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
-  const [liteMode, setLiteMode] = useState(isMobile);
+  const [liteMode, setLiteMode] = useState(true);
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
