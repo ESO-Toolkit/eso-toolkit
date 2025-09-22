@@ -1012,7 +1012,7 @@ const Calculator: React.FC = React.memo(() => {
               ? '1px solid rgba(56, 189, 248, 0.8)'
               : '1px solid rgb(40 145 200 / 35%)'
           : liteMode
-            ? 'none'
+            ? '1px solid transparent'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(255, 255, 255, 0.12)'
               : '1px solid rgba(148, 163, 184, 0.6)',
@@ -1322,10 +1322,10 @@ const Calculator: React.FC = React.memo(() => {
                         ? 'rgb(136 164 192 / 15%)'
                         : 'rgba(241, 245, 249, 0.8)'
                     : theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.3)'
+                      ? 'rgba(56, 189, 248, 0.15)'
                       : liteMode
-                        ? 'rgb(136 164 192 / 8%)'
-                        : 'rgba(241, 245, 249, 0.6)',
+                        ? 'rgba(40 145 200, 0.12)'
+                        : 'rgba(40 145 200, 0.12)',
                   opacity: !hasQuantity ? 0.6 : 1,
                   '&:hover': {
                     backgroundColor: !hasQuantity
@@ -1335,10 +1335,10 @@ const Calculator: React.FC = React.memo(() => {
                           ? 'rgb(136 164 192 / 15%)'
                           : 'rgba(241, 245, 249, 0.8)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.5)'
+                        ? 'rgba(56, 189, 248, 0.25)'
                         : liteMode
-                          ? 'rgb(136 164 192 / 20%)'
-                          : 'rgba(241, 245, 249, 0.9)',
+                          ? 'rgba(40 145 200, 0.18)'
+                          : 'rgba(40 145 200, 0.18)',
                   },
                 },
                 '& .MuiOutlinedInput-notchedOutline': {
@@ -1348,20 +1348,20 @@ const Calculator: React.FC = React.memo(() => {
                       ? 'rgba(148, 163, 184, 0.3)'
                       : 'rgba(148, 163, 184, 0.4)'
                     : theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.2)'
+                      ? 'rgba(56, 189, 248, 0.4)'
                       : liteMode
-                        ? 'rgba(136, 164, 192, 0.3)'
-                        : 'rgba(148, 163, 184, 0.3)',
+                        ? 'rgba(40 145 200, 0.4)'
+                        : 'rgba(40 145 200, 0.4)',
                   '&:hover': {
                     borderColor: !hasQuantity
                       ? theme.palette.mode === 'dark'
                         ? 'rgba(148, 163, 184, 0.4)'
                         : 'rgba(148, 163, 184, 0.5)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.4)'
+                        ? 'rgba(56, 189, 248, 0.6)'
                         : liteMode
-                          ? 'rgba(99, 102, 241, 0.5)'
-                          : 'rgba(99, 102, 241, 0.4)',
+                          ? 'rgba(40 145 200, 0.6)'
+                          : 'rgba(40 145 200, 0.6)',
                   },
                 },
                 '& .MuiInputBase-input': {
