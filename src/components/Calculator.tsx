@@ -2285,7 +2285,7 @@ const Calculator: React.FC = React.memo(() => {
                         gap: { xs: 1, sm: 3 },
                         flexWrap: { xs: 'wrap', sm: 'nowrap' },
                         px: liteMode ? '30px' : { xs: 1, sm: 0 },
-                      pb: liteMode ? '24px' : 0,
+                        pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
@@ -2524,7 +2524,7 @@ const Calculator: React.FC = React.memo(() => {
                         gap: { xs: 1, sm: 3 },
                         flexWrap: { xs: 'wrap', sm: 'nowrap' },
                         px: liteMode ? '30px' : { xs: 1, sm: 0 },
-                      pb: liteMode ? '24px' : 0,
+                        pb: liteMode ? '24px' : 0,
                       }}
                     >
                       {/* Left - Value */}
