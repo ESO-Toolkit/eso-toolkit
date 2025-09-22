@@ -987,8 +987,8 @@ const Calculator: React.FC = React.memo(() => {
         display: 'grid',
         gridTemplateColumns: gridColumns,
         alignItems: 'center',
-        gap: liteMode ? 0.5 : 2,
-        p: liteMode ? 0.5 : 1.5,
+        gap: liteMode ? 0.125 : 2,
+        p: liteMode ? 0.125 : 1.5,
         background: item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
@@ -1016,7 +1016,7 @@ const Calculator: React.FC = React.memo(() => {
               ? '1px solid rgba(255, 255, 255, 0.12)'
               : '1px solid rgba(148, 163, 184, 0.6)',
         borderRadius: '8px !important',
-        mb: liteMode ? 0.5 : 1,
+        mb: liteMode ? 0.125 : 1,
         cursor: item.locked ? 'not-allowed' : 'pointer',
         opacity: item.locked ? 0.7 : 1,
         transition: liteMode ? 'none' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1178,7 +1178,7 @@ const Calculator: React.FC = React.memo(() => {
 
       const nameStyles = {
         color: item.enabled ? 'text.primary' : 'text.disabled',
-        fontSize: { xs: liteMode ? '0.8rem' : '0.95rem', sm: liteMode ? '0.75rem' : '0.9rem' },
+        fontSize: { xs: liteMode ? '0.7rem' : '0.95rem', sm: liteMode ? '0.65rem' : '0.9rem' },
         lineHeight: { xs: 1.4, sm: 1.2 },
         wordBreak: 'break-word' as const,
       };
@@ -1190,13 +1190,14 @@ const Calculator: React.FC = React.memo(() => {
         textShadow: theme.palette.mode === 'dark' ? '0 0 10px rgba(199 234 255,0.25)' : 'none',
         minWidth: liteMode ? '3ch' : isMobile ? '4ch' : '4ch',
         textAlign: 'right',
-        fontSize: liteMode ? '0.7rem' : isMobile ? '0.85rem' : '0.875rem',
+        fontSize: liteMode ? '0.6rem' : isMobile ? '0.85rem' : '0.875rem',
+        pr: liteMode ? 0.5 : 0,
       };
 
       const perDisplayStyles = {
         color: theme.palette.text.secondary,
         fontStyle: 'italic',
-        fontSize: liteMode ? '0.65rem' : isMobile ? '0.7rem' : '0.75rem',
+        fontSize: liteMode ? '0.55rem' : isMobile ? '0.7rem' : '0.75rem',
       };
 
       // Handle click on the entire list item
@@ -1222,13 +1223,13 @@ const Calculator: React.FC = React.memo(() => {
           key={key}
           sx={{
             ...getCalculatorItemStyles(item),
-            minHeight: liteMode ? 44 : isMobile ? 52 : 48,
-            py: liteMode ? 1 : isMobile ? 1.25 : 1,
-            pl: liteMode ? 1 : 0.5,
+            minHeight: liteMode ? 36 : isMobile ? 52 : 48,
+            py: liteMode ? 0.5 : isMobile ? 1.25 : 1,
+            pl: liteMode ? 0.5 : 0.5,
           }}
           onClick={item.locked ? undefined : handleItemClick}
         >
-          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.5 : 0.75 }}>
+          <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
               disabled={item.locked}
@@ -1622,7 +1623,7 @@ const Calculator: React.FC = React.memo(() => {
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  gap: liteMode ? 1.5 : 3,
+                  gap: liteMode ? 1 : 3,
                   flexWrap: 'wrap',
                 }}
               >
@@ -1746,7 +1747,7 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pve'
@@ -1786,7 +1787,7 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'pvp'
@@ -1811,7 +1812,7 @@ const Calculator: React.FC = React.memo(() => {
                           : isMobile
                             ? '0.85rem'
                             : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 1 : isMobile ? 1.2 : 1.5,
+                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
                       fontWeight: 600,
                       background:
                         gameMode === 'both'
@@ -2259,7 +2260,7 @@ const Calculator: React.FC = React.memo(() => {
                     isLiteMode={liteMode}
                     sx={{
                       position: 'relative',
-                      p: liteMode ? 2 : 3,
+                      p: liteMode ? 1 : 3,
                       borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
@@ -2269,22 +2270,10 @@ const Calculator: React.FC = React.memo(() => {
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
                           : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
                       border: liteMode
-                        ? `1px solid ${
-                            penStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.2)'
-                              : penStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.2)'
-                                : 'rgba(239, 68, 68, 0.2)'
-                          }`
+                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
                         : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
                       boxShadow: liteMode
-                        ? `0 4px 12px ${
-                            penStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.1)'
-                              : penStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.1)'
-                                : 'rgba(239, 68, 68, 0.1)'
-                          }`
+                        ? 'none'
                         : theme.palette.mode === 'dark'
                           ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
                           : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
@@ -2503,7 +2492,7 @@ const Calculator: React.FC = React.memo(() => {
                     isLiteMode={liteMode}
                     sx={{
                       position: 'relative',
-                      p: liteMode ? 2 : 3,
+                      p: liteMode ? 1 : 3,
                       borderRadius: '8px !important',
                       background: liteMode
                         ? theme.palette.mode === 'dark'
@@ -2513,22 +2502,10 @@ const Calculator: React.FC = React.memo(() => {
                           ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
                           : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
                       border: liteMode
-                        ? `1px solid ${
-                            critStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.2)'
-                              : critStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.2)'
-                                : 'rgba(239, 68, 68, 0.2)'
-                          }`
+                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
                         : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
                       boxShadow: liteMode
-                        ? `0 4px 12px ${
-                            critStatus === 'at-cap'
-                              ? 'rgba(34, 197, 94, 0.1)'
-                              : critStatus === 'over-cap'
-                                ? 'rgba(251, 146, 60, 0.1)'
-                                : 'rgba(239, 68, 68, 0.1)'
-                          }`
+                        ? 'none'
                         : theme.palette.mode === 'dark'
                           ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
                           : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
