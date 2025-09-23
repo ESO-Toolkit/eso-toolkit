@@ -369,4 +369,3 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
     </Box>
   );
 };
-
