@@ -14,8 +14,8 @@ export function usePageBackground(pageClass: string, isDarkMode = false): void {
 
     // Apply background image to body based on theme
     const backgroundImage = isDarkMode
-      ? 'url("/eso-log-aggregator/text-editor/text-editor-bg-dark.jpg")'
-      : 'url("/eso-log-aggregator/text-editor/text-editor-bg-light.jpg")';
+      ? 'url("/text-editor/text-editor-bg-dark.jpg")'
+      : 'url("/text-editor/text-editor-bg-light.jpg")';
 
     document.body.style.backgroundImage = backgroundImage;
     document.body.style.backgroundSize = 'cover';
