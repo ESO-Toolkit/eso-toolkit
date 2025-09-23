@@ -231,10 +231,30 @@ export const TextEditorSkeleton: React.FC<TextEditorSkeletonProps> = ({
         >
           {/* Preview text skeleton with multiple lines */}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            <Skeleton variant="text" width="60%" height={20} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <Skeleton variant="text" width="80%" height={20} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <Skeleton variant="text" width="45%" height={20} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
-            <Skeleton variant="text" width="70%" height={20} sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }} />
+            <Skeleton
+              variant="text"
+              width="60%"
+              height={20}
+              sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <Skeleton
+              variant="text"
+              width="80%"
+              height={20}
+              sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <Skeleton
+              variant="text"
+              width="45%"
+              height={20}
+              sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
+            <Skeleton
+              variant="text"
+              width="70%"
+              height={20}
+              sx={{ backgroundColor: 'rgba(255, 255, 255, 0.1)' }}
+            />
           </Box>
         </Box>
       </Box>
