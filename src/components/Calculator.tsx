@@ -947,8 +947,8 @@ const Calculator: React.FC = React.memo(() => {
         background: item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgb(53 118 204 / 25%) 0%, rgb(85 159 255 / 18%) 100%) !important'
-              : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%) !important'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%)'
             : theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
@@ -960,7 +960,7 @@ const Calculator: React.FC = React.memo(() => {
         border: item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
-              ? '1px solid rgb(105 162 255 / 29%) !important'
+              ? '1px solid rgba(56, 189, 248, 0.6) !important'
               : '1px solid rgb(105 162 255 / 40%) !important'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.8)'
@@ -1770,11 +1770,10 @@ const Calculator: React.FC = React.memo(() => {
               fontSize: isExtraSmall ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
               padding: isExtraSmall ? '6px 8px' : isMobile ? '8px 12px' : '12px 16px',
               textTransform: 'none',
-              borderRadius: '8px 8px 0 0',
+              borderRadius: '8px',
               color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
               transition: 'all 0.2s ease',
               border: '1px solid transparent',
-              borderBottom: 'none',
               marginRight: 1,
               // Enhanced tablet and mobile touch targets
               minWidth: isTablet ? '100px' : 'auto',
@@ -1785,7 +1784,6 @@ const Calculator: React.FC = React.memo(() => {
                     ? 'rgba(255, 255, 255, 0.05)'
                     : 'rgba(0, 0, 0, 0.04)',
                 border: '1px solid rgba(99, 102, 241, 0.3)',
-                borderBottom: 'none',
               },
               '&.Mui-selected': {
                 color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
@@ -1794,8 +1792,7 @@ const Calculator: React.FC = React.memo(() => {
                     ? 'rgba(128, 211, 255, 0.15)'
                     : 'rgba(40, 145, 200, 0.08)',
                 border: '1px solid rgba(40, 145, 200, 0.5)',
-                borderBottom: 'none',
-                borderRadius: '8px 8px 0 0',
+                borderRadius: '8px',
               },
             },
             '& .MuiTabs-indicator': {
@@ -2143,6 +2140,7 @@ const Calculator: React.FC = React.memo(() => {
                     gap: 2,
                     p: 2,
                     alignItems: 'center',
+                    borderRadius: '10px',
                     backgroundColor: liteMode
                       ? theme.palette.mode === 'dark'
                         ? 'rgba(15, 23, 42, 0.4)'
