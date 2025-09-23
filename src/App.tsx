@@ -7,6 +7,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
 import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
+import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
 import { LoggerProvider, LogLevel } from './contexts/LoggerContext';
@@ -66,6 +67,9 @@ const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
+
+// Calculator specific loading fallback
+const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
 
 const MainApp: React.FC = () => {
   return (
@@ -248,7 +252,7 @@ const AppRoutes: React.FC = () => {
               path="/calculator"
               element={
                 <ErrorBoundary>
-                  <Suspense fallback={<LoadingFallback />}>
+                  <Suspense fallback={<CalculatorLoadingFallback />}>
                     <Calculator />
                   </Suspense>
                 </ErrorBoundary>
@@ -305,5 +309,5 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-export { TextEditorSkeleton };
+export { SmartCalculatorSkeleton, TextEditorSkeleton };
 export default App;
