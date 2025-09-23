@@ -9,6 +9,8 @@
 /coverage
 /test-results/
 /test-results-nightly/
+/test-results-manual/
+/test-results-extracted/
 /playwright-report/
 /playwright-report-nightly/
 /playwright/.cache/

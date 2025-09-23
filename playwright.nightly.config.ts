@@ -29,7 +29,7 @@ export default defineConfig({
   testDir: './tests',
 
   /* Global setup for authentication */
-  globalSetup: require.resolve('./tests/global-setup.ts'),
+  globalSetup: './tests/global-setup.ts',
 
   /* Only run nightly regression tests */
   testMatch: '**/nightly-regression*.spec.ts',
