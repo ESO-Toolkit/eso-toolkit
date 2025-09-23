@@ -5,7 +5,7 @@ test.describe('Basic Authentication Test', () => {
     console.log('🔍 Testing basic application loading with authentication...');
     
     // Navigate to the application
-    await page.goto('/');
+    await page.goto('');
     
     // Wait for the page to load
     await page.waitForLoadState('networkidle', { timeout: 15000 });
