@@ -23,6 +23,26 @@ const TEST_TIMEOUTS = {
 
 test.describe('Nightly Regression - Authentication and Reports', () => {
   test.beforeEach(async ({ page }) => {
+    // Fail hard if authentication credentials are not available
+    const hasOAuthCredentials = process.env.OAUTH_CLIENT_ID && process.env.OAUTH_CLIENT_SECRET;
+    const hasUserCredentials = process.env.ESO_LOGS_TEST_EMAIL && process.env.ESO_LOGS_TEST_PASSWORD;
+    
+    if (!hasOAuthCredentials && !hasUserCredentials) {
+      throw new Error(
+        '🔑 AUTHENTICATION CREDENTIALS REQUIRED!\n\n' +
+        'Authentication tests cannot run without proper credentials.\n' +
+        'Please set one of the following environment variable combinations:\n\n' +
+        '  Option 1 (OAuth Client Credentials):\n' +
+        '    - OAUTH_CLIENT_ID\n' +
+        '    - OAUTH_CLIENT_SECRET\n\n' +
+        '  Option 2 (User Credentials):\n' +
+        '    - ESO_LOGS_TEST_EMAIL\n' +
+        '    - ESO_LOGS_TEST_PASSWORD\n\n' +
+        'If running in CI/CD, ensure these are configured as repository secrets.\n' +
+        'If running locally, set these in your environment or .env file.'
+      );
+    }
+
     // Don't set up API mocking - we want real data
     test.setTimeout(120000); // 2 minutes per test
 
