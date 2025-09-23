@@ -579,13 +579,13 @@ const StickyFooter = styled(Box)<{ isLiteMode: boolean }>(({ theme, isLiteMode }
       ? '1px solid rgba(128, 211, 255, 0.3)'
       : '1px solid rgba(203, 213, 225, 0.3)',
   borderRadius: isLiteMode ? 0 : '6px 6px 6px 6px',
-  padding: isLiteMode ? theme.spacing(1.5) : theme.spacing(3),
+  padding: isLiteMode ? theme.spacing(3.75) : theme.spacing(3),
   boxShadow: isLiteMode
     ? 'none'
     : theme.palette.mode === 'dark'
       ? '0 -8px 32px rgba(0, 0, 0, 0.4)'
       : '0 -8px 32px rgba(0, 0, 0, 0.1)',
-  paddingBottom: `calc(${theme.spacing(isLiteMode ? 1.5 : 3)} + env(safe-area-inset-bottom))`,
+  paddingBottom: `calc(${theme.spacing(isLiteMode ? 3.75 : 3)} + env(safe-area-inset-bottom))`,
 }));
 
 interface TabPanelProps {
@@ -953,7 +953,7 @@ const Calculator: React.FC = React.memo(() => {
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
           : liteMode
-            ? 'rgb(200 210 220 / 8%)'
+            ? 'rgb(0 0 0 / 28%)'
             : theme.palette.mode === 'dark'
               ? 'rgba(15, 23, 42, 0.6)'
               : 'rgba(241, 245, 249, 0.8)',
@@ -984,7 +984,7 @@ const Calculator: React.FC = React.memo(() => {
               transform: liteMode ? 'none' : 'translateY(-1px)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.6)'
+                  ? '1px solid rgba(56, 189, 248, 0.3)'
                   : '1px solid rgb(40 145 200 / 50%)',
               boxShadow: liteMode
                 ? 'none'
@@ -1881,9 +1881,9 @@ const Calculator: React.FC = React.memo(() => {
                       sx={{
                         '& .MuiSwitch-switchBase': {
                           '&.Mui-checked': {
-                            color: '#10b981',
+                            color: 'rgb(56 189 248)',
                             '& + .MuiSwitch-track': {
-                              backgroundColor: 'rgba(16, 185, 129, 0.4)',
+                              backgroundColor: 'rgba(56, 189, 248, 0.4)',
                             },
                           },
                         },
@@ -2432,7 +2432,7 @@ const Calculator: React.FC = React.memo(() => {
             )}
 
             {/* Tab Content */}
-            <Box sx={{ px: liteMode ? 1.5 : isMobile ? 1 : 3, pb: 3 }}>
+            <Box sx={{ px: liteMode ? 3.75 : isMobile ? 1 : 3, pb: 3 }}>
               <TabPanel value={selectedTab} index={0}>
                 {(() => {
                   const filteredPenData = getFilteredItems(penetrationData, 'pen');
