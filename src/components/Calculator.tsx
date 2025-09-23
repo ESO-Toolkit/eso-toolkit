@@ -518,7 +518,9 @@ const CalculatorCard = styled(Paper, {
     padding: liteMode ? 0 : 0,
   },
   background: liteMode
-    ? theme.palette.background.paper
+    ? theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+      : theme.palette.background.paper
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
@@ -1565,7 +1567,7 @@ const Calculator: React.FC = React.memo(() => {
       ? {
           background:
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
+              ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
               : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)',
           border: `1px solid ${
             theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
@@ -1822,7 +1824,7 @@ const Calculator: React.FC = React.memo(() => {
                     : 'rgb(40 145 200 / 15%)',
                 background: liteMode
                   ? theme.palette.mode === 'dark'
-                    ? 'rgba(15, 23, 42, 0.8)'
+                    ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
                     : 'rgba(255, 255, 255, 0.95)'
                   : theme.palette.mode === 'dark'
                     ? 'rgba(15, 23, 42, 0.9)'
