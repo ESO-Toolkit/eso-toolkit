@@ -3,7 +3,6 @@ import { fileURLToPath } from 'url';
 
 import react from '@vitejs/plugin-react-swc';
 import { defineConfig, loadEnv } from 'vite';
-import eslint from 'vite-plugin-eslint';
 import svgr from 'vite-plugin-svgr';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -28,17 +27,8 @@ export default defineConfig(({ command, mode }) => {
         include: '**/*.svg?react',
       }),
       react(),
-      // Disable ESLint during build to reduce memory usage
-      ...(command === 'serve'
-        ? [
-            eslint({
-              include: ['src/**/*.{ts,tsx}'],
-              exclude: ['node_modules', 'build'],
-              emitWarning: true,
-              emitError: false,
-            }),
-          ]
-        : []),
+      // ESLint plugin disabled due to ESLint 9 compatibility issues
+    // Use 'npm run lint' for linting during development
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
