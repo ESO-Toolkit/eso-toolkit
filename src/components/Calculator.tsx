@@ -23,7 +23,6 @@ import {
   ListItemIcon,
   ListItemText,
   Chip,
-  Alert,
   Tooltip,
   IconButton,
   useMediaQuery,
@@ -33,8 +32,9 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Stack,
 } from '@mui/material';
-import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
+import { styled, useTheme, alpha } from '@mui/material/styles';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 
 import {
@@ -490,6 +490,7 @@ const MODE_FILTER = {
 
 // Mode type
 type GameMode = 'pve' | 'pvp' | 'both';
+type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
 
 // Styled components
 const CalculatorContainer = styled(Box, {
@@ -517,9 +518,7 @@ const CalculatorCard = styled(Paper, {
     padding: liteMode ? 0 : 0,
   },
   background: liteMode
-    ? theme.palette.mode === 'dark'
-      ? 'linear-gradient(180deg, rgba(15,23,42,0.8) 0%, rgba(3,7,18,0.9) 100%)'
-      : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)'
+    ? theme.palette.background.paper
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
@@ -615,55 +614,7 @@ function a11yProps(index: number): { id: string; 'aria-controls': string } {
   };
 }
 
-// Custom styled alert component that matches the glassmorphism design
-const _StyledAlert = styled(Alert)(
-  ({
-    theme,
-    severity,
-    liteMode,
-  }: {
-    theme: Theme;
-    severity: 'success' | 'warning' | 'error' | 'info';
-    liteMode: boolean;
-  }) => ({
-    borderRadius: liteMode ? 6 : 10,
-    border: liteMode
-      ? 'none'
-      : theme.palette.mode === 'dark'
-        ? severity === 'success'
-          ? '1px solid rgba(34, 197, 94, 0.3)'
-          : severity === 'warning'
-            ? '1px solid rgba(251, 146, 60, 0.3)'
-            : '1px solid rgba(239, 68, 68, 0.3)'
-        : severity === 'success'
-          ? '1px solid rgba(34, 197, 94, 0.2)'
-          : severity === 'warning'
-            ? '1px solid rgba(251, 146, 60, 0.2)'
-            : '1px solid rgba(239, 68, 68, 0.2)',
-    background: liteMode
-      ? theme.palette.background.paper
-      : theme.palette.mode === 'dark'
-        ? severity === 'success'
-          ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%)'
-          : severity === 'warning'
-            ? 'linear-gradient(135deg, rgba(251, 146, 60, 0.1) 0%, rgba(251, 146, 60, 0.05) 100%)'
-            : 'linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(239, 68, 68, 0.05) 100%)'
-        : severity === 'success'
-          ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.08) 0%, rgba(34, 197, 94, 0.04) 100%)'
-          : severity === 'warning'
-            ? 'linear-gradient(135deg, rgba(251, 146, 60, 0.08) 0%, rgba(251, 146, 60, 0.04) 100%)'
-            : 'linear-gradient(135deg, rgba(239, 68, 68, 0.08) 0%, rgba(239, 68, 68, 0.04) 100%)',
-    backdropFilter: liteMode ? 'none' : 'blur(10px)',
-    '& .MuiAlert-icon': {
-      color: severity === 'success' ? '#22c55e' : severity === 'warning' ? '#fb923c' : '#ef4444',
-    },
-    '& .MuiAlert-message': {
-      fontSize: liteMode ? '0.75rem' : '0.875rem',
-    },
-  }),
-);
-
-// Custom tooltip content component that matches SkillTooltip styling
+// Custom styled alert component that matches SkillTooltip styling
 interface CalculatorTooltipProps {
   title: string;
   content: string;
@@ -1011,12 +962,14 @@ const Calculator: React.FC = React.memo(() => {
               : '1px solid rgb(105 162 255 / 40%) !important'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.8)'
-              : '1px solid rgb(40 145 200 / 35%)'
+              : liteMode
+                ? '1px solid rgb(40 145 200 / 35%)'
+                : '1px solid rgb(40 145 200 / 35%)'
           : liteMode
             ? '1px solid transparent'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(255, 255, 255, 0.12)'
-              : '1px solid rgba(148, 163, 184, 0.6)',
+              : '1px solid rgba(203, 213, 225, 0.3)',
         borderRadius: '8px !important',
         mb: liteMode ? 0.125 : 1,
         cursor: item.locked ? 'not-allowed' : 'pointer',
@@ -1072,9 +1025,11 @@ const Calculator: React.FC = React.memo(() => {
       let perDisplay = '';
 
       if (item.name === 'Anthelmir') {
+        // Penetration = Weapon Damage ÷ 2.5
         const wd = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(wd / 2.5);
       } else if (item.name === 'Balorgh') {
+        // Penetration = Ultimate × 23
         const ult = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(ult * 23);
       } else if (item.isFlat) {
@@ -1239,13 +1194,6 @@ const Calculator: React.FC = React.memo(() => {
               disableRipple
               disableTouchRipple
               sx={(theme) => {
-                // eslint-disable-next-line no-console
-                console.log(
-                  'Checkbox styling - liteMode:',
-                  liteMode,
-                  'theme.mode:',
-                  theme.palette.mode,
-                );
                 return {
                   ...checkboxStyles,
                   '&.Mui-checked': {
@@ -1543,6 +1491,265 @@ const Calculator: React.FC = React.memo(() => {
     );
   };
 
+  const getStatusVisuals = (
+    status: SummaryStatus,
+  ): {
+    label: string;
+    color: string;
+    background: string;
+    border: string;
+    Icon: typeof CheckCircleIcon;
+  } => {
+    const palette: Record<
+      SummaryStatus,
+      {
+        label: string;
+        color: string;
+        light: { background: string; border: string };
+        dark: { background: string; border: string };
+        Icon: typeof CheckCircleIcon;
+      }
+    > = {
+      'at-cap': {
+        label: 'Optimal',
+        color: '#22c55e',
+        light: { background: 'rgba(34, 197, 94, 0.1)', border: 'rgba(34, 197, 94, 0.2)' },
+        dark: { background: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)' },
+        Icon: CheckCircleIcon,
+      },
+      'over-cap': {
+        label: 'Over Cap',
+        color: '#fb923c',
+        light: { background: 'rgba(251, 146, 60, 0.1)', border: 'rgba(251, 146, 60, 0.2)' },
+        dark: { background: 'rgba(251, 146, 60, 0.15)', border: 'rgba(251, 146, 60, 0.3)' },
+        Icon: ErrorIcon,
+      },
+      'under-cap': {
+        label: 'Below Cap',
+        color: '#ef4444',
+        light: { background: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.2)' },
+        dark: { background: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)' },
+        Icon: HelpOutlineIcon,
+      },
+    };
+
+    const selected = palette[status];
+    const modeStyles = theme.palette.mode === 'dark' ? selected.dark : selected.light;
+
+    return {
+      label: selected.label,
+      color: selected.color,
+      background: modeStyles.background,
+      border: modeStyles.border,
+      Icon: selected.Icon,
+    };
+  };
+
+  const renderSummaryFooter = ({
+    label,
+    value,
+    valueSuffix = '',
+    status,
+    rangeDescription,
+  }: {
+    label: string;
+    value: string;
+    valueSuffix?: string;
+    status: SummaryStatus;
+    rangeDescription: string;
+  }): React.JSX.Element => {
+    const statusVisual = getStatusVisuals(status);
+    const StatusIcon = statusVisual.Icon;
+
+    const surfaceStyles = liteMode
+      ? {
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
+              : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)',
+          border: `1px solid ${
+            theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
+          }`,
+          boxShadow: 'none',
+        }
+      : {
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+          border: `1px solid ${
+            theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'
+          }`,
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+              : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        };
+
+    return (
+      <StickyFooter
+        isLiteMode={liteMode}
+        sx={{
+          position: 'relative',
+          borderRadius: '12px !important',
+          p: 0,
+          background: surfaceStyles.background,
+          border: surfaceStyles.border,
+          boxShadow: surfaceStyles.boxShadow,
+          backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
+          WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
+          transition: 'all 0.3s ease',
+          ...(!liteMode && {
+            '&::before': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 16,
+              right: 16,
+              height: 3,
+              background:
+                'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)',
+              borderRadius: '2px 2px 0 0',
+            },
+          }),
+        }}
+      >
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'minmax(0, 1.35fr) minmax(0, 1fr)',
+              sm: 'minmax(0, 1fr) minmax(240px, auto)',
+            },
+            gridTemplateAreas: {
+              xs: '"value status" "value status"',
+              sm: '"value status"',
+            },
+            alignItems: { xs: 'stretch', sm: 'center' },
+            columnGap: { xs: 1.25, sm: 4, md: 5 },
+            rowGap: { xs: 0.75, sm: 0 },
+            padding: {
+              xs: liteMode ? '18px 20px' : '22px 26px',
+              sm: liteMode ? '20px 28px' : '24px 32px',
+            },
+            maxWidth: { xs: 460, sm: '100%' },
+            margin: '0 auto',
+          }}
+        >
+          <Box
+            sx={{
+              gridArea: 'value',
+              minWidth: 0,
+              textAlign: { xs: 'left', sm: 'left' },
+              pr: { xs: 1, sm: 0 },
+            }}
+          >
+            <Typography
+              variant="overline"
+              sx={{
+                display: 'block',
+                letterSpacing: { xs: '0.07em', sm: '0.08em' },
+                fontSize: { xs: '0.72rem', sm: '0.75rem' },
+                fontWeight: 600,
+                color: theme.palette.text.secondary,
+                mb: { xs: 0.6, sm: 0.75 },
+              }}
+            >
+              {label}
+            </Typography>
+            <Typography
+              variant={isMobile ? 'h5' : 'h4'}
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.95rem', sm: '2.25rem' },
+                color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                fontFamily: 'Inter, sans-serif',
+                lineHeight: 1.15,
+              }}
+            >
+              {value}
+              {valueSuffix ? (
+                <Box
+                  component="span"
+                  sx={{
+                    fontSize: { xs: '1.25rem', sm: '1.3rem' },
+                    fontWeight: 600,
+                    ml: 0.45,
+                    opacity: 0.85,
+                  }}
+                >
+                  {valueSuffix}
+                </Box>
+              ) : null}
+            </Typography>
+          </Box>
+
+          <Stack
+            spacing={{ xs: 1.1, sm: 1 }}
+            alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
+            justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
+            sx={{
+              gridArea: 'status',
+              minWidth: { sm: 220 },
+              borderLeft: {
+                xs: 'none',
+                sm: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
+              },
+              pl: { xs: 0, sm: 3 },
+              ml: { xs: 0, sm: 2 },
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'space-between',
+              gap: { xs: 1, sm: 1 },
+              alignSelf: { xs: 'stretch', sm: 'center' },
+            }}
+          >
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+                gap: { xs: 0.85, sm: 1 },
+                borderRadius: '999px',
+                px: { xs: 1.4, sm: 1.75 },
+                py: { xs: 0.6, sm: 0.7 },
+                background: statusVisual.background,
+                border: `1px solid ${statusVisual.border}`,
+              }}
+            >
+              <StatusIcon sx={{ fontSize: { xs: 19, sm: 20 }, color: statusVisual.color }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: { xs: '0.92rem', sm: '0.85rem' },
+                  color: statusVisual.color,
+                  letterSpacing: 0.15,
+                }}
+              >
+                {statusVisual.label}
+              </Typography>
+            </Box>
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: { xs: '0.82rem', sm: '0.8rem' },
+                lineHeight: { xs: 1.42, sm: 1.4 },
+                color: alpha(theme.palette.text.secondary, 0.9),
+                whiteSpace: 'pre-line',
+                textAlign: 'right',
+                letterSpacing: 0.12,
+                pr: { xs: 0.25, sm: 0 },
+              }}
+            >
+              {rangeDescription.replace(/-/g, '–')}
+            </Typography>
+          </Stack>
+        </Box>
+      </StickyFooter>
+    );
+  };
+
   return (
     <>
       <CalculatorContainer liteMode={liteMode}>
@@ -1560,8 +1767,39 @@ const Calculator: React.FC = React.memo(() => {
               minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
               fontSize: isExtraSmall ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
               padding: isExtraSmall ? '6px 8px' : isMobile ? '8px 12px' : '12px 16px',
-              minWidth: isExtraSmall ? 'auto' : isMobile ? '80px' : 'auto',
+              textTransform: 'none',
+              borderRadius: '8px 8px 0 0',
+              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
+              transition: 'all 0.2s ease',
+              border: '1px solid transparent',
+              borderBottom: 'none',
+              marginRight: 1,
+              // Enhanced tablet and mobile touch targets
+              minWidth: isTablet ? '100px' : 'auto',
+              '&:hover': {
+                color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(255, 255, 255, 0.05)'
+                    : 'rgba(0, 0, 0, 0.04)',
+                border: '1px solid rgba(99, 102, 241, 0.3)',
+                borderBottom: 'none',
+              },
+              '&.Mui-selected': {
+                color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(128, 211, 255, 0.15)'
+                    : 'rgba(40, 145, 200, 0.08)',
+                border: '1px solid rgba(40, 145, 200, 0.5)',
+                borderBottom: 'none',
+                borderRadius: '8px 8px 0 0',
+              },
             },
+            '& .MuiTabs-indicator': {
+              display: 'none',
+            },
+            minHeight: 48,
           }}
         >
           {/* Main Calculator */}
@@ -1589,7 +1827,6 @@ const Calculator: React.FC = React.memo(() => {
                   : theme.palette.mode === 'dark'
                     ? 'rgba(15, 23, 42, 0.9)'
                     : 'rgba(255, 255, 255, 0.98)',
-                borderRadius: liteMode ? 0 : '16px 16px 0 0',
                 backdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 WebkitBackdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 position: 'relative',
@@ -2244,195 +2481,18 @@ const Calculator: React.FC = React.memo(() => {
                   style={{ height: '1px', marginTop: '16px' }}
                 />
 
-                {selectedTab === 0 && (
-                  <StickyFooter
-                    isLiteMode={liteMode}
-                    sx={{
-                      position: 'relative',
-                      p: liteMode ? 1 : 3,
-                      borderRadius: '8px !important',
-                      background: liteMode
-                        ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                          : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
-                        : theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                      border: liteMode
-                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
-                        : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
-                      boxShadow: liteMode
-                        ? 'none'
-                        : theme.palette.mode === 'dark'
-                          ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                          : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-                      backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-                      WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-                      transition: 'all 0.3s ease',
-                      ...(!liteMode && {
-                        '&::before': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 12,
-                          right: 12,
-                          height: 3,
-                          background:
-                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
-                          borderRadius: '2px 2px 0 0',
-                        },
-                      }),
-                    }}
-                  >
-                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'row', sm: 'row' },
-                        alignItems: { xs: 'center', sm: 'center' },
-                        justifyContent: 'space-between',
-                        gap: { xs: 1, sm: 3 },
-                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
-                        pb: liteMode ? '24px' : 0,
-                      }}
-                    >
-                      {/* Left - Value */}
-                      <Box
-                        sx={{
-                          textAlign: { xs: 'left', sm: 'left' },
-                          flex: { xs: 1, sm: 1 },
-                          pl: { xs: 0.5, sm: 0 },
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                            color: theme.palette.text.secondary,
-                            fontSize: { xs: '0.8rem', sm: '0.85rem' },
-                            opacity: 0.8,
-                            mb: { xs: 0.5, sm: 0.25 },
-                          }}
-                        >
-                          Total Penetration
-                        </Typography>
-                        <Typography
-                          variant={isMobile ? 'h6' : 'h5'}
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: { xs: '1.8rem', sm: '1.8rem' },
-                            color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
-                            fontFamily: 'Inter, sans-serif',
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {penTotal.toLocaleString()}
-                        </Typography>
-                      </Box>
-
-                      {/* Right - Status and Info */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
-                          gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'right', sm: 'right' },
-                          minWidth: { xs: 'auto', sm: '200px' },
-                          flexShrink: 0,
-                          pr: { xs: 0.5, sm: 0 },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: { xs: 0.75, sm: 1 },
-                            px: { xs: 1.5, sm: 2 },
-                            py: { xs: 0.75, sm: 1 },
-                            borderRadius: '8px',
-                            background:
-                              penStatus === 'at-cap'
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(34, 197, 94, 0.15)'
-                                  : 'rgba(34, 197, 94, 0.1)'
-                                : penStatus === 'over-cap'
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(251, 146, 60, 0.15)'
-                                    : 'rgba(251, 146, 60, 0.1)'
-                                  : theme.palette.mode === 'dark'
-                                    ? 'rgba(239, 68, 68, 0.15)'
-                                    : 'rgba(239, 68, 68, 0.1)',
-                            border: `1px solid ${
-                              penStatus === 'at-cap'
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(34, 197, 94, 0.3)'
-                                  : 'rgba(34, 197, 94, 0.2)'
-                                : penStatus === 'over-cap'
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(251, 146, 60, 0.3)'
-                                    : 'rgba(251, 146, 60, 0.2)'
-                                  : theme.palette.mode === 'dark'
-                                    ? 'rgba(239, 68, 68, 0.3)'
-                                    : 'rgba(239, 68, 68, 0.2)'
-                            }`,
-                          }}
-                        >
-                          {penStatus === 'at-cap' && (
-                            <CheckCircleIcon
-                              sx={{ fontSize: isMobile ? 18 : 16, color: '#22c55e' }}
-                            />
-                          )}
-                          {penStatus === 'over-cap' && (
-                            <ErrorIcon sx={{ fontSize: isMobile ? 18 : 16, color: '#fb923c' }} />
-                          )}
-                          {penStatus === 'under-cap' && (
-                            <HelpOutlineIcon
-                              sx={{ fontSize: isMobile ? 18 : 16, color: '#ef4444' }}
-                            />
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: { xs: '0.85rem', sm: '0.8rem' },
-                              color:
-                                penStatus === 'at-cap'
-                                  ? '#22c55e'
-                                  : penStatus === 'over-cap'
-                                    ? '#fb923c'
-                                    : '#ef4444',
-                            }}
-                          >
-                            {penStatus === 'at-cap'
-                              ? 'Optimal'
-                              : penStatus === 'over-cap'
-                                ? 'Over Cap'
-                                : 'Below Cap'}
-                          </Typography>
-                        </Box>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            color: theme.palette.text.secondary,
-                            opacity: 0.7,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {gameMode === 'pve'
-                            ? 'Target: 18,200-18,999'
-                            : gameMode === 'pvp'
-                              ? 'Target: 33,300-37,000'
-                              : isMobile
-                                ? 'PvE: 18.2K-19K\nPvP: 33.3K-37K'
-                                : 'PvE: 18.2K-19K | PvP: 33.3K-37K'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </StickyFooter>
-                )}
+                {selectedTab === 0 &&
+                  renderSummaryFooter({
+                    label: 'Total Penetration',
+                    value: penTotal.toLocaleString(),
+                    status: penStatus,
+                    rangeDescription:
+                      gameMode === 'pve'
+                        ? 'Target: 18,200–18,999'
+                        : gameMode === 'pvp'
+                          ? 'Target: 33,300–37,000'
+                          : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
+                  })}
               </TabPanel>
 
               <TabPanel value={selectedTab} index={1}>
@@ -2483,195 +2543,19 @@ const Calculator: React.FC = React.memo(() => {
                   style={{ height: '1px', marginTop: '16px' }}
                 />
 
-                {selectedTab === 1 && (
-                  <StickyFooter
-                    isLiteMode={liteMode}
-                    sx={{
-                      position: 'relative',
-                      p: liteMode ? 1 : 3,
-                      borderRadius: '8px !important',
-                      background: liteMode
-                        ? theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgb(7 12 20 / 80%) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                          : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)'
-                        : theme.palette.mode === 'dark'
-                          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-                          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-                      border: liteMode
-                        ? `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'}`
-                        : `1px solid ${theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'}`,
-                      boxShadow: liteMode
-                        ? 'none'
-                        : theme.palette.mode === 'dark'
-                          ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                          : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-                      backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-                      WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-                      transition: 'all 0.3s ease',
-                      ...(!liteMode && {
-                        '&::before': {
-                          content: '""',
-                          position: 'absolute',
-                          top: 0,
-                          left: 12,
-                          right: 12,
-                          height: 3,
-                          background:
-                            'linear-gradient(90deg, rgb(128 211 255 / 80%) 0%, rgb(56 189 248 / 80%) 50%, rgb(40 145 200 / 80%) 100%)',
-                          borderRadius: '2px 2px 0 0',
-                        },
-                      }),
-                    }}
-                  >
-                    {/* Mobile-optimized layout: horizontal on mobile, responsive on desktop */}
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        flexDirection: { xs: 'row', sm: 'row' },
-                        alignItems: { xs: 'center', sm: 'center' },
-                        justifyContent: 'space-between',
-                        gap: { xs: 1, sm: 3 },
-                        flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                        px: liteMode ? '30px' : { xs: 1, sm: 0 },
-                        pb: liteMode ? '24px' : 0,
-                      }}
-                    >
-                      {/* Left - Value */}
-                      <Box
-                        sx={{
-                          textAlign: { xs: 'left', sm: 'left' },
-                          flex: { xs: 1, sm: 1 },
-                          pl: { xs: 0.5, sm: 0 },
-                        }}
-                      >
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontWeight: 600,
-                            color: theme.palette.text.secondary,
-                            fontSize: { xs: '0.8rem', sm: '0.85rem' },
-                            opacity: 0.8,
-                            mb: { xs: 0.5, sm: 0.25 },
-                          }}
-                        >
-                          Total Critical Damage
-                        </Typography>
-                        <Typography
-                          variant={isMobile ? 'h6' : 'h5'}
-                          sx={{
-                            fontWeight: 700,
-                            fontSize: { xs: '1.8rem', sm: '1.8rem' },
-                            color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#0f172a',
-                            fontFamily: 'Inter, sans-serif',
-                            lineHeight: 1.2,
-                          }}
-                        >
-                          {critTotal}%
-                        </Typography>
-                      </Box>
-
-                      {/* Right - Status and Info */}
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          alignItems: { xs: 'flex-end', sm: 'flex-end' },
-                          gap: { xs: 1, sm: 1 },
-                          textAlign: { xs: 'right', sm: 'right' },
-                          minWidth: { xs: 'auto', sm: '200px' },
-                          flexShrink: 0,
-                          pr: { xs: 0.5, sm: 0 },
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: { xs: 0.75, sm: 1 },
-                            px: { xs: 1.5, sm: 2 },
-                            py: { xs: 0.75, sm: 1 },
-                            borderRadius: '8px',
-                            background:
-                              critStatus === 'at-cap'
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(34, 197, 94, 0.15)'
-                                  : 'rgba(34, 197, 94, 0.1)'
-                                : critStatus === 'over-cap'
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(251, 146, 60, 0.15)'
-                                    : 'rgba(251, 146, 60, 0.1)'
-                                  : theme.palette.mode === 'dark'
-                                    ? 'rgba(239, 68, 68, 0.15)'
-                                    : 'rgba(239, 68, 68, 0.1)',
-                            border: `1px solid ${
-                              critStatus === 'at-cap'
-                                ? theme.palette.mode === 'dark'
-                                  ? 'rgba(34, 197, 94, 0.3)'
-                                  : 'rgba(34, 197, 94, 0.2)'
-                                : critStatus === 'over-cap'
-                                  ? theme.palette.mode === 'dark'
-                                    ? 'rgba(251, 146, 60, 0.3)'
-                                    : 'rgba(251, 146, 60, 0.2)'
-                                  : theme.palette.mode === 'dark'
-                                    ? 'rgba(239, 68, 68, 0.3)'
-                                    : 'rgba(239, 68, 68, 0.2)'
-                            }`,
-                          }}
-                        >
-                          {critStatus === 'at-cap' && (
-                            <CheckCircleIcon
-                              sx={{ fontSize: isMobile ? 18 : 16, color: '#22c55e' }}
-                            />
-                          )}
-                          {critStatus === 'over-cap' && (
-                            <ErrorIcon sx={{ fontSize: isMobile ? 18 : 16, color: '#fb923c' }} />
-                          )}
-                          {critStatus === 'under-cap' && (
-                            <HelpOutlineIcon
-                              sx={{ fontSize: isMobile ? 18 : 16, color: '#ef4444' }}
-                            />
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontWeight: 600,
-                              fontSize: { xs: '0.85rem', sm: '0.8rem' },
-                              color:
-                                critStatus === 'at-cap'
-                                  ? '#22c55e'
-                                  : critStatus === 'over-cap'
-                                    ? '#fb923c'
-                                    : '#ef4444',
-                            }}
-                          >
-                            {critStatus === 'at-cap'
-                              ? 'Optimal'
-                              : critStatus === 'over-cap'
-                                ? 'Over Cap'
-                                : 'Below Cap'}
-                          </Typography>
-                        </Box>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: { xs: '0.7rem', sm: '0.75rem' },
-                            color: theme.palette.text.secondary,
-                            opacity: 0.7,
-                            lineHeight: 1.3,
-                          }}
-                        >
-                          {gameMode === 'pve'
-                            ? 'Target: 125%+'
-                            : gameMode === 'pvp'
-                              ? 'Target: 100%+'
-                              : isMobile
-                                ? 'PvE: 125%+\nPvP: 100%+'
-                                : 'PvE: 125%+ | PvP: 100%+'}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </StickyFooter>
-                )}
+                {selectedTab === 1 &&
+                  renderSummaryFooter({
+                    label: 'Total Critical Damage',
+                    value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
+                    valueSuffix: '%',
+                    status: critStatus,
+                    rangeDescription:
+                      gameMode === 'pve'
+                        ? 'Target: 125%+'
+                        : gameMode === 'pvp'
+                          ? 'Target: 100%+'
+                          : 'PvE: 125%+\nPvP: 100%+',
+                  })}
               </TabPanel>
             </Box>
 
@@ -2702,7 +2586,13 @@ const Calculator: React.FC = React.memo(() => {
                   <Typography variant="body2">Below Cap</Typography>
                 </Box>
               </Box>
-              <Typography variant="body2" sx={{ fontStyle: 'italic', color: 'text.secondary' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontStyle: 'italic',
+                  color: 'text.secondary',
+                }}
+              >
                 Grey italic numbers show per-stack values for stackable buffs
               </Typography>
             </Box>
