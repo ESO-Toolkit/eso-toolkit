@@ -116,7 +116,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Navigate to report to get fights
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -221,7 +221,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       }
 
       // Navigate to replay page
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/replay`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/replay`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -300,7 +300,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Navigate to live logging
-      await page.goto(`/#/report/${reportId}/live`, {
+      await page.goto(`#/report/${reportId}/live`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -355,7 +355,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Navigate to report and get fight
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -368,7 +368,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       console.log(`ℹ️  Using fight ${fightId} for heatmap visualization test`);
 
       // Navigate to location heatmap (experimental tab)
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/location-heatmap`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/location-heatmap`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -446,7 +446,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Get fight ID
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -464,7 +464,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       console.log(`ℹ️  Using fight ${fightId} for rotation analysis test`);
 
       // Navigate to rotation analysis
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/rotation-analysis`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/rotation-analysis`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -515,7 +515,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Get fight ID
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -528,7 +528,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       console.log(`ℹ️  Using fight ${fightId} for talents grid test`);
 
       // Navigate to talents
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/talents`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/talents`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -575,7 +575,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Get fight ID and navigate to damage done tab
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -587,7 +587,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       console.log(`ℹ️  Using fight ${fightId} for advanced filtering test`);
 
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/damage-done`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/damage-done`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -629,7 +629,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Test search in events tab
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -641,7 +641,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       console.log(`ℹ️  Using fight ${fightId} for search functionality test`);
 
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/raw-events`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/raw-events`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -683,7 +683,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Get fight ID
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -701,7 +701,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       for (let i = 0; i < tabs.length; i++) {
         const tabId = tabs[i];
 
-        await page.goto(`/#/report/${reportId}/fight/${fightId}/${tabId}`, {
+        await page.goto(`#/report/${reportId}/fight/${fightId}/${tabId}`, {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -730,7 +730,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
       const reportId = REPORT_WITH_FIGHTS;
 
       // Navigate to raw events which typically has the most data
-      await page.goto(`/#/report/${reportId}`, {
+      await page.goto(`#/report/${reportId}`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -742,7 +742,7 @@ test.describe('Nightly Regression - Interactive Features', () => {
 
       console.log(`ℹ️  Using fight ${fightId} for large datasets test`);
 
-      await page.goto(`/#/report/${reportId}/fight/${fightId}/raw-events`, {
+      await page.goto(`#/report/${reportId}/fight/${fightId}/raw-events`, {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
