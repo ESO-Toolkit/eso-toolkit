@@ -525,7 +525,7 @@ const CalculatorCard = styled(Paper, {
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
   backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-  borderRadius: liteMode ? 12 : 14,
+  borderRadius: liteMode ? 22 : 22,
   border: liteMode
     ? theme.palette.mode === 'dark'
       ? '1px solid rgba(128, 211, 255, 0.15)'
