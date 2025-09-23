@@ -1,5 +1,11 @@
 import { Page } from '@playwright/test';
 
+// Default timeouts matching the existing test configuration
+const DEFAULT_TIMEOUTS = {
+  navigation: 30000,
+  networkIdle: 15000,
+};
+
 /**
  * Page Object Model for ESO Log Aggregator application
  * Centralizes URL construction and navigation logic for all test files
@@ -11,28 +17,40 @@ export class EsoLogAggregatorPage {
    * Navigate to the login page
    */
   async goToLogin() {
-    await this.page.goto('#/login', { waitUntil: 'networkidle' });
+    await this.page.goto('#/login', { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
    * Navigate to the my reports page
    */
   async goToMyReports() {
-    await this.page.goto('#/my-reports', { waitUntil: 'networkidle' });
+    await this.page.goto('#/my-reports', { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
    * Navigate to the latest reports page
    */
   async goToLatestReports() {
-    await this.page.goto('#/latest-reports', { waitUntil: 'networkidle' });
+    await this.page.goto('#/latest-reports', { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
    * Navigate to the calculator page
    */
   async goToCalculator() {
-    await this.page.goto('#/calculator', { waitUntil: 'networkidle' });
+    await this.page.goto('#/calculator', { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -40,7 +58,10 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReport(reportId: string) {
-    await this.page.goto(`#/report/${reportId}`, { waitUntil: 'networkidle' });
+    await this.page.goto(`#/report/${reportId}`, { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -48,7 +69,10 @@ export class EsoLogAggregatorPage {
    * @param reportId - The report ID to navigate to
    */
   async goToReportLive(reportId: string) {
-    await this.page.goto(`#/report/${reportId}/live`, { waitUntil: 'networkidle' });
+    await this.page.goto(`#/report/${reportId}/live`, { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -57,7 +81,10 @@ export class EsoLogAggregatorPage {
    * @param fightId - The fight ID
    */
   async goToFight(reportId: string, fightId: string) {
-    await this.page.goto(`#/report/${reportId}/fight/${fightId}`, { waitUntil: 'networkidle' });
+    await this.page.goto(`#/report/${reportId}/fight/${fightId}`, { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -67,7 +94,10 @@ export class EsoLogAggregatorPage {
    * @param tab - The tab name (e.g., 'insights', 'replay', 'players', 'damage-done', etc.)
    */
   async goToFightTab(reportId: string, fightId: string, tab: string) {
-    await this.page.goto(`#/report/${reportId}/fight/${fightId}/${tab}`, { waitUntil: 'networkidle' });
+    await this.page.goto(`#/report/${reportId}/fight/${fightId}/${tab}`, { 
+      waitUntil: 'domcontentloaded',
+      timeout: DEFAULT_TIMEOUTS.navigation,
+    });
   }
 
   /**
@@ -145,7 +175,7 @@ export class EsoLogAggregatorPage {
    * Wait for navigation to complete
    */
   async waitForNavigation() {
-    await this.page.waitForLoadState('networkidle');
+    await this.page.waitForLoadState('networkidle', { timeout: DEFAULT_TIMEOUTS.networkIdle });
   }
 }
 
