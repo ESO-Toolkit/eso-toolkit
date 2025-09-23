@@ -127,3 +127,13 @@ export const TEST_DATA = {
     'resources',
   ],
 } as const;
+
+/**
+ * Get the base URL for tests based on environment variables
+ * Priority: NIGHTLY_BASE_URL > BASE_URL > default GitHub Pages URL
+ */
+export function getBaseUrl(): string {
+  return process.env.NIGHTLY_BASE_URL || 
+         process.env.BASE_URL || 
+         'https://bkrupa.github.io/eso-log-aggregator/';
+}

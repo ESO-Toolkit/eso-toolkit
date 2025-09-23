@@ -3,6 +3,7 @@ import * as dotenv from 'dotenv';
 import fetch from 'cross-fetch';
 import * as fs from 'fs';
 import * as path from 'path';
+import { getBaseUrl } from './selectors';
 
 /**
  * Global setup for Playwright nightly tests
@@ -169,7 +170,7 @@ async function performBrowserLogin(
 
   try {
     // Navigate to the app
-    const baseUrl = process.env.NIGHTLY_BASE_URL || 'http://localhost:3000';
+    const baseUrl = getBaseUrl();
     await page.goto(`${baseUrl}/#/login`, { waitUntil: 'domcontentloaded', timeout: 30000 });
 
     // If we have an existing token from client credentials, inject it
