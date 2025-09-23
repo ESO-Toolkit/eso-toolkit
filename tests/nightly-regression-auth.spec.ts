@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createAuthTestUtils, AuthEnv } from './auth-utils';
+import { createEsoPage } from './utils/EsoLogAggregatorPage';
 
 /**
  * Nightly Regression Tests - Authentication and User Reports
@@ -60,6 +61,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.describe('Authentication Flow', () => {
     test('should show authentication options when not logged in', async ({ page }) => {
       const authUtils = createAuthTestUtils(page);
+      const esoPage = createEsoPage(page);
 
       // Debug: Log the base URL being used
       console.log('🔍 Environment variables:');
@@ -67,18 +69,15 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       console.log('  BASE_URL:', process.env.BASE_URL);
       console.log('  Expected navigation to: #/login');
 
-      // Navigate to login page first
-      await page.goto('#/login', {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      // Navigate to login page using the page class method
+      await esoPage.goToLogin();
 
       // Debug: Log the actual URL we ended up at
       const currentUrl = page.url();
       console.log('🔍 Actual URL after navigation:', currentUrl);
 
-      // Wait for the page to be ready
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      // Wait for the page to be ready using the page class
+      await esoPage.waitForNavigation();
 
       // Take initial screenshot of login page
       await page.screenshot({
@@ -163,14 +162,13 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     });
 
     test('should redirect unauthenticated users from protected routes', async ({ page }) => {
-      // Navigate to page first
-      await page.goto('#/my-reports', {
-        waitUntil: 'domcontentloaded',
-        timeout: TEST_TIMEOUTS.navigation,
-      });
+      const esoPage = createEsoPage(page);
+      
+      // Navigate to protected page using page class
+      await esoPage.goToMyReports();
 
       // Wait for the page to be ready
-      await page.waitForLoadState('networkidle', { timeout: 10000 });
+      await esoPage.waitForNavigation();
 
       // Take screenshot of initial protected route access attempt
       await page.screenshot({
