@@ -61,11 +61,21 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
     test('should show authentication options when not logged in', async ({ page }) => {
       const authUtils = createAuthTestUtils(page);
 
+      // Debug: Log the base URL being used
+      console.log('🔍 Environment variables:');
+      console.log('  NIGHTLY_BASE_URL:', process.env.NIGHTLY_BASE_URL);
+      console.log('  BASE_URL:', process.env.BASE_URL);
+      console.log('  Expected navigation to: #/login');
+
       // Navigate to login page first
-      await page.goto('/#/login', {
+      await page.goto('#/login', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
+
+      // Debug: Log the actual URL we ended up at
+      const currentUrl = page.url();
+      console.log('🔍 Actual URL after navigation:', currentUrl);
 
       // Wait for the page to be ready
       await page.waitForLoadState('networkidle', { timeout: 10000 });
@@ -103,7 +113,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
     test('should maintain authentication state', async ({ page }) => {
       // Navigate to app first
-      await page.goto('/#/', {
+      await page.goto('', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -127,7 +137,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
         console.log('✅ Authentication state loaded successfully');
 
         // Navigate to a protected route
-        await page.goto('/#/my-reports', {
+        await page.goto('#/my-reports', {
           waitUntil: 'domcontentloaded',
           timeout: TEST_TIMEOUTS.navigation,
         });
@@ -154,7 +164,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
     test('should redirect unauthenticated users from protected routes', async ({ page }) => {
       // Navigate to page first
-      await page.goto('/#/my-reports', {
+      await page.goto('#/my-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -254,7 +264,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('Latest Reports Page', () => {
     test('should load latest reports page', async ({ page }) => {
-      await page.goto('/#/latest-reports', {
+      await page.goto('#/latest-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -330,7 +340,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       const isAuth = await authUtils.isAuthenticated();
       console.log(`ℹ️  Testing user reports page - authenticated: ${isAuth}`);
 
-      await page.goto('/#/my-reports', {
+      await page.goto('#/my-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -415,7 +425,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
       const isAuth = await authUtils.isAuthenticated();
       console.log(`ℹ️  Testing report interactions - authenticated: ${isAuth}`);
 
-      await page.goto('/#/my-reports', {
+      await page.goto('#/my-reports', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -471,7 +481,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('Calculator Page', () => {
     test('should load calculator page without authentication', async ({ page }) => {
-      await page.goto('/#/calculator', {
+      await page.goto('#/calculator', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -581,7 +591,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
   test.describe('Landing Page and Navigation', () => {
     test('should load landing page correctly', async ({ page }) => {
-      await page.goto('/', {
+      await page.goto('', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -697,14 +707,14 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
           }
 
           // Go back to landing page for next test
-          await page.goto('/', { waitUntil: 'domcontentloaded' });
+          await page.goto('', { waitUntil: 'domcontentloaded' });
           await page.waitForLoadState('networkidle', { timeout: 5000 });
         }
       }
     });
 
     test('should handle search functionality if available', async ({ page }) => {
-      await page.goto('/', {
+      await page.goto('', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -749,7 +759,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.describe('Error Handling and Edge Cases', () => {
     test('should handle invalid report IDs gracefully', async ({ page }) => {
       // Try to access a non-existent report
-      await page.goto('/#/report/INVALID_REPORT_ID', {
+      await page.goto('#/report/INVALID_REPORT_ID', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -807,7 +817,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
 
     test('should handle network issues gracefully', async ({ page }) => {
       // Navigate to a report first
-      await page.goto('/#/report/3gjVGWB2dxCL8XAw', {
+      await page.goto('#/report/3gjVGWB2dxCL8XAw', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
@@ -861,7 +871,7 @@ test.describe('Nightly Regression - Authentication and Reports', () => {
   test.describe('Cross-browser Compatibility Checks', () => {
     test('should verify key functionality works across browsers', async ({ page, browserName }) => {
       // Test basic navigation in different browsers
-      await page.goto('/#/calculator', {
+      await page.goto('#/calculator', {
         waitUntil: 'domcontentloaded',
         timeout: TEST_TIMEOUTS.navigation,
       });
