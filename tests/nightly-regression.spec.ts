@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-import { SELECTORS, TEST_TIMEOUTS, TEST_DATA } from './selectors';
+import { SELECTORS, TEST_TIMEOUTS, TEST_DATA, getBaseUrl } from './selectors';
 
 /**
  * Nightly Regression Tests
@@ -263,7 +263,7 @@ test.describe('Nightly Regression Tests - Real Data', () => {
           const directNavigationUrl = `/#/report/${reportId}/fight/${fightId}/insights`;
 
           console.log('Navigating directly to:', directNavigationUrl);
-          await page.goto(`http://localhost:3000${directNavigationUrl}`, {
+          await page.goto(`${getBaseUrl()}${directNavigationUrl}`, {
             waitUntil: 'domcontentloaded',
             timeout: TEST_TIMEOUTS.navigation,
           });
