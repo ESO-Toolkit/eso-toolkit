@@ -518,9 +518,7 @@ const CalculatorCard = styled(Paper, {
     padding: liteMode ? 0 : 0,
   },
   background: liteMode
-    ? theme.palette.mode === 'dark'
-      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-      : theme.palette.background.paper
+    ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
@@ -948,12 +946,14 @@ const Calculator: React.FC = React.memo(() => {
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
-              : 'linear-gradient(135deg, rgb(140 182 237 / 20%) 0%, rgb(85 159 255 / 12%) 100%)'
+              : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
             : theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
               : 'linear-gradient(135deg, rgb(128 211 255 / 20%) 0%, rgb(56 189 248 / 15%) 100%)'
           : liteMode
-            ? 'rgb(0 0 0 / 28%)'
+            ? theme.palette.mode === 'dark'
+              ? 'rgb(0 0 0 / 28%)'
+              : 'rgb(255 255 255 / 41%)'
             : theme.palette.mode === 'dark'
               ? 'rgba(15, 23, 42, 0.6)'
               : 'rgba(241, 245, 249, 0.8)',
@@ -984,8 +984,8 @@ const Calculator: React.FC = React.memo(() => {
               transform: liteMode ? 'none' : 'translateY(-1px)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.3)'
-                  : '1px solid rgb(40 145 200 / 50%)',
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgb(40 145 200 / 30%)',
               boxShadow: liteMode
                 ? 'none'
                 : theme.palette.mode === 'dark'
@@ -1567,10 +1567,12 @@ const Calculator: React.FC = React.memo(() => {
       ? {
           background:
             theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-              : 'linear-gradient(135deg, rgba(241, 245, 249, 0.9) 0%, rgba(226, 232, 240, 0.8) 100%)',
+              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+              : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
           border: `1px solid ${
-            theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
+            theme.palette.mode === 'dark'
+              ? 'rgb(123 123 123 / 20%)'
+              : 'rgba(203, 213, 225, 0.5)'
           }`,
           boxShadow: 'none',
         }
@@ -1580,7 +1582,9 @@ const Calculator: React.FC = React.memo(() => {
               ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
           border: `1px solid ${
-            theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'
+            theme.palette.mode === 'dark'
+              ? 'rgba(71, 85, 105, 0.3)'
+              : 'rgba(203, 213, 225, 0.5)'
           }`,
           boxShadow:
             theme.palette.mode === 'dark'
@@ -1752,6 +1756,36 @@ const Calculator: React.FC = React.memo(() => {
     );
   };
 
+  const filteredPenData = useMemo(
+    () => getFilteredItems(penetrationData, 'pen'),
+    [getFilteredItems, penetrationData],
+  );
+  const filteredCritData = useMemo(
+    () => getFilteredItems(criticalData, 'crit'),
+    [getFilteredItems, criticalData],
+  );
+
+  const penSelectableItems = useMemo(
+    () =>
+      Object.values(filteredPenData)
+        .flat()
+        .filter((item) => !item.locked),
+    [filteredPenData],
+  );
+  const critSelectableItems = useMemo(
+    () =>
+      Object.values(filteredCritData)
+        .flat()
+        .filter((item) => !item.locked),
+    [filteredCritData],
+  );
+
+  const penAllSelected = penSelectableItems.length > 0 && penSelectableItems.every((item) => item.enabled);
+  const penNoneSelected = penSelectableItems.every((item) => !item.enabled);
+  const critAllSelected =
+    critSelectableItems.length > 0 && critSelectableItems.every((item) => item.enabled);
+  const critNoneSelected = critSelectableItems.every((item) => !item.enabled);
+
   return (
     <>
       <CalculatorContainer liteMode={liteMode}>
@@ -1813,7 +1847,7 @@ const Calculator: React.FC = React.memo(() => {
                 flexWrap: 'wrap',
                 gap: liteMode ? 1 : isMobile ? 2 : 3,
                 p: liteMode ? 2 : isExtraSmall ? 1.5 : isMobile ? 2 : 4,
-                borderBottom: liteMode ? 'none' : '1px solid',
+                borderRadius: '10px',
                 borderColor: liteMode
                   ? 'transparent'
                   : theme.palette.mode === 'dark'
@@ -1822,12 +1856,10 @@ const Calculator: React.FC = React.memo(() => {
                 background: liteMode
                   ? theme.palette.mode === 'dark'
                     ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
-                    : 'rgba(255, 255, 255, 0.95)'
+                    : 'rgba(255, 255, 255, 0.65)'
                   : theme.palette.mode === 'dark'
                     ? 'rgba(15, 23, 42, 0.9)'
                     : 'rgba(255, 255, 255, 0.98)',
-                backdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
-                WebkitBackdropFilter: liteMode ? 'blur(8px)' : 'blur(10px)',
                 position: 'relative',
                 // Enhanced mobile responsiveness
                 '@media (max-width: 380px)': {
@@ -2071,15 +2103,14 @@ const Calculator: React.FC = React.memo(() => {
                       : 'rgb(40 145 200 / 15%)',
                   background: liteMode
                     ? theme.palette.mode === 'dark'
-                      ? 'rgba(15, 23, 42, 0.6)'
-                      : 'rgba(255, 255, 255, 0.9)'
+                      ? 'rgba(15, 23, 42, 0.0)'
+                      : 'rgba(255, 255, 255, 0.0)'
                     : theme.palette.mode === 'dark'
                       ? 'rgba(15, 23, 42, 0.7)'
                       : 'rgba(255, 255, 255, 0.95)',
-                  backdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
-                  WebkitBackdropFilter: liteMode ? 'blur(6px)' : 'blur(8px)',
+
                   position: 'relative',
-                  borderRadius: liteMode ? 0 : '8px 8px 0 0',
+                  borderRadius: liteMode ? '8px 8px 0 0' : '8px 8px 0 0',
                 }}
               >
                 <Tabs
@@ -2092,12 +2123,11 @@ const Calculator: React.FC = React.memo(() => {
                       minHeight: isTablet ? 44 : 48,
                       padding: isTablet ? '10px 16px' : '12px 24px',
                       textTransform: 'none',
-                      borderRadius: '8px 8px 0 0',
+                      borderRadius: '8px !important',
                       color:
                         theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
                       transition: 'all 0.2s ease',
                       border: '1px solid transparent',
-                      borderBottom: 'none',
                       marginRight: 1,
                       // Enhanced tablet and mobile touch targets
                       minWidth: isTablet ? '100px' : 'auto',
@@ -2109,7 +2139,6 @@ const Calculator: React.FC = React.memo(() => {
                             ? 'rgba(255, 255, 255, 0.05)'
                             : 'rgba(0, 0, 0, 0.04)',
                         border: '1px solid rgba(99, 102, 241, 0.3)',
-                        borderBottom: 'none',
                       },
                       '&.Mui-selected': {
                         color:
@@ -2119,8 +2148,7 @@ const Calculator: React.FC = React.memo(() => {
                             ? 'rgba(128, 211, 255, 0.15)'
                             : 'rgba(40, 145, 200, 0.08)',
                         border: '1px solid rgba(40, 145, 200, 0.5)',
-                        borderBottom: 'none',
-                        borderRadius: '8px 8px 0 0',
+                        borderRadius: '8px !important',
                       },
                     },
                     '& .MuiTabs-indicator': {
@@ -2143,231 +2171,264 @@ const Calculator: React.FC = React.memo(() => {
                     borderRadius: '10px',
                     backgroundColor: liteMode
                       ? theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.4)'
-                        : 'rgba(255, 255, 255, 0.7)'
+                        ? 'rgba(15, 23, 42, 0.0)'
+                        : 'rgba(255, 255, 255, 0.0)'
                       : theme.palette.mode === 'dark'
                         ? 'rgba(15, 23, 42, 0.3)'
                         : 'rgba(255, 255, 255, 0.5)',
-                    borderBottom: '1px solid',
                     borderColor:
                       theme.palette.mode === 'dark'
                         ? 'rgb(128 211 255 / 15%)'
                         : 'rgb(40 145 200 / 12%)',
-                    backdropFilter: 'blur(4px)',
-                    WebkitBackdropFilter: 'blur(4px)',
+                    flexWrap: 'wrap',
+                    justifyContent: 'flex-end',
                   }}
                 >
                   {selectedTab === 0 && (
-                    <>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={
-                          <CheckCircleIcon
-                            sx={{
-                              fontSize: 18,
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgb(128 211 255 / 90%)'
-                                  : 'rgb(40 145 200 / 90%)',
-                            }}
-                          />
-                        }
-                        onClick={() => toggleAllPen(true)}
-                        sx={{
-                          fontSize: '0.875rem',
-                          px: 2,
-                          fontWeight: 600,
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(128 211 255 / 30%)'
-                              : 'rgb(40 145 200 / 30%)',
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(128 211 255 / 90%)'
-                              : 'rgb(40 145 200 / 90%)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(128 211 255 / 8%) 0%, rgb(56 189 248 / 6%) 100%)'
-                              : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 6%) 100%)',
-                          '&:hover': {
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(128 211 255 / 60%)'
-                                : 'rgb(40 145 200 / 60%)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(128 211 255 / 12%) 0%, rgb(56 189 248 / 10%) 100%)'
-                                : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 10%) 100%)',
-                            transform: 'translateY(-1px)',
-                            boxShadow:
-                              theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(56 189 248 / 30%)'
-                                : '0 4px 12px rgb(40 145 200 / 25%)',
+                    <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+                      <ButtonGroup
+                        variant="text"
+                        disableElevation
+                        fullWidth={isMobile}
+                        aria-label="Penetration bulk actions"
+                        sx={(muiTheme) => ({
+                          alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                          backgroundColor:
+                            muiTheme.palette.mode === 'dark'
+                              ? 'rgba(21, 34, 50, 0.55)'
+                              : 'rgba(235, 244, 252, 0.85)',
+                          border: `1px solid ${
+                            muiTheme.palette.mode === 'dark'
+                              ? alpha(muiTheme.palette.primary.light, 0.2)
+                              : alpha(muiTheme.palette.primary.main, 0.18)
+                          }`,
+                          '& .MuiButton-root': {
+                            flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                            justifyContent: 'center',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            px: { xs: 2.2, sm: 2.6 },
+                            py: { xs: 1.05, sm: 0.9 },
+                            borderRadius: 0,
+                            minWidth: { xs: 'auto', sm: 140 },
+                            transition: 'background-color 0.2s ease, color 0.2s ease',
+                            borderRight: 'none',
                           },
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                      >
-                        Check All
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={
-                          <ErrorIcon
-                            sx={{
-                              fontSize: 18,
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgb(156 163 175 / 90%)'
-                                  : 'rgb(107 114 128 / 90%)',
-                            }}
-                          />
-                        }
-                        onClick={() => toggleAllPen(false)}
-                        sx={{
-                          fontSize: '0.875rem',
-                          px: 2,
-                          fontWeight: 600,
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(156 163 175 / 30%)'
-                              : 'rgb(107 114 128 / 30%)',
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(156 163 175 / 90%)'
-                              : 'rgb(107 114 128 / 90%)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(156 163 175 / 8%) 0%, rgb(107 114 128 / 6%) 100%)'
-                              : 'linear-gradient(135deg, rgb(107 114 128 / 8%) 0%, rgb(156 163 175 / 6%) 100%)',
-                          '&:hover': {
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(156 163 175 / 60%)'
-                                : 'rgb(107 114 128 / 60%)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(156 163 175 / 12%) 0%, rgb(107 114 128 / 10%) 100%)'
-                                : 'linear-gradient(135deg, rgb(107 114 128 / 12%) 0%, rgb(156 163 175 / 10%) 100%)',
-                            transform: 'translateY(-1px)',
-                            boxShadow:
-                              theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(156 163 175 / 30%)'
-                                : '0 4px 12px rgb(107 114 128 / 25%)',
+                          '& .MuiButton-root + .MuiButton-root': {
+                            borderLeft: {
+                              xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                              sm: `1px solid ${
+                                muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.18)
+                                  : alpha(muiTheme.palette.primary.main, 0.15)
+                              }`,
+                            },
                           },
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        })}
                       >
-                        Uncheck All
-                      </Button>
-                    </>
+                        <Tooltip title="Select all penetration buffs" placement="top" arrow>
+                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
+                            <Button
+                              startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
+                              onClick={() => toggleAllPen(true)}
+                              disabled={penAllSelected || penSelectableItems.length === 0}
+                              aria-label="Select all penetration buffs"
+                              sx={(muiTheme) => ({
+                                color:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? muiTheme.palette.primary.light
+                                    : muiTheme.palette.primary.main,
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                  backgroundColor:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(40, 82, 120, 0.35)'
+                                      : 'rgba(210, 233, 249, 0.85)',
+                                },
+                                '&:focus-visible': {
+                                  outline: `2px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.6)
+                                      : alpha(muiTheme.palette.primary.main, 0.5)
+                                  }`,
+                                  outlineOffset: 2,
+                                },
+                                '&.Mui-disabled': {
+                                  color: muiTheme.palette.text.disabled,
+                                  backgroundColor: 'transparent',
+                                },
+                              })}
+                            >
+                              Select all
+                            </Button>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Clear all penetration buffs" placement="top" arrow>
+                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
+                            <Button
+                              startIcon={<ErrorIcon sx={{ fontSize: 18 }} />}
+                              onClick={() => toggleAllPen(false)}
+                              disabled={penNoneSelected || penSelectableItems.length === 0}
+                              aria-label="Clear all penetration buffs"
+                              sx={(muiTheme) => ({
+                                color:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? muiTheme.palette.error.light
+                                    : muiTheme.palette.error.main,
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                  backgroundColor:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(132, 32, 45, 0.32)'
+                                      : 'rgba(255, 235, 233, 0.85)',
+                                },
+                                '&:focus-visible': {
+                                  outline: `2px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.error.light, 0.55)
+                                      : alpha(muiTheme.palette.error.main, 0.5)
+                                  }`,
+                                  outlineOffset: 2,
+                                },
+                                '&.Mui-disabled': {
+                                  color: muiTheme.palette.text.disabled,
+                                  backgroundColor: 'transparent',
+                                },
+                              })}
+                            >
+                              Clear all buffs
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      </ButtonGroup>
+                    </Stack>
                   )}
                   {selectedTab === 1 && (
-                    <>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={
-                          <CheckCircleIcon
-                            sx={{
-                              fontSize: 18,
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgb(128 211 255 / 90%)'
-                                  : 'rgb(40 145 200 / 90%)',
-                            }}
-                          />
-                        }
-                        onClick={() => toggleAllCrit(true)}
-                        sx={{
-                          fontSize: '0.875rem',
-                          px: 2,
-                          fontWeight: 600,
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(128 211 255 / 30%)'
-                              : 'rgb(40 145 200 / 30%)',
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(128 211 255 / 90%)'
-                              : 'rgb(40 145 200 / 90%)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(128 211 255 / 10%) 0%, rgb(56 189 248 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(40 145 200 / 8%) 0%, rgb(56 189 248 / 4%) 100%)',
-                          '&:hover': {
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(128 211 255 / 60%)'
-                                : 'rgb(40 145 200 / 60%)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(128 211 255 / 15%) 0%, rgb(56 189 248 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(40 145 200 / 12%) 0%, rgb(56 189 248 / 6%) 100%)',
-                            transform: 'translateY(-1px)',
-                            boxShadow:
-                              theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(56 189 248 / 20%)'
-                                : '0 4px 12px rgb(40 145 200 / 10%)',
+                    <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+                      <ButtonGroup
+                        variant="text"
+                        disableElevation
+                        fullWidth={isMobile}
+                        aria-label="Critical bulk actions"
+                        sx={(muiTheme) => ({
+                          alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                          borderRadius: 999,
+                          overflow: 'hidden',
+                          backgroundColor:
+                            muiTheme.palette.mode === 'dark'
+                              ? 'rgba(26, 21, 46, 0.55)'
+                              : 'rgba(239, 233, 252, 0.85)',
+                          border: `1px solid ${
+                            muiTheme.palette.mode === 'dark'
+                              ? alpha(muiTheme.palette.primary.light, 0.18)
+                              : alpha(muiTheme.palette.primary.main, 0.16)
+                          }`,
+                          '& .MuiButton-root': {
+                            flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                            justifyContent: 'center',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            textTransform: 'none',
+                            px: { xs: 2.2, sm: 2.6 },
+                            py: { xs: 1.05, sm: 0.9 },
+                            borderRadius: 0,
+                            minWidth: { xs: 'auto', sm: 140 },
+                            transition: 'background-color 0.2s ease, color 0.2s ease',
+                            borderRight: 'none',
                           },
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
-                      >
-                        Check All
-                      </Button>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={
-                          <ErrorIcon
-                            sx={{
-                              fontSize: 18,
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgb(148 163 184 / 90%)'
-                                  : 'rgb(148 163 184 / 80%)',
-                            }}
-                          />
-                        }
-                        onClick={() => toggleAllCrit(false)}
-                        sx={{
-                          fontSize: '0.875rem',
-                          px: 2,
-                          fontWeight: 600,
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(148 163 184 / 30%)'
-                              : 'rgb(148 163 184 / 20%)',
-                          color:
-                            theme.palette.mode === 'dark'
-                              ? 'rgb(148 163 184 / 90%)'
-                              : 'rgb(148 163 184 / 80%)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgb(148 163 184 / 10%) 0%, rgb(148 163 184 / 5%) 100%)'
-                              : 'linear-gradient(135deg, rgb(148 163 184 / 8%) 0%, rgb(148 163 184 / 4%) 100%)',
-                          '&:hover': {
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(148 163 184 / 60%)'
-                                : 'rgb(148 163 184 / 60%)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgb(148 163 184 / 15%) 0%, rgb(148 163 184 / 8%) 100%)'
-                                : 'linear-gradient(135deg, rgb(148 163 184 / 12%) 0%, rgb(148 163 184 / 6%) 100%)',
-                            transform: 'translateY(-1px)',
-                            boxShadow:
-                              theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgb(148 163 184 / 20%)'
-                                : '0 4px 12px rgb(148 163 184 / 10%)',
+                          '& .MuiButton-root + .MuiButton-root': {
+                            borderLeft: {
+                              xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                              sm: `1px solid ${
+                                muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.18)
+                                  : alpha(muiTheme.palette.primary.main, 0.15)
+                              }`,
+                            },
                           },
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                        }}
+                        })}
                       >
-                        Uncheck All
-                      </Button>
-                    </>
+                        <Tooltip title="Select all critical buffs" placement="top" arrow>
+                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
+                            <Button
+                              startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
+                              onClick={() => toggleAllCrit(true)}
+                              disabled={critAllSelected || critSelectableItems.length === 0}
+                              aria-label="Select all critical buffs"
+                              sx={(muiTheme) => ({
+                                color:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? muiTheme.palette.primary.light
+                                    : muiTheme.palette.primary.main,
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                  backgroundColor:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(67, 52, 116, 0.32)'
+                                      : 'rgba(225, 219, 253, 0.85)',
+                                },
+                                '&:focus-visible': {
+                                  outline: `2px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.6)
+                                      : alpha(muiTheme.palette.primary.main, 0.5)
+                                  }`,
+                                  outlineOffset: 2,
+                                },
+                                '&.Mui-disabled': {
+                                  color: muiTheme.palette.text.disabled,
+                                  backgroundColor: 'transparent',
+                                },
+                              })}
+                            >
+                              Select all
+                            </Button>
+                          </span>
+                        </Tooltip>
+                        <Tooltip title="Clear all critical buffs" placement="top" arrow>
+                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
+                            <Button
+                              startIcon={<ErrorIcon sx={{ fontSize: 18 }} />}
+                              onClick={() => toggleAllCrit(false)}
+                              disabled={critNoneSelected || critSelectableItems.length === 0}
+                              aria-label="Clear all critical buffs"
+                              sx={(muiTheme) => ({
+                                color:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? muiTheme.palette.error.light
+                                    : muiTheme.palette.error.main,
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                  backgroundColor:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(137, 48, 52, 0.3)'
+                                      : 'rgba(255, 235, 233, 0.85)',
+                                },
+                                '&:focus-visible': {
+                                  outline: `2px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.error.light, 0.55)
+                                      : alpha(muiTheme.palette.error.main, 0.5)
+                                  }`,
+                                  outlineOffset: 2,
+                                },
+                                '&.Mui-disabled': {
+                                  color: muiTheme.palette.text.disabled,
+                                  backgroundColor: 'transparent',
+                                },
+                              })}
+                            >
+                              Clear all
+                            </Button>
+                          </span>
+                        </Tooltip>
+                      </ButtonGroup>
+                    </Stack>
                   )}
                 </Box>
               </Box>
@@ -2390,12 +2451,11 @@ const Calculator: React.FC = React.memo(() => {
                       minHeight: isMobile ? 44 : 48,
                       padding: isMobile ? '8px 16px' : '12px 24px',
                       textTransform: 'none',
-                      borderRadius: '8px 8px 0 0',
+                      borderRadius: '8px !important',
                       color:
                         theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
                       transition: 'all 0.2s ease',
                       border: '1px solid transparent',
-                      borderBottom: 'none',
                       marginRight: isMobile ? 0 : 1,
                       '&:hover': {
                         color:
@@ -2405,7 +2465,6 @@ const Calculator: React.FC = React.memo(() => {
                             ? 'rgba(255, 255, 255, 0.05)'
                             : 'rgba(0, 0, 0, 0.04)',
                         border: '1px solid rgba(99, 102, 241, 0.3)',
-                        borderBottom: 'none',
                       },
                       '&.Mui-selected': {
                         color:
@@ -2415,8 +2474,7 @@ const Calculator: React.FC = React.memo(() => {
                             ? 'rgba(128, 211, 255, 0.15)'
                             : 'rgba(40, 145, 200, 0.08)',
                         border: '1px solid rgba(40, 145, 200, 0.5)',
-                        borderBottom: 'none',
-                        borderRadius: '8px 8px 0 0',
+                        borderRadius: '8px !important',
                       },
                     },
                     '& .MuiTabs-indicator': {
@@ -2432,10 +2490,9 @@ const Calculator: React.FC = React.memo(() => {
             )}
 
             {/* Tab Content */}
-            <Box sx={{ px: liteMode ? 3.75 : isMobile ? 1 : 3, pb: 3 }}>
+            <Box sx={{ px: isMobile ? 1.5 : 3.75, pb: 3 }}>
               <TabPanel value={selectedTab} index={0}>
                 {(() => {
-                  const filteredPenData = getFilteredItems(penetrationData, 'pen');
                   return liteMode ? (
                     // Lite mode: render all penetration items in a single flattened list
                     <List sx={{ p: 0, overflowX: 'hidden' }}>
@@ -2497,7 +2554,6 @@ const Calculator: React.FC = React.memo(() => {
 
               <TabPanel value={selectedTab} index={1}>
                 {(() => {
-                  const filteredCritData = getFilteredItems(criticalData, 'crit');
                   return liteMode ? (
                     // Lite mode: render all critical items in a single flattened list
                     <List sx={{ p: 0, overflowX: 'hidden' }}>
