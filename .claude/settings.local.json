@@ -58,7 +58,8 @@
       "Bash(npm run type-check:*)",
       "Bash(pkill:*)",
       "Bash(npm run format:check:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(npm run)"
     ],
     "deny": [],
     "ask": []
