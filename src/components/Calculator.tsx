@@ -11,8 +11,6 @@ import {
   Box,
   Typography,
   Container,
-  Tabs,
-  Tab,
   Paper,
   FormControlLabel,
   Switch,
@@ -617,12 +615,6 @@ function TabPanel(props: TabPanelProps): React.JSX.Element {
   );
 }
 
-function a11yProps(index: number): { id: string; 'aria-controls': string } {
-  return {
-    id: `calculator-tab-${index}`,
-    'aria-controls': `calculator-tabpanel-${index}`,
-  };
-}
 
 // Custom styled alert component that matches SkillTooltip styling
 interface CalculatorTooltipProps {
@@ -1967,9 +1959,11 @@ const Calculator: React.FC = React.memo(() => {
                           size="small"
                           variant="outlined"
                           onClick={() => {
-                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            const selectableItems = Object.values(filteredPenData)
+                              .flat()
+                              .filter((item) => !item.locked);
                             selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find(key =>
+                              const category = Object.keys(filteredPenData).find((key) =>
                                 filteredPenData[key as keyof CalculatorData].includes(item),
                               ) as keyof CalculatorData;
                               const itemIndex = filteredPenData[category].indexOf(item);
@@ -1984,10 +1978,16 @@ const Calculator: React.FC = React.memo(() => {
                             py: 0.4,
                             borderColor: 'rgba(56, 189, 248, 0.4)',
                             color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.5)' : 'rgba(235, 244, 252, 0.7)',
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(21, 34, 50, 0.5)'
+                                : 'rgba(235, 244, 252, 0.7)',
                             '&:hover': {
                               borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.7)' : 'rgba(235, 244, 252, 0.9)',
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(21, 34, 50, 0.7)'
+                                  : 'rgba(235, 244, 252, 0.9)',
                             },
                           }}
                         >
@@ -1997,9 +1997,11 @@ const Calculator: React.FC = React.memo(() => {
                           size="small"
                           variant="outlined"
                           onClick={() => {
-                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            const selectableItems = Object.values(filteredPenData)
+                              .flat()
+                              .filter((item) => !item.locked);
                             selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find(key =>
+                              const category = Object.keys(filteredPenData).find((key) =>
                                 filteredPenData[key as keyof CalculatorData].includes(item),
                               ) as keyof CalculatorData;
                               const itemIndex = filteredPenData[category].indexOf(item);
@@ -2014,10 +2016,16 @@ const Calculator: React.FC = React.memo(() => {
                             py: 0.4,
                             borderColor: 'rgba(239, 68, 68, 0.4)',
                             color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.25)' : 'rgba(254, 226, 226, 0.7)',
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(153, 27, 27, 0.25)'
+                                : 'rgba(254, 226, 226, 0.7)',
                             '&:hover': {
                               borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.4)' : 'rgba(254, 226, 226, 0.9)',
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(153, 27, 27, 0.4)'
+                                  : 'rgba(254, 226, 226, 0.9)',
                             },
                           }}
                         >
@@ -2037,9 +2045,11 @@ const Calculator: React.FC = React.memo(() => {
                           size="small"
                           variant="outlined"
                           onClick={() => {
-                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            const selectableItems = Object.values(filteredCritData)
+                              .flat()
+                              .filter((item) => !item.locked);
                             selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find(key =>
+                              const category = Object.keys(filteredCritData).find((key) =>
                                 filteredCritData[key as keyof CalculatorData].includes(item),
                               ) as keyof CalculatorData;
                               const itemIndex = filteredCritData[category].indexOf(item);
@@ -2054,10 +2064,16 @@ const Calculator: React.FC = React.memo(() => {
                             py: 0.4,
                             borderColor: 'rgba(56, 189, 248, 0.4)',
                             color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.5)' : 'rgba(235, 244, 252, 0.7)',
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(21, 34, 50, 0.5)'
+                                : 'rgba(235, 244, 252, 0.7)',
                             '&:hover': {
                               borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.7)' : 'rgba(235, 244, 252, 0.9)',
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(21, 34, 50, 0.7)'
+                                  : 'rgba(235, 244, 252, 0.9)',
                             },
                           }}
                         >
@@ -2067,9 +2083,11 @@ const Calculator: React.FC = React.memo(() => {
                           size="small"
                           variant="outlined"
                           onClick={() => {
-                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            const selectableItems = Object.values(filteredCritData)
+                              .flat()
+                              .filter((item) => !item.locked);
                             selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find(key =>
+                              const category = Object.keys(filteredCritData).find((key) =>
                                 filteredCritData[key as keyof CalculatorData].includes(item),
                               ) as keyof CalculatorData;
                               const itemIndex = filteredCritData[category].indexOf(item);
@@ -2084,10 +2102,16 @@ const Calculator: React.FC = React.memo(() => {
                             py: 0.4,
                             borderColor: 'rgba(239, 68, 68, 0.4)',
                             color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.25)' : 'rgba(254, 226, 226, 0.7)',
+                            backgroundColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(153, 27, 27, 0.25)'
+                                : 'rgba(254, 226, 226, 0.7)',
                             '&:hover': {
                               borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.4)' : 'rgba(254, 226, 226, 0.9)',
+                              backgroundColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(153, 27, 27, 0.4)'
+                                  : 'rgba(254, 226, 226, 0.9)',
                             },
                           }}
                         >
@@ -2126,7 +2150,10 @@ const Calculator: React.FC = React.memo(() => {
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       // Enhanced mobile touch targets
                       minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                      minWidth: { xs: 'auto', sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto' },
+                      minWidth: {
+                        xs: 'auto',
+                        sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
+                      },
                       fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
                       px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
                       flex: { xs: 1, sm: 'none' },
@@ -2280,7 +2307,10 @@ const Calculator: React.FC = React.memo(() => {
                     display: 'flex',
                     gap: 1,
                     p: 0.5,
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.8)'
+                        : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
@@ -2288,7 +2318,7 @@ const Calculator: React.FC = React.memo(() => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 0 ? "contained" : "text"}
+                      variant={selectedTab === 0 ? 'contained' : 'text'}
                       onClick={() => setSelectedTab(0)}
                       sx={{
                         py: 1,
@@ -2296,25 +2326,39 @@ const Calculator: React.FC = React.memo(() => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color: selectedTab === 0
-                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
-                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor: selectedTab === 0
-                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
-                          : 'transparent',
+                        color:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '#60a5fa'
+                              : '#3b82f6'
+                            : 'transparent',
                         border: selectedTab === 0 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor: selectedTab === 0
-                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
-                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor:
+                            selectedTab === 0
+                              ? theme.palette.mode === 'dark'
+                                ? '#3b82f6'
+                                : '#2563eb'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow: selectedTab === 0
-                          ? theme.palette.mode === 'dark'
-                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                          : 'none',
+                        boxShadow:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
                       }}
                     >
                       <motion.span
@@ -2331,7 +2375,7 @@ const Calculator: React.FC = React.memo(() => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 1 ? "contained" : "text"}
+                      variant={selectedTab === 1 ? 'contained' : 'text'}
                       onClick={() => setSelectedTab(1)}
                       sx={{
                         py: 1,
@@ -2339,25 +2383,39 @@ const Calculator: React.FC = React.memo(() => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color: selectedTab === 1
-                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
-                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor: selectedTab === 1
-                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
-                          : 'transparent',
+                        color:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '#60a5fa'
+                              : '#3b82f6'
+                            : 'transparent',
                         border: selectedTab === 1 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor: selectedTab === 1
-                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
-                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor:
+                            selectedTab === 1
+                              ? theme.palette.mode === 'dark'
+                                ? '#3b82f6'
+                                : '#2563eb'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow: selectedTab === 1
-                          ? theme.palette.mode === 'dark'
-                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                          : 'none',
+                        boxShadow:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
                       }}
                     >
                       <motion.span
@@ -2744,7 +2802,10 @@ const Calculator: React.FC = React.memo(() => {
                     display: 'flex',
                     gap: 1,
                     p: 0.5,
-                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(30, 41, 59, 0.8)'
+                        : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
@@ -2752,7 +2813,7 @@ const Calculator: React.FC = React.memo(() => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 0 ? "contained" : "text"}
+                      variant={selectedTab === 0 ? 'contained' : 'text'}
                       onClick={() => setSelectedTab(0)}
                       sx={{
                         py: 1,
@@ -2760,25 +2821,39 @@ const Calculator: React.FC = React.memo(() => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color: selectedTab === 0
-                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
-                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor: selectedTab === 0
-                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
-                          : 'transparent',
+                        color:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '#60a5fa'
+                              : '#3b82f6'
+                            : 'transparent',
                         border: selectedTab === 0 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor: selectedTab === 0
-                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
-                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor:
+                            selectedTab === 0
+                              ? theme.palette.mode === 'dark'
+                                ? '#3b82f6'
+                                : '#2563eb'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow: selectedTab === 0
-                          ? theme.palette.mode === 'dark'
-                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                          : 'none',
+                        boxShadow:
+                          selectedTab === 0
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
                       }}
                     >
                       <motion.span
@@ -2795,7 +2870,7 @@ const Calculator: React.FC = React.memo(() => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 1 ? "contained" : "text"}
+                      variant={selectedTab === 1 ? 'contained' : 'text'}
                       onClick={() => setSelectedTab(1)}
                       sx={{
                         py: 1,
@@ -2803,25 +2878,39 @@ const Calculator: React.FC = React.memo(() => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color: selectedTab === 1
-                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
-                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor: selectedTab === 1
-                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
-                          : 'transparent',
+                        color:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '#60a5fa'
+                              : '#3b82f6'
+                            : 'transparent',
                         border: selectedTab === 1 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor: selectedTab === 1
-                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
-                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor:
+                            selectedTab === 1
+                              ? theme.palette.mode === 'dark'
+                                ? '#3b82f6'
+                                : '#2563eb'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.1)'
+                                : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow: selectedTab === 1
-                          ? theme.palette.mode === 'dark'
-                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                          : 'none',
+                        boxShadow:
+                          selectedTab === 1
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
                       }}
                     >
                       <motion.span
