@@ -940,7 +940,7 @@ const Calculator: React.FC = React.memo(() => {
         display: 'grid',
         gridTemplateColumns: gridColumns,
         alignItems: 'center',
-        gap: liteMode ? 0.5 : 2,
+        gap: liteMode ? 0.625 : 2, // 0.625 = 5px in MUI spacing (8px base)
         p: liteMode ? 0.125 : 1.5,
         background: item.enabled
           ? liteMode
@@ -973,7 +973,7 @@ const Calculator: React.FC = React.memo(() => {
               ? '1px solid rgba(255, 255, 255, 0.12)'
               : '1px solid rgba(203, 213, 225, 0.3)',
         borderRadius: '8px !important',
-        mb: liteMode ? 0.125 : 1,
+        mb: liteMode ? 0.625 : 1, // 0.625 = 5px in MUI spacing (8px base)
         cursor: item.locked ? 'not-allowed' : 'pointer',
         opacity: item.locked ? 0.7 : 1,
         transition: liteMode ? 'none' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
