@@ -1570,9 +1570,7 @@ const Calculator: React.FC = React.memo(() => {
               ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
               : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
           border: `1px solid ${
-            theme.palette.mode === 'dark'
-              ? 'rgb(123 123 123 / 20%)'
-              : 'rgba(203, 213, 225, 0.5)'
+            theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
           }`,
           boxShadow: 'none',
         }
@@ -1582,9 +1580,7 @@ const Calculator: React.FC = React.memo(() => {
               ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
               : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
           border: `1px solid ${
-            theme.palette.mode === 'dark'
-              ? 'rgba(71, 85, 105, 0.3)'
-              : 'rgba(203, 213, 225, 0.5)'
+            theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'
           }`,
           boxShadow:
             theme.palette.mode === 'dark'
@@ -1780,7 +1776,8 @@ const Calculator: React.FC = React.memo(() => {
     [filteredCritData],
   );
 
-  const penAllSelected = penSelectableItems.length > 0 && penSelectableItems.every((item) => item.enabled);
+  const penAllSelected =
+    penSelectableItems.length > 0 && penSelectableItems.every((item) => item.enabled);
   const penNoneSelected = penSelectableItems.every((item) => !item.enabled);
   const critAllSelected =
     critSelectableItems.length > 0 && critSelectableItems.every((item) => item.enabled);
