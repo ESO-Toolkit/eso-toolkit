@@ -35,6 +35,7 @@ import {
   Stack,
 } from '@mui/material';
 import { styled, useTheme, alpha } from '@mui/material/styles';
+import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef } from 'react';
 
 import {
@@ -2123,7 +2124,6 @@ const Calculator: React.FC = React.memo(() => {
                       borderRadius: '8px !important',
                       color:
                         theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
-                      transition: 'all 0.2s ease',
                       border: '1px solid transparent',
                       marginRight: 1,
                       // Enhanced tablet and mobile touch targets
@@ -2181,252 +2181,314 @@ const Calculator: React.FC = React.memo(() => {
                     justifyContent: 'flex-end',
                   }}
                 >
-                  {selectedTab === 0 && (
-                    <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-                      <ButtonGroup
-                        variant="text"
-                        disableElevation
-                        fullWidth={isMobile}
-                        aria-label="Penetration bulk actions"
-                        sx={(muiTheme) => ({
-                          alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                          backgroundColor:
-                            muiTheme.palette.mode === 'dark'
-                              ? 'rgba(21, 34, 50, 0.55)'
-                              : 'rgba(235, 244, 252, 0.85)',
-                          border: `1px solid ${
-                            muiTheme.palette.mode === 'dark'
-                              ? alpha(muiTheme.palette.primary.light, 0.2)
-                              : alpha(muiTheme.palette.primary.main, 0.18)
-                          }`,
-                          '& .MuiButton-root': {
-                            flex: { xs: '1 1 100%', sm: '0 0 auto' },
-                            justifyContent: 'center',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            px: { xs: 2.2, sm: 2.6 },
-                            py: { xs: 1.05, sm: 0.9 },
-                            borderRadius: 0,
-                            minWidth: { xs: 'auto', sm: 140 },
-                            transition: 'background-color 0.2s ease, color 0.2s ease',
-                            borderRight: 'none',
-                          },
-                          '& .MuiButton-root + .MuiButton-root': {
-                            borderLeft: {
-                              xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                              sm: `1px solid ${
-                                muiTheme.palette.mode === 'dark'
-                                  ? alpha(muiTheme.palette.primary.light, 0.18)
-                                  : alpha(muiTheme.palette.primary.main, 0.15)
-                              }`,
-                            },
-                          },
-                        })}
-                      >
-                        <Tooltip title="Select all penetration buffs" placement="top" arrow>
-                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
-                            <Button
-                              startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
-                              onClick={() => toggleAllPen(true)}
-                              disabled={penAllSelected || penSelectableItems.length === 0}
-                              aria-label="Select all penetration buffs"
+                  <AnimatePresence mode="wait">
+                    {selectedTab === 0 && (
+                      <div>
+                        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+                          <div>
+                            <ButtonGroup
+                              variant="text"
+                              disableElevation
+                              fullWidth={isMobile}
+                              aria-label="Penetration bulk actions"
                               sx={(muiTheme) => ({
-                                color:
+                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                borderRadius: 999,
+                                overflow: 'hidden',
+                                backgroundColor:
                                   muiTheme.palette.mode === 'dark'
-                                    ? muiTheme.palette.primary.light
-                                    : muiTheme.palette.primary.main,
-                                backgroundColor: 'transparent',
-                                '&:hover': {
-                                  backgroundColor:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(40, 82, 120, 0.35)'
-                                      : 'rgba(210, 233, 249, 0.85)',
+                                    ? 'rgba(21, 34, 50, 0.55)'
+                                    : 'rgba(235, 244, 252, 0.85)',
+                                border: `1px solid ${
+                                  muiTheme.palette.mode === 'dark'
+                                    ? alpha(muiTheme.palette.primary.light, 0.2)
+                                    : alpha(muiTheme.palette.primary.main, 0.18)
+                                }`,
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                '& .MuiButton-root': {
+                                  flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                                  justifyContent: 'center',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  textTransform: 'none',
+                                  px: { xs: 2.2, sm: 2.6 },
+                                  py: { xs: 1.05, sm: 0.9 },
+                                  borderRadius: 0,
+                                  minWidth: { xs: 'auto', sm: 140 },
+                                  transition: 'background-color 0.2s ease, color 0.2s ease',
+                                  borderRight: 'none',
                                 },
-                                '&:focus-visible': {
-                                  outline: `2px solid ${
-                                    muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.primary.light, 0.6)
-                                      : alpha(muiTheme.palette.primary.main, 0.5)
-                                  }`,
-                                  outlineOffset: 2,
-                                },
-                                '&.Mui-disabled': {
-                                  color: muiTheme.palette.text.disabled,
-                                  backgroundColor: 'transparent',
+                                '& .MuiButton-root + .MuiButton-root': {
+                                  borderLeft: {
+                                    xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                                    sm: `1px solid ${
+                                      muiTheme.palette.mode === 'dark'
+                                        ? alpha(muiTheme.palette.primary.light, 0.18)
+                                        : alpha(muiTheme.palette.primary.main, 0.15)
+                                    }`,
+                                  },
                                 },
                               })}
                             >
-                              Select all
-                            </Button>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Clear all penetration buffs" placement="top" arrow>
-                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
-                            <Button
-                              startIcon={<ErrorIcon sx={{ fontSize: 18 }} />}
-                              onClick={() => toggleAllPen(false)}
-                              disabled={penNoneSelected || penSelectableItems.length === 0}
-                              aria-label="Clear all penetration buffs"
+                              <Tooltip title="Select all penetration buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: 10 }}
+                                        transition={{ duration: 0.2 }}
+                                      >
+                                        <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllPen(true)}
+                                    disabled={penAllSelected || penSelectableItems.length === 0}
+                                    aria-label="Select all penetration buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.primary.light
+                                          : muiTheme.palette.primary.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(40, 82, 120, 0.35)'
+                                            : 'rgba(210, 233, 249, 0.85)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.primary.light, 0.6)
+                                            : alpha(muiTheme.palette.primary.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Select all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                              <Tooltip title="Clear all penetration buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                        transition={{ duration: 0.5 }}
+                                      >
+                                        <ErrorIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllPen(false)}
+                                    disabled={penNoneSelected || penSelectableItems.length === 0}
+                                    aria-label="Clear all penetration buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.error.light
+                                          : muiTheme.palette.error.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(132, 32, 45, 0.32)'
+                                            : 'rgba(255, 235, 233, 0.85)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.error.light, 0.55)
+                                            : alpha(muiTheme.palette.error.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Clear all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                            </ButtonGroup>
+                          </div>
+                        </Stack>
+                      </div>
+                    )}
+                  </AnimatePresence>
+                  <AnimatePresence mode="wait">
+                    {selectedTab === 1 && (
+                      <div>
+                        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
+                          <div>
+                            <ButtonGroup
+                              variant="text"
+                              disableElevation
+                              fullWidth={isMobile}
+                              aria-label="Critical bulk actions"
                               sx={(muiTheme) => ({
-                                color:
+                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                borderRadius: 999,
+                                overflow: 'hidden',
+                                backgroundColor:
                                   muiTheme.palette.mode === 'dark'
-                                    ? muiTheme.palette.error.light
-                                    : muiTheme.palette.error.main,
-                                backgroundColor: 'transparent',
-                                '&:hover': {
-                                  backgroundColor:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(132, 32, 45, 0.32)'
-                                      : 'rgba(255, 235, 233, 0.85)',
+                                    ? 'rgba(21, 34, 50, 0.55)'
+                                    : 'rgba(235, 244, 252, 0.85)',
+                                border: `1px solid ${
+                                  muiTheme.palette.mode === 'dark'
+                                    ? alpha(muiTheme.palette.primary.light, 0.2)
+                                    : alpha(muiTheme.palette.primary.main, 0.18)
+                                }`,
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                '& .MuiButton-root': {
+                                  flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                                  justifyContent: 'center',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 600,
+                                  textTransform: 'none',
+                                  px: { xs: 2.2, sm: 2.6 },
+                                  py: { xs: 1.05, sm: 0.9 },
+                                  borderRadius: 0,
+                                  minWidth: { xs: 'auto', sm: 140 },
+                                  transition: 'background-color 0.2s ease, color 0.2s ease',
+                                  borderRight: 'none',
                                 },
-                                '&:focus-visible': {
-                                  outline: `2px solid ${
-                                    muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.error.light, 0.55)
-                                      : alpha(muiTheme.palette.error.main, 0.5)
-                                  }`,
-                                  outlineOffset: 2,
-                                },
-                                '&.Mui-disabled': {
-                                  color: muiTheme.palette.text.disabled,
-                                  backgroundColor: 'transparent',
+                                '& .MuiButton-root + .MuiButton-root': {
+                                  borderLeft: {
+                                    xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                                    sm: `1px solid ${
+                                      muiTheme.palette.mode === 'dark'
+                                        ? alpha(muiTheme.palette.primary.light, 0.18)
+                                        : alpha(muiTheme.palette.primary.main, 0.15)
+                                    }`,
+                                  },
                                 },
                               })}
                             >
-                              Clear all buffs
-                            </Button>
-                          </span>
-                        </Tooltip>
-                      </ButtonGroup>
-                    </Stack>
-                  )}
-                  {selectedTab === 1 && (
-                    <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-                      <ButtonGroup
-                        variant="text"
-                        disableElevation
-                        fullWidth={isMobile}
-                        aria-label="Critical bulk actions"
-                        sx={(muiTheme) => ({
-                          alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                          flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                          borderRadius: 999,
-                          overflow: 'hidden',
-                          backgroundColor:
-                            muiTheme.palette.mode === 'dark'
-                              ? 'rgba(26, 21, 46, 0.55)'
-                              : 'rgba(239, 233, 252, 0.85)',
-                          border: `1px solid ${
-                            muiTheme.palette.mode === 'dark'
-                              ? alpha(muiTheme.palette.primary.light, 0.18)
-                              : alpha(muiTheme.palette.primary.main, 0.16)
-                          }`,
-                          '& .MuiButton-root': {
-                            flex: { xs: '1 1 100%', sm: '0 0 auto' },
-                            justifyContent: 'center',
-                            fontSize: '0.85rem',
-                            fontWeight: 600,
-                            textTransform: 'none',
-                            px: { xs: 2.2, sm: 2.6 },
-                            py: { xs: 1.05, sm: 0.9 },
-                            borderRadius: 0,
-                            minWidth: { xs: 'auto', sm: 140 },
-                            transition: 'background-color 0.2s ease, color 0.2s ease',
-                            borderRight: 'none',
-                          },
-                          '& .MuiButton-root + .MuiButton-root': {
-                            borderLeft: {
-                              xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                              sm: `1px solid ${
-                                muiTheme.palette.mode === 'dark'
-                                  ? alpha(muiTheme.palette.primary.light, 0.18)
-                                  : alpha(muiTheme.palette.primary.main, 0.15)
-                              }`,
-                            },
-                          },
-                        })}
-                      >
-                        <Tooltip title="Select all critical buffs" placement="top" arrow>
-                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
-                            <Button
-                              startIcon={<CheckCircleIcon sx={{ fontSize: 18 }} />}
-                              onClick={() => toggleAllCrit(true)}
-                              disabled={critAllSelected || critSelectableItems.length === 0}
-                              aria-label="Select all critical buffs"
-                              sx={(muiTheme) => ({
-                                color:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? muiTheme.palette.primary.light
-                                    : muiTheme.palette.primary.main,
-                                backgroundColor: 'transparent',
-                                '&:hover': {
-                                  backgroundColor:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(67, 52, 116, 0.32)'
-                                      : 'rgba(225, 219, 253, 0.85)',
-                                },
-                                '&:focus-visible': {
-                                  outline: `2px solid ${
-                                    muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.primary.light, 0.6)
-                                      : alpha(muiTheme.palette.primary.main, 0.5)
-                                  }`,
-                                  outlineOffset: 2,
-                                },
-                                '&.Mui-disabled': {
-                                  color: muiTheme.palette.text.disabled,
-                                  backgroundColor: 'transparent',
-                                },
-                              })}
-                            >
-                              Select all
-                            </Button>
-                          </span>
-                        </Tooltip>
-                        <Tooltip title="Clear all critical buffs" placement="top" arrow>
-                          <span style={{ display: 'flex', flex: '1 1 auto' }}>
-                            <Button
-                              startIcon={<ErrorIcon sx={{ fontSize: 18 }} />}
-                              onClick={() => toggleAllCrit(false)}
-                              disabled={critNoneSelected || critSelectableItems.length === 0}
-                              aria-label="Clear all critical buffs"
-                              sx={(muiTheme) => ({
-                                color:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? muiTheme.palette.error.light
-                                    : muiTheme.palette.error.main,
-                                backgroundColor: 'transparent',
-                                '&:hover': {
-                                  backgroundColor:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(137, 48, 52, 0.3)'
-                                      : 'rgba(255, 235, 233, 0.85)',
-                                },
-                                '&:focus-visible': {
-                                  outline: `2px solid ${
-                                    muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.error.light, 0.55)
-                                      : alpha(muiTheme.palette.error.main, 0.5)
-                                  }`,
-                                  outlineOffset: 2,
-                                },
-                                '&.Mui-disabled': {
-                                  color: muiTheme.palette.text.disabled,
-                                  backgroundColor: 'transparent',
-                                },
-                              })}
-                            >
-                              Clear all
-                            </Button>
-                          </span>
-                        </Tooltip>
-                      </ButtonGroup>
-                    </Stack>
-                  )}
+                              <Tooltip title="Select all critical buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: 10 }}
+                                        transition={{ duration: 0.2 }}
+                                      >
+                                        <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllCrit(true)}
+                                    disabled={critAllSelected || critSelectableItems.length === 0}
+                                    aria-label="Select all critical buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.primary.light
+                                          : muiTheme.palette.primary.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(40, 82, 120, 0.35)'
+                                            : 'rgba(210, 233, 249, 0.85)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.primary.light, 0.6)
+                                            : alpha(muiTheme.palette.primary.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Select all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                              <Tooltip title="Clear all critical buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.05 }}
+                                  whileTap={{ scale: 0.95 }}
+                                >
+                                  <Button
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                        transition={{ duration: 0.5 }}
+                                      >
+                                        <ErrorIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllCrit(false)}
+                                    disabled={critNoneSelected || critSelectableItems.length === 0}
+                                    aria-label="Clear all critical buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.error.light
+                                          : muiTheme.palette.error.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(137, 48, 52, 0.3)'
+                                            : 'rgba(255, 235, 233, 0.85)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.error.light, 0.55)
+                                            : alpha(muiTheme.palette.error.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Clear all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                            </ButtonGroup>
+                          </div>
+                        </Stack>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </Box>
               </Box>
             ) : (
@@ -2451,7 +2513,6 @@ const Calculator: React.FC = React.memo(() => {
                       borderRadius: '8px !important',
                       color:
                         theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
-                      transition: 'all 0.2s ease',
                       border: '1px solid transparent',
                       marginRight: isMobile ? 0 : 1,
                       '&:hover': {
