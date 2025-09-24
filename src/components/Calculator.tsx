@@ -1944,6 +1944,152 @@ const Calculator: React.FC = React.memo(() => {
                     </Typography>
                   }
                 />
+
+                {/* Mobile Action Buttons */}
+                {isMobile && (
+                  <AnimatePresence mode="wait">
+                    {selectedTab === 0 && (
+                      <motion.div
+                        style={{ display: 'flex', gap: 4 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredPenData).find(key =>
+                                filteredPenData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredPenData[category].indexOf(item);
+                              updatePenItem(category, itemIndex, { enabled: true });
+                            });
+                          }}
+                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
+                          sx={{
+                            fontSize: '0.75rem',
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.4,
+                            borderColor: 'rgba(56, 189, 248, 0.4)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.5)' : 'rgba(235, 244, 252, 0.7)',
+                            '&:hover': {
+                              borderColor: 'rgba(56, 189, 248, 0.6)',
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.7)' : 'rgba(235, 244, 252, 0.9)',
+                            },
+                          }}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredPenData).find(key =>
+                                filteredPenData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredPenData[category].indexOf(item);
+                              updatePenItem(category, itemIndex, { enabled: false });
+                            });
+                          }}
+                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
+                          sx={{
+                            fontSize: '0.75rem',
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.4,
+                            borderColor: 'rgba(239, 68, 68, 0.4)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.25)' : 'rgba(254, 226, 226, 0.7)',
+                            '&:hover': {
+                              borderColor: 'rgba(239, 68, 68, 0.6)',
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.4)' : 'rgba(254, 226, 226, 0.9)',
+                            },
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </motion.div>
+                    )}
+                    {selectedTab === 1 && (
+                      <motion.div
+                        style={{ display: 'flex', gap: 4 }}
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredCritData).find(key =>
+                                filteredCritData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredCritData[category].indexOf(item);
+                              updateCritItem(category, itemIndex, { enabled: true });
+                            });
+                          }}
+                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
+                          sx={{
+                            fontSize: '0.75rem',
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.4,
+                            borderColor: 'rgba(56, 189, 248, 0.4)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.5)' : 'rgba(235, 244, 252, 0.7)',
+                            '&:hover': {
+                              borderColor: 'rgba(56, 189, 248, 0.6)',
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.7)' : 'rgba(235, 244, 252, 0.9)',
+                            },
+                          }}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredCritData).find(key =>
+                                filteredCritData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredCritData[category].indexOf(item);
+                              updateCritItem(category, itemIndex, { enabled: false });
+                            });
+                          }}
+                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
+                          sx={{
+                            fontSize: '0.75rem',
+                            minWidth: 'auto',
+                            px: 1,
+                            py: 0.4,
+                            borderColor: 'rgba(239, 68, 68, 0.4)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.25)' : 'rgba(254, 226, 226, 0.7)',
+                            '&:hover': {
+                              borderColor: 'rgba(239, 68, 68, 0.6)',
+                              backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.4)' : 'rgba(254, 226, 226, 0.9)',
+                            },
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                )}
               </Box>
               {/* Game Mode Selector */}
               <Box
@@ -2581,144 +2727,6 @@ const Calculator: React.FC = React.memo(() => {
                   <Tab label="Penetration" {...a11yProps(0)} />
                   <Tab label="Critical" {...a11yProps(1)} />
                 </Tabs>
-
-                {/* Mobile Action Buttons */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'center',
-                    gap: 2,
-                    mt: 2,
-                    px: 1,
-                  }}
-                >
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 0 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 8 }}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find(key =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon />}
-                          sx={{
-                            fontSize: '0.8rem',
-                            minWidth: 'auto',
-                            px: 1.5,
-                            py: 0.5,
-                            borderColor: 'rgba(56, 189, 248, 0.5)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.6)' : 'rgba(235, 244, 252, 0.8)',
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find(key =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon />}
-                          sx={{
-                            fontSize: '0.8rem',
-                            minWidth: 'auto',
-                            px: 1.5,
-                            py: 0.5,
-                            borderColor: 'rgba(239, 68, 68, 0.5)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.3)' : 'rgba(254, 226, 226, 0.8)',
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </motion.div>
-                    )}
-                    {selectedTab === 1 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 8 }}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -10 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find(key =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon />}
-                          sx={{
-                            fontSize: '0.8rem',
-                            minWidth: 'auto',
-                            px: 1.5,
-                            py: 0.5,
-                            borderColor: 'rgba(56, 189, 248, 0.5)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.6)' : 'rgba(235, 244, 252, 0.8)',
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find(key =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon />}
-                          sx={{
-                            fontSize: '0.8rem',
-                            minWidth: 'auto',
-                            px: 1.5,
-                            py: 0.5,
-                            borderColor: 'rgba(239, 68, 68, 0.5)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.3)' : 'rgba(254, 226, 226, 0.8)',
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </Box>
               </Box>
             )}
 
