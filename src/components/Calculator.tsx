@@ -2184,8 +2184,8 @@ const Calculator: React.FC = React.memo(() => {
                   <AnimatePresence mode="wait">
                     {selectedTab === 0 && (
                       <div>
-                        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-                          <div>
+                        <Stack spacing={0} sx={{ minWidth: 0 }}>
+                          <Box sx={{ m: 0, p: 0 }}>
                             <ButtonGroup
                               variant="text"
                               disableElevation
@@ -2196,6 +2196,8 @@ const Calculator: React.FC = React.memo(() => {
                                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
                                 borderRadius: 999,
                                 overflow: 'hidden',
+                                position: 'relative',
+                                transform: 'translateZ(0)',
                                 backgroundColor:
                                   muiTheme.palette.mode === 'dark'
                                     ? 'rgba(21, 34, 50, 0.55)'
@@ -2215,9 +2217,17 @@ const Calculator: React.FC = React.memo(() => {
                                   px: { xs: 2.2, sm: 2.6 },
                                   py: { xs: 1.05, sm: 0.9 },
                                   borderRadius: 0,
-                                  minWidth: { xs: 'auto', sm: 140 },
-                                  transition: 'background-color 0.2s ease, color 0.2s ease',
+                                  minWidth: { xs: 'auto', sm: 130 },
+                                  transition: 'background-color 0.2s ease',
                                   borderRight: 'none',
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  MozUserSelect: 'none',
+                                  msUserSelect: 'none',
+                                  whiteSpace: 'nowrap',
+                                  margin: 0,
+                                  lineHeight: 1,
+                                  boxSizing: 'border-box',
                                 },
                                 '& .MuiButton-root + .MuiButton-root': {
                                   borderLeft: {
@@ -2234,10 +2244,11 @@ const Calculator: React.FC = React.memo(() => {
                               <Tooltip title="Select all penetration buffs" placement="top" arrow>
                                 <motion.span
                                   style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
+                                    disableRipple
                                     startIcon={
                                       <motion.div
                                         initial={{ rotate: 0 }}
@@ -2283,10 +2294,11 @@ const Calculator: React.FC = React.memo(() => {
                               <Tooltip title="Clear all penetration buffs" placement="top" arrow>
                                 <motion.span
                                   style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
+                                    disableRipple
                                     startIcon={
                                       <motion.div
                                         initial={{ rotate: 0 }}
@@ -2330,7 +2342,7 @@ const Calculator: React.FC = React.memo(() => {
                                 </motion.span>
                               </Tooltip>
                             </ButtonGroup>
-                          </div>
+                          </Box>
                         </Stack>
                       </div>
                     )}
@@ -2338,8 +2350,8 @@ const Calculator: React.FC = React.memo(() => {
                   <AnimatePresence mode="wait">
                     {selectedTab === 1 && (
                       <div>
-                        <Stack spacing={0.75} sx={{ minWidth: 0 }}>
-                          <div>
+                        <Stack spacing={0} sx={{ minWidth: 0 }}>
+                          <Box sx={{ m: 0, p: 0 }}>
                             <ButtonGroup
                               variant="text"
                               disableElevation
@@ -2350,6 +2362,8 @@ const Calculator: React.FC = React.memo(() => {
                                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
                                 borderRadius: 999,
                                 overflow: 'hidden',
+                                position: 'relative',
+                                transform: 'translateZ(0)',
                                 backgroundColor:
                                   muiTheme.palette.mode === 'dark'
                                     ? 'rgba(21, 34, 50, 0.55)'
@@ -2369,9 +2383,17 @@ const Calculator: React.FC = React.memo(() => {
                                   px: { xs: 2.2, sm: 2.6 },
                                   py: { xs: 1.05, sm: 0.9 },
                                   borderRadius: 0,
-                                  minWidth: { xs: 'auto', sm: 140 },
-                                  transition: 'background-color 0.2s ease, color 0.2s ease',
+                                  minWidth: { xs: 'auto', sm: 130 },
+                                  transition: 'background-color 0.2s ease',
                                   borderRight: 'none',
+                                  userSelect: 'none',
+                                  WebkitUserSelect: 'none',
+                                  MozUserSelect: 'none',
+                                  msUserSelect: 'none',
+                                  whiteSpace: 'nowrap',
+                                  margin: 0,
+                                  lineHeight: 1,
+                                  boxSizing: 'border-box',
                                 },
                                 '& .MuiButton-root + .MuiButton-root': {
                                   borderLeft: {
@@ -2388,10 +2410,11 @@ const Calculator: React.FC = React.memo(() => {
                               <Tooltip title="Select all critical buffs" placement="top" arrow>
                                 <motion.span
                                   style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
+                                    disableRipple
                                     startIcon={
                                       <motion.div
                                         initial={{ rotate: 0 }}
@@ -2437,10 +2460,11 @@ const Calculator: React.FC = React.memo(() => {
                               <Tooltip title="Clear all critical buffs" placement="top" arrow>
                                 <motion.span
                                   style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.05 }}
-                                  whileTap={{ scale: 0.95 }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
                                 >
                                   <Button
+                                    disableRipple
                                     startIcon={
                                       <motion.div
                                         initial={{ rotate: 0 }}
@@ -2484,7 +2508,7 @@ const Calculator: React.FC = React.memo(() => {
                                 </motion.span>
                               </Tooltip>
                             </ButtonGroup>
-                          </div>
+                          </Box>
                         </Stack>
                       </div>
                     )}
