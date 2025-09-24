@@ -615,7 +615,6 @@ function TabPanel(props: TabPanelProps): React.JSX.Element {
   );
 }
 
-
 // Custom styled alert component that matches SkillTooltip styling
 interface CalculatorTooltipProps {
   title: string;
