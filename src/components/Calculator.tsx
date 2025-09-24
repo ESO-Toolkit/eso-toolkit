@@ -2194,7 +2194,7 @@ const Calculator: React.FC = React.memo(() => {
                               sx={(muiTheme) => ({
                                 alignSelf: { xs: 'stretch', sm: 'flex-end' },
                                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                                borderRadius: 999,
+                                borderRadius: '10px',
                                 overflow: 'hidden',
                                 position: 'relative',
                                 transform: 'translateZ(0)',
@@ -2360,7 +2360,7 @@ const Calculator: React.FC = React.memo(() => {
                               sx={(muiTheme) => ({
                                 alignSelf: { xs: 'stretch', sm: 'flex-end' },
                                 flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                                borderRadius: 999,
+                                borderRadius: '10px',
                                 overflow: 'hidden',
                                 position: 'relative',
                                 transform: 'translateZ(0)',
