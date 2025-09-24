@@ -4,6 +4,8 @@ import {
   Info as InfoIcon,
   HelpOutline as HelpOutlineIcon,
   ExpandMore as ExpandMoreIcon,
+  SelectAll as SelectAllIcon,
+  Clear as ClearIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -1839,11 +1841,11 @@ const Calculator: React.FC = React.memo(() => {
             <Box
               sx={{
                 display: 'flex',
-                alignItems: 'center',
+                alignItems: { xs: 'flex-start', sm: 'center' },
                 justifyContent: 'space-between',
                 mb: liteMode ? 2 : isMobile ? 3 : 4,
                 flexWrap: 'wrap',
-                gap: liteMode ? 1 : isMobile ? 2 : 3,
+                gap: { xs: 2, sm: liteMode ? 1 : isMobile ? 2 : 3 },
                 p: liteMode ? 2 : isExtraSmall ? 1.5 : isMobile ? 2 : 4,
                 borderRadius: '10px',
                 borderColor: liteMode
@@ -1860,6 +1862,8 @@ const Calculator: React.FC = React.memo(() => {
                     : 'rgba(255, 255, 255, 0.98)',
                 position: 'relative',
                 // Enhanced mobile responsiveness
+                // Better mobile layout with stacked controls
+                flexDirection: { xs: 'column', sm: 'row' },
                 '@media (max-width: 380px)': {
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -1894,12 +1898,15 @@ const Calculator: React.FC = React.memo(() => {
                     },
               }}
             >
+              {/* Lite Mode Switch */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
                   flexWrap: 'wrap',
+                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: { xs: 'space-between', sm: 'flex-start' },
                 }}
               >
                 <FormControlLabel
@@ -1938,11 +1945,13 @@ const Calculator: React.FC = React.memo(() => {
                   }
                 />
               </Box>
+              {/* Game Mode Selector */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'flex-end',
+                  justifyContent: { xs: 'center', sm: 'flex-end' },
+                  width: { xs: '100%', sm: 'auto' },
                 }}
               >
                 <ButtonGroup
@@ -1951,6 +1960,7 @@ const Calculator: React.FC = React.memo(() => {
                   }
                   variant="outlined"
                   sx={{
+                    width: { xs: '100%', sm: 'auto' },
                     '& .MuiButton-root': {
                       border: liteMode
                         ? theme.palette.mode === 'dark'
@@ -1963,9 +1973,10 @@ const Calculator: React.FC = React.memo(() => {
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       // Enhanced mobile touch targets
                       minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                      minWidth: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
+                      minWidth: { xs: 'auto', sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto' },
                       fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
                       px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
+                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
                         borderColor: 'rgb(128 211 255 / 80%)',
@@ -2521,18 +2532,20 @@ const Calculator: React.FC = React.memo(() => {
                 sx={{
                   mb: isMobile ? 3 : 4,
                   px: isMobile ? 2 : 4,
+                  width: '100%',
                 }}
               >
                 <Tabs
                   value={selectedTab}
                   onChange={(e, newValue) => setSelectedTab(newValue)}
                   variant={isMobile ? 'fullWidth' : 'standard'}
+                  centered={!isMobile}
                   sx={{
                     '& .MuiTab-root': {
                       fontSize: isMobile ? '0.9rem' : '1rem',
                       fontWeight: 600,
-                      minHeight: isMobile ? 44 : 48,
-                      padding: isMobile ? '8px 16px' : '12px 24px',
+                      minHeight: { xs: 48, sm: 48 },
+                      padding: { xs: '12px 16px', sm: '12px 24px' },
                       textTransform: 'none',
                       borderRadius: '8px !important',
                       color:
@@ -2568,11 +2581,149 @@ const Calculator: React.FC = React.memo(() => {
                   <Tab label="Penetration" {...a11yProps(0)} />
                   <Tab label="Critical" {...a11yProps(1)} />
                 </Tabs>
+
+                {/* Mobile Action Buttons */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'center',
+                    gap: 2,
+                    mt: 2,
+                    px: 1,
+                  }}
+                >
+                  <AnimatePresence mode="wait">
+                    {selectedTab === 0 && (
+                      <motion.div
+                        style={{ display: 'flex', gap: 8 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredPenData).find(key =>
+                                filteredPenData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredPenData[category].indexOf(item);
+                              updatePenItem(category, itemIndex, { enabled: true });
+                            });
+                          }}
+                          startIcon={<SelectAllIcon />}
+                          sx={{
+                            fontSize: '0.8rem',
+                            minWidth: 'auto',
+                            px: 1.5,
+                            py: 0.5,
+                            borderColor: 'rgba(56, 189, 248, 0.5)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.6)' : 'rgba(235, 244, 252, 0.8)',
+                          }}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredPenData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredPenData).find(key =>
+                                filteredPenData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredPenData[category].indexOf(item);
+                              updatePenItem(category, itemIndex, { enabled: false });
+                            });
+                          }}
+                          startIcon={<ClearIcon />}
+                          sx={{
+                            fontSize: '0.8rem',
+                            minWidth: 'auto',
+                            px: 1.5,
+                            py: 0.5,
+                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.3)' : 'rgba(254, 226, 226, 0.8)',
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </motion.div>
+                    )}
+                    {selectedTab === 1 && (
+                      <motion.div
+                        style={{ display: 'flex', gap: 8 }}
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredCritData).find(key =>
+                                filteredCritData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredCritData[category].indexOf(item);
+                              updateCritItem(category, itemIndex, { enabled: true });
+                            });
+                          }}
+                          startIcon={<SelectAllIcon />}
+                          sx={{
+                            fontSize: '0.8rem',
+                            minWidth: 'auto',
+                            px: 1.5,
+                            py: 0.5,
+                            borderColor: 'rgba(56, 189, 248, 0.5)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(21, 34, 50, 0.6)' : 'rgba(235, 244, 252, 0.8)',
+                          }}
+                        >
+                          All
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => {
+                            const selectableItems = Object.values(filteredCritData).flat().filter(item => !item.locked);
+                            selectableItems.forEach((item) => {
+                              const category = Object.keys(filteredCritData).find(key =>
+                                filteredCritData[key as keyof CalculatorData].includes(item),
+                              ) as keyof CalculatorData;
+                              const itemIndex = filteredCritData[category].indexOf(item);
+                              updateCritItem(category, itemIndex, { enabled: false });
+                            });
+                          }}
+                          startIcon={<ClearIcon />}
+                          sx={{
+                            fontSize: '0.8rem',
+                            minWidth: 'auto',
+                            px: 1.5,
+                            py: 0.5,
+                            borderColor: 'rgba(239, 68, 68, 0.5)',
+                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                            backgroundColor: theme.palette.mode === 'dark' ? 'rgba(153, 27, 27, 0.3)' : 'rgba(254, 226, 226, 0.8)',
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Box>
               </Box>
             )}
 
             {/* Tab Content */}
-            <Box sx={{ px: isMobile ? 1.5 : 3.75, pb: 3 }}>
+            <Box sx={{ px: { xs: 1.5, sm: 3.75 }, pb: 3 }}>
               <TabPanel value={selectedTab} index={0}>
                 {(() => {
                   return liteMode ? (
