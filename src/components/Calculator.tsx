@@ -598,15 +598,22 @@ interface TabPanelProps {
 function TabPanel(props: TabPanelProps): React.JSX.Element {
   const { children, value, index, ...other } = props;
   return (
-    <div
-      role="tabpanel"
-      hidden={value !== index}
-      id={`calculator-tabpanel-${index}`}
-      aria-labelledby={`calculator-tab-${index}`}
-      {...other}
-    >
-      {value === index && <Box>{children}</Box>}
-    </div>
+    <AnimatePresence mode="wait">
+      <motion.div
+        role="tabpanel"
+        hidden={value !== index}
+        id={`calculator-tabpanel-${index}`}
+        aria-labelledby={`calculator-tab-${index}`}
+        {...other}
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+        style={{ display: value === index ? 'block' : 'none' }}
+      >
+        {value === index && <Box>{children}</Box>}
+      </motion.div>
+    </AnimatePresence>
   );
 }
 
@@ -2268,52 +2275,103 @@ const Calculator: React.FC = React.memo(() => {
                   borderRadius: liteMode ? '8px 8px 0 0' : '8px 8px 0 0',
                 }}
               >
-                <Tabs
-                  value={selectedTab}
-                  onChange={(e, newValue) => setSelectedTab(newValue)}
+                <Box
                   sx={{
-                    '& .MuiTab-root': {
-                      fontSize: isTablet ? '0.9rem' : '1rem',
-                      fontWeight: 600,
-                      minHeight: isTablet ? 44 : 48,
-                      padding: isTablet ? '10px 16px' : '12px 24px',
-                      textTransform: 'none',
-                      borderRadius: '8px !important',
-                      color:
-                        theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
-                      border: '1px solid transparent',
-                      marginRight: 1,
-                      // Enhanced tablet and mobile touch targets
-                      minWidth: isTablet ? '100px' : 'auto',
-                      '&:hover': {
-                        color:
-                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(0, 0, 0, 0.04)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                      },
-                      '&.Mui-selected': {
-                        color:
-                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(128, 211, 255, 0.15)'
-                            : 'rgba(40, 145, 200, 0.08)',
-                        border: '1px solid rgba(40, 145, 200, 0.5)',
-                        borderRadius: '8px !important',
-                      },
-                    },
-                    '& .MuiTabs-indicator': {
-                      display: 'none',
-                    },
-                    minHeight: 48,
+                    display: 'flex',
+                    gap: 1,
+                    p: 0.5,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
                 >
-                  <Tab label="Penetration" {...a11yProps(0)} />
-                  <Tab label="Critical" {...a11yProps(1)} />
-                </Tabs>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 0 ? "contained" : "text"}
+                      onClick={() => setSelectedTab(0)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
+                        border: selectedTab === 0 ? 'none' : '1px solid transparent',
+                        '&:hover': {
+                          backgroundColor: selectedTab === 0
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
+                        },
+                        transition: 'all 0.2s ease',
+                        boxShadow: selectedTab === 0
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 0 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Penetration
+                      </motion.span>
+                    </Button>
+                  </motion.div>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 1 ? "contained" : "text"}
+                      onClick={() => setSelectedTab(1)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
+                        border: selectedTab === 1 ? 'none' : '1px solid transparent',
+                        '&:hover': {
+                          backgroundColor: selectedTab === 1
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
+                        },
+                        transition: 'all 0.2s ease',
+                        boxShadow: selectedTab === 1
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 1 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Critical
+                      </motion.span>
+                    </Button>
+                  </motion.div>
+                </Box>
 
                 {/* Action buttons for current tab */}
                 <Box
@@ -2681,52 +2739,103 @@ const Calculator: React.FC = React.memo(() => {
                   width: '100%',
                 }}
               >
-                <Tabs
-                  value={selectedTab}
-                  onChange={(e, newValue) => setSelectedTab(newValue)}
-                  variant={isMobile ? 'fullWidth' : 'standard'}
-                  centered={!isMobile}
+                <Box
                   sx={{
-                    '& .MuiTab-root': {
-                      fontSize: isMobile ? '0.9rem' : '1rem',
-                      fontWeight: 600,
-                      minHeight: { xs: 48, sm: 48 },
-                      padding: { xs: '12px 16px', sm: '12px 24px' },
-                      textTransform: 'none',
-                      borderRadius: '8px !important',
-                      color:
-                        theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
-                      border: '1px solid transparent',
-                      marginRight: isMobile ? 0 : 1,
-                      '&:hover': {
-                        color:
-                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.05)'
-                            : 'rgba(0, 0, 0, 0.04)',
-                        border: '1px solid rgba(99, 102, 241, 0.3)',
-                      },
-                      '&.Mui-selected': {
-                        color:
-                          theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
-                        backgroundColor:
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(128, 211, 255, 0.15)'
-                            : 'rgba(40, 145, 200, 0.08)',
-                        border: '1px solid rgba(40, 145, 200, 0.5)',
-                        borderRadius: '8px !important',
-                      },
-                    },
-                    '& .MuiTabs-indicator': {
-                      display: 'none',
-                    },
-                    minHeight: isMobile ? 44 : 48,
+                    display: 'flex',
+                    gap: 1,
+                    p: 0.5,
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+                    borderRadius: '10px',
+                    border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
                 >
-                  <Tab label="Penetration" {...a11yProps(0)} />
-                  <Tab label="Critical" {...a11yProps(1)} />
-                </Tabs>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 0 ? "contained" : "text"}
+                      onClick={() => setSelectedTab(0)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
+                        border: selectedTab === 0 ? 'none' : '1px solid transparent',
+                        '&:hover': {
+                          backgroundColor: selectedTab === 0
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
+                        },
+                        transition: 'all 0.2s ease',
+                        boxShadow: selectedTab === 0
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 0 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Penetration
+                      </motion.span>
+                    </Button>
+                  </motion.div>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 1 ? "contained" : "text"}
+                      onClick={() => setSelectedTab(1)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
+                        border: selectedTab === 1 ? 'none' : '1px solid transparent',
+                        '&:hover': {
+                          backgroundColor: selectedTab === 1
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
+                          border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
+                        },
+                        transition: 'all 0.2s ease',
+                        boxShadow: selectedTab === 1
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 1 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Critical
+                      </motion.span>
+                    </Button>
+                  </motion.div>
+                </Box>
               </Box>
             )}
 
