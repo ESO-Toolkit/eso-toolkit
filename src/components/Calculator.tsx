@@ -570,6 +570,8 @@ const useStickyFooter = () => {
   const [isSticky, setIsSticky] = useState(false);
   const [footerStyle, setFooterStyle] = useState({});
   const rafRef = useRef<number>();
+  const isTransitioningRef = useRef(false);
+  const lastPositionRef = useRef({ sticky: false, transform: '' });
 
   useEffect(() => {
     const handleScroll = () => {
@@ -589,37 +591,65 @@ const useStickyFooter = () => {
         const cardRect = calculatorCard.getBoundingClientRect();
         const windowHeight = window.innerHeight;
 
-        // Simple logic: footer should be sticky when it's about to go below viewport
-        // BUT only if the calculator card is still extending below viewport
+        // Calculate trigger point with hysteresis to prevent flickering
         const footerBottom = rect.bottom;
         const cardBottom = cardRect.bottom;
         const viewportBottom = windowHeight;
 
+        // Use different thresholds for entering and exiting sticky state
+        const stickyEnterThreshold = 20; // 20px before footer goes off screen
+        const stickyExitThreshold = 40; // 40px before footer comes back on screen
+
         // Footer should be sticky when:
-        // 1. Footer would be below viewport (footerBottom > viewportBottom)
+        // 1. Footer would be below viewport (footerBottom > viewportBottom - stickyEnterThreshold)
         // 2. Calculator card extends below viewport (cardBottom > viewportBottom)
         // 3. Calculator card top is still in view (cardRect.top < windowHeight)
-        const shouldBeSticky = footerBottom > viewportBottom - 20 &&
-                               cardBottom > viewportBottom &&
-                               cardRect.top < windowHeight;
+        const shouldEnterSticky = footerBottom > viewportBottom - stickyEnterThreshold &&
+                                  cardBottom > viewportBottom &&
+                                  cardRect.top < windowHeight;
 
-        if (shouldBeSticky !== isSticky) {
-          setIsSticky(shouldBeSticky);
+        const shouldExitSticky = footerBottom < viewportBottom - stickyExitThreshold ||
+                                 cardBottom <= viewportBottom ||
+                                 cardRect.top >= windowHeight;
+
+        const shouldBeSticky = shouldEnterSticky && !shouldExitSticky;
+
+        if (shouldBeSticky !== isSticky && !isTransitioningRef.current) {
+          isTransitioningRef.current = true;
 
           if (shouldBeSticky) {
-            // Position fixed at bottom of viewport, but constrained to calculator card bounds
+            // Calculate how much to translate up to keep footer in view
+            const translateY = Math.max(0, footerBottom - viewportBottom + stickyEnterThreshold);
+
             setFooterStyle({
-              position: 'fixed',
-              bottom: '20px',
-              left: `${Math.max(cardRect.left + 20, window.scrollX + 20)}px`, // Don't go beyond card left
-              width: `${Math.min(cardRect.width - 40, window.innerWidth - 40)}px`, // Don't go beyond card right
+              transform: `translateY(-${translateY}px)`,
+              position: 'relative',
               zIndex: 1000,
-              maxWidth: `${cardRect.width - 40}px`,
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: 'transform',
             });
+            lastPositionRef.current = { sticky: true, transform: `translateY(-${translateY}px)` };
           } else {
-            // Return to normal position
-            setFooterStyle({});
+            // Return to normal position smoothly
+            setFooterStyle({
+              transform: 'translateY(0)',
+              position: 'relative',
+              zIndex: 100,
+              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              willChange: 'transform',
+            });
+            lastPositionRef.current = { sticky: false, transform: '' };
           }
+
+          // Update state after transition
+          setTimeout(() => {
+            setIsSticky(shouldBeSticky);
+            if (!shouldBeSticky) {
+              // Clear transform after returning to normal position
+              setFooterStyle({});
+            }
+            isTransitioningRef.current = false;
+          }, 300);
         }
       });
     };
@@ -3094,13 +3124,15 @@ const renderSummaryFooter = ({
               sx={{
                 px: isMobile ? 1.5 : 3.75,
                 pb: 3,
-                position: 'relative', // JavaScript will handle positioning
+                position: 'relative', // Keep in document flow, use transform for movement
                 zIndex: 100,
                 backgroundColor: liteMode ? 'transparent' : theme.palette.background.paper,
                 borderRadius: liteMode ? '0' : '12px',
                 boxShadow: liteMode ? 'none' : '0 -4px 12px rgba(0, 0, 0, 0.1)',
                 marginTop: '20px',
-                // JavaScript-controlled positioning
+                // Only apply transform-based transitions to avoid layout shifts
+                transform: 'translateY(0)',
+                // JavaScript-controlled positioning (will override transform)
                 ...footerStyle,
                 // DEBUG: Visual boundary
                 border: isSticky ? '3px solid green' : '3px solid blue',
