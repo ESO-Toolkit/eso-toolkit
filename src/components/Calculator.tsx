@@ -592,7 +592,8 @@ const useStickyFooter = () => {
       viewportHeight - cardRect.top - footerRect.height,
     );
     const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
-    const clampedBottom = Math.min(Math.max(baseBottom, minBottom), maxBottom);
+    const desiredBottom = minBottom > 0 ? minBottom : baseBottom;
+    const clampedBottom = Math.min(desiredBottom, maxBottom);
 
     const nextStyle: React.CSSProperties = {
       position: 'fixed',
