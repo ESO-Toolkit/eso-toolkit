@@ -505,8 +505,6 @@ const CalculatorContainer = styled(Box, {
   display: 'block', // Changed from flex
   // flexDirection: 'column', // Removed
   // alignItems: 'center', // Removed
-  // DEBUG: Visual boundary
-  border: '2px solid red',
   // Remove stacking context creators
   overflow: 'visible',
   transform: 'none',
@@ -524,9 +522,6 @@ const CalculatorCard = styled(Paper, {
   position: 'relative',
   display: 'flex',
   flexDirection: 'column',
-  // minHeight: '100%', // Removed - interferes with sticky positioning
-  // DEBUG: Visual boundary
-  border: '2px solid blue',
   [theme.breakpoints.down('sm')]: {
     padding: liteMode ? 0 : 0,
   },
@@ -535,152 +530,185 @@ const CalculatorCard = styled(Paper, {
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
-  // // backdropFilter: // REMOVED - breaks sticky positioning liteMode ? 'blur(10px)' : 'blur(20px)', // REMOVED - breaks sticky positioning
-  // WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)', // REMOVED - breaks sticky positioning
   borderRadius: liteMode ? 22 : 22,
-  // DEBUG: Visual boundary - override all other borders
-  border: '2px solid blue !important',
-  // boxShadow: liteMode // REMOVED - breaks sticky positioning
-  //   ? theme.palette.mode === 'dark'
-  //     ? '0 4px 16px rgba(0, 0, 0, 0.3)'
-  //     : '0 4px 16px rgba(0, 0, 0, 0.08)'
-  //   : theme.palette.mode === 'dark'
-  //     ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-  //     : '0 8px 32px rgba(0, 0, 0, 0.1)',
-  display: 'flex',
-  flexDirection: 'column',
   minHeight: 'auto',
-  // transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', // REMOVED - breaks sticky positioning
-  position: 'relative',
-  // overflowX: 'hidden', // Removed - was breaking sticky positioning
-  // '&:hover': !liteMode // REMOVED - breaks sticky positioning
-  //   ? {
-  //       transform: 'translateY(-2px)', // REMOVED - creates stacking context
-  //       boxShadow: // REMOVED - breaks sticky positioning
-  //         theme.palette.mode === 'dark'
-  //           ? '0 12px 40px rgba(0, 0, 0, 0.5)'
-  //           : '0 12px 40px rgba(0, 0, 0, 0.15)',
-  //   }
-  // : {},
 }));
 
 // JavaScript-based sticky positioning hook
 const useStickyFooter = () => {
   const footerRef = useRef<HTMLDivElement>(null);
+  const placeholderRef = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
-  const [footerStyle, setFooterStyle] = useState({});
-  const rafRef = useRef<number>();
-  const isTransitioningRef = useRef(false);
-  const lastPositionRef = useRef({ sticky: false, transform: '' });
+  const [footerStyle, setFooterStyle] = useState<React.CSSProperties>({});
+  const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
 
-  useEffect(() => {
-    const handleScroll = () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
+  const rafRef = useRef<number | null>(null);
+  const tickerRef = useRef<number | null>(null);
+  const cardRectSignatureRef = useRef<string>('');
+  const placeholderWidthRef = useRef<number>(0);
+
+  const runMeasurement = useCallback(() => {
+    const footerEl = footerRef.current;
+    const placeholderEl = placeholderRef.current;
+
+    if (!footerEl) {
+      return;
+    }
+
+    const calculatorCard = footerEl.closest('[data-calculator-card]') as HTMLElement | null;
+    if (!calculatorCard) {
+      return;
+    }
+
+    const cardRect = calculatorCard.getBoundingClientRect();
+    const footerRect = footerEl.getBoundingClientRect();
+    const placeholderRect = placeholderEl?.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    const cardBottomThreshold = viewportHeight - 8;
+    const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
+
+    if (!shouldStick) {
+      if (isSticky) {
+        setIsSticky(false);
+        setFooterStyle({});
+        setPlaceholderHeight('auto');
       }
+      return;
+    }
 
-      rafRef.current = requestAnimationFrame(() => {
-        if (!footerRef.current) return;
+    const cardStyles = window.getComputedStyle(calculatorCard);
+    const paddingLeft = parseFloat(cardStyles.paddingLeft) || 0;
+    const paddingRight = parseFloat(cardStyles.paddingRight) || 0;
 
-        const footer = footerRef.current;
-        const rect = footer.getBoundingClientRect();
-        const calculatorCard = footer.closest('[data-calculator-card]');
+    const width = placeholderRect
+      ? placeholderRect.width
+      : Math.max(0, cardRect.width - paddingLeft - paddingRight);
+    const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
 
-        if (!calculatorCard) return;
+    const baseBottom = 16;
+    const maxBottom = Math.max(
+      baseBottom,
+      viewportHeight - cardRect.top - footerRect.height,
+    );
+    const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
+    const clampedBottom = Math.min(Math.max(baseBottom, minBottom), maxBottom);
 
-        const cardRect = calculatorCard.getBoundingClientRect();
-        const windowHeight = window.innerHeight;
-
-        // Calculate trigger point with hysteresis to prevent flickering
-        const footerBottom = rect.bottom;
-        const cardBottom = cardRect.bottom;
-        const viewportBottom = windowHeight;
-
-        // Use different thresholds for entering and exiting sticky state
-        const stickyEnterThreshold = 20; // 20px before footer goes off screen
-        const stickyExitThreshold = 40; // 40px before footer comes back on screen
-
-        // Footer should be sticky when:
-        // 1. Footer would be below viewport (footerBottom > viewportBottom - stickyEnterThreshold)
-        // 2. Calculator card extends below viewport (cardBottom > viewportBottom)
-        // 3. Calculator card top is still in view (cardRect.top < windowHeight)
-        const shouldEnterSticky = footerBottom > viewportBottom - stickyEnterThreshold &&
-                                  cardBottom > viewportBottom &&
-                                  cardRect.top < windowHeight;
-
-        const shouldExitSticky = footerBottom < viewportBottom - stickyExitThreshold ||
-                                 cardBottom <= viewportBottom ||
-                                 cardRect.top >= windowHeight;
-
-        const shouldBeSticky = shouldEnterSticky && !shouldExitSticky;
-
-        if (shouldBeSticky !== isSticky && !isTransitioningRef.current) {
-          isTransitioningRef.current = true;
-
-          if (shouldBeSticky) {
-            // Calculate how much to translate up to keep footer in view
-            const translateY = Math.max(0, footerBottom - viewportBottom + stickyEnterThreshold);
-
-            setFooterStyle({
-              transform: `translateY(-${translateY}px)`,
-              position: 'relative',
-              zIndex: 1000,
-              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              willChange: 'transform',
-            });
-            lastPositionRef.current = { sticky: true, transform: `translateY(-${translateY}px)` };
-          } else {
-            // Return to normal position smoothly
-            setFooterStyle({
-              transform: 'translateY(0)',
-              position: 'relative',
-              zIndex: 100,
-              transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              willChange: 'transform',
-            });
-            lastPositionRef.current = { sticky: false, transform: '' };
-          }
-
-          // Update state after transition
-          setTimeout(() => {
-            setIsSticky(shouldBeSticky);
-            if (!shouldBeSticky) {
-              // Clear transform after returning to normal position
-              setFooterStyle({});
-            }
-            isTransitioningRef.current = false;
-          }, 300);
-        }
-      });
+    const nextStyle: React.CSSProperties = {
+      position: 'fixed',
+      left: `${Math.round(left)}px`,
+      width: `${Math.round(width)}px`,
+      bottom: `${Math.round(clampedBottom)}px`,
+      zIndex: 11,
+      boxSizing: 'border-box',
     };
 
-    // Debounced resize handler
-    const handleResize = () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
+    const footerHeight = `${Math.round(footerRect.height)}px`;
+    if (placeholderHeight !== footerHeight) {
+      setPlaceholderHeight(footerHeight);
+    }
+
+    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}`;
+    const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
+    if (cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky) {
+      cardRectSignatureRef.current = newSignature;
+      placeholderWidthRef.current = width;
+      setFooterStyle(nextStyle);
+      if (!isSticky) {
+        setIsSticky(true);
       }
-      rafRef.current = requestAnimationFrame(handleScroll);
+    } else {
+      // small positional adjustments
+      setFooterStyle((prev) => ({ ...prev, ...nextStyle }));
+      if (!isSticky) {
+        setIsSticky(true);
+      }
+    }
+  }, [isSticky, placeholderHeight]);
+
+  const scheduleMeasurement = useCallback(() => {
+    if (rafRef.current !== null) {
+      return;
+    }
+    rafRef.current = window.requestAnimationFrame(() => {
+      rafRef.current = null;
+      runMeasurement();
+    });
+  }, [runMeasurement]);
+
+  useEffect(() => {
+    runMeasurement();
+
+    const handleScroll = () => {
+      runMeasurement();
+      scheduleMeasurement();
+    };
+    const handleResize = () => {
+      runMeasurement();
+      scheduleMeasurement();
     };
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     window.addEventListener('resize', handleResize);
 
-    // Initial check after a short delay to ensure layout is settled
-    const timeoutId = setTimeout(() => {
-      handleScroll();
-    }, 100);
-
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
-      if (rafRef.current) {
+      if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
       }
-      clearTimeout(timeoutId);
     };
-  }, [isSticky]);
+  }, [runMeasurement, scheduleMeasurement]);
 
-  return { footerRef, footerStyle, isSticky };
+  useEffect(() => {
+    if (!isSticky) {
+      if (tickerRef.current !== null) {
+        cancelAnimationFrame(tickerRef.current);
+        tickerRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      runMeasurement();
+      tickerRef.current = window.requestAnimationFrame(tick);
+    };
+
+    tickerRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      if (tickerRef.current !== null) {
+        cancelAnimationFrame(tickerRef.current);
+        tickerRef.current = null;
+      }
+    };
+  }, [isSticky, runMeasurement]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      runMeasurement();
+    });
+
+    if (footerRef.current) {
+      observer.observe(footerRef.current);
+    }
+
+    const calculatorCard = footerRef.current?.closest('[data-calculator-card]') as HTMLElement | null;
+    if (calculatorCard) {
+      observer.observe(calculatorCard);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [runMeasurement]);
+
+  return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
 };
 
 const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
@@ -811,7 +839,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
-const Calculator: React.FC = React.memo(() => {
+const CalculatorComponent: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -823,7 +851,7 @@ const Calculator: React.FC = React.memo(() => {
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
 
   // JavaScript-based sticky footer
-  const { footerRef, footerStyle, isSticky } = useStickyFooter();
+  const { footerRef, placeholderRef, placeholderHeight, footerStyle, isSticky } = useStickyFooter();
     
 
   // Calculate total values
@@ -1883,9 +1911,6 @@ const renderSummaryFooter = ({
           sx={{
             py: liteMode ? 1 : isMobile ? 1.5 : 2,
             px: liteMode ? 0.5 : isExtraSmall ? 0.5 : isMobile ? 1 : 2,
-            // overflowX: 'hidden', // Removed - was breaking sticky positioning
-            // DEBUG: Visual boundary
-            border: '2px solid orange',
             // Remove potential stacking context creators
             position: 'static',
             overflow: 'visible',
@@ -3119,63 +3144,47 @@ const renderSummaryFooter = ({
             </Box>
 
             {/* Footer positioned outside TabPanels but inside CalculatorCard */}
-            <Box
-              ref={footerRef}
-              sx={{
-                px: isMobile ? 1.5 : 3.75,
-                pb: 3,
-                position: 'relative', // Keep in document flow, use transform for movement
-                zIndex: 100,
-                backgroundColor: liteMode ? 'transparent' : theme.palette.background.paper,
-                borderRadius: liteMode ? '0' : '12px',
-                boxShadow: liteMode ? 'none' : '0 -4px 12px rgba(0, 0, 0, 0.1)',
-                marginTop: '20px',
-                // Only apply transform-based transitions to avoid layout shifts
-                transform: 'translateY(0)',
-                // JavaScript-controlled positioning (will override transform)
-                ...footerStyle,
-                // DEBUG: Visual boundary
-                border: isSticky ? '3px solid green' : '3px solid blue',
-                // Debug info
-                '&::before': {
-                  content: isSticky ? '"STICKY"' : '"NORMAL"',
-                  position: 'absolute',
-                  top: '-25px',
-                  left: '5px',
-                  background: isSticky ? 'green' : 'blue',
-                  color: 'white',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontSize: '10px',
-                  fontWeight: 'bold',
-                },
-              }}
-            >
-              {selectedTab === 0 &&
-                renderSummaryFooter({
-                  label: 'Total Penetration',
-                  value: penTotal.toLocaleString(),
-                  status: penStatus,
-                  rangeDescription:
-                    gameMode === 'pve'
-                      ? 'Target: 18,200–18,999'
-                      : gameMode === 'pvp'
-                        ? 'Target: 33,300–37,000'
-                        : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
-                })}
-              {selectedTab === 1 &&
-                renderSummaryFooter({
-                  label: 'Total Critical Damage',
-                  value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
-                  valueSuffix: '%',
-                  status: critStatus,
-                  rangeDescription:
-                    gameMode === 'pve'
-                      ? 'Target: 125%+'
-                      : gameMode === 'pvp'
-                        ? 'Target: 100%+'
-                        : 'PvE: 125%+\nPvP: 100%+',
-                })}
+            <Box ref={placeholderRef} sx={{ minHeight: placeholderHeight }}>
+              <Box
+                ref={footerRef}
+                sx={{
+                  px: isMobile ? 1.5 : 3.75,
+                  pb: 3,
+                  position: 'relative',
+                  zIndex: 5,
+                  backgroundColor: liteMode ? 'transparent' : theme.palette.background.paper,
+                  borderRadius: liteMode ? '0' : '12px',
+                  boxShadow: liteMode ? 'none' : '0 -4px 18px rgba(15, 23, 42, 0.16)',
+                  marginTop: '20px',
+                }}
+                style={footerStyle}
+              >
+                {selectedTab === 0 &&
+                  renderSummaryFooter({
+                    label: 'Total Penetration',
+                    value: penTotal.toLocaleString(),
+                    status: penStatus,
+                    rangeDescription:
+                      gameMode === 'pve'
+                        ? 'Target: 18,200–18,999'
+                        : gameMode === 'pvp'
+                          ? 'Target: 33,300–37,000'
+                          : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
+                  })}
+                {selectedTab === 1 &&
+                  renderSummaryFooter({
+                    label: 'Total Critical Damage',
+                    value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
+                    valueSuffix: '%',
+                    status: critStatus,
+                    rangeDescription:
+                      gameMode === 'pve'
+                        ? 'Target: 125%+'
+                        : gameMode === 'pvp'
+                          ? 'Target: 100%+'
+                          : 'PvE: 125%+\nPvP: 100%+',
+                  })}
+              </Box>
             </Box>
 
             {/* Total Section - moved inside tab content */}
@@ -3221,8 +3230,9 @@ const renderSummaryFooter = ({
 
           </>
   );
-});
+};
 
+const Calculator = React.memo(CalculatorComponent);
 Calculator.displayName = 'Calculator';
 
 export { Calculator };
