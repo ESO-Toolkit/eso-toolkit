@@ -25,6 +25,7 @@ export const selectWorkerTask = <T extends SharedComputationWorkerTaskType>(
 export const selectActorPositionsTask = selectWorkerTask('calculateActorPositions');
 export const selectBuffLookupTask = selectWorkerTask('calculateBuffLookup');
 export const selectCriticalDamageTask = selectWorkerTask('calculateCriticalDamageData');
+export const selectDamageOverTimeTask = selectWorkerTask('calculateDamageOverTimeData');
 export const selectPenetrationDataTask = selectWorkerTask('calculatePenetrationData');
 export const selectStatusEffectUptimesTask = selectWorkerTask('calculateStatusEffectUptimes');
 export const selectDamageReductionTask = selectWorkerTask('calculateDamageReductionData');
@@ -64,6 +65,7 @@ export const selectWorkerTaskLastUpdated = <T extends SharedComputationWorkerTas
 export const selectActorPositionsResult = selectWorkerTaskResult('calculateActorPositions');
 export const selectBuffLookupResult = selectWorkerTaskResult('calculateBuffLookup');
 export const selectCriticalDamageResult = selectWorkerTaskResult('calculateCriticalDamageData');
+export const selectDamageOverTimeResult = selectWorkerTaskResult('calculateDamageOverTimeData');
 export const selectPenetrationDataResult = selectWorkerTaskResult('calculatePenetrationData');
 export const selectStatusEffectUptimesResult = selectWorkerTaskResult(
   'calculateStatusEffectUptimes',

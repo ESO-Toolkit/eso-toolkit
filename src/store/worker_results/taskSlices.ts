@@ -21,6 +21,13 @@ export {
 } from './criticalDamageSlice';
 
 export {
+  damageOverTimeSlice,
+  damageOverTimeActions,
+  executeDamageOverTimeTask,
+  damageOverTimeReducer,
+} from './damageOverTimeSlice';
+
+export {
   penetrationDataSlice,
   penetrationDataActions,
   executePenetrationDataTask,

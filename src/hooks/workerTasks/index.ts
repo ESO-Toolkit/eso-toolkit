@@ -3,6 +3,7 @@ export { useBuffLookupTask } from './useBuffLookupTask';
 export { useDebuffLookupTask } from './useDebuffLookupTask';
 export { useHostileBuffLookupTask } from './useHostileBuffLookupTask';
 export { useCriticalDamageTask } from './useCriticalDamageTask';
+export { useDamageOverTimeTask } from './useDamageOverTimeTask';
 export { usePenetrationDataTask } from './usePenetrationDataTask';
 export { useStatusEffectUptimesTask } from './useStatusEffectUptimesTask';
 export { useDamageReductionTask } from './useDamageReductionTask';
