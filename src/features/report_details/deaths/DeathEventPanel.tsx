@@ -8,11 +8,18 @@ import {
   useReportMasterData,
   usePlayerData,
   useCastEvents,
+  useHealingEvents,
+  useResourceEvents,
 } from '../../../hooks';
 import { useDebuffLookupTask } from '../../../hooks/workerTasks/useDebuffLookupTask';
 import { useSelectedReportAndFight } from '../../../ReportFightContext';
 import { KnownAbilities } from '../../../types/abilities';
-import { DeathEvent } from '../../../types/combatlogEvents';
+import {
+  DeathEvent,
+  DamageEvent,
+  HealEvent,
+  ResourceChangeEvent,
+} from '../../../types/combatlogEvents';
 import { isBuffActiveOnTarget } from '../../../utils/BuffLookupUtils';
 import { calculateDeathDurations } from '../../../utils/deathDurationUtils';
 
@@ -30,6 +37,66 @@ interface AttackEvent {
   type?: string | null;
   amount?: number | null;
   wasBlocked?: boolean | null;
+  individualAttacks?: Array<{
+    abilityName: string;
+    amount: number;
+    timestamp: number;
+  }>;
+}
+
+// Simple health calculation function
+function calculateHealthBeforeDeath(
+  playerId: string,
+  deathTimestamp: number,
+  damageEvents: DamageEvent[],
+  healingEvents: HealEvent[],
+  resourceEvents: ResourceChangeEvent[],
+): { health: number | null; maxHealth: number | null } {
+  const timeWindow = 10000; // Look back 10 seconds
+  const minTimeBeforeDeath = 10; // Must be at least 10ms before death
+
+  // Combine all events that might have health data
+  const allHealthEvents = [
+    ...damageEvents.filter(
+      (e) =>
+        String(e.targetID ?? '') === playerId &&
+        e.timestamp >= deathTimestamp - timeWindow &&
+        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
+        e.targetResources?.hitPoints !== undefined,
+    ),
+    ...healingEvents.filter(
+      (e) =>
+        String(e.targetID ?? '') === playerId &&
+        e.timestamp >= deathTimestamp - timeWindow &&
+        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
+        e.targetResources?.hitPoints !== undefined,
+    ),
+    ...resourceEvents.filter(
+      (e) =>
+        String(e.targetID ?? '') === playerId &&
+        e.timestamp >= deathTimestamp - timeWindow &&
+        e.timestamp <= deathTimestamp - minTimeBeforeDeath &&
+        e.targetResources?.hitPoints !== undefined,
+    ),
+  ].sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0)); // Most recent first
+
+  // Find the most recent event with valid health data
+  const mostRecentHealthEvent = allHealthEvents.find(
+    (event) =>
+      event.targetResources?.hitPoints !== undefined &&
+      event.targetResources?.hitPoints > 0 &&
+      event.targetResources?.maxHitPoints !== undefined &&
+      event.targetResources?.maxHitPoints > 0,
+  );
+
+  if (mostRecentHealthEvent) {
+    return {
+      health: mostRecentHealthEvent.targetResources.hitPoints,
+      maxHealth: mostRecentHealthEvent.targetResources.maxHitPoints,
+    };
+  }
+
+  return { health: null, maxHealth: null };
 }
 
 interface DeathInfo {
@@ -39,6 +106,9 @@ interface DeathInfo {
   lastAttacks: AttackEvent[];
   stamina: number | null;
   maxStamina: number | null;
+  health: number | null;
+  maxHealth: number | null;
+  killingBlowDamage: number | null;
   wasBlocking: boolean | null;
   deathDurationMs: number | null;
   resurrectionTime: number | null;
@@ -53,6 +123,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
   const { deathEvents, isDeathEventsLoading } = useDeathEvents();
   const { damageEvents, isDamageEventsLoading } = useDamageEvents();
   const { castEvents, isCastEventsLoading } = useCastEvents();
+  const { healingEvents, isHealingEventsLoading } = useHealingEvents();
+  const { resourceEvents, isResourceEventsLoading } = useResourceEvents();
   const { debuffLookupData, isDebuffLookupLoading } = useDebuffLookupTask();
   const { reportMasterData, isMasterDataLoading } = useReportMasterData();
   const { playerData } = usePlayerData();
@@ -185,14 +257,95 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           }
         }
 
-        // Get last 3 attacks with damage > 0
-        const lastAttacks = relevantDamageEvents
-          .filter((a) => typeof a.amount === 'number' && a.amount > 0)
-          .slice(-3);
+        // Calculate killing blow damage from recent damage events FIRST
+        let killingBlowDamage: number | null = null;
+        let killingBlowEvent: AttackEvent | null = null;
+        const deathTimestamp = deathEvent.timestamp ?? 0;
+        const timeWindowMs = 1000; // Look back 1 second
+        const simultaneousWindowMs = 50; // Treat damage within 50ms as simultaneous
 
-        // OPTIMIZED: Build killing blow once with cached ability lookup
-        let killingBlow: AttackEvent | null = null;
-        if (typeof deathEvent.abilityGameID === 'number') {
+        const recentDamageToPlayer = sortedDamageEvents
+          .filter(
+            (dmgEvent) =>
+              String(dmgEvent.targetID ?? '') === playerId &&
+              dmgEvent.timestamp >= deathTimestamp - timeWindowMs &&
+              dmgEvent.timestamp <= deathTimestamp &&
+              typeof dmgEvent.amount === 'number' &&
+              dmgEvent.amount > 0,
+          )
+          .sort((a, b) => (b.timestamp ?? 0) - (a.timestamp ?? 0)); // Most recent first
+
+        if (recentDamageToPlayer.length > 0) {
+          const mostRecentDamage = recentDamageToPlayer[0];
+          const mostRecentTimestamp = mostRecentDamage.timestamp ?? 0;
+
+          // Find all damage events that happened within simultaneousWindowMs of the most recent one
+          const simultaneousDamage = recentDamageToPlayer.filter(
+            (dmgEvent) =>
+              Math.abs((dmgEvent.timestamp ?? 0) - mostRecentTimestamp) <= simultaneousWindowMs,
+          );
+
+          // Sum all simultaneous damage
+          killingBlowDamage = simultaneousDamage.reduce(
+            (total, dmgEvent) => total + (dmgEvent.amount ?? 0),
+            0,
+          );
+
+          // Multiple simultaneous damage events detected
+
+          // Use the most recent damage event for killing blow display, but show total damage
+          killingBlowEvent = {
+            abilityName:
+              simultaneousDamage.length > 1
+                ? `Multiple attacks (${simultaneousDamage.length})`
+                : typeof mostRecentDamage.abilityGameID === 'number'
+                  ? getAbilityName(mostRecentDamage.abilityGameID)
+                  : undefined,
+            abilityId: mostRecentDamage.abilityGameID,
+            sourceID:
+              typeof mostRecentDamage.sourceID === 'number' ? mostRecentDamage.sourceID : undefined,
+            timestamp: mostRecentDamage.timestamp,
+            type: mostRecentDamage.type,
+            amount: killingBlowDamage, // Use total damage, not just single event
+            wasBlocked:
+              typeof mostRecentDamage.blocked === 'number' ? mostRecentDamage.blocked === 1 : null,
+            // Add individual attacks for tooltip display
+            individualAttacks:
+              simultaneousDamage.length > 1
+                ? simultaneousDamage.map((dmg) => ({
+                    abilityName:
+                      typeof dmg.abilityGameID === 'number'
+                        ? getAbilityName(dmg.abilityGameID) || 'Unknown'
+                        : 'Unknown',
+                    amount: dmg.amount ?? 0,
+                    timestamp: dmg.timestamp ?? 0,
+                  }))
+                : undefined,
+          };
+        }
+
+        // Get last 3 attacks with damage > 0, EXCLUDING the killing blow to avoid duplication
+        const allValidAttacks = relevantDamageEvents.filter(
+          (a) => typeof a.amount === 'number' && a.amount > 0,
+        );
+
+        // If we have a killing blow event, exclude it from recent attacks
+        let lastAttacks: AttackEvent[];
+        if (killingBlowEvent) {
+          // Filter out the killing blow event (match by timestamp and amount)
+          const filteredAttacks = allValidAttacks.filter(
+            (attack) =>
+              attack.timestamp !== killingBlowEvent!.timestamp ||
+              attack.amount !== killingBlowEvent!.amount,
+          );
+          lastAttacks = filteredAttacks.slice(-3);
+        } else {
+          lastAttacks = allValidAttacks.slice(-3);
+        }
+
+        // OPTIMIZED: Build killing blow once with cached ability lookup (fallback if no recent damage)
+        let killingBlow: AttackEvent | null = killingBlowEvent;
+        if (!killingBlow && typeof deathEvent.abilityGameID === 'number') {
           killingBlow = {
             abilityName: getAbilityName(deathEvent.abilityGameID),
             abilityId: deathEvent.abilityGameID,
@@ -219,6 +372,15 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           );
         }
 
+        // Calculate health before death
+        const { health, maxHealth } = calculateHealthBeforeDeath(
+          playerId,
+          deathTimestamp,
+          sortedDamageEvents,
+          healingEvents,
+          resourceEvents,
+        );
+
         deaths.push({
           playerId,
           timestamp: deathEvent.timestamp ?? 0,
@@ -226,6 +388,9 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           lastAttacks,
           stamina: deathEvent.targetResources.stamina,
           maxStamina: deathEvent.targetResources.maxStamina,
+          health,
+          maxHealth,
+          killingBlowDamage,
           wasBlocking: false,
           deathDurationMs: deathDurationData?.deathDurationMs ?? null,
           resurrectionTime: deathDurationData?.resurrectionTime ?? null,
@@ -244,6 +409,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     deathEvents,
     damageEvents,
     castEvents,
+    healingEvents,
+    resourceEvents,
     debuffLookupData,
     reportMasterData.actorsById,
     reportMasterData.abilitiesById,
@@ -254,6 +421,8 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
     isDeathEventsLoading ||
     isDamageEventsLoading ||
     isCastEventsLoading ||
+    isHealingEventsLoading ||
+    isResourceEventsLoading ||
     isDebuffLookupLoading ||
     isMasterDataLoading;
 

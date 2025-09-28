@@ -8,6 +8,7 @@ import {
   Avatar,
   useTheme,
   Link as MuiLink,
+  Tooltip,
 } from '@mui/material';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -27,6 +28,11 @@ interface AttackEvent {
   type?: string | null;
   amount?: number | null;
   wasBlocked?: boolean | null;
+  individualAttacks?: Array<{
+    abilityName: string;
+    amount: number;
+    timestamp: number;
+  }>;
 }
 
 interface DeathInfo {
@@ -36,6 +42,9 @@ interface DeathInfo {
   lastAttacks: AttackEvent[];
   stamina: number | null;
   maxStamina: number | null;
+  health: number | null;
+  maxHealth: number | null;
+  killingBlowDamage: number | null;
   wasBlocking: boolean | null;
   deathDurationMs: number | null;
   resurrectionTime: number | null;
@@ -68,6 +77,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
   isLoading = false,
 }) => {
   const theme = useTheme();
+
   const roleColors = useRoleColors();
   // Create a map of player IDs to their data for quick lookup
   const playerMap = React.useMemo(() => {
@@ -233,6 +243,13 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     variant="rounded"
                     width="60%"
                     height={32}
+                    sx={{ borderRadius: '16px', mb: 1 }}
+                  />
+                  <Skeleton variant="text" width="45%" height={16} sx={{ mb: 0.5 }} />
+                  <Skeleton
+                    variant="rounded"
+                    width="70%"
+                    height={32}
                     sx={{ borderRadius: '16px' }}
                   />
                 </Box>
@@ -244,6 +261,17 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     variant="rounded"
                     width="90%"
                     height={48}
+                    sx={{ borderRadius: '16px' }}
+                  />
+                </Box>
+
+                {/* Killing blow damage skeleton */}
+                <Box sx={{ mb: 2 }}>
+                  <Skeleton variant="text" width="35%" height={16} sx={{ mb: 0.5 }} />
+                  <Skeleton
+                    variant="rounded"
+                    width="60%"
+                    height={32}
                     sx={{ borderRadius: '16px' }}
                   />
                 </Box>
@@ -698,6 +726,80 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                   </Box>
                 </Box>
 
+                {/* Health Before Fatal Attack - only show if we have actual data */}
+                {info.health !== null && info.maxHealth !== null && (
+                  <Box sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color:
+                          theme.palette.mode === 'dark' ? theme.palette.text.primary : '#1e293b',
+                        fontWeight: 200,
+                        display: 'block',
+                        mb: 0.5,
+                        fontSize: '0.85rem',
+                        textShadow:
+                          theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none',
+                      }}
+                    >
+                      ❤️ Health Before Fatal Attack
+                    </Typography>
+                    <Box
+                      sx={{
+                        display: 'inline-block',
+                        px: 2,
+                        py: 1,
+                        borderRadius: '16px',
+                        background:
+                          theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(244, 67, 54, 0.15) 0%, rgba(220, 38, 38, 0.08) 100%)'
+                            : 'linear-gradient(135deg, rgba(254, 226, 226, 0.8) 0%, rgba(252, 242, 242, 0.9) 100%)',
+                        border:
+                          theme.palette.mode === 'dark'
+                            ? '1px solid rgba(244, 67, 54, 0.3)'
+                            : '1px solid rgba(220, 38, 38, 0.2)',
+                        backdropFilter: 'blur(8px)',
+                        boxShadow:
+                          theme.palette.mode === 'dark'
+                            ? '0 2px 8px rgba(244, 67, 54, 0.15)'
+                            : '0 1px 4px rgba(220, 38, 38, 0.1)',
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: theme.palette.mode === 'dark' ? 'white' : 'black',
+                          fontSize: '0.8rem',
+                          fontWeight: 300,
+                          display: 'inline',
+                        }}
+                      >
+                        {info.health.toLocaleString()}/{info.maxHealth.toLocaleString()} (
+                        <span
+                          style={{
+                            fontWeight: 800,
+                            color:
+                              info.health === 0
+                                ? theme.palette.mode === 'dark'
+                                  ? '#f44336'
+                                  : '#d32f2f'
+                                : (info.health / info.maxHealth) * 100 < 25
+                                  ? theme.palette.mode === 'dark'
+                                    ? '#ff9800'
+                                    : '#f57c00'
+                                  : theme.palette.mode === 'dark'
+                                    ? '#4caf50'
+                                    : '#388e3c',
+                          }}
+                        >
+                          {Math.round((info.health / info.maxHealth) * 100)}%
+                        </span>
+                        )
+                      </Typography>
+                    </Box>
+                  </Box>
+                )}
+
                 {/* Killing blow */}
                 <Box sx={{ mb: 2 }}>
                   <Typography
@@ -748,14 +850,63 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       >
                         <span style={{ fontWeight: 500 }}>Killed</span>{' '}
                         <span style={{ fontWeight: 400 }}>by</span>{' '}
-                        <span
-                          style={{
-                            fontWeight: 300,
-                            color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
-                          }}
-                        >
-                          {info.killingBlow.abilityName || 'Unknown'}
-                        </span>
+                        {info.killingBlow.individualAttacks ? (
+                          <Tooltip
+                            title={
+                              <Box>
+                                <Typography variant="body2" sx={{ fontWeight: 'bold', mb: 1 }}>
+                                  Simultaneous Attacks:
+                                </Typography>
+                                {info.killingBlow.individualAttacks.map((attack, idx) => (
+                                  <Typography
+                                    key={idx}
+                                    variant="body2"
+                                    sx={{
+                                      fontSize: '0.75rem',
+                                      mb: 0.5,
+                                      '&:last-child': { mb: 0 },
+                                    }}
+                                  >
+                                    • {attack.abilityName}: {attack.amount.toLocaleString()} damage
+                                  </Typography>
+                                ))}
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontWeight: 'bold',
+                                    mt: 1,
+                                    pt: 1,
+                                    borderTop: '1px solid rgba(255,255,255,0.2)',
+                                  }}
+                                >
+                                  Total: {info.killingBlowDamage?.toLocaleString()} damage
+                                </Typography>
+                              </Box>
+                            }
+                            arrow
+                            placement="top"
+                          >
+                            <span
+                              style={{
+                                fontWeight: 300,
+                                color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
+                                cursor: 'help',
+                                textDecoration: 'underline dotted',
+                              }}
+                            >
+                              {info.killingBlow.abilityName || 'Unknown'}
+                            </span>
+                          </Tooltip>
+                        ) : (
+                          <span
+                            style={{
+                              fontWeight: 300,
+                              color: theme.palette.mode === 'dark' ? '#f674ab' : '#bf1a76',
+                            }}
+                          >
+                            {info.killingBlow.abilityName || 'Unknown'}
+                          </span>
+                        )}
                         {killingBlowSourceName && info.killingBlow.sourceID && (
                           <>
                             {' '}
@@ -817,6 +968,88 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                     </Typography>
                   )}
                 </Box>
+
+                {/* Killing Blow Damage */}
+                {info.killingBlowDamage !== null &&
+                  info.killingBlowDamage !== undefined &&
+                  info.killingBlowDamage > 0 && (
+                    <Box sx={{ mb: 2 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color:
+                            theme.palette.mode === 'dark' ? theme.palette.text.primary : '#1e293b',
+                          fontWeight: 200,
+                          display: 'block',
+                          mb: 0.5,
+                          fontSize: '0.85rem',
+                          textShadow:
+                            theme.palette.mode === 'dark' ? '0 1px 2px rgba(0,0,0,0.5)' : 'none',
+                        }}
+                      >
+                        💥 Fatal Damage
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'inline-block',
+                          px: 2,
+                          py: 1,
+                          borderRadius: '16px',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(255, 87, 34, 0.15) 0%, rgba(244, 67, 54, 0.08) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 241, 220, 0.8) 0%, rgba(254, 245, 238, 0.9) 100%)',
+                          border:
+                            theme.palette.mode === 'dark'
+                              ? '1px solid rgba(255, 87, 34, 0.3)'
+                              : '1px solid rgba(255, 87, 34, 0.2)',
+                          backdropFilter: 'blur(8px)',
+                          boxShadow:
+                            theme.palette.mode === 'dark'
+                              ? '0 2px 8px rgba(255, 87, 34, 0.15)'
+                              : '0 1px 4px rgba(255, 87, 34, 0.1)',
+                        }}
+                      >
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: theme.palette.mode === 'dark' ? 'white' : 'black',
+                            fontSize: '0.9rem',
+                            fontWeight: 700,
+                            display: 'inline',
+                            textShadow:
+                              theme.palette.mode === 'dark'
+                                ? '0 1px 2px rgba(0,0,0,0.8)'
+                                : '0 1px 0 rgba(255,255,255,0.7)',
+                          }}
+                        >
+                          {info.killingBlowDamage.toLocaleString()}
+                          <span
+                            style={{
+                              fontSize: '0.75rem',
+                              fontWeight: 400,
+                              opacity: 0.8,
+                              marginLeft: '4px',
+                            }}
+                          >
+                            damage
+                          </span>
+                          {info.maxHealth && info.killingBlowDamage >= info.maxHealth && (
+                            <span
+                              style={{
+                                fontSize: '0.7rem',
+                                fontWeight: 600,
+                                marginLeft: '8px',
+                                color: theme.palette.mode === 'dark' ? '#ff9800' : '#e65100',
+                              }}
+                            >
+                              (Execution)
+                            </span>
+                          )}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  )}
 
                 {/* Recent attacks */}
                 <Box>
