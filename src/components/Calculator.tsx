@@ -765,8 +765,8 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
         border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
         backgroundColor:
           theme.palette.mode === 'dark'
-            ? alpha(theme.palette.background.paper, 0.95)
-            : alpha(theme.palette.background.paper, 0.98),
+            ? alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.95)
+            : alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.98),
         // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
@@ -1712,17 +1712,10 @@ const renderSummaryFooter = ({
           boxShadow: 'none',
         }
       : {
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-          border: `1px solid ${
-            theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'
-          }`,
-          boxShadow:
-            theme.palette.mode === 'dark'
-              ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-              : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          // In full mode, no additional styling since it's handled by the parent container
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
         };
 
     return (
@@ -3153,9 +3146,9 @@ const renderSummaryFooter = ({
                   pb: 3,
                   position: 'relative',
                   zIndex: 5,
-                  backgroundColor: liteMode ? 'transparent' : theme.palette.background.paper,
+                  backgroundColor: liteMode ? 'transparent' : theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)",
                   borderRadius: liteMode ? '0' : '12px',
-                  boxShadow: liteMode ? 'none' : '0 -4px 18px rgba(15, 23, 42, 0.16)',
+                  boxShadow: liteMode ? 'none' : theme.palette.mode === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)' : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                   marginTop: '20px',
                 }}
                 style={footerStyle}
