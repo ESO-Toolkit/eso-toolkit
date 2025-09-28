@@ -2,6 +2,9 @@ import { Box, Typography, Avatar, LinearProgress } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
+import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
+
+import { DamageTimelineChart } from './DamageTimelineChart';
 
 interface DamageRow {
   id: string;
@@ -18,6 +21,10 @@ interface DamageRow {
 interface DamageDonePanelViewProps {
   damageRows: DamageRow[];
   selectedTargetNames?: string[] | null;
+  damageOverTimeData?: DamageOverTimeResult | null;
+  isDamageOverTimeLoading?: boolean;
+  selectedTargetIds?: Set<number>;
+  availableTargets?: Array<{ id: number; name: string }>;
 }
 
 type SortField = 'name' | 'total' | 'dps' | 'activeDps';
@@ -29,6 +36,10 @@ type SortDirection = 'asc' | 'desc';
 export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   damageRows,
   selectedTargetNames,
+  damageOverTimeData,
+  isDamageOverTimeLoading = false,
+  selectedTargetIds = new Set(),
+  availableTargets = [],
 }) => {
   const roleColors = useRoleColors();
   const [sortField, setSortField] = useState<SortField>('total');
@@ -908,6 +919,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
       ) : (
         <Typography>No damage events found.</Typography>
       )}
+
+      {/* Damage Over Time Chart */}
+      <Box sx={{ mt: 3 }}>
+        <DamageTimelineChart
+          damageOverTimeData={damageOverTimeData || null}
+          selectedTargetIds={selectedTargetIds}
+          availableTargets={availableTargets}
+          isLoading={isDamageOverTimeLoading}
+          height={400}
+        />
+      </Box>
     </Box>
   );
 };

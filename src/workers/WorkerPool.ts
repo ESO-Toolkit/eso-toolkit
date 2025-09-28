@@ -5,6 +5,7 @@ import { ILogger } from '../contexts/LoggerContext';
 import { ActorPositionsCalculationTask } from './calculations/CalculateActorPositions';
 import { BuffCalculationTask } from './calculations/CalculateBuffLookups';
 import { CriticalDamageCalculationTask } from './calculations/CalculateCriticalDamage';
+import { DamageOverTimeCalculationTask } from './calculations/CalculateDamageOverTime';
 import { DamageReductionCalculationTask } from './calculations/CalculateDamageReduction';
 import { ElementalWeaknessStacksCalculationTask } from './calculations/CalculateElementalWeaknessStacks';
 import { PenetrationCalculationTask } from './calculations/CalculatePenetration';
@@ -265,6 +266,12 @@ export class WorkerPool {
         case 'calculateCriticalDamageData':
           result = await workerInfo.worker.calculateCriticalDamageData(
             task.data as CriticalDamageCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculateDamageOverTimeData':
+          result = await workerInfo.worker.calculateDamageOverTimeData(
+            task.data as DamageOverTimeCalculationTask,
             onProgress,
           );
           break;

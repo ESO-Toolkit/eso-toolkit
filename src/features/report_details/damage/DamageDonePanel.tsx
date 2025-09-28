@@ -12,11 +12,13 @@ import {
   useSelectedTargetIds,
   useDeathEvents,
   useCastEvents,
+  useDamageOverTimeTask,
 } from '../../../hooks';
 import { selectActorsById } from '../../../store/master_data/masterDataSelectors';
 import { KnownAbilities } from '../../../types/abilities';
 import { calculateActivePercentages } from '../../../utils/activePercentageUtils';
 import { resolveActorName } from '../../../utils/resolveActorName';
+import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
 import { DamageDonePanelView } from './DamageDonePanelView';
 
@@ -34,6 +36,9 @@ export const DamageDonePanel: React.FC = () => {
   const selectedTargetIds = useSelectedTargetIds();
   const actorsById = useSelector(selectActorsById);
 
+  // Get damage over time data
+  const { damageOverTimeData, isDamageOverTimeLoading } = useDamageOverTimeTask();
+
   // Resolve selected target names for display
   const selectedTargetNames = useMemo(() => {
     if (selectedTargetIds.size === 0) return null;
@@ -45,6 +50,41 @@ export const DamageDonePanel: React.FC = () => {
 
     return names;
   }, [selectedTargetIds, actorsById]);
+
+  // Prepare available targets for the chart
+  const availableTargets = useMemo(() => {
+    if (!fight || !actorsById) return [];
+
+    const targets: Array<{ id: number; name: string }> = [];
+
+    // Add enemy players
+    if (fight.enemyPlayers) {
+      fight.enemyPlayers.forEach((playerId) => {
+        if (typeof playerId === 'number') {
+          const actor = actorsById[playerId];
+          targets.push({
+            id: playerId,
+            name: resolveActorName(actor, playerId),
+          });
+        }
+      });
+    }
+
+    // Add NPCs
+    if (fight.enemyNPCs) {
+      fight.enemyNPCs.forEach((npcId) => {
+        if (typeof npcId === 'number') {
+          const actor = actorsById[npcId];
+          targets.push({
+            id: npcId,
+            name: resolveActorName(actor, npcId),
+          });
+        }
+      });
+    }
+
+    return targets;
+  }, [fight, actorsById]);
 
   // Extract data from hooks with memoization
   const masterData = useMemo(
@@ -275,5 +315,14 @@ export const DamageDonePanel: React.FC = () => {
     );
   }
 
-  return <DamageDonePanelView damageRows={damageRows} selectedTargetNames={selectedTargetNames} />;
+  return (
+    <DamageDonePanelView
+      damageRows={damageRows}
+      selectedTargetNames={selectedTargetNames}
+      damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
+      isDamageOverTimeLoading={isDamageOverTimeLoading}
+      selectedTargetIds={selectedTargetIds}
+      availableTargets={availableTargets}
+    />
+  );
 };
