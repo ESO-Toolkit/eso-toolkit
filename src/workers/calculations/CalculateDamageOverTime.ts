@@ -177,6 +177,9 @@ export function calculateDamageOverTimeData(
 
     const playerEvents = playerDamageEvents.filter((event) => event.sourceID === playerId);
 
+    // Skip players with no damage events
+    if (playerEvents.length === 0) continue;
+
     // Create data points for each time bucket (all targets combined)
     const dataPoints: DamageOverTimeDataPoint[] = [];
     let totalDamage = 0;
