@@ -192,7 +192,9 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-const MobileSubmenuContainer = styled(Box)<{ open: boolean; itemCount?: number }>(
+const MobileSubmenuContainer = styled(Box, {
+  shouldForwardProp: (prop) => !['open', 'itemCount'].includes(prop as string),
+})<{ open: boolean; itemCount?: number }>(
   ({ theme, open, itemCount = 3 }) => ({
     width: '100%',
     overflow: 'hidden',
