@@ -33,6 +33,7 @@ interface AttackEvent {
     amount: number;
     timestamp: number;
   }>;
+  attackerWasTaunted?: boolean | null;
 }
 
 interface DeathInfo {
@@ -938,26 +939,28 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                       </Typography>
 
                       {/* Taunt indicator */}
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          display: 'block',
-                          mt: 0.5,
-                          fontSize: '0.7rem',
-                          fontWeight: 600,
-                          color: info.killerWasTaunted
-                            ? theme.palette.mode === 'dark'
-                              ? '#4ade80'
-                              : '#059669'
-                            : theme.palette.mode === 'dark'
-                              ? '#94a3b8'
-                              : '#64748b',
-                        }}
-                      >
-                        {info.killerWasTaunted
-                          ? '✅ Killer was taunted'
-                          : '❌ Killer was NOT taunted'}
-                      </Typography>
+                      {info.killingBlow.attackerWasTaunted !== null && (
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            display: 'block',
+                            mt: 0.5,
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                            color: info.killingBlow.attackerWasTaunted
+                              ? theme.palette.mode === 'dark'
+                                ? '#4ade80'
+                                : '#059669'
+                              : theme.palette.mode === 'dark'
+                                ? '#94a3b8'
+                                : '#64748b',
+                          }}
+                        >
+                          {info.killingBlow.attackerWasTaunted
+                            ? '🎯 Killer was taunted'
+                            : '🔴 Killer was NOT taunted'}
+                        </Typography>
+                      )}
                     </Box>
                   ) : (
                     <Typography
@@ -1118,6 +1121,18 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                             >
                               {attack.abilityName || 'Unknown'} by{' '}
                               <span style={{ color: sourceColor }}>{attackSourceName}</span>
+                              {attack.attackerWasTaunted && (
+                                <span
+                                  style={{
+                                    marginLeft: '4px',
+                                    fontSize: '0.6rem',
+                                    opacity: 0.9,
+                                  }}
+                                  title="Attacker was taunted"
+                                >
+                                  🎯
+                                </span>
+                              )}
                             </Typography>
                             <Box
                               sx={{
