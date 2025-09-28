@@ -728,7 +728,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               : null;
 
                             if (tooltipProps) {
-                              const { itemCount, ...filteredTooltipProps } = tooltipProps;
+                              const { itemCount: _itemCount, ...filteredTooltipProps } =
+                                tooltipProps;
                               return (
                                 <Tooltip
                                   key={chipData.key}
