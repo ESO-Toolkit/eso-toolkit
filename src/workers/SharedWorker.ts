@@ -7,6 +7,7 @@ import { expose } from 'comlink';
 import { calculateActorPositions } from './calculations/CalculateActorPositions';
 import { calculateBuffLookup } from './calculations/CalculateBuffLookups';
 import { calculateCriticalDamageData } from './calculations/CalculateCriticalDamage';
+import { calculateDamageOverTimeData } from './calculations/CalculateDamageOverTime';
 import { calculateDamageReductionData } from './calculations/CalculateDamageReduction';
 import { calculateElementalWeaknessStacks } from './calculations/CalculateElementalWeaknessStacks';
 import { calculatePenetrationData } from './calculations/CalculatePenetration';
@@ -19,6 +20,7 @@ const SHARED_WORKER = {
   calculateDebuffLookup: calculateBuffLookup,
   calculateHostileBuffLookup: calculateBuffLookup,
   calculateCriticalDamageData,
+  calculateDamageOverTimeData,
   calculateDamageReductionData,
   calculatePenetrationData,
   calculateStatusEffectUptimes,
