@@ -43,16 +43,18 @@ export interface GearSetTooltipProps {
  * Gear set tooltip card similar to SkillTooltip. Designed to sit inside popovers/menus
  * but also works standalone. Uses the app's dark theme and styling consistent with skill tooltips.
  */
-export const GearSetTooltip: React.FC<GearSetTooltipProps> = ({
-  headerBadge,
-  lineText,
-  iconUrl,
-  setName,
-  setBonuses,
-  description,
-  itemCount,
-  _gearPieces,
-}) => {
+export const GearSetTooltip: React.FC<GearSetTooltipProps> = (props) => {
+  const {
+    headerBadge,
+    lineText,
+    iconUrl,
+    setName,
+    setBonuses,
+    description,
+    itemCount,
+    _gearPieces,
+  } = props;
+
   const theme = useTheme();
 
   // Determine appropriate colors for bonuses based on active state

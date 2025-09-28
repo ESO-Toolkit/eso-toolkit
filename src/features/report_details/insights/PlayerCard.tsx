@@ -728,10 +728,11 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               : null;
 
                             if (tooltipProps) {
+                              const { itemCount, ...filteredTooltipProps } = tooltipProps;
                               return (
                                 <Tooltip
                                   key={chipData.key}
-                                  title={<GearSetTooltip {...tooltipProps} />}
+                                  title={<GearSetTooltip {...filteredTooltipProps} />}
                                   placement="top"
                                   enterDelay={300}
                                   enterTouchDelay={0}

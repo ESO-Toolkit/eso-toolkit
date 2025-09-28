@@ -76,9 +76,16 @@ const SkillTooltipLoadingFallback: React.FC = () => (
 
 // Wrapper component with suspense boundary
 export const LazySkillTooltip: React.FC<SkillTooltipProps> = (props) => {
+  // Filter out any unknown props that might cause DOM element warnings
+  const {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    itemCount,
+    ...filteredProps
+  } = props as SkillTooltipProps & { itemCount?: unknown };
+
   return (
     <Suspense fallback={<SkillTooltipLoadingFallback />}>
-      <SkillTooltip {...props} />
+      <SkillTooltip {...filteredProps} />
     </Suspense>
   );
 };
