@@ -331,13 +331,143 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ToolsSection = styled(Container)(({ theme }) => ({
-  padding: '0rem 0rem 0rem 0rem',
-  paddingTop: 0,
-  maxWidth: '1200px',
-  [theme.breakpoints.down('sm')]: {
-    padding: '0rem 1rem', // This adds 1rem padding on left and right for mobile
+const CommunitySection = styled(Box)(({ theme }) => ({
+  padding: '4rem 0',
+  background: theme.palette.mode === 'dark'
+    ? 'linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%)'
+    : 'linear-gradient(180deg, transparent 0%, rgba(241, 245, 249, 0.5) 50%, transparent 100%)',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent)',
   },
+  [theme.breakpoints.down('md')]: {
+    padding: '3rem 0',
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '2rem 0',
+  },
+}));
+
+const CommunityGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+  gap: '2rem',
+  maxWidth: '1200px',
+  margin: '0 auto',
+  padding: '0 2rem',
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    gap: '1.5rem',
+    padding: '0 1rem',
+  },
+}));
+
+const CommunityCard = styled(Box)(({ theme }) => ({
+  background: theme.palette.mode === 'dark'
+    ? 'rgba(15, 23, 42, 0.4)'
+    : 'rgba(255, 255, 255, 0.6)',
+  backdropFilter: 'blur(10px)',
+  border: theme.palette.mode === 'dark'
+    ? '1px solid rgba(56, 189, 248, 0.1)'
+    : '1px solid rgba(30, 41, 59, 0.1)',
+  borderRadius: '16px',
+  padding: '2rem',
+  textAlign: 'center',
+  transition: 'all 0.3s ease',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+  },
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    borderColor: 'rgba(56, 189, 248, 0.2)',
+    '&::before': {
+      opacity: 1,
+    },
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '1.5rem',
+  },
+}));
+
+const CommunityIcon = styled(Box)(({ theme }) => ({
+  width: '80px',
+  height: '80px',
+  margin: '0 auto 1.5rem',
+  background: theme.palette.mode === 'dark'
+    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1))'
+    : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(0, 225, 255, 0.05))',
+  border: theme.palette.mode === 'dark'
+    ? '1px solid rgba(56, 189, 248, 0.2)'
+    : '1px solid rgba(56, 189, 248, 0.15)',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '2.5rem',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'scale(1.1) rotate(5deg)',
+  },
+}));
+
+const CommunityStats = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '3rem',
+  margin: '3rem 0',
+  flexWrap: 'wrap',
+  [theme.breakpoints.down('md')]: {
+    gap: '2rem',
+    margin: '2rem 0',
+  },
+  [theme.breakpoints.down('sm')]: {
+    gap: '1.5rem',
+  },
+}));
+
+const StatItem = styled(Box)(({ theme }) => ({
+  textAlign: 'center',
+  flex: '1',
+  minWidth: '120px',
+}));
+
+const StatNumber = styled(Typography)(({ theme }) => ({
+  fontSize: '2.5rem',
+  fontWeight: 800,
+  background: theme.palette.mode === 'dark'
+    ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
+    : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  marginBottom: '0.5rem',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '2rem',
+  },
+}));
+
+const StatLabel = styled(Typography)(({ theme }) => ({
+  fontSize: '0.9rem',
+  color: theme.palette.text.secondary,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
 }));
 
 const SectionTitle = styled(Typography, {
@@ -361,6 +491,32 @@ const SectionTitle = styled(Typography, {
   },
 }));
 
+const CommunityTitle = styled(Typography)(({ theme }) => ({
+  textAlign: 'center',
+  fontSize: '2.5rem',
+  fontWeight: 700,
+  marginBottom: '1.5rem',
+  marginTop: '8rem',
+  color: theme.palette.text.primary,
+  lineHeight: 1.2,
+  [theme.breakpoints.down('md')]: {
+    fontSize: '2.2rem',
+    marginTop: '6rem',
+    marginBottom: '1.25rem',
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '1.8rem',
+    marginTop: '4rem',
+    marginBottom: '1rem',
+    lineHeight: 1.3,
+  },
+  [theme.breakpoints.down(480)]: {
+    fontSize: '1.6rem',
+    marginTop: '3rem',
+    marginBottom: '0.8rem',
+  },
+}));
+
 const SectionSubtitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
   color: theme.palette.text.secondary,
@@ -379,6 +535,15 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
     marginBottom: '2.5rem',
     maxWidth: '400px',
     paddingInline: '1rem',
+  },
+}));
+
+const ToolsSection = styled(Container)(({ theme }) => ({
+  padding: '0rem 0rem 0rem 0rem',
+  paddingTop: 0,
+  maxWidth: '1200px',
+  [theme.breakpoints.down('sm')]: {
+    padding: '0rem 1rem',
   },
 }));
 
@@ -901,14 +1066,70 @@ export const LandingPage: React.FC = () => {
         </ToolsGrid>
       </ToolsSection>
 
-      <ToolsSection id="about">
-        <SectionTitle variant="h2">Built By Players, For Players</SectionTitle>
-        <SectionSubtitle>
-          ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
-          Online experience. Our tools are constantly updated to match the latest game patches and
-          meta changes.
-        </SectionSubtitle>
-      </ToolsSection>
+      <CommunitySection id="about">
+        <Box sx={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+          <CommunityTitle variant="h2">Built By Players,<br />For Players</CommunityTitle>
+          <SectionSubtitle sx={{ maxWidth: '800px' }}>
+            ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
+            Online experience. Our tools are constantly updated to match the latest game patches and
+            meta changes.
+          </SectionSubtitle>
+
+          <CommunityStats>
+            <StatItem>
+              <StatNumber>🧮</StatNumber>
+              <StatLabel>Calculator</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>📝</StatNumber>
+              <StatLabel>Editor</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>📈</StatNumber>
+              <StatLabel>Analytics</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>🤖</StatNumber>
+              <StatLabel>RosterBot</StatLabel>
+            </StatItem>
+          </CommunityStats>
+
+          <CommunityGrid>
+            <CommunityCard>
+              <CommunityIcon>🎮</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Passionate Gamers
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                We're dedicated ESO players who understand the game's mechanics and community needs.
+                Our tools are built from real gameplay experience.
+              </Typography>
+            </CommunityCard>
+
+            <CommunityCard>
+              <CommunityIcon>🔄</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Always Updated
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                Stay current with the latest patches, balance changes, and meta shifts. Our tools
+                are updated within hours of new game releases.
+              </Typography>
+            </CommunityCard>
+
+            <CommunityCard>
+              <CommunityIcon>💬</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Community Driven
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                Your feedback shapes our development. Join our Discord community to suggest features,
+                report bugs, and connect with fellow players.
+              </Typography>
+            </CommunityCard>
+          </CommunityGrid>
+        </Box>
+      </CommunitySection>
 
       <Footer />
     </LandingContainer>
