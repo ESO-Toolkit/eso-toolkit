@@ -1,7 +1,6 @@
 {
   "name": "eso-log-aggregator",
   "version": "0.1.0",
-  "type": "module",
   "private": true,
   "sideEffects": [
     "*.css",
@@ -79,8 +78,8 @@
     "coverage:gist": "node scripts/upload-coverage-to-gist.cjs",
     "coverage:open": "start coverage/lcov-report/index.html",
     "dev": "node scripts/generate-version.cjs && vite",
-    "download-report-data": "npx tsx scripts/download-report-data.ts",
-    "fetch-abilities": "ts-node scripts/fetchAbilitiesToJson.ts",
+    "download-report-data": "ts-node --project tsconfig.node.json scripts/download-report-data.ts",
+    "fetch-abilities": "ts-node --project tsconfig.node.json scripts/fetchAbilitiesToJson.ts",
     "fix:cache-busting": "node scripts/fix-cache-busting.cjs",
     "format:check": "prettier --check ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",
     "format": "prettier --write ./src/**/*.{ts,tsx,js,jsx,json,css,md,graphql}",

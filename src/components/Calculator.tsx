@@ -34,7 +34,7 @@ import {
   AccordionDetails,
   Stack,
 } from '@mui/material';
-import { styled, useTheme, alpha } from '@mui/material/styles';
+import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
@@ -537,7 +537,7 @@ const CalculatorCard = styled(Paper, {
 // JavaScript-based sticky positioning hook
 const useStickyFooter = (
   liteMode: boolean,
-  theme: any,
+  theme: Theme,
   isMobile: boolean,
 ): {
   footerRef: React.RefObject<HTMLDivElement | null>;
@@ -650,7 +650,7 @@ const useStickyFooter = (
         setIsSticky(true);
       }
     }
-  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode]);
+  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode, isMobile]);
 
   const scheduleMeasurement = useCallback(() => {
     if (rafRef.current !== null) {

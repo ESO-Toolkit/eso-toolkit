@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useSelector } from 'react-redux';
 
+import type { ReportActorFragment } from '../graphql/generated';
 import { selectSelectedTargetIds } from '../store/ui/uiSelectors';
 
 import { useCurrentFight } from './useCurrentFight';
@@ -16,7 +17,6 @@ export function useSelectedTargetIds(): Set<number> {
   const { fight } = useCurrentFight();
   const { reportMasterData } = useReportMasterData();
 
-  // Memoize all targets first (cheaper operation)
   const allTargets = React.useMemo(() => {
     if (!fight?.enemyNPCs) {
       return [];
@@ -27,25 +27,50 @@ export function useSelectedTargetIds(): Set<number> {
       .map((npc) => npc.id);
   }, [fight?.enemyNPCs]);
 
-  // Compute boss targets (expensive operation, but properly cached)
+  // Filter enemies: for duplicate names, keep only Boss subtype; for unique names, keep all
   const bossTargets = React.useMemo(() => {
     if (!fight?.enemyNPCs || !reportMasterData?.actorsById) {
       return [];
     }
 
-    return fight.enemyNPCs
-      .filter((npc): npc is { id: number } => {
-        if (!npc?.id) {
-          return false;
-        }
+    const validEnemies = fight.enemyNPCs
+      .filter((npc): npc is { id: number } => npc?.id != null)
+      .map((npc) => ({
+        id: npc.id,
+        actor: reportMasterData.actorsById[npc.id],
+      }))
+      .filter((enemy) => enemy.actor && enemy.actor.name);
 
-        const actor = reportMasterData.actorsById[npc.id];
-        return actor && actor.subType === 'Boss';
-      })
-      .map((npc) => npc.id);
+    const enemyGroups = validEnemies.reduce(
+      (acc, enemy) => {
+        const name = enemy.actor.name;
+        if (name && !acc[name]) {
+          acc[name] = [];
+        }
+        if (name) {
+          acc[name].push(enemy);
+        }
+        return acc;
+      },
+      {} as Record<string, Array<{ id: number; actor: ReportActorFragment }>>,
+    );
+
+    const filteredEnemies = validEnemies.filter((enemy) => {
+      const name = enemy.actor.name;
+      if (!name) return false;
+
+      const sameNameEnemies = enemyGroups[name];
+
+      if (sameNameEnemies && sameNameEnemies.length === 1) {
+        return true; // Unique name
+      }
+
+      return enemy.actor.subType === 'Boss'; // Multiple names - only Boss subtype
+    });
+
+    return filteredEnemies.map((enemy) => enemy.id);
   }, [fight?.enemyNPCs, reportMasterData?.actorsById]);
 
-  // Cache selected targets set for reference stability
   const selectedTargetsSet = React.useMemo(() => {
     const filteredIds = selectedTargetIds.filter(
       (id) => id !== ALL_TARGETS_SENTINEL && id !== ALL_ENEMIES_SENTINEL,
@@ -53,7 +78,6 @@ export function useSelectedTargetIds(): Set<number> {
     return new Set(filteredIds);
   }, [selectedTargetIds]);
 
-  // Check sentinel states (cached)
   const hasAllTargetsSelected = React.useMemo(() => {
     return selectedTargetIds.includes(ALL_TARGETS_SENTINEL);
   }, [selectedTargetIds]);
@@ -66,29 +90,19 @@ export function useSelectedTargetIds(): Set<number> {
     return selectedTargetIds.length === 0;
   }, [selectedTargetIds]);
 
-  // Cache Set objects only when needed
   const allTargetsSet = React.useMemo(() => new Set(allTargets), [allTargets]);
   const bossTargetsSet = React.useMemo(() => new Set(bossTargets), [bossTargets]);
 
   return React.useMemo(() => {
-    // Handle "all enemies" selection
     if (hasAllEnemiesSelected) {
       return allTargetsSet;
     }
 
-    // Treat empty selection or "all bosses" as boss targets
     if (hasAllTargetsSelected || isEmptySelection) {
-      if (bossTargetsSet.size > 0) {
-        // If there are bosses, return cached boss targets set
-        return bossTargetsSet;
-      } else {
-        // If no bosses, return cached all targets set
-        return allTargetsSet;
-      }
-    } else {
-      // Return the cached selected targets set
-      return selectedTargetsSet;
+      return bossTargetsSet.size > 0 ? bossTargetsSet : allTargetsSet;
     }
+
+    return selectedTargetsSet;
   }, [
     hasAllTargetsSelected,
     hasAllEnemiesSelected,
