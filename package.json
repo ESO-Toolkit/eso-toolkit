@@ -149,7 +149,7 @@
     "@graphql-codegen/typescript-react-apollo": "^4.3.3",
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.1",
-    "@playwright/test": "^1.55.0",
+    "@playwright/test": "^1.55.1",
     "@storybook/addon-docs": "^9.1.8",
     "@storybook/addon-links": "^9.1.8",
     "@storybook/react-vite": "^9.1.8",
