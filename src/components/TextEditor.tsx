@@ -356,8 +356,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background: 'transparent !important',
-  backgroundColor: 'transparent !important',
+  background: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
+  backgroundColor: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -407,7 +407,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     zIndex: 2,
   },
 
-  '& *': {
+  '& span, & strong, & em, & i, & b': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
   },
@@ -438,7 +438,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
 
     // RESTORE ORIGINAL OVERLAY on mobile too
     '&::after': {
-      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     },
   },
 }));
