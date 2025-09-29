@@ -386,6 +386,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     opacity: 0.3,
     zIndex: -1,
     pointerEvents: 'none',
+    filter: 'blur(1px)',
+    WebkitFilter: 'blur(1px)',
   },
 
   // Semi-transparent overlay for text readability
