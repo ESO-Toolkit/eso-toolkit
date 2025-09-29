@@ -535,7 +535,7 @@ const CalculatorCard = styled(Paper, {
 }));
 
 // JavaScript-based sticky positioning hook
-const useStickyFooter = (): {
+const useStickyFooter = (liteMode: boolean, theme: any): {
   footerRef: React.RefObject<HTMLDivElement | null>;
   placeholderRef: React.RefObject<HTMLDivElement | null>;
   placeholderHeight: string;
@@ -605,6 +605,10 @@ const useStickyFooter = (): {
       bottom: `${Math.round(clampedBottom)}px`,
       zIndex: 11,
       boxSizing: 'border-box',
+      // Preserve background styling - prevent transparency in full mode
+      background: liteMode ? 'transparent' : theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)",
+      borderRadius: liteMode ? '0' : '12px',
+      boxShadow: liteMode ? 'none' : theme.palette.mode === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)' : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
     };
 
     const footerHeight = `${Math.round(footerRect.height)}px`;
@@ -628,7 +632,7 @@ const useStickyFooter = (): {
         setIsSticky(true);
       }
     }
-  }, [isSticky, placeholderHeight]);
+  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode]);
 
   const scheduleMeasurement = useCallback(() => {
     if (rafRef.current !== null) {
@@ -860,7 +864,7 @@ const CalculatorComponent: React.FC = () => {
     placeholderHeight,
     footerStyle,
     isSticky: _isSticky,
-  } = useStickyFooter();
+  } = useStickyFooter(liteMode, theme);
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
