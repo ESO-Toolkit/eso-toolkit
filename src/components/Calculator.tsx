@@ -536,8 +536,8 @@ const CalculatorCard = styled(Paper, {
 
 // JavaScript-based sticky positioning hook
 const useStickyFooter = (): {
-  footerRef: React.RefObject<HTMLDivElement>;
-  placeholderRef: React.RefObject<HTMLDivElement>;
+  footerRef: React.RefObject<HTMLDivElement | null>;
+  placeholderRef: React.RefObject<HTMLDivElement | null>;
   placeholderHeight: string;
   footerStyle: React.CSSProperties;
   isSticky: boolean;
