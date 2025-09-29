@@ -596,9 +596,12 @@ const useStickyFooter = (
     const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
 
     const baseBottom = 16;
-    const maxBottom = Math.max(baseBottom, viewportHeight - cardRect.top - footerRect.height);
+    // Add space for feedback button on mobile (16px for button + 8px spacing = 24px)
+    const mobileFeedbackOffset = window.innerWidth < 600 ? 24 : 0;
+    const adjustedBaseBottom = baseBottom + mobileFeedbackOffset;
+    const maxBottom = Math.max(adjustedBaseBottom, viewportHeight - cardRect.top - footerRect.height);
     const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
-    const desiredBottom = minBottom > 0 ? minBottom : baseBottom;
+    const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
     const clampedBottom = Math.min(desiredBottom, maxBottom);
 
     const nextStyle: React.CSSProperties = {
