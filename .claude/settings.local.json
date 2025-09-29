@@ -63,7 +63,10 @@
       "mcp__chrome-devtools__get_connection_status",
       "mcp__chrome-devtools__execute_javascript",
       "mcp__chrome-devtools__get_console_logs",
-      "Bash(git rm:*)"
+      "Bash(git rm:*)",
+      "mcp__chrome-devtools__start_chrome_and_connect",
+      "mcp__chrome-devtools__connect_to_browser",
+      "mcp__chrome-devtools__navigate_to_url"
     ],
     "deny": [],
     "ask": []
