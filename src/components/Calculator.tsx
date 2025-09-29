@@ -36,7 +36,7 @@ import {
 } from '@mui/material';
 import { styled, useTheme, alpha } from '@mui/material/styles';
 import { motion, AnimatePresence } from 'framer-motion';
-import React, { useState, useMemo, useCallback, useRef } from 'react';
+import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import {
   CalculatorItem,
@@ -497,15 +497,19 @@ type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
 const CalculatorContainer = styled(Box, {
   shouldForwardProp: (prop) => prop !== 'liteMode',
 })<{ liteMode?: boolean }>(({ theme, liteMode: _liteMode }) => ({
-  minHeight: '100vh',
+  // minHeight: '100vh', // Removed - interferes with sticky positioning
   background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
-  position: 'relative',
+  position: 'static', // Changed from relative
   width: '100%',
   maxWidth: '100vw',
-  display: 'flex',
-  flexDirection: 'column',
-  alignItems: 'center',
-  overflowX: 'hidden',
+  display: 'block', // Changed from flex
+  // flexDirection: 'column', // Removed
+  // alignItems: 'center', // Removed
+  // Remove stacking context creators
+  overflow: 'visible',
+  transform: 'none',
+  willChange: 'auto',
+  contain: 'none',
 }));
 
 const CalculatorCard = styled(Paper, {
@@ -515,6 +519,9 @@ const CalculatorCard = styled(Paper, {
   maxWidth: liteMode ? '100%' : '1200px',
   margin: '0 auto',
   padding: liteMode ? 0 : '24px',
+  position: 'relative',
+  display: 'flex',
+  flexDirection: 'column',
   [theme.breakpoints.down('sm')]: {
     padding: liteMode ? 0 : 0,
   },
@@ -523,69 +530,198 @@ const CalculatorCard = styled(Paper, {
     : theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)',
-  backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-  WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
   borderRadius: liteMode ? 22 : 22,
-  border: liteMode
-    ? theme.palette.mode === 'dark'
-      ? '1px solid rgba(128, 211, 255, 0.15)'
-      : '1px solid rgba(40, 145, 200, 0.2)'
-    : theme.palette.mode === 'dark'
-      ? '1px solid rgba(128, 211, 255, 0.2)'
-      : '1px solid rgba(203, 213, 225, 0.3)',
-  boxShadow: liteMode
-    ? theme.palette.mode === 'dark'
-      ? '0 4px 16px rgba(0, 0, 0, 0.3)'
-      : '0 4px 16px rgba(0, 0, 0, 0.08)'
-    : theme.palette.mode === 'dark'
-      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-      : '0 8px 32px rgba(0, 0, 0, 0.1)',
-  display: 'flex',
-  flexDirection: 'column',
   minHeight: 'auto',
-  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-  overflowX: 'hidden',
-  '&:hover': !liteMode
-    ? {
-        transform: 'translateY(-2px)',
-        boxShadow:
-          theme.palette.mode === 'dark'
-            ? '0 12px 40px rgba(0, 0, 0, 0.5)'
-            : '0 12px 40px rgba(0, 0, 0, 0.15)',
-      }
-    : {},
 }));
 
-// CSS handles sticky positioning - no custom hook needed
+// JavaScript-based sticky positioning hook
+const useStickyFooter = (): {
+  footerRef: React.RefObject<HTMLDivElement | null>;
+  placeholderRef: React.RefObject<HTMLDivElement | null>;
+  placeholderHeight: string;
+  footerStyle: React.CSSProperties;
+  isSticky: boolean;
+} => {
+  const footerRef = useRef<HTMLDivElement>(null);
+  const placeholderRef = useRef<HTMLDivElement>(null);
+  const [isSticky, setIsSticky] = useState(false);
+  const [footerStyle, setFooterStyle] = useState<React.CSSProperties>({});
+  const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
+
+  const rafRef = useRef<number | null>(null);
+  const tickerRef = useRef<number | null>(null);
+  const cardRectSignatureRef = useRef<string>('');
+  const placeholderWidthRef = useRef<number>(0);
+
+  const runMeasurement = useCallback(() => {
+    const footerEl = footerRef.current;
+    const placeholderEl = placeholderRef.current;
+
+    if (!footerEl) {
+      return;
+    }
+
+    const calculatorCard = footerEl.closest('[data-calculator-card]') as HTMLElement | null;
+    if (!calculatorCard) {
+      return;
+    }
+
+    const cardRect = calculatorCard.getBoundingClientRect();
+    const footerRect = footerEl.getBoundingClientRect();
+    const placeholderRect = placeholderEl?.getBoundingClientRect();
+    const viewportHeight = window.innerHeight;
+
+    const cardBottomThreshold = viewportHeight - 8;
+    const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
+
+    if (!shouldStick) {
+      if (isSticky) {
+        setIsSticky(false);
+        setFooterStyle({});
+        setPlaceholderHeight('auto');
+      }
+      return;
+    }
+
+    const cardStyles = window.getComputedStyle(calculatorCard);
+    const paddingLeft = parseFloat(cardStyles.paddingLeft) || 0;
+    const paddingRight = parseFloat(cardStyles.paddingRight) || 0;
+
+    const width = placeholderRect
+      ? placeholderRect.width
+      : Math.max(0, cardRect.width - paddingLeft - paddingRight);
+    const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
+
+    const baseBottom = 16;
+    const maxBottom = Math.max(baseBottom, viewportHeight - cardRect.top - footerRect.height);
+    const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
+    const desiredBottom = minBottom > 0 ? minBottom : baseBottom;
+    const clampedBottom = Math.min(desiredBottom, maxBottom);
+
+    const nextStyle: React.CSSProperties = {
+      position: 'fixed',
+      left: `${Math.round(left)}px`,
+      width: `${Math.round(width)}px`,
+      bottom: `${Math.round(clampedBottom)}px`,
+      zIndex: 11,
+      boxSizing: 'border-box',
+    };
+
+    const footerHeight = `${Math.round(footerRect.height)}px`;
+    if (placeholderHeight !== footerHeight) {
+      setPlaceholderHeight(footerHeight);
+    }
+
+    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}`;
+    const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
+    if (cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky) {
+      cardRectSignatureRef.current = newSignature;
+      placeholderWidthRef.current = width;
+      setFooterStyle(nextStyle);
+      if (!isSticky) {
+        setIsSticky(true);
+      }
+    } else {
+      // small positional adjustments
+      setFooterStyle((prev) => ({ ...prev, ...nextStyle }));
+      if (!isSticky) {
+        setIsSticky(true);
+      }
+    }
+  }, [isSticky, placeholderHeight]);
+
+  const scheduleMeasurement = useCallback(() => {
+    if (rafRef.current !== null) {
+      return;
+    }
+    rafRef.current = window.requestAnimationFrame(() => {
+      rafRef.current = null;
+      runMeasurement();
+    });
+  }, [runMeasurement]);
+
+  useEffect(() => {
+    runMeasurement();
+
+    const handleScroll = (): void => {
+      runMeasurement();
+      scheduleMeasurement();
+    };
+    const handleResize = (): void => {
+      runMeasurement();
+      scheduleMeasurement();
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', handleResize);
+      if (rafRef.current !== null) {
+        cancelAnimationFrame(rafRef.current);
+        rafRef.current = null;
+      }
+    };
+  }, [runMeasurement, scheduleMeasurement]);
+
+  useEffect(() => {
+    if (!isSticky) {
+      if (tickerRef.current !== null) {
+        cancelAnimationFrame(tickerRef.current);
+        tickerRef.current = null;
+      }
+      return;
+    }
+
+    const tick = (): void => {
+      runMeasurement();
+      tickerRef.current = window.requestAnimationFrame(tick);
+    };
+
+    tickerRef.current = window.requestAnimationFrame(tick);
+
+    return () => {
+      if (tickerRef.current !== null) {
+        cancelAnimationFrame(tickerRef.current);
+        tickerRef.current = null;
+      }
+    };
+  }, [isSticky, runMeasurement]);
+
+  useEffect(() => {
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const observer = new ResizeObserver(() => {
+      runMeasurement();
+    });
+
+    if (footerRef.current) {
+      observer.observe(footerRef.current);
+    }
+
+    const calculatorCard = footerRef.current?.closest(
+      '[data-calculator-card]',
+    ) as HTMLElement | null;
+    if (calculatorCard) {
+      observer.observe(calculatorCard);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, [runMeasurement]);
+
+  return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
+};
 
 const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
   ({ theme: _theme, isLiteMode: _isLiteMode }) => ({
     position: 'relative',
   }),
 );
-
-const StickyFooter = styled(Box)<{ isLiteMode: boolean }>(({ theme, isLiteMode }) => ({
-  position: 'sticky',
-  bottom: 0,
-  zIndex: 1000,
-  marginTop: 'auto',
-  background: isLiteMode ? theme.palette.background.paper : 'transparent', // Make transparent when not in lite mode so inner container shows through
-  backdropFilter: isLiteMode ? 'none' : 'blur(20px)',
-  WebkitBackdropFilter: isLiteMode ? 'none' : 'blur(20px)',
-  borderTop: isLiteMode
-    ? 'none'
-    : theme.palette.mode === 'dark'
-      ? '1px solid rgba(128, 211, 255, 0.3)'
-      : '1px solid rgba(203, 213, 225, 0.3)',
-  borderRadius: isLiteMode ? 0 : '6px 6px 6px 6px',
-  padding: isLiteMode ? theme.spacing(3.75) : theme.spacing(3),
-  boxShadow: isLiteMode
-    ? 'none'
-    : theme.palette.mode === 'dark'
-      ? '0 -8px 32px rgba(0, 0, 0, 0.4)'
-      : '0 -8px 32px rgba(0, 0, 0, 0.1)',
-  paddingBottom: `calc(${theme.spacing(isLiteMode ? 3.75 : 3)} + env(safe-area-inset-bottom))`,
-}));
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -632,10 +768,8 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
         minWidth: 240,
         border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
         backgroundColor:
-          theme.palette.mode === 'dark'
-            ? alpha(theme.palette.background.paper, 0.95)
-            : alpha(theme.palette.background.paper, 0.98),
-        backdropFilter: 'blur(10px)',
+          theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+        // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
     >
@@ -708,7 +842,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
-const Calculator: React.FC = React.memo(() => {
+const CalculatorComponent: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -718,7 +852,15 @@ const Calculator: React.FC = React.memo(() => {
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
-  const sentinelRef = useRef<HTMLDivElement>(null);
+
+  // JavaScript-based sticky footer
+  const {
+    footerRef,
+    placeholderRef,
+    placeholderHeight,
+    footerStyle,
+    isSticky: _isSticky,
+  } = useStickyFooter();
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
@@ -979,7 +1121,7 @@ const Calculator: React.FC = React.memo(() => {
         opacity: item.locked ? 0.7 : 1,
         transition: liteMode ? 'none' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
         position: 'relative',
-        backdropFilter: !liteMode ? 'blur(8px)' : 'none',
+        // backdropFilter: // REMOVED - breaks sticky positioning !liteMode ? 'blur(8px)' : 'none',
         '&:hover': !item.locked
           ? {
               transform: liteMode ? 'none' : 'translateY(-1px)',
@@ -1486,7 +1628,7 @@ const Calculator: React.FC = React.memo(() => {
           </Typography>
         </AccordionSummary>
         <AccordionDetails sx={{ pb: 2.5, pt: 1, px: liteMode ? 2 : isMobile ? 1 : 2 }}>
-          <List sx={{ p: 0, overflowX: 'hidden' }}>
+          <List sx={{ p: 0 }}>
             {items.map((item, index) => renderItem(item, index, category, updateFunction))}
           </List>
         </AccordionDetails>
@@ -1576,45 +1718,22 @@ const Calculator: React.FC = React.memo(() => {
           boxShadow: 'none',
         }
       : {
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-          border: `1px solid ${
-            theme.palette.mode === 'dark' ? 'rgba(71, 85, 105, 0.3)' : 'rgba(203, 213, 225, 0.5)'
-          }`,
-          boxShadow:
-            theme.palette.mode === 'dark'
-              ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-              : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+          // In full mode, no additional styling since it's handled by the parent container
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
         };
 
     return (
-      <StickyFooter
-        isLiteMode={liteMode}
+      <Box
         sx={{
-          position: 'relative',
           borderRadius: '12px !important',
-          p: 0,
           background: surfaceStyles.background,
           border: surfaceStyles.border,
           boxShadow: surfaceStyles.boxShadow,
-          backdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-          WebkitBackdropFilter: liteMode ? 'blur(10px)' : 'blur(20px)',
-          transition: 'all 0.3s ease',
-          ...(!liteMode && {
-            '&::before': {
-              content: '""',
-              position: 'absolute',
-              top: 0,
-              left: 16,
-              right: 16,
-              height: 3,
-              background:
-                'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)',
-              borderRadius: '2px 2px 0 0',
-            },
-          }),
+          margin: '0 auto',
+          maxWidth: 'lg',
+          position: 'relative', // Ensure no positioning conflicts
         }}
       >
         <Box
@@ -1749,7 +1868,7 @@ const Calculator: React.FC = React.memo(() => {
             </Typography>
           </Stack>
         </Box>
-      </StickyFooter>
+      </Box>
     );
   };
 
@@ -1792,7 +1911,12 @@ const Calculator: React.FC = React.memo(() => {
           sx={{
             py: liteMode ? 1 : isMobile ? 1.5 : 2,
             px: liteMode ? 0.5 : isExtraSmall ? 0.5 : isMobile ? 1 : 2,
-            overflowX: 'hidden',
+            // Remove potential stacking context creators
+            position: 'static',
+            overflow: 'visible',
+            transform: 'none',
+            willChange: 'auto',
+            contain: 'none',
             // Enhanced mobile padding and spacing
             '& .MuiTabs-root': {
               minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
@@ -1834,7 +1958,7 @@ const Calculator: React.FC = React.memo(() => {
           }}
         >
           {/* Main Calculator */}
-          <CalculatorCard liteMode={liteMode}>
+          <CalculatorCard liteMode={liteMode} data-calculator-card="true">
             {/* Controls */}
             <Box
               sx={{
@@ -1845,6 +1969,7 @@ const Calculator: React.FC = React.memo(() => {
                 flexWrap: 'wrap',
                 gap: { xs: 2, sm: liteMode ? 1 : isMobile ? 2 : 3 },
                 p: liteMode ? 2 : isExtraSmall ? 1.5 : isMobile ? 2 : 4,
+                gridArea: 'content',
                 borderRadius: '10px',
                 borderColor: liteMode
                   ? 'transparent'
@@ -2145,7 +2270,7 @@ const Calculator: React.FC = React.memo(() => {
                         : theme.palette.mode === 'dark'
                           ? '1px solid rgb(128 211 255 / 30%)'
                           : '1px solid rgb(40 145 200 / 25%)',
-                      backdropFilter: 'blur(10px)',
+                      // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       // Enhanced mobile touch targets
                       minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
@@ -2469,7 +2594,7 @@ const Calculator: React.FC = React.memo(() => {
                                 borderRadius: '10px',
                                 overflow: 'hidden',
                                 position: 'relative',
-                                transform: 'translateZ(0)',
+                                // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
                                 backgroundColor:
                                   muiTheme.palette.mode === 'dark'
                                     ? 'rgba(21, 34, 50, 0.55)'
@@ -2635,7 +2760,7 @@ const Calculator: React.FC = React.memo(() => {
                                 borderRadius: '10px',
                                 overflow: 'hidden',
                                 position: 'relative',
-                                transform: 'translateZ(0)',
+                                // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
                                 backgroundColor:
                                   muiTheme.palette.mode === 'dark'
                                     ? 'rgba(21, 34, 50, 0.55)'
@@ -2933,7 +3058,7 @@ const Calculator: React.FC = React.memo(() => {
                 {(() => {
                   return liteMode ? (
                     // Lite mode: render all penetration items in a single flattened list
-                    <List sx={{ p: 0, overflowX: 'hidden' }}>
+                    <List sx={{ p: 0 }}>
                       {Object.values(filteredPenData).flatMap((items, categoryIndex) =>
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
@@ -2970,31 +3095,14 @@ const Calculator: React.FC = React.memo(() => {
                   );
                 })()}
 
-                {/* Sentinel element for intersection observer */}
-                <div
-                  ref={selectedTab === 0 ? sentinelRef : undefined}
-                  style={{ height: '1px', marginTop: '16px' }}
-                />
-
-                {selectedTab === 0 &&
-                  renderSummaryFooter({
-                    label: 'Total Penetration',
-                    value: penTotal.toLocaleString(),
-                    status: penStatus,
-                    rangeDescription:
-                      gameMode === 'pve'
-                        ? 'Target: 18,200–18,999'
-                        : gameMode === 'pvp'
-                          ? 'Target: 33,300–37,000'
-                          : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
-                  })}
+                {/* Footer removed from inside TabPanel - moved outside */}
               </TabPanel>
 
               <TabPanel value={selectedTab} index={1}>
                 {(() => {
                   return liteMode ? (
                     // Lite mode: render all critical items in a single flattened list
-                    <List sx={{ p: 0, overflowX: 'hidden' }}>
+                    <List sx={{ p: 0 }}>
                       {Object.values(filteredCritData).flatMap((items, categoryIndex) =>
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
@@ -3031,12 +3139,46 @@ const Calculator: React.FC = React.memo(() => {
                   );
                 })()}
 
-                {/* Sentinel element for intersection observer */}
-                <div
-                  ref={selectedTab === 1 ? sentinelRef : undefined}
-                  style={{ height: '1px', marginTop: '16px' }}
-                />
+                {/* Footer removed from inside TabPanel - moved outside */}
+              </TabPanel>
+            </Box>
 
+            {/* Footer positioned outside TabPanels but inside CalculatorCard */}
+            <Box ref={placeholderRef} sx={{ minHeight: placeholderHeight }}>
+              <Box
+                ref={footerRef}
+                sx={{
+                  px: isMobile ? 1.5 : 3.75,
+                  pb: 3,
+                  position: 'relative',
+                  zIndex: 5,
+                  backgroundColor: liteMode
+                    ? 'transparent'
+                    : theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                  borderRadius: liteMode ? '0' : '12px',
+                  boxShadow: liteMode
+                    ? 'none'
+                    : theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  marginTop: '20px',
+                }}
+                style={footerStyle}
+              >
+                {selectedTab === 0 &&
+                  renderSummaryFooter({
+                    label: 'Total Penetration',
+                    value: penTotal.toLocaleString(),
+                    status: penStatus,
+                    rangeDescription:
+                      gameMode === 'pve'
+                        ? 'Target: 18,200–18,999'
+                        : gameMode === 'pvp'
+                          ? 'Target: 33,300–37,000'
+                          : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
+                  })}
                 {selectedTab === 1 &&
                   renderSummaryFooter({
                     label: 'Total Critical Damage',
@@ -3050,7 +3192,7 @@ const Calculator: React.FC = React.memo(() => {
                           ? 'Target: 100%+'
                           : 'PvE: 125%+\nPvP: 100%+',
                   })}
-              </TabPanel>
+              </Box>
             </Box>
 
             {/* Total Section - moved inside tab content */}
@@ -3095,8 +3237,9 @@ const Calculator: React.FC = React.memo(() => {
       </CalculatorContainer>
     </>
   );
-});
+};
 
+const Calculator = React.memo(CalculatorComponent);
 Calculator.displayName = 'Calculator';
 
 export { Calculator };

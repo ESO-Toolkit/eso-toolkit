@@ -2,6 +2,7 @@ import React from 'react';
 
 import { buildTooltipPropsFromAbilityId } from '../../utils/skillTooltipMapper';
 import { LazySkillTooltip as SkillTooltip } from '../LazySkillTooltip';
+import type { SkillTooltipProps } from '../SkillTooltip';
 
 export const InspiredScholarshipTooltip: React.FC = () => {
   // Use the new ID-based system
@@ -20,5 +21,12 @@ export const InspiredScholarshipTooltip: React.FC = () => {
     );
   }
 
-  return <SkillTooltip {...props} />;
+  // Filter out any unknown props that might cause DOM element warnings
+  const {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    itemCount,
+    ...filteredProps
+  } = props as SkillTooltipProps & { itemCount?: unknown };
+
+  return <SkillTooltip {...filteredProps} />;
 };

@@ -192,28 +192,27 @@ const CloseButton = styled(IconButton)(({ theme }) => ({
   },
 }));
 
-const MobileSubmenuContainer = styled(Box)<{ open: boolean; itemCount?: number }>(
-  ({ theme, open, itemCount = 3 }) => ({
-    width: '100%',
-    overflow: 'hidden',
-    // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding
-    height: open ? `${itemCount * 56 + 4}px` : 0,
-    transition:
-      'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
-    marginBottom: open ? theme.spacing(1) : 0,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    paddingTop: open ? theme.spacing(0.5) : 0,
-    background: open
-      ? theme.palette.mode === 'dark'
-        ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.6) 100%)'
-        : 'linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.8) 100%)'
-      : 'transparent',
-    borderRadius: open ? '0 0 16px 16px' : 0,
-    backdropFilter: open ? 'blur(10px)' : 'none',
-  }),
-);
+const MobileSubmenuContainer = styled(Box, {
+  shouldForwardProp: (prop) => !['open', 'itemCount'].includes(prop as string),
+})<{ open: boolean; itemCount?: number }>(({ theme, open, itemCount = 3 }) => ({
+  width: '100%',
+  overflow: 'hidden',
+  // Calculate height dynamically based on number of items: items × (52px height + 4px margin) + top padding
+  height: open ? `${itemCount * 56 + 4}px` : 0,
+  transition: 'height 0.4s cubic-bezier(0.4, 0, 0.2, 1), margin 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+  marginBottom: open ? theme.spacing(1) : 0,
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  paddingTop: open ? theme.spacing(0.5) : 0,
+  background: open
+    ? theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.4) 0%, rgba(3, 7, 18, 0.6) 100%)'
+      : 'linear-gradient(180deg, rgba(248, 250, 252, 0.6) 0%, rgba(241, 245, 249, 0.8) 100%)'
+    : 'transparent',
+  borderRadius: open ? '0 0 16px 16px' : 0,
+  backdropFilter: open ? 'blur(10px)' : 'none',
+}));
 
 const BaseMobileSubmenuItem = styled(Button, {
   shouldForwardProp: (prop) => !['open', 'index', 'colorVariant'].includes(prop as string),
