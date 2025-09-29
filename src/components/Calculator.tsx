@@ -535,7 +535,13 @@ const CalculatorCard = styled(Paper, {
 }));
 
 // JavaScript-based sticky positioning hook
-const useStickyFooter = () => {
+const useStickyFooter = (): {
+  footerRef: React.RefObject<HTMLDivElement>;
+  placeholderRef: React.RefObject<HTMLDivElement>;
+  placeholderHeight: string;
+  footerStyle: React.CSSProperties;
+  isSticky: boolean;
+} => {
   const footerRef = useRef<HTMLDivElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
@@ -587,10 +593,7 @@ const useStickyFooter = () => {
     const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
 
     const baseBottom = 16;
-    const maxBottom = Math.max(
-      baseBottom,
-      viewportHeight - cardRect.top - footerRect.height,
-    );
+    const maxBottom = Math.max(baseBottom, viewportHeight - cardRect.top - footerRect.height);
     const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
     const desiredBottom = minBottom > 0 ? minBottom : baseBottom;
     const clampedBottom = Math.min(desiredBottom, maxBottom);
@@ -640,11 +643,11 @@ const useStickyFooter = () => {
   useEffect(() => {
     runMeasurement();
 
-    const handleScroll = () => {
+    const handleScroll = (): void => {
       runMeasurement();
       scheduleMeasurement();
     };
-    const handleResize = () => {
+    const handleResize = (): void => {
       runMeasurement();
       scheduleMeasurement();
     };
@@ -671,7 +674,7 @@ const useStickyFooter = () => {
       return;
     }
 
-    const tick = () => {
+    const tick = (): void => {
       runMeasurement();
       tickerRef.current = window.requestAnimationFrame(tick);
     };
@@ -699,7 +702,9 @@ const useStickyFooter = () => {
       observer.observe(footerRef.current);
     }
 
-    const calculatorCard = footerRef.current?.closest('[data-calculator-card]') as HTMLElement | null;
+    const calculatorCard = footerRef.current?.closest(
+      '[data-calculator-card]',
+    ) as HTMLElement | null;
     if (calculatorCard) {
       observer.observe(calculatorCard);
     }
@@ -717,7 +722,6 @@ const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
     position: 'relative',
   }),
 );
-
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -764,9 +768,7 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
         minWidth: 240,
         border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
         backgroundColor:
-          theme.palette.mode === 'dark'
-            ? alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.95)
-            : alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.98),
+          theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
         // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
@@ -852,8 +854,13 @@ const CalculatorComponent: React.FC = () => {
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
 
   // JavaScript-based sticky footer
-  const { footerRef, placeholderRef, placeholderHeight, footerStyle, isSticky } = useStickyFooter();
-    
+  const {
+    footerRef,
+    placeholderRef,
+    placeholderHeight,
+    footerStyle,
+    isSticky: _isSticky,
+  } = useStickyFooter();
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
@@ -1683,8 +1690,7 @@ const CalculatorComponent: React.FC = () => {
     };
   };
 
-  
-const renderSummaryFooter = ({
+  const renderSummaryFooter = ({
     label,
     value,
     valueSuffix = '',
@@ -1697,7 +1703,7 @@ const renderSummaryFooter = ({
     status: SummaryStatus;
     rangeDescription: string;
   }): React.JSX.Element => {
-        const statusVisual = getStatusVisuals(status);
+    const statusVisual = getStatusVisuals(status);
     const StatusIcon = statusVisual.Icon;
 
     const surfaceStyles = liteMode
@@ -3146,9 +3152,17 @@ const renderSummaryFooter = ({
                   pb: 3,
                   position: 'relative',
                   zIndex: 5,
-                  backgroundColor: liteMode ? 'transparent' : theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)",
+                  backgroundColor: liteMode
+                    ? 'transparent'
+                    : theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
                   borderRadius: liteMode ? '0' : '12px',
-                  boxShadow: liteMode ? 'none' : theme.palette.mode === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)' : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  boxShadow: liteMode
+                    ? 'none'
+                    : theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                   marginTop: '20px',
                 }}
                 style={footerStyle}
@@ -3221,8 +3235,7 @@ const renderSummaryFooter = ({
           )}
         </Container>
       </CalculatorContainer>
-
-          </>
+    </>
   );
 };
 
