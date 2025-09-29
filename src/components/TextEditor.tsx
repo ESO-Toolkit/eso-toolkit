@@ -318,8 +318,30 @@ const StatusBar = styled(Box)(({ theme: _theme }) => ({
   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
 }));
 
-const CharCounter = styled(Typography)(({ theme }) => ({
-  color: theme.palette.text.secondary,
+const CharCounter = styled(Box)(({ theme }) => ({
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '8px',
+  padding: '6px 12px',
+  borderRadius: '20px',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(226, 184, 77, 0.2) 0%, rgba(226, 184, 77, 0.1) 50%, rgba(226, 184, 77, 0.05) 100%)'
+      : 'linear-gradient(135deg, rgba(120, 120, 120, 0.15) 0%, rgba(100, 100, 100, 0.12) 50%, rgba(80, 80, 80, 0.08) 100%)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(226, 184, 77, 0.3)'
+      : '1px solid rgba(226, 184, 77, 0.4)',
+  backdropFilter: 'blur(8px) saturate(150%)',
+  WebkitBackdropFilter: 'blur(8px) saturate(150%)',
+  transition: 'all 0.2s ease-in-out',
+  '&:hover': {
+    transform: 'translateY(-1px)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 4px 12px rgba(226, 184, 77, 0.2)'
+        : '0 4px 12px rgba(226, 184, 77, 0.25)',
+  },
 }));
 
 const CopyButton = styled('button')(({ theme }) => ({
@@ -356,8 +378,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
   padding: '20px',
   borderRadius: '12px',
   minHeight: '120px',
-  background: 'transparent !important',
-  backgroundColor: 'transparent !important',
+  background: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
+  backgroundColor: theme.palette.mode === 'dark' ? 'transparent !important' : '#000000 !important',
   border:
     theme.palette.mode === 'dark'
       ? '1px solid rgba(255, 255, 255, 0.2)'
@@ -386,6 +408,8 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     opacity: 0.3,
     zIndex: -1,
     pointerEvents: 'none',
+    filter: 'blur(1px)',
+    WebkitFilter: 'blur(1px)',
   },
 
   // Semi-transparent overlay for text readability
@@ -407,7 +431,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
     zIndex: 2,
   },
 
-  '& *': {
+  '& span, & strong, & em, & i, & b': {
     background: 'transparent !important',
     backgroundColor: 'transparent !important',
   },
@@ -438,7 +462,7 @@ const PreviewArea = styled(Box)(({ theme }) => ({
 
     // RESTORE ORIGINAL OVERLAY on mobile too
     '&::after': {
-      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.4)',
+      background: theme.palette.mode === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'transparent',
     },
   },
 }));
@@ -1434,8 +1458,63 @@ export const TextEditor: React.FC = () => {
 
           <StatusBar>
             <CharCounter>
-              <span style={{ color: '#ccc', fontSize: '12px' }}>Characters: </span>
-              <span style={{ color: '#e2b84d', fontWeight: 600 }}>{charCount}</span>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: '16px',
+                  height: '16px',
+                  fontSize: '12px',
+                  color: theme.palette.mode === 'dark' ? 'rgba(226, 184, 77, 0.9)' : '#b8860b',
+                  mr: '4px',
+                }}
+              >
+                #️⃣
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: '11px',
+                  fontWeight: 500,
+                  color: theme.palette.mode === 'dark' ? 'rgba(226, 184, 77, 0.8)' : '#8b6914',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                  [theme.breakpoints.down('sm')]: {
+                    fontSize: '10px',
+                  },
+                }}
+              >
+                <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+                  Characters
+                </Box>
+                <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+                  Chars
+                </Box>
+              </Typography>
+              <Box
+                sx={{
+                  width: '1px',
+                  height: '16px',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(226, 184, 77, 0.3)'
+                      : 'rgba(226, 184, 77, 0.5)',
+                  mx: '4px',
+                }}
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: theme.palette.mode === 'dark' ? '#e2b84d' : '#333333',
+                  fontFamily: 'Space Grotesk, Inter, system-ui',
+                  fontFeatureSettings: '"tnum"',
+                }}
+              >
+                {charCount.toLocaleString()}
+              </Typography>
             </CharCounter>
             <CopyButton onClick={copyToClipboard}>{copyFeedback || '📋 Copy Text'}</CopyButton>
           </StatusBar>
