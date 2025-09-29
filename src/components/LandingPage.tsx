@@ -1,6 +1,6 @@
 import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
-import React, { useState, JSX } from 'react';
+import React, { useState, JSX, useEffect, useRef } from 'react';
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
@@ -323,16 +323,16 @@ const HeroTitle = styled(Typography, {
     fontSize: 'clamp(2.2rem, 6vw, 4rem)',
   },
   [theme.breakpoints.down('md')]: {
-    fontSize: 'clamp(2.5rem, 5vw, 3rem)',
+    fontSize: 'clamp(2.8rem, 5vw, 3.5rem)',
     lineHeight: 1.5,
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(2rem, 6vw, 2.2rem)',
+    fontSize: 'clamp(2.5rem, 6vw, 2.8rem)',
     lineHeight: 1.5,
     marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(1.8rem, 7vw, 1.9rem)',
+    fontSize: 'clamp(2.2rem, 7vw, 2.5rem)',
     lineHeight: 1.5,
   },
   '@keyframes shimmer': {
@@ -721,34 +721,81 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
 
 const ToolsSection = styled(Container)(({ theme }) => ({
   padding: '0rem 0rem 0rem 0rem',
-  paddingTop: 0,
+  paddingTop: '3rem',
   maxWidth: '1200px',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: '-2rem',
+    left: '50%',
+    transform: 'translateX(-50%)',
+    width: '200px',
+    height: '4px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)',
+    borderRadius: '2px',
+    animation: 'sectionPulse 3s ease-in-out infinite',
+  },
+  '@keyframes sectionPulse': {
+    '0%, 100%': {
+      opacity: 0.6,
+      transform: 'translateX(-50%) scaleX(0.8)',
+    },
+    '50%': {
+      opacity: 1,
+      transform: 'translateX(-50%) scaleX(1.2)',
+    },
+  },
   [theme.breakpoints.down('sm')]: {
     padding: '0rem 1rem',
   },
 }));
 
-const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => (
-  <Box
-    sx={{
-      display: 'grid',
-      gap: '1.5rem',
-      marginTop: '3rem',
-      gridTemplateColumns: {
-        xs: '1fr',
-        sm: '1fr',
-        md: '1fr 1fr',
-        lg: '1fr 1fr',
-      },
-      maxWidth: '800px',
-      margin: '0 auto',
-    }}
-  >
-    {children}
-  </Box>
-);
+const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => {
+  const [hoveredIndex, setHoveredIndex] = useState<number | null>(null);
 
-const ToolCard = styled(Box)(({ theme }) => ({
+  return (
+    <Box
+      sx={{
+        display: 'grid',
+        gap: '1.5rem',
+        marginTop: '3rem',
+        gridTemplateColumns: {
+          xs: '1fr',
+          sm: '1fr',
+          md: '1fr 1fr',
+          lg: '1fr 1fr',
+        },
+        maxWidth: '800px',
+        margin: '0 auto',
+        perspective: '1000px',
+      }}
+    >
+      {React.Children.map(children, (child, index) => (
+        <Box
+          key={index}
+          sx={{
+            transformStyle: 'preserve-3d',
+            transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform:
+              hoveredIndex === null
+                ? 'translateZ(0)'
+                : hoveredIndex === index
+                  ? 'translateZ(40px) translateY(-10px)'
+                  : `translateZ(${-20 * Math.abs(index - hoveredIndex)}px) translateY(${-5 * Math.abs(index - hoveredIndex)}px)`,
+            opacity: hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.7,
+          }}
+          onMouseEnter={() => setHoveredIndex(index)}
+          onMouseLeave={() => setHoveredIndex(null)}
+        >
+          {child}
+        </Box>
+      ))}
+    </Box>
+  );
+};
+
+const ToolCard = styled(Box)<{ index?: number }>(({ theme, index = 0 }) => ({
   background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
   backdropFilter: 'blur(12px)',
   border:
@@ -768,6 +815,9 @@ const ToolCard = styled(Box)(({ theme }) => ({
     theme.palette.mode === 'dark'
       ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
       : '0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
+  opacity: 0,
+  transform: 'translateY(30px)',
+  animation: `cardEntrance 0.6s ease-out ${index * 0.1}s forwards`,
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -795,7 +845,7 @@ const ToolCard = styled(Box)(({ theme }) => ({
     pointerEvents: 'none',
   },
   '&:hover': {
-    transform: 'translateY(-8px)',
+    transform: 'translateY(-12px) scale(1.02)',
     borderColor: 'rgba(56, 189, 248, 0.3)',
     boxShadow:
       theme.palette.mode === 'dark'
@@ -813,6 +863,16 @@ const ToolCard = styled(Box)(({ theme }) => ({
     minHeight: '280px',
     '&:hover': {
       transform: 'translateY(-4px)',
+    },
+  },
+  '@keyframes cardEntrance': {
+    '0%': {
+      opacity: 0,
+      transform: 'translateY(30px) scale(0.95)',
+    },
+    '100%': {
+      opacity: 1,
+      transform: 'translateY(0) scale(1)',
     },
   },
 }));
@@ -839,9 +899,11 @@ const ToolIcon = styled(Box)(({ theme }) => ({
     theme.palette.mode === 'dark'
       ? '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
       : '0 4px 20px rgba(15, 23, 42, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-  transition: 'all 0.3s ease',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   position: 'relative',
   overflow: 'hidden',
+  transform: 'translateY(10px)',
+  animation: 'iconEntrance 0.6s ease-out 0.2s forwards',
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -857,9 +919,19 @@ const ToolIcon = styled(Box)(({ theme }) => ({
     transition: 'opacity 0.3s ease',
   },
   '&:hover': {
-    transform: 'scale(1.05) rotate(5deg)',
+    transform: 'scale(1.1) rotate(8deg)',
     '&::before': {
       opacity: 1,
+    },
+  },
+  '@keyframes iconEntrance': {
+    '0%': {
+      opacity: 0,
+      transform: 'translateY(10px) scale(0.8)',
+    },
+    '100%': {
+      opacity: 1,
+      transform: 'translateY(0) scale(1)',
     },
   },
 }));
@@ -1094,8 +1166,10 @@ const ESORune = styled(Box)<{ delay?: number; x?: string; y?: string }>(
 
 export const LandingPage: React.FC = () => {
   const [showAnimations, setShowAnimations] = useState(false);
+  const [isVisible, setIsVisible] = useState(false);
   const { isLoggedIn } = useAuth();
   const { isReady, isLoggedIn: clientIsLoggedIn } = useEsoLogsClientContext();
+  const toolsSectionRef = useRef<HTMLDivElement>(null);
 
   // Defer complex animations until after initial render
   React.useEffect(() => {
@@ -1104,6 +1178,29 @@ export const LandingPage: React.FC = () => {
     }, 100); // Small delay to ensure initial content is rendered first
 
     return () => clearTimeout(timer);
+  }, []);
+
+  // Intersection Observer for smooth scroll animations
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true);
+        }
+      },
+      { threshold: 0.1, rootMargin: '-50px' },
+    );
+
+    const currentRef = toolsSectionRef.current;
+    if (currentRef) {
+      observer.observe(currentRef);
+    }
+
+    return () => {
+      if (currentRef) {
+        observer.unobserve(currentRef);
+      }
+    };
   }, []);
 
   return (
@@ -1160,114 +1257,130 @@ export const LandingPage: React.FC = () => {
         </HeroContent>
       </HeroSection>
 
-      <ToolsSection id="tools">
-        <SectionTitle variant="h2">Our Tools</SectionTitle>
-        <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
+      <ToolsSection id="tools" ref={toolsSectionRef}>
+        <Box
+          sx={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
+            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+          }}
+        >
+          <SectionTitle variant="h2">Our Tools</SectionTitle>
+          <SectionSubtitle>Everything you need to excel in Tamriel</SectionSubtitle>
+        </Box>
 
-        <ToolsGrid>
-          <ToolCard>
-            <ToolIcon>
-              <CvIcon size="2rem" />
-            </ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-              Text Editor
-            </Typography>
-            <Typography
-              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-            >
-              Create eye-catching MOTD and group finder posts with our visual editor. Design
-              messages that stand out with custom styles and formatting.
-            </Typography>
-            <ToolFeatures>
-              <li>Visual interface for easy formatting</li>
-              <li>Custom styles and colors</li>
-              <li>Preview before posting</li>
-              <li>Save templates for reuse</li>
-            </ToolFeatures>
-            <ToolAction href="/text-editor">Launch Editor</ToolAction>
-          </ToolCard>
+        <Box
+          sx={{
+            opacity: isVisible ? 1 : 0,
+            transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
+          }}
+        >
+          <ToolsGrid>
+            <ToolCard index={0}>
+              <ToolIcon>
+                <CvIcon size="2rem" />
+              </ToolIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Text Editor
+              </Typography>
+              <Typography
+                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+              >
+                Create eye-catching MOTD and group finder posts with our visual editor. Design
+                messages that stand out with custom styles and formatting.
+              </Typography>
+              <ToolFeatures>
+                <li>Visual interface for easy formatting</li>
+                <li>Custom styles and colors</li>
+                <li>Preview before posting</li>
+                <li>Save templates for reuse</li>
+              </ToolFeatures>
+              <ToolAction href="/text-editor">Launch Editor</ToolAction>
+            </ToolCard>
 
-          <ToolCard>
-            <ToolIcon>
-              <CalculatorIcon size="2rem" />
-            </ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-              Build Calculator
-            </Typography>
-            <Typography
-              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-            >
-              Optimize your character&apos;s stats with our comprehensive calculator. Track
-              penetration, critical damage, and armor to hit those crucial caps.
-            </Typography>
-            <ToolFeatures>
-              <li>
-                Penetration optimizer <span style={{ fontWeight: 300 }}>(18,200 cap)</span>
-              </li>
-              <li>
-                Critical damage calculator <span style={{ fontWeight: 300 }}>(125% cap)</span>
-              </li>
-              <li>Armor resistance planner</li>
-              <li>Real-time cap status indicators</li>
-            </ToolFeatures>
-            <ToolAction href="/calculator">Launch Calculator</ToolAction>
-          </ToolCard>
+            <ToolCard index={1}>
+              <ToolIcon>
+                <CalculatorIcon size="2rem" />
+              </ToolIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Build Calculator
+              </Typography>
+              <Typography
+                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+              >
+                Optimize your character&apos;s stats with our comprehensive calculator. Track
+                penetration, critical damage, and armor to hit those crucial caps.
+              </Typography>
+              <ToolFeatures>
+                <li>
+                  Penetration optimizer <span style={{ fontWeight: 300 }}>(18,200 cap)</span>
+                </li>
+                <li>
+                  Critical damage calculator <span style={{ fontWeight: 300 }}>(125% cap)</span>
+                </li>
+                <li>Armor resistance planner</li>
+                <li>Real-time cap status indicators</li>
+              </ToolFeatures>
+              <ToolAction href="/calculator">Launch Calculator</ToolAction>
+            </ToolCard>
 
-          <ToolCard>
-            <ToolIcon>
-              <FileLoopIcon size="2rem" />
-            </ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-              ESO Log Analyzer
-            </Typography>
-            <Typography
-              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-            >
-              Deep dive into your ESO combat logs with advanced analytics. Analyze player
-              performance, damage patterns, and raid insights with detailed breakdowns.
-            </Typography>
-            <ToolFeatures>
-              <li>Combat performance analysis</li>
-              <li>Player damage breakdowns</li>
-              <li>Skill usage tracking</li>
-              <li>Real-time fight insights</li>
-            </ToolFeatures>
-            <ToolAction
-              onClick={() =>
-                window.open(
-                  'https://github.com/bkrupa/eso-log-aggregator',
-                  '_blank',
-                  'noopener,noreferrer',
-                )
-              }
-            >
-              View on GitHub
-            </ToolAction>
-          </ToolCard>
+            <ToolCard index={2}>
+              <ToolIcon>
+                <FileLoopIcon size="2rem" />
+              </ToolIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                ESO Log Analyzer
+              </Typography>
+              <Typography
+                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+              >
+                Deep dive into your ESO combat logs with advanced analytics. Analyze player
+                performance, damage patterns, and raid insights with detailed breakdowns.
+              </Typography>
+              <ToolFeatures>
+                <li>Combat performance analysis</li>
+                <li>Player damage breakdowns</li>
+                <li>Skill usage tracking</li>
+                <li>Real-time fight insights</li>
+              </ToolFeatures>
+              <ToolAction
+                onClick={() =>
+                  window.open(
+                    'https://github.com/bkrupa/eso-log-aggregator',
+                    '_blank',
+                    'noopener,noreferrer',
+                  )
+                }
+              >
+                View on GitHub
+              </ToolAction>
+            </ToolCard>
 
-          <ToolCard>
-            <ComingSoonBadge>Coming Soon</ComingSoonBadge>
-            <ToolIcon>
-              <PeopleIcon size="2rem" />
-            </ToolIcon>
-            <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-              Discord Roster Bot
-            </Typography>
-            <Typography
-              sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
-            >
-              Manage your guild roster effortlessly with our Discord bot. Track members, roles, and
-              raid signups all in one place.
-            </Typography>
-            <ToolFeatures>
-              <li>Automated roster management</li>
-              <li>Raid signup tracking</li>
-              <li>Role assignment system</li>
-              <li>Activity monitoring</li>
-            </ToolFeatures>
-            <ToolAction disabled>Coming Soon</ToolAction>
-          </ToolCard>
-        </ToolsGrid>
+            <ToolCard index={3}>
+              <ComingSoonBadge>Coming Soon</ComingSoonBadge>
+              <ToolIcon>
+                <PeopleIcon size="2rem" />
+              </ToolIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Discord Roster Bot
+              </Typography>
+              <Typography
+                sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
+              >
+                Manage your guild roster effortlessly with our Discord bot. Track members, roles,
+                and raid signups all in one place.
+              </Typography>
+              <ToolFeatures>
+                <li>Automated roster management</li>
+                <li>Raid signup tracking</li>
+                <li>Role assignment system</li>
+                <li>Activity monitoring</li>
+              </ToolFeatures>
+              <ToolAction disabled>Coming Soon</ToolAction>
+            </ToolCard>
+          </ToolsGrid>
+        </Box>
       </ToolsSection>
 
       <CommunitySection id="about">
