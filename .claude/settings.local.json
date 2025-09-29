@@ -59,7 +59,11 @@
       "Bash(pkill:*)",
       "Bash(npm run format:check:*)",
       "WebSearch",
-      "Bash(npm run)"
+      "Bash(npm run)",
+      "mcp__chrome-devtools__get_connection_status",
+      "mcp__chrome-devtools__execute_javascript",
+      "mcp__chrome-devtools__get_console_logs",
+      "Bash(git rm:*)"
     ],
     "deny": [],
     "ask": []
