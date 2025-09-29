@@ -728,19 +728,25 @@ const ToolsSection = styled(Container)(({ theme }) => ({
   },
 }));
 
-const ToolsGrid = styled(Box)(({ theme: _theme }) => ({
-  display: 'grid',
-  gap: '1.5rem',
-  marginTop: '3rem',
-  gridTemplateColumns: {
-    xs: '1fr',
-    sm: '1fr',
-    md: '1fr 1fr',
-    lg: '1fr 1fr',
-  },
-  maxWidth: '800px',
-  margin: '3rem auto 0 auto',
-}));
+const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => (
+  <Box
+    sx={{
+      display: 'grid',
+      gap: '1.5rem',
+      marginTop: '3rem',
+      gridTemplateColumns: {
+        xs: '1fr',
+        sm: '1fr',
+        md: '1fr 1fr',
+        lg: '1fr 1fr',
+      },
+      maxWidth: '800px',
+      margin: '0 auto',
+    }}
+  >
+    {children}
+  </Box>
+);
 
 const ToolCard = styled(Box)(({ theme }) => ({
   background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
