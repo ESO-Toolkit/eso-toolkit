@@ -15,6 +15,7 @@ import {
 import React from 'react';
 import { useSelector } from 'react-redux';
 
+import type { ReportActorFragment } from '../../../graphql/generated';
 import { useReportMasterData } from '../../../hooks';
 import { useSelectedFight } from '../../../hooks/useSelectedFight';
 import { ALL_TARGETS_SENTINEL, ALL_ENEMIES_SENTINEL } from '../../../hooks/useSelectedTargetIds';
@@ -130,24 +131,47 @@ const TargetSelectorComponent: React.FC = () => {
       return [];
     }
 
-    const result = [];
-    const actorsById = reportMasterData.actorsById; // Cache the reference
+    const actorsById = reportMasterData.actorsById;
 
-    for (const npc of fight.enemyNPCs) {
-      if (!npc?.id) {
-        continue;
+    const validEnemies = fight.enemyNPCs
+      .filter((npc): npc is { id: number } => npc?.id != null)
+      .map((npc) => ({
+        id: npc.id,
+        actor: actorsById[npc.id],
+      }))
+      .filter((enemy) => enemy.actor && enemy.actor.name);
+
+    const enemyGroups = validEnemies.reduce(
+      (acc, enemy) => {
+        const name = enemy.actor.name;
+        if (name && !acc[name]) {
+          acc[name] = [];
+        }
+        if (name) {
+          acc[name].push(enemy);
+        }
+        return acc;
+      },
+      {} as Record<string, Array<{ id: number; actor: ReportActorFragment }>>,
+    );
+
+    const filteredEnemies = validEnemies.filter((enemy) => {
+      const name = enemy.actor.name;
+      if (!name) return false;
+
+      const sameNameEnemies = enemyGroups[name];
+
+      if (sameNameEnemies && sameNameEnemies.length === 1) {
+        return true; // Unique name
       }
 
-      const enemy = actorsById[npc.id];
-      if (enemy) {
-        result.push({
-          id: enemy.id,
-          name: enemy.name,
-        });
-      }
-    }
+      return enemy.actor.subType === 'Boss'; // Multiple names - only Boss subtype
+    });
 
-    return result;
+    return filteredEnemies.map((enemy) => ({
+      id: enemy.id,
+      name: enemy.actor.name,
+    }));
   }, [reportMasterData?.actorsById, fight?.enemyNPCs]);
 
   // Custom render value for multi-select display

@@ -57,6 +57,55 @@ const mockNonBossActor: ReportActorFragment = {
   server: null,
 };
 
+// Mock Lokkestiiz actors for duplicate name filtering test
+const mockLokkestiizBoss: ReportActorFragment = {
+  __typename: 'ReportActor',
+  id: 500,
+  name: 'Lokkestiiz',
+  displayName: 'Lokkestiiz',
+  subType: 'Boss',
+  type: 'NPC',
+  gameID: 88342,
+  icon: 'custom-icon-death_recap_cold_ranged.png',
+  server: null,
+};
+
+const mockLokkestiizFake1: ReportActorFragment = {
+  __typename: 'ReportActor',
+  id: 501,
+  name: 'Lokkestiiz',
+  displayName: 'Lokkestiiz',
+  subType: 'NPC',
+  type: 'NPC',
+  gameID: 90304,
+  icon: 'custom-icon-death_recap_cold_aoe.png',
+  server: null,
+};
+
+const mockLokkestiizFake2: ReportActorFragment = {
+  __typename: 'ReportActor',
+  id: 502,
+  name: 'Lokkestiiz',
+  displayName: 'Lokkestiiz',
+  subType: 'NPC',
+  type: 'NPC',
+  gameID: 90314,
+  icon: 'custom-icon-death_recap_melee_basic.png',
+  server: null,
+};
+
+const mockFrostAtronach: ReportActorFragment = {
+  __typename: 'ReportActor',
+  id: 503,
+  name: 'Frost Atronach',
+  displayName: 'Frost Atronach',
+  subType: 'NPC',
+  type: 'NPC',
+  gameID: 90284,
+  icon: 'custom-icon-death_recap_cold_melee.png',
+  server: null,
+};
+
 const mockPlayerActor: ReportActorFragment = {
   __typename: 'ReportActor',
   id: 400,
@@ -116,6 +165,26 @@ const mockFightWithNullEnemies: FightFragment = {
   enemyNPCs: null,
 };
 
+// Fight with duplicate names (Lokkestiiz scenario)
+const mockFightWithDuplicates: FightFragment = {
+  __typename: 'ReportFight',
+  id: 10,
+  startTime: 5000,
+  endTime: 6000,
+  name: 'Test Fight With Duplicate Names',
+  difficulty: null,
+  bossPercentage: null,
+  encounterID: 1010,
+  friendlyPlayers: [400],
+  enemyPlayers: [],
+  enemyNPCs: [
+    { __typename: 'ReportFightNPC', id: 500, gameID: 88342, groupCount: 1, instanceCount: 1 }, // Lokkestiiz Boss
+    { __typename: 'ReportFightNPC', id: 501, gameID: 90304, groupCount: 1, instanceCount: 1 }, // Lokkestiiz Fake 1
+    { __typename: 'ReportFightNPC', id: 502, gameID: 90314, groupCount: 1, instanceCount: 1 }, // Lokkestiiz Fake 2
+    { __typename: 'ReportFightNPC', id: 503, gameID: 90284, groupCount: 1, instanceCount: 1 }, // Frost Atronach (unique)
+  ],
+};
+
 const mockReportData: ReportFragment = {
   __typename: 'Report',
   code: 'test-report',
@@ -124,7 +193,12 @@ const mockReportData: ReportFragment = {
   title: 'Test Report',
   visibility: 'public',
   zone: { __typename: 'Zone', name: 'Test Zone' },
-  fights: [mockFightWithBosses, mockFightWithoutEnemies, mockFightWithNullEnemies],
+  fights: [
+    mockFightWithBosses,
+    mockFightWithoutEnemies,
+    mockFightWithNullEnemies,
+    mockFightWithDuplicates,
+  ],
 };
 
 const mockMasterData = {
@@ -134,6 +208,10 @@ const mockMasterData = {
     200: mockBossActor2,
     300: mockNonBossActor,
     400: mockPlayerActor,
+    500: mockLokkestiizBoss,
+    501: mockLokkestiizFake1,
+    502: mockLokkestiizFake2,
+    503: mockFrostAtronach,
   },
   loading: false,
   loaded: true,
@@ -141,7 +219,7 @@ const mockMasterData = {
   cacheMetadata: {
     lastFetchedReportId: 'test-report',
     lastFetchedTimestamp: Date.now(),
-    actorCount: 4,
+    actorCount: 8,
     abilityCount: 0,
   },
 };
@@ -204,6 +282,37 @@ describe('useSelectedTargetIds', () => {
     jest.clearAllMocks();
   });
 
+  it('should filter duplicate names and keep only Boss subtype for Lokkestiiz scenario', () => {
+    mockUseReportData.mockReturnValue({
+      reportData: {
+        ...mockReportData,
+        fights: [mockFightWithDuplicates],
+      },
+      isReportLoading: false,
+    });
+
+    mockUseReportMasterData.mockReturnValue({
+      reportMasterData: mockMasterData,
+      isMasterDataLoading: false,
+    });
+
+    const { result } = renderHook(() => useSelectedTargetIds(), {
+      wrapper: ({ children }) => (
+        <TestWrapper fightId="10" selectedTargetIds={[]}>
+          {children}
+        </TestWrapper>
+      ),
+    });
+
+    // Should return:
+    // - Lokkestiiz Boss (500) - only Boss subtype among duplicates
+    // - Frost Atronach (503) - unique name, so kept
+    // Should NOT return:
+    // - Lokkestiiz Fake 1 (501) - duplicate name with NPC subtype
+    // - Lokkestiiz Fake 2 (502) - duplicate name with NPC subtype
+    expect(Array.from(result.current).sort()).toEqual([500, 503]);
+  });
+
   it('should return selected target ID when one is explicitly selected', () => {
     mockUseReportData.mockReturnValue({
       reportData: mockReportData,
@@ -245,8 +354,9 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    // Should return both boss NPCs (100 and 200), but not the regular NPC (300)
-    expect(Array.from(result.current).sort()).toEqual([100, 200]);
+    // Should return all enemies since each has unique names (no duplicate filtering applied)
+    // Boss NPCs (100, 200) and Regular NPC (300) all have unique names
+    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
   });
 
   it('should return empty set when no fight is found', () => {
@@ -504,8 +614,8 @@ describe('useSelectedTargetIds', () => {
       ),
     });
 
-    // Initial result - fight with bosses
-    expect(Array.from(result.current).sort()).toEqual([100, 200]);
+    // Initial result - fight with all unique-named enemies
+    expect(Array.from(result.current).sort()).toEqual([100, 200, 300]);
 
     // Rerender with different fight ID - fight without enemies
     rerender();
@@ -599,14 +709,14 @@ describe('useSelectedTargetIds', () => {
     });
 
     const firstResult = result.current;
-    expect(Array.from(firstResult).sort()).toEqual([100, 200]);
+    expect(Array.from(firstResult).sort()).toEqual([100, 200, 300]);
 
     // Re-render without changing any dependencies
     rerender();
 
     const secondResult = result.current;
     expect(secondResult).toBe(firstResult); // Should be the same reference
-    expect(Array.from(secondResult).sort()).toEqual([100, 200]);
+    expect(Array.from(secondResult).sort()).toEqual([100, 200, 300]);
   });
 
   it('should return stable reference for selected target when params do not change', () => {
