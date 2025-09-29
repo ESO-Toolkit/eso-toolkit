@@ -42,6 +42,7 @@ interface AttackEvent {
     amount: number;
     timestamp: number;
   }>;
+  attackerWasTaunted?: boolean | null;
 }
 
 // Simple health calculation function
@@ -245,6 +246,21 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
                 ? getAbilityName(dmgEvent.abilityGameID)
                 : undefined;
 
+            // Check if the attacker was taunted at the time of this attack
+            let attackerWasTaunted: boolean | null = null;
+            if (
+              typeof dmgEvent.sourceID === 'number' &&
+              typeof dmgEvent.timestamp === 'number' &&
+              debuffLookupData
+            ) {
+              attackerWasTaunted = isBuffActiveOnTarget(
+                debuffLookupData,
+                KnownAbilities.TAUNT,
+                dmgEvent.timestamp,
+                dmgEvent.sourceID,
+              );
+            }
+
             relevantDamageEvents.push({
               abilityName,
               abilityId: dmgEvent.abilityGameID,
@@ -253,6 +269,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
               type: dmgEvent.type,
               amount: typeof dmgEvent.amount === 'number' ? dmgEvent.amount : undefined,
               wasBlocked: typeof dmgEvent.blocked === 'number' ? dmgEvent.blocked === 1 : null,
+              attackerWasTaunted,
             });
           }
         }
@@ -291,7 +308,20 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
             0,
           );
 
-          // Multiple simultaneous damage events detected
+          // Check if the killer was taunted at the time of death
+          let killerWasTaunted: boolean | null = null;
+          if (
+            typeof mostRecentDamage.sourceID === 'number' &&
+            typeof mostRecentDamage.timestamp === 'number' &&
+            debuffLookupData
+          ) {
+            killerWasTaunted = isBuffActiveOnTarget(
+              debuffLookupData,
+              KnownAbilities.TAUNT,
+              mostRecentDamage.timestamp,
+              mostRecentDamage.sourceID,
+            );
+          }
 
           // Use the most recent damage event for killing blow display, but show total damage
           killingBlowEvent = {
@@ -321,6 +351,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
                     timestamp: dmg.timestamp ?? 0,
                   }))
                 : undefined,
+            attackerWasTaunted: killerWasTaunted,
           };
         }
 
@@ -346,6 +377,20 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
         // OPTIMIZED: Build killing blow once with cached ability lookup (fallback if no recent damage)
         let killingBlow: AttackEvent | null = killingBlowEvent;
         if (!killingBlow && typeof deathEvent.abilityGameID === 'number') {
+          // Check if the killer was taunted at the time of death
+          let killerWasTaunted: boolean | null = null;
+          if (
+            typeof deathEvent.sourceID === 'number' &&
+            typeof deathEvent.timestamp === 'number' &&
+            debuffLookupData
+          ) {
+            killerWasTaunted = isBuffActiveOnTarget(
+              debuffLookupData,
+              KnownAbilities.TAUNT,
+              deathEvent.timestamp,
+              deathEvent.sourceID,
+            );
+          }
           killingBlow = {
             abilityName: getAbilityName(deathEvent.abilityGameID),
             abilityId: deathEvent.abilityGameID,
@@ -353,24 +398,13 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
             timestamp: deathEvent.timestamp,
             type: deathEvent.type,
             amount: typeof deathEvent.amount === 'number' ? deathEvent.amount : undefined,
+            attackerWasTaunted: killerWasTaunted,
           };
         }
 
         // Get death duration data for this death
         const playerDurations = deathDurationMap.get(playerId);
         const deathDurationData = playerDurations?.get(deathEvent.timestamp ?? 0);
-
-        // Check if the killer was taunted at the time of death
-        let killerWasTaunted: boolean | null = null;
-        if (killingBlow?.sourceID && debuffLookupData) {
-          // Use the pre-computed debuff lookup data
-          killerWasTaunted = isBuffActiveOnTarget(
-            debuffLookupData,
-            KnownAbilities.TAUNT,
-            deathEvent.timestamp || 0,
-            killingBlow.sourceID,
-          );
-        }
 
         // Calculate health before death
         const { health, maxHealth } = calculateHealthBeforeDeath(
@@ -394,7 +428,7 @@ export const DeathEventPanel: React.FC<DeathEventPanelProps> = ({ fight }) => {
           wasBlocking: false,
           deathDurationMs: deathDurationData?.deathDurationMs ?? null,
           resurrectionTime: deathDurationData?.resurrectionTime ?? null,
-          killerWasTaunted,
+          killerWasTaunted: killingBlow?.attackerWasTaunted ?? null,
         });
 
         lastDeathTimestamp = deathEvent.timestamp;
