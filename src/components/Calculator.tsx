@@ -3152,8 +3152,8 @@ const CalculatorComponent: React.FC = () => {
               <Box
                 ref={footerRef}
                 sx={{
-                  px: isMobile ? 1.5 : 3.75,
-                  pb: 3,
+                  px: 0, // Remove horizontal padding
+                  pb: 0, // Remove bottom padding
                   position: 'relative',
                   zIndex: 5,
                   backgroundColor: liteMode
