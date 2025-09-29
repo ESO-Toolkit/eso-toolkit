@@ -10,8 +10,8 @@ import { Footer } from './Footer';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
 // Import icon components directly
 const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill="#000000">
-    <g fill="#000000">
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill="currentColor">
+    <g fill="currentColor">
       <path fillRule="evenodd" d="M4 18.105V3.895C4 2.848 4.866 2 5.933 2h10.634c1.067 0 1.933.848 1.933 1.895v14.21c0 1.047-.866 1.895-1.933 1.895H5.933C4.866 20 4 19.152 4 18.105Z" clipRule="evenodd" opacity=".2" />
       <path fillRule="evenodd" d="M2.5 3v14A2.5 2.5 0 0 0 5 19.5h10a2.5 2.5 0 0 0 2.5-2.5V3A2.5 2.5 0 0 0 15 .5H5A2.5 2.5 0 0 0 2.5 3ZM5 18.5A1.5 1.5 0 0 1 3.5 17V3A1.5 1.5 0 0 1 5 1.5h10A1.5 1.5 0 0 1 16.5 3v14a1.5 1.5 0 0 1-1.5 1.5H5Z" clipRule="evenodd" />
       <path d="M5 7.5v-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5Zm7 8.2v-4.9a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v4.9a.8.8 0 0 1-.8.8h-1.4a.8.8 0 0 1-.8-.8ZM5 12v-1.5a.5.5 0 0 1 .5-.5H7a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 12Zm3.5 0v-1.5A.5.5 0 0 1 9 10h1.5a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5H9a.5.5 0 0 1-.5-.5ZM5 16v-1.5a.5.5 0 0 1 .5-.5H7a.5.5 0 0 1 .5.5V16a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 16Zm3.5 0v-1.5A.5.5 0 0 1 9 14h1.5a.5.5 0 0 1 .5.5V16a.5.5 0 0 1-.5.5H9a.5.5 0 0 1-.5-.5Z" />
@@ -22,19 +22,19 @@ const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
 const CvIcon = ({ size }: { size: string }): JSX.Element => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
     <g fill="none">
-      <path fill="#000000" d="M6.5 2h6.685a1.5 1.5 0 0 1 1.106.486l4.314 4.702A1.5 1.5 0 0 1 19 8.202V18.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.5v-15A1.5 1.5 0 0 1 6.5 2Z" opacity=".2" />
-      <path fill="#000000" d="M6.5 12.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Zm0 2.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Z" />
-      <path fill="#000000" fillRule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1ZM4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-15Z" clipRule="evenodd" />
-      <path stroke="#000000" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.1v4.7h4.7" />
-      <path fill="#000000" d="M8.134 6.133a1.067 1.067 0 1 0 0-2.133a1.067 1.067 0 0 0 0 2.133Z" />
-      <path fill="#000000" fillRule="evenodd" d="M10.266 8.444c0-1.134-.955-1.955-2.133-1.955S6 7.309 6 8.444v.534a.356.356 0 0 0 .356.355h3.555a.356.356 0 0 0 .355-.355v-.534Z" clipRule="evenodd" />
+      <path fill="currentColor" d="M6.5 2h6.685a1.5 1.5 0 0 1 1.106.486l4.314 4.702A1.5 1.5 0 0 1 19 8.202V18.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.5v-15A1.5 1.5 0 0 1 6.5 2Z" opacity=".2" />
+      <path fill="currentColor" d="M6.5 12.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Zm0 2.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Z" />
+      <path fill="currentColor" fillRule="evenodd" d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1ZM4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-15Z" clipRule="evenodd" />
+      <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" d="M11.5 2.1v4.7h4.7" />
+      <path fill="currentColor" d="M8.134 6.133a1.067 1.067 0 1 0 0-2.133a1.067 1.067 0 0 0 0 2.133Z" />
+      <path fill="currentColor" fillRule="evenodd" d="M10.266 8.444c0-1.134-.955-1.955-2.133-1.955S6 7.309 6 8.444v.534a.356.356 0 0 0 .356.355h3.555a.356.356 0 0 0 .355-.355v-.534Z" clipRule="evenodd" />
     </g>
   </svg>
 );
 
 const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
-    <g fill="#000000">
+    <g fill="currentColor">
       <g opacity=".2">
         <path d="M12.143 4h-3.55a1 1 0 0 0-1 1v2l.448 8.056a1 1 0 0 0 .998.944h7.554a1 1 0 0 0 1-1V8.21a.5.5 0 0 0-.15-.357l-3.804-3.71a.5.5 0 0 0-.35-.143h-1.146Z" />
         <path fillRule="evenodd" d="M6.593 5a2 2 0 0 1 2-2h4.697a1.5 1.5 0 0 1 1.047.426l3.804 3.711c.289.282.452.67.452 1.074V15a2 2 0 0 1-2 2H9.04a2 2 0 0 1-1.997-1.89l-.449-8.082V5Zm2 0v1.972L9.04 15h7.554V8.421L13.086 5H8.593Z" clipRule="evenodd" />
@@ -49,7 +49,7 @@ const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
 
 const PeopleIcon = ({ size }: { size: string }): JSX.Element => (
   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
-    <g fill="#000000">
+    <g fill="currentColor">
       <g opacity=".2">
         <path d="M9.75 7.75a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z" />
         <path fillRule="evenodd" d="M6.75 8.75a1 1 0 1 0 0-2a1 1 0 0 0 0 2Zm0 2a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z" clipRule="evenodd" />
@@ -491,6 +491,7 @@ const CommunityIcon = styled(Box)(({ theme }) => ({
   alignItems: 'center',
   justifyContent: 'center',
   fontSize: '2.5rem',
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
   transition: 'all 0.3s ease',
   '&:hover': {
     transform: 'scale(1.1) rotate(5deg)',
@@ -727,6 +728,7 @@ const ToolIcon = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   fontSize: '2rem',
   marginBottom: '1.5rem',
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
   boxShadow:
     theme.palette.mode === 'dark'
       ? '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
