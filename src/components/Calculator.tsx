@@ -538,6 +538,7 @@ const CalculatorCard = styled(Paper, {
 const useStickyFooter = (
   liteMode: boolean,
   theme: any,
+  isMobile: boolean,
 ): {
   footerRef: React.RefObject<HTMLDivElement | null>;
   placeholderRef: React.RefObject<HTMLDivElement | null>;
@@ -597,9 +598,12 @@ const useStickyFooter = (
 
     const baseBottom = 16;
     // Add space for feedback button on mobile (16px for button + 8px spacing = 24px)
-    const mobileFeedbackOffset = window.innerWidth < 600 ? 24 : 0;
+    const mobileFeedbackOffset = isMobile ? 24 : 0;
     const adjustedBaseBottom = baseBottom + mobileFeedbackOffset;
-    const maxBottom = Math.max(adjustedBaseBottom, viewportHeight - cardRect.top - footerRect.height);
+    const maxBottom = Math.max(
+      adjustedBaseBottom,
+      viewportHeight - cardRect.top - footerRect.height,
+    );
     const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
     const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
     const clampedBottom = Math.min(desiredBottom, maxBottom);
@@ -609,7 +613,7 @@ const useStickyFooter = (
       left: `${Math.round(left)}px`,
       width: `${Math.round(width)}px`,
       bottom: `${Math.round(clampedBottom)}px`,
-      zIndex: 11,
+      zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
       boxSizing: 'border-box',
       // Preserve background styling - prevent transparency in full mode
       background: liteMode
@@ -878,7 +882,7 @@ const CalculatorComponent: React.FC = () => {
     placeholderHeight,
     footerStyle,
     isSticky: _isSticky,
-  } = useStickyFooter(liteMode, theme);
+  } = useStickyFooter(liteMode, theme, isMobile);
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
