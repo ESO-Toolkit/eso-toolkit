@@ -493,27 +493,30 @@ const SectionTitle = styled(Typography, {
 
 const CommunityTitle = styled(Typography)(({ theme }) => ({
   textAlign: 'center',
-  fontSize: '2.5rem',
+  fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
   fontWeight: 700,
   marginBottom: '1.5rem',
   marginTop: '8rem',
   color: theme.palette.text.primary,
-  lineHeight: 1.2,
+  lineHeight: 1.1,
+  maxWidth: '800px',
+  margin: '8rem auto 1.5rem auto',
   [theme.breakpoints.down('md')]: {
-    fontSize: '2.2rem',
     marginTop: '6rem',
     marginBottom: '1.25rem',
+    lineHeight: 1.2,
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: '1.8rem',
+    fontSize: 'clamp(1.6rem, 5vw, 2.2rem)',
     marginTop: '4rem',
     marginBottom: '1rem',
     lineHeight: 1.3,
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: '1.6rem',
+    fontSize: 'clamp(1.4rem, 6vw, 1.8rem)',
     marginTop: '3rem',
     marginBottom: '0.8rem',
+    lineHeight: 1.4,
   },
 }));
 
@@ -1068,7 +1071,7 @@ export const LandingPage: React.FC = () => {
 
       <CommunitySection id="about">
         <Box sx={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
-          <CommunityTitle variant="h2">Built By Players,<br />For Players</CommunityTitle>
+          <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
           <SectionSubtitle sx={{ maxWidth: '800px' }}>
             ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
             Online experience. Our tools are constantly updated to match the latest game patches and
