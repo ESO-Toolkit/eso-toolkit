@@ -1,6 +1,6 @@
 import { Box, Button, Container, Typography, CircularProgress } from '@mui/material';
 import { styled, Theme } from '@mui/material/styles';
-import React, { useState } from 'react';
+import React, { useState, JSX } from 'react';
 
 import { useEsoLogsClientContext } from '../EsoLogsClientContext';
 import { useAuth } from '../features/auth/AuthContext';
@@ -8,15 +8,172 @@ import { useAuth } from '../features/auth/AuthContext';
 import { AuthenticatedLandingSection } from './AuthenticatedLandingSection';
 import { Footer } from './Footer';
 import { UnauthenticatedLandingSection } from './UnauthenticatedLandingSection';
+// Import icon components directly
+const CalculatorIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill="currentColor"
+  >
+    <g fill="currentColor">
+      <path
+        fillRule="evenodd"
+        d="M4 18.105V3.895C4 2.848 4.866 2 5.933 2h10.634c1.067 0 1.933.848 1.933 1.895v14.21c0 1.047-.866 1.895-1.933 1.895H5.933C4.866 20 4 19.152 4 18.105Z"
+        clipRule="evenodd"
+        opacity=".2"
+      />
+      <path
+        fillRule="evenodd"
+        d="M2.5 3v14A2.5 2.5 0 0 0 5 19.5h10a2.5 2.5 0 0 0 2.5-2.5V3A2.5 2.5 0 0 0 15 .5H5A2.5 2.5 0 0 0 2.5 3ZM5 18.5A1.5 1.5 0 0 1 3.5 17V3A1.5 1.5 0 0 1 5 1.5h10A1.5 1.5 0 0 1 16.5 3v14a1.5 1.5 0 0 1-1.5 1.5H5Z"
+        clipRule="evenodd"
+      />
+      <path d="M5 7.5v-4a.5.5 0 0 1 .5-.5h9a.5.5 0 0 1 .5.5v4a.5.5 0 0 1-.5.5h-9a.5.5 0 0 1-.5-.5Zm7 8.2v-4.9a.8.8 0 0 1 .8-.8h1.4a.8.8 0 0 1 .8.8v4.9a.8.8 0 0 1-.8.8h-1.4a.8.8 0 0 1-.8-.8ZM5 12v-1.5a.5.5 0 0 1 .5-.5H7a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 12Zm3.5 0v-1.5A.5.5 0 0 1 9 10h1.5a.5.5 0 0 1 .5.5V12a.5.5 0 0 1-.5.5H9a.5.5 0 0 1-.5-.5ZM5 16v-1.5a.5.5 0 0 1 .5-.5H7a.5.5 0 0 1 .5.5V16a.5.5 0 0 1-.5.5H5.5A.5.5 0 0 1 5 16Zm3.5 0v-1.5A.5.5 0 0 1 9 14h1.5a.5.5 0 0 1 .5.5V16a.5.5 0 0 1-.5.5H9a.5.5 0 0 1-.5-.5Z" />
+    </g>
+  </svg>
+);
+
+const CvIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+    <g fill="none">
+      <path
+        fill="currentColor"
+        d="M6.5 2h6.685a1.5 1.5 0 0 1 1.106.486l4.314 4.702A1.5 1.5 0 0 1 19 8.202V18.5a1.5 1.5 0 0 1-1.5 1.5h-11A1.5 1.5 0 0 1 5 18.5v-15A1.5 1.5 0 0 1 6.5 2Z"
+        opacity=".2"
+      />
+      <path
+        fill="currentColor"
+        d="M6.5 12.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Zm0 2.5a.5.5 0 0 1 0-1h7a.5.5 0 0 1 0 1h-7Z"
+      />
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M11.185 1H4.5A1.5 1.5 0 0 0 3 2.5v15A1.5 1.5 0 0 0 4.5 19h11a1.5 1.5 0 0 0 1.5-1.5V7.202a1.5 1.5 0 0 0-.395-1.014l-4.314-4.702A1.5 1.5 0 0 0 11.185 1ZM4 2.5a.5.5 0 0 1 .5-.5h6.685a.5.5 0 0 1 .369.162l4.314 4.702a.5.5 0 0 1 .132.338V17.5a.5.5 0 0 1-.5.5h-11a.5.5 0 0 1-.5-.5v-15Z"
+        clipRule="evenodd"
+      />
+      <path
+        stroke="currentColor"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        d="M11.5 2.1v4.7h4.7"
+      />
+      <path
+        fill="currentColor"
+        d="M8.134 6.133a1.067 1.067 0 1 0 0-2.133a1.067 1.067 0 0 0 0 2.133Z"
+      />
+      <path
+        fill="currentColor"
+        fillRule="evenodd"
+        d="M10.266 8.444c0-1.134-.955-1.955-2.133-1.955S6 7.309 6 8.444v.534a.356.356 0 0 0 .356.355h3.555a.356.356 0 0 0 .355-.355v-.534Z"
+        clipRule="evenodd"
+      />
+    </g>
+  </svg>
+);
+
+const FileLoopIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+    <g fill="currentColor">
+      <g opacity=".2">
+        <path d="M12.143 4h-3.55a1 1 0 0 0-1 1v2l.448 8.056a1 1 0 0 0 .998.944h7.554a1 1 0 0 0 1-1V8.21a.5.5 0 0 0-.15-.357l-3.804-3.71a.5.5 0 0 0-.35-.143h-1.146Z" />
+        <path
+          fillRule="evenodd"
+          d="M6.593 5a2 2 0 0 1 2-2h4.697a1.5 1.5 0 0 1 1.047.426l3.804 3.711c.289.282.452.67.452 1.074V15a2 2 0 0 1-2 2H9.04a2 2 0 0 1-1.997-1.89l-.449-8.082V5Zm2 0v1.972L9.04 15h7.554V8.421L13.086 5H8.593Z"
+          clipRule="evenodd"
+        />
+        <path d="M11.66 13.693c-.82 1.43-2.851 1.806-4.537.84c-1.686-.967-2.389-2.91-1.57-4.34c.82-1.43 2.851-1.805 4.538-.839c1.686.967 2.389 2.91 1.569 4.34Z" />
+        <path
+          fillRule="evenodd"
+          d="M9.593 10.222c-1.346-.772-2.7-.353-3.172.469c-.471.822-.148 2.202 1.199 2.974c1.347.772 2.701.353 3.172-.469c.472-.822.148-2.202-1.199-2.974Zm-4.907-.526c1.168-2.037 3.876-2.37 5.902-1.21c2.026 1.162 3.107 3.667 1.94 5.704c-.999 1.743-3.124 2.239-4.985 1.62l-1.622 2.831a1 1 0 0 1-1.735-.994l1.622-2.831c-1.475-1.293-2.12-3.377-1.122-5.12Z"
+          clipRule="evenodd"
+        />
+      </g>
+      <path
+        fillRule="evenodd"
+        d="M5.5 4a2 2 0 0 1 2-2h5.1a.5.5 0 0 1 .35.144l4.4 4.333a.5.5 0 0 1 .15.356V14a2 2 0 0 1-2 2h-9a.5.5 0 0 1 0-1h9a1 1 0 0 0 1-1V7.333h-2.9a1.5 1.5 0 0 1-1.5-1.5V3H7.5a1 1 0 0 0-1 1v2.5a.5.5 0 0 1-1 0V4Zm7.6-.306l2.68 2.64H13.6a.5.5 0 0 1-.5-.5v-2.14Z"
+        clipRule="evenodd"
+      />
+      <path
+        fillRule="evenodd"
+        d="M7.998 8.628a2.291 2.291 0 1 0-2.15 4.047a2.291 2.291 0 0 0 2.15-4.047Zm-3.981.48a3.291 3.291 0 1 1 1.82 4.652l-1.61 3.03a.5.5 0 1 1-.883-.47l1.61-3.03a3.292 3.292 0 0 1-.937-4.183Z"
+        clipRule="evenodd"
+      />
+    </g>
+  </svg>
+);
+
+const PeopleIcon = ({ size }: { size: string }): JSX.Element => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20">
+    <g fill="currentColor">
+      <g opacity=".2">
+        <path d="M9.75 7.75a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z" />
+        <path
+          fillRule="evenodd"
+          d="M6.75 8.75a1 1 0 1 0 0-2a1 1 0 0 0 0 2Zm0 2a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z"
+          clipRule="evenodd"
+        />
+        <path
+          fillRule="evenodd"
+          d="M6.8 11.5A1.5 1.5 0 0 0 5.3 13v1.5a1 1 0 0 1-2 0V13a3.5 3.5 0 0 1 7 0v.5a1 1 0 1 1-2 0V13a1.5 1.5 0 0 0-1.5-1.5Z"
+          clipRule="evenodd"
+        />
+        <path d="M12.75 7.75a3 3 0 1 0 6 0a3 3 0 0 0-6 0Z" />
+        <path
+          fillRule="evenodd"
+          d="M15.75 8.75a1 1 0 1 1 0-2a1 1 0 0 1 0 2Zm0 2a3 3 0 1 1 0-6a3 3 0 0 1 0 6Z"
+          clipRule="evenodd"
+        />
+        <path
+          fillRule="evenodd"
+          d="M15.7 11.5a1.5 1.5 0 0 1 1.5 1.5v1.5a1 1 0 1 0 2 0V13a3.5 3.5 0 0 0-7 0v.5a1 1 0 1 0 2 0V13a1.5 1.5 0 0 1 1.5-1.5Z"
+          clipRule="evenodd"
+        />
+        <path
+          fillRule="evenodd"
+          d="M11.3 14.25a1.5 1.5 0 0 0-1.5 1.5v1.5a1 1 0 0 1-2 0v-1.5a3.5 3.5 0 0 1 7 0v1.5a1 1 0 1 1-2 0v-1.5a1.5 1.5 0 0 0-1.5-1.5Z"
+          clipRule="evenodd"
+        />
+        <path d="M14.25 10.5a3 3 0 1 1-6 0a3 3 0 0 1 6 0Z" />
+        <path
+          fillRule="evenodd"
+          d="M11.25 11.5a1 1 0 1 0 0-2a1 1 0 0 0 0 2Zm0 2a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z"
+          clipRule="evenodd"
+        />
+        <path d="M4.25 11.5h5v4h-5v-4Zm9 0h5v4h-5v-4Z" />
+        <path d="M9.25 13.5h4l.5 4.75h-5l.5-4.75Z" />
+      </g>
+      <path
+        fillRule="evenodd"
+        d="M5 9a2 2 0 1 0 0-4a2 2 0 0 0 0 4Zm0 1a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z"
+        clipRule="evenodd"
+      />
+      <path
+        fillRule="evenodd"
+        d="M3.854 8.896a.5.5 0 0 1 0 .708l-.338.337A3.47 3.47 0 0 0 2.5 12.394v1.856a.5.5 0 1 1-1 0v-1.856a4.47 4.47 0 0 1 1.309-3.16l.337-.338a.5.5 0 0 1 .708 0Zm11.792-.3a.5.5 0 0 0 0 .708l.338.337A3.469 3.469 0 0 1 17 12.094v2.156a.5.5 0 0 0 1 0v-2.156a4.47 4.47 0 0 0-1.309-3.16l-.337-.338a.5.5 0 0 0-.708 0Z"
+        clipRule="evenodd"
+      />
+      <path
+        fillRule="evenodd"
+        d="M14 9a2 2 0 1 1 0-4a2 2 0 0 1 0 4Zm0 1a3 3 0 1 1 0-6a3 3 0 0 1 0 6Zm-4.5 3.25a2.5 2.5 0 0 0-2.5 2.5v1.3a.5.5 0 0 1-1 0v-1.3a3.5 3.5 0 0 1 7 0v1.3a.5.5 0 1 1-1 0v-1.3a2.5 2.5 0 0 0-2.5-2.5Z"
+        clipRule="evenodd"
+      />
+      <path
+        fillRule="evenodd"
+        d="M9.5 11.75a2 2 0 1 0 0-4a2 2 0 0 0 0 4Zm0 1a3 3 0 1 0 0-6a3 3 0 0 0 0 6Z"
+        clipRule="evenodd"
+      />
+    </g>
+  </svg>
+);
 
 // Styled components using your existing design
 const LandingContainer = styled(Box)(({ theme }) => ({
   minHeight: '100vh',
   background: theme.palette.mode === 'dark' ? theme.palette.background.default : 'transparent',
   position: 'relative',
-  overflow: 'visible',
+  overflowX: 'hidden',
   width: '100%',
-  maxWidth: '100vw',
   display: 'flex',
   flexDirection: 'column',
   alignItems: 'center',
@@ -42,9 +199,13 @@ const HeroSection = styled(Box, {
   },
   [theme.breakpoints.down('sm')]: {
     minHeight: '60vh',
-    padding: '1rem 1rem 0rem',
+    padding: '0.75rem 0.75rem 0rem',
     alignItems: 'flex-start',
-    paddingTop: '3rem',
+    paddingTop: '2rem',
+  },
+  [theme.breakpoints.down(360)]: {
+    padding: '0.5rem 0.5rem 0rem',
+    paddingTop: '1.5rem',
   },
   ...(showAnimations && {
     '&::before': {
@@ -65,8 +226,8 @@ const HeroSection = styled(Box, {
       top: '20%',
       left: '50%',
       transform: 'translateX(-50%)',
-      width: '600px',
-      height: '300px',
+      width: { xs: '90%', sm: '600px' },
+      height: { xs: '150px', sm: '300px' },
       background:
         'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
       borderRadius: '50%',
@@ -134,6 +295,13 @@ const HeroTitle = styled(Typography, {
       ? '0 2px 4px rgba(0, 0, 0, 0.3)'
       : '0 1px 2px rgba(15, 23, 42, 0.1)',
   animation: showAnimations ? 'shimmer 3s ease-in-out infinite' : 'none',
+  '@media (max-width: 480px) and (prefers-reduced-motion: reduce)': {
+    animation: 'none',
+    textShadow:
+      theme.palette.mode === 'dark'
+        ? '0 2px 4px rgba(0, 0, 0, 0.3)'
+        : '0 1px 2px rgba(15, 23, 42, 0.1)',
+  },
   margin: '0 auto 2rem auto',
   textAlign: 'center',
   width: '100%',
@@ -159,12 +327,12 @@ const HeroTitle = styled(Typography, {
     lineHeight: 1.5,
   },
   [theme.breakpoints.down('sm')]: {
-    fontSize: 'clamp(2.8rem, 6vw, 2.5rem)',
+    fontSize: 'clamp(2rem, 6vw, 2.2rem)',
     lineHeight: 1.5,
     marginBottom: '1.5rem',
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: 'clamp(2.3rem, 7vw, 2rem)',
+    fontSize: 'clamp(1.8rem, 7vw, 1.9rem)',
     lineHeight: 1.5,
   },
   '@keyframes shimmer': {
@@ -260,7 +428,7 @@ const HeroSubtitle = styled(Typography)(({ theme }) => ({
     lineHeight: 1.6,
   },
   [theme.breakpoints.down(480)]: {
-    fontSize: '1.1m',
+    fontSize: '1.1rem',
     margin: '12px auto 24px auto',
   },
 }));
@@ -331,33 +499,202 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
   },
 }));
 
-const ToolsSection = styled(Container)(({ theme }) => ({
-  padding: '0rem 0rem 0rem 0rem',
-  paddingTop: 0,
-  maxWidth: '1200px',
-  [theme.breakpoints.down('sm')]: {
-    padding: '0rem 1rem', // This adds 1rem padding on left and right for mobile
+const CommunitySection = styled(Box)(({ theme }) => ({
+  padding: '4rem 0',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%)'
+      : 'linear-gradient(180deg, transparent 0%, rgba(241, 245, 249, 0.5) 50%, transparent 100%)',
+  position: 'relative',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent)',
   },
+  [theme.breakpoints.down('md')]: {
+    padding: '3rem 0',
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '2rem 0',
+  },
+}));
+
+const CommunityGrid = styled(Box)(({ theme }) => ({
+  display: 'grid',
+  gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+  gap: '2rem',
+  maxWidth: '1200px',
+  margin: '0 auto',
+  padding: '0 2rem',
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: '1fr',
+    gap: '1.5rem',
+    padding: '0 1rem',
+  },
+}));
+
+const CommunityCard = styled(Box)(({ theme }) => ({
+  background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.6)',
+  backdropFilter: 'blur(10px)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.1)'
+      : '1px solid rgba(30, 41, 59, 0.1)',
+  borderRadius: '16px',
+  padding: '2rem',
+  textAlign: 'center',
+  transition: 'all 0.3s ease',
+  position: 'relative',
+  overflow: 'hidden',
+  '&::before': {
+    content: '""',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: '1px',
+    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.4), transparent)',
+    opacity: 0,
+    transition: 'opacity 0.3s ease',
+  },
+  '&:hover': {
+    transform: 'translateY(-4px)',
+    borderColor: 'rgba(56, 189, 248, 0.2)',
+    '&::before': {
+      opacity: 1,
+    },
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '1.5rem',
+  },
+}));
+
+const CommunityIcon = styled(Box)(({ theme }) => ({
+  width: '80px',
+  height: '80px',
+  margin: '0 auto 1.5rem',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1))'
+      : 'linear-gradient(135deg, rgba(56, 189, 248, 0.08), rgba(0, 225, 255, 0.05))',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(56, 189, 248, 0.2)'
+      : '1px solid rgba(56, 189, 248, 0.15)',
+  borderRadius: '50%',
+  display: 'flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  fontSize: '2.5rem',
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
+  transition: 'all 0.3s ease',
+  '&:hover': {
+    transform: 'scale(1.1) rotate(5deg)',
+  },
+}));
+
+const CommunityStats = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  justifyContent: 'center',
+  gap: '3rem',
+  margin: '3rem 0',
+  flexWrap: 'wrap',
+  [theme.breakpoints.down('md')]: {
+    gap: '2rem',
+    margin: '2rem 0',
+  },
+  [theme.breakpoints.down('sm')]: {
+    gap: '1.5rem',
+  },
+}));
+
+const StatItem = styled(Box)(({ theme: _theme }) => ({
+  textAlign: 'center',
+  flex: '1',
+  minWidth: '120px',
+}));
+
+const StatNumber = styled(Typography)(({ theme }) => ({
+  fontSize: '2.5rem',
+  fontWeight: 800,
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, #38bdf8 0%, #00e1ff 100%)'
+      : 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  marginBottom: '0.5rem',
+  [theme.breakpoints.down('sm')]: {
+    fontSize: '2rem',
+  },
+}));
+
+const StatLabel = styled(Typography)(({ theme }) => ({
+  fontSize: '0.9rem',
+  color: theme.palette.text.secondary,
+  fontWeight: 500,
+  textTransform: 'uppercase',
+  letterSpacing: '0.05em',
 }));
 
 const SectionTitle = styled(Typography, {
   shouldForwardProp: (prop) => prop !== 'theme',
-})<{ theme?: Theme }>(({ theme }) => ({
+})<{ theme?: Theme }>(({ theme: _theme }) => ({
   textAlign: 'center',
   fontSize: '2.5rem',
   fontWeight: 700,
   marginBottom: '1.5rem',
   marginTop: '8rem',
-  color: theme.palette.text.primary,
-  [theme.breakpoints.down('md')]: {
+  color: _theme?.palette.text.primary,
+  [_theme?.breakpoints.down('md')]: {
     fontSize: '2.2rem',
     marginTop: '6rem',
     marginBottom: '1.25rem',
   },
-  [theme.breakpoints.down('sm')]: {
+  [_theme?.breakpoints.down('sm')]: {
     fontSize: '2rem',
     marginTop: '4rem',
     marginBottom: '1rem',
+  },
+}));
+
+const CommunityTitle = styled(Typography)(({ theme }) => ({
+  textAlign: 'center',
+  fontSize: 'clamp(1.8rem, 4vw, 2.8rem)',
+  fontWeight: 700,
+  marginBottom: '1.5rem',
+  marginTop: '8rem',
+  color: theme.palette.text.primary,
+  lineHeight: 1.1,
+  maxWidth: '800px',
+  margin: '8rem auto 1.5rem auto',
+  [theme.breakpoints.down('md')]: {
+    marginTop: '6rem',
+    marginBottom: '1.25rem',
+    lineHeight: 1.2,
+  },
+  [theme.breakpoints.down('sm')]: {
+    fontSize: 'clamp(1.6rem, 5vw, 2.2rem)',
+    marginTop: '4rem',
+    marginBottom: '1rem',
+    lineHeight: 1.3,
+  },
+  [theme.breakpoints.down(480)]: {
+    fontSize: 'clamp(1.4rem, 6vw, 1.8rem)',
+    marginTop: '3rem',
+    marginBottom: '0.8rem',
+    lineHeight: 1.4,
+  },
+  [theme.breakpoints.down(360)]: {
+    fontSize: 'clamp(1.2rem, 7vw, 1.6rem)',
+    marginTop: '2rem',
+    marginBottom: '0.6rem',
+    lineHeight: 1.4,
   },
 }));
 
@@ -382,14 +719,34 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
   },
 }));
 
-const ToolsGrid = styled(Box)(({ theme: _theme }) => ({
-  display: 'grid',
-  gap: '1.5rem',
-  marginTop: '3rem',
-  gridTemplateColumns: '1fr',
-  maxWidth: '800px',
-  margin: '3rem auto 0 auto',
+const ToolsSection = styled(Container)(({ theme }) => ({
+  padding: '0rem 0rem 0rem 0rem',
+  paddingTop: 0,
+  maxWidth: '1200px',
+  [theme.breakpoints.down('sm')]: {
+    padding: '0rem 1rem',
+  },
 }));
+
+const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => (
+  <Box
+    sx={{
+      display: 'grid',
+      gap: '1.5rem',
+      marginTop: '3rem',
+      gridTemplateColumns: {
+        xs: '1fr',
+        sm: '1fr',
+        md: '1fr 1fr',
+        lg: '1fr 1fr',
+      },
+      maxWidth: '800px',
+      margin: '0 auto',
+    }}
+  >
+    {children}
+  </Box>
+);
 
 const ToolCard = styled(Box)(({ theme }) => ({
   background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
@@ -477,6 +834,7 @@ const ToolIcon = styled(Box)(({ theme }) => ({
   justifyContent: 'center',
   fontSize: '2rem',
   marginBottom: '1.5rem',
+  color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
   boxShadow:
     theme.palette.mode === 'dark'
       ? '0 4px 20px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
@@ -613,6 +971,9 @@ const ParticleContainer = styled(Box)(({ theme }) => ({
   zIndex: 1,
   overflow: 'hidden',
   [theme.breakpoints.down('sm')]: {
+    display: 'none',
+  },
+  '@media (max-width: 480px) and (prefers-reduced-motion: reduce)': {
     display: 'none',
   },
 }));
@@ -805,7 +1166,9 @@ export const LandingPage: React.FC = () => {
 
         <ToolsGrid>
           <ToolCard>
-            <ToolIcon>📝</ToolIcon>
+            <ToolIcon>
+              <CvIcon size="2rem" />
+            </ToolIcon>
             <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Text Editor
             </Typography>
@@ -825,7 +1188,9 @@ export const LandingPage: React.FC = () => {
           </ToolCard>
 
           <ToolCard>
-            <ToolIcon>🧮</ToolIcon>
+            <ToolIcon>
+              <CalculatorIcon size="2rem" />
+            </ToolIcon>
             <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Build Calculator
             </Typography>
@@ -849,7 +1214,9 @@ export const LandingPage: React.FC = () => {
           </ToolCard>
 
           <ToolCard>
-            <ToolIcon>📊</ToolIcon>
+            <ToolIcon>
+              <FileLoopIcon size="2rem" />
+            </ToolIcon>
             <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               ESO Log Analyzer
             </Typography>
@@ -880,7 +1247,9 @@ export const LandingPage: React.FC = () => {
 
           <ToolCard>
             <ComingSoonBadge>Coming Soon</ComingSoonBadge>
-            <ToolIcon>🤖</ToolIcon>
+            <ToolIcon>
+              <PeopleIcon size="2rem" />
+            </ToolIcon>
             <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
               Discord Roster Bot
             </Typography>
@@ -901,14 +1270,78 @@ export const LandingPage: React.FC = () => {
         </ToolsGrid>
       </ToolsSection>
 
-      <ToolsSection id="about">
-        <SectionTitle variant="h2">Built By Players, For Players</SectionTitle>
-        <SectionSubtitle>
-          ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
-          Online experience. Our tools are constantly updated to match the latest game patches and
-          meta changes.
-        </SectionSubtitle>
-      </ToolsSection>
+      <CommunitySection id="about">
+        <Box sx={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+          <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
+          <SectionSubtitle sx={{ maxWidth: '800px' }}>
+            ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
+            Online experience. Our tools are constantly updated to match the latest game patches and
+            meta changes.
+          </SectionSubtitle>
+
+          <CommunityStats>
+            <StatItem>
+              <StatNumber>
+                <CalculatorIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>Calculator</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>
+                <CvIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>Editor</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>
+                <FileLoopIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>Analytics</StatLabel>
+            </StatItem>
+            <StatItem>
+              <StatNumber>
+                <PeopleIcon size="2.5rem" />
+              </StatNumber>
+              <StatLabel>RosterBot</StatLabel>
+            </StatItem>
+          </CommunityStats>
+
+          <CommunityGrid>
+            <CommunityCard>
+              <CommunityIcon>🎮</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Passionate Gamers
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                We&apos;re dedicated ESO players who understand the game&apos;s mechanics and
+                community needs. Our tools are built from real gameplay experience.
+              </Typography>
+            </CommunityCard>
+
+            <CommunityCard>
+              <CommunityIcon>🔄</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Up to Date
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                Stay current with the latest patches, balance changes, and meta shifts. Our tools
+                are updated regularly to ensure you have the best resources at your fingertips.
+              </Typography>
+            </CommunityCard>
+
+            <CommunityCard>
+              <CommunityIcon>💬</CommunityIcon>
+              <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
+                Community Driven
+              </Typography>
+              <Typography sx={{ color: 'text.secondary', lineHeight: 1.6 }}>
+                Your feedback shapes our development. Join our Discord community to suggest
+                features, report bugs, and connect with fellow players.
+              </Typography>
+            </CommunityCard>
+          </CommunityGrid>
+        </Box>
+      </CommunitySection>
 
       <Footer />
     </LandingContainer>

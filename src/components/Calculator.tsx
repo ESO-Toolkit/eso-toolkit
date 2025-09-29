@@ -1284,11 +1284,11 @@ const CalculatorComponent: React.FC = () => {
           fontWeight: 500,
           // Hide spin buttons for a cleaner look
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
-            '-webkit-appearance': 'none',
+            WebkitAppearance: 'none',
             margin: 0,
           },
           '&[type=number]': {
-            '-moz-appearance': 'textfield',
+            MozAppearance: 'textfield',
           },
         },
         '& .MuiInputLabel-root': {
