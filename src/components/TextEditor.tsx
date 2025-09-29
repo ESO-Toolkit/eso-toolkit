@@ -324,20 +324,23 @@ const CharCounter = styled(Box)(({ theme }) => ({
   gap: '8px',
   padding: '6px 12px',
   borderRadius: '20px',
-  background: theme.palette.mode === 'dark'
-    ? 'linear-gradient(135deg, rgba(226, 184, 77, 0.2) 0%, rgba(226, 184, 77, 0.1) 50%, rgba(226, 184, 77, 0.05) 100%)'
-    : 'linear-gradient(135deg, rgba(120, 120, 120, 0.15) 0%, rgba(100, 100, 100, 0.12) 50%, rgba(80, 80, 80, 0.08) 100%)',
-  border: theme.palette.mode === 'dark'
-    ? '1px solid rgba(226, 184, 77, 0.3)'
-    : '1px solid rgba(226, 184, 77, 0.4)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgba(226, 184, 77, 0.2) 0%, rgba(226, 184, 77, 0.1) 50%, rgba(226, 184, 77, 0.05) 100%)'
+      : 'linear-gradient(135deg, rgba(120, 120, 120, 0.15) 0%, rgba(100, 100, 100, 0.12) 50%, rgba(80, 80, 80, 0.08) 100%)',
+  border:
+    theme.palette.mode === 'dark'
+      ? '1px solid rgba(226, 184, 77, 0.3)'
+      : '1px solid rgba(226, 184, 77, 0.4)',
   backdropFilter: 'blur(8px) saturate(150%)',
   WebkitBackdropFilter: 'blur(8px) saturate(150%)',
   transition: 'all 0.2s ease-in-out',
   '&:hover': {
     transform: 'translateY(-1px)',
-    boxShadow: theme.palette.mode === 'dark'
-      ? '0 4px 12px rgba(226, 184, 77, 0.2)'
-      : '0 4px 12px rgba(226, 184, 77, 0.25)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 4px 12px rgba(226, 184, 77, 0.2)'
+        : '0 4px 12px rgba(226, 184, 77, 0.25)',
   },
 }));
 
@@ -1493,7 +1496,10 @@ export const TextEditor: React.FC = () => {
                 sx={{
                   width: '1px',
                   height: '16px',
-                  background: theme.palette.mode === 'dark' ? 'rgba(226, 184, 77, 0.3)' : 'rgba(226, 184, 77, 0.5)',
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(226, 184, 77, 0.3)'
+                      : 'rgba(226, 184, 77, 0.5)',
                   mx: '4px',
                 }}
               />
