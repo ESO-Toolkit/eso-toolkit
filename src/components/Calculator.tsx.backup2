@@ -4,13 +4,13 @@ import {
   Info as InfoIcon,
   HelpOutline as HelpOutlineIcon,
   ExpandMore as ExpandMoreIcon,
-  SelectAll as SelectAllIcon,
-  Clear as ClearIcon,
 } from '@mui/icons-material';
 import {
   Box,
   Typography,
   Container,
+  Tabs,
+  Tab,
   Paper,
   FormControlLabel,
   Switch,
@@ -535,16 +535,7 @@ const CalculatorCard = styled(Paper, {
 }));
 
 // JavaScript-based sticky positioning hook
-const useStickyFooter = (
-  liteMode: boolean,
-  theme: any,
-): {
-  footerRef: React.RefObject<HTMLDivElement | null>;
-  placeholderRef: React.RefObject<HTMLDivElement | null>;
-  placeholderHeight: string;
-  footerStyle: React.CSSProperties;
-  isSticky: boolean;
-} => {
+const useStickyFooter = () => {
   const footerRef = useRef<HTMLDivElement>(null);
   const placeholderRef = useRef<HTMLDivElement>(null);
   const [isSticky, setIsSticky] = useState(false);
@@ -555,6 +546,29 @@ const useStickyFooter = (
   const tickerRef = useRef<number | null>(null);
   const cardRectSignatureRef = useRef<string>('');
   const placeholderWidthRef = useRef<number>(0);
+  const globalFooterRef = useRef<HTMLElement | null>(null);
+  const releasedDueToOverlapRef = useRef<boolean>(false);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return;
+    }
+
+    const selectors = [
+      '[data-site-footer]',
+      'footer[role="contentinfo"]',
+      'footer.site-footer',
+      'footer',
+    ];
+
+    for (const selector of selectors) {
+      const el = document.querySelector(selector) as HTMLElement | null;
+      if (el) {
+        globalFooterRef.current = el;
+        break;
+      }
+    }
+  }, []);
 
   const runMeasurement = useCallback(() => {
     const footerEl = footerRef.current;
@@ -573,14 +587,70 @@ const useStickyFooter = (
     const footerRect = footerEl.getBoundingClientRect();
     const placeholderRect = placeholderEl?.getBoundingClientRect();
     const viewportHeight = window.innerHeight;
+    const globalFooterRect = globalFooterRef.current?.getBoundingClientRect() ?? null;
 
-    const cardBottomThreshold = viewportHeight - 8;
-    const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
+    const bottomBoundary = Math.min(
+      cardRect.bottom,
+      globalFooterRect ? globalFooterRect.top : Number.POSITIVE_INFINITY,
+    );
+    const boundaryOverlap = bottomBoundary < viewportHeight ? viewportHeight - bottomBoundary : 0;
+    const baseBottomPadding = 16;
+    const adjustedBottom = baseBottomPadding + boundaryOverlap;
+    const footerHeightValue = Math.max(footerRect.height, 96);
+    const maxBottomOffset = Math.max(baseBottomPadding, viewportHeight - Math.round(footerHeightValue * 1.1));
+    const clampedBottom = Math.min(Math.max(baseBottomPadding, adjustedBottom), maxBottomOffset);
+
+    const footerHeight = `${Math.round(footerRect.height)}px`;
+
+    const enterThreshold = viewportHeight - footerRect.height - clampedBottom;
+    const exitThreshold = footerRect.height + clampedBottom;
+    const recoveryBuffer = footerRect.height + baseBottomPadding * 2;
+
+    let shouldStick = isSticky
+      ? cardRect.bottom > exitThreshold
+      : cardRect.bottom >= enterThreshold && cardRect.top < viewportHeight;
+
+    const requiresRelease = boundaryOverlap > baseBottomPadding;
+    if (requiresRelease) {
+      releasedDueToOverlapRef.current = true;
+      shouldStick = false;
+    } else if (releasedDueToOverlapRef.current) {
+      const recoveryThreshold = viewportHeight + recoveryBuffer;
+      if (bottomBoundary >= recoveryThreshold) {
+        releasedDueToOverlapRef.current = false;
+      } else {
+        shouldStick = false;
+      }
+    }
+
+    if (process.env.NODE_ENV === 'development') {
+      const metrics = {
+        cardTop: Math.round(cardRect.top),
+        cardBottom: Math.round(cardRect.bottom),
+        viewportHeight,
+        footerHeight: Math.round(footerRect.height),
+        isSticky,
+        shouldStick,
+        bottomBoundary: Math.round(bottomBoundary),
+        boundaryOverlap: Math.round(boundaryOverlap),
+        releasedDueToOverlap: releasedDueToOverlapRef.current,
+        thresholds: {
+          enter: Math.round(enterThreshold),
+          exit: Math.round(exitThreshold),
+        },
+      };
+      const shouldLogMetrics = shouldStick !== isSticky;
+      if (shouldLogMetrics) {
+        console.log('[sticky-footer metrics]', JSON.stringify(metrics));
+      }
+    }
 
     if (!shouldStick) {
       if (isSticky) {
         setIsSticky(false);
         setFooterStyle({});
+      }
+      if (placeholderHeight !== 'auto') {
         setPlaceholderHeight('auto');
       }
       return;
@@ -595,12 +665,6 @@ const useStickyFooter = (
       : Math.max(0, cardRect.width - paddingLeft - paddingRight);
     const left = placeholderRect ? placeholderRect.left : cardRect.left + paddingLeft;
 
-    const baseBottom = 16;
-    const maxBottom = Math.max(baseBottom, viewportHeight - cardRect.top - footerRect.height);
-    const minBottom = Math.max(0, viewportHeight - cardRect.bottom);
-    const desiredBottom = minBottom > 0 ? minBottom : baseBottom;
-    const clampedBottom = Math.min(desiredBottom, maxBottom);
-
     const nextStyle: React.CSSProperties = {
       position: 'fixed',
       left: `${Math.round(left)}px`,
@@ -608,30 +672,28 @@ const useStickyFooter = (
       bottom: `${Math.round(clampedBottom)}px`,
       zIndex: 11,
       boxSizing: 'border-box',
-      // Preserve background styling - prevent transparency in full mode
-      background: liteMode
-        ? 'transparent'
-        : theme.palette.mode === 'dark'
-          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-      borderRadius: liteMode ? '0' : '12px',
-      boxShadow: liteMode
-        ? 'none'
-        : theme.palette.mode === 'dark'
-          ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
     };
 
-    const footerHeight = `${Math.round(footerRect.height)}px`;
     if (placeholderHeight !== footerHeight) {
       setPlaceholderHeight(footerHeight);
     }
 
-    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}`;
+    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}|${cardRect.bottom}`;
     const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
     if (cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky) {
       cardRectSignatureRef.current = newSignature;
       placeholderWidthRef.current = width;
+      if (process.env.NODE_ENV === 'development') {
+        const styleMetrics = {
+          left: Math.round(left),
+          width: Math.round(width),
+          clampedBottom: Math.round(clampedBottom),
+          cardTop: Math.round(cardRect.top),
+          cardBottom: Math.round(cardRect.bottom),
+          placeholderWidth: placeholderRect ? Math.round(placeholderRect.width) : null,
+        };
+        console.log('[sticky-footer style]', JSON.stringify(styleMetrics));
+      }
       setFooterStyle(nextStyle);
       if (!isSticky) {
         setIsSticky(true);
@@ -643,7 +705,8 @@ const useStickyFooter = (
         setIsSticky(true);
       }
     }
-  }, [isSticky, placeholderHeight, liteMode, theme.palette.mode]);
+
+  }, [isSticky, placeholderHeight]);
 
   const scheduleMeasurement = useCallback(() => {
     if (rafRef.current !== null) {
@@ -658,11 +721,11 @@ const useStickyFooter = (
   useEffect(() => {
     runMeasurement();
 
-    const handleScroll = (): void => {
+    const handleScroll = () => {
       runMeasurement();
       scheduleMeasurement();
     };
-    const handleResize = (): void => {
+    const handleResize = () => {
       runMeasurement();
       scheduleMeasurement();
     };
@@ -689,7 +752,7 @@ const useStickyFooter = (
       return;
     }
 
-    const tick = (): void => {
+    const tick = () => {
       runMeasurement();
       tickerRef.current = window.requestAnimationFrame(tick);
     };
@@ -717,9 +780,7 @@ const useStickyFooter = (
       observer.observe(footerRef.current);
     }
 
-    const calculatorCard = footerRef.current?.closest(
-      '[data-calculator-card]',
-    ) as HTMLElement | null;
+    const calculatorCard = footerRef.current?.closest('[data-calculator-card]') as HTMLElement | null;
     if (calculatorCard) {
       observer.observe(calculatorCard);
     }
@@ -738,6 +799,7 @@ const _TotalSection = styled(Box)<{ isLiteMode: boolean }>(
   }),
 );
 
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -747,23 +809,23 @@ interface TabPanelProps {
 function TabPanel(props: TabPanelProps): React.JSX.Element {
   const { children, value, index, ...other } = props;
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`calculator-tabpanel-${index}`}
-        aria-labelledby={`calculator-tab-${index}`}
-        {...other}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        style={{ display: value === index ? 'block' : 'none' }}
-      >
-        {value === index && <Box>{children}</Box>}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`calculator-tabpanel-${index}`}
+      aria-labelledby={`calculator-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
   );
+}
+
+function a11yProps(index: number): { id: string; 'aria-controls': string } {
+  return {
+    id: `calculator-tab-${index}`,
+    'aria-controls': `calculator-tabpanel-${index}`,
+  };
 }
 
 // Custom styled alert component that matches SkillTooltip styling
@@ -783,7 +845,9 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
         minWidth: 240,
         border: `1px solid ${alpha(theme.palette.common.white, 0.1)}`,
         backgroundColor:
-          theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.9)' : 'rgba(255, 255, 255, 0.9)',
+          theme.palette.mode === 'dark'
+            ? alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.95)
+            : alpha(theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)", 0.98),
         // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
         WebkitBackdropFilter: 'blur(10px)',
       }}
@@ -869,13 +933,8 @@ const CalculatorComponent: React.FC = () => {
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
 
   // JavaScript-based sticky footer
-  const {
-    footerRef,
-    placeholderRef,
-    placeholderHeight,
-    footerStyle,
-    isSticky: _isSticky,
-  } = useStickyFooter(liteMode, theme);
+  const { footerRef, placeholderRef, placeholderHeight, footerStyle, isSticky } = useStickyFooter();
+    
 
   // Calculate total values
   const calculateItemValue = useCallback((item: CalculatorItem): number => {
@@ -1406,8 +1465,8 @@ const CalculatorComponent: React.FC = () => {
           >
             <TextField
               size={isMobile ? 'medium' : 'small'}
-              type="number"
-              value={hasQuantity ? item.quantity : '-'}
+              type={hasQuantity ? 'number' : 'text'}
+              value={hasQuantity ? item.quantity : ''}
               onChange={
                 hasQuantity
                   ? (e) =>
@@ -1421,12 +1480,16 @@ const CalculatorComponent: React.FC = () => {
               }
               disabled={!hasQuantity || item.locked}
               placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-              inputProps={{
-                min: hasQuantity ? item.minQuantity || 0 : 0,
-                max: hasQuantity ? item.maxQuantity || 100 : 0,
-                step: hasQuantity ? item.step || 1 : 1,
-                readOnly: !hasQuantity,
-              }}
+              inputProps={
+                hasQuantity
+                  ? {
+                      min: item.minQuantity || 0,
+                      max: item.maxQuantity || 100,
+                      step: item.step || 1,
+                      inputMode: 'numeric',
+                    }
+                  : { readOnly: true }
+              }
               sx={{
                 ...textFieldStyles,
                 '& .MuiInputBase-root': {
@@ -1705,7 +1768,8 @@ const CalculatorComponent: React.FC = () => {
     };
   };
 
-  const renderSummaryFooter = ({
+  
+const renderSummaryFooter = ({
     label,
     value,
     valueSuffix = '',
@@ -1718,7 +1782,7 @@ const CalculatorComponent: React.FC = () => {
     status: SummaryStatus;
     rangeDescription: string;
   }): React.JSX.Element => {
-    const statusVisual = getStatusVisuals(status);
+        const statusVisual = getStatusVisuals(status);
     const StatusIcon = statusVisual.Icon;
 
     const surfaceStyles = liteMode
@@ -1937,17 +2001,17 @@ const CalculatorComponent: React.FC = () => {
               minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
             },
             '& .MuiTab-root': {
-              minHeight: isExtraSmall ? '48px' : isMobile ? '52px' : 'auto',
-              fontSize: isExtraSmall ? '0.8rem' : isMobile ? '0.85rem' : '0.9rem',
-              padding: isExtraSmall ? '6px 8px' : isMobile ? '8px 12px' : '12px 16px',
+              fontSize: isTablet ? '0.9rem' : '1rem',
+              fontWeight: 600,
+              minHeight: isTablet ? 44 : 48,
+              padding: isTablet ? '10px 16px' : '12px 24px',
               textTransform: 'none',
-              borderRadius: '8px',
+              borderRadius: '8px 8px 0 0',
               color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.secondary,
               transition: 'all 0.2s ease',
               border: '1px solid transparent',
+              borderBottom: 'none',
               marginRight: 1,
-              // Enhanced tablet and mobile touch targets
-              minWidth: isTablet ? '100px' : 'auto',
               '&:hover': {
                 color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.primary.main,
                 backgroundColor:
@@ -1963,11 +2027,13 @@ const CalculatorComponent: React.FC = () => {
                     ? 'rgba(128, 211, 255, 0.15)'
                     : 'rgba(40, 145, 200, 0.08)',
                 border: '1px solid rgba(40, 145, 200, 0.5)',
-                borderRadius: '8px',
+                borderRadius: '8px 8px 0 0',
               },
             },
             '& .MuiTabs-indicator': {
-              display: 'none',
+              height: 3,
+              borderRadius: '3px 3px 0 0',
+              backgroundColor: theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 90%)' : 'rgb(40 145 200 / 90%)',
             },
             minHeight: 48,
           }}
@@ -1978,11 +2044,11 @@ const CalculatorComponent: React.FC = () => {
             <Box
               sx={{
                 display: 'flex',
-                alignItems: { xs: 'flex-start', sm: 'center' },
+                alignItems: 'center',
                 justifyContent: 'space-between',
                 mb: liteMode ? 2 : isMobile ? 3 : 4,
                 flexWrap: 'wrap',
-                gap: { xs: 2, sm: liteMode ? 1 : isMobile ? 2 : 3 },
+                gap: liteMode ? 1 : isMobile ? 2 : 3,
                 p: liteMode ? 2 : isExtraSmall ? 1.5 : isMobile ? 2 : 4,
                 gridArea: 'content',
                 borderRadius: '10px',
@@ -2000,8 +2066,6 @@ const CalculatorComponent: React.FC = () => {
                     : 'rgba(255, 255, 255, 0.98)',
                 position: 'relative',
                 // Enhanced mobile responsiveness
-                // Better mobile layout with stacked controls
-                flexDirection: { xs: 'column', sm: 'row' },
                 '@media (max-width: 380px)': {
                   flexDirection: 'column',
                   alignItems: 'stretch',
@@ -2036,15 +2100,12 @@ const CalculatorComponent: React.FC = () => {
                     },
               }}
             >
-              {/* Lite Mode Switch */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: 2,
                   flexWrap: 'wrap',
-                  width: { xs: '100%', sm: 'auto' },
-                  justifyContent: { xs: 'space-between', sm: 'flex-start' },
                 }}
               >
                 <FormControlLabel
@@ -2082,192 +2143,12 @@ const CalculatorComponent: React.FC = () => {
                     </Typography>
                   }
                 />
-
-                {/* Mobile Action Buttons */}
-                {isMobile && (
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 0 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 4 }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find((key) =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(56, 189, 248, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(21, 34, 50, 0.5)'
-                                : 'rgba(235, 244, 252, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(21, 34, 50, 0.7)'
-                                  : 'rgba(235, 244, 252, 0.9)',
-                            },
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find((key) =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(239, 68, 68, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(153, 27, 27, 0.25)'
-                                : 'rgba(254, 226, 226, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(153, 27, 27, 0.4)'
-                                  : 'rgba(254, 226, 226, 0.9)',
-                            },
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </motion.div>
-                    )}
-                    {selectedTab === 1 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 4 }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                      >
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find((key) =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(56, 189, 248, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(21, 34, 50, 0.5)'
-                                : 'rgba(235, 244, 252, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(21, 34, 50, 0.7)'
-                                  : 'rgba(235, 244, 252, 0.9)',
-                            },
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find((key) =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(239, 68, 68, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(153, 27, 27, 0.25)'
-                                : 'rgba(254, 226, 226, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(153, 27, 27, 0.4)'
-                                  : 'rgba(254, 226, 226, 0.9)',
-                            },
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                )}
               </Box>
-              {/* Game Mode Selector */}
               <Box
                 sx={{
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: { xs: 'center', sm: 'flex-end' },
-                  width: { xs: '100%', sm: 'auto' },
+                  justifyContent: 'flex-end',
                 }}
               >
                 <ButtonGroup
@@ -2276,7 +2157,6 @@ const CalculatorComponent: React.FC = () => {
                   }
                   variant="outlined"
                   sx={{
-                    width: { xs: '100%', sm: 'auto' },
                     '& .MuiButton-root': {
                       border: liteMode
                         ? theme.palette.mode === 'dark'
@@ -2289,13 +2169,9 @@ const CalculatorComponent: React.FC = () => {
                       transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                       // Enhanced mobile touch targets
                       minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                      minWidth: {
-                        xs: 'auto',
-                        sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
-                      },
+                      minWidth: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
                       fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
                       px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
-                      flex: { xs: 1, sm: 'none' },
                       '&:hover': {
                         transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
                         borderColor: 'rgb(128 211 255 / 80%)',
@@ -2446,10 +2322,7 @@ const CalculatorComponent: React.FC = () => {
                     display: 'flex',
                     gap: 1,
                     p: 0.5,
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.8)'
-                        : 'rgba(248, 250, 252, 0.8)',
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
@@ -2457,7 +2330,7 @@ const CalculatorComponent: React.FC = () => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 0 ? 'contained' : 'text'}
+                      variant={selectedTab === 0 ? "contained" : "text"}
                       onClick={() => setSelectedTab(0)}
                       sx={{
                         py: 1,
@@ -2465,39 +2338,25 @@ const CalculatorComponent: React.FC = () => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '#0f172a'
-                              : '#ffffff'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '#60a5fa'
-                              : '#3b82f6'
-                            : 'transparent',
+                        color: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
                         border: selectedTab === 0 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor:
-                            selectedTab === 0
-                              ? theme.palette.mode === 'dark'
-                                ? '#3b82f6'
-                                : '#2563eb'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.1)'
-                                : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor: selectedTab === 0
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                            : 'none',
+                        boxShadow: selectedTab === 0
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
                       }}
                     >
                       <motion.span
@@ -2514,7 +2373,7 @@ const CalculatorComponent: React.FC = () => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 1 ? 'contained' : 'text'}
+                      variant={selectedTab === 1 ? "contained" : "text"}
                       onClick={() => setSelectedTab(1)}
                       sx={{
                         py: 1,
@@ -2522,39 +2381,25 @@ const CalculatorComponent: React.FC = () => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '#0f172a'
-                              : '#ffffff'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '#60a5fa'
-                              : '#3b82f6'
-                            : 'transparent',
+                        color: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
                         border: selectedTab === 1 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor:
-                            selectedTab === 1
-                              ? theme.palette.mode === 'dark'
-                                ? '#3b82f6'
-                                : '#2563eb'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.1)'
-                                : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor: selectedTab === 1
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                            : 'none',
+                        boxShadow: selectedTab === 1
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
                       }}
                     >
                       <motion.span
@@ -2933,7 +2778,6 @@ const CalculatorComponent: React.FC = () => {
                 sx={{
                   mb: isMobile ? 3 : 4,
                   px: isMobile ? 2 : 4,
-                  width: '100%',
                 }}
               >
                 <Box
@@ -2941,10 +2785,7 @@ const CalculatorComponent: React.FC = () => {
                     display: 'flex',
                     gap: 1,
                     p: 0.5,
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.8)'
-                        : 'rgba(248, 250, 252, 0.8)',
+                    backgroundColor: theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
                     borderRadius: '10px',
                     border: '1px solid rgba(148, 163, 184, 0.2)',
                   }}
@@ -2952,7 +2793,7 @@ const CalculatorComponent: React.FC = () => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 0 ? 'contained' : 'text'}
+                      variant={selectedTab === 0 ? "contained" : "text"}
                       onClick={() => setSelectedTab(0)}
                       sx={{
                         py: 1,
@@ -2960,39 +2801,25 @@ const CalculatorComponent: React.FC = () => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '#0f172a'
-                              : '#ffffff'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '#60a5fa'
-                              : '#3b82f6'
-                            : 'transparent',
+                        color: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 0
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
                         border: selectedTab === 0 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor:
-                            selectedTab === 0
-                              ? theme.palette.mode === 'dark'
-                                ? '#3b82f6'
-                                : '#2563eb'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.1)'
-                                : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor: selectedTab === 0
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 0 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow:
-                          selectedTab === 0
-                            ? theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                            : 'none',
+                        boxShadow: selectedTab === 0
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
                       }}
                     >
                       <motion.span
@@ -3009,7 +2836,7 @@ const CalculatorComponent: React.FC = () => {
                   <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
                     <Button
                       fullWidth
-                      variant={selectedTab === 1 ? 'contained' : 'text'}
+                      variant={selectedTab === 1 ? "contained" : "text"}
                       onClick={() => setSelectedTab(1)}
                       sx={{
                         py: 1,
@@ -3017,39 +2844,25 @@ const CalculatorComponent: React.FC = () => {
                         fontWeight: 600,
                         textTransform: 'none',
                         borderRadius: '8px',
-                        color:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '#0f172a'
-                              : '#ffffff'
-                            : theme.palette.mode === 'dark'
-                              ? 'rgba(255, 255, 255, 0.7)'
-                              : 'rgba(30, 41, 59, 0.7)',
-                        backgroundColor:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '#60a5fa'
-                              : '#3b82f6'
-                            : 'transparent',
+                        color: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#0f172a' : '#ffffff'
+                          : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor: selectedTab === 1
+                          ? theme.palette.mode === 'dark' ? '#60a5fa' : '#3b82f6'
+                          : 'transparent',
                         border: selectedTab === 1 ? 'none' : '1px solid transparent',
                         '&:hover': {
-                          backgroundColor:
-                            selectedTab === 1
-                              ? theme.palette.mode === 'dark'
-                                ? '#3b82f6'
-                                : '#2563eb'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.1)'
-                                : 'rgba(30, 41, 59, 0.1)',
+                          backgroundColor: selectedTab === 1
+                            ? theme.palette.mode === 'dark' ? '#3b82f6' : '#2563eb'
+                            : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(30, 41, 59, 0.1)',
                           border: selectedTab === 1 ? 'none' : '1px solid rgba(148, 163, 184, 0.3)',
                         },
                         transition: 'all 0.2s ease',
-                        boxShadow:
-                          selectedTab === 1
-                            ? theme.palette.mode === 'dark'
-                              ? '0 4px 12px rgba(96, 165, 250, 0.3)'
-                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
-                            : 'none',
+                        boxShadow: selectedTab === 1
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(96, 165, 250, 0.3)'
+                            : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                          : 'none',
                       }}
                     >
                       <motion.span
@@ -3068,7 +2881,7 @@ const CalculatorComponent: React.FC = () => {
             )}
 
             {/* Tab Content */}
-            <Box sx={{ px: { xs: 1.5, sm: 3.75 }, pb: 3 }}>
+            <Box sx={{ px: isMobile ? 1.5 : 3.75, pb: 3 }}>
               <TabPanel value={selectedTab} index={0}>
                 {(() => {
                   return liteMode ? (
@@ -3163,21 +2976,13 @@ const CalculatorComponent: React.FC = () => {
               <Box
                 ref={footerRef}
                 sx={{
-                  px: 0, // Remove horizontal padding
-                  pb: 0, // Remove bottom padding
+                  px: isMobile ? 1.5 : 3.75,
+                  pb: 3,
                   position: 'relative',
                   zIndex: 5,
-                  backgroundColor: liteMode
-                    ? 'transparent'
-                    : theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                  backgroundColor: liteMode ? 'transparent' : theme.palette.mode === "dark" ? "linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)" : "linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)",
                   borderRadius: liteMode ? '0' : '12px',
-                  boxShadow: liteMode
-                    ? 'none'
-                    : theme.palette.mode === 'dark'
-                      ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-                      : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+                  boxShadow: liteMode ? 'none' : theme.palette.mode === 'dark' ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)' : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
                   marginTop: '20px',
                 }}
                 style={footerStyle}
@@ -3250,7 +3055,8 @@ const CalculatorComponent: React.FC = () => {
           )}
         </Container>
       </CalculatorContainer>
-    </>
+
+          </>
   );
 };
 
