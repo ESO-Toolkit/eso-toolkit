@@ -1120,11 +1120,10 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                               }}
                             >
                               {attack.abilityName || 'Unknown'} by{' '}
-                              <span style={{ color: sourceColor }}>{attackSourceName}</span>
                               {attack.attackerWasTaunted && (
                                 <span
                                   style={{
-                                    marginLeft: '4px',
+                                    marginRight: '4px',
                                     fontSize: '0.6rem',
                                     opacity: 0.9,
                                   }}
@@ -1133,6 +1132,7 @@ export const DeathEventPanelView: React.FC<DeathEventPanelViewProps> = ({
                                   🎯
                                 </span>
                               )}
+                              <span style={{ color: sourceColor }}>{attackSourceName}</span>
                             </Typography>
                             <Box
                               sx={{
