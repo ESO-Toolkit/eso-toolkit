@@ -1,9 +1,10 @@
 import { Typography } from '@mui/material';
 import React from 'react';
-import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
+import { fetchReportMasterData, forceMasterDataRefresh } from '@/store/master_data/masterDataSlice';
 import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
+import { useAppDispatch } from '@/store/useAppDispatch';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetReportByCodeDocument } from '../../graphql/generated';
@@ -15,7 +16,7 @@ const REFETCH_INTERVAL = 30 * 1000; // 30 seconds
 export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
   const { reportId, fightId } = useParams();
   const client = useEsoLogsClientInstance();
-  const dispatch = useDispatch();
+  const dispatch = useAppDispatch();
 
   // Initialize to the fight id from the url
   const [latestFightId, setFightId] = React.useState<string | null | undefined>(fightId);
@@ -44,6 +45,11 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
 
     if (lastFight && lastFight.id.toString() !== latestFightId) {
       setFightId(lastFight.id.toString());
+
+      // Force master data refresh when a new fight is detected
+      // This ensures new actors and abilities from the new fight are loaded
+      dispatch(forceMasterDataRefresh());
+      dispatch(fetchReportMasterData({ reportCode: reportId, client }));
     }
 
     // Always update report data and cache metadata for live logging

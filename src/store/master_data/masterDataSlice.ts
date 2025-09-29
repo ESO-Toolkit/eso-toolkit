@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 
+import { DATA_FETCH_CACHE_TIMEOUT } from '../../Constants';
 import { EsoLogsClient } from '../../esologsClient';
 import {
   GetReportMasterDataDocument,
@@ -96,14 +97,19 @@ export const fetchReportMasterData = createAsyncThunk<
     condition: ({ reportCode }, { getState }) => {
       const state = getState() as { masterData: MasterDataState };
 
-      // Check if we already have master data for this report
-      if (
+      // Check if we already have master data for this report and it's still fresh
+      const isCached =
         state.masterData.cacheMetadata.lastFetchedReportId === reportCode &&
         state.masterData.loaded &&
         Object.keys(state.masterData.abilitiesById).length > 0 &&
-        Object.keys(state.masterData.actorsById).length > 0
-      ) {
-        return false; // Prevent thunk execution - data is cached
+        Object.keys(state.masterData.actorsById).length > 0;
+
+      const isFresh =
+        state.masterData.cacheMetadata.lastFetchedTimestamp &&
+        Date.now() - state.masterData.cacheMetadata.lastFetchedTimestamp < DATA_FETCH_CACHE_TIMEOUT;
+
+      if (isCached && isFresh) {
+        return false; // Prevent thunk execution - data is cached and fresh
       }
 
       // Only prevent duplicate execution if we're loading the SAME report
@@ -129,7 +135,6 @@ const masterDataSlice = createSlice({
       state.loading = false;
       state.loaded = false;
       state.error = null;
-      // OPTIMIZED: Reset cache metadata and loading states
       state.cacheMetadata = {
         lastFetchedReportId: null,
         lastFetchedTimestamp: null,
@@ -140,6 +145,11 @@ const masterDataSlice = createSlice({
     resetLoadingState(state) {
       state.loading = false;
       state.error = null;
+    },
+    forceMasterDataRefresh(state) {
+      // Clear cache metadata to force a refresh on next fetch
+      state.cacheMetadata.lastFetchedTimestamp = null;
+      state.loaded = false;
     },
   },
   extraReducers: (builder) => {
@@ -171,5 +181,6 @@ const masterDataSlice = createSlice({
   },
 });
 
-export const { clearMasterData, resetLoadingState } = masterDataSlice.actions;
+export const { clearMasterData, resetLoadingState, forceMasterDataRefresh } =
+  masterDataSlice.actions;
 export default masterDataSlice.reducer;

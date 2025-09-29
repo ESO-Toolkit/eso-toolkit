@@ -6,6 +6,7 @@ import { ReportAbilityFragment, ReportActorFragment } from '../../graphql/genera
 import masterDataReducer, {
   clearMasterData,
   resetLoadingState,
+  forceMasterDataRefresh,
   fetchReportMasterData,
   MasterDataPayload,
 } from './masterDataSlice';
@@ -200,6 +201,44 @@ describe('masterDataSlice', () => {
       expect(afterReset.masterData.actorsById).toEqual(beforeReset.masterData.actorsById);
       expect(afterReset.masterData.loaded).toBe(beforeReset.masterData.loaded);
       expect(afterReset.masterData.cacheMetadata).toEqual(beforeReset.masterData.cacheMetadata);
+    });
+  });
+
+  describe('forceMasterDataRefresh', () => {
+    it('should clear cache timestamp and set loaded to false', () => {
+      // First set up some data and cache metadata
+      const mockData: MasterDataPayload = {
+        reportCode: 'test-report',
+        abilities: [{ gameID: 1, name: 'Test Ability', icon: 'icon.png' }],
+        abilitiesById: { 1: { gameID: 1, name: 'Test Ability', icon: 'icon.png' } },
+        actors: [{ id: 1, name: 'Test Actor', type: 'Player' }],
+        actorsById: { 1: { id: 1, name: 'Test Actor', type: 'Player' } },
+      };
+
+      store.dispatch(
+        fetchReportMasterData.fulfilled(mockData, 'test-request-id', {
+          reportCode: 'test-report',
+          client: mockClient,
+        }),
+      );
+
+      const beforeRefresh = store.getState();
+      expect(beforeRefresh.masterData.loaded).toBe(true);
+      expect(beforeRefresh.masterData.cacheMetadata.lastFetchedTimestamp).not.toBeNull();
+
+      // Force refresh
+      store.dispatch(forceMasterDataRefresh());
+
+      const afterRefresh = store.getState();
+      expect(afterRefresh.masterData.loaded).toBe(false);
+      expect(afterRefresh.masterData.cacheMetadata.lastFetchedTimestamp).toBeNull();
+
+      // Data should remain unchanged
+      expect(afterRefresh.masterData.abilitiesById).toEqual(beforeRefresh.masterData.abilitiesById);
+      expect(afterRefresh.masterData.actorsById).toEqual(beforeRefresh.masterData.actorsById);
+      expect(afterRefresh.masterData.cacheMetadata.lastFetchedReportId).toEqual(
+        beforeRefresh.masterData.cacheMetadata.lastFetchedReportId,
+      );
     });
   });
 
