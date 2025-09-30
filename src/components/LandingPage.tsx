@@ -201,11 +201,11 @@ const HeroSection = styled(Box, {
     minHeight: '60vh',
     padding: '0.75rem 0.75rem 2rem',
     alignItems: 'flex-start',
-    paddingTop: '2rem',
+    paddingTop: '4rem',
   },
   [theme.breakpoints.down(360)]: {
     padding: '0.5rem 0.5rem 1.5rem',
-    paddingTop: '1.5rem',
+    paddingTop: '3rem',
   },
   ...(showAnimations && {
     '&::before': {
