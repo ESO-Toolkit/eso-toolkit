@@ -1255,11 +1255,12 @@ const CalculatorComponent: React.FC = () => {
   // Memoize calculator item styles with pre-calculated base values
   const getCalculatorItemStyles = React.useCallback(
     (item: CalculatorItem) => {
+      const controlColumnMin = liteMode ? 36 : isMobile ? 50 : 60;
       const gridColumns = liteMode
-        ? 'auto 36px 1fr auto'
+        ? `auto minmax(${controlColumnMin}px, max-content) 1fr auto`
         : isMobile
-          ? 'auto 50px 1fr auto'
-          : 'auto 60px 1fr auto auto';
+          ? `auto minmax(${controlColumnMin}px, max-content) 1fr auto`
+          : `auto minmax(${controlColumnMin}px, max-content) 1fr auto auto`;
 
       return {
         display: 'grid',
@@ -1412,8 +1413,9 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Optimized text input styling for all mobile sizes
+      const controlSlotWidth = liteMode ? 36 : isMobile ? 50 : 60;
       const textFieldStyles = {
-        width: liteMode ? 48 : isExtraSmall ? 48 : isMobile ? 56 : 60,
+        width: controlSlotWidth,
         '& .MuiInputBase-root': {
           fontSize: liteMode
             ? '0.75rem'
@@ -1507,6 +1509,125 @@ const CalculatorComponent: React.FC = () => {
         fontSize: liteMode ? '0.65rem' : isMobile ? '0.7rem' : '0.75rem',
       };
 
+      const variantCycleControl = currentVariant ? (
+        <Tooltip
+          title={
+            nextVariant
+              ? `Cycle variant (Next: ${nextVariant.name})`
+              : 'Cycle variant'
+          }
+          enterDelay={0}
+          enterTouchDelay={0}
+          arrow
+        >
+          <Button
+            size="small"
+            disableElevation
+            disableRipple
+            onClick={(e) => {
+              e.stopPropagation();
+              cycleArmorResistanceVariant(resolvedIndex);
+            }}
+            sx={{
+              minWidth: 'auto',
+              minHeight: '24px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              py: 0.4,
+              px: 1.2,
+              borderRadius: '8px',
+              textTransform: 'none',
+              border: '1px solid',
+              borderColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.8)'
+                  : 'rgba(40, 145, 200, 0.6)',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
+              color:
+                theme.palette.mode === 'dark'
+                  ? 'rgb(199 234 255)'
+                  : 'rgb(40 145 200)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              '&:hover': {
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.9)'
+                    : 'rgba(40, 145, 200, 0.7)',
+                color:
+                  theme.palette.mode === 'dark'
+                    ? 'rgb(199, 234, 255)'
+                    : 'rgb(40, 145, 200)',
+                transform: 'translateY(-1px)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                    : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              },
+              '&:active': {
+                transform: 'translateY(0)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                {currentVariant.name}
+              </Typography>
+              {nextVariant && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.3,
+                    px: 0.6,
+                    py: 0.1,
+                    borderRadius: '999px',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.6)'
+                        : 'rgba(56, 189, 248, 0.1)',
+                    border: '1px solid',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.4)'
+                        : 'rgba(40, 145, 200, 0.4)',
+                  }}
+                >
+                  <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: '0.6rem',
+                      fontWeight: 600,
+                      letterSpacing: 0.3,
+                      textTransform: 'uppercase',
+                    }}
+                  >
+                    {nextVariant.name}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Button>
+        </Tooltip>
+      ) : null;
+
       // Handle click on the entire list item
       const handleItemClick = (e: React.MouseEvent): void => {
         // Don't toggle if clicking on interactive elements
@@ -1583,7 +1704,22 @@ const CalculatorComponent: React.FC = () => {
             />
           </ListItemIcon>
 
-          <Tooltip
+          {variantCycleControl ? (
+            <Box
+              sx={{
+                minWidth: controlSlotWidth,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+                px: liteMode ? 0 : 0.25,
+                mr: liteMode ? 0.75 : 1,
+              }}
+            >
+              {variantCycleControl}
+            </Box>
+          ) : (
+            <Tooltip
             title={
               !hasQuantity
                 ? "This item doesn't have adjustable quantity"
@@ -1683,9 +1819,10 @@ const CalculatorComponent: React.FC = () => {
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
           </Tooltip>
+        )}
 
           <ListItemText
-            sx={{ ml: liteMode ? 1.5 : 0 }}
+            sx={{ ml: liteMode ? 1.5 : 0, minWidth: 0 }}
             primary={
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
                 <Box
@@ -1699,134 +1836,6 @@ const CalculatorComponent: React.FC = () => {
                   <Typography variant="body2" sx={nameStyles}>
                     {item.name}
                   </Typography>
-                  {/* Variant selection buttons */}
-                  {currentVariant && (
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 0.75,
-                        ml: 0.5,
-                      }}
-                    >
-                      <Tooltip
-                        title={
-                          nextVariant
-                            ? `Cycle variant (Next: ${nextVariant.name})`
-                            : 'Cycle variant'
-                        }
-                        enterDelay={0}
-                        enterTouchDelay={0}
-                        arrow
-                      >
-                        <Button
-                          size="small"
-                          disableElevation
-                          disableRipple
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            cycleArmorResistanceVariant(resolvedIndex);
-                          }}
-                          sx={{
-                            minWidth: 'auto',
-                            minHeight: '24px',
-                            fontSize: '0.7rem',
-                            fontWeight: 600,
-                            py: 0.4,
-                            px: 1.2,
-                            borderRadius: '8px',
-                            textTransform: 'none',
-                            border: '1px solid',
-                            borderColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(56, 189, 248, 0.8)'
-                                : 'rgba(40, 145, 200, 0.6)',
-                            background:
-                              theme.palette.mode === 'dark'
-                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
-                            color:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(199 234 255)'
-                                : 'rgb(40 145 200)',
-                            boxShadow:
-                              theme.palette.mode === 'dark'
-                                ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                                : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)',
-                            '&:hover': {
-                              background:
-                                theme.palette.mode === 'dark'
-                                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
-                              borderColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(56, 189, 248, 0.9)'
-                                  : 'rgba(40, 145, 200, 0.7)',
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgb(199, 234, 255)'
-                                  : 'rgb(40, 145, 200)',
-                              transform: 'translateY(-1px)',
-                              boxShadow:
-                                theme.palette.mode === 'dark'
-                                  ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                                  : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-                            },
-                            '&:active': {
-                              transform: 'translateY(0)',
-                              boxShadow:
-                                theme.palette.mode === 'dark'
-                                  ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                                  : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                            },
-                          }}
-                        >
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                            <Typography component="span" fontWeight={600} fontSize="0.7rem">
-                              {currentVariant.name}
-                            </Typography>
-                            {nextVariant && (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 0.3,
-                                  px: 0.6,
-                                  py: 0.1,
-                                  borderRadius: '999px',
-                                  backgroundColor:
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(15, 23, 42, 0.6)'
-                                      : 'rgba(56, 189, 248, 0.1)',
-                                  border: '1px solid',
-                                  borderColor:
-                                    theme.palette.mode === 'dark'
-                                      ? 'rgba(56, 189, 248, 0.4)'
-                                      : 'rgba(40, 145, 200, 0.4)',
-                                }}
-                              >
-                                <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
-                                <Typography
-                                  component="span"
-                                  sx={{
-                                    fontSize: '0.6rem',
-                                    fontWeight: 600,
-                                    letterSpacing: 0.3,
-                                    textTransform: 'uppercase',
-                                  }}
-                                >
-                                  {nextVariant.name}
-                                </Typography>
-                              </Box>
-                            )}
-                          </Box>
-                        </Button>
-                      </Tooltip>
-                    </Box>
-                  )}
                   {item.tooltip && !item.hideTooltip && (
                     <Tooltip
                       title={<CalculatorTooltip title={item.name} content={item.tooltip} />}
