@@ -186,25 +186,25 @@ const HeroSection = styled(Box, {
   display: 'flex',
   alignItems: 'flex-start',
   justifyContent: 'center',
-  padding: '0rem 2rem 0rem',
+  padding: '0rem 2rem 4rem',
   position: 'relative',
   paddingTop: '6rem',
   overflow: 'hidden',
   width: '100%',
   maxWidth: '100vw',
-  [theme.breakpoints.down('md')]: {
+    [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
-    padding: '2rem 1rem 0rem',
+    padding: '2rem 1rem 3rem',
     paddingTop: '3rem',
   },
   [theme.breakpoints.down('sm')]: {
     minHeight: '60vh',
-    padding: '0.75rem 0.75rem 0rem',
+    padding: '0.75rem 0.75rem 2rem',
     alignItems: 'flex-start',
     paddingTop: '2rem',
   },
   [theme.breakpoints.down(360)]: {
-    padding: '0.5rem 0.5rem 0rem',
+    padding: '0.5rem 0.5rem 1.5rem',
     paddingTop: '1.5rem',
   },
   ...(showAnimations && {
@@ -220,29 +220,10 @@ const HeroSection = styled(Box, {
       pointerEvents: 'none',
       zIndex: -1,
     },
-    '&::after': {
-      content: '""',
-      position: 'absolute',
-      top: '20%',
-      left: '50%',
-      transform: 'translateX(-50%)',
-      width: { xs: '90%', sm: '600px' },
-      height: { xs: '150px', sm: '300px' },
-      background:
-        'radial-gradient(ellipse at center, rgba(56, 189, 248, 0.08) 0%, rgba(0, 225, 255, 0.05) 30%, transparent 70%)',
-      borderRadius: '50%',
-      filter: 'blur(40px)',
-      zIndex: 0,
-      animation: 'pulse-bg 4s ease-in-out infinite alternate',
-    },
   }),
   '@keyframes rotate': {
     from: { transform: 'rotate(0deg)' },
     to: { transform: 'rotate(360deg)' },
-  },
-  '@keyframes pulse-bg': {
-    '0%': { opacity: 0.3, transform: 'translateX(-50%) scale(0.8)' },
-    '100%': { opacity: 0.6, transform: 'translateX(-50%) scale(1.2)' },
   },
 }));
 
@@ -500,7 +481,7 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
 }));
 
 const CommunitySection = styled(Box)(({ theme }) => ({
-  padding: '4rem 0',
+  padding: '2rem 0',
   background:
     theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, transparent 0%, rgba(15, 23, 42, 0.3) 50%, transparent 100%)'
@@ -720,34 +701,14 @@ const SectionSubtitle = styled(Typography)(({ theme }) => ({
 }));
 
 const ToolsSection = styled(Container)(({ theme }) => ({
-  padding: '0rem 0rem 0rem 0rem',
-  paddingTop: '3rem',
+  padding: '0 2rem 4rem',
   maxWidth: '1200px',
-  position: 'relative',
-  '&::before': {
-    content: '""',
-    position: 'absolute',
-    top: '-2rem',
-    left: '50%',
-    transform: 'translateX(-50%)',
-    width: '200px',
-    height: '4px',
-    background: 'linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.6), transparent)',
-    borderRadius: '2px',
-    animation: 'sectionPulse 3s ease-in-out infinite',
-  },
-  '@keyframes sectionPulse': {
-    '0%, 100%': {
-      opacity: 0.6,
-      transform: 'translateX(-50%) scaleX(0.8)',
-    },
-    '50%': {
-      opacity: 1,
-      transform: 'translateX(-50%) scaleX(1.2)',
-    },
+  margin: '0 auto',
+  [theme.breakpoints.down('md')]: {
+    padding: '0 1rem 3rem',
   },
   [theme.breakpoints.down('sm')]: {
-    padding: '0rem 1rem',
+    padding: '0 1rem 2rem',
   },
 }));
 
@@ -756,7 +717,7 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
 
   return (
     <Box
-      sx={{
+      sx={(theme) => ({
         display: 'grid',
         gap: '1.5rem',
         marginTop: '3rem',
@@ -769,12 +730,15 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
         maxWidth: '800px',
         margin: '0 auto',
         perspective: '1000px',
-      }}
+        [theme.breakpoints.down('sm')]: {
+          perspective: 'none',
+        },
+      })}
     >
       {React.Children.map(children, (child, index) => (
         <Box
           key={index}
-          sx={{
+          sx={(theme) => ({
             transformStyle: 'preserve-3d',
             transition: 'all 0.4s cubic-bezier(0.4, 0, 0.2, 1)',
             transform:
@@ -784,7 +748,12 @@ const ToolsGrid = ({ children }: { children: React.ReactNode }): JSX.Element => 
                   ? 'translateZ(40px) translateY(-10px)'
                   : `translateZ(${-20 * Math.abs(index - hoveredIndex)}px) translateY(${-5 * Math.abs(index - hoveredIndex)}px)`,
             opacity: hoveredIndex === null ? 1 : hoveredIndex === index ? 1 : 0.7,
-          }}
+            [theme.breakpoints.down('sm')]: {
+              transformStyle: 'flat',
+              transform: 'none',
+              overflow: 'hidden',
+            },
+          })}
           onMouseEnter={() => setHoveredIndex(index)}
           onMouseLeave={() => setHoveredIndex(null)}
         >
@@ -816,8 +785,8 @@ const ToolCard = styled(Box)<{ index?: number }>(({ theme, index = 0 }) => ({
       ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
       : '0 8px 32px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.6)',
   opacity: 0,
-  transform: 'translateY(30px)',
-  animation: `cardEntrance 0.6s ease-out ${index * 0.1}s forwards`,
+  transform: 'translateY(20px)',
+  animation: `cardEntrance 0.5s ease-out ${index * 0.1}s forwards`,
   '&::before': {
     content: '""',
     position: 'absolute',
@@ -862,13 +831,13 @@ const ToolCard = styled(Box)<{ index?: number }>(({ theme, index = 0 }) => ({
     padding: '1.5rem',
     minHeight: '280px',
     '&:hover': {
-      transform: 'translateY(-4px)',
+      transform: 'none',
     },
   },
   '@keyframes cardEntrance': {
     '0%': {
       opacity: 0,
-      transform: 'translateY(30px) scale(0.95)',
+      transform: 'translateY(20px) scale(0.98)',
     },
     '100%': {
       opacity: 1,
@@ -1261,8 +1230,8 @@ export const LandingPage: React.FC = () => {
         <Box
           sx={{
             opacity: isVisible ? 1 : 0,
-            transform: isVisible ? 'translateY(0)' : 'translateY(30px)',
-            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+            transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
+            transition: 'all 0.6s ease-out',
           }}
         >
           <SectionTitle variant="h2">Our Tools</SectionTitle>
@@ -1273,7 +1242,7 @@ export const LandingPage: React.FC = () => {
           sx={{
             opacity: isVisible ? 1 : 0,
             transform: isVisible ? 'translateY(0)' : 'translateY(20px)',
-            transition: 'all 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.3s',
+            transition: 'all 0.6s ease-out 0.2s',
           }}
         >
           <ToolsGrid>
@@ -1282,7 +1251,7 @@ export const LandingPage: React.FC = () => {
                 <CvIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Text Editor
+                Text-Editor
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1304,7 +1273,7 @@ export const LandingPage: React.FC = () => {
                 <CalculatorIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Build Calculator
+                Build Caclulator
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1330,7 +1299,7 @@ export const LandingPage: React.FC = () => {
                 <FileLoopIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                ESO Log Analyzer
+                Log Analyzer
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1363,7 +1332,7 @@ export const LandingPage: React.FC = () => {
                 <PeopleIcon size="2rem" />
               </ToolIcon>
               <Typography variant="h5" sx={{ mb: 2, color: 'text.primary', fontWeight: 700 }}>
-                Discord Roster Bot
+                Roster-Bot
               </Typography>
               <Typography
                 sx={{ color: 'text.secondary', mb: 2, flex: 1, fontWeight: 200, lineHeight: 1.6 }}
@@ -1384,7 +1353,17 @@ export const LandingPage: React.FC = () => {
       </ToolsSection>
 
       <CommunitySection id="about">
-        <Box sx={{ maxWidth: '1200px', margin: '0 auto', padding: '0 2rem' }}>
+        <Box sx={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          '@media (max-width: 899.95px)': {
+            padding: '0 1rem',
+          },
+          '@media (max-width: 599.95px)': {
+            padding: '0 1rem',
+          },
+        }}>
           <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
           <SectionSubtitle sx={{ maxWidth: '800px' }}>
             ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
@@ -1397,25 +1376,25 @@ export const LandingPage: React.FC = () => {
               <StatNumber>
                 <CalculatorIcon size="2.5rem" />
               </StatNumber>
-              <StatLabel>Calculator</StatLabel>
+              <StatLabel>Build Caclulator</StatLabel>
             </StatItem>
             <StatItem>
               <StatNumber>
                 <CvIcon size="2.5rem" />
               </StatNumber>
-              <StatLabel>Editor</StatLabel>
+              <StatLabel>Text-Editor</StatLabel>
             </StatItem>
             <StatItem>
               <StatNumber>
                 <FileLoopIcon size="2.5rem" />
               </StatNumber>
-              <StatLabel>Analytics</StatLabel>
+              <StatLabel>Log Analyzer</StatLabel>
             </StatItem>
             <StatItem>
               <StatNumber>
                 <PeopleIcon size="2.5rem" />
               </StatNumber>
-              <StatLabel>RosterBot</StatLabel>
+              <StatLabel>Roster-Bot</StatLabel>
             </StatItem>
           </CommunityStats>
 
