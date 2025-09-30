@@ -35,7 +35,7 @@ import {
   Stack,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import {
@@ -801,22 +801,20 @@ interface TabPanelProps {
 function TabPanel(props: TabPanelProps): React.JSX.Element {
   const { children, value, index, ...other } = props;
   return (
-    <AnimatePresence mode="wait">
-      <motion.div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`calculator-tabpanel-${index}`}
-        aria-labelledby={`calculator-tab-${index}`}
-        {...other}
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: -10 }}
-        transition={{ duration: 0.2 }}
-        style={{ display: value === index ? 'block' : 'none' }}
-      >
-        {value === index && <Box>{children}</Box>}
-      </motion.div>
-    </AnimatePresence>
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`calculator-tabpanel-${index}`}
+      aria-labelledby={`calculator-tab-${index}`}
+      {...other}
+      style={{
+        display: value === index ? 'block' : 'none',
+        opacity: value === index ? 1 : 0,
+        transition: 'opacity 0.2s ease-in-out',
+      }}
+    >
+      {value === index && <Box>{children}</Box>}
+    </div>
   );
 }
 
@@ -944,6 +942,9 @@ const CalculatorComponent: React.FC = () => {
       // Penetration = Ultimate × 23
       const ult = parseFloat(item.quantity.toString()) || 0;
       return Math.round(ult * 23);
+    } else if (item.variants && item.selectedVariant !== undefined) {
+      // Use the selected variant value
+      return item.variants[item.selectedVariant].value;
     } else if (item.isFlat) {
       return item.value || 0;
     } else {
@@ -1137,6 +1138,23 @@ const CalculatorComponent: React.FC = () => {
     [],
   );
 
+  const updateArmorResistanceVariant = useCallback(
+    (index: number, variantIndex: number) => {
+      setArmorResistanceData((prev: CalculatorData) => {
+        const newCategoryItems = [...prev.gear];
+        const item = { ...newCategoryItems[index] };
+        item.selectedVariant = variantIndex;
+        item.value = item.variants?.[variantIndex].value;
+        newCategoryItems[index] = item;
+        return {
+          ...prev,
+          gear: newCategoryItems,
+        };
+      });
+    },
+    [],
+  );
+
   // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
     setPenetrationData((prev: CalculatorData) => {
@@ -1305,6 +1323,8 @@ const CalculatorComponent: React.FC = () => {
         // Penetration = Ultimate × 23
         const ult = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(ult * 23);
+      } else if (item.variants && item.selectedVariant !== undefined) {
+        displayValue = item.variants[item.selectedVariant].value;
       } else if (item.isFlat) {
         displayValue = item.value || 0;
       } else {
@@ -1436,7 +1456,7 @@ const CalculatorComponent: React.FC = () => {
         if (
           e.target instanceof HTMLInputElement || // TextField input
           e.target instanceof HTMLButtonElement || // IconButton
-          (e.target as HTMLElement).closest('button') || // Any button
+          (e.target as HTMLElement).closest('button') || // Any button (including variant buttons)
           (e.target as HTMLElement).closest('input') || // Any input
           (e.target as HTMLElement).closest('.MuiCheckbox-root') // Checkbox
         ) {
@@ -1622,6 +1642,88 @@ const CalculatorComponent: React.FC = () => {
                   <Typography variant="body2" sx={nameStyles}>
                     {item.name}
                   </Typography>
+                  {/* Variant selection buttons */}
+                  {item.variants && (
+                    <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', ml: 0.5 }}>
+                      {item.variants.map((variant, variantIndex) => (
+                        <Button
+                          key={variantIndex}
+                          size="small"
+                          disableElevation
+                          disableRipple
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            updateArmorResistanceVariant(index, variantIndex);
+                          }}
+                          sx={{
+                            minWidth: 'auto',
+                            minHeight: '24px',
+                            fontSize: '0.7rem',
+                            fontWeight: 500,
+                            py: 0.4,
+                            px: 0.8,
+                            borderRadius: '6px',
+                            textTransform: 'none',
+                            border: '1px solid',
+                            borderColor: item.selectedVariant === variantIndex
+                              ? theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.8)'
+                                : 'rgba(40, 145, 200, 0.6)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.12)'
+                                : 'rgba(203, 213, 225, 0.4)',
+                            background: item.selectedVariant === variantIndex
+                              ? theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(15, 23, 42, 0.4)'
+                                : 'rgba(255, 255, 255, 0.6)',
+                            color: item.selectedVariant === variantIndex
+                              ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)'
+                              : theme.palette.text.secondary,
+                            boxShadow: item.selectedVariant === variantIndex
+                              ? theme.palette.mode === 'dark'
+                                ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                                : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                              : 'none',
+                            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                            backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
+                            '&:hover': {
+                              background: item.selectedVariant === variantIndex
+                                ? theme.palette.mode === 'dark'
+                                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)'
+                                : theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.15)'
+                                  : 'rgba(40, 145, 200, 0.08)',
+                              borderColor: theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.9)'
+                                : 'rgba(40, 145, 200, 0.7)',
+                              color: theme.palette.mode === 'dark'
+                                ? 'rgb(199, 234, 255)'
+                                : 'rgb(40, 145, 200)',
+                              transform: 'translateY(-1px)',
+                              boxShadow: theme.palette.mode === 'dark'
+                                ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                                : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                            },
+                            '&:active': {
+                              transform: 'translateY(0)',
+                              boxShadow: item.selectedVariant === variantIndex
+                                ? theme.palette.mode === 'dark'
+                                  ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                                  : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+                                : 'none',
+                            },
+                          }}
+                        >
+                          {variant.name}
+                        </Button>
+                      ))}
+                    </Box>
+                  )}
                   {item.tooltip && !item.hideTooltip && (
                     <Tooltip
                       title={<CalculatorTooltip title={item.name} content={item.tooltip} />}
@@ -1709,6 +1811,7 @@ const CalculatorComponent: React.FC = () => {
       isExtraSmall,
       theme.palette.mode,
       theme.palette.text.secondary,
+      updateArmorResistanceVariant,
     ],
   );
 
@@ -2044,7 +2147,7 @@ const CalculatorComponent: React.FC = () => {
 
   const armorResistanceAllSelected =
     armorResistanceSelectableItems.length > 0 && armorResistanceSelectableItems.every((item) => item.enabled);
-  const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
+  // const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
   const armorResistanceAnySelected = armorResistanceSelectableItems.some((item) => item.enabled);
 
   return (
@@ -2213,16 +2316,8 @@ const CalculatorComponent: React.FC = () => {
                 />
 
                 {/* Mobile Action Buttons */}
-                {isMobile && (
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 0 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 4 }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                      >
+                {isMobile && selectedTab === 0 && (
+                  <div style={{ display: 'flex', gap: 4 }}>
                         <Button
                           size="small"
                           variant="outlined"
@@ -2299,16 +2394,10 @@ const CalculatorComponent: React.FC = () => {
                         >
                           Clear
                         </Button>
-                      </motion.div>
+                      </div>
                     )}
                     {selectedTab === 1 && (
-                      <motion.div
-                        style={{ display: 'flex', gap: 4 }}
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0, scale: 0.8 }}
-                        transition={{ duration: 0.15 }}
-                      >
+                      <div style={{ display: 'flex', gap: 4 }}>
                         <Button
                           size="small"
                           variant="outlined"
@@ -2385,10 +2474,8 @@ const CalculatorComponent: React.FC = () => {
                         >
                           Clear
                         </Button>
-                      </motion.div>
+                      </div>
                     )}
-                  </AnimatePresence>
-                )}
               </Box>
               {/* Game Mode Selector */}
               <Box
@@ -2768,8 +2855,7 @@ const CalculatorComponent: React.FC = () => {
                     justifyContent: 'flex-end',
                   }}
                 >
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 0 && (
+                  {selectedTab === 0 && (
                       <div>
                         <Stack spacing={0} sx={{ minWidth: 0 }}>
                           <Box sx={{ m: 0, p: 0 }}>
@@ -2933,9 +3019,7 @@ const CalculatorComponent: React.FC = () => {
                         </Stack>
                       </div>
                     )}
-                  </AnimatePresence>
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 1 && (
+                  {selectedTab === 1 && (
                       <div>
                         <Stack spacing={0} sx={{ minWidth: 0 }}>
                           <Box sx={{ m: 0, p: 0 }}>
@@ -3099,9 +3183,7 @@ const CalculatorComponent: React.FC = () => {
                         </Stack>
                       </div>
                     )}
-                  </AnimatePresence>
-                  <AnimatePresence mode="wait">
-                    {selectedTab === 2 && (
+                  {selectedTab === 2 && (
                       <div>
                         <Stack spacing={0} sx={{ minWidth: 0 }}>
                           <Box sx={{ m: 0, p: 0 }}>
@@ -3266,7 +3348,6 @@ const CalculatorComponent: React.FC = () => {
                         </Stack>
                       </div>
                     )}
-                  </AnimatePresence>
                 </Box>
               </Box>
             ) : (
@@ -3595,10 +3676,10 @@ const CalculatorComponent: React.FC = () => {
                       ].map((item, index) =>
                         renderItem(
                           item,
-                          index,
+                          item.category === 'gear' ? item.originalIndex : index,
                           item.category as keyof CalculatorData,
                           (category, itemIndex, updates) => updateArmorResistanceItem(category, item.originalIndex, updates),
-                        )
+                        ),
                       )}
                     </List>
                   )}

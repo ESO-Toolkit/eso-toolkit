@@ -17,6 +17,11 @@ export interface CalculatorItem {
   hideTooltip?: boolean;
   tooltip?: string;
   quantityTitle?: string;
+  variants?: {
+    name: string;
+    value: number;
+  }[];
+  selectedVariant?: number;
 }
 
 export interface CalculatorData {
