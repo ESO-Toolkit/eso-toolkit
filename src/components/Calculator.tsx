@@ -43,12 +43,16 @@ import {
   CalculatorData,
   PENETRATION_DATA,
   CRITICAL_DATA,
+  ARMOR_RESISTANCE_DATA,
   PEN_OPTIMAL_MIN_PVE,
   PEN_OPTIMAL_MAX_PVE,
   PEN_OPTIMAL_MIN_PVP,
   PEN_OPTIMAL_MAX_PVP,
   CRIT_OPTIMAL_MIN,
   CRIT_OPTIMAL_MAX,
+  ARMOR_RESISTANCE_OPTIMAL_MIN,
+  ARMOR_RESISTANCE_OPTIMAL_MAX,
+  ARMOR_RESISTANCE_CAP,
 } from '../data/skill-lines/calculator-data';
 
 // Mode filter configuration based on original calculator
@@ -72,11 +76,6 @@ const MODE_FILTER = {
       'Champion Point: Piercing',
       'Champion Point: Force of Nature',
       // Additional gear items
-      'Crystal Weapon',
-      'Shattered Fate',
-      "Spriggan's Thorns",
-      'Sharpened (1H Trait)',
-      'Sharpened (2H Trait)',
       'Arena 1-piece Bonus',
       'Martial Knowledge',
       'Advancing Yokeda',
@@ -272,6 +271,30 @@ const MODE_FILTER = {
       "Perfected Ysgramor's Birthright",
       'Perfected Zaan',
       "Perfected Zoal's Scorching Blade",
+    ],
+    armor: [
+      'Major Resolve',
+      'Minor Resolve',
+      'Heavy Armor Passive',
+      'Light Armor Passive',
+      'Nord Passive',
+      'Breton Passive',
+      'Dragonknight Passive',
+      'Warden Passive Per Skill',
+      'Templar Passive',
+      'Arcanist Passive',
+      'Runic Sunder',
+      'Fortified',
+      'Bulwark',
+      'Armor Potions',
+      'Lord Warden',
+      'Ozezans',
+      'Markyn Ring of Majesty',
+      'Defending Trait',
+      'Armor Line Bonus',
+      'Shield',
+      'Shield Reinforced',
+      'Armor Master',
     ],
   },
   pvp: {
@@ -485,6 +508,30 @@ const MODE_FILTER = {
       "Perfected Ysgramor's Birthright",
       'Perfected Zaan',
       "Perfected Zoal's Scorching Blade",
+    ],
+    armor: [
+      'Major Resolve',
+      'Minor Resolve',
+      'Heavy Armor Passive',
+      'Light Armor Passive',
+      'Nord Passive',
+      'Breton Passive',
+      'Dragonknight Passive',
+      'Warden Passive Per Skill',
+      'Templar Passive',
+      'Arcanist Passive',
+      'Runic Sunder',
+      'Fortified',
+      'Bulwark',
+      'Armor Potions',
+      'Lord Warden',
+      'Ozezans',
+      'Markyn Ring of Majesty',
+      'Defending Trait',
+      'Armor Line Bonus',
+      'Shield',
+      'Shield Reinforced',
+      'Armor Master',
     ],
   },
 };
@@ -874,6 +921,7 @@ const CalculatorComponent: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
+  const [armorResistanceData, setArmorResistanceData] = useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
 
   // JavaScript-based sticky footer
   const {
@@ -989,6 +1037,30 @@ const CalculatorComponent: React.FC = () => {
     return total;
   }, [criticalData, gameMode, calculateItemValue]);
 
+  const armorResistanceTotal = useMemo(() => {
+    const allowedItems = gameMode === 'both' ? null : MODE_FILTER[gameMode]?.['armor'] || null;
+    let total = 0;
+
+    // Pre-calculate for performance
+    const items = [
+      ...armorResistanceData.groupBuffs,
+      ...armorResistanceData.gear,
+      ...armorResistanceData.classPassives,
+      ...armorResistanceData.passives,
+      ...armorResistanceData.cp,
+    ];
+
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.enabled && (!allowedItems || allowedItems.includes(item.name))) {
+        const value = calculateItemValue(item);
+        total += value;
+      }
+    }
+
+    return total;
+  }, [armorResistanceData, gameMode, calculateItemValue]);
+
   // Status calculation
   const getPenStatus = useCallback((total: number, mode: GameMode) => {
     if (mode === 'pve') {
@@ -1012,8 +1084,15 @@ const CalculatorComponent: React.FC = () => {
     return 'under-cap';
   }, []);
 
+  const getArmorResistanceStatus = useCallback((total: number) => {
+    if (total >= ARMOR_RESISTANCE_OPTIMAL_MIN && total <= ARMOR_RESISTANCE_OPTIMAL_MAX) return 'at-cap';
+    if (total > ARMOR_RESISTANCE_CAP) return 'over-cap';
+    return 'under-cap';
+  }, []);
+
   const penStatus = getPenStatus(penTotal, gameMode);
   const critStatus = getCritStatus(critTotal);
+  const armorResistanceStatus = getArmorResistanceStatus(armorResistanceTotal);
 
   // Update item handlers - optimized for performance
   const updatePenItem = useCallback(
@@ -1044,6 +1123,20 @@ const CalculatorComponent: React.FC = () => {
     [],
   );
 
+  const updateArmorResistanceItem = useCallback(
+    (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
+      setArmorResistanceData((prev: CalculatorData) => {
+        const newCategoryItems = [...prev[category]];
+        newCategoryItems[index] = { ...newCategoryItems[index], ...updates };
+        return {
+          ...prev,
+          [category]: newCategoryItems,
+        };
+      });
+    },
+    [],
+  );
+
   // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
     setPenetrationData((prev: CalculatorData) => {
@@ -1060,6 +1153,19 @@ const CalculatorComponent: React.FC = () => {
 
   const toggleAllCrit = useCallback((enabled: boolean) => {
     setCriticalData((prev: CalculatorData) => {
+      const newData = { ...prev };
+
+      Object.keys(newData).forEach((category) => {
+        newData[category as keyof CalculatorData] = newData[category as keyof CalculatorData].map(
+          (item: CalculatorItem) => (item.locked ? item : { ...item, enabled }),
+        );
+      });
+      return newData;
+    });
+  }, []);
+
+  const toggleAllArmorResistance = useCallback((enabled: boolean) => {
+    setArmorResistanceData((prev: CalculatorData) => {
       const newData = { ...prev };
 
       Object.keys(newData).forEach((category) => {
@@ -1902,6 +2008,10 @@ const CalculatorComponent: React.FC = () => {
     () => getFilteredItems(criticalData, 'crit'),
     [getFilteredItems, criticalData],
   );
+  const filteredArmorResistanceData = useMemo(
+    () => getFilteredItems(armorResistanceData, 'armor'),
+    [getFilteredItems, armorResistanceData],
+  );
 
   const penSelectableItems = useMemo(
     () =>
@@ -1917,6 +2027,13 @@ const CalculatorComponent: React.FC = () => {
         .filter((item) => !item.locked),
     [filteredCritData],
   );
+  const armorResistanceSelectableItems = useMemo(
+    () =>
+      Object.values(filteredArmorResistanceData)
+        .flat()
+        .filter((item) => !item.locked),
+    [filteredArmorResistanceData],
+  );
 
   const penAllSelected =
     penSelectableItems.length > 0 && penSelectableItems.every((item) => item.enabled);
@@ -1924,6 +2041,11 @@ const CalculatorComponent: React.FC = () => {
   const critAllSelected =
     critSelectableItems.length > 0 && critSelectableItems.every((item) => item.enabled);
   const critNoneSelected = critSelectableItems.every((item) => !item.enabled);
+
+  const armorResistanceAllSelected =
+    armorResistanceSelectableItems.length > 0 && armorResistanceSelectableItems.every((item) => item.enabled);
+  const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
+  const armorResistanceAnySelected = armorResistanceSelectableItems.some((item) => item.enabled);
 
   return (
     <>
@@ -2575,6 +2697,52 @@ const CalculatorComponent: React.FC = () => {
                       </motion.span>
                     </Button>
                   </motion.div>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 2 ? 'contained' : 'text'}
+                      onClick={() => setSelectedTab(2)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(37 99 235 / 95%)'
+                            : 'transparent',
+                        border:
+                          selectedTab === 2 ? 'none' : '1px solid transparent',
+                        boxShadow:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.4)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 2 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Armor
+                      </motion.span>
+                    </Button>
+                  </motion.div>
                 </Box>
 
                 {/* Action buttons for current tab */}
@@ -2932,6 +3100,173 @@ const CalculatorComponent: React.FC = () => {
                       </div>
                     )}
                   </AnimatePresence>
+                  <AnimatePresence mode="wait">
+                    {selectedTab === 2 && (
+                      <div>
+                        <Stack spacing={0} sx={{ minWidth: 0 }}>
+                          <Box sx={{ m: 0, p: 0 }}>
+                            <ButtonGroup
+                              variant="text"
+                              disableElevation
+                              fullWidth={isMobile}
+                              aria-label="Armor resistance bulk actions"
+                              sx={(muiTheme) => ({
+                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                                borderRadius: '10px',
+                                overflow: 'hidden',
+                                position: 'relative',
+                                backgroundColor:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? 'rgba(21, 34, 50, 0.55)'
+                                    : 'rgba(235, 244, 252, 0.85)',
+                                border: `1px solid ${
+                                  muiTheme.palette.mode === 'dark'
+                                    ? alpha(muiTheme.palette.primary.light, 0.2)
+                                    : alpha(muiTheme.palette.primary.main, 0.18)
+                                }`,
+                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                                '& .MuiButton-root': {
+                                  fontSize: '0.813rem',
+                                  fontWeight: 500,
+                                  textTransform: 'none',
+                                  py: 1.25,
+                                  px: 1.5,
+                                  borderRadius: 0,
+                                  border: 'none',
+                                  transition: 'all 0.2s ease',
+                                  color:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(255, 255, 255, 0.85)'
+                                      : 'rgba(30, 41, 59, 0.9)',
+                                  backgroundColor: 'transparent',
+                                  '&:hover': {
+                                    backgroundColor:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? 'rgba(40, 82, 120, 0.35)'
+                                        : 'rgba(210, 233, 249, 0.85)',
+                                  },
+                                  '&:focus-visible': {
+                                    outline: `2px solid ${
+                                      muiTheme.palette.mode === 'dark'
+                                        ? alpha(muiTheme.palette.primary.light, 0.6)
+                                        : alpha(muiTheme.palette.primary.main, 0.5)
+                                    }`,
+                                    outlineOffset: 2,
+                                  },
+                                  '&.Mui-disabled': {
+                                    color: muiTheme.palette.text.disabled,
+                                    backgroundColor: 'transparent',
+                                  },
+                                },
+                              })}
+                            >
+                              <Tooltip title="Select all armor resistance buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    disableRipple
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: [0, 10, 0] }}
+                                        transition={{ duration: 0.3 }}
+                                      >
+                                        <SelectAllIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllArmorResistance(true)}
+                                    disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
+                                    aria-label="Select all armor resistance buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.primary.light
+                                          : muiTheme.palette.primary.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(40, 82, 120, 0.35)'
+                                            : 'rgba(210, 233, 249, 0.85)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.primary.light, 0.6)
+                                            : alpha(muiTheme.palette.primary.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Select all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                              <Tooltip title="Clear all armor resistance buffs" placement="top" arrow>
+                                <motion.span
+                                  style={{ display: 'flex', flex: '1 1 auto' }}
+                                  whileHover={{ scale: 1.02 }}
+                                  whileTap={{ scale: 0.98 }}
+                                >
+                                  <Button
+                                    disableRipple
+                                    startIcon={
+                                      <motion.div
+                                        initial={{ rotate: 0 }}
+                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                        transition={{ duration: 0.5 }}
+                                      >
+                                        <ErrorIcon sx={{ fontSize: 18 }} />
+                                      </motion.div>
+                                    }
+                                    onClick={() => toggleAllArmorResistance(false)}
+                                    disabled={!armorResistanceAnySelected}
+                                    aria-label="Clear all armor resistance buffs"
+                                    sx={(muiTheme) => ({
+                                      color:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? muiTheme.palette.error.light
+                                          : muiTheme.palette.error.main,
+                                      backgroundColor: 'transparent',
+                                      '&:hover': {
+                                        backgroundColor:
+                                          muiTheme.palette.mode === 'dark'
+                                            ? 'rgba(153, 27, 27, 0.25)'
+                                            : 'rgba(252, 165, 165, 0.25)',
+                                      },
+                                      '&:focus-visible': {
+                                        outline: `2px solid ${
+                                          muiTheme.palette.mode === 'dark'
+                                            ? alpha(muiTheme.palette.error.light, 0.6)
+                                            : alpha(muiTheme.palette.error.main, 0.5)
+                                        }`,
+                                        outlineOffset: 2,
+                                      },
+                                      '&.Mui-disabled': {
+                                        color: muiTheme.palette.text.disabled,
+                                        backgroundColor: 'transparent',
+                                      },
+                                    })}
+                                  >
+                                    Clear all
+                                  </Button>
+                                </motion.span>
+                              </Tooltip>
+                            </ButtonGroup>
+                          </Box>
+                        </Stack>
+                      </div>
+                    )}
+                  </AnimatePresence>
                 </Box>
               </Box>
             ) : (
@@ -3070,6 +3405,52 @@ const CalculatorComponent: React.FC = () => {
                       </motion.span>
                     </Button>
                   </motion.div>
+                  <motion.div whileTap={{ scale: 0.95 }} style={{ flex: 1 }}>
+                    <Button
+                      fullWidth
+                      variant={selectedTab === 2 ? 'contained' : 'text'}
+                      onClick={() => setSelectedTab(2)}
+                      sx={{
+                        py: 1,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        borderRadius: '8px',
+                        color:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? '#0f172a'
+                              : '#ffffff'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.7)'
+                              : 'rgba(30, 41, 59, 0.7)',
+                        backgroundColor:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgb(128 211 255 / 90%)'
+                              : 'rgb(37 99 235 / 95%)'
+                            : 'transparent',
+                        border:
+                          selectedTab === 2 ? 'none' : '1px solid transparent',
+                        boxShadow:
+                          selectedTab === 2
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(96, 165, 250, 0.4)'
+                              : '0 4px 12px rgba(59, 130, 246, 0.3)'
+                            : 'none',
+                      }}
+                    >
+                      <motion.span
+                        initial={false}
+                        animate={{
+                          scale: selectedTab === 2 ? 1.05 : 1,
+                        }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        Armor
+                      </motion.span>
+                    </Button>
+                  </motion.div>
                 </Box>
               </Box>
             )}
@@ -3163,6 +3544,67 @@ const CalculatorComponent: React.FC = () => {
 
                 {/* Footer removed from inside TabPanel - moved outside */}
               </TabPanel>
+
+              <TabPanel value={selectedTab} index={2}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+                  {/* Armor Resistance Calculator Categories */}
+                  {!liteMode && (
+                    <>
+                      {renderSection(
+                        'Group Buffs',
+                        armorResistanceData.groupBuffs,
+                        'groupBuffs',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Gear',
+                        armorResistanceData.gear,
+                        'gear',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Class & Race Passives',
+                        armorResistanceData.classPassives,
+                        'classPassives',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Passives',
+                        armorResistanceData.passives,
+                        'passives',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Champion Points',
+                        armorResistanceData.cp,
+                        'cp',
+                        updateArmorResistanceItem,
+                      )}
+                    </>
+                  )}
+
+                  {/* Lite Mode - All categories in one */}
+                  {liteMode && (
+                    <List sx={{ p: 0 }}>
+                      {[
+                        ...armorResistanceData.groupBuffs.map((item, index) => ({ ...item, category: 'groupBuffs', originalIndex: index })),
+                        ...armorResistanceData.gear.map((item, index) => ({ ...item, category: 'gear', originalIndex: index })),
+                        ...armorResistanceData.classPassives.map((item, index) => ({ ...item, category: 'classPassives', originalIndex: index })),
+                        ...armorResistanceData.passives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+                        ...armorResistanceData.cp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+                      ].map((item, index) =>
+                        renderItem(
+                          item,
+                          index,
+                          item.category as keyof CalculatorData,
+                          (category, itemIndex, updates) => updateArmorResistanceItem(category, item.originalIndex, updates),
+                        )
+                      )}
+                    </List>
+                  )}
+                </Box>
+                {/* Footer removed from inside TabPanel - moved outside */}
+              </TabPanel>
             </Box>
 
             {/* Footer positioned outside TabPanels but inside CalculatorCard */}
@@ -3213,6 +3655,13 @@ const CalculatorComponent: React.FC = () => {
                         : gameMode === 'pvp'
                           ? 'Target: 100%+'
                           : 'PvE: 125%+\nPvP: 100%+',
+                  })}
+                {selectedTab === 2 &&
+                  renderSummaryFooter({
+                    label: 'Total Armor Resistance',
+                    value: armorResistanceTotal.toLocaleString(),
+                    status: armorResistanceStatus,
+                    rangeDescription: 'Target: 33,100\nCap: 33,100',
                   })}
               </Box>
             </Box>
