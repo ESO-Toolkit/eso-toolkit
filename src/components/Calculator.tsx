@@ -3638,8 +3638,26 @@ const CalculatorComponent: React.FC = () => {
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
-                        'Gear',
-                        armorResistanceData.gear,
+                        'Light Armor',
+                        armorResistanceData.gear.filter(item => item.name.startsWith('Light')),
+                        'gear',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Medium Armor',
+                        armorResistanceData.gear.filter(item => item.name.startsWith('Medium')),
+                        'gear',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Heavy Armor',
+                        armorResistanceData.gear.filter(item => item.name.startsWith('Heavy')),
+                        'gear',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
+                        'Shield',
+                        armorResistanceData.gear.filter(item => item.name.startsWith('Shield')),
                         'gear',
                         updateArmorResistanceItem,
                       )}
@@ -3669,7 +3687,10 @@ const CalculatorComponent: React.FC = () => {
                     <List sx={{ p: 0 }}>
                       {[
                         ...armorResistanceData.groupBuffs.map((item, index) => ({ ...item, category: 'groupBuffs', originalIndex: index })),
-                        ...armorResistanceData.gear.map((item, index) => ({ ...item, category: 'gear', originalIndex: index })),
+                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Light')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
+                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Medium')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
+                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Heavy')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
+                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Shield')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
                         ...armorResistanceData.classPassives.map((item, index) => ({ ...item, category: 'classPassives', originalIndex: index })),
                         ...armorResistanceData.passives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
                         ...armorResistanceData.cp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
