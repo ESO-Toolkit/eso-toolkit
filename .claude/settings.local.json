@@ -66,7 +66,16 @@
       "Bash(git rm:*)",
       "mcp__chrome-devtools__start_chrome_and_connect",
       "mcp__chrome-devtools__connect_to_browser",
-      "mcp__chrome-devtools__navigate_to_url"
+      "mcp__chrome-devtools__navigate_to_url",
+      "mcp__chrome-devtools__start_chrome",
+      "mcp__chrome-devtools__get_console_error_summary",
+      "mcp__chrome-devtools__clear_console",
+      "mcp__chrome-devtools__get_document",
+      "mcp__chrome-devtools__get_network_requests",
+      "mcp__perplexity-mcp__perplexity_ask",
+      "mcp__chrome-devtools__search_elements",
+      "mcp__chrome-devtools__get_page_info",
+      "mcp__chrome-devtools__disconnect_from_browser"
     ],
     "deny": [],
     "ask": []

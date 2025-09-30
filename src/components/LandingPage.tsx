@@ -192,7 +192,7 @@ const HeroSection = styled(Box, {
   overflow: 'hidden',
   width: '100%',
   maxWidth: '100vw',
-    [theme.breakpoints.down('md')]: {
+  [theme.breakpoints.down('md')]: {
     minHeight: '70vh',
     padding: '2rem 1rem 3rem',
     paddingTop: '3rem',
@@ -1353,17 +1353,19 @@ export const LandingPage: React.FC = () => {
       </ToolsSection>
 
       <CommunitySection id="about">
-        <Box sx={{
-          maxWidth: '1200px',
-          margin: '0 auto',
-          padding: '0 2rem',
-          '@media (max-width: 899.95px)': {
-            padding: '0 1rem',
-          },
-          '@media (max-width: 599.95px)': {
-            padding: '0 1rem',
-          },
-        }}>
+        <Box
+          sx={{
+            maxWidth: '1200px',
+            margin: '0 auto',
+            padding: '0 2rem',
+            '@media (max-width: 899.95px)': {
+              padding: '0 1rem',
+            },
+            '@media (max-width: 599.95px)': {
+              padding: '0 1rem',
+            },
+          }}
+        >
           <CommunityTitle variant="h2">Built By Players, For Players</CommunityTitle>
           <SectionSubtitle sx={{ maxWidth: '800px' }}>
             ESO Helper Tools is a community-driven project dedicated to enhancing your Elder Scrolls
