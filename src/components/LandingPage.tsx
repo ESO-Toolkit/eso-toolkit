@@ -201,11 +201,11 @@ const HeroSection = styled(Box, {
     minHeight: '60vh',
     padding: '0.75rem 0.75rem 2rem',
     alignItems: 'flex-start',
-    paddingTop: '2rem',
+    paddingTop: '4rem',
   },
   [theme.breakpoints.down(360)]: {
     padding: '0.5rem 0.5rem 1.5rem',
-    paddingTop: '1.5rem',
+    paddingTop: '3rem',
   },
   ...(showAnimations && {
     '&::before': {
@@ -579,24 +579,41 @@ const CommunityIcon = styled(Box)(({ theme }) => ({
 }));
 
 const CommunityStats = styled(Box)(({ theme }) => ({
-  display: 'flex',
-  justifyContent: 'center',
-  gap: '3rem',
-  margin: '3rem 0',
-  flexWrap: 'wrap',
-  [theme.breakpoints.down('md')]: {
+  display: 'grid',
+  gridTemplateColumns: 'repeat(4, 1fr)',
+  gap: '2rem',
+  maxWidth: '1200px',
+  margin: '3rem auto',
+
+  // Medium screens (tablets) - switch to 2x2 grid
+  [theme.breakpoints.down('lg')]: {
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '2rem',
-    margin: '2rem 0',
+    margin: '2.5rem 1rem',
   },
-  [theme.breakpoints.down('sm')]: {
+
+  // Small screens (mobile) - maintain 2x2 grid with adjusted spacing
+  [theme.breakpoints.down('md')]: {
+    gridTemplateColumns: 'repeat(2, 1fr)',
     gap: '1.5rem',
+    margin: '2rem 1rem',
+  },
+
+  // Extra small screens - still maintain 2x2 but with tighter spacing
+  [theme.breakpoints.down('sm')]: {
+    gridTemplateColumns: 'repeat(2, 1fr)',
+    gap: '1rem',
+    margin: '2rem 1rem',
   },
 }));
 
 const StatItem = styled(Box)(({ theme: _theme }) => ({
   textAlign: 'center',
-  flex: '1',
-  minWidth: '120px',
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  justifyContent: 'center',
+  minWidth: '0',
 }));
 
 const StatNumber = styled(Typography)(({ theme }) => ({
