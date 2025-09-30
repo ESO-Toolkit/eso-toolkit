@@ -6,6 +6,7 @@ import {
   ExpandMore as ExpandMoreIcon,
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,
+  Autorenew as AutorenewIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -536,6 +537,8 @@ const MODE_FILTER = {
   },
 };
 
+type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number };
+
 // Mode type
 type GameMode = 'pve' | 'pvp' | 'both';
 type SummaryStatus = 'at-cap' | 'over-cap' | 'under-cap';
@@ -921,6 +924,25 @@ const CalculatorComponent: React.FC = () => {
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] = useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
 
+  const armorResistanceGearWithIndex = useMemo<IndexedCalculatorItem[]>(
+    () =>
+      armorResistanceData.gear.map((item, gearIndex) => ({
+        ...item,
+        originalIndex: gearIndex,
+      })),
+    [armorResistanceData.gear],
+  );
+
+  const armorResistanceGearSections = useMemo(
+    () => ({
+      light: armorResistanceGearWithIndex.filter((item) => item.name.startsWith('Light')),
+      medium: armorResistanceGearWithIndex.filter((item) => item.name.startsWith('Medium')),
+      heavy: armorResistanceGearWithIndex.filter((item) => item.name.startsWith('Heavy')),
+      shield: armorResistanceGearWithIndex.filter((item) => item.name.startsWith('Shield')),
+    }),
+    [armorResistanceGearWithIndex],
+  );
+
   // JavaScript-based sticky footer
   const {
     footerRef,
@@ -1138,22 +1160,36 @@ const CalculatorComponent: React.FC = () => {
     [],
   );
 
-  const updateArmorResistanceVariant = useCallback(
-    (index: number, variantIndex: number) => {
-      setArmorResistanceData((prev: CalculatorData) => {
-        const newCategoryItems = [...prev.gear];
-        const item = { ...newCategoryItems[index] };
-        item.selectedVariant = variantIndex;
-        item.value = item.variants?.[variantIndex].value;
-        newCategoryItems[index] = item;
-        return {
-          ...prev,
-          gear: newCategoryItems,
-        };
-      });
-    },
-    [],
-  );
+  const cycleArmorResistanceVariant = useCallback((index: number) => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      const newCategoryItems = [...prev.gear];
+      const target = newCategoryItems[index];
+
+      if (!target) {
+        return prev;
+      }
+
+      const item = { ...target };
+      const variants = item.variants ?? [];
+
+      if (!variants.length) {
+        return prev;
+      }
+
+      const currentIndex =
+        typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
+      const nextIndex = (currentIndex + 1) % variants.length;
+
+      item.selectedVariant = nextIndex;
+      item.value = variants[nextIndex].value;
+      newCategoryItems[index] = item;
+
+      return {
+        ...prev,
+        gear: newCategoryItems,
+      };
+    });
+  }, []);
 
   // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
@@ -1308,8 +1344,29 @@ const CalculatorComponent: React.FC = () => {
         updates: Partial<CalculatorItem>,
       ) => void,
     ): React.JSX.Element => {
+      const indexedItem = item as IndexedCalculatorItem;
+      const resolvedIndex =
+        typeof indexedItem.originalIndex === 'number' ? indexedItem.originalIndex : index;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
-      const key = `${category}-${index}-${item.enabled}-${item.quantity}-${hasQuantity}`;
+      const key = `${category}-${resolvedIndex}-${item.enabled}-${item.quantity}-${hasQuantity}`;
+
+      const variants = item.variants ?? [];
+      const hasVariants = variants.length > 0;
+      const selectedVariantIndex = hasVariants
+        ? Math.min(
+            Math.max(
+              typeof item.selectedVariant === 'number' ? item.selectedVariant : 0,
+              0,
+            ),
+            variants.length - 1,
+          )
+        : undefined;
+      const currentVariant =
+        selectedVariantIndex !== undefined ? variants[selectedVariantIndex] : undefined;
+      const nextVariant =
+        selectedVariantIndex !== undefined
+          ? variants[(selectedVariantIndex + 1) % variants.length]
+          : undefined;
 
       // Calculate display values once
       let displayValue: number;
@@ -1323,8 +1380,8 @@ const CalculatorComponent: React.FC = () => {
         // Penetration = Ultimate × 23
         const ult = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(ult * 23);
-      } else if (item.variants && item.selectedVariant !== undefined) {
-        displayValue = item.variants[item.selectedVariant].value;
+      } else if (currentVariant) {
+        displayValue = currentVariant.value;
       } else if (item.isFlat) {
         displayValue = item.value || 0;
       } else {
@@ -1464,7 +1521,7 @@ const CalculatorComponent: React.FC = () => {
         }
 
         if (!item.locked) {
-          updateFunction(category, index, { enabled: !item.enabled });
+          updateFunction(category, resolvedIndex, { enabled: !item.enabled });
         }
       };
 
@@ -1521,7 +1578,7 @@ const CalculatorComponent: React.FC = () => {
                   },
                 };
               }}
-              onChange={(e) => updateFunction(category, index, { enabled: e.target.checked })}
+              onChange={(e) => updateFunction(category, resolvedIndex, { enabled: e.target.checked })}
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
           </ListItemIcon>
@@ -1544,7 +1601,7 @@ const CalculatorComponent: React.FC = () => {
               onChange={
                 hasQuantity
                   ? (e) =>
-                      updateFunction(category, index, {
+                      updateFunction(category, resolvedIndex, {
                         quantity: Math.max(
                           item.minQuantity || 0,
                           Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
@@ -1643,85 +1700,131 @@ const CalculatorComponent: React.FC = () => {
                     {item.name}
                   </Typography>
                   {/* Variant selection buttons */}
-                  {item.variants && (
-                    <Box sx={{ display: 'flex', gap: 0.75, alignItems: 'center', ml: 0.5 }}>
-                      {item.variants.map((variant, variantIndex) => (
+                  {currentVariant && (
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 0.75,
+                        ml: 0.5,
+                      }}
+                    >
+                      <Tooltip
+                        title={
+                          nextVariant
+                            ? `Cycle variant (Next: ${nextVariant.name})`
+                            : 'Cycle variant'
+                        }
+                        enterDelay={0}
+                        enterTouchDelay={0}
+                        arrow
+                      >
                         <Button
-                          key={variantIndex}
                           size="small"
                           disableElevation
                           disableRipple
                           onClick={(e) => {
                             e.stopPropagation();
-                            updateArmorResistanceVariant(index, variantIndex);
+                            cycleArmorResistanceVariant(resolvedIndex);
                           }}
                           sx={{
                             minWidth: 'auto',
                             minHeight: '24px',
                             fontSize: '0.7rem',
-                            fontWeight: 500,
+                            fontWeight: 600,
                             py: 0.4,
-                            px: 0.8,
-                            borderRadius: '6px',
+                            px: 1.2,
+                            borderRadius: '8px',
                             textTransform: 'none',
                             border: '1px solid',
-                            borderColor: item.selectedVariant === variantIndex
-                              ? theme.palette.mode === 'dark'
+                            borderColor:
+                              theme.palette.mode === 'dark'
                                 ? 'rgba(56, 189, 248, 0.8)'
-                                : 'rgba(40, 145, 200, 0.6)'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(255, 255, 255, 0.12)'
-                                : 'rgba(203, 213, 225, 0.4)',
-                            background: item.selectedVariant === variantIndex
-                              ? theme.palette.mode === 'dark'
+                                : 'rgba(40, 145, 200, 0.6)',
+                            background:
+                              theme.palette.mode === 'dark'
                                 ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
-                              : theme.palette.mode === 'dark'
-                                ? 'rgba(15, 23, 42, 0.4)'
-                                : 'rgba(255, 255, 255, 0.6)',
-                            color: item.selectedVariant === variantIndex
-                              ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)'
-                              : theme.palette.text.secondary,
-                            boxShadow: item.selectedVariant === variantIndex
-                              ? theme.palette.mode === 'dark'
+                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(199 234 255)'
+                                : 'rgb(40 145 200)',
+                            boxShadow:
+                              theme.palette.mode === 'dark'
                                 ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                                : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-                              : 'none',
+                                : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
                             backdropFilter: 'blur(8px)',
                             WebkitBackdropFilter: 'blur(8px)',
                             '&:hover': {
-                              background: item.selectedVariant === variantIndex
-                                ? theme.palette.mode === 'dark'
+                              background:
+                                theme.palette.mode === 'dark'
                                   ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)'
-                                : theme.palette.mode === 'dark'
-                                  ? 'rgba(56, 189, 248, 0.15)'
-                                  : 'rgba(40, 145, 200, 0.08)',
-                              borderColor: theme.palette.mode === 'dark'
-                                ? 'rgba(56, 189, 248, 0.9)'
-                                : 'rgba(40, 145, 200, 0.7)',
-                              color: theme.palette.mode === 'dark'
-                                ? 'rgb(199, 234, 255)'
-                                : 'rgb(40, 145, 200)',
+                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.9)'
+                                  : 'rgba(40, 145, 200, 0.7)',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgb(199, 234, 255)'
+                                  : 'rgb(40, 145, 200)',
                               transform: 'translateY(-1px)',
-                              boxShadow: theme.palette.mode === 'dark'
-                                ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                                : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                              boxShadow:
+                                theme.palette.mode === 'dark'
+                                  ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                                  : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
                             },
                             '&:active': {
                               transform: 'translateY(0)',
-                              boxShadow: item.selectedVariant === variantIndex
-                                ? theme.palette.mode === 'dark'
+                              boxShadow:
+                                theme.palette.mode === 'dark'
                                   ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                                  : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
-                                : 'none',
+                                  : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
                             },
                           }}
                         >
-                          {variant.name}
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                            <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                              {currentVariant.name}
+                            </Typography>
+                            {nextVariant && (
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.3,
+                                  px: 0.6,
+                                  py: 0.1,
+                                  borderRadius: '999px',
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(15, 23, 42, 0.6)'
+                                      : 'rgba(56, 189, 248, 0.1)',
+                                  border: '1px solid',
+                                  borderColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(56, 189, 248, 0.4)'
+                                      : 'rgba(40, 145, 200, 0.4)',
+                                }}
+                              >
+                                <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
+                                <Typography
+                                  component="span"
+                                  sx={{
+                                    fontSize: '0.6rem',
+                                    fontWeight: 600,
+                                    letterSpacing: 0.3,
+                                    textTransform: 'uppercase',
+                                  }}
+                                >
+                                  {nextVariant.name}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
                         </Button>
-                      ))}
+                      </Tooltip>
                     </Box>
                   )}
                   {item.tooltip && !item.hideTooltip && (
@@ -1811,7 +1914,7 @@ const CalculatorComponent: React.FC = () => {
       isExtraSmall,
       theme.palette.mode,
       theme.palette.text.secondary,
-      updateArmorResistanceVariant,
+      cycleArmorResistanceVariant,
     ],
   );
 
@@ -3639,25 +3742,25 @@ const CalculatorComponent: React.FC = () => {
                       )}
                       {renderSection(
                         'Light Armor',
-                        armorResistanceData.gear.filter(item => item.name.startsWith('Light')),
+                        armorResistanceGearSections.light,
                         'gear',
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
                         'Medium Armor',
-                        armorResistanceData.gear.filter(item => item.name.startsWith('Medium')),
+                        armorResistanceGearSections.medium,
                         'gear',
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
                         'Heavy Armor',
-                        armorResistanceData.gear.filter(item => item.name.startsWith('Heavy')),
+                        armorResistanceGearSections.heavy,
                         'gear',
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
                         'Shield',
-                        armorResistanceData.gear.filter(item => item.name.startsWith('Shield')),
+                        armorResistanceGearSections.shield,
                         'gear',
                         updateArmorResistanceItem,
                       )}
@@ -3687,10 +3790,10 @@ const CalculatorComponent: React.FC = () => {
                     <List sx={{ p: 0 }}>
                       {[
                         ...armorResistanceData.groupBuffs.map((item, index) => ({ ...item, category: 'groupBuffs', originalIndex: index })),
-                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Light')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
-                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Medium')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
-                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Heavy')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
-                        ...armorResistanceData.gear.filter(item => item.name.startsWith('Shield')).map((item, _index) => ({ ...item, category: 'gear', originalIndex: armorResistanceData.gear.findIndex(original => original.name === item.name) })),
+                        ...armorResistanceGearSections.light.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceGearSections.medium.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceGearSections.heavy.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceGearSections.shield.map((item) => ({ ...item, category: 'gear' })),
                         ...armorResistanceData.classPassives.map((item, index) => ({ ...item, category: 'classPassives', originalIndex: index })),
                         ...armorResistanceData.passives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
                         ...armorResistanceData.cp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
