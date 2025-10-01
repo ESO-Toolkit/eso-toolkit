@@ -1602,16 +1602,6 @@ const CalculatorComponent: React.FC = () => {
 
       const variantCycleControl = currentVariant ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.5 : 0.75 }}>
-          <Tooltip
-            title={
-              nextVariant
-                ? `Cycle variant (Next: ${nextVariant.name})`
-                : 'Cycle variant'
-            }
-            enterDelay={0}
-            enterTouchDelay={0}
-            arrow
-          >
             <Button
               size="small"
               disableElevation
@@ -1718,7 +1708,6 @@ const CalculatorComponent: React.FC = () => {
                 )}
               </Box>
             </Button>
-          </Tooltip>
           <Tooltip title={`Gear Quality: ${qualityLabel}`}>
             <Rating
               name={`armor-quality-${category}-${resolvedIndex}`}
