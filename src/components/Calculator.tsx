@@ -1709,7 +1709,7 @@ const CalculatorComponent: React.FC = () => {
                       component="span"
                       sx={{
                         fontSize: '0.6rem',
-                        fontWeight: 600,
+                        fontWeight: 300,
                         letterSpacing: 0.3,
                         textTransform: 'uppercase',
                       }}
