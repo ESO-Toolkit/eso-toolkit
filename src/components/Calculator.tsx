@@ -3985,8 +3985,8 @@ const CalculatorComponent: React.FC = () => {
                       gameMode === 'pve'
                         ? 'Target: 18,200–18,999'
                         : gameMode === 'pvp'
-                          ? 'Target: 33,300–37,000'
-                          : 'PvE: 18,200–18,999\nPvP: 33,300–37,000',
+                          ? 'Target: 33,100–33,500'
+                          : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
                   })}
                 {selectedTab === 1 &&
                   renderSummaryFooter({
@@ -4006,7 +4006,7 @@ const CalculatorComponent: React.FC = () => {
                     label: 'Total Armor Resistance',
                     value: armorResistanceTotal.toLocaleString(),
                     status: armorResistanceStatus,
-                    rangeDescription: 'Target: 33,100\nCap: 33,100',
+                    rangeDescription: 'Target: 33,100–33,500\nCap: 33,500',
                   })}
               </Box>
             </Box>

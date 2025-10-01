@@ -718,9 +718,9 @@ const applyArmorQualityData = (data: CalculatorData): void => {
 applyArmorQualityData(ARMOR_RESISTANCE_DATA);
 
 // Armor Resistance Calculator Constants
-export const ARMOR_RESISTANCE_OPTIMAL_MIN = 18200;
-export const ARMOR_RESISTANCE_OPTIMAL_MAX = 33100;
-export const ARMOR_RESISTANCE_CAP = 33100;
+export const ARMOR_RESISTANCE_OPTIMAL_MIN = 33100;
+export const ARMOR_RESISTANCE_OPTIMAL_MAX = 33500;
+export const ARMOR_RESISTANCE_CAP = 33500;
 
 // Tooltip data for armor resistance items
 export const ARMOR_RESISTANCE_TOOLTIPS = {
