@@ -1732,9 +1732,9 @@ const CalculatorComponent: React.FC = () => {
               }
             }}
             sx={{
-              minWidth: isMobile ? '60px' : '175px',
-              width: isMobile ? '60px' : '175px',
-              minHeight: isMobile ? '32px' : '24px',
+              minWidth: isMobile ? '80px' : '175px',
+              width: isMobile ? '80px' : '175px',
+              minHeight: isMobile ? '40px' : '24px',
               fontSize: '0.7rem',
               fontWeight: 600,
               py: 0.4,
