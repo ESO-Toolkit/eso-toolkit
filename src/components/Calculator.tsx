@@ -1756,7 +1756,7 @@ const CalculatorComponent: React.FC = () => {
 
       const nameStyles = {
         color: item.enabled ? 'text.primary' : 'text.disabled',
-        fontSize: { xs: liteMode ? '0.7rem' : '0.95rem', sm: liteMode ? '0.65rem' : '0.9rem' },
+        fontSize: { xs: liteMode ? '0.7rem' : '0.95rem', sm: liteMode ? '0.9rem' : '0.9rem' },
         lineHeight: { xs: 1.4, sm: 1.2 },
         wordBreak: 'break-word' as const,
       };
@@ -1911,16 +1911,10 @@ const CalculatorComponent: React.FC = () => {
                 getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
                 sx={{
                   '& .MuiRating-iconFilled': {
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgb(56 189 248)'
-                        : 'rgb(40 145 200)',
+                    color: 'rgb(255 222 148)',
                   },
                   '& .MuiRating-iconHover': {
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgb(94 234 212)'
-                        : 'rgb(14 165 233)',
+                    color: 'rgb(255 234 179)',
                   },
                 }}
               />
@@ -3289,8 +3283,8 @@ const CalculatorComponent: React.FC = () => {
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
                               border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                  ? alpha(muiTheme.palette.primary.light, 0.2)
-                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                                ? alpha(muiTheme.palette.primary.light, 0.2)
+                                : alpha(muiTheme.palette.primary.main, 0.18)
                                 }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
@@ -3318,8 +3312,8 @@ const CalculatorComponent: React.FC = () => {
                                 borderLeft: {
                                   xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
                                   sm: `1px solid ${muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.primary.light, 0.18)
-                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                    ? alpha(muiTheme.palette.primary.light, 0.18)
+                                    : alpha(muiTheme.palette.primary.main, 0.15)
                                     }`,
                                 },
                               },
@@ -3359,8 +3353,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.primary.light, 0.6)
-                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                        ? alpha(muiTheme.palette.primary.light, 0.6)
+                                        : alpha(muiTheme.palette.primary.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -3408,8 +3402,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.error.light, 0.55)
-                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                        ? alpha(muiTheme.palette.error.light, 0.55)
+                                        : alpha(muiTheme.palette.error.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -3449,8 +3443,8 @@ const CalculatorComponent: React.FC = () => {
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
                               border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                  ? alpha(muiTheme.palette.primary.light, 0.2)
-                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                                ? alpha(muiTheme.palette.primary.light, 0.2)
+                                : alpha(muiTheme.palette.primary.main, 0.18)
                                 }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
@@ -3478,8 +3472,8 @@ const CalculatorComponent: React.FC = () => {
                                 borderLeft: {
                                   xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
                                   sm: `1px solid ${muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.primary.light, 0.18)
-                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                    ? alpha(muiTheme.palette.primary.light, 0.18)
+                                    : alpha(muiTheme.palette.primary.main, 0.15)
                                     }`,
                                 },
                               },
@@ -3519,8 +3513,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.primary.light, 0.6)
-                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                        ? alpha(muiTheme.palette.primary.light, 0.6)
+                                        : alpha(muiTheme.palette.primary.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -3568,8 +3562,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.error.light, 0.55)
-                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                        ? alpha(muiTheme.palette.error.light, 0.55)
+                                        : alpha(muiTheme.palette.error.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -3608,8 +3602,8 @@ const CalculatorComponent: React.FC = () => {
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
                               border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                  ? alpha(muiTheme.palette.primary.light, 0.2)
-                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                                ? alpha(muiTheme.palette.primary.light, 0.2)
+                                : alpha(muiTheme.palette.primary.main, 0.18)
                                 }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
@@ -3634,8 +3628,8 @@ const CalculatorComponent: React.FC = () => {
                                 },
                                 '&:focus-visible': {
                                   outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                      ? alpha(muiTheme.palette.primary.light, 0.6)
-                                      : alpha(muiTheme.palette.primary.main, 0.5)
+                                    ? alpha(muiTheme.palette.primary.light, 0.6)
+                                    : alpha(muiTheme.palette.primary.main, 0.5)
                                     }`,
                                   outlineOffset: 2,
                                 },
@@ -3680,8 +3674,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.primary.light, 0.6)
-                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                        ? alpha(muiTheme.palette.primary.light, 0.6)
+                                        : alpha(muiTheme.palette.primary.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -3729,8 +3723,8 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                     '&:focus-visible': {
                                       outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                          ? alpha(muiTheme.palette.error.light, 0.6)
-                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                        ? alpha(muiTheme.palette.error.light, 0.6)
+                                        : alpha(muiTheme.palette.error.main, 0.5)
                                         }`,
                                       outlineOffset: 2,
                                     },
@@ -4380,16 +4374,10 @@ const CalculatorComponent: React.FC = () => {
                             getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
                             sx={{
                               '& .MuiRating-iconFilled': {
-                                color:
-                                  theme.palette.mode === 'dark'
-                                    ? 'rgb(56 189 248)'
-                                    : 'rgb(40, 145, 200)',
+                                color: 'rgb(255 222 148)',
                               },
                               '& .MuiRating-iconHover': {
-                                color:
-                                  theme.palette.mode === 'dark'
-                                    ? 'rgb(94 234 212)'
-                                    : 'rgb(14 165 233)',
+                                color: 'rgb(255 234 179)',
                               },
                             }}
                           />
