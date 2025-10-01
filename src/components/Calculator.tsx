@@ -35,6 +35,11 @@ import {
   AccordionSummary,
   AccordionDetails,
   Stack,
+  Modal,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -922,6 +927,8 @@ const CalculatorComponent: React.FC = () => {
   const [selectedTab, setSelectedTab] = useState(0);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
+  const [variantModalOpen, setVariantModalOpen] = useState(false);
+  const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] = useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
@@ -1608,12 +1615,17 @@ const CalculatorComponent: React.FC = () => {
               disableRipple
               onClick={(e) => {
                 e.stopPropagation();
-                cycleArmorResistanceVariant(resolvedIndex);
+                if (isMobile) {
+                  setCurrentEditingIndex(resolvedIndex);
+                  setVariantModalOpen(true);
+                } else {
+                  cycleArmorResistanceVariant(resolvedIndex);
+                }
               }}
               sx={{
-                minWidth: '175px',
-                width: '175px',
-                minHeight: '24px',
+                minWidth: isMobile ? '60px' : '175px',
+                width: isMobile ? '60px' : '175px',
+                minHeight: isMobile ? '32px' : '24px',
                 fontSize: '0.7rem',
                 fontWeight: 600,
                 py: 0.4,
@@ -1669,10 +1681,10 @@ const CalculatorComponent: React.FC = () => {
               }}
             >
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography component="span" fontWeight={600} fontSize="0.7rem">
-                  {currentVariant.name}
+                <Typography component="span" fontWeight={600} fontSize={isMobile ? '0.6rem' : '0.7rem'}>
+                  {isMobile ? 'Trait' : currentVariant.name}
                 </Typography>
-                {nextVariant && (
+                {nextVariant && !isMobile && (
                   <Box
                     sx={{
                       display: 'flex',
@@ -1708,7 +1720,8 @@ const CalculatorComponent: React.FC = () => {
                 )}
               </Box>
             </Button>
-          <Tooltip title={`Gear Quality: ${qualityLabel}`}>
+          {!isMobile && (
+            <Tooltip title={`Gear Quality: ${qualityLabel}`}>
             <Rating
               name={`armor-quality-${category}-${resolvedIndex}`}
               value={ratingValue}
@@ -1740,7 +1753,8 @@ const CalculatorComponent: React.FC = () => {
                 },
               }}
             />
-          </Tooltip>
+            </Tooltip>
+          )}
         </Box>
       ) : null;
 
@@ -4036,6 +4050,222 @@ const CalculatorComponent: React.FC = () => {
             </Box>
           )}
         </Container>
+
+        {/* Armor Variant Selection Modal for Mobile */}
+        <Dialog
+          open={variantModalOpen}
+          onClose={() => {
+            setVariantModalOpen(false);
+            setCurrentEditingIndex(null);
+          }}
+          fullWidth
+          maxWidth="xs"
+          PaperProps={{
+            sx: {
+              borderRadius: '12px',
+              background: theme.palette.mode === 'dark'
+                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: `1px solid ${theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.3)'
+                : 'rgba(40, 145, 200, 0.2)'}`,
+              boxShadow: theme.palette.mode === 'dark'
+                ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                : '0 8px 32px rgba(0, 0, 0, 0.1)',
+            },
+          }}
+        >
+          <DialogTitle
+            sx={{
+              textAlign: 'center',
+              fontWeight: 700,
+              fontSize: '1.1rem',
+              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
+              pb: 1,
+            }}
+          >
+            Select Armor Variant
+          </DialogTitle>
+          <DialogContent sx={{ py: 2 }}>
+            <Stack spacing={3}>
+              {['regular', 'reinforced', 'nirnhoned'].map((variant) => {
+                // Get current variant from state using the editing index
+                const currentItem = currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
+                const currentVariant = currentItem?.variants && currentItem.selectedVariant !== undefined
+                  ? currentItem.variants[currentItem.selectedVariant]
+                  : null;
+                const isSelected = currentVariant?.name === variant;
+
+                // Quality rating is handled globally below
+
+                return (
+                  <Box key={variant}>
+                    <Button
+                      fullWidth
+                      size="large"
+                      onClick={() => {
+                        // Find the variant index and cycle to it
+                        const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(variant);
+                        if (variantIndex !== -1 && currentEditingIndex !== null) {
+                          // Calculate how many cycles needed to reach this variant
+                          const currentIndex = currentVariant
+                            ? ['regular', 'reinforced', 'nirnhoned'].indexOf(currentVariant.name)
+                            : 0;
+                          const cyclesNeeded = (variantIndex - currentIndex + 3) % 3;
+
+                          // Cycle the required number of times
+                          for (let i = 0; i < cyclesNeeded; i++) {
+                            cycleArmorResistanceVariant(currentEditingIndex);
+                          }
+                        }
+                      }}
+                      sx={{
+                        borderRadius: '8px',
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        fontSize: '1rem',
+                        py: 1.5,
+                        border: '2px solid',
+                        borderColor: isSelected
+                          ? (theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.8)'
+                              : 'rgba(40, 145, 200, 0.6)')
+                          : (theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.3)'
+                              : 'rgba(40, 145, 200, 0.2)'),
+                        background: isSelected
+                          ? (theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)')
+                          : 'transparent',
+                        color: isSelected
+                          ? (theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)')
+                          : (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : theme.palette.text.secondary),
+                        '&:hover': {
+                          borderColor: theme.palette.mode === 'dark'
+                            ? 'rgba(56, 189, 248, 0.6)'
+                            : 'rgba(40, 145, 200, 0.4)',
+                          background: theme.palette.mode === 'dark'
+                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+                        },
+                      }}
+                    >
+                      {variant === 'regular' ? 'Regular' :
+                       variant === 'reinforced' ? 'Reinforced' : 'Nirnhoned'}
+                    </Button>
+                  </Box>
+                );
+              })}
+
+              {/* Divider */}
+              <Divider sx={{
+                borderColor: theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.2)'
+                  : 'rgba(40, 145, 200, 0.2)',
+              }} />
+
+              {/* Single Quality Rating */}
+              <Box sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                pt: 1,
+              }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    mb: 2,
+                    fontWeight: 600,
+                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : theme.palette.text.primary,
+                    textAlign: 'center',
+                  }}
+                >
+                  Gear Quality
+                </Typography>
+                <Box sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  px: 2,
+                }}>
+                  {(() => {
+                    // Calculate quality rating values once for the current item
+                    const currentItem = currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
+                    const qualityLevel = typeof currentItem?.qualityLevel === 'number'
+                      ? currentItem.qualityLevel
+                      : ARMOR_QUALITY_LABELS.length - 1;
+                    const ratingValue = qualityLevel + 1;
+                    const qualityLabel = ARMOR_QUALITY_LABELS[qualityLevel] ?? ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
+
+                    return (
+                      <>
+                        <Tooltip title={`Gear Quality: ${qualityLabel}`}>
+                          <Rating
+                            name="modal-armor-quality"
+                            value={ratingValue}
+                            max={ARMOR_QUALITY_LABELS.length}
+                            precision={1}
+                            size="large"
+                            onChange={(event, newValue) => {
+                              event.stopPropagation();
+                              if (typeof newValue === 'number' && currentEditingIndex !== null) {
+                                updateArmorResistanceQuality(currentEditingIndex, newValue - 1);
+                              }
+                            }}
+                            onClick={(event) => event.stopPropagation()}
+                            onMouseDown={(event) => event.stopPropagation()}
+                            onTouchStart={(event) => event.stopPropagation()}
+                            getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
+                            sx={{
+                              '& .MuiRating-iconFilled': {
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgb(56 189 248)'
+                                    : 'rgb(40, 145, 200)',
+                              },
+                              '& .MuiRating-iconHover': {
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgb(94 234 212)'
+                                    : 'rgb(14 165 233)',
+                              },
+                            }}
+                          />
+                        </Tooltip>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            ml: 2,
+                            fontWeight: 600,
+                            color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)',
+                          }}
+                        >
+                          {qualityLabel}
+                        </Typography>
+                      </>
+                    );
+                  })()}
+                </Box>
+              </Box>
+            </Stack>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button
+              onClick={() => setVariantModalOpen(false)}
+              sx={{
+                borderRadius: '6px',
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
+            >
+              Cancel
+            </Button>
+          </DialogActions>
+        </Dialog>
       </CalculatorContainer>
     </>
   );
