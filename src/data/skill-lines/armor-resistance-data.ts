@@ -137,7 +137,6 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'group_buffs',
       tooltip: 'Increases your Physical and Spell Resistance by <strong>5948</strong>.',
-      locked: true,
     },
     {
       name: 'Minor Resolve',
@@ -147,7 +146,6 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'group_buffs',
       tooltip: 'Increases your Physical and Spell Resistance by <strong>2974</strong>.',
-      locked: true,
     },
   ],
   gear: [
@@ -549,7 +547,6 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       step: 1,
       category: 'passives',
       tooltip: 'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
-      locked: true,
     },
     {
       name: 'Light Armor Passive',
@@ -557,11 +554,10 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       quantity: 0,
       value: 726,
       per: 726,
-      maxQuantity: 0,
+      maxQuantity: 7,
       step: 1,
       category: 'passives',
       tooltip: 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
-      locked: true,
     },
     {
       name: 'Runic Sunder',
