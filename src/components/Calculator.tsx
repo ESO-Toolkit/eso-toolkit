@@ -1621,7 +1621,8 @@ const CalculatorComponent: React.FC = () => {
                 cycleArmorResistanceVariant(resolvedIndex);
               }}
               sx={{
-                minWidth: 'auto',
+                minWidth: '175px',
+                width: '175px',
                 minHeight: '24px',
                 fontSize: '0.7rem',
                 fontWeight: 600,
