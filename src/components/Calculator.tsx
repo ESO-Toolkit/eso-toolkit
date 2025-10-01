@@ -1453,13 +1453,64 @@ const CalculatorComponent: React.FC = () => {
           ? `auto minmax(${controlColumnMin}px, max-content) 1fr auto`
           : `auto minmax(${controlColumnMin}px, max-content) 1fr auto auto`;
 
-      return {
-        display: 'grid',
-        gridTemplateColumns: gridColumns,
-        alignItems: 'center',
-        gap: liteMode ? 0.625 : 2, // 0.625 = 5px in MUI spacing (8px base)
-        p: liteMode ? 0.125 : 1.5,
-        background: item.enabled
+      // Special gradient backgrounds for armor passives
+      const isLightArmorPassive = item.name === 'Light Armor Passive';
+      const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
+
+      let background;
+      let border;
+
+      if (isLightArmorPassive) {
+        background = item.enabled
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(214, 168, 255, 0.4) 0%, rgba(154, 95, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgba(214, 168, 255, 0.2) 0%, rgba(154, 95, 255, 0.15) 100%)'
+            : theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(214, 168, 255, 0.4) 0%, rgba(154, 95, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgba(214, 168, 255, 0.2) 0%, rgba(154, 95, 255, 0.15) 100%)'
+          : liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(214, 168, 255, 0.1)'
+              : 'rgba(214, 168, 255, 0.05)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(214, 168, 255, 0.1)'
+              : 'rgba(214, 168, 255, 0.05)';
+
+        border = item.enabled
+          ? liteMode
+            ? '1px solid rgba(214, 168, 255, 0.6) !important'
+            : '1px solid rgba(214, 168, 255, 0.8)'
+          : liteMode
+            ? '1px solid transparent'
+            : '1px solid rgba(214, 168, 255, 0.2)';
+      } else if (isHeavyArmorPassive) {
+        background = item.enabled
+          ? liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(214, 168, 255, 0.4) 0%, rgba(154, 95, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgba(214, 168, 255, 0.2) 0%, rgba(154, 95, 255, 0.15) 100%)'
+            : theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(214, 168, 255, 0.4) 0%, rgba(154, 95, 255, 0.3) 100%)'
+              : 'linear-gradient(135deg, rgba(214, 168, 255, 0.2) 0%, rgba(154, 95, 255, 0.15) 100%)'
+          : liteMode
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(214, 168, 255, 0.1)'
+              : 'rgba(214, 168, 255, 0.05)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(214, 168, 255, 0.1)'
+              : 'rgba(214, 168, 255, 0.05)';
+
+        border = item.enabled
+          ? liteMode
+            ? '1px solid rgba(214, 168, 255, 0.6) !important'
+            : '1px solid rgba(214, 168, 255, 0.8)'
+          : liteMode
+            ? '1px solid transparent'
+            : '1px solid rgba(214, 168, 255, 0.2)';
+      } else {
+        // Default background for other items
+        background = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.4) 0%, rgba(0, 225, 255, 0.3) 100%)'
@@ -1473,8 +1524,9 @@ const CalculatorComponent: React.FC = () => {
               : 'rgb(255 255 255 / 41%)'
             : theme.palette.mode === 'dark'
               ? 'rgba(15, 23, 42, 0.6)'
-              : 'rgba(241, 245, 249, 0.8)',
-        border: item.enabled
+              : 'rgba(241, 245, 249, 0.8)';
+
+        border = item.enabled
           ? liteMode
             ? theme.palette.mode === 'dark'
               ? '1px solid rgba(56, 189, 248, 0.6) !important'
@@ -1488,7 +1540,17 @@ const CalculatorComponent: React.FC = () => {
             ? '1px solid transparent'
             : theme.palette.mode === 'dark'
               ? '1px solid rgba(255, 255, 255, 0.12)'
-              : '1px solid rgba(203, 213, 225, 0.3)',
+              : '1px solid rgba(203, 213, 225, 0.3)';
+      }
+
+      return {
+        display: 'grid',
+        gridTemplateColumns: gridColumns,
+        alignItems: 'center',
+        gap: liteMode ? 0.625 : 2, // 0.625 = 5px in MUI spacing (8px base)
+        p: liteMode ? 0.125 : 1.5,
+        background,
+        border,
         borderRadius: '8px !important',
         mb: liteMode ? 0.625 : 1, // 0.625 = 5px in MUI spacing (8px base)
         cursor: item.locked ? 'not-allowed' : 'pointer',
