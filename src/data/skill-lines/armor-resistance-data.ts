@@ -1,3 +1,95 @@
+import armorQualityValues from './armor-quality-values.json';
+
+export const ARMOR_QUALITY_LABELS = ['White', 'Green', 'Blue', 'Purple', 'Gold'];
+
+const ARMOR_WEIGHT_KEYS = new Set(['light', 'medium', 'heavy']);
+const ARMOR_SLOT_KEY_MAP: Record<string, string> = {
+  chest: 'chest',
+  helm: 'head',
+  head: 'head',
+  shoulders: 'shoulder',
+  shoulder: 'shoulder',
+  hands: 'hands',
+  hand: 'hands',
+  belt: 'belt',
+  sash: 'belt',
+  pants: 'legs',
+  legs: 'legs',
+  greaves: 'legs',
+  feet: 'feet',
+  boots: 'feet',
+  gauntlets: 'hands',
+  shield: 'shield',
+};
+
+const ARMOR_TRAIT_KEY_MAP: Record<string, string> = {
+  regular: 'regular',
+  reinforced: 'reinforced',
+  nirnhoned: 'nirnhoned',
+};
+
+const QUALITY_FALLBACK = (value?: number): number[] =>
+  Array(ARMOR_QUALITY_LABELS.length).fill(typeof value === 'number' ? value : 0);
+
+type ArmorQualityMap = Record<string, Record<string, Record<string, number[]>>>;
+const armorQualityMap = armorQualityValues as ArmorQualityMap;
+
+const TRAIT_ORDER = ['regular', 'reinforced', 'nirnhoned'] as const;
+type TraitKey = (typeof TRAIT_ORDER)[number];
+
+const TRAIT_DISPLAY_LABELS: Record<TraitKey, string> = {
+  regular: 'Regular',
+  reinforced: 'Reinforced',
+  nirnhoned: 'Nirnhoned',
+};
+
+const resolveSlotKey = (slotParts: string[]): string | null => {
+  if (slotParts.length === 0) {
+    return null;
+  }
+
+  const normalized = slotParts.join(' ').toLowerCase().trim();
+  const candidates = [
+    normalized,
+    normalized.replace(/\s+/g, ''),
+    normalized.endsWith('s') ? normalized.slice(0, -1) : normalized,
+  ];
+
+  for (const candidate of candidates) {
+    const mapped = ARMOR_SLOT_KEY_MAP[candidate];
+    if (mapped) {
+      return mapped;
+    }
+  }
+
+  return candidates[candidates.length - 1];
+};
+
+const normalizeTraitKey = (value?: string | null): TraitKey | null => {
+  if (!value) {
+    return null;
+  }
+
+  const normalized = value.toLowerCase();
+  const mapped = ARMOR_TRAIT_KEY_MAP[normalized] ?? normalized;
+  return TRAIT_ORDER.includes(mapped as TraitKey) ? (mapped as TraitKey) : null;
+};
+
+const getQualityValues = (
+  weightKey: string | null,
+  slotKey: string | null,
+  traitKey: TraitKey,
+  fallbackValue?: number,
+): number[] => {
+  if (weightKey && slotKey) {
+    const values = armorQualityMap[weightKey]?.[slotKey]?.[traitKey];
+    if (Array.isArray(values) && values.length === ARMOR_QUALITY_LABELS.length) {
+      return values.map((value) => Number(value));
+    }
+  }
+
+  return QUALITY_FALLBACK(fallbackValue);
+};
 // ESO Calculator Data - Armor Resistance
 // Extracted from Elder Tools - Resistances.csv
 
@@ -20,8 +112,10 @@ export interface CalculatorItem {
   variants?: {
     name: string;
     value: number;
+    qualityValues?: number[];
   }[];
   selectedVariant?: number;
+  qualityLevel?: number;
 }
 
 export interface CalculatorData {
@@ -541,6 +635,87 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
     },
   ],
 };
+
+
+const applyArmorQualityData = (data: CalculatorData): void => {
+  data.gear = data.gear.map((item) => {
+    if (!item.variants || item.variants.length === 0) {
+      return item;
+    }
+
+    const nameParts = item.name.split(' ');
+    const possibleWeight = nameParts[0]?.toLowerCase();
+    const weightKey = possibleWeight && ARMOR_WEIGHT_KEYS.has(possibleWeight) ? possibleWeight : null;
+    const slotParts = weightKey ? nameParts.slice(1) : nameParts;
+    const slotKey = resolveSlotKey(slotParts);
+    const baseQualityLevel =
+      typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
+    const currentTraitKey = normalizeTraitKey(item.variants[item.selectedVariant ?? 0]?.name);
+
+    const builtVariants = weightKey && slotKey
+      ? TRAIT_ORDER
+          .map((traitKey) => {
+            const qualityValues = getQualityValues(weightKey, slotKey, traitKey, item.value);
+            if (!qualityValues.some((value) => value !== 0)) {
+              return null;
+            }
+
+            return {
+              name: TRAIT_DISPLAY_LABELS[traitKey],
+              value: qualityValues[qualityValues.length - 1] ?? item.value ?? 0,
+              qualityValues,
+            };
+          })
+          .filter((variant): variant is CalculatorItem['variants'][number] => Boolean(variant))
+      : [];
+
+    const fallbackVariants = item.variants.map((variant) => ({
+      ...variant,
+      qualityValues:
+        variant.qualityValues && variant.qualityValues.length === ARMOR_QUALITY_LABELS.length
+          ? variant.qualityValues
+          : QUALITY_FALLBACK(variant.value),
+    }));
+
+    const updatedVariants = builtVariants.length > 0 ? builtVariants : fallbackVariants;
+
+    if (updatedVariants.length === 0) {
+      return item;
+    }
+
+    let selectedVariantIndex = updatedVariants.findIndex((variant) => {
+      const traitKey = normalizeTraitKey(variant.name);
+      return traitKey && traitKey === currentTraitKey;
+    });
+
+    if (selectedVariantIndex === -1) {
+      selectedVariantIndex = Math.min(
+        typeof item.selectedVariant === 'number' ? item.selectedVariant : 0,
+        updatedVariants.length - 1,
+      );
+    }
+
+    const selectedVariant = updatedVariants[selectedVariantIndex];
+    const qualityValues =
+      selectedVariant?.qualityValues && selectedVariant.qualityValues.length === ARMOR_QUALITY_LABELS.length
+        ? selectedVariant.qualityValues
+        : QUALITY_FALLBACK(selectedVariant?.value);
+    const safeQualityLevel = Math.min(
+      Math.max(baseQualityLevel, 0),
+      qualityValues.length - 1,
+    );
+
+    return {
+      ...item,
+      variants: updatedVariants,
+      selectedVariant: selectedVariantIndex,
+      qualityLevel: safeQualityLevel,
+      value: qualityValues[safeQualityLevel],
+    };
+  });
+};
+
+applyArmorQualityData(ARMOR_RESISTANCE_DATA);
 
 // Armor Resistance Calculator Constants
 export const ARMOR_RESISTANCE_OPTIMAL_MIN = 18200;

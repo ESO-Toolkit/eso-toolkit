@@ -20,8 +20,10 @@ export interface CalculatorItem {
   variants?: {
     name: string;
     value: number;
+    qualityValues?: number[];
   }[];
   selectedVariant?: number;
+  qualityLevel?: number;
 }
 
 export interface CalculatorData {
@@ -580,3 +582,4 @@ export { ARMOR_RESISTANCE_DATA } from './armor-resistance-data';
 export { ARMOR_RESISTANCE_OPTIMAL_MIN } from './armor-resistance-data';
 export { ARMOR_RESISTANCE_OPTIMAL_MAX } from './armor-resistance-data';
 export { ARMOR_RESISTANCE_CAP } from './armor-resistance-data';
+export { ARMOR_QUALITY_LABELS } from './armor-resistance-data';

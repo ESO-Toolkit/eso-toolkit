@@ -25,6 +25,7 @@ import {
   ListItemText,
   Chip,
   Tooltip,
+  Rating,
   IconButton,
   useMediaQuery,
   Card,
@@ -54,6 +55,7 @@ import {
   ARMOR_RESISTANCE_OPTIMAL_MIN,
   ARMOR_RESISTANCE_OPTIMAL_MAX,
   ARMOR_RESISTANCE_CAP,
+  ARMOR_QUALITY_LABELS,
 } from '../data/skill-lines/calculator-data';
 
 // Mode filter configuration based on original calculator
@@ -965,8 +967,24 @@ const CalculatorComponent: React.FC = () => {
       const ult = parseFloat(item.quantity.toString()) || 0;
       return Math.round(ult * 23);
     } else if (item.variants && item.selectedVariant !== undefined) {
-      // Use the selected variant value
-      return item.variants[item.selectedVariant].value;
+      // Use the selected variant value with quality scaling
+      const variant = item.variants[item.selectedVariant];
+      if (!variant) {
+        return 0;
+      }
+
+      if (variant.qualityValues && variant.qualityValues.length > 0) {
+        const qualityLevel =
+          typeof item.qualityLevel === 'number'
+            ? Math.min(
+                Math.max(item.qualityLevel, 0),
+                variant.qualityValues.length - 1,
+              )
+            : variant.qualityValues.length - 1;
+        return variant.qualityValues[qualityLevel] ?? variant.value ?? 0;
+      }
+
+      return variant.value ?? item.value ?? 0;
     } else if (item.isFlat) {
       return item.value || 0;
     } else {
@@ -1179,9 +1197,26 @@ const CalculatorComponent: React.FC = () => {
       const currentIndex =
         typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
       const nextIndex = (currentIndex + 1) % variants.length;
+      const nextVariant = variants[nextIndex];
 
       item.selectedVariant = nextIndex;
-      item.value = variants[nextIndex].value;
+
+      const qualityLevel =
+        typeof item.qualityLevel === 'number'
+          ? item.qualityLevel
+          : ARMOR_QUALITY_LABELS.length - 1;
+      const variantQualityValues = nextVariant?.qualityValues;
+      const safeQualityLevel = Math.min(
+        Math.max(qualityLevel, 0),
+        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+      );
+
+      item.qualityLevel = safeQualityLevel;
+      item.value =
+        variantQualityValues?.[safeQualityLevel] ??
+        nextVariant?.value ??
+        item.value;
+
       newCategoryItems[index] = item;
 
       return {
@@ -1191,7 +1226,47 @@ const CalculatorComponent: React.FC = () => {
     });
   }, []);
 
-  // Bulk toggle handlers
+  const updateArmorResistanceQuality = useCallback((index: number, qualityLevel: number) => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      const newCategoryItems = [...prev.gear];
+      const target = newCategoryItems[index];
+
+      if (!target) {
+        return prev;
+      }
+
+      const item = { ...target };
+      const variants = item.variants ?? [];
+      const selectedIndex =
+        typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
+      const selectedVariant = variants[selectedIndex];
+
+      if (!selectedVariant) {
+        return prev;
+      }
+
+      const variantQualityValues = selectedVariant.qualityValues;
+      const safeQualityLevel = Math.min(
+        Math.max(qualityLevel, 0),
+        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+      );
+
+      item.qualityLevel = safeQualityLevel;
+      item.value =
+        variantQualityValues?.[safeQualityLevel] ??
+        selectedVariant.value ??
+        item.value;
+
+      newCategoryItems[index] = item;
+
+      return {
+        ...prev,
+        gear: newCategoryItems,
+      };
+    });
+  }, []);
+
+    // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
     setPenetrationData((prev: CalculatorData) => {
       const newData = { ...prev };
@@ -1369,6 +1444,18 @@ const CalculatorComponent: React.FC = () => {
           ? variants[(selectedVariantIndex + 1) % variants.length]
           : undefined;
 
+      const defaultQualityLevel = ARMOR_QUALITY_LABELS.length - 1;
+      const variantQualityValues = currentVariant?.qualityValues;
+      const qualityLevel = Math.min(
+        Math.max(
+          typeof item.qualityLevel === 'number' ? item.qualityLevel : defaultQualityLevel,
+          0,
+        ),
+        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+      );
+      const qualityLabel = ARMOR_QUALITY_LABELS[qualityLevel] ?? ARMOR_QUALITY_LABELS[defaultQualityLevel];
+      const ratingValue = qualityLevel + 1;
+
       // Calculate display values once
       let displayValue: number;
       let perDisplay = '';
@@ -1382,7 +1469,11 @@ const CalculatorComponent: React.FC = () => {
         const ult = parseFloat(item.quantity.toString()) || 0;
         displayValue = Math.round(ult * 23);
       } else if (currentVariant) {
-        displayValue = currentVariant.value;
+        displayValue =
+          variantQualityValues?.[qualityLevel] ??
+          currentVariant.value ??
+          item.value ??
+          0;
       } else if (item.isFlat) {
         displayValue = item.value || 0;
       } else {
@@ -1413,7 +1504,7 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Optimized text input styling for all mobile sizes
-      const controlSlotWidth = liteMode ? 36 : isMobile ? 50 : 60;
+      const controlSlotWidth = liteMode ? 36 : isExtraSmall ? 44 : isMobile ? 50 : 60;
       const textFieldStyles = {
         width: controlSlotWidth,
         '& .MuiInputBase-root': {
@@ -1510,122 +1601,157 @@ const CalculatorComponent: React.FC = () => {
       };
 
       const variantCycleControl = currentVariant ? (
-        <Tooltip
-          title={
-            nextVariant
-              ? `Cycle variant (Next: ${nextVariant.name})`
-              : 'Cycle variant'
-          }
-          enterDelay={0}
-          enterTouchDelay={0}
-          arrow
-        >
-          <Button
-            size="small"
-            disableElevation
-            disableRipple
-            onClick={(e) => {
-              e.stopPropagation();
-              cycleArmorResistanceVariant(resolvedIndex);
-            }}
-            sx={{
-              minWidth: 'auto',
-              minHeight: '24px',
-              fontSize: '0.7rem',
-              fontWeight: 600,
-              py: 0.4,
-              px: 1.2,
-              borderRadius: '8px',
-              textTransform: 'none',
-              border: '1px solid',
-              borderColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.8)'
-                  : 'rgba(40, 145, 200, 0.6)',
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgb(199 234 255)'
-                  : 'rgb(40 145 200)',
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                  : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              '&:hover': {
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.5 : 0.75 }}>
+          <Tooltip
+            title={
+              nextVariant
+                ? `Cycle variant (Next: ${nextVariant.name})`
+                : 'Cycle variant'
+            }
+            enterDelay={0}
+            enterTouchDelay={0}
+            arrow
+          >
+            <Button
+              size="small"
+              disableElevation
+              disableRipple
+              onClick={(e) => {
+                e.stopPropagation();
+                cycleArmorResistanceVariant(resolvedIndex);
+              }}
+              sx={{
+                minWidth: 'auto',
+                minHeight: '24px',
+                fontSize: '0.7rem',
+                fontWeight: 600,
+                py: 0.4,
+                px: 1.2,
+                borderRadius: '8px',
+                textTransform: 'none',
+                border: '1px solid',
                 borderColor:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.9)'
-                    : 'rgba(40, 145, 200, 0.7)',
+                    ? 'rgba(56, 189, 248, 0.8)'
+                    : 'rgba(40, 145, 200, 0.6)',
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
                 color:
                   theme.palette.mode === 'dark'
-                    ? 'rgb(199, 234, 255)'
-                    : 'rgb(40, 145, 200)',
-                transform: 'translateY(-1px)',
+                    ? 'rgb(199 234 255)'
+                    : 'rgb(40 145 200)',
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                    : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography component="span" fontWeight={600} fontSize="0.7rem">
-                {currentVariant.name}
-              </Typography>
-              {nextVariant && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.3,
-                    px: 0.6,
-                    py: 0.1,
-                    borderRadius: '999px',
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.6)'
-                        : 'rgba(56, 189, 248, 0.1)',
-                    border: '1px solid',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.4)'
-                        : 'rgba(40, 145, 200, 0.4)',
-                  }}
-                >
-                  <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
-                  <Typography
-                    component="span"
+                    ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                '&:hover': {
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                      : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.9)'
+                      : 'rgba(40, 145, 200, 0.7)',
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? 'rgb(199, 234, 255)'
+                      : 'rgb(40, 145, 200)',
+                  transform: 'translateY(-1px)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                  {currentVariant.name}
+                </Typography>
+                {nextVariant && (
+                  <Box
                     sx={{
-                      fontSize: '0.6rem',
-                      fontWeight: 600,
-                      letterSpacing: 0.3,
-                      textTransform: 'uppercase',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.3,
+                      px: 0.6,
+                      py: 0.1,
+                      borderRadius: '999px',
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(15, 23, 42, 0.6)'
+                          : 'rgba(56, 189, 248, 0.1)',
+                      border: '1px solid',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.4)'
+                          : 'rgba(40, 145, 200, 0.4)',
                     }}
                   >
-                    {nextVariant.name}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Button>
-        </Tooltip>
+                    <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 600,
+                        letterSpacing: 0.3,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {nextVariant.name}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Button>
+          </Tooltip>
+          <Tooltip title={`Gear Quality: ${qualityLabel}`}>
+            <Rating
+              name={`armor-quality-${category}-${resolvedIndex}`}
+              value={ratingValue}
+              max={ARMOR_QUALITY_LABELS.length}
+              precision={1}
+              size="small"
+              onChange={(event, newValue) => {
+                event.stopPropagation();
+                if (typeof newValue === 'number') {
+                  updateArmorResistanceQuality(resolvedIndex, newValue - 1);
+                }
+              }}
+              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => event.stopPropagation()}
+              onTouchStart={(event) => event.stopPropagation()}
+              getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
+              sx={{
+                '& .MuiRating-iconFilled': {
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? 'rgb(56 189 248)'
+                      : 'rgb(40 145 200)',
+                },
+                '& .MuiRating-iconHover': {
+                  color:
+                    theme.palette.mode === 'dark'
+                      ? 'rgb(94 234 212)'
+                      : 'rgb(14 165 233)',
+                },
+              }}
+            />
+          </Tooltip>
+        </Box>
       ) : null;
 
       // Handle click on the entire list item
@@ -1924,6 +2050,7 @@ const CalculatorComponent: React.FC = () => {
       theme.palette.mode,
       theme.palette.text.secondary,
       cycleArmorResistanceVariant,
+      updateArmorResistanceQuality,
     ],
   );
 
