@@ -159,6 +159,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy helm provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2425 },
         { name: 'Reinforced', value: 2813 },
@@ -173,6 +174,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy shoulders provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2425 },
         { name: 'Reinforced', value: 2813 },
@@ -187,6 +189,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy chest provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2772 },
         { name: 'Reinforced', value: 3215 },
@@ -201,6 +204,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy hands provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1386 },
         { name: 'Nirnhoned', value: 1639 },
@@ -215,6 +219,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy belt provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1039 },
         { name: 'Nirnhoned', value: 1292 },
@@ -229,6 +234,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy pants provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2425 },
         { name: 'Reinforced', value: 2813 },
@@ -243,6 +249,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Heavy feet provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2425 },
         { name: 'Reinforced', value: 2813 },
@@ -257,6 +264,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Shield provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1720 },
         { name: 'Reinforced', value: 1995 },
@@ -271,6 +279,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium helm provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1823 },
         { name: 'Reinforced', value: 2114 },
@@ -285,6 +294,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium shoulders provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1823 },
         { name: 'Reinforced', value: 2114 },
@@ -299,6 +309,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium chest provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 2084 },
         { name: 'Reinforced', value: 2417 },
@@ -313,6 +324,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium hands provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1042 },
         { name: 'Nirnhoned', value: 1295 },
@@ -327,6 +339,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium belt provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 781 },
         { name: 'Nirnhoned', value: 1034 },
@@ -341,6 +354,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium pants provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1823 },
         { name: 'Reinforced', value: 2114 },
@@ -355,6 +369,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Medium feet provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1823 },
         { name: 'Reinforced', value: 2114 },
@@ -369,6 +384,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light helm provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1221 },
         { name: 'Nirnhoned', value: 1474 },
@@ -383,6 +399,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light shoulders provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1221 },
         { name: 'Nirnhoned', value: 1474 },
@@ -397,6 +414,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light chest provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1396 },
         { name: 'Nirnhoned', value: 1649 },
@@ -411,6 +429,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light hands provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 698 },
         { name: 'Nirnhoned', value: 951 },
@@ -425,6 +444,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light belt provides Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 523 },
         { name: 'Nirnhoned', value: 776 },
@@ -439,6 +459,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light pants provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1221 },
         { name: 'Nirnhoned', value: 1474 },
@@ -453,6 +474,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       isFlat: true,
       category: 'gear',
       tooltip: 'Light feet provide Physical and Spell Resistance.',
+      hideTooltip: true,
       variants: [
         { name: 'Regular', value: 1221 },
         { name: 'Nirnhoned', value: 1474 },
