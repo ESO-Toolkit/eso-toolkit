@@ -984,9 +984,9 @@ const CalculatorComponent: React.FC = () => {
         const qualityLevel =
           typeof item.qualityLevel === 'number'
             ? Math.min(
-                Math.max(item.qualityLevel, 0),
-                variant.qualityValues.length - 1,
-              )
+              Math.max(item.qualityLevel, 0),
+              variant.qualityValues.length - 1,
+            )
             : variant.qualityValues.length - 1;
         return variant.qualityValues[qualityLevel] ?? variant.value ?? 0;
       }
@@ -1176,10 +1176,47 @@ const CalculatorComponent: React.FC = () => {
       setArmorResistanceData((prev: CalculatorData) => {
         const newCategoryItems = [...prev[category]];
         newCategoryItems[index] = { ...newCategoryItems[index], ...updates };
-        return {
+
+        // Create updated data to calculate armor passives
+        const updatedData = {
           ...prev,
           [category]: newCategoryItems,
         };
+
+        // Auto-calculate armor passive quantities based on enabled gear pieces
+        const lightArmorCount = updatedData.gear.filter(item =>
+          item.name.startsWith('Light') &&
+          item.name !== 'Light Armor Passive' &&
+          item.enabled
+        ).length;
+
+        const heavyArmorCount = updatedData.gear.filter(item =>
+          item.name.startsWith('Heavy') &&
+          item.name !== 'Heavy Armor Passive' &&
+          item.enabled
+        ).length;
+
+        // Find and update Light Armor Passive
+        const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+        if (lightArmorPassiveIndex !== -1) {
+          updatedData.gear[lightArmorPassiveIndex] = {
+            ...updatedData.gear[lightArmorPassiveIndex],
+            quantity: lightArmorCount,
+            enabled: lightArmorCount > 0,
+          };
+        }
+
+        // Find and update Heavy Armor Passive
+        const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+        if (heavyArmorPassiveIndex !== -1) {
+          updatedData.gear[heavyArmorPassiveIndex] = {
+            ...updatedData.gear[heavyArmorPassiveIndex],
+            quantity: heavyArmorCount,
+            enabled: heavyArmorCount > 0,
+          };
+        }
+
+        return updatedData;
       });
     },
     [],
@@ -1226,10 +1263,46 @@ const CalculatorComponent: React.FC = () => {
 
       newCategoryItems[index] = item;
 
-      return {
+      // Create updated data to calculate armor passives
+      const updatedData = {
         ...prev,
         gear: newCategoryItems,
       };
+
+      // Auto-calculate armor passive quantities based on enabled gear pieces
+      const lightArmorCount = updatedData.gear.filter(item =>
+        item.name.startsWith('Light') &&
+        item.name !== 'Light Armor Passive' &&
+        item.enabled
+      ).length;
+
+      const heavyArmorCount = updatedData.gear.filter(item =>
+        item.name.startsWith('Heavy') &&
+        item.name !== 'Heavy Armor Passive' &&
+        item.enabled
+      ).length;
+
+      // Find and update Light Armor Passive
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+      if (lightArmorPassiveIndex !== -1) {
+        updatedData.gear[lightArmorPassiveIndex] = {
+          ...updatedData.gear[lightArmorPassiveIndex],
+          quantity: lightArmorCount,
+          enabled: lightArmorCount > 0,
+        };
+      }
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+      if (heavyArmorPassiveIndex !== -1) {
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0,
+        };
+      }
+
+      return updatedData;
     });
   }, []);
 
@@ -1266,14 +1339,50 @@ const CalculatorComponent: React.FC = () => {
 
       newCategoryItems[index] = item;
 
-      return {
+      // Create updated data to calculate armor passives
+      const updatedData = {
         ...prev,
         gear: newCategoryItems,
       };
+
+      // Auto-calculate armor passive quantities based on enabled gear pieces
+      const lightArmorCount = updatedData.gear.filter(item =>
+        item.name.startsWith('Light') &&
+        item.name !== 'Light Armor Passive' &&
+        item.enabled
+      ).length;
+
+      const heavyArmorCount = updatedData.gear.filter(item =>
+        item.name.startsWith('Heavy') &&
+        item.name !== 'Heavy Armor Passive' &&
+        item.enabled
+      ).length;
+
+      // Find and update Light Armor Passive
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+      if (lightArmorPassiveIndex !== -1) {
+        updatedData.gear[lightArmorPassiveIndex] = {
+          ...updatedData.gear[lightArmorPassiveIndex],
+          quantity: lightArmorCount,
+          enabled: lightArmorCount > 0,
+        };
+      }
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+      if (heavyArmorPassiveIndex !== -1) {
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0,
+        };
+      }
+
+      return updatedData;
     });
   }, []);
 
-    // Bulk toggle handlers
+  // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
     setPenetrationData((prev: CalculatorData) => {
       const newData = { ...prev };
@@ -1389,26 +1498,26 @@ const CalculatorComponent: React.FC = () => {
         // backdropFilter: // REMOVED - breaks sticky positioning !liteMode ? 'blur(8px)' : 'none',
         '&:hover': !item.locked
           ? {
-              transform: liteMode ? 'none' : 'translateY(-1px)',
-              border:
-                theme.palette.mode === 'dark'
-                  ? '1px solid rgba(56, 189, 248, 0.2)'
-                  : '1px solid rgb(40 145 200 / 30%)',
-              boxShadow: liteMode
-                ? 'none'
+            transform: liteMode ? 'none' : 'translateY(-1px)',
+            border:
+              theme.palette.mode === 'dark'
+                ? '1px solid rgba(56, 189, 248, 0.2)'
+                : '1px solid rgb(40 145 200 / 30%)',
+            boxShadow: liteMode
+              ? 'none'
+              : theme.palette.mode === 'dark'
+                ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                : '0 4px 12px rgb(40 145 200 / 25%)',
+            '& .MuiCheckbox-root': {
+              backgroundColor: liteMode
+                ? theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.1)'
+                  : 'rgba(40 145 200, 0.08)'
                 : theme.palette.mode === 'dark'
-                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                  : '0 4px 12px rgb(40 145 200 / 25%)',
-              '& .MuiCheckbox-root': {
-                backgroundColor: liteMode
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.1)'
-                    : 'rgba(40 145 200, 0.08)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.12)'
-                    : 'rgba(40 145 200, 0.1)',
-              },
-            }
+                  ? 'rgba(56, 189, 248, 0.12)'
+                  : 'rgba(40 145 200, 0.1)',
+            },
+          }
           : {},
       };
     },
@@ -1437,12 +1546,12 @@ const CalculatorComponent: React.FC = () => {
       const hasVariants = variants.length > 0;
       const selectedVariantIndex = hasVariants
         ? Math.min(
-            Math.max(
-              typeof item.selectedVariant === 'number' ? item.selectedVariant : 0,
-              0,
-            ),
-            variants.length - 1,
-          )
+          Math.max(
+            typeof item.selectedVariant === 'number' ? item.selectedVariant : 0,
+            0,
+          ),
+          variants.length - 1,
+        )
         : undefined;
       const currentVariant =
         selectedVariantIndex !== undefined ? variants[selectedVariantIndex] : undefined;
@@ -1609,150 +1718,150 @@ const CalculatorComponent: React.FC = () => {
 
       const variantCycleControl = currentVariant ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.5 : 0.75 }}>
-            <Button
-              size="small"
-              disableElevation
-              disableRipple
-              onClick={(e) => {
-                e.stopPropagation();
-                if (isMobile) {
-                  setCurrentEditingIndex(resolvedIndex);
-                  setVariantModalOpen(true);
-                } else {
-                  cycleArmorResistanceVariant(resolvedIndex);
-                }
-              }}
-              sx={{
-                minWidth: isMobile ? '60px' : '175px',
-                width: isMobile ? '60px' : '175px',
-                minHeight: isMobile ? '32px' : '24px',
-                fontSize: '0.7rem',
-                fontWeight: 600,
-                py: 0.4,
-                px: 1.2,
-                borderRadius: '8px',
-                textTransform: 'none',
-                border: '1px solid',
-                borderColor:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.8)'
-                    : 'rgba(40, 145, 200, 0.6)',
+          <Button
+            size="small"
+            disableElevation
+            disableRipple
+            onClick={(e) => {
+              e.stopPropagation();
+              if (isMobile) {
+                setCurrentEditingIndex(resolvedIndex);
+                setVariantModalOpen(true);
+              } else {
+                cycleArmorResistanceVariant(resolvedIndex);
+              }
+            }}
+            sx={{
+              minWidth: isMobile ? '60px' : '175px',
+              width: isMobile ? '60px' : '175px',
+              minHeight: isMobile ? '32px' : '24px',
+              fontSize: '0.7rem',
+              fontWeight: 600,
+              py: 0.4,
+              px: 1.2,
+              borderRadius: '8px',
+              textTransform: 'none',
+              border: '1px solid',
+              borderColor:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.8)'
+                  : 'rgba(40, 145, 200, 0.6)',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
+              color:
+                theme.palette.mode === 'dark'
+                  ? 'rgb(199 234 255)'
+                  : 'rgb(40 145 200)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              '&:hover': {
                 background:
                   theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.9)'
+                    : 'rgba(40, 145, 200, 0.7)',
                 color:
                   theme.palette.mode === 'dark'
-                    ? 'rgb(199 234 255)'
-                    : 'rgb(40 145 200)',
+                    ? 'rgb(199, 234, 255)'
+                    : 'rgb(40, 145, 200)',
+                transform: 'translateY(-1px)',
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                backdropFilter: 'blur(8px)',
-                WebkitBackdropFilter: 'blur(8px)',
-                '&:hover': {
-                  background:
-                    theme.palette.mode === 'dark'
-                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                      : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
-                  borderColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.9)'
-                      : 'rgba(40, 145, 200, 0.7)',
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? 'rgb(199, 234, 255)'
-                      : 'rgb(40, 145, 200)',
-                  transform: 'translateY(-1px)',
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                      : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-                },
-                '&:active': {
-                  transform: 'translateY(0)',
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                      : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                },
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-                <Typography component="span" fontWeight={600} fontSize={isMobile ? '0.6rem' : '0.7rem'}>
-                  {isMobile ? 'Trait' : currentVariant.name}
-                </Typography>
-                {nextVariant && !isMobile && (
-                  <Box
+                    ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                    : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+              },
+              '&:active': {
+                transform: 'translateY(0)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+              },
+            }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              <Typography component="span" fontWeight={600} fontSize={isMobile ? '0.6rem' : '0.7rem'}>
+                {isMobile ? 'Trait' : currentVariant.name}
+              </Typography>
+              {nextVariant && !isMobile && (
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 0.3,
+                    px: 0.6,
+                    py: 0.1,
+                    borderRadius: '999px',
+                    backgroundColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(15, 23, 42, 0.6)'
+                        : 'rgba(56, 189, 248, 0.1)',
+                    border: '1px solid',
+                    borderColor:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(56, 189, 248, 0.4)'
+                        : 'rgba(40, 145, 200, 0.4)',
+                  }}
+                >
+                  <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
+                  <Typography
+                    component="span"
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.3,
-                      px: 0.6,
-                      py: 0.1,
-                      borderRadius: '999px',
-                      backgroundColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(15, 23, 42, 0.6)'
-                          : 'rgba(56, 189, 248, 0.1)',
-                      border: '1px solid',
-                      borderColor:
-                        theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.4)'
-                          : 'rgba(40, 145, 200, 0.4)',
+                      fontSize: '0.6rem',
+                      fontWeight: 300,
+                      letterSpacing: 0.3,
+                      textTransform: 'uppercase',
                     }}
                   >
-                    <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
-                    <Typography
-                      component="span"
-                      sx={{
-                        fontSize: '0.6rem',
-                        fontWeight: 300,
-                        letterSpacing: 0.3,
-                        textTransform: 'uppercase',
-                      }}
-                    >
-                      {nextVariant.name}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
-            </Button>
+                    {nextVariant.name}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          </Button>
           {!isMobile && (
             <Tooltip title={`Gear Quality: ${qualityLabel}`}>
-            <Rating
-              name={`armor-quality-${category}-${resolvedIndex}`}
-              value={ratingValue}
-              max={ARMOR_QUALITY_LABELS.length}
-              precision={1}
-              size="small"
-              onChange={(event, newValue) => {
-                event.stopPropagation();
-                if (typeof newValue === 'number') {
-                  updateArmorResistanceQuality(resolvedIndex, newValue - 1);
-                }
-              }}
-              onClick={(event) => event.stopPropagation()}
-              onMouseDown={(event) => event.stopPropagation()}
-              onTouchStart={(event) => event.stopPropagation()}
-              getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
-              sx={{
-                '& .MuiRating-iconFilled': {
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? 'rgb(56 189 248)'
-                      : 'rgb(40 145 200)',
-                },
-                '& .MuiRating-iconHover': {
-                  color:
-                    theme.palette.mode === 'dark'
-                      ? 'rgb(94 234 212)'
-                      : 'rgb(14 165 233)',
-                },
-              }}
-            />
+              <Rating
+                name={`armor-quality-${category}-${resolvedIndex}`}
+                value={ratingValue}
+                max={ARMOR_QUALITY_LABELS.length}
+                precision={1}
+                size="small"
+                onChange={(event, newValue) => {
+                  event.stopPropagation();
+                  if (typeof newValue === 'number') {
+                    updateArmorResistanceQuality(resolvedIndex, newValue - 1);
+                  }
+                }}
+                onClick={(event) => event.stopPropagation()}
+                onMouseDown={(event) => event.stopPropagation()}
+                onTouchStart={(event) => event.stopPropagation()}
+                getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
+                sx={{
+                  '& .MuiRating-iconFilled': {
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgb(56 189 248)'
+                        : 'rgb(40 145 200)',
+                  },
+                  '& .MuiRating-iconHover': {
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgb(94 234 212)'
+                        : 'rgb(14 165 233)',
+                  },
+                }}
+              />
             </Tooltip>
           )}
         </Box>
@@ -1850,56 +1959,43 @@ const CalculatorComponent: React.FC = () => {
             </Box>
           ) : (
             <Tooltip
-            title={
-              !hasQuantity
-                ? "This item doesn't have adjustable quantity"
-                : item.locked
-                  ? 'This item is locked'
-                  : ''
-            }
-            placement="top"
-            arrow
-          >
-            <TextField
-              size={isMobile ? 'medium' : 'small'}
-              type="number"
-              value={hasQuantity ? item.quantity : '-'}
-              onChange={
-                hasQuantity
-                  ? (e) =>
+              title={
+                !hasQuantity
+                  ? "This item doesn't have adjustable quantity"
+                  : item.locked
+                    ? 'This item is locked'
+                    : ''
+              }
+              placement="top"
+              arrow
+            >
+              <TextField
+                size={isMobile ? 'medium' : 'small'}
+                type="number"
+                value={hasQuantity ? item.quantity : '-'}
+                onChange={
+                  hasQuantity
+                    ? (e) =>
                       updateFunction(category, resolvedIndex, {
                         quantity: Math.max(
                           item.minQuantity || 0,
                           Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
                         ),
                       })
-                  : undefined
-              }
-              disabled={!hasQuantity || item.locked}
-              placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-              inputProps={{
-                min: hasQuantity ? item.minQuantity || 0 : 0,
-                max: hasQuantity ? item.maxQuantity || 100 : 0,
-                step: hasQuantity ? item.step || 1 : 1,
-                readOnly: !hasQuantity,
-              }}
-              sx={{
-                ...textFieldStyles,
-                '& .MuiInputBase-root': {
-                  ...textFieldStyles['& .MuiInputBase-root'],
-                  backgroundColor: !hasQuantity
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(30, 41, 59, 0.5)'
-                      : liteMode
-                        ? 'rgb(136 164 192 / 15%)'
-                        : 'rgba(241, 245, 249, 0.8)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.15)'
-                      : liteMode
-                        ? 'rgba(40 145 200, 0.12)'
-                        : 'rgba(40 145 200, 0.12)',
-                  opacity: !hasQuantity ? 0.6 : 1,
-                  '&:hover': {
+                    : undefined
+                }
+                disabled={!hasQuantity || item.locked}
+                placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
+                inputProps={{
+                  min: hasQuantity ? item.minQuantity || 0 : 0,
+                  max: hasQuantity ? item.maxQuantity || 100 : 0,
+                  step: hasQuantity ? item.step || 1 : 1,
+                  readOnly: !hasQuantity,
+                }}
+                sx={{
+                  ...textFieldStyles,
+                  '& .MuiInputBase-root': {
+                    ...textFieldStyles['& .MuiInputBase-root'],
                     backgroundColor: !hasQuantity
                       ? theme.palette.mode === 'dark'
                         ? 'rgba(30, 41, 59, 0.5)'
@@ -1907,49 +2003,62 @@ const CalculatorComponent: React.FC = () => {
                           ? 'rgb(136 164 192 / 15%)'
                           : 'rgba(241, 245, 249, 0.8)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.25)'
+                        ? 'rgba(56, 189, 248, 0.15)'
                         : liteMode
-                          ? 'rgba(40 145 200, 0.18)'
-                          : 'rgba(40 145 200, 0.18)',
+                          ? 'rgba(40 145 200, 0.12)'
+                          : 'rgba(40 145 200, 0.12)',
+                    opacity: !hasQuantity ? 0.6 : 1,
+                    '&:hover': {
+                      backgroundColor: !hasQuantity
+                        ? theme.palette.mode === 'dark'
+                          ? 'rgba(30, 41, 59, 0.5)'
+                          : liteMode
+                            ? 'rgb(136 164 192 / 15%)'
+                            : 'rgba(241, 245, 249, 0.8)'
+                        : theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.25)'
+                          : liteMode
+                            ? 'rgba(40 145 200, 0.18)'
+                            : 'rgba(40 145 200, 0.18)',
+                    },
                   },
-                },
-                '& .MuiOutlinedInput-notchedOutline': {
-                  ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
-                  borderColor: !hasQuantity
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.3)'
-                      : 'rgba(148, 163, 184, 0.4)'
-                    : theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.4)'
-                      : liteMode
-                        ? 'rgba(40 145 200, 0.4)'
-                        : 'rgba(40 145 200, 0.4)',
-                  '&:hover': {
+                  '& .MuiOutlinedInput-notchedOutline': {
+                    ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
                     borderColor: !hasQuantity
                       ? theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.4)'
-                        : 'rgba(148, 163, 184, 0.5)'
+                        ? 'rgba(148, 163, 184, 0.3)'
+                        : 'rgba(148, 163, 184, 0.4)'
                       : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.6)'
+                        ? 'rgba(56, 189, 248, 0.4)'
                         : liteMode
-                          ? 'rgba(40 145 200, 0.6)'
-                          : 'rgba(40 145 200, 0.6)',
+                          ? 'rgba(40 145 200, 0.4)'
+                          : 'rgba(40 145 200, 0.4)',
+                    '&:hover': {
+                      borderColor: !hasQuantity
+                        ? theme.palette.mode === 'dark'
+                          ? 'rgba(148, 163, 184, 0.4)'
+                          : 'rgba(148, 163, 184, 0.5)'
+                        : theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.6)'
+                          : liteMode
+                            ? 'rgba(40 145 200, 0.6)'
+                            : 'rgba(40 145 200, 0.6)',
+                    },
                   },
-                },
-                '& .MuiInputBase-input': {
-                  ...textFieldStyles['& .MuiInputBase-input'],
-                  color: !hasQuantity
-                    ? theme.palette.mode === 'dark'
-                      ? 'rgba(148, 163, 184, 0.8)'
-                      : 'rgba(100, 116, 139, 0.8)'
-                    : 'inherit',
-                  cursor: !hasQuantity ? 'not-allowed' : 'text',
-                },
-              }}
-              onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
-            />
-          </Tooltip>
-        )}
+                  '& .MuiInputBase-input': {
+                    ...textFieldStyles['& .MuiInputBase-input'],
+                    color: !hasQuantity
+                      ? theme.palette.mode === 'dark'
+                        ? 'rgba(148, 163, 184, 0.8)'
+                        : 'rgba(100, 116, 139, 0.8)'
+                      : 'inherit',
+                    cursor: !hasQuantity ? 'not-allowed' : 'text',
+                  },
+                }}
+                onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
+              />
+            </Tooltip>
+          )}
 
           <ListItemText
             sx={{ ml: liteMode ? 1.5 : 0, minWidth: 0 }}
@@ -2182,21 +2291,20 @@ const CalculatorComponent: React.FC = () => {
 
     const surfaceStyles = liteMode
       ? {
-          background:
-            theme.palette.mode === 'dark'
-              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-              : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
-          border: `1px solid ${
-            theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+            : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
+        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
           }`,
-          boxShadow: 'none',
-        }
+        boxShadow: 'none',
+      }
       : {
-          // In full mode, no additional styling since it's handled by the parent container
-          background: 'transparent',
-          border: 'none',
-          boxShadow: 'none',
-        };
+        // In full mode, no additional styling since it's handled by the parent container
+        background: 'transparent',
+        border: 'none',
+        boxShadow: 'none',
+      };
 
     return (
       <Box
@@ -2484,31 +2592,31 @@ const CalculatorComponent: React.FC = () => {
                 },
                 '&::before': liteMode
                   ? {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 16,
-                      right: 16,
-                      height: '1px',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
-                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
-                      opacity: 0.7,
-                    }
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 16,
+                    right: 16,
+                    height: '1px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                        : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                    opacity: 0.7,
+                  }
                   : {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 16,
-                      right: 16,
-                      height: '1px',
-                      background:
-                        theme.palette.mode === 'dark'
-                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
-                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
-                      opacity: 0.7,
-                    },
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 16,
+                    right: 16,
+                    height: '1px',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                        : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                    opacity: 0.7,
+                  },
               }}
             >
               {/* Lite Mode Switch */}
@@ -2561,164 +2669,164 @@ const CalculatorComponent: React.FC = () => {
                 {/* Mobile Action Buttons */}
                 {isMobile && selectedTab === 0 && (
                   <div style={{ display: 'flex', gap: 4 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find((key) =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(56, 189, 248, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(21, 34, 50, 0.5)'
-                                : 'rgba(235, 244, 252, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(21, 34, 50, 0.7)'
-                                  : 'rgba(235, 244, 252, 0.9)',
-                            },
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredPenData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredPenData).find((key) =>
-                                filteredPenData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredPenData[category].indexOf(item);
-                              updatePenItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(239, 68, 68, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(153, 27, 27, 0.25)'
-                                : 'rgba(254, 226, 226, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(153, 27, 27, 0.4)'
-                                  : 'rgba(254, 226, 226, 0.9)',
-                            },
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
-                    {selectedTab === 1 && (
-                      <div style={{ display: 'flex', gap: 4 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find((key) =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: true });
-                            });
-                          }}
-                          startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(56, 189, 248, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(21, 34, 50, 0.5)'
-                                : 'rgba(235, 244, 252, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(56, 189, 248, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(21, 34, 50, 0.7)'
-                                  : 'rgba(235, 244, 252, 0.9)',
-                            },
-                          }}
-                        >
-                          All
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => {
-                            const selectableItems = Object.values(filteredCritData)
-                              .flat()
-                              .filter((item) => !item.locked);
-                            selectableItems.forEach((item) => {
-                              const category = Object.keys(filteredCritData).find((key) =>
-                                filteredCritData[key as keyof CalculatorData].includes(item),
-                              ) as keyof CalculatorData;
-                              const itemIndex = filteredCritData[category].indexOf(item);
-                              updateCritItem(category, itemIndex, { enabled: false });
-                            });
-                          }}
-                          startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
-                          sx={{
-                            fontSize: '0.75rem',
-                            minWidth: 'auto',
-                            px: 1,
-                            py: 0.4,
-                            borderColor: 'rgba(239, 68, 68, 0.4)',
-                            color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
-                            backgroundColor:
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(153, 27, 27, 0.25)'
-                                : 'rgba(254, 226, 226, 0.7)',
-                            '&:hover': {
-                              borderColor: 'rgba(239, 68, 68, 0.6)',
-                              backgroundColor:
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(153, 27, 27, 0.4)'
-                                  : 'rgba(254, 226, 226, 0.9)',
-                            },
-                          }}
-                        >
-                          Clear
-                        </Button>
-                      </div>
-                    )}
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        const selectableItems = Object.values(filteredPenData)
+                          .flat()
+                          .filter((item) => !item.locked);
+                        selectableItems.forEach((item) => {
+                          const category = Object.keys(filteredPenData).find((key) =>
+                            filteredPenData[key as keyof CalculatorData].includes(item),
+                          ) as keyof CalculatorData;
+                          const itemIndex = filteredPenData[category].indexOf(item);
+                          updatePenItem(category, itemIndex, { enabled: true });
+                        });
+                      }}
+                      startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: 'rgba(56, 189, 248, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(21, 34, 50, 0.5)'
+                            : 'rgba(235, 244, 252, 0.7)',
+                        '&:hover': {
+                          borderColor: 'rgba(56, 189, 248, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(21, 34, 50, 0.7)'
+                              : 'rgba(235, 244, 252, 0.9)',
+                        },
+                      }}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        const selectableItems = Object.values(filteredPenData)
+                          .flat()
+                          .filter((item) => !item.locked);
+                        selectableItems.forEach((item) => {
+                          const category = Object.keys(filteredPenData).find((key) =>
+                            filteredPenData[key as keyof CalculatorData].includes(item),
+                          ) as keyof CalculatorData;
+                          const itemIndex = filteredPenData[category].indexOf(item);
+                          updatePenItem(category, itemIndex, { enabled: false });
+                        });
+                      }}
+                      startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: 'rgba(239, 68, 68, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(153, 27, 27, 0.25)'
+                            : 'rgba(254, 226, 226, 0.7)',
+                        '&:hover': {
+                          borderColor: 'rgba(239, 68, 68, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(153, 27, 27, 0.4)'
+                              : 'rgba(254, 226, 226, 0.9)',
+                        },
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
+                {selectedTab === 1 && (
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        const selectableItems = Object.values(filteredCritData)
+                          .flat()
+                          .filter((item) => !item.locked);
+                        selectableItems.forEach((item) => {
+                          const category = Object.keys(filteredCritData).find((key) =>
+                            filteredCritData[key as keyof CalculatorData].includes(item),
+                          ) as keyof CalculatorData;
+                          const itemIndex = filteredCritData[category].indexOf(item);
+                          updateCritItem(category, itemIndex, { enabled: true });
+                        });
+                      }}
+                      startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: 'rgba(56, 189, 248, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(21, 34, 50, 0.5)'
+                            : 'rgba(235, 244, 252, 0.7)',
+                        '&:hover': {
+                          borderColor: 'rgba(56, 189, 248, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(21, 34, 50, 0.7)'
+                              : 'rgba(235, 244, 252, 0.9)',
+                        },
+                      }}
+                    >
+                      All
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => {
+                        const selectableItems = Object.values(filteredCritData)
+                          .flat()
+                          .filter((item) => !item.locked);
+                        selectableItems.forEach((item) => {
+                          const category = Object.keys(filteredCritData).find((key) =>
+                            filteredCritData[key as keyof CalculatorData].includes(item),
+                          ) as keyof CalculatorData;
+                          const itemIndex = filteredCritData[category].indexOf(item);
+                          updateCritItem(category, itemIndex, { enabled: false });
+                        });
+                      }}
+                      startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: 'rgba(239, 68, 68, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(153, 27, 27, 0.25)'
+                            : 'rgba(254, 226, 226, 0.7)',
+                        '&:hover': {
+                          borderColor: 'rgba(239, 68, 68, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(153, 27, 27, 0.4)'
+                              : 'rgba(254, 226, 226, 0.9)',
+                        },
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
               </Box>
               {/* Game Mode Selector */}
               <Box
@@ -3099,498 +3207,486 @@ const CalculatorComponent: React.FC = () => {
                   }}
                 >
                   {selectedTab === 0 && (
-                      <div>
-                        <Stack spacing={0} sx={{ minWidth: 0 }}>
-                          <Box sx={{ m: 0, p: 0 }}>
-                            <ButtonGroup
-                              variant="text"
-                              disableElevation
-                              fullWidth={isMobile}
-                              aria-label="Penetration bulk actions"
-                              sx={(muiTheme) => ({
-                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                                borderRadius: '10px',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
-                                backgroundColor:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? 'rgba(21, 34, 50, 0.55)'
-                                    : 'rgba(235, 244, 252, 0.85)',
-                                border: `1px solid ${
-                                  muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.2)
-                                    : alpha(muiTheme.palette.primary.main, 0.18)
+                    <div>
+                      <Stack spacing={0} sx={{ minWidth: 0 }}>
+                        <Box sx={{ m: 0, p: 0 }}>
+                          <ButtonGroup
+                            variant="text"
+                            disableElevation
+                            fullWidth={isMobile}
+                            aria-label="Penetration bulk actions"
+                            sx={(muiTheme) => ({
+                              alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              position: 'relative',
+                              // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
+                              backgroundColor:
+                                muiTheme.palette.mode === 'dark'
+                                  ? 'rgba(21, 34, 50, 0.55)'
+                                  : 'rgba(235, 244, 252, 0.85)',
+                              border: `1px solid ${muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
                                 }`,
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                '& .MuiButton-root': {
-                                  flex: { xs: '1 1 100%', sm: '0 0 auto' },
-                                  justifyContent: 'center',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 600,
-                                  textTransform: 'none',
-                                  px: { xs: 2.2, sm: 2.6 },
-                                  py: { xs: 1.05, sm: 0.9 },
-                                  borderRadius: 0,
-                                  minWidth: { xs: 'auto', sm: 130 },
-                                  transition: 'background-color 0.2s ease',
-                                  borderRight: 'none',
-                                  userSelect: 'none',
-                                  WebkitUserSelect: 'none',
-                                  MozUserSelect: 'none',
-                                  msUserSelect: 'none',
-                                  whiteSpace: 'nowrap',
-                                  margin: 0,
-                                  lineHeight: 1,
-                                  boxSizing: 'border-box',
-                                },
-                                '& .MuiButton-root + .MuiButton-root': {
-                                  borderLeft: {
-                                    xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                                    sm: `1px solid ${
-                                      muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.18)
-                                        : alpha(muiTheme.palette.primary.main, 0.15)
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                              '& .MuiButton-root': {
+                                flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                                justifyContent: 'center',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                px: { xs: 2.2, sm: 2.6 },
+                                py: { xs: 1.05, sm: 0.9 },
+                                borderRadius: 0,
+                                minWidth: { xs: 'auto', sm: 130 },
+                                transition: 'background-color 0.2s ease',
+                                borderRight: 'none',
+                                userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                msUserSelect: 'none',
+                                whiteSpace: 'nowrap',
+                                margin: 0,
+                                lineHeight: 1,
+                                boxSizing: 'border-box',
+                              },
+                              '& .MuiButton-root + .MuiButton-root': {
+                                borderLeft: {
+                                  xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.18)
+                                      : alpha(muiTheme.palette.primary.main, 0.15)
                                     }`,
-                                  },
                                 },
-                              })}
-                            >
-                              <Tooltip title="Select all penetration buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: 10 }}
-                                        transition={{ duration: 0.2 }}
-                                      >
-                                        <CheckCircleIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllPen(true)}
-                                    disabled={penAllSelected || penSelectableItems.length === 0}
-                                    aria-label="Select all penetration buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
-                                        muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.primary.light
-                                          : muiTheme.palette.primary.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(40, 82, 120, 0.35)'
-                                            : 'rgba(210, 233, 249, 0.85)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.primary.light, 0.6)
-                                            : alpha(muiTheme.palette.primary.main, 0.5)
-                                        }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Select all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                              <Tooltip title="Clear all penetration buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                      >
-                                        <ErrorIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllPen(false)}
-                                    disabled={penNoneSelected || penSelectableItems.length === 0}
-                                    aria-label="Clear all penetration buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
-                                        muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.error.light
-                                          : muiTheme.palette.error.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(132, 32, 45, 0.32)'
-                                            : 'rgba(255, 235, 233, 0.85)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.error.light, 0.55)
-                                            : alpha(muiTheme.palette.error.main, 0.5)
-                                        }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Clear all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                            </ButtonGroup>
-                          </Box>
-                        </Stack>
-                      </div>
-                    )}
-                  {selectedTab === 1 && (
-                      <div>
-                        <Stack spacing={0} sx={{ minWidth: 0 }}>
-                          <Box sx={{ m: 0, p: 0 }}>
-                            <ButtonGroup
-                              variant="text"
-                              disableElevation
-                              fullWidth={isMobile}
-                              aria-label="Critical bulk actions"
-                              sx={(muiTheme) => ({
-                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                                borderRadius: '10px',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
-                                backgroundColor:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? 'rgba(21, 34, 50, 0.55)'
-                                    : 'rgba(235, 244, 252, 0.85)',
-                                border: `1px solid ${
-                                  muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.2)
-                                    : alpha(muiTheme.palette.primary.main, 0.18)
-                                }`,
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                '& .MuiButton-root': {
-                                  flex: { xs: '1 1 100%', sm: '0 0 auto' },
-                                  justifyContent: 'center',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 600,
-                                  textTransform: 'none',
-                                  px: { xs: 2.2, sm: 2.6 },
-                                  py: { xs: 1.05, sm: 0.9 },
-                                  borderRadius: 0,
-                                  minWidth: { xs: 'auto', sm: 130 },
-                                  transition: 'background-color 0.2s ease',
-                                  borderRight: 'none',
-                                  userSelect: 'none',
-                                  WebkitUserSelect: 'none',
-                                  MozUserSelect: 'none',
-                                  msUserSelect: 'none',
-                                  whiteSpace: 'nowrap',
-                                  margin: 0,
-                                  lineHeight: 1,
-                                  boxSizing: 'border-box',
-                                },
-                                '& .MuiButton-root + .MuiButton-root': {
-                                  borderLeft: {
-                                    xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                                    sm: `1px solid ${
+                              },
+                            })}
+                          >
+                            <Tooltip title="Select all penetration buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: 10 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllPen(true)}
+                                  disabled={penAllSelected || penSelectableItems.length === 0}
+                                  aria-label="Select all penetration buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
                                       muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.18)
-                                        : alpha(muiTheme.palette.primary.main, 0.15)
-                                    }`,
-                                  },
-                                },
-                              })}
-                            >
-                              <Tooltip title="Select all critical buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: 10 }}
-                                        transition={{ duration: 0.2 }}
-                                      >
-                                        <CheckCircleIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllCrit(true)}
-                                    disabled={critAllSelected || critSelectableItems.length === 0}
-                                    aria-label="Select all critical buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
-                                        muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.primary.light
-                                          : muiTheme.palette.primary.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(40, 82, 120, 0.35)'
-                                            : 'rgba(210, 233, 249, 0.85)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.primary.light, 0.6)
-                                            : alpha(muiTheme.palette.primary.main, 0.5)
-                                        }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Select all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                              <Tooltip title="Clear all critical buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                      >
-                                        <ErrorIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllCrit(false)}
-                                    disabled={critNoneSelected || critSelectableItems.length === 0}
-                                    aria-label="Clear all critical buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
-                                        muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.error.light
-                                          : muiTheme.palette.error.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(137, 48, 52, 0.3)'
-                                            : 'rgba(255, 235, 233, 0.85)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.error.light, 0.55)
-                                            : alpha(muiTheme.palette.error.main, 0.5)
-                                        }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Clear all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                            </ButtonGroup>
-                          </Box>
-                        </Stack>
-                      </div>
-                    )}
-                  {selectedTab === 2 && (
-                      <div>
-                        <Stack spacing={0} sx={{ minWidth: 0 }}>
-                          <Box sx={{ m: 0, p: 0 }}>
-                            <ButtonGroup
-                              variant="text"
-                              disableElevation
-                              fullWidth={isMobile}
-                              aria-label="Armor resistance bulk actions"
-                              sx={(muiTheme) => ({
-                                alignSelf: { xs: 'stretch', sm: 'flex-end' },
-                                flexWrap: { xs: 'wrap', sm: 'nowrap' },
-                                borderRadius: '10px',
-                                overflow: 'hidden',
-                                position: 'relative',
-                                backgroundColor:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? 'rgba(21, 34, 50, 0.55)'
-                                    : 'rgba(235, 244, 252, 0.85)',
-                                border: `1px solid ${
-                                  muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.2)
-                                    : alpha(muiTheme.palette.primary.main, 0.18)
-                                }`,
-                                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-                                '& .MuiButton-root': {
-                                  fontSize: '0.813rem',
-                                  fontWeight: 500,
-                                  textTransform: 'none',
-                                  py: 1.25,
-                                  px: 1.5,
-                                  borderRadius: 0,
-                                  border: 'none',
-                                  transition: 'all 0.2s ease',
-                                  color:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(255, 255, 255, 0.85)'
-                                      : 'rgba(30, 41, 59, 0.9)',
-                                  backgroundColor: 'transparent',
-                                  '&:hover': {
-                                    backgroundColor:
-                                      muiTheme.palette.mode === 'dark'
-                                        ? 'rgba(40, 82, 120, 0.35)'
-                                        : 'rgba(210, 233, 249, 0.85)',
-                                  },
-                                  '&:focus-visible': {
-                                    outline: `2px solid ${
-                                      muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.6)
-                                        : alpha(muiTheme.palette.primary.main, 0.5)
-                                    }`,
-                                    outlineOffset: 2,
-                                  },
-                                  '&.Mui-disabled': {
-                                    color: muiTheme.palette.text.disabled,
+                                        ? muiTheme.palette.primary.light
+                                        : muiTheme.palette.primary.main,
                                     backgroundColor: 'transparent',
-                                  },
+                                    '&:hover': {
+                                      backgroundColor:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? 'rgba(40, 82, 120, 0.35)'
+                                          : 'rgba(210, 233, 249, 0.85)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                        }`,
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
+                                >
+                                  Select all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                            <Tooltip title="Clear all penetration buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                      transition={{ duration: 0.5 }}
+                                    >
+                                      <ErrorIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllPen(false)}
+                                  disabled={penNoneSelected || penSelectableItems.length === 0}
+                                  aria-label="Clear all penetration buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? muiTheme.palette.error.light
+                                        : muiTheme.palette.error.main,
+                                    backgroundColor: 'transparent',
+                                    '&:hover': {
+                                      backgroundColor:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? 'rgba(132, 32, 45, 0.32)'
+                                          : 'rgba(255, 235, 233, 0.85)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.55)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                        }`,
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
+                                >
+                                  Clear all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                          </ButtonGroup>
+                        </Box>
+                      </Stack>
+                    </div>
+                  )}
+                  {selectedTab === 1 && (
+                    <div>
+                      <Stack spacing={0} sx={{ minWidth: 0 }}>
+                        <Box sx={{ m: 0, p: 0 }}>
+                          <ButtonGroup
+                            variant="text"
+                            disableElevation
+                            fullWidth={isMobile}
+                            aria-label="Critical bulk actions"
+                            sx={(muiTheme) => ({
+                              alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              position: 'relative',
+                              // transform: 'translateZ(0)', // REMOVED - breaks sticky positioning
+                              backgroundColor:
+                                muiTheme.palette.mode === 'dark'
+                                  ? 'rgba(21, 34, 50, 0.55)'
+                                  : 'rgba(235, 244, 252, 0.85)',
+                              border: `1px solid ${muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                                }`,
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                              '& .MuiButton-root': {
+                                flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                                justifyContent: 'center',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
+                                textTransform: 'none',
+                                px: { xs: 2.2, sm: 2.6 },
+                                py: { xs: 1.05, sm: 0.9 },
+                                borderRadius: 0,
+                                minWidth: { xs: 'auto', sm: 130 },
+                                transition: 'background-color 0.2s ease',
+                                borderRight: 'none',
+                                userSelect: 'none',
+                                WebkitUserSelect: 'none',
+                                MozUserSelect: 'none',
+                                msUserSelect: 'none',
+                                whiteSpace: 'nowrap',
+                                margin: 0,
+                                lineHeight: 1,
+                                boxSizing: 'border-box',
+                              },
+                              '& .MuiButton-root + .MuiButton-root': {
+                                borderLeft: {
+                                  xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.18)
+                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                    }`,
                                 },
-                              })}
-                            >
-                              <Tooltip title="Select all armor resistance buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
-                                >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: [0, 10, 0] }}
-                                        transition={{ duration: 0.3 }}
-                                      >
-                                        <SelectAllIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllArmorResistance(true)}
-                                    disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
-                                    aria-label="Select all armor resistance buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
+                              },
+                            })}
+                          >
+                            <Tooltip title="Select all critical buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: 10 }}
+                                      transition={{ duration: 0.2 }}
+                                    >
+                                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllCrit(true)}
+                                  disabled={critAllSelected || critSelectableItems.length === 0}
+                                  aria-label="Select all critical buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? muiTheme.palette.primary.light
+                                        : muiTheme.palette.primary.main,
+                                    backgroundColor: 'transparent',
+                                    '&:hover': {
+                                      backgroundColor:
                                         muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.primary.light
-                                          : muiTheme.palette.primary.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(40, 82, 120, 0.35)'
-                                            : 'rgba(210, 233, 249, 0.85)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.primary.light, 0.6)
-                                            : alpha(muiTheme.palette.primary.main, 0.5)
+                                          ? 'rgba(40, 82, 120, 0.35)'
+                                          : 'rgba(210, 233, 249, 0.85)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
                                         }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Select all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                              <Tooltip title="Clear all armor resistance buffs" placement="top" arrow>
-                                <motion.span
-                                  style={{ display: 'flex', flex: '1 1 auto' }}
-                                  whileHover={{ scale: 1.02 }}
-                                  whileTap={{ scale: 0.98 }}
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
                                 >
-                                  <Button
-                                    disableRipple
-                                    startIcon={
-                                      <motion.div
-                                        initial={{ rotate: 0 }}
-                                        whileHover={{ rotate: [-10, 10, -10, 0] }}
-                                        transition={{ duration: 0.5 }}
-                                      >
-                                        <ErrorIcon sx={{ fontSize: 18 }} />
-                                      </motion.div>
-                                    }
-                                    onClick={() => toggleAllArmorResistance(false)}
-                                    disabled={!armorResistanceAnySelected}
-                                    aria-label="Clear all armor resistance buffs"
-                                    sx={(muiTheme) => ({
-                                      color:
+                                  Select all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                            <Tooltip title="Clear all critical buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                      transition={{ duration: 0.5 }}
+                                    >
+                                      <ErrorIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllCrit(false)}
+                                  disabled={critNoneSelected || critSelectableItems.length === 0}
+                                  aria-label="Clear all critical buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? muiTheme.palette.error.light
+                                        : muiTheme.palette.error.main,
+                                    backgroundColor: 'transparent',
+                                    '&:hover': {
+                                      backgroundColor:
                                         muiTheme.palette.mode === 'dark'
-                                          ? muiTheme.palette.error.light
-                                          : muiTheme.palette.error.main,
-                                      backgroundColor: 'transparent',
-                                      '&:hover': {
-                                        backgroundColor:
-                                          muiTheme.palette.mode === 'dark'
-                                            ? 'rgba(153, 27, 27, 0.25)'
-                                            : 'rgba(252, 165, 165, 0.25)',
-                                      },
-                                      '&:focus-visible': {
-                                        outline: `2px solid ${
-                                          muiTheme.palette.mode === 'dark'
-                                            ? alpha(muiTheme.palette.error.light, 0.6)
-                                            : alpha(muiTheme.palette.error.main, 0.5)
+                                          ? 'rgba(137, 48, 52, 0.3)'
+                                          : 'rgba(255, 235, 233, 0.85)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.55)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
                                         }`,
-                                        outlineOffset: 2,
-                                      },
-                                      '&.Mui-disabled': {
-                                        color: muiTheme.palette.text.disabled,
-                                        backgroundColor: 'transparent',
-                                      },
-                                    })}
-                                  >
-                                    Clear all
-                                  </Button>
-                                </motion.span>
-                              </Tooltip>
-                            </ButtonGroup>
-                          </Box>
-                        </Stack>
-                      </div>
-                    )}
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
+                                >
+                                  Clear all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                          </ButtonGroup>
+                        </Box>
+                      </Stack>
+                    </div>
+                  )}
+                  {selectedTab === 2 && (
+                    <div>
+                      <Stack spacing={0} sx={{ minWidth: 0 }}>
+                        <Box sx={{ m: 0, p: 0 }}>
+                          <ButtonGroup
+                            variant="text"
+                            disableElevation
+                            fullWidth={isMobile}
+                            aria-label="Armor resistance bulk actions"
+                            sx={(muiTheme) => ({
+                              alignSelf: { xs: 'stretch', sm: 'flex-end' },
+                              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+                              borderRadius: '10px',
+                              overflow: 'hidden',
+                              position: 'relative',
+                              backgroundColor:
+                                muiTheme.palette.mode === 'dark'
+                                  ? 'rgba(21, 34, 50, 0.55)'
+                                  : 'rgba(235, 244, 252, 0.85)',
+                              border: `1px solid ${muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                                }`,
+                              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+                              '& .MuiButton-root': {
+                                fontSize: '0.813rem',
+                                fontWeight: 500,
+                                textTransform: 'none',
+                                py: 1.25,
+                                px: 1.5,
+                                borderRadius: 0,
+                                border: 'none',
+                                transition: 'all 0.2s ease',
+                                color:
+                                  muiTheme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.85)'
+                                    : 'rgba(30, 41, 59, 0.9)',
+                                backgroundColor: 'transparent',
+                                '&:hover': {
+                                  backgroundColor:
+                                    muiTheme.palette.mode === 'dark'
+                                      ? 'rgba(40, 82, 120, 0.35)'
+                                      : 'rgba(210, 233, 249, 0.85)',
+                                },
+                                '&:focus-visible': {
+                                  outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.6)
+                                      : alpha(muiTheme.palette.primary.main, 0.5)
+                                    }`,
+                                  outlineOffset: 2,
+                                },
+                                '&.Mui-disabled': {
+                                  color: muiTheme.palette.text.disabled,
+                                  backgroundColor: 'transparent',
+                                },
+                              },
+                            })}
+                          >
+                            <Tooltip title="Select all armor resistance buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: [0, 10, 0] }}
+                                      transition={{ duration: 0.3 }}
+                                    >
+                                      <SelectAllIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllArmorResistance(true)}
+                                  disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
+                                  aria-label="Select all armor resistance buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? muiTheme.palette.primary.light
+                                        : muiTheme.palette.primary.main,
+                                    backgroundColor: 'transparent',
+                                    '&:hover': {
+                                      backgroundColor:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? 'rgba(40, 82, 120, 0.35)'
+                                          : 'rgba(210, 233, 249, 0.85)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                        }`,
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
+                                >
+                                  Select all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                            <Tooltip title="Clear all armor resistance buffs" placement="top" arrow>
+                              <motion.span
+                                style={{ display: 'flex', flex: '1 1 auto' }}
+                                whileHover={{ scale: 1.02 }}
+                                whileTap={{ scale: 0.98 }}
+                              >
+                                <Button
+                                  disableRipple
+                                  startIcon={
+                                    <motion.div
+                                      initial={{ rotate: 0 }}
+                                      whileHover={{ rotate: [-10, 10, -10, 0] }}
+                                      transition={{ duration: 0.5 }}
+                                    >
+                                      <ErrorIcon sx={{ fontSize: 18 }} />
+                                    </motion.div>
+                                  }
+                                  onClick={() => toggleAllArmorResistance(false)}
+                                  disabled={!armorResistanceAnySelected}
+                                  aria-label="Clear all armor resistance buffs"
+                                  sx={(muiTheme) => ({
+                                    color:
+                                      muiTheme.palette.mode === 'dark'
+                                        ? muiTheme.palette.error.light
+                                        : muiTheme.palette.error.main,
+                                    backgroundColor: 'transparent',
+                                    '&:hover': {
+                                      backgroundColor:
+                                        muiTheme.palette.mode === 'dark'
+                                          ? 'rgba(153, 27, 27, 0.25)'
+                                          : 'rgba(252, 165, 165, 0.25)',
+                                    },
+                                    '&:focus-visible': {
+                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.6)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                        }`,
+                                      outlineOffset: 2,
+                                    },
+                                    '&.Mui-disabled': {
+                                      color: muiTheme.palette.text.disabled,
+                                      backgroundColor: 'transparent',
+                                    },
+                                  })}
+                                >
+                                  Clear all
+                                </Button>
+                              </motion.span>
+                            </Tooltip>
+                          </ButtonGroup>
+                        </Box>
+                      </Stack>
+                    </div>
+                  )}
                 </Box>
               </Box>
             ) : (
@@ -4130,15 +4226,15 @@ const CalculatorComponent: React.FC = () => {
                         border: '2px solid',
                         borderColor: isSelected
                           ? (theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.8)'
-                              : 'rgba(40, 145, 200, 0.6)')
+                            ? 'rgba(56, 189, 248, 0.8)'
+                            : 'rgba(40, 145, 200, 0.6)')
                           : (theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.3)'
-                              : 'rgba(40, 145, 200, 0.2)'),
+                            ? 'rgba(56, 189, 248, 0.3)'
+                            : 'rgba(40, 145, 200, 0.2)'),
                         background: isSelected
                           ? (theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)')
+                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)')
                           : 'transparent',
                         color: isSelected
                           ? (theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)')
@@ -4154,7 +4250,7 @@ const CalculatorComponent: React.FC = () => {
                       }}
                     >
                       {variant === 'regular' ? 'Regular' :
-                       variant === 'reinforced' ? 'Reinforced' : 'Nirnhoned'}
+                        variant === 'reinforced' ? 'Reinforced' : 'Nirnhoned'}
                     </Button>
                   </Box>
                 );
