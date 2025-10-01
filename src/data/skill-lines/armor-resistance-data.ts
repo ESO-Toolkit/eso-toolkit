@@ -512,7 +512,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1650,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Dragonknight class passive grants <strong>1650</strong> Physical and Spell Resistance.',
+      tooltip: '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
     },
     {
       name: 'Warden Passive Per Skill',
@@ -522,7 +522,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1240,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
+      tooltip: '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by <strong>1240</strong> for each Winter\'s Embrace ability slotted.',
     },
     {
       name: 'Templar Passive',
@@ -531,7 +531,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1320,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Templar class passive grants <strong>1320</strong> Physical and Spell Resistance.',
+      tooltip: '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
     },
     {
       name: 'Arcanist Passive',
@@ -540,7 +540,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1980,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Arcanist class passive grants <strong>1980</strong> Physical and Spell Resistance.',
+      tooltip: '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
     },
     {
       name: 'Nord Passive',
@@ -549,7 +549,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 2600,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Nord racial passive grants <strong>2600</strong> Physical and Spell Resistance.',
+      tooltip: '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
     },
     {
       name: 'Breton Passive',
@@ -558,7 +558,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 2310,
       isFlat: true,
       category: 'classPassives',
-      tooltip: 'Breton racial passive grants <strong>2310</strong> Spell Resistance.',
+      tooltip: '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
     },
   ],
   passives: [
@@ -747,12 +747,12 @@ export const ARMOR_RESISTANCE_CAP = 33500;
 export const ARMOR_RESISTANCE_TOOLTIPS = {
   'Heavy Armor Passive': 'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
   'Light Armor Passive': 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
-  'Nord Passive': 'Nord racial passive grants <strong>2600</strong> Physical and Spell Resistance.',
-  'Breton Passive': 'Breton racial passive grants <strong>2310</strong> Spell Resistance.',
-  'Dragonknight Passive': 'Dragonknight class passive grants <strong>1650</strong> Physical and Spell Resistance.',
-  'Warden Passive Per Skill': 'Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
-  'Templar Passive': 'Templar class passive grants <strong>1320</strong> Physical and Spell Resistance.',
-  'Arcanist Passive': 'Arcanist class passive grants <strong>1980</strong> Physical and Spell Resistance.',
+  'Nord Passive': '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
+  'Breton Passive': '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
+  'Dragonknight Passive': '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
+  'Warden Passive Per Skill': '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
+  'Templar Passive': '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
+  'Arcanist Passive': '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
   'Runic Sunder': 'Runic Sunder steals <strong>2200</strong> Armor from enemies.',
   'Fortified': 'Fortified increases Physical and Spell Resistance by <strong>1731</strong>.',
   'Bulwark': 'Bulwark increases Physical and Spell Resistance by <strong>1900</strong>.',
