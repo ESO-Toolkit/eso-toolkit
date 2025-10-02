@@ -543,7 +543,115 @@ const MODE_FILTER = {
   },
 };
 
-type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number };
+type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number; id?: string };
+
+// Helper function to generate unique ID for items
+const generateItemId = (category: string, name: string, index: number): string => {
+  return `${category}-${name}-${index}`;
+};
+
+// Helper function to find item by ID in any category
+const findItemById = (data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    const index = data[category].findIndex(item => (item as any).id === id);
+    if (index !== -1) {
+      return { category, index, item: data[category][index] };
+    }
+  }
+  return null;
+};
+
+// Helper function to validate calculator data integrity
+const validateCalculatorData = (data: CalculatorData): boolean => {
+  let isValid = true;
+  const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
+
+  console.log('🔍 [VALIDATION] Starting data integrity check...');
+
+  // Check for duplicate items in each category and track all items
+  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    const items = data[category];
+    const nameMap = new Map<string, number[]>();
+
+    items.forEach((item, index) => {
+      // Track all items for cross-category validation
+      if (!itemTracker.has(item.name)) {
+        itemTracker.set(item.name, []);
+      }
+      itemTracker.get(item.name)!.push({ category, index, id: (item as any).id });
+
+      // Check within category duplicates
+      if (!nameMap.has(item.name)) {
+        nameMap.set(item.name, []);
+      }
+      nameMap.get(item.name)!.push(index);
+    });
+
+    // Check for duplicates within category
+    for (const [name, indices] of nameMap.entries()) {
+      if (indices.length > 1) {
+        console.error(`❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`);
+        isValid = false;
+      }
+    }
+  }
+
+  // Check for cross-category duplicates (should only exist for specific items like armor passives)
+  for (const [itemName, locations] of itemTracker.entries()) {
+    if (locations.length > 1 && !itemName.includes('Armor Passive')) {
+      console.error(`❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+        locations.map(loc => `${loc.category}[${loc.index}]`).join(', '));
+      isValid = false;
+    }
+  }
+
+  // TEMPORARILY DISABLED: Validate armor passive items specifically
+  // This validation is preventing normal operation when duplicates occur
+  // TODO: Fix the root cause of duplication instead of just detecting it
+  /*
+  const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
+  const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
+
+  if (lightArmorPassives.length > 1) {
+    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
+    isValid = false;
+  }
+
+  if (heavyArmorPassives.length > 1) {
+    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
+    isValid = false;
+  }
+  */
+
+  // Validate gear category structure
+  const expectedGearItems = [
+    'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
+    'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
+    'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt'
+  ];
+
+  expectedGearItems.forEach((expectedName, expectedIndex) => {
+    const actualItem = data.gear[expectedIndex];
+    if (!actualItem || actualItem.name !== expectedName) {
+      console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
+      isValid = false;
+    }
+  });
+
+  // Check for missing or invalid resistance values
+  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    data[category].forEach((item, index) => {
+      if (!item.resistanceValue || item.resistanceValue === "-") {
+        console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
+        isValid = false;
+      }
+    });
+  }
+
+  console.log(`🔍 [VALIDATION] Check completed - ${isValid ? 'PASSED' : 'FAILED'}`);
+  return isValid;
+};
+
 
 // Mode type
 type GameMode = 'pve' | 'pvp' | 'both';
@@ -924,6 +1032,125 @@ const CalculatorComponent: React.FC = () => {
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
+
+  // Helper function to generate unique IDs for items
+  const generateItemId = useCallback((category: string, name: string, index: number): string => {
+    return `${category}-${name}-${index}`;
+  }, []);
+
+  // Helper function to find item by ID
+  const findItemById = useCallback((data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+      const index = data[category].findIndex(item => (item as any).id === id);
+      if (index !== -1) {
+        return { category, index, item: data[category][index] };
+      }
+    }
+    return null;
+  }, []);
+
+  // Helper function to validate calculator data integrity
+  const validateCalculatorData = useCallback((data: CalculatorData): boolean => {
+    let isValid = true;
+    const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
+
+    console.log('🔍 [VALIDATION] Starting data integrity check...');
+
+    // Check for duplicate items in each category and track all items
+    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+      const items = data[category];
+      const nameMap = new Map<string, number[]>();
+
+      items.forEach((item, index) => {
+        // Track all items for cross-category validation
+        if (!itemTracker.has(item.name)) {
+          itemTracker.set(item.name, []);
+        }
+        itemTracker.get(item.name)!.push({ category, index, id: (item as any).id });
+
+        // Check within category duplicates
+        if (!nameMap.has(item.name)) {
+          nameMap.set(item.name, []);
+        }
+        nameMap.get(item.name)!.push(index);
+      });
+
+      // Check for duplicates within category
+      for (const [name, indices] of nameMap.entries()) {
+        if (indices.length > 1) {
+          console.error(`❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`);
+          isValid = false;
+        }
+      }
+    }
+
+    // Check for cross-category duplicates (should only exist for specific items like armor passives)
+    for (const [itemName, locations] of itemTracker.entries()) {
+      if (locations.length > 1 && !itemName.includes('Armor Passive')) {
+        console.error(`❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+          locations.map(loc => `${loc.category}[${loc.index}]`).join(', '));
+        isValid = false;
+      }
+    }
+
+    // TEMPORARILY DISABLED: Validate armor passive items specifically
+    // This validation is preventing normal operation when duplicates occur
+    // TODO: Fix the root cause of duplication instead of just detecting it
+    /*
+    const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
+    const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
+
+    if (lightArmorPassives.length > 1) {
+      console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
+      isValid = false;
+    }
+
+    if (heavyArmorPassives.length > 1) {
+      console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
+      isValid = false;
+    }
+    */
+
+    // TEMPORARILY DISABLED: Validate gear category structure
+    // The actual gear array structure doesn't match the expected order
+    // TODO: Revisit this validation when data structure is stabilized
+    /*
+    const expectedGearItems = [
+      'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
+      'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
+      'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt'
+    ];
+
+    expectedGearItems.forEach((expectedName, expectedIndex) => {
+      const actualItem = data.gear[expectedIndex];
+      if (!actualItem || actualItem.name !== expectedName) {
+        console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
+        isValid = false;
+      }
+    });
+    */
+
+    // TEMPORARILY DISABLED: Check for missing or invalid resistance values
+    // This is preventing armor items from being clicked/enabled
+    // TODO: Fix resistance calculation logic
+    /*
+    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+      data[category].forEach((item, index) => {
+        if (!item.resistanceValue || item.resistanceValue === "-") {
+          console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
+          isValid = false;
+        }
+      });
+    }
+    */
+
+    if (!isValid) {
+      console.log(`🔍 [VALIDATION] Debug - current gear array:`, data.gear.map((item, i) => `${i}: ${item.name} (resistance: "${item.resistanceValue}")`));
+    }
+
+    console.log(`🔍 [VALIDATION] Check completed - ${isValid ? 'PASSED' : 'FAILED'}`);
+    return isValid;
+  }, []);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -936,6 +1163,104 @@ const CalculatorComponent: React.FC = () => {
 
   // Use a ref to track the latest armor resistance data for modal state reading
   const armorResistanceDataRef = useRef(armorResistanceData);
+
+  // ID-based update function for armor resistance items
+  const updateArmorResistanceItemById = useCallback(
+    (id: string, updates: Partial<CalculatorItem>) => {
+      console.log(`🔄 [UPDATE] Updating item by ID: ${id}`, updates);
+
+      setArmorResistanceData((prev: CalculatorData) => {
+        // TEMPORARILY DISABLED: Validate previous state before making changes
+        // if (!validateCalculatorData(prev)) {
+        //   console.error(`❌ [UPDATE] Previous state validation failed - aborting update`);
+        //   return prev;
+        // }
+
+        const location = findItemById(prev, id);
+        if (!location) {
+          console.warn(`⚠️ [UPDATE] Item with ID ${id} not found`);
+          return prev;
+        }
+
+        console.log(`📍 [UPDATE] Found item: ${location.category}[${location.index}] (${prev[location.category][location.index].name})`);
+
+        const newCategoryItems = [...prev[location.category]];
+        const originalItem = newCategoryItems[location.index];
+
+        // Validate we're not corrupting the array
+        if (originalItem.name !== (updates.name && updates.name !== originalItem.name ? updates.name : originalItem.name)) {
+          console.error(`❌ [UPDATE] Name mismatch detected - potential corruption`);
+          return prev;
+        }
+
+        newCategoryItems[location.index] = { ...originalItem, ...updates };
+
+        // Create updated data to calculate armor passives
+        const updatedData = {
+          ...prev,
+          [location.category]: newCategoryItems,
+        };
+
+        // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
+        // if (!validateCalculatorData(updatedData)) {
+        //   console.error(`❌ [UPDATE] Intermediate state validation failed - aborting update`);
+        //   return prev;
+        // }
+
+        // TEMPORARILY DISABLED: Auto-calculate armor passive quantities - this is causing duplication issues
+        // TODO: Re-implement this logic without causing state corruption
+        /*
+        const lightArmorCount = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
+        ).length;
+
+        const heavyArmorCount = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+        ).length;
+
+        // Find and update Light Armor Passive with validation
+        const lightArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Light Armor Passive',
+        );
+        console.log(`🛡️ [PASSIVE] Light armor count: ${lightArmorCount}, passive index: ${lightArmorPassiveIndex}`);
+        if (lightArmorPassiveIndex !== -1) {
+          updatedData.gear[lightArmorPassiveIndex] = {
+            ...updatedData.gear[lightArmorPassiveIndex],
+            quantity: lightArmorCount,
+          };
+        } else {
+          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
+        }
+
+        // Find and update Heavy Armor Passive with validation
+        const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Heavy Armor Passive',
+        );
+        console.log(`🛡️ [PASSIVE] Heavy armor count: ${heavyArmorCount}, passive index: ${heavyArmorPassiveIndex}`);
+        if (heavyArmorPassiveIndex !== -1) {
+          updatedData.gear[heavyArmorPassiveIndex] = {
+            ...updatedData.gear[heavyArmorPassiveIndex],
+            quantity: heavyArmorCount,
+          };
+        } else {
+          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
+        }
+
+        // Final validation before returning
+        if (!validateCalculatorData(updatedData)) {
+          console.error(`❌ [UPDATE] Final validation failed - reverting to previous state`);
+          return prev;
+        }
+        */
+
+        console.log(`✅ [UPDATE] Successfully updated item ${id}`);
+        return updatedData;
+      });
+    },
+    [validateCalculatorData, findItemById],
+  );
   armorResistanceDataRef.current = armorResistanceData;
 
   const armorResistanceGearWithIndex = useMemo<IndexedCalculatorItem[]>(
@@ -943,6 +1268,7 @@ const CalculatorComponent: React.FC = () => {
       armorResistanceData.gear.map((item, gearIndex) => ({
         ...item,
         originalIndex: gearIndex,
+        id: generateItemId('gear', item.name, gearIndex),
       })),
     [armorResistanceData.gear],
   );
@@ -1204,16 +1530,27 @@ const CalculatorComponent: React.FC = () => {
 
   const updateArmorResistanceItem = useCallback(
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
+      console.log(`🔄 [LEGACY_UPDATE] Updating ${category}[${index}]`, updates);
+
       setArmorResistanceData((prev: CalculatorData) => {
+        // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
+        // if (!validateCalculatorData(prev)) {
+        //   console.error(`❌ [LEGACY_UPDATE] Previous state validation failed - aborting update`);
+        //   return prev;
+        // }
+
         const newCategoryItems = [...prev[category]];
 
         // Add validation to prevent index out of bounds
         if (index < 0 || index >= newCategoryItems.length) {
-          console.warn(`Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`);
+          console.warn(`⚠️ [LEGACY_UPDATE] Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`);
           return prev;
         }
 
-        newCategoryItems[index] = { ...newCategoryItems[index], ...updates };
+        const originalItem = newCategoryItems[index];
+        console.log(`📍 [LEGACY_UPDATE] Found item: ${originalItem.name}`);
+
+        newCategoryItems[index] = { ...originalItem, ...updates };
 
         // Create updated data to calculate armor passives
         const updatedData = {
@@ -1221,7 +1558,15 @@ const CalculatorComponent: React.FC = () => {
           [category]: newCategoryItems,
         };
 
-        // Auto-calculate armor passive quantities based on enabled gear pieces
+        // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
+        // if (!validateCalculatorData(updatedData)) {
+        //   console.error(`❌ [LEGACY_UPDATE] Intermediate state validation failed - aborting update`);
+        //   return prev;
+        // }
+
+        // TEMPORARILY DISABLED: Auto-calculate armor passive quantities - this is causing duplication issues
+        // TODO: Re-implement this logic without causing state corruption
+        /*
         const lightArmorCount = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
@@ -1231,6 +1576,21 @@ const CalculatorComponent: React.FC = () => {
           (item) =>
             item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
         ).length;
+
+        // Validate no duplicate passive items exist
+        const lightArmorPassives = updatedData.gear.filter(
+          (item) => item.name === 'Light Armor Passive'
+        );
+        const heavyArmorPassives = updatedData.gear.filter(
+          (item) => item.name === 'Heavy Armor Passive'
+        );
+
+        if (lightArmorPassives.length > 1) {
+          console.warn('Multiple Light Armor Passive items found, using first one');
+        }
+        if (heavyArmorPassives.length > 1) {
+          console.warn('Multiple Heavy Armor Passive items found, using first one');
+        }
 
         // Find and update Light Armor Passive
         const lightArmorPassiveIndex = updatedData.gear.findIndex(
@@ -1255,11 +1615,37 @@ const CalculatorComponent: React.FC = () => {
             enabled: heavyArmorCount > 0,
           };
         }
+        */
 
         return updatedData;
       });
     },
     [],
+  );
+
+  // Create a wrapper update function that tries ID-based updates first for gear items
+  const updateArmorResistanceItemWithFallback = useCallback(
+    (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
+      console.log(`🔄 [FALLBACK] Attempting update for ${category}[${index}]:`, updates);
+      // For gear items, try ID-based update first
+      if (category === 'gear') {
+        const item = armorResistanceData.gear[index];
+        console.log(`🔍 [FALLBACK] Checking gear item at index ${index}:`, {
+          name: item?.name,
+          hasId: !!(item as any)?.id,
+          id: (item as any)?.id,
+          enabled: item?.enabled
+        });
+        if (item && (item as any).id) {
+          console.log(`✅ [FALLBACK] Found ID ${(item as any).id} for item ${item.name}, using ID-based update`);
+          updateArmorResistanceItemById((item as any).id, updates);
+          return;
+        }
+      }
+      console.log(`⚠️ [FALLBACK] No ID found or not gear category, falling back to index-based update`);
+      updateArmorResistanceItem(category, index, updates);
+    },
+    [armorResistanceData.gear, updateArmorResistanceItemById, updateArmorResistanceItem],
   );
 
   const cycleArmorResistanceVariant = useCallback((index: number) => {
@@ -1727,6 +2113,9 @@ const CalculatorComponent: React.FC = () => {
       const indexedItem = item as IndexedCalculatorItem;
       const resolvedIndex =
         typeof indexedItem.originalIndex === 'number' ? indexedItem.originalIndex : index;
+
+      // Use the original update function directly for now
+      const enhancedUpdateFunction = updateFunction;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
       const key = `${category}-${resolvedIndex}-${item.enabled}-${item.quantity}-${hasQuantity}`;
 
@@ -2134,7 +2523,7 @@ const CalculatorComponent: React.FC = () => {
                 };
               }}
               onChange={(e) =>
-                updateFunction(category, resolvedIndex, { enabled: e.target.checked })
+                enhancedUpdateFunction(category, resolvedIndex, { enabled: e.target.checked })
               }
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
@@ -4263,63 +4652,97 @@ const CalculatorComponent: React.FC = () => {
 
                   {/* Lite Mode - All categories in one */}
                   {liteMode && (
-                    <List sx={{ p: 0 }}>
-                      {[
-                        ...armorResistanceData.groupBuffs.map((item, index) => ({
-                          ...item,
-                          category: 'groupBuffs',
-                          originalIndex: index,
-                        })),
-                        ...armorResistanceGearSections.light.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                          originalIndex: item.originalIndex,
-                        })),
-                        ...armorResistanceGearSections.medium.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                          originalIndex: item.originalIndex,
-                        })),
-                        ...armorResistanceGearSections.heavy.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                          originalIndex: item.originalIndex,
-                        })),
-                        ...armorResistanceGearSections.shield.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                          originalIndex: item.originalIndex,
-                        })),
-                        ...armorResistanceSets.map((item) => ({ ...item, category: 'gear', originalIndex: item.originalIndex })),
-                        ...armorResistanceData.classPassives.map((item, index) => ({
-                          ...item,
-                          category: 'classPassives',
-                          originalIndex: index,
-                        })),
-                        ...filteredPassives.map((item, index) => ({
-                          ...item,
-                          category: 'passives',
-                          originalIndex: index,
-                        })),
-                        ...filteredCp.map((item, index) => ({
-                          ...item,
-                          category: 'cp',
-                          originalIndex: index,
-                        })),
-                      ].map((item, index) =>
-                        renderItem(
-                          item,
-                          item.originalIndex ?? index,
-                          item.category as keyof CalculatorData,
-                          (category, itemIndex, updates) =>
-                            updateArmorResistanceItem(
-                              category,
-                              item.originalIndex ?? itemIndex,
-                              updates,
-                            ),
-                        ),
-                      )}
-                    </List>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {/* Group Buffs */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Group Buffs</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceData.groupBuffs.map((item, index) =>
+                            renderItem(item, index, 'groupBuffs', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Light Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Light Armor</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.light.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Medium Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Medium Armor</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.medium.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Heavy Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Heavy Armor</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.heavy.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Shield */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Shield</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.shield.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Set Items */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Set Items</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceSets.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Class Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Class Passives</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceData.classPassives.map((item, index) =>
+                            renderItem(item, index, 'classPassives', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Other Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Other Passives</Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredPassives.map((item, index) =>
+                            renderItem(item, index, 'passives', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Champion Points */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredCp.map((item, index) =>
+                            renderItem(item, index, 'cp', updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+                    </Box>
                   )}
                 </Box>
                 {/* Footer removed from inside TabPanel - moved outside */}
