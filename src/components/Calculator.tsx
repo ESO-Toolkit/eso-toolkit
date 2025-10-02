@@ -1408,6 +1408,89 @@ const CalculatorComponent: React.FC = () => {
     });
   }, []);
 
+  const setArmorResistanceVariant = useCallback((index: number, variantName: string) => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      const newCategoryItems = [...prev.gear];
+      const target = newCategoryItems[index];
+
+      if (!target) {
+        return prev;
+      }
+
+      const item = { ...target };
+      const variants = item.variants ?? [];
+
+      if (!variants.length) {
+        return prev;
+      }
+
+      // Find the variant index by name
+      const variantIndex = variants.findIndex((v) => v.name === variantName);
+      if (variantIndex === -1) {
+        return prev;
+      }
+
+      const selectedVariant = variants[variantIndex];
+      item.selectedVariant = variantIndex;
+
+      const qualityLevel =
+        typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
+      const variantQualityValues = selectedVariant?.qualityValues;
+      const safeQualityLevel = Math.min(
+        Math.max(qualityLevel, 0),
+        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+      );
+
+      item.qualityLevel = safeQualityLevel;
+      item.value = variantQualityValues?.[safeQualityLevel] ?? selectedVariant?.value ?? item.value;
+
+      newCategoryItems[index] = item;
+
+      // Create updated data to calculate armor passives
+      const updatedData = {
+        ...prev,
+        gear: newCategoryItems,
+      };
+
+      // Auto-calculate armor passive quantities based on enabled gear pieces
+      const lightArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
+      ).length;
+
+      const heavyArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+      ).length;
+
+      // Find and update Light Armor Passive
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Light Armor Passive',
+      );
+      if (lightArmorPassiveIndex !== -1) {
+        updatedData.gear[lightArmorPassiveIndex] = {
+          ...updatedData.gear[lightArmorPassiveIndex],
+          quantity: lightArmorCount,
+          enabled: lightArmorCount > 0,
+        };
+      }
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
+      if (heavyArmorPassiveIndex !== -1) {
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0,
+        };
+      }
+
+      return updatedData;
+    });
+  }, []);
+
   // Bulk toggle handlers
   const toggleAllPen = useCallback((enabled: boolean) => {
     setPenetrationData((prev: CalculatorData) => {
@@ -4386,21 +4469,8 @@ const CalculatorComponent: React.FC = () => {
                         fullWidth
                         size="large"
                         onClick={() => {
-                          // Find the variant index and cycle to it
-                          const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(
-                            variant,
-                          );
-                          if (variantIndex !== -1 && currentEditingIndex !== null) {
-                            // Calculate how many cycles needed to reach this variant
-                            const currentIndex = currentVariant
-                              ? ['regular', 'reinforced', 'nirnhoned'].indexOf(currentVariant.name)
-                              : 0;
-                            const cyclesNeeded = (variantIndex - currentIndex + 3) % 3;
-
-                            // Cycle the required number of times
-                            for (let i = 0; i < cyclesNeeded; i++) {
-                              cycleArmorResistanceVariant(currentEditingIndex);
-                            }
+                          if (currentEditingIndex !== null) {
+                            setArmorResistanceVariant(currentEditingIndex, variant);
                           }
                         }}
                         sx={{
