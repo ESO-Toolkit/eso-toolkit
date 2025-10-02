@@ -2130,6 +2130,11 @@ const CalculatorComponent: React.FC = () => {
       const isLightArmorPassive = item.name === 'Light Armor Passive';
       const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
 
+      // Debug logging to identify which items are being blocked
+      if (isLightArmorPassive || isHeavyArmorPassive) {
+        console.log(`🛡️ [DEBUG] Armor passive detected: ${item.name} (Light: ${isLightArmorPassive}, Heavy: ${isHeavyArmorPassive})`);
+      }
+
       // Use the original update function directly for now
       const enhancedUpdateFunction = updateFunction;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
@@ -2585,11 +2590,15 @@ const CalculatorComponent: React.FC = () => {
 
         // Don't allow manual clicking for armor passives - these are auto-calculated
         if (isLightArmorPassive || isHeavyArmorPassive) {
+          console.log(`🛡️ [DEBUG] Click blocked for armor passive: ${item.name} (Light: ${isLightArmorPassive}, Heavy: ${isHeavyArmorPassive})`);
           return;
         }
 
         if (!item.locked) {
+          console.log(`🛡️ [DEBUG] Click allowed for: ${item.name} (locked: ${item.locked})`);
           updateFunction(category, resolvedIndex, { enabled: !item.enabled });
+        } else {
+          console.log(`🛡️ [DEBUG] Click blocked for locked item: ${item.name} (locked: ${item.locked})`);
         }
       };
 
