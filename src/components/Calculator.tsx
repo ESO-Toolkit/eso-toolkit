@@ -929,14 +929,14 @@ const CalculatorComponent: React.FC = () => {
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
   const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('Regular');
-
-  // Use a ref to track the latest armor resistance data for modal state reading
-  const armorResistanceDataRef = useRef(armorResistanceData);
-  armorResistanceDataRef.current = armorResistanceData;
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] =
     useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
+
+  // Use a ref to track the latest armor resistance data for modal state reading
+  const armorResistanceDataRef = useRef(armorResistanceData);
+  armorResistanceDataRef.current = armorResistanceData;
 
   const armorResistanceGearWithIndex = useMemo<IndexedCalculatorItem[]>(
     () =>
