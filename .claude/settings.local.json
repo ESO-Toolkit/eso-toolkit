@@ -75,7 +75,11 @@
       "mcp__perplexity-mcp__perplexity_ask",
       "mcp__chrome-devtools__search_elements",
       "mcp__chrome-devtools__get_page_info",
-      "mcp__chrome-devtools__disconnect_from_browser"
+      "mcp__chrome-devtools__disconnect_from_browser",
+      "mcp__chrome-devtools__describe_element",
+      "mcp__chrome-devtools__get_element_outer_html",
+      "mcp__chrome-devtools__get_computed_styles",
+      "mcp__chrome-devtools__get_element_attributes"
     ],
     "deny": [],
     "ask": []

@@ -17,12 +17,20 @@ export interface CalculatorItem {
   hideTooltip?: boolean;
   tooltip?: string;
   quantityTitle?: string;
+  variants?: {
+    name: string;
+    value: number;
+    qualityValues?: number[];
+  }[];
+  selectedVariant?: number;
+  qualityLevel?: number;
 }
 
 export interface CalculatorData {
   groupBuffs: CalculatorItem[];
   gear: CalculatorItem[];
   passives: CalculatorItem[];
+  classPassives: CalculatorItem[];
   cp: CalculatorItem[];
 }
 
@@ -352,6 +360,7 @@ export const PENETRATION_DATA: CalculatorData = {
       tooltip: CALCULATOR_TOOLTIPS['Champion Point: Force of Nature'],
     },
   ],
+  classPassives: [],
 };
 
 // Critical Damage Calculator Data
@@ -565,4 +574,12 @@ export const CRITICAL_DATA: CalculatorData = {
       tooltip: CALCULATOR_TOOLTIPS['Backstabber'],
     },
   ],
+  classPassives: [],
 };
+
+// Import armor resistance data
+export { ARMOR_RESISTANCE_DATA } from './armor-resistance-data';
+export { ARMOR_RESISTANCE_OPTIMAL_MIN } from './armor-resistance-data';
+export { ARMOR_RESISTANCE_OPTIMAL_MAX } from './armor-resistance-data';
+export { ARMOR_RESISTANCE_CAP } from './armor-resistance-data';
+export { ARMOR_QUALITY_LABELS } from './armor-resistance-data';
