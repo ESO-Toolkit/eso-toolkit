@@ -2574,6 +2574,7 @@ const CalculatorComponent: React.FC = () => {
   const critAllSelected =
     critSelectableItems.length > 0 && critSelectableItems.every((item) => item.enabled);
   const critNoneSelected = critSelectableItems.every((item) => !item.enabled);
+  const critAnySelected = critSelectableItems.some((item) => item.enabled);
   const armorResistanceAllSelected =
     armorResistanceSelectableItems.length > 0 && armorResistanceSelectableItems.every((item) => item.enabled);
   const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
@@ -2817,6 +2818,66 @@ const CalculatorComponent: React.FC = () => {
                           backgroundColor:
                             theme.palette.mode === 'dark'
                               ? 'rgba(153, 27, 27, 0.4)'
+                              : 'rgba(254, 226, 226, 0.9)',
+                        },
+                      }}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                )}
+                {isMobile && selectedTab === 1 && (
+                  <div style={{ display: 'flex', gap: 4 }}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => toggleAllCrit(true)}
+                      disabled={critAllSelected || critSelectableItems.length === 0}
+                      startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: 'rgba(56, 189, 248, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(21, 34, 50, 0.5)'
+                            : 'rgba(235, 244, 252, 0.7)',
+                        '&:hover': {
+                          borderColor: 'rgba(56, 189, 248, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(21, 34, 50, 0.7)'
+                              : 'rgba(235, 244, 252, 0.9)',
+                        },
+                      }}
+                    >
+                      Select All
+                    </Button>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      onClick={() => toggleAllCrit(false)}
+                      disabled={!critAnySelected}
+                      startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
+                      sx={{
+                        fontSize: '0.75rem',
+                        minWidth: 'auto',
+                        px: 1,
+                        py: 0.4,
+                        borderColor: theme.palette.mode === 'dark' ? 'rgba(244, 63, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
+                        color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
+                        backgroundColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(153, 27, 27, 0.4)'
+                            : 'rgba(254, 226, 226, 0.9)',
+                        '&:hover': {
+                          borderColor: theme.palette.mode === 'dark' ? 'rgba(244, 63, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+                          backgroundColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(153, 27, 27, 0.6)'
                               : 'rgba(254, 226, 226, 0.9)',
                         },
                       }}
@@ -3311,7 +3372,7 @@ const CalculatorComponent: React.FC = () => {
                               },
                             })}
                           >
-                            <Tooltip title="Select all penetration buffs" placement="top" arrow>
+                            <Tooltip title="Select All penetration buffs" placement="top" arrow>
                               <motion.span
                                 style={{ display: 'flex', flex: '1 1 auto' }}
                                 whileHover={{ scale: 1.02 }}
@@ -3330,7 +3391,7 @@ const CalculatorComponent: React.FC = () => {
                                   }
                                   onClick={() => toggleAllPen(true)}
                                   disabled={penAllSelected || penSelectableItems.length === 0}
-                                  aria-label="Select all penetration buffs"
+                                  aria-label="Select All penetration buffs"
                                   sx={(muiTheme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
@@ -3356,7 +3417,7 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                   })}
                                 >
-                                  Select all
+                                  Select All
                                 </Button>
                               </motion.span>
                             </Tooltip>
@@ -3461,7 +3522,7 @@ const CalculatorComponent: React.FC = () => {
                               },
                             })}
                           >
-                            <Tooltip title="Select all critical buffs" placement="top" arrow>
+                            <Tooltip title="Select All critical buffs" placement="top" arrow>
                               <motion.span
                                 style={{ display: 'flex', flex: '1 1 auto' }}
                                 whileHover={{ scale: 1.02 }}
@@ -3480,7 +3541,7 @@ const CalculatorComponent: React.FC = () => {
                                   }
                                   onClick={() => toggleAllCrit(true)}
                                   disabled={critAllSelected || critSelectableItems.length === 0}
-                                  aria-label="Select all critical buffs"
+                                  aria-label="Select All critical buffs"
                                   sx={(muiTheme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
@@ -3506,7 +3567,7 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                   })}
                                 >
-                                  Select all
+                                  Select All
                                 </Button>
                               </motion.span>
                             </Tooltip>
@@ -3610,7 +3671,7 @@ const CalculatorComponent: React.FC = () => {
                               },
                             })}
                           >
-                            <Tooltip title="Select all armor resistance buffs" placement="top" arrow>
+                            <Tooltip title="Select All armor resistance buffs" placement="top" arrow>
                               <motion.span
                                 style={{ display: 'flex', flex: '1 1 auto' }}
                                 whileHover={{ scale: 1.02 }}
@@ -3629,7 +3690,7 @@ const CalculatorComponent: React.FC = () => {
                                   }
                                   onClick={() => toggleAllArmorResistance(true)}
                                   disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
-                                  aria-label="Select all armor resistance buffs"
+                                  aria-label="Select All armor resistance buffs"
                                   sx={(muiTheme) => ({
                                     color:
                                       muiTheme.palette.mode === 'dark'
@@ -3655,7 +3716,7 @@ const CalculatorComponent: React.FC = () => {
                                     },
                                   })}
                                 >
-                                  Select all
+                                  Select All
                                 </Button>
                               </motion.span>
                             </Tooltip>
