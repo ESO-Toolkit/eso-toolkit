@@ -2126,6 +2126,10 @@ const CalculatorComponent: React.FC = () => {
       const resolvedIndex =
         typeof indexedItem.originalIndex === 'number' ? indexedItem.originalIndex : index;
 
+      // Armor passive detection for disabling manual interaction
+      const isLightArmorPassive = item.name === 'Light Armor Passive';
+      const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
+
       // Use the original update function directly for now
       const enhancedUpdateFunction = updateFunction;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
