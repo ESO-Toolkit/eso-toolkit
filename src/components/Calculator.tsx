@@ -1206,6 +1206,13 @@ const CalculatorComponent: React.FC = () => {
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
       setArmorResistanceData((prev: CalculatorData) => {
         const newCategoryItems = [...prev[category]];
+
+        // Add validation to prevent index out of bounds
+        if (index < 0 || index >= newCategoryItems.length) {
+          console.warn(`Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`);
+          return prev;
+        }
+
         newCategoryItems[index] = { ...newCategoryItems[index], ...updates };
 
         // Create updated data to calculate armor passives
@@ -4113,7 +4120,7 @@ const CalculatorComponent: React.FC = () => {
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
-                            itemIndex,
+                            item.originalIndex ?? itemIndex,
                             Object.keys(filteredPenData)[categoryIndex] as keyof CalculatorData,
                             updatePenItem,
                           ),
@@ -4157,7 +4164,7 @@ const CalculatorComponent: React.FC = () => {
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
-                            itemIndex,
+                            item.originalIndex ?? itemIndex,
                             Object.keys(filteredCritData)[categoryIndex] as keyof CalculatorData,
                             updateCritItem,
                           ),
@@ -4266,20 +4273,24 @@ const CalculatorComponent: React.FC = () => {
                         ...armorResistanceGearSections.light.map((item) => ({
                           ...item,
                           category: 'gear',
+                          originalIndex: item.originalIndex,
                         })),
                         ...armorResistanceGearSections.medium.map((item) => ({
                           ...item,
                           category: 'gear',
+                          originalIndex: item.originalIndex,
                         })),
                         ...armorResistanceGearSections.heavy.map((item) => ({
                           ...item,
                           category: 'gear',
+                          originalIndex: item.originalIndex,
                         })),
                         ...armorResistanceGearSections.shield.map((item) => ({
                           ...item,
                           category: 'gear',
+                          originalIndex: item.originalIndex,
                         })),
-                        ...armorResistanceSets.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceSets.map((item) => ({ ...item, category: 'gear', originalIndex: item.originalIndex })),
                         ...armorResistanceData.classPassives.map((item, index) => ({
                           ...item,
                           category: 'classPassives',
@@ -4298,7 +4309,7 @@ const CalculatorComponent: React.FC = () => {
                       ].map((item, index) =>
                         renderItem(
                           item,
-                          item.category === 'gear' ? (item.originalIndex ?? index) : index,
+                          item.originalIndex ?? index,
                           item.category as keyof CalculatorData,
                           (category, itemIndex, updates) =>
                             updateArmorResistanceItem(
