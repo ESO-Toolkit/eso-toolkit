@@ -929,6 +929,10 @@ const CalculatorComponent: React.FC = () => {
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
   const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('Regular');
+
+  // Use a ref to track the latest armor resistance data for modal state reading
+  const armorResistanceDataRef = useRef(armorResistanceData);
+  armorResistanceDataRef.current = armorResistanceData;
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] =
@@ -1919,8 +1923,8 @@ const CalculatorComponent: React.FC = () => {
                 const currentItem = armorResistanceData.gear[resolvedIndex];
                 // Validate item exists and has variants before opening modal
                 if (currentItem && currentItem.variants && currentItem.variants.length > 0) {
-                  // Get the currently applied variant from the actual data
-                  const freshItem = armorResistanceData.gear[resolvedIndex];
+                  // Get the currently applied variant from the ref (latest data)
+                  const freshItem = armorResistanceDataRef.current.gear[resolvedIndex];
                   let currentVariant = 'Regular'; // Default fallback
 
                   // Try to get the selected variant from the fresh data
