@@ -1361,31 +1361,13 @@ const CalculatorComponent: React.FC = () => {
         );
       }
 
-      // Debug logging to help troubleshoot
-      console.log('Setting variant:', variantName,
-        'Available variants:', variants.map(v => v.name),
-        'Found index:', variantIndex);
-
       if (variantIndex === -1) {
-        console.warn('Variant not found:', variantName, 'Available:', variants.map(v => v.name));
         return prev;
       }
 
       const selectedVariant = variants[variantIndex];
-
-      // Update the selected variant
-      console.log('DEBUG - Before update:', {
-        index: index,
-        oldSelectedVariant: item.selectedVariant,
-        newVariantIndex: variantIndex,
-        variantName: variantName
-      });
       item.selectedVariant = variantIndex;
-      console.log('DEBUG - After update:', {
-        newSelectedVariant: item.selectedVariant,
-        item: item
-      });
-
+  
       // Update quality and value based on selected variant
       const qualityLevel =
         typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
@@ -1935,18 +1917,8 @@ const CalculatorComponent: React.FC = () => {
                     }
                   }
 
-                  console.log('DEBUG - Modal Opening:', {
-                    itemName: currentItem.name,
-                    selectedItemIndex: currentItem.selectedVariant,
-                    freshItemSelectedIndex: freshItem?.selectedVariant,
-                    selectedItemIndexType: typeof currentItem.selectedVariant,
-                    variants: currentItem.variants.map(v => v.name),
-                    currentVariant: currentVariant,
-                    resolvedIndex: resolvedIndex
-                  });
                   setCurrentEditingIndex(resolvedIndex);
                   setTempSelectedVariant(currentVariant);
-                  console.log('DEBUG - Set temp variant to:', currentVariant);
                   setVariantModalOpen(true);
                 }
               } else {
