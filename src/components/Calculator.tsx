@@ -35,7 +35,6 @@ import {
   AccordionSummary,
   AccordionDetails,
   Stack,
-  Modal,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -931,7 +930,8 @@ const CalculatorComponent: React.FC = () => {
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
-  const [armorResistanceData, setArmorResistanceData] = useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
+  const [armorResistanceData, setArmorResistanceData] =
+    useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
 
   const armorResistanceGearWithIndex = useMemo<IndexedCalculatorItem[]>(
     () =>
@@ -955,15 +955,22 @@ const CalculatorComponent: React.FC = () => {
   // Set items from different categories
   const armorResistanceSets = useMemo(
     () => [
-      ...armorResistanceData.cp.filter((item) => item.name === 'Armor Master').map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
-      ...armorResistanceData.passives.filter((item) => ['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name)).map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+      ...armorResistanceData.cp
+        .filter((item) => item.name === 'Armor Master')
+        .map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+      ...armorResistanceData.passives
+        .filter((item) => ['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name))
+        .map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
     ],
     [armorResistanceData.cp, armorResistanceData.passives],
   );
 
   // Filter out set items from their original categories
   const filteredPassives = useMemo(
-    () => armorResistanceData.passives.filter((item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name)),
+    () =>
+      armorResistanceData.passives.filter(
+        (item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name),
+      ),
     [armorResistanceData.passives],
   );
 
@@ -1003,10 +1010,7 @@ const CalculatorComponent: React.FC = () => {
       if (variant.qualityValues && variant.qualityValues.length > 0) {
         const qualityLevel =
           typeof item.qualityLevel === 'number'
-            ? Math.min(
-              Math.max(item.qualityLevel, 0),
-              variant.qualityValues.length - 1,
-            )
+            ? Math.min(Math.max(item.qualityLevel, 0), variant.qualityValues.length - 1)
             : variant.qualityValues.length - 1;
         return variant.qualityValues[qualityLevel] ?? variant.value ?? 0;
       }
@@ -1034,7 +1038,7 @@ const CalculatorComponent: React.FC = () => {
 
   // Filter items based on current mode
   const getFilteredItems = useCallback(
-    (data: CalculatorData, calcType: 'pen' | 'crit') => {
+    (data: CalculatorData, calcType: 'pen' | 'crit' | 'armor') => {
       if (gameMode === 'both') {
         // Return all items when both modes are selected
         return data;
@@ -1046,6 +1050,7 @@ const CalculatorComponent: React.FC = () => {
         gear: [],
         passives: [],
         cp: [],
+        classPassives: [],
       };
 
       Object.keys(data).forEach((category) => {
@@ -1153,7 +1158,8 @@ const CalculatorComponent: React.FC = () => {
   }, []);
 
   const getArmorResistanceStatus = useCallback((total: number) => {
-    if (total >= ARMOR_RESISTANCE_OPTIMAL_MIN && total <= ARMOR_RESISTANCE_OPTIMAL_MAX) return 'at-cap';
+    if (total >= ARMOR_RESISTANCE_OPTIMAL_MIN && total <= ARMOR_RESISTANCE_OPTIMAL_MAX)
+      return 'at-cap';
     if (total > ARMOR_RESISTANCE_CAP) return 'over-cap';
     return 'under-cap';
   }, []);
@@ -1204,20 +1210,20 @@ const CalculatorComponent: React.FC = () => {
         };
 
         // Auto-calculate armor passive quantities based on enabled gear pieces
-        const lightArmorCount = updatedData.gear.filter(item =>
-          item.name.startsWith('Light') &&
-          item.name !== 'Light Armor Passive' &&
-          item.enabled
+        const lightArmorCount = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
         ).length;
 
-        const heavyArmorCount = updatedData.gear.filter(item =>
-          item.name.startsWith('Heavy') &&
-          item.name !== 'Heavy Armor Passive' &&
-          item.enabled
+        const heavyArmorCount = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
         ).length;
 
         // Find and update Light Armor Passive
-        const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+        const lightArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Light Armor Passive',
+        );
         if (lightArmorPassiveIndex !== -1) {
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
@@ -1227,7 +1233,9 @@ const CalculatorComponent: React.FC = () => {
         }
 
         // Find and update Heavy Armor Passive
-        const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+        const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Heavy Armor Passive',
+        );
         if (heavyArmorPassiveIndex !== -1) {
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
@@ -1258,17 +1266,14 @@ const CalculatorComponent: React.FC = () => {
         return prev;
       }
 
-      const currentIndex =
-        typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
+      const currentIndex = typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
       const nextIndex = (currentIndex + 1) % variants.length;
       const nextVariant = variants[nextIndex];
 
       item.selectedVariant = nextIndex;
 
       const qualityLevel =
-        typeof item.qualityLevel === 'number'
-          ? item.qualityLevel
-          : ARMOR_QUALITY_LABELS.length - 1;
+        typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
       const variantQualityValues = nextVariant?.qualityValues;
       const safeQualityLevel = Math.min(
         Math.max(qualityLevel, 0),
@@ -1276,10 +1281,7 @@ const CalculatorComponent: React.FC = () => {
       );
 
       item.qualityLevel = safeQualityLevel;
-      item.value =
-        variantQualityValues?.[safeQualityLevel] ??
-        nextVariant?.value ??
-        item.value;
+      item.value = variantQualityValues?.[safeQualityLevel] ?? nextVariant?.value ?? item.value;
 
       newCategoryItems[index] = item;
 
@@ -1290,20 +1292,20 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Auto-calculate armor passive quantities based on enabled gear pieces
-      const lightArmorCount = updatedData.gear.filter(item =>
-        item.name.startsWith('Light') &&
-        item.name !== 'Light Armor Passive' &&
-        item.enabled
+      const lightArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
       ).length;
 
-      const heavyArmorCount = updatedData.gear.filter(item =>
-        item.name.startsWith('Heavy') &&
-        item.name !== 'Heavy Armor Passive' &&
-        item.enabled
+      const heavyArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
       ).length;
 
       // Find and update Light Armor Passive
-      const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Light Armor Passive',
+      );
       if (lightArmorPassiveIndex !== -1) {
         updatedData.gear[lightArmorPassiveIndex] = {
           ...updatedData.gear[lightArmorPassiveIndex],
@@ -1313,7 +1315,9 @@ const CalculatorComponent: React.FC = () => {
       }
 
       // Find and update Heavy Armor Passive
-      const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
       if (heavyArmorPassiveIndex !== -1) {
         updatedData.gear[heavyArmorPassiveIndex] = {
           ...updatedData.gear[heavyArmorPassiveIndex],
@@ -1337,8 +1341,7 @@ const CalculatorComponent: React.FC = () => {
 
       const item = { ...target };
       const variants = item.variants ?? [];
-      const selectedIndex =
-        typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
+      const selectedIndex = typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
       const selectedVariant = variants[selectedIndex];
 
       if (!selectedVariant) {
@@ -1352,10 +1355,7 @@ const CalculatorComponent: React.FC = () => {
       );
 
       item.qualityLevel = safeQualityLevel;
-      item.value =
-        variantQualityValues?.[safeQualityLevel] ??
-        selectedVariant.value ??
-        item.value;
+      item.value = variantQualityValues?.[safeQualityLevel] ?? selectedVariant.value ?? item.value;
 
       newCategoryItems[index] = item;
 
@@ -1366,20 +1366,20 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Auto-calculate armor passive quantities based on enabled gear pieces
-      const lightArmorCount = updatedData.gear.filter(item =>
-        item.name.startsWith('Light') &&
-        item.name !== 'Light Armor Passive' &&
-        item.enabled
+      const lightArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
       ).length;
 
-      const heavyArmorCount = updatedData.gear.filter(item =>
-        item.name.startsWith('Heavy') &&
-        item.name !== 'Heavy Armor Passive' &&
-        item.enabled
+      const heavyArmorCount = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
       ).length;
 
       // Find and update Light Armor Passive
-      const lightArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Light Armor Passive');
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Light Armor Passive',
+      );
       if (lightArmorPassiveIndex !== -1) {
         updatedData.gear[lightArmorPassiveIndex] = {
           ...updatedData.gear[lightArmorPassiveIndex],
@@ -1389,7 +1389,9 @@ const CalculatorComponent: React.FC = () => {
       }
 
       // Find and update Heavy Armor Passive
-      const heavyArmorPassiveIndex = updatedData.gear.findIndex(item => item.name === 'Heavy Armor Passive');
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
       if (heavyArmorPassiveIndex !== -1) {
         updatedData.gear[heavyArmorPassiveIndex] = {
           ...updatedData.gear[heavyArmorPassiveIndex],
@@ -1442,7 +1444,6 @@ const CalculatorComponent: React.FC = () => {
     });
   }, []);
 
-  
   // Memoize expensive calculations and styles
   // Pre-calculate common style values to prevent recreation on every render
   const _baseStyles = React.useMemo(
@@ -1581,26 +1582,26 @@ const CalculatorComponent: React.FC = () => {
         // backdropFilter: // REMOVED - breaks sticky positioning !liteMode ? 'blur(8px)' : 'none',
         '&:hover': !item.locked
           ? {
-            transform: liteMode ? 'none' : 'translateY(-1px)',
-            border:
-              theme.palette.mode === 'dark'
-                ? '1px solid rgba(56, 189, 248, 0.2)'
-                : '1px solid rgb(40 145 200 / 30%)',
-            boxShadow: liteMode
-              ? 'none'
-              : theme.palette.mode === 'dark'
-                ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                : '0 4px 12px rgb(40 145 200 / 25%)',
-            '& .MuiCheckbox-root': {
-              backgroundColor: liteMode
-                ? theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.1)'
-                  : 'rgba(40 145 200, 0.08)'
+              transform: liteMode ? 'none' : 'translateY(-1px)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgb(40 145 200 / 30%)',
+              boxShadow: liteMode
+                ? 'none'
                 : theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.12)'
-                  : 'rgba(40 145 200, 0.1)',
-            },
-          }
+                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                  : '0 4px 12px rgb(40 145 200 / 25%)',
+              '& .MuiCheckbox-root': {
+                backgroundColor: liteMode
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.1)'
+                    : 'rgba(40 145 200, 0.08)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.12)'
+                    : 'rgba(40 145 200, 0.1)',
+              },
+            }
           : {},
       };
     },
@@ -1629,12 +1630,9 @@ const CalculatorComponent: React.FC = () => {
       const hasVariants = variants.length > 0;
       const selectedVariantIndex = hasVariants
         ? Math.min(
-          Math.max(
-            typeof item.selectedVariant === 'number' ? item.selectedVariant : 0,
-            0,
-          ),
-          variants.length - 1,
-        )
+            Math.max(typeof item.selectedVariant === 'number' ? item.selectedVariant : 0, 0),
+            variants.length - 1,
+          )
         : undefined;
       const currentVariant =
         selectedVariantIndex !== undefined ? variants[selectedVariantIndex] : undefined;
@@ -1652,7 +1650,8 @@ const CalculatorComponent: React.FC = () => {
         ),
         (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
       );
-      const qualityLabel = ARMOR_QUALITY_LABELS[qualityLevel] ?? ARMOR_QUALITY_LABELS[defaultQualityLevel];
+      const qualityLabel =
+        ARMOR_QUALITY_LABELS[qualityLevel] ?? ARMOR_QUALITY_LABELS[defaultQualityLevel];
       const ratingValue = qualityLevel + 1;
 
       // Calculate display values once
@@ -1669,10 +1668,7 @@ const CalculatorComponent: React.FC = () => {
         displayValue = Math.round(ult * 23);
       } else if (currentVariant) {
         displayValue =
-          variantQualityValues?.[qualityLevel] ??
-          currentVariant.value ??
-          item.value ??
-          0;
+          variantQualityValues?.[qualityLevel] ?? currentVariant.value ?? item.value ?? 0;
       } else if (item.isFlat) {
         displayValue = item.value || 0;
       } else {
@@ -1833,10 +1829,7 @@ const CalculatorComponent: React.FC = () => {
                 theme.palette.mode === 'dark'
                   ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
                   : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgb(199 234 255)'
-                  : 'rgb(40 145 200)',
+              color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
               boxShadow:
                 theme.palette.mode === 'dark'
                   ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
@@ -1853,10 +1846,7 @@ const CalculatorComponent: React.FC = () => {
                   theme.palette.mode === 'dark'
                     ? 'rgba(56, 189, 248, 0.9)'
                     : 'rgba(40, 145, 200, 0.7)',
-                color:
-                  theme.palette.mode === 'dark'
-                    ? 'rgb(199, 234, 255)'
-                    : 'rgb(40, 145, 200)',
+                color: theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
                 transform: 'translateY(-1px)',
                 boxShadow:
                   theme.palette.mode === 'dark'
@@ -1873,7 +1863,11 @@ const CalculatorComponent: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography component="span" fontWeight={600} fontSize={isMobile ? '0.6rem' : '0.7rem'}>
+              <Typography
+                component="span"
+                fontWeight={600}
+                fontSize={isMobile ? '0.6rem' : '0.7rem'}
+              >
                 {isMobile ? 'Trait' : currentVariant.name}
               </Typography>
               {nextVariant && !isMobile && (
@@ -1929,7 +1923,9 @@ const CalculatorComponent: React.FC = () => {
                 onClick={(event) => event.stopPropagation()}
                 onMouseDown={(event) => event.stopPropagation()}
                 onTouchStart={(event) => event.stopPropagation()}
-                getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
+                getLabelText={(value: number) =>
+                  `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
+                }
                 sx={{
                   '& .MuiRating-iconFilled': {
                     color: 'rgb(255 222 148)',
@@ -2015,7 +2011,9 @@ const CalculatorComponent: React.FC = () => {
                   },
                 };
               }}
-              onChange={(e) => updateFunction(category, resolvedIndex, { enabled: e.target.checked })}
+              onChange={(e) =>
+                updateFunction(category, resolvedIndex, { enabled: e.target.checked })
+              }
               onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
           </ListItemIcon>
@@ -2053,12 +2051,12 @@ const CalculatorComponent: React.FC = () => {
                 onChange={
                   hasQuantity
                     ? (e) =>
-                      updateFunction(category, resolvedIndex, {
-                        quantity: Math.max(
-                          item.minQuantity || 0,
-                          Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
-                        ),
-                      })
+                        updateFunction(category, resolvedIndex, {
+                          quantity: Math.max(
+                            item.minQuantity || 0,
+                            Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
+                          ),
+                        })
                     : undefined
                 }
                 disabled={!hasQuantity || item.locked}
@@ -2368,20 +2366,21 @@ const CalculatorComponent: React.FC = () => {
 
     const surfaceStyles = liteMode
       ? {
-        background:
-          theme.palette.mode === 'dark'
-            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-            : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
-        border: `1px solid ${theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+              : 'linear-gradient(135deg, rgb(255 255 255 / 90%) 0%, rgb(255 255 255 / 80%) 100%)',
+          border: `1px solid ${
+            theme.palette.mode === 'dark' ? 'rgb(123 123 123 / 20%)' : 'rgba(203, 213, 225, 0.5)'
           }`,
-        boxShadow: 'none',
-      }
+          boxShadow: 'none',
+        }
       : {
-        // In full mode, no additional styling since it's handled by the parent container
-        background: 'transparent',
-        border: 'none',
-        boxShadow: 'none',
-      };
+          // In full mode, no additional styling since it's handled by the parent container
+          background: 'transparent',
+          border: 'none',
+          boxShadow: 'none',
+        };
 
     return (
       <Box
@@ -2576,10 +2575,11 @@ const CalculatorComponent: React.FC = () => {
   const critNoneSelected = critSelectableItems.every((item) => !item.enabled);
   const critAnySelected = critSelectableItems.some((item) => item.enabled);
   const armorResistanceAllSelected =
-    armorResistanceSelectableItems.length > 0 && armorResistanceSelectableItems.every((item) => item.enabled);
-  const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
+    armorResistanceSelectableItems.length > 0 &&
+    armorResistanceSelectableItems.every((item) => item.enabled);
+  // const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
   const armorResistanceAnySelected = armorResistanceSelectableItems.some((item) => item.enabled);
-  
+
   return (
     <>
       <CalculatorContainer liteMode={liteMode}>
@@ -2671,31 +2671,31 @@ const CalculatorComponent: React.FC = () => {
                 },
                 '&::before': liteMode
                   ? {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 16,
-                    right: 16,
-                    height: '1px',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
-                        : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
-                    opacity: 0.7,
-                  }
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 16,
+                      right: 16,
+                      height: '1px',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                      opacity: 0.7,
+                    }
                   : {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 16,
-                    right: 16,
-                    height: '1px',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
-                        : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
-                    opacity: 0.7,
-                  },
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 16,
+                      right: 16,
+                      height: '1px',
+                      background:
+                        theme.palette.mode === 'dark'
+                          ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+                          : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+                      opacity: 0.7,
+                    },
               }}
             >
               {/* Lite Mode Switch */}
@@ -2867,14 +2867,20 @@ const CalculatorComponent: React.FC = () => {
                         minWidth: 'auto',
                         px: 1,
                         py: 0.4,
-                        borderColor: theme.palette.mode === 'dark' ? 'rgba(244, 63, 94, 0.4)' : 'rgba(239, 68, 68, 0.4)',
+                        borderColor:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(244, 63, 94, 0.4)'
+                            : 'rgba(239, 68, 68, 0.4)',
                         color: theme.palette.mode === 'dark' ? '#ffffff' : 'inherit',
                         backgroundColor:
                           theme.palette.mode === 'dark'
                             ? 'rgba(153, 27, 27, 0.4)'
                             : 'rgba(254, 226, 226, 0.9)',
                         '&:hover': {
-                          borderColor: theme.palette.mode === 'dark' ? 'rgba(244, 63, 94, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(244, 63, 94, 0.6)'
+                              : 'rgba(239, 68, 68, 0.6)',
                           backgroundColor:
                             theme.palette.mode === 'dark'
                               ? 'rgba(153, 27, 27, 0.6)'
@@ -2892,7 +2898,9 @@ const CalculatorComponent: React.FC = () => {
                       size="small"
                       variant="outlined"
                       onClick={() => toggleAllArmorResistance(true)}
-                      disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
+                      disabled={
+                        armorResistanceAllSelected || armorResistanceSelectableItems.length === 0
+                      }
                       startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
                       sx={{
                         fontSize: '0.75rem',
@@ -2946,7 +2954,7 @@ const CalculatorComponent: React.FC = () => {
                     </Button>
                   </div>
                 )}
-                </Box>
+              </Box>
               {/* Game Mode Selector */}
               <Box
                 sx={{
@@ -3279,8 +3287,7 @@ const CalculatorComponent: React.FC = () => {
                               ? 'rgb(128 211 255 / 90%)'
                               : 'rgb(37 99 235 / 95%)'
                             : 'transparent',
-                        border:
-                          selectedTab === 2 ? 'none' : '1px solid transparent',
+                        border: selectedTab === 2 ? 'none' : '1px solid transparent',
                         boxShadow:
                           selectedTab === 2
                             ? theme.palette.mode === 'dark'
@@ -3345,10 +3352,11 @@ const CalculatorComponent: React.FC = () => {
                                 muiTheme.palette.mode === 'dark'
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
-                              border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                ? alpha(muiTheme.palette.primary.light, 0.2)
-                                : alpha(muiTheme.palette.primary.main, 0.18)
-                                }`,
+                              border: `1px solid ${
+                                muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                              }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
                                 flex: { xs: '1 1 100%', sm: '0 0 auto' },
@@ -3364,10 +3372,11 @@ const CalculatorComponent: React.FC = () => {
                               '& .MuiButton-root + .MuiButton-root': {
                                 borderLeft: {
                                   xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.18)
-                                    : alpha(muiTheme.palette.primary.main, 0.15)
-                                    }`,
+                                  sm: `1px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.18)
+                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                  }`,
                                 },
                               },
                             })}
@@ -3405,10 +3414,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(210, 233, 249, 0.85)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.6)
-                                        : alpha(muiTheme.palette.primary.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3454,10 +3464,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(255, 235, 233, 0.85)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.error.light, 0.55)
-                                        : alpha(muiTheme.palette.error.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.55)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3495,10 +3506,11 @@ const CalculatorComponent: React.FC = () => {
                                 muiTheme.palette.mode === 'dark'
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
-                              border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                ? alpha(muiTheme.palette.primary.light, 0.2)
-                                : alpha(muiTheme.palette.primary.main, 0.18)
-                                }`,
+                              border: `1px solid ${
+                                muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                              }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
                                 flex: { xs: '1 1 100%', sm: '0 0 auto' },
@@ -3514,10 +3526,11 @@ const CalculatorComponent: React.FC = () => {
                               '& .MuiButton-root + .MuiButton-root': {
                                 borderLeft: {
                                   xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.18)
-                                    : alpha(muiTheme.palette.primary.main, 0.15)
-                                    }`,
+                                  sm: `1px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.18)
+                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                  }`,
                                 },
                               },
                             })}
@@ -3555,10 +3568,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(210, 233, 249, 0.85)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.6)
-                                        : alpha(muiTheme.palette.primary.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3604,10 +3618,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(255, 235, 233, 0.85)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.error.light, 0.55)
-                                        : alpha(muiTheme.palette.error.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.55)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3644,10 +3659,11 @@ const CalculatorComponent: React.FC = () => {
                                 muiTheme.palette.mode === 'dark'
                                   ? 'rgba(21, 34, 50, 0.55)'
                                   : 'rgba(235, 244, 252, 0.85)',
-                              border: `1px solid ${muiTheme.palette.mode === 'dark'
-                                ? alpha(muiTheme.palette.primary.light, 0.2)
-                                : alpha(muiTheme.palette.primary.main, 0.18)
-                                }`,
+                              border: `1px solid ${
+                                muiTheme.palette.mode === 'dark'
+                                  ? alpha(muiTheme.palette.primary.light, 0.2)
+                                  : alpha(muiTheme.palette.primary.main, 0.18)
+                              }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
                                 flex: { xs: '1 1 100%', sm: '0 0 auto' },
@@ -3663,15 +3679,20 @@ const CalculatorComponent: React.FC = () => {
                               '& .MuiButton-root + .MuiButton-root': {
                                 borderLeft: {
                                   xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
-                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.18)
-                                    : alpha(muiTheme.palette.primary.main, 0.15)
-                                    }`,
+                                  sm: `1px solid ${
+                                    muiTheme.palette.mode === 'dark'
+                                      ? alpha(muiTheme.palette.primary.light, 0.18)
+                                      : alpha(muiTheme.palette.primary.main, 0.15)
+                                  }`,
                                 },
                               },
                             })}
                           >
-                            <Tooltip title="Select All armor resistance buffs" placement="top" arrow>
+                            <Tooltip
+                              title="Select All armor resistance buffs"
+                              placement="top"
+                              arrow
+                            >
                               <motion.span
                                 style={{ display: 'flex', flex: '1 1 auto' }}
                                 whileHover={{ scale: 1.02 }}
@@ -3689,7 +3710,10 @@ const CalculatorComponent: React.FC = () => {
                                     </motion.div>
                                   }
                                   onClick={() => toggleAllArmorResistance(true)}
-                                  disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
+                                  disabled={
+                                    armorResistanceAllSelected ||
+                                    armorResistanceSelectableItems.length === 0
+                                  }
                                   aria-label="Select All armor resistance buffs"
                                   sx={(muiTheme) => ({
                                     color:
@@ -3704,10 +3728,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(210, 233, 249, 0.85)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.primary.light, 0.6)
-                                        : alpha(muiTheme.palette.primary.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.primary.light, 0.6)
+                                          : alpha(muiTheme.palette.primary.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3753,10 +3778,11 @@ const CalculatorComponent: React.FC = () => {
                                           : 'rgba(252, 165, 165, 0.25)',
                                     },
                                     '&:focus-visible': {
-                                      outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                        ? alpha(muiTheme.palette.error.light, 0.6)
-                                        : alpha(muiTheme.palette.error.main, 0.5)
-                                        }`,
+                                      outline: `2px solid ${
+                                        muiTheme.palette.mode === 'dark'
+                                          ? alpha(muiTheme.palette.error.light, 0.6)
+                                          : alpha(muiTheme.palette.error.main, 0.5)
+                                      }`,
                                       outlineOffset: 2,
                                     },
                                     '&.Mui-disabled': {
@@ -3937,8 +3963,7 @@ const CalculatorComponent: React.FC = () => {
                               ? 'rgb(128 211 255 / 90%)'
                               : 'rgb(37 99 235 / 95%)'
                             : 'transparent',
-                        border:
-                          selectedTab === 2 ? 'none' : '1px solid transparent',
+                        border: selectedTab === 2 ? 'none' : '1px solid transparent',
                         boxShadow:
                           selectedTab === 2
                             ? theme.palette.mode === 'dark'
@@ -4118,21 +4143,54 @@ const CalculatorComponent: React.FC = () => {
                   {liteMode && (
                     <List sx={{ p: 0 }}>
                       {[
-                        ...armorResistanceData.groupBuffs.map((item, index) => ({ ...item, category: 'groupBuffs', originalIndex: index })),
-                        ...armorResistanceGearSections.light.map((item) => ({ ...item, category: 'gear' })),
-                        ...armorResistanceGearSections.medium.map((item) => ({ ...item, category: 'gear' })),
-                        ...armorResistanceGearSections.heavy.map((item) => ({ ...item, category: 'gear' })),
-                        ...armorResistanceGearSections.shield.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceData.groupBuffs.map((item, index) => ({
+                          ...item,
+                          category: 'groupBuffs',
+                          originalIndex: index,
+                        })),
+                        ...armorResistanceGearSections.light.map((item) => ({
+                          ...item,
+                          category: 'gear',
+                        })),
+                        ...armorResistanceGearSections.medium.map((item) => ({
+                          ...item,
+                          category: 'gear',
+                        })),
+                        ...armorResistanceGearSections.heavy.map((item) => ({
+                          ...item,
+                          category: 'gear',
+                        })),
+                        ...armorResistanceGearSections.shield.map((item) => ({
+                          ...item,
+                          category: 'gear',
+                        })),
                         ...armorResistanceSets.map((item) => ({ ...item, category: 'gear' })),
-                        ...armorResistanceData.classPassives.map((item, index) => ({ ...item, category: 'classPassives', originalIndex: index })),
-                        ...filteredPassives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
-                        ...filteredCp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+                        ...armorResistanceData.classPassives.map((item, index) => ({
+                          ...item,
+                          category: 'classPassives',
+                          originalIndex: index,
+                        })),
+                        ...filteredPassives.map((item, index) => ({
+                          ...item,
+                          category: 'passives',
+                          originalIndex: index,
+                        })),
+                        ...filteredCp.map((item, index) => ({
+                          ...item,
+                          category: 'cp',
+                          originalIndex: index,
+                        })),
                       ].map((item, index) =>
                         renderItem(
                           item,
-                          item.category === 'gear' ? item.originalIndex : index,
+                          item.category === 'gear' ? (item.originalIndex ?? index) : index,
                           item.category as keyof CalculatorData,
-                          (category, itemIndex, updates) => updateArmorResistanceItem(category, item.originalIndex, updates),
+                          (category, itemIndex, updates) =>
+                            updateArmorResistanceItem(
+                              category,
+                              item.originalIndex ?? itemIndex,
+                              updates,
+                            ),
                         ),
                       )}
                     </List>
@@ -4253,17 +4311,21 @@ const CalculatorComponent: React.FC = () => {
           PaperProps={{
             sx: {
               borderRadius: '12px',
-              background: theme.palette.mode === 'dark'
-                ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
               backdropFilter: 'blur(10px)',
               WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${theme.palette.mode === 'dark'
-                ? 'rgba(56, 189, 248, 0.3)'
-                : 'rgba(40, 145, 200, 0.2)'}`,
-              boxShadow: theme.palette.mode === 'dark'
-                ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                : '0 8px 32px rgba(0, 0, 0, 0.1)',
+              border: `1px solid ${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.3)'
+                  : 'rgba(40, 145, 200, 0.2)'
+              }`,
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
             },
           }}
         >
@@ -4282,10 +4344,14 @@ const CalculatorComponent: React.FC = () => {
             <Stack spacing={3}>
               {['regular', 'reinforced', 'nirnhoned'].map((variant) => {
                 // Get current variant from state using the editing index
-                const currentItem = currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
-                const currentVariant = currentItem?.variants && currentItem.selectedVariant !== undefined
-                  ? currentItem.variants[currentItem.selectedVariant]
-                  : null;
+                const currentItem =
+                  currentEditingIndex !== null
+                    ? armorResistanceData.gear[currentEditingIndex]
+                    : null;
+                const currentVariant =
+                  currentItem?.variants && currentItem.selectedVariant !== undefined
+                    ? currentItem.variants[currentItem.selectedVariant]
+                    : null;
                 const isSelected = currentVariant?.name === variant;
 
                 // Quality rating is handled globally below
@@ -4297,7 +4363,9 @@ const CalculatorComponent: React.FC = () => {
                       size="large"
                       onClick={() => {
                         // Find the variant index and cycle to it
-                        const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(variant);
+                        const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(
+                          variant,
+                        );
                         if (variantIndex !== -1 && currentEditingIndex !== null) {
                           // Calculate how many cycles needed to reach this variant
                           const currentIndex = currentVariant
@@ -4319,77 +4387,102 @@ const CalculatorComponent: React.FC = () => {
                         py: 1.5,
                         border: '2px solid',
                         borderColor: isSelected
-                          ? (theme.palette.mode === 'dark'
+                          ? theme.palette.mode === 'dark'
                             ? 'rgba(56, 189, 248, 0.8)'
-                            : 'rgba(40, 145, 200, 0.6)')
-                          : (theme.palette.mode === 'dark'
+                            : 'rgba(40, 145, 200, 0.6)'
+                          : theme.palette.mode === 'dark'
                             ? 'rgba(56, 189, 248, 0.3)'
-                            : 'rgba(40, 145, 200, 0.2)'),
+                            : 'rgba(40, 145, 200, 0.2)',
                         background: isSelected
-                          ? (theme.palette.mode === 'dark'
+                          ? theme.palette.mode === 'dark'
                             ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)')
+                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
                           : 'transparent',
                         color: isSelected
-                          ? (theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)')
-                          : (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.7)' : theme.palette.text.secondary),
+                          ? theme.palette.mode === 'dark'
+                            ? 'rgb(199 234 255)'
+                            : 'rgb(40, 145, 200)'
+                          : theme.palette.mode === 'dark'
+                            ? 'rgba(255, 255, 255, 0.7)'
+                            : theme.palette.text.secondary,
                         '&:hover': {
-                          borderColor: theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.6)'
-                            : 'rgba(40, 145, 200, 0.4)',
-                          background: theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+                          borderColor:
+                            theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.6)'
+                              : 'rgba(40, 145, 200, 0.4)',
+                          background:
+                            theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
                         },
                       }}
                     >
-                      {variant === 'regular' ? 'Regular' :
-                        variant === 'reinforced' ? 'Reinforced' : 'Nirnhoned'}
+                      {variant === 'regular'
+                        ? 'Regular'
+                        : variant === 'reinforced'
+                          ? 'Reinforced'
+                          : 'Nirnhoned'}
                     </Button>
                   </Box>
                 );
               })}
 
               {/* Divider */}
-              <Divider sx={{
-                borderColor: theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.2)'
-                  : 'rgba(40, 145, 200, 0.2)',
-              }} />
+              <Divider
+                sx={{
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.2)'
+                      : 'rgba(40, 145, 200, 0.2)',
+                }}
+              />
 
               {/* Single Quality Rating */}
-              <Box sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                pt: 1,
-              }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  pt: 1,
+                }}
+              >
                 <Typography
                   variant="body2"
                   sx={{
                     mb: 2,
                     fontWeight: 600,
-                    color: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.9)' : theme.palette.text.primary,
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : theme.palette.text.primary,
                     textAlign: 'center',
                   }}
                 >
                   Gear Quality
                 </Typography>
-                <Box sx={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  px: 2,
-                }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    px: 2,
+                  }}
+                >
                   {(() => {
                     // Calculate quality rating values once for the current item
-                    const currentItem = currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
-                    const qualityLevel = typeof currentItem?.qualityLevel === 'number'
-                      ? currentItem.qualityLevel
-                      : ARMOR_QUALITY_LABELS.length - 1;
+                    const currentItem =
+                      currentEditingIndex !== null
+                        ? armorResistanceData.gear[currentEditingIndex]
+                        : null;
+                    const qualityLevel =
+                      typeof currentItem?.qualityLevel === 'number'
+                        ? currentItem.qualityLevel
+                        : ARMOR_QUALITY_LABELS.length - 1;
                     const ratingValue = qualityLevel + 1;
-                    const qualityLabel = ARMOR_QUALITY_LABELS[qualityLevel] ?? ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
+                    const qualityLabel =
+                      ARMOR_QUALITY_LABELS[qualityLevel] ??
+                      ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
 
                     return (
                       <>
@@ -4409,7 +4502,9 @@ const CalculatorComponent: React.FC = () => {
                             onClick={(event) => event.stopPropagation()}
                             onMouseDown={(event) => event.stopPropagation()}
                             onTouchStart={(event) => event.stopPropagation()}
-                            getLabelText={(value: number) => `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`}
+                            getLabelText={(value: number) =>
+                              `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
+                            }
                             sx={{
                               '& .MuiRating-iconFilled': {
                                 color: 'rgb(255 222 148)',
@@ -4425,7 +4520,10 @@ const CalculatorComponent: React.FC = () => {
                           sx={{
                             ml: 2,
                             fontWeight: 600,
-                            color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)',
+                            color:
+                              theme.palette.mode === 'dark'
+                                ? 'rgb(199 234 255)'
+                                : 'rgb(40, 145, 200)',
                           }}
                         >
                           {qualityLabel}

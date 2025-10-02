@@ -862,19 +862,19 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
               right: `${100 - backgroundFillPercent}%`,
               background: isWipe
                 ? (() => {
-                  const healthPercent = bossHealthPercent;
-                  if (healthPercent >= 80) {
-                    return getThemeColors.wipeRedGradient;
-                  } else if (healthPercent >= 50) {
-                    return getThemeColors.wipeOrangeGradient;
-                  } else if (healthPercent >= 20) {
-                    return getThemeColors.wipeYellowGradient;
-                  } else if (healthPercent >= 8) {
-                    return getThemeColors.wipeLowGradient;
-                  } else {
-                    return getThemeColors.wipeVeryLowGradient;
-                  }
-                })()
+                    const healthPercent = bossHealthPercent;
+                    if (healthPercent >= 80) {
+                      return getThemeColors.wipeRedGradient;
+                    } else if (healthPercent >= 50) {
+                      return getThemeColors.wipeOrangeGradient;
+                    } else if (healthPercent >= 20) {
+                      return getThemeColors.wipeYellowGradient;
+                    } else if (healthPercent >= 8) {
+                      return getThemeColors.wipeLowGradient;
+                    } else {
+                      return getThemeColors.wipeVeryLowGradient;
+                    }
+                  })()
                 : fight.difficulty == null
                   ? getThemeColors.trashGradient
                   : isFalsePositive

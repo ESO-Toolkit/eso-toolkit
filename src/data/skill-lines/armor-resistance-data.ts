@@ -171,7 +171,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       step: 1,
       isFlat: true,
       category: 'gear',
-      tooltip: 'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
+      tooltip:
+        'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
     },
     {
       name: 'Heavy Helm',
@@ -512,7 +513,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1650,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
+      tooltip:
+        '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
     },
     {
       name: 'Warden Passive Per Skill',
@@ -522,7 +524,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1240,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by <strong>1240</strong> for each Winter\'s Embrace ability slotted.',
+      tooltip:
+        '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by <strong>1240</strong> for each Winter\'s Embrace ability slotted.',
     },
     {
       name: 'Templar Passive',
@@ -531,7 +534,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1320,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
+      tooltip:
+        '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
     },
     {
       name: 'Arcanist Passive',
@@ -540,7 +544,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1980,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
+      tooltip:
+        '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
     },
     {
       name: 'Nord Passive',
@@ -549,7 +554,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 2600,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
+      tooltip:
+        '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
     },
     {
       name: 'Breton Passive',
@@ -558,7 +564,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 2310,
       isFlat: true,
       category: 'classPassives',
-      tooltip: '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
+      tooltip:
+        '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
     },
   ],
   passives: [
@@ -571,7 +578,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       category: 'passives',
       tooltip: 'Runic Sunder steals <strong>2200</strong> Armor from enemies.',
     },
-        {
+    {
       name: 'Armor Potions',
       enabled: false,
       quantity: 1,
@@ -614,7 +621,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1638,
       isFlat: true,
       category: 'passives',
-      tooltip: 'Defending trait on jewelry grants <strong>1638</strong> Physical and Spell Resistance.',
+      tooltip:
+        'Defending trait on jewelry grants <strong>1638</strong> Physical and Spell Resistance.',
     },
     {
       name: 'Armor Line Bonus',
@@ -623,7 +631,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 1487,
       isFlat: true,
       category: 'passives',
-      tooltip: 'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
+      tooltip:
+        'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
     },
   ],
   cp: [
@@ -634,7 +643,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       value: 2984,
       isFlat: true,
       category: 'cp',
-      tooltip: 'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
+      tooltip:
+        'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
     },
     {
       name: 'Fortified',
@@ -657,7 +667,6 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
   ],
 };
 
-
 const applyArmorQualityData = (data: CalculatorData): void => {
   data.gear = data.gear.map((item) => {
     if (!item.variants || item.variants.length === 0) {
@@ -666,29 +675,29 @@ const applyArmorQualityData = (data: CalculatorData): void => {
 
     const nameParts = item.name.split(' ');
     const possibleWeight = nameParts[0]?.toLowerCase();
-    const weightKey = possibleWeight && ARMOR_WEIGHT_KEYS.has(possibleWeight) ? possibleWeight : null;
+    const weightKey =
+      possibleWeight && ARMOR_WEIGHT_KEYS.has(possibleWeight) ? possibleWeight : null;
     const slotParts = weightKey ? nameParts.slice(1) : nameParts;
     const slotKey = resolveSlotKey(slotParts);
     const baseQualityLevel =
       typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
     const currentTraitKey = normalizeTraitKey(item.variants[item.selectedVariant ?? 0]?.name);
 
-    const builtVariants = weightKey && slotKey
-      ? TRAIT_ORDER
-          .map((traitKey) => {
+    const builtVariants =
+      weightKey && slotKey
+        ? TRAIT_ORDER.map((traitKey) => {
             const qualityValues = getQualityValues(weightKey, slotKey, traitKey, item.value);
             if (!qualityValues.some((value) => value !== 0)) {
               return null;
             }
 
             return {
-              name: TRAIT_DISPLAY_LABELS[traitKey],
+              name: TRAIT_DISPLAY_LABELS[traitKey] || traitKey,
               value: qualityValues[qualityValues.length - 1] ?? item.value ?? 0,
-              qualityValues,
+              qualityValues: qualityValues.length > 0 ? qualityValues : undefined,
             };
-          })
-          .filter((variant): variant is CalculatorItem['variants'][number] => Boolean(variant))
-      : [];
+          }).filter((variant): variant is NonNullable<typeof variant> => variant !== null)
+        : [];
 
     const fallbackVariants = item.variants.map((variant) => ({
       ...variant,
@@ -705,6 +714,7 @@ const applyArmorQualityData = (data: CalculatorData): void => {
     }
 
     let selectedVariantIndex = updatedVariants.findIndex((variant) => {
+      if (!variant) return false;
       const traitKey = normalizeTraitKey(variant.name);
       return traitKey && traitKey === currentTraitKey;
     });
@@ -718,17 +728,15 @@ const applyArmorQualityData = (data: CalculatorData): void => {
 
     const selectedVariant = updatedVariants[selectedVariantIndex];
     const qualityValues =
-      selectedVariant?.qualityValues && selectedVariant.qualityValues.length === ARMOR_QUALITY_LABELS.length
+      selectedVariant?.qualityValues &&
+      selectedVariant.qualityValues.length === ARMOR_QUALITY_LABELS.length
         ? selectedVariant.qualityValues
         : QUALITY_FALLBACK(selectedVariant?.value);
-    const safeQualityLevel = Math.min(
-      Math.max(baseQualityLevel, 0),
-      qualityValues.length - 1,
-    );
+    const safeQualityLevel = Math.min(Math.max(baseQualityLevel, 0), qualityValues.length - 1);
 
     return {
       ...item,
-      variants: updatedVariants,
+      variants: updatedVariants.filter((v) => v !== null) as CalculatorItem['variants'],
       selectedVariant: selectedVariantIndex,
       qualityLevel: safeQualityLevel,
       value: qualityValues[safeQualityLevel],
@@ -745,26 +753,39 @@ export const ARMOR_RESISTANCE_CAP = 33500;
 
 // Tooltip data for armor resistance items
 export const ARMOR_RESISTANCE_TOOLTIPS = {
-  'Heavy Armor Passive': 'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
+  'Heavy Armor Passive':
+    'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
   'Light Armor Passive': 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
-  'Nord Passive': '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
-  'Breton Passive': '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
-  'Dragonknight Passive': '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
-  'Warden Passive Per Skill': '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
-  'Templar Passive': '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
-  'Arcanist Passive': '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
+  'Nord Passive':
+    '<div class="tt-head">Nord Racial Passive</div><strong>Rugged</strong><br/>Increases your Physical and Spell Resistance by 2600.',
+  'Breton Passive':
+    '<div class="tt-head">Breton Racial Passive</div><strong>Spell Attunement</strong><br/>Increases your Spell Resistance by 2310. This effect is doubled if you are afflicted with Burning, Chilled, or Concussed.',
+  'Dragonknight Passive':
+    '<div class="tt-head">Draconic Power</div><strong>Scaled Armor</strong><br/>Increases your Physical and Spell Resistance by 2974.',
+  'Warden Passive Per Skill':
+    '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by 1240 for each Winter\'s Embrace ability slotted.',
+  'Templar Passive':
+    '<div class="tt-head">Aedric Spear</div><strong>Balanced Warrior</strong><br/>Increases your Weapon Damage, Spell Damage, and Armor by 6%.',
+  'Arcanist Passive':
+    '<div class="tt-head">Soldier Of Apocrypha</div><strong>Aegis of the Unseen</strong><br/>While a beneficial Soldier of Apocrypha ability is active on you, increase your Armor by 3271.',
   'Runic Sunder': 'Runic Sunder steals <strong>2200</strong> Armor from enemies.',
-  'Fortified': 'Fortified increases Physical and Spell Resistance by <strong>1731</strong>.',
-  'Bulwark': 'Bulwark increases Physical and Spell Resistance by <strong>1900</strong>.',
+  Fortified: 'Fortified increases Physical and Spell Resistance by <strong>1731</strong>.',
+  Bulwark: 'Bulwark increases Physical and Spell Resistance by <strong>1900</strong>.',
   'Armor Potions': 'Armor potions grant <strong>5280</strong> Physical and Spell Resistance.',
-  'Lord Warden': 'Lord Warden set bonus grants <strong>3180</strong> Physical and Spell Resistance.',
-  'Ozezans': 'Ozezans set bonus grants <strong>4272</strong> Physical and Spell Resistance.',
-  'Markyn Ring of Majesty': 'Markyn Ring of Majesty grants <strong>1157</strong> Physical and Spell Resistance.',
-  'Defending Trait': 'Defending trait on jewelry grants <strong>1638</strong> Physical and Spell Resistance.',
-  'Armor Line Bonus': 'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
-  'Shield': 'Shields grant base <strong>1720</strong> Physical and Spell Resistance.',
-  'Shield Reinforced': 'Reinforced shields grant <strong>1995</strong> Physical and Spell Resistance.',
+  'Lord Warden':
+    'Lord Warden set bonus grants <strong>3180</strong> Physical and Spell Resistance.',
+  Ozezans: 'Ozezans set bonus grants <strong>4272</strong> Physical and Spell Resistance.',
+  'Markyn Ring of Majesty':
+    'Markyn Ring of Majesty grants <strong>1157</strong> Physical and Spell Resistance.',
+  'Defending Trait':
+    'Defending trait on jewelry grants <strong>1638</strong> Physical and Spell Resistance.',
+  'Armor Line Bonus':
+    'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
+  Shield: 'Shields grant base <strong>1720</strong> Physical and Spell Resistance.',
+  'Shield Reinforced':
+    'Reinforced shields grant <strong>1995</strong> Physical and Spell Resistance.',
   'Major Resolve': 'Increases your Physical and Spell Resistance by <strong>5948</strong>.',
   'Minor Resolve': 'Increases your Physical and Spell Resistance by <strong>2974</strong>.',
-  'Armor Master': 'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
+  'Armor Master':
+    'Armor Master constellation grants <strong>2984</strong> Physical and Spell Resistance.',
 };
