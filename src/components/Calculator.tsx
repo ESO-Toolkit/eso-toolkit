@@ -928,7 +928,7 @@ const CalculatorComponent: React.FC = () => {
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
-  const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('regular');
+  const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('Regular');
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] =
@@ -1370,7 +1370,17 @@ const CalculatorComponent: React.FC = () => {
       const selectedVariant = variants[variantIndex];
 
       // Update the selected variant
+      console.log('DEBUG - Before update:', {
+        index: index,
+        oldSelectedVariant: item.selectedVariant,
+        newVariantIndex: variantIndex,
+        variantName: variantName
+      });
       item.selectedVariant = variantIndex;
+      console.log('DEBUG - After update:', {
+        newSelectedVariant: item.selectedVariant,
+        item: item
+      });
 
       // Update quality and value based on selected variant
       const qualityLevel =
@@ -1905,14 +1915,34 @@ const CalculatorComponent: React.FC = () => {
             onClick={(e) => {
               e.stopPropagation();
               if (isMobile) {
+                // Get the latest item data to ensure we have the current selectedVariant
                 const currentItem = armorResistanceData.gear[resolvedIndex];
                 // Validate item exists and has variants before opening modal
                 if (currentItem && currentItem.variants && currentItem.variants.length > 0) {
-                  const currentVariant = currentItem.selectedVariant !== undefined
-                    ? currentItem.variants[currentItem.selectedVariant]?.name
-                    : 'Regular';
+                  // Get the currently applied variant from the actual data
+                  const freshItem = armorResistanceData.gear[resolvedIndex];
+                  let currentVariant = 'Regular'; // Default fallback
+
+                  // Try to get the selected variant from the fresh data
+                  if (freshItem && freshItem.selectedVariant !== undefined && freshItem.selectedVariant !== null) {
+                    const variantIndex = freshItem.selectedVariant;
+                    if (freshItem.variants && freshItem.variants[variantIndex]) {
+                      currentVariant = freshItem.variants[variantIndex].name;
+                    }
+                  }
+
+                  console.log('DEBUG - Modal Opening:', {
+                    itemName: currentItem.name,
+                    selectedItemIndex: currentItem.selectedVariant,
+                    freshItemSelectedIndex: freshItem?.selectedVariant,
+                    selectedItemIndexType: typeof currentItem.selectedVariant,
+                    variants: currentItem.variants.map(v => v.name),
+                    currentVariant: currentVariant,
+                    resolvedIndex: resolvedIndex
+                  });
                   setCurrentEditingIndex(resolvedIndex);
-                  setTempSelectedVariant(currentVariant || 'Regular');
+                  setTempSelectedVariant(currentVariant);
+                  console.log('DEBUG - Set temp variant to:', currentVariant);
                   setVariantModalOpen(true);
                 }
               } else {
@@ -4643,7 +4673,7 @@ const CalculatorComponent: React.FC = () => {
                 }
                 setVariantModalOpen(false);
                 setCurrentEditingIndex(null);
-                setTempSelectedVariant('regular');
+                setTempSelectedVariant('Regular');
               }}
               sx={{
                 borderRadius: '6px',

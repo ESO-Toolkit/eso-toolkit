@@ -1,196 +1,66 @@
-[vite] connecting...
-[vite] connected.
-2025-09-26T00:35:15.902Z [Sentry] [INFO] Sentry disabled - not in production build
-2025-09-26T00:35:16.026Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
-2025-09-26T00:35:16.032Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
-[Komodo] CS Register csid_t366ys_nh6cfa_2_8_3
-[sticky-footer metrics] {"cardTop":145,"cardBottom":2633,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":2633,"boundaryOverlap":0,"thresholds":{"enter":496,"exit":173}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2633,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":45,"cardBottom":2512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-55,"cardBottom":2412,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-155,"cardBottom":2312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-255,"cardBottom":2212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-355,"cardBottom":2112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-455,"cardBottom":2012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-555,"cardBottom":1912,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-755,"cardBottom":1712,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-855,"cardBottom":1612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-955,"cardBottom":1512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1155,"cardBottom":1312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1255,"cardBottom":1212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1355,"cardBottom":1112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1655,"cardBottom":812,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":73,"cardTop":-1855,"cardBottom":612,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-invariant.ts:42 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[NEW] Explain Console errors by using Copilot in Edge: click
+client:789 [vite] connecting...
+client:912 [vite] connected.
+LoggerContext.tsx:128 2025-10-02T19:32:41.586Z [Sentry] [INFO] Sentry disabled - not in production build
+LoggerContext.tsx:126 2025-10-02T19:32:41.761Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized {data: {…}, error: undefined}
+LoggerContext.tsx:128 2025-10-02T19:32:41.765Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
+LoggerContext.tsx:126 2025-10-02T19:32:41.766Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated {data: {…}, error: undefined}
+LoggerContext.tsx:126 2025-10-02T19:32:41.766Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated {data: {…}, error: undefined}
+LoggerContext.tsx:128 2025-10-02T19:32:41.962Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+LoggerContext.tsx:128 2025-10-02T19:32:41.970Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+LoggerContext.tsx:128 2025-10-02T19:32:41.972Z [ESO-Logger][EsoLogsClient] [INFO] Updating EsoLogsClient access token
+LoggerContext.tsx:128 2025-10-02T19:32:41.979Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+LoggerContext.tsx:128 2025-10-02T19:32:41.979Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+LoggerContext.tsx:126 2025-10-02T19:32:41.981Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated {data: {…}, error: undefined}
+LoggerContext.tsx:126 2025-10-02T19:32:41.981Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated {data: {…}, error: undefined}
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+[Violation] 'message' handler took <N>ms
+rl-cs.js:1 [Komodo]   CS Register csid_t3irmi_wp1oje_2_8_3
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
+The specified value "-" cannot be parsed, or is out of range.
 
-         to explain an error.
+The specified value "-" cannot be parsed, or is out of range.
+[NEW] Explain Console errors by using Copilot in Edge: click
+         
+         to explain an error. 
         Learn more
         Don't show again
-
-scheduler.development.js:14 [Violation] 'message' handler took 511ms
+react-dom-client.development.js:16244 [Violation] 'click' handler took 182ms
+Calculator.tsx:1927 DEBUG - Modal Opening: {itemName: 'Light Helm', selectedItemIndex: 0, freshItemSelectedIndex: 0, selectedItemIndexType: 'number', variants: Array(3), …}
+Calculator.tsx:1940 DEBUG - Set temp variant to: Regular
+Calculator.tsx:1361 Setting variant: Reinforced Available variants: (3) ['Regular', 'Reinforced', 'Nirnhoned'] Found index: 1
+Calculator.tsx:1373 DEBUG - Before update: {index: 17, oldSelectedVariant: 0, newVariantIndex: 1, variantName: 'Reinforced'}
+Calculator.tsx:1380 DEBUG - After update: {newSelectedVariant: 1, item: {…}}
+Calculator.tsx:1361 Setting variant: Reinforced Available variants: (3) ['Regular', 'Reinforced', 'Nirnhoned'] Found index: 1
+Calculator.tsx:1373 DEBUG - Before update: {index: 17, oldSelectedVariant: 0, newVariantIndex: 1, variantName: 'Reinforced'}
+Calculator.tsx:1380 DEBUG - After update: {newSelectedVariant: 1, item: {…}}
+:3000/#/calculator:1  Blocked aria-hidden on an element because its descendant retained focus. The focus must not be hidden from assistive technology users. Avoid using aria-hidden on a focused element or its ancestor. Consider using the inert attribute instead, which will also prevent focus. For more details, see the aria-hidden section of the WAI-ARIA specification at https://w3c.github.io/aria/#aria-hidden.
+Element with focus: <button.MuiButtonBase-root MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-disableElevation MuiButton-root MuiButton-text MuiButton-textPrimary MuiButton-sizeSmall MuiButton-textSizeSmall MuiButton-colorPrimary MuiButton-disableElevation css-cbkyka-MuiButtonBase-root-MuiButton-root>
+Ancestor with aria-hidden: <div#root> <div id=​"root" aria-hidden=​"true">​…​</div>​<div class=​"MuiBox-root css-1u9mni1">​…​</div>​flex<header class=​"MuiPaper-root MuiPaper-elevation MuiPaper-elevation0 MuiAppBar-root MuiAppBar-colorTransparent MuiAppBar-positionStatic css-1i85xlu-MuiPaper-root-MuiAppBar-root" style=​"--Paper-shadow:​ none;​ --Paper-overlay:​ linear-gradient(rgba(255, 255, 255, 0)​, rgba(255, 255, 255, 0)​)​;​">​…​</header>​flex<div class=​"MuiBox-root css-1bjd1tz">​…​</div>​flex<div class=​"MuiContainer-root MuiContainer-maxWidthMd css-q5d0pz-MuiContainer-root">​…​</div>​<div class=​"MuiBox-root css-1j5c7z">​…​</div>​<div class=​"MuiBox-root css-hncnev">​…​</div>​<div class=​"MuiContainer-root css-lke6c1-MuiContainer-root">​…​</div>​<div class=​"MuiPaper-root MuiPaper-elevation MuiPaper-rounded MuiPaper-elevation1 css-1db4tu4-MuiPaper-root" data-calculator-card=​"true" style=​"--Paper-shadow:​ 0px 2px 1px -1px rgba(0,0,0,0.2)​,0px 1px 1px 0px rgba(0,0,0,0.14)​,0px 1px 3px 0px rgba(0,0,0,0.12)​;​ --Paper-overlay:​ linear-gradient(rgba(255, 255, 255, 0.051)​, rgba(255, 255, 255, 0.051)​)​;​">​…​</div>​flex<div class=​"MuiBox-root css-o6q9lz">​…​</div>​flex<div class=​"MuiBox-root css-1s49bok">​…​</div>​<div class=​"MuiBox-root css-ud94yb">​…​</div>​<div role=​"tabpanel" id=​"calculator-tabpanel-0" aria-labelledby=​"calculator-tab-0" style=​"display:​ none;​ opacity:​ 0;​ transition:​ opacity 0.2s ease-in-out;​" hidden>​</div>​<div role=​"tabpanel" hidden id=​"calculator-tabpanel-1" aria-labelledby=​"calculator-tab-1" style=​"display:​ none;​ opacity:​ 0;​ transition:​ opacity 0.2s ease-in-out;​">​</div>​<div role=​"tabpanel" id=​"calculator-tabpanel-2" aria-labelledby=​"calculator-tab-2" style=​"display:​ block;​ opacity:​ 1;​ transition:​ opacity 0.2s ease-in-out;​">​…​</div>​<div class=​"MuiBox-root css-0">​…​</div>​<div class=​"MuiBox-root css-1i43dhb">​…​</div>​flex<ul class=​"MuiList-root MuiList-padding css-2wvk20-MuiList-root">​…​</ul>​<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-1rnbqet-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-1rnbqet-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-bgbifd-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-hqdfek-MuiListItem-root">​…​</li>​grid<div class=​"MuiListItemIcon-root css-1y9yr50-MuiListItemIcon-root">​…​</div>​flex<span class=​"MuiButtonBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium PrivateSwitchBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium Mui-checked MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium css-a8nrly-MuiButtonBase-root-MuiSwitchBase-root-MuiCheckbox-root">​…​</span>​flex<input data-indeterminate=​"false" class=​"PrivateSwitchBase-input css-12xagqm-MuiSwitchBase-root" type=​"checkbox" checked>​<svg class=​"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root" focusable=​"false" aria-hidden=​"true" viewBox=​"0 0 24 24" data-testid=​"CheckBoxIcon">​…​</svg>​</span>​</div>​<div class=​"MuiFormControl-root MuiTextField-root css-192kq7m-MuiFormControl-root-MuiTextField-root" aria-label data-mui-internal-clone-element=​"true">​…​</div>​flex<div class=​"MuiListItemText-root css-1sowlqg-MuiListItemText-root">​…​</div>​<div class=​"MuiBox-root css-1txkph7">​…​</div>​flex</li>​<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-1rnbqet-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-1rnbqet-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<div class=​"MuiListItemIcon-root css-1y9yr50-MuiListItemIcon-root">​…​</div>​flex<span class=​"MuiButtonBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium PrivateSwitchBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium css-a8nrly-MuiButtonBase-root-MuiSwitchBase-root-MuiCheckbox-root">​…​</span>​flex<input data-indeterminate=​"false" class=​"PrivateSwitchBase-input css-12xagqm-MuiSwitchBase-root" type=​"checkbox">​<svg class=​"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root" focusable=​"false" aria-hidden=​"true" viewBox=​"0 0 24 24" data-testid=​"CheckBoxOutlineBlankIcon">​…​</svg>​</span>​</div>​<div class=​"MuiFormControl-root MuiTextField-root css-7au8fq-MuiFormControl-root-MuiTextField-root" aria-label=​"This item doesn't have adjustable quantity" data-mui-internal-clone-element=​"true">​…​</div>​flex<div class=​"MuiListItemText-root css-1sowlqg-MuiListItemText-root">​…​</div>​<div class=​"MuiBox-root css-1txkph7">​…​</div>​flex</li>​<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<div class=​"MuiListItemIcon-root css-1y9yr50-MuiListItemIcon-root">​…​</div>​flex<span class=​"MuiButtonBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium PrivateSwitchBase-root MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium MuiCheckbox-root MuiCheckbox-colorPrimary MuiCheckbox-sizeMedium css-a8nrly-MuiButtonBase-root-MuiSwitchBase-root-MuiCheckbox-root">​…​</span>​flex<input data-indeterminate=​"false" class=​"PrivateSwitchBase-input css-12xagqm-MuiSwitchBase-root" type=​"checkbox">​<svg class=​"MuiSvgIcon-root MuiSvgIcon-fontSizeMedium css-1umw9bq-MuiSvgIcon-root" focusable=​"false" aria-hidden=​"true" viewBox=​"0 0 24 24" data-testid=​"CheckBoxOutlineBlankIcon">​…​</svg>​</span>​</div>​<div class=​"MuiFormControl-root MuiTextField-root css-7au8fq-MuiFormControl-root-MuiTextField-root" aria-label=​"This item doesn't have adjustable quantity" data-mui-internal-clone-element=​"true">​…​</div>​flex<div class=​"MuiListItemText-root css-1sowlqg-MuiListItemText-root">​…​</div>​<div class=​"MuiBox-root css-1txkph7">​…​</div>​flex</li>​<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid<li class=​"MuiListItem-root MuiListItem-gutters MuiListItem-padding css-wuyrjb-MuiListItem-root">​…​</li>​grid</ul>​</div>​</div>​</div>​</div>​<div class=​"MuiBox-root css-whj3w9">​…​</div>​</div>​</div>​</div>​</div>​</div>​<footer class=​"MuiBox-root css-1iaf7c3">​…​</footer>​</div>​<div class=​"MuiBox-root css-6cupe0">​…​</div>​flex</div>​
+invariant.ts:42 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+Calculator.tsx:1927 DEBUG - Modal Opening: {itemName: 'Light Helm', selectedItemIndex: 0, freshItemSelectedIndex: 0, selectedItemIndexType: 'number', variants: Array(3), …}
+Calculator.tsx:1940 DEBUG - Set temp variant to: Regular
