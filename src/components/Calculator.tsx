@@ -4382,29 +4382,38 @@ const CalculatorComponent: React.FC = () => {
                       sx={{
                         borderRadius: '8px',
                         textTransform: 'none',
-                        fontWeight: 600,
+                        fontWeight: isSelected ? 700 : 600,
                         fontSize: '1rem',
                         py: 1.5,
                         border: '2px solid',
                         borderColor: isSelected
                           ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8)'
-                            : 'rgba(40, 145, 200, 0.6)'
+                            ? 'rgba(56, 189, 248, 1)'
+                            : 'rgba(40, 145, 200, 0.8)'
                           : theme.palette.mode === 'dark'
                             ? 'rgba(56, 189, 248, 0.3)'
                             : 'rgba(40, 145, 200, 0.2)',
                         background: isSelected
                           ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
-                          : 'transparent',
+                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)'
+                          : theme.palette.mode === 'dark'
+                            ? 'rgba(30, 41, 59, 0.5)'
+                            : 'rgba(248, 250, 252, 0.5)',
                         color: isSelected
                           ? theme.palette.mode === 'dark'
                             ? 'rgb(199 234 255)'
                             : 'rgb(40, 145, 200)'
                           : theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.7)'
+                            ? 'rgba(255, 255, 255, 0.8)'
                             : theme.palette.text.secondary,
+                        boxShadow: isSelected
+                          ? theme.palette.mode === 'dark'
+                            ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                            : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
+                          : theme.palette.mode === 'dark'
+                            ? '0 2px 4px rgba(0, 0, 0, 0.2)'
+                            : '0 1px 3px rgba(0, 0, 0, 0.1)',
                         '&:hover': {
                           borderColor:
                             theme.palette.mode === 'dark'
@@ -4417,11 +4426,14 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      {variant === 'regular'
-                        ? 'Regular'
-                        : variant === 'reinforced'
-                          ? 'Reinforced'
-                          : 'Nirnhoned'}
+                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
+                        {isSelected && <CheckCircleIcon sx={{ fontSize: '1.2rem', color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)' }} />}
+                        {variant === 'regular'
+                          ? 'Regular'
+                          : variant === 'reinforced'
+                            ? 'Reinforced'
+                            : 'Nirnhoned'}
+                      </Box>
                     </Button>
                   </Box>
                 );
@@ -4535,16 +4547,46 @@ const CalculatorComponent: React.FC = () => {
               </Box>
             </Stack>
           </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
+          <DialogActions sx={{ px: 3, pb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
             <Button
-              onClick={() => setVariantModalOpen(false)}
+              onClick={() => {
+                setVariantModalOpen(false);
+                setCurrentEditingIndex(null);
+              }}
               sx={{
                 borderRadius: '6px',
                 textTransform: 'none',
                 fontWeight: 500,
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(239, 68, 68, 0.3)',
+                color: theme.palette.mode === 'dark' ? '#fca5a5' : '#dc2626',
+                '&:hover': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.5)',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                },
               }}
+              variant="outlined"
             >
               Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                setVariantModalOpen(false);
+                setCurrentEditingIndex(null);
+              }}
+              sx={{
+                borderRadius: '6px',
+                textTransform: 'none',
+                fontWeight: 600,
+                borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5)' : 'rgba(40, 145, 200, 0.3)',
+                color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0284c7',
+                '&:hover': {
+                  borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.7)' : 'rgba(40, 145, 200, 0.5)',
+                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(40, 145, 200, 0.05)',
+                },
+              }}
+              variant="outlined"
+            >
+              Apply
             </Button>
           </DialogActions>
         </Dialog>
