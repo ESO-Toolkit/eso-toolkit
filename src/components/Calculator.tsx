@@ -7,6 +7,10 @@ import {
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,
   Autorenew as AutorenewIcon,
+  Shield as ShieldIcon,
+  Security as SecurityIcon,
+  Hexagon as HexagonIcon,
+  SettingsSuggest as SettingsSuggestIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -1797,7 +1801,8 @@ const CalculatorComponent: React.FC = () => {
 
       const variantCycleControl = currentVariant ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.5 : 0.75 }}>
-          <Button
+          <Tooltip title={isMobile ? "Select Armor Trait" : `Current: ${currentVariant.name}${nextVariant ? ` → ${nextVariant.name}` : ''}`}>
+            <Button
             size="small"
             disableElevation
             disableRipple
@@ -1811,14 +1816,16 @@ const CalculatorComponent: React.FC = () => {
               }
             }}
             sx={{
-              minWidth: isMobile ? '80px' : '175px',
-              width: isMobile ? '80px' : '175px',
-              minHeight: isMobile ? '40px' : '24px',
-              fontSize: '0.7rem',
+              minWidth: isMobile ? '50px' : '175px',
+              width: isMobile ? '50px' : '175px',
+              height: isMobile ? '40px' : '32px',
+              minHeight: isMobile ? '40px' : '32px',
+              fontSize: isMobile ? '0.85rem' : '0.8rem',
               fontWeight: 600,
-              py: 0.4,
-              px: 1.2,
+              py: isMobile ? 1 : 0.5,
+              px: isMobile ? 0.4 : 1.2,
               borderRadius: '8px',
+              marginLeft: liteMode ? 0 : '-8px !important',
               textTransform: 'none',
               border: '1px solid',
               borderColor:
@@ -1863,13 +1870,17 @@ const CalculatorComponent: React.FC = () => {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography
-                component="span"
-                fontWeight={600}
-                fontSize={isMobile ? '0.6rem' : '0.7rem'}
-              >
-                {isMobile ? 'Trait' : currentVariant.name}
-              </Typography>
+              {isMobile ? (
+                <SettingsSuggestIcon sx={{ fontSize: '1rem' }} />
+              ) : (
+                <Typography
+                  component="span"
+                  fontWeight={600}
+                  fontSize="0.7rem"
+                >
+                  {currentVariant.name}
+                </Typography>
+              )}
               {nextVariant && !isMobile && (
                 <Box
                   sx={{
@@ -1906,6 +1917,7 @@ const CalculatorComponent: React.FC = () => {
               )}
             </Box>
           </Button>
+          </Tooltip>
           {!isMobile && (
             <Tooltip title={`Gear Quality: ${qualityLabel}`}>
               <Rating
@@ -2028,6 +2040,7 @@ const CalculatorComponent: React.FC = () => {
                 flexShrink: 0,
                 px: liteMode ? 0 : 0.25,
                 mr: liteMode ? 0.75 : 1,
+                ml: isMobile ? -0.5 : 0,
               }}
             >
               {variantCycleControl}
@@ -4341,7 +4354,7 @@ const CalculatorComponent: React.FC = () => {
             Select Armor Variant
           </DialogTitle>
           <DialogContent sx={{ py: 2 }}>
-            <Stack spacing={3}>
+            <Stack spacing={2}>
               {['regular', 'reinforced', 'nirnhoned'].map((variant) => {
                 // Get current variant from state using the editing index
                 const currentItem =
@@ -4358,83 +4371,140 @@ const CalculatorComponent: React.FC = () => {
 
                 return (
                   <Box key={variant}>
-                    <Button
-                      fullWidth
-                      size="large"
-                      onClick={() => {
-                        // Find the variant index and cycle to it
-                        const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(
-                          variant,
-                        );
-                        if (variantIndex !== -1 && currentEditingIndex !== null) {
-                          // Calculate how many cycles needed to reach this variant
-                          const currentIndex = currentVariant
-                            ? ['regular', 'reinforced', 'nirnhoned'].indexOf(currentVariant.name)
-                            : 0;
-                          const cyclesNeeded = (variantIndex - currentIndex + 3) % 3;
-
-                          // Cycle the required number of times
-                          for (let i = 0; i < cyclesNeeded; i++) {
-                            cycleArmorResistanceVariant(currentEditingIndex);
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: isSelected ? 700 : 600,
-                        fontSize: '1rem',
-                        py: 1.5,
-                        border: '2px solid',
-                        borderColor: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 1)'
-                            : 'rgba(40, 145, 200, 0.8)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3)'
-                            : 'rgba(40, 145, 200, 0.2)',
-                        background: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(30, 41, 59, 0.5)'
-                            : 'rgba(248, 250, 252, 0.5)',
-                        color: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgb(199 234 255)'
-                            : 'rgb(40, 145, 200)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.8)'
-                            : theme.palette.text.secondary,
-                        boxShadow: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
-                            : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
-                          : theme.palette.mode === 'dark'
-                            ? '0 2px 4px rgba(0, 0, 0, 0.2)'
-                            : '0 1px 3px rgba(0, 0, 0, 0.1)',
-                        '&:hover': {
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.6)'
-                              : 'rgba(40, 145, 200, 0.4)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
-                        },
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 1 }}>
-                        {isSelected && <CheckCircleIcon sx={{ fontSize: '1.2rem', color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)' }} />}
-                        {variant === 'regular'
-                          ? 'Regular'
+                    <Tooltip
+                      title={
+                        variant === 'regular'
+                          ? 'Regular Armor'
                           : variant === 'reinforced'
-                            ? 'Reinforced'
-                            : 'Nirnhoned'}
-                      </Box>
-                    </Button>
+                            ? 'Reinforced Armor'
+                            : 'Nirnhoned Armor'
+                      }
+                    >
+                      <Button
+                        fullWidth
+                        size="large"
+                        onClick={() => {
+                          // Find the variant index and cycle to it
+                          const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(
+                            variant,
+                          );
+                          if (variantIndex !== -1 && currentEditingIndex !== null) {
+                            // Calculate how many cycles needed to reach this variant
+                            const currentIndex = currentVariant
+                              ? ['regular', 'reinforced', 'nirnhoned'].indexOf(currentVariant.name)
+                              : 0;
+                            const cyclesNeeded = (variantIndex - currentIndex + 3) % 3;
+
+                            // Cycle the required number of times
+                            for (let i = 0; i < cyclesNeeded; i++) {
+                              cycleArmorResistanceVariant(currentEditingIndex);
+                            }
+                          }
+                        }}
+                        sx={{
+                          borderRadius: '12px',
+                          textTransform: 'none',
+                          fontWeight: isSelected ? 700 : 600,
+                          fontSize: '1rem',
+                          py: 2,
+                          border: '2px solid',
+                          borderColor: isSelected
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 1)'
+                              : 'rgba(40, 145, 200, 0.8)'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(56, 189, 248, 0.3)'
+                              : 'rgba(40, 145, 200, 0.2)',
+                          background: isSelected
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(30, 41, 59, 0.5)'
+                              : 'rgba(248, 250, 252, 0.5)',
+                          color: isSelected
+                            ? theme.palette.mode === 'dark'
+                              ? 'rgb(199 234 255)'
+                              : 'rgb(40, 145, 200)'
+                            : theme.palette.mode === 'dark'
+                              ? 'rgba(255, 255, 255, 0.8)'
+                              : theme.palette.text.secondary,
+                          boxShadow: isSelected
+                            ? theme.palette.mode === 'dark'
+                              ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2)'
+                              : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)'
+                            : theme.palette.mode === 'dark'
+                              ? '0 2px 4px rgba(0, 0, 0, 0.2)'
+                              : '0 1px 3px rgba(0, 0, 0, 0.1)',
+                          '&:hover': {
+                            borderColor:
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.6)'
+                                : 'rgba(40, 145, 200, 0.4)',
+                            background:
+                              theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+                          },
+                        }}
+                      >
+                        <Box sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: 1,
+                          flexDirection: 'column',
+                        }}>
+                          {variant === 'regular' && (
+                            <ShieldIcon sx={{
+                              fontSize: '2rem',
+                              color: isSelected
+                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
+                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
+                            }} />
+                          )}
+                          {variant === 'reinforced' && (
+                            <SecurityIcon sx={{
+                              fontSize: '2rem',
+                              color: isSelected
+                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
+                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
+                            }} />
+                          )}
+                          {variant === 'nirnhoned' && (
+                            <HexagonIcon sx={{
+                              fontSize: '2rem',
+                              color: isSelected
+                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
+                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
+                            }} />
+                          )}
+                          {isSelected && (
+                            <CheckCircleIcon sx={{
+                              fontSize: '1rem',
+                              color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)',
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                            }} />
+                          )}
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontWeight: isSelected ? 600 : 500,
+                              color: 'inherit',
+                            }}
+                          >
+                            {variant === 'regular'
+                              ? 'Regular'
+                              : variant === 'reinforced'
+                                ? 'Reinforced'
+                                : 'Nirnhoned'}
+                          </Typography>
+                        </Box>
+                      </Button>
+                    </Tooltip>
                   </Box>
                 );
               })}
@@ -4504,7 +4574,7 @@ const CalculatorComponent: React.FC = () => {
                             value={ratingValue}
                             max={ARMOR_QUALITY_LABELS.length}
                             precision={1}
-                            size="large"
+                            size="medium"
                             onChange={(event, newValue) => {
                               event.stopPropagation();
                               if (typeof newValue === 'number' && currentEditingIndex !== null) {
