@@ -952,6 +952,26 @@ const CalculatorComponent: React.FC = () => {
     [armorResistanceGearWithIndex],
   );
 
+  // Set items from different categories
+  const armorResistanceSets = useMemo(
+    () => [
+      ...armorResistanceData.cp.filter((item) => item.name === 'Armor Master').map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+      ...armorResistanceData.passives.filter((item) => ['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name)).map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+    ],
+    [armorResistanceData.cp, armorResistanceData.passives],
+  );
+
+  // Filter out set items from their original categories
+  const filteredPassives = useMemo(
+    () => armorResistanceData.passives.filter((item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name)),
+    [armorResistanceData.passives],
+  );
+
+  const filteredCp = useMemo(
+    () => armorResistanceData.cp.filter((item) => item.name !== 'Armor Master'),
+    [armorResistanceData.cp],
+  );
+
   // JavaScript-based sticky footer
   const {
     footerRef,
@@ -1422,6 +1442,7 @@ const CalculatorComponent: React.FC = () => {
     });
   }, []);
 
+  
   // Memoize expensive calculations and styles
   // Pre-calculate common style values to prevent recreation on every render
   const _baseStyles = React.useMemo(
@@ -2530,6 +2551,7 @@ const CalculatorComponent: React.FC = () => {
         .filter((item) => !item.locked),
     [filteredPenData],
   );
+
   const critSelectableItems = useMemo(
     () =>
       Object.values(filteredCritData)
@@ -2537,6 +2559,7 @@ const CalculatorComponent: React.FC = () => {
         .filter((item) => !item.locked),
     [filteredCritData],
   );
+
   const armorResistanceSelectableItems = useMemo(
     () =>
       Object.values(filteredArmorResistanceData)
@@ -2551,12 +2574,11 @@ const CalculatorComponent: React.FC = () => {
   const critAllSelected =
     critSelectableItems.length > 0 && critSelectableItems.every((item) => item.enabled);
   const critNoneSelected = critSelectableItems.every((item) => !item.enabled);
-
   const armorResistanceAllSelected =
     armorResistanceSelectableItems.length > 0 && armorResistanceSelectableItems.every((item) => item.enabled);
-  // const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
+  const armorResistanceNoneSelected = armorResistanceSelectableItems.every((item) => !item.enabled);
   const armorResistanceAnySelected = armorResistanceSelectableItems.some((item) => item.enabled);
-
+  
   return (
     <>
       <CalculatorContainer liteMode={liteMode}>
@@ -2803,23 +2825,13 @@ const CalculatorComponent: React.FC = () => {
                     </Button>
                   </div>
                 )}
-                {selectedTab === 1 && (
+                {isMobile && selectedTab === 2 && (
                   <div style={{ display: 'flex', gap: 4 }}>
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => {
-                        const selectableItems = Object.values(filteredCritData)
-                          .flat()
-                          .filter((item) => !item.locked);
-                        selectableItems.forEach((item) => {
-                          const category = Object.keys(filteredCritData).find((key) =>
-                            filteredCritData[key as keyof CalculatorData].includes(item),
-                          ) as keyof CalculatorData;
-                          const itemIndex = filteredCritData[category].indexOf(item);
-                          updateCritItem(category, itemIndex, { enabled: true });
-                        });
-                      }}
+                      onClick={() => toggleAllArmorResistance(true)}
+                      disabled={armorResistanceAllSelected || armorResistanceSelectableItems.length === 0}
                       startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
                       sx={{
                         fontSize: '0.75rem',
@@ -2846,18 +2858,8 @@ const CalculatorComponent: React.FC = () => {
                     <Button
                       size="small"
                       variant="outlined"
-                      onClick={() => {
-                        const selectableItems = Object.values(filteredCritData)
-                          .flat()
-                          .filter((item) => !item.locked);
-                        selectableItems.forEach((item) => {
-                          const category = Object.keys(filteredCritData).find((key) =>
-                            filteredCritData[key as keyof CalculatorData].includes(item),
-                          ) as keyof CalculatorData;
-                          const itemIndex = filteredCritData[category].indexOf(item);
-                          updateCritItem(category, itemIndex, { enabled: false });
-                        });
-                      }}
+                      onClick={() => toggleAllArmorResistance(false)}
+                      disabled={!armorResistanceAnySelected}
                       startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
                       sx={{
                         fontSize: '0.75rem',
@@ -2883,7 +2885,7 @@ const CalculatorComponent: React.FC = () => {
                     </Button>
                   </div>
                 )}
-              </Box>
+                </Box>
               {/* Game Mode Selector */}
               <Box
                 sx={{
@@ -3330,10 +3332,10 @@ const CalculatorComponent: React.FC = () => {
                                   startIcon={
                                     <motion.div
                                       initial={{ rotate: 0 }}
-                                      whileHover={{ rotate: 10 }}
-                                      transition={{ duration: 0.2 }}
+                                      whileHover={{ rotate: [0, 10, 0] }}
+                                      transition={{ duration: 0.3 }}
                                     >
-                                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                      <SelectAllIcon sx={{ fontSize: 18 }} />
                                     </motion.div>
                                   }
                                   onClick={() => toggleAllPen(true)}
@@ -3490,10 +3492,10 @@ const CalculatorComponent: React.FC = () => {
                                   startIcon={
                                     <motion.div
                                       initial={{ rotate: 0 }}
-                                      whileHover={{ rotate: 10 }}
-                                      transition={{ duration: 0.2 }}
+                                      whileHover={{ rotate: [0, 10, 0] }}
+                                      transition={{ duration: 0.3 }}
                                     >
-                                      <CheckCircleIcon sx={{ fontSize: 18 }} />
+                                      <SelectAllIcon sx={{ fontSize: 18 }} />
                                     </motion.div>
                                   }
                                   onClick={() => toggleAllCrit(true)}
@@ -3607,35 +3609,23 @@ const CalculatorComponent: React.FC = () => {
                                 }`,
                               boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
                               '& .MuiButton-root': {
-                                fontSize: '0.813rem',
-                                fontWeight: 500,
+                                flex: { xs: '1 1 100%', sm: '0 0 auto' },
+                                justifyContent: 'center',
+                                fontSize: '0.85rem',
+                                fontWeight: 600,
                                 textTransform: 'none',
-                                py: 1.25,
-                                px: 1.5,
-                                borderRadius: 0,
-                                border: 'none',
-                                transition: 'all 0.2s ease',
-                                color:
-                                  muiTheme.palette.mode === 'dark'
-                                    ? 'rgba(255, 255, 255, 0.85)'
-                                    : 'rgba(30, 41, 59, 0.9)',
-                                backgroundColor: 'transparent',
-                                '&:hover': {
-                                  backgroundColor:
-                                    muiTheme.palette.mode === 'dark'
-                                      ? 'rgba(40, 82, 120, 0.35)'
-                                      : 'rgba(210, 233, 249, 0.85)',
-                                },
-                                '&:focus-visible': {
-                                  outline: `2px solid ${muiTheme.palette.mode === 'dark'
-                                    ? alpha(muiTheme.palette.primary.light, 0.6)
-                                    : alpha(muiTheme.palette.primary.main, 0.5)
+                                px: { xs: 2.2, sm: 2.6 },
+                                py: { xs: 1.05, sm: 0.9 },
+                                lineHeight: 1,
+                                boxSizing: 'border-box',
+                              },
+                              '& .MuiButton-root + .MuiButton-root': {
+                                borderLeft: {
+                                  xs: `1px solid ${alpha(muiTheme.palette.divider, 0.4)}`,
+                                  sm: `1px solid ${muiTheme.palette.mode === 'dark'
+                                    ? alpha(muiTheme.palette.primary.light, 0.18)
+                                    : alpha(muiTheme.palette.primary.main, 0.15)
                                     }`,
-                                  outlineOffset: 2,
-                                },
-                                '&.Mui-disabled': {
-                                  color: muiTheme.palette.text.disabled,
-                                  backgroundColor: 'transparent',
                                 },
                               },
                             })}
@@ -4033,6 +4023,12 @@ const CalculatorComponent: React.FC = () => {
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
+                        'Class & Race Passives',
+                        armorResistanceData.classPassives,
+                        'classPassives',
+                        updateArmorResistanceItem,
+                      )}
+                      {renderSection(
                         'Light Armor',
                         armorResistanceGearSections.light,
                         'gear',
@@ -4057,20 +4053,20 @@ const CalculatorComponent: React.FC = () => {
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
-                        'Class & Race Passives',
-                        armorResistanceData.classPassives,
-                        'classPassives',
+                        'Sets',
+                        armorResistanceSets,
+                        'gear',
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
                         'Passives',
-                        armorResistanceData.passives,
+                        filteredPassives,
                         'passives',
                         updateArmorResistanceItem,
                       )}
                       {renderSection(
                         'Champion Points',
-                        armorResistanceData.cp,
+                        filteredCp,
                         'cp',
                         updateArmorResistanceItem,
                       )}
@@ -4086,9 +4082,10 @@ const CalculatorComponent: React.FC = () => {
                         ...armorResistanceGearSections.medium.map((item) => ({ ...item, category: 'gear' })),
                         ...armorResistanceGearSections.heavy.map((item) => ({ ...item, category: 'gear' })),
                         ...armorResistanceGearSections.shield.map((item) => ({ ...item, category: 'gear' })),
+                        ...armorResistanceSets.map((item) => ({ ...item, category: 'gear' })),
                         ...armorResistanceData.classPassives.map((item, index) => ({ ...item, category: 'classPassives', originalIndex: index })),
-                        ...armorResistanceData.passives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
-                        ...armorResistanceData.cp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+                        ...filteredPassives.map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+                        ...filteredCp.map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
                       ].map((item, index) =>
                         renderItem(
                           item,
