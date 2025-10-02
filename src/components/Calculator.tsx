@@ -1223,9 +1223,7 @@ const CalculatorComponent: React.FC = () => {
         //   return prev;
         // }
 
-        // TEMPORARILY DISABLED: Auto-calculate armor passive quantities - this is causing duplication issues
-        // TODO: Re-implement this logic without causing state corruption
-        /*
+        // Auto-calculate armor passive quantities and enabled state
         const lightArmorCount = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
@@ -1245,6 +1243,7 @@ const CalculatorComponent: React.FC = () => {
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
             quantity: lightArmorCount,
+            enabled: lightArmorCount > 0, // Auto-enable if there are light armor pieces
           };
         } else {
           console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
@@ -1259,6 +1258,7 @@ const CalculatorComponent: React.FC = () => {
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
             quantity: heavyArmorCount,
+            enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
           };
         } else {
           console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
@@ -1269,7 +1269,6 @@ const CalculatorComponent: React.FC = () => {
           console.error(`❌ [UPDATE] Final validation failed - reverting to previous state`);
           return prev;
         }
-        */
 
         console.log(`✅ [UPDATE] Successfully updated item ${id}`);
         return updatedData;
@@ -1580,9 +1579,7 @@ const CalculatorComponent: React.FC = () => {
         //   return prev;
         // }
 
-        // TEMPORARILY DISABLED: Auto-calculate armor passive quantities - this is causing duplication issues
-        // TODO: Re-implement this logic without causing state corruption
-        /*
+        // Auto-calculate armor passive quantities and enabled state
         const lightArmorCount = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
@@ -1631,7 +1628,6 @@ const CalculatorComponent: React.FC = () => {
             enabled: heavyArmorCount > 0,
           };
         }
-        */
 
         return updatedData;
       });
@@ -2583,6 +2579,11 @@ const CalculatorComponent: React.FC = () => {
           return;
         }
 
+        // Don't allow manual clicking for armor passives - these are auto-calculated
+        if (isLightArmorPassive || isHeavyArmorPassive) {
+          return;
+        }
+
         if (!item.locked) {
           updateFunction(category, resolvedIndex, { enabled: !item.enabled });
         }
@@ -2602,7 +2603,7 @@ const CalculatorComponent: React.FC = () => {
           <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : isMobile ? 0 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
-              disabled={item.locked}
+              disabled={item.locked || isLightArmorPassive || isHeavyArmorPassive}
               size={isMobile ? 'medium' : 'small'}
               disableRipple
               disableTouchRipple
