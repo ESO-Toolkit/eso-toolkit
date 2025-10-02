@@ -1801,122 +1801,124 @@ const CalculatorComponent: React.FC = () => {
 
       const variantCycleControl = currentVariant ? (
         <Box sx={{ display: 'flex', alignItems: 'center', gap: liteMode ? 0.5 : 0.75 }}>
-          <Tooltip title={isMobile ? "Select Armor Trait" : `Current: ${currentVariant.name}${nextVariant ? ` → ${nextVariant.name}` : ''}`}>
+          <Tooltip
+            title={
+              isMobile
+                ? 'Select Armor Trait'
+                : `Current: ${currentVariant.name}${nextVariant ? ` → ${nextVariant.name}` : ''}`
+            }
+          >
             <Button
-            size="small"
-            disableElevation
-            disableRipple
-            onClick={(e) => {
-              e.stopPropagation();
-              if (isMobile) {
-                setCurrentEditingIndex(resolvedIndex);
-                setVariantModalOpen(true);
-              } else {
-                cycleArmorResistanceVariant(resolvedIndex);
-              }
-            }}
-            sx={{
-              minWidth: isMobile ? '50px' : '175px',
-              width: isMobile ? '50px' : '175px',
-              height: isMobile ? '40px' : '32px',
-              minHeight: isMobile ? '40px' : '32px',
-              fontSize: isMobile ? '0.85rem' : '0.8rem',
-              fontWeight: 600,
-              py: isMobile ? 1 : 0.5,
-              px: isMobile ? 0.4 : 1.2,
-              borderRadius: '8px',
-              marginLeft: liteMode ? 0 : '-8px !important',
-              textTransform: 'none',
-              border: '1px solid',
-              borderColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.8)'
-                  : 'rgba(40, 145, 200, 0.6)',
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
-              color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                  : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              '&:hover': {
-                background:
-                  theme.palette.mode === 'dark'
-                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
-                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+              size="small"
+              disableElevation
+              disableRipple
+              onClick={(e) => {
+                e.stopPropagation();
+                if (isMobile) {
+                  setCurrentEditingIndex(resolvedIndex);
+                  setVariantModalOpen(true);
+                } else {
+                  cycleArmorResistanceVariant(resolvedIndex);
+                }
+              }}
+              sx={{
+                minWidth: isMobile ? '50px' : '175px',
+                width: isMobile ? '50px' : '175px',
+                height: isMobile ? '40px' : '32px',
+                minHeight: isMobile ? '40px' : '32px',
+                fontSize: isMobile ? '0.85rem' : '0.8rem',
+                fontWeight: 600,
+                py: isMobile ? 1 : 0.5,
+                px: isMobile ? 0.4 : 1.2,
+                borderRadius: '8px',
+                marginLeft: liteMode ? 0 : '-8px !important',
+                textTransform: 'none',
+                border: '1px solid',
                 borderColor:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.9)'
-                    : 'rgba(40, 145, 200, 0.7)',
-                color: theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
-                transform: 'translateY(-1px)',
+                    ? 'rgba(56, 189, 248, 0.8)'
+                    : 'rgba(40, 145, 200, 0.6)',
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                    : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)',
+                color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145 200)',
                 boxShadow:
                   theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
-                    : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
-              },
-              '&:active': {
-                transform: 'translateY(0)',
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-              },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              {isMobile ? (
-                <SettingsSuggestIcon sx={{ fontSize: '1rem' }} />
-              ) : (
-                <Typography
-                  component="span"
-                  fontWeight={600}
-                  fontSize="0.7rem"
-                >
-                  {currentVariant.name}
-                </Typography>
-              )}
-              {nextVariant && !isMobile && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.3,
-                    px: 0.6,
-                    py: 0.1,
-                    borderRadius: '999px',
-                    backgroundColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(15, 23, 42, 0.6)'
-                        : 'rgba(56, 189, 248, 0.1)',
-                    border: '1px solid',
-                    borderColor:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.4)'
-                        : 'rgba(40, 145, 200, 0.4)',
-                  }}
-                >
-                  <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
-                  <Typography
-                    component="span"
+                    ? '0 2px 8px rgba(56, 189, 248, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 2px 8px rgba(40, 145, 200, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                '&:hover': {
+                  background:
+                    theme.palette.mode === 'dark'
+                      ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.35) 0%, rgba(0, 225, 255, 0.25) 100%)'
+                      : 'linear-gradient(135deg, rgba(40, 145, 200, 0.18) 0%, rgba(56, 189, 248, 0.12) 100%)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.9)'
+                      : 'rgba(40, 145, 200, 0.7)',
+                  color: theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
+                  transform: 'translateY(-1px)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.15)'
+                      : '0 4px 12px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.4)',
+                },
+                '&:active': {
+                  transform: 'translateY(0)',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 1px 4px rgba(56, 189, 248, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1)'
+                      : '0 1px 4px rgba(40, 145, 200, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                },
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+                {isMobile ? (
+                  <SettingsSuggestIcon sx={{ fontSize: '1rem' }} />
+                ) : (
+                  <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                    {currentVariant.name}
+                  </Typography>
+                )}
+                {nextVariant && !isMobile && (
+                  <Box
                     sx={{
-                      fontSize: '0.6rem',
-                      fontWeight: 300,
-                      letterSpacing: 0.3,
-                      textTransform: 'uppercase',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.3,
+                      px: 0.6,
+                      py: 0.1,
+                      borderRadius: '999px',
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(15, 23, 42, 0.6)'
+                          : 'rgba(56, 189, 248, 0.1)',
+                      border: '1px solid',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.4)'
+                          : 'rgba(40, 145, 200, 0.4)',
                     }}
                   >
-                    {nextVariant.name}
-                  </Typography>
-                </Box>
-              )}
-            </Box>
-          </Button>
+                    <AutorenewIcon sx={{ fontSize: '0.9rem' }} />
+                    <Typography
+                      component="span"
+                      sx={{
+                        fontSize: '0.6rem',
+                        fontWeight: 300,
+                        letterSpacing: 0.3,
+                        textTransform: 'uppercase',
+                      }}
+                    >
+                      {nextVariant.name}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Button>
           </Tooltip>
           {!isMobile && (
             <Tooltip title={`Gear Quality: ${qualityLabel}`}>
@@ -4448,45 +4450,70 @@ const CalculatorComponent: React.FC = () => {
                           },
                         }}
                       >
-                        <Box sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: 1,
-                          flexDirection: 'column',
-                        }}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: 1,
+                            flexDirection: 'column',
+                          }}
+                        >
                           {variant === 'regular' && (
-                            <ShieldIcon sx={{
-                              fontSize: '2rem',
-                              color: isSelected
-                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
-                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
-                            }} />
+                            <ShieldIcon
+                              sx={{
+                                fontSize: '2rem',
+                                color: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.8)'
+                                    : theme.palette.text.secondary,
+                              }}
+                            />
                           )}
                           {variant === 'reinforced' && (
-                            <SecurityIcon sx={{
-                              fontSize: '2rem',
-                              color: isSelected
-                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
-                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
-                            }} />
+                            <SecurityIcon
+                              sx={{
+                                fontSize: '2rem',
+                                color: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.8)'
+                                    : theme.palette.text.secondary,
+                              }}
+                            />
                           )}
                           {variant === 'nirnhoned' && (
-                            <HexagonIcon sx={{
-                              fontSize: '2rem',
-                              color: isSelected
-                                ? theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)'
-                                : theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.8)' : theme.palette.text.secondary,
-                            }} />
+                            <HexagonIcon
+                              sx={{
+                                fontSize: '2rem',
+                                color: isSelected
+                                  ? theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)'
+                                  : theme.palette.mode === 'dark'
+                                    ? 'rgba(255, 255, 255, 0.8)'
+                                    : theme.palette.text.secondary,
+                              }}
+                            />
                           )}
                           {isSelected && (
-                            <CheckCircleIcon sx={{
-                              fontSize: '1rem',
-                              color: theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40, 145, 200)',
-                              position: 'absolute',
-                              top: 8,
-                              right: 8,
-                            }} />
+                            <CheckCircleIcon
+                              sx={{
+                                fontSize: '1rem',
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)',
+                                position: 'absolute',
+                                top: 8,
+                                right: 8,
+                              }}
+                            />
                           )}
                           <Typography
                             variant="caption"
@@ -4627,11 +4654,20 @@ const CalculatorComponent: React.FC = () => {
                 borderRadius: '6px',
                 textTransform: 'none',
                 fontWeight: 500,
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.5)' : 'rgba(239, 68, 68, 0.3)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(239, 68, 68, 0.5)'
+                    : 'rgba(239, 68, 68, 0.3)',
                 color: theme.palette.mode === 'dark' ? '#fca5a5' : '#dc2626',
                 '&:hover': {
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.7)' : 'rgba(239, 68, 68, 0.5)',
-                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(239, 68, 68, 0.7)'
+                      : 'rgba(239, 68, 68, 0.5)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(239, 68, 68, 0.1)'
+                      : 'rgba(239, 68, 68, 0.05)',
                 },
               }}
               variant="outlined"
@@ -4647,11 +4683,20 @@ const CalculatorComponent: React.FC = () => {
                 borderRadius: '6px',
                 textTransform: 'none',
                 fontWeight: 600,
-                borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.5)' : 'rgba(40, 145, 200, 0.3)',
+                borderColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.5)'
+                    : 'rgba(40, 145, 200, 0.3)',
                 color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0284c7',
                 '&:hover': {
-                  borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.7)' : 'rgba(40, 145, 200, 0.5)',
-                  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.1)' : 'rgba(40, 145, 200, 0.05)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.7)'
+                      : 'rgba(40, 145, 200, 0.5)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.1)'
+                      : 'rgba(40, 145, 200, 0.05)',
                 },
               }}
               variant="outlined"
