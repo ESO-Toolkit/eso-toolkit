@@ -3656,7 +3656,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      All
+                     Select All
                     </Button>
                     <Button
                       size="small"
@@ -3726,7 +3726,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      Select All
+                     Select All
                     </Button>
                     <Button
                       size="small"
@@ -3794,7 +3794,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      All
+                      Select All
                     </Button>
                     <Button
                       size="small"
