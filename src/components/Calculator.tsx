@@ -3473,28 +3473,125 @@ const CalculatorComponent: React.FC = () => {
           position: 'relative', // Ensure no positioning conflicts
         }}
       >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'minmax(0, 1.35fr) minmax(0, 1fr)',
-              sm: 'minmax(0, 1fr) minmax(240px, auto)',
-            },
-            gridTemplateAreas: {
-              xs: '"value status" "value status"',
-              sm: '"value status"',
-            },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            columnGap: { xs: 1.25, sm: 4, md: 5 },
-            rowGap: { xs: 0.75, sm: 0 },
-            padding: {
-              xs: liteMode ? '18px 20px' : '22px 26px',
-              sm: liteMode ? '20px 28px' : '24px 32px',
-            },
-            maxWidth: { xs: 460, sm: '100%' },
-            margin: '0 auto',
-          }}
-        >
+        {/* Use different layout for armor tab on mobile */}
+        {isArmorTab && isMobile ? (
+          <Box
+            sx={{
+              padding: liteMode ? '18px 20px' : '22px 26px',
+              maxWidth: 460,
+              margin: '0 auto',
+            }}
+          >
+            {/* Value Section */}
+            <Box sx={{ mb: 2 }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  letterSpacing: '0.07em',
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  color: theme.palette.text.secondary,
+                  mb: 0.6,
+                }}
+              >
+                {label}
+              </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '1.95rem',
+                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.15,
+                }}
+              >
+                {value}
+                {valueSuffix ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '1.25rem',
+                      fontWeight: 600,
+                      ml: 0.45,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {valueSuffix}
+                  </Box>
+                ) : null}
+              </Typography>
+            </Box>
+
+            {/* Status Badge */}
+            <Box
+              sx={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 0.85,
+                borderRadius: '999px',
+                px: 1.4,
+                py: 0.6,
+                background: statusVisual.background,
+                border: `1px solid ${statusVisual.border}`,
+                mb: 2,
+              }}
+            >
+              <StatusIcon sx={{ fontSize: 19, color: statusVisual.color }} />
+              <Typography
+                variant="body2"
+                sx={{
+                  fontWeight: 600,
+                  fontSize: '0.92rem',
+                  color: statusVisual.color,
+                  letterSpacing: 0.15,
+                }}
+              >
+                {statusVisual.label}
+              </Typography>
+            </Box>
+
+            {/* Range Description */}
+            <Typography
+              variant="caption"
+              sx={{
+                fontSize: '0.75rem',
+                lineHeight: 1.3,
+                color: alpha(theme.palette.text.secondary, 0.9),
+                whiteSpace: 'pre-line',
+                textAlign: 'left',
+                letterSpacing: 0.12,
+                wordBreak: 'break-word',
+                hyphens: 'auto',
+              }}
+            >
+              {rangeDescription.replace(/-/g, '–')}
+            </Typography>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1.35fr) minmax(0, 1fr)',
+                sm: 'minmax(0, 1fr) minmax(240px, auto)',
+              },
+              gridTemplateAreas: {
+                xs: '"value status" "value status"',
+                sm: '"value status"',
+              },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              columnGap: { xs: 1.25, sm: 4, md: 5 },
+              rowGap: { xs: 0.75, sm: 0 },
+              padding: {
+                xs: liteMode ? '18px 20px' : '22px 26px',
+                sm: liteMode ? '20px 28px' : '24px 32px',
+              },
+              maxWidth: { xs: 460, sm: '100%' },
+              margin: '0 auto',
+            }}
+          >
           <Box
             sx={{
               gridArea: 'value',
@@ -3607,6 +3704,7 @@ const CalculatorComponent: React.FC = () => {
             </Typography>
           </Stack>
         </Box>
+        )}
       </Box>
     );
   };
