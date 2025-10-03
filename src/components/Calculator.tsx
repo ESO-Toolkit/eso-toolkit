@@ -5822,8 +5822,8 @@ const CalculatorComponent: React.FC = () => {
                     rangeDescription: '', // Not used in quadrant layout
                     isArmorTab: true,
                     quadrantData: {
-                      overResistInfo: `🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ` (${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of max)`}`,
-                      targetRanges: `Target: 33,100–33,500\nCap: 33,500${overResistanceAmount > 0 ? `\n\n⚠️ Over-Resistance: ${overResistanceAmount.toLocaleString()} caps` : ''}`,
+                      overResistInfo: `🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ''}`,
+                      targetRanges: `Target: 33,100–33,500\nCap: 33,500`,
                     },
                   })}
               </Box>
