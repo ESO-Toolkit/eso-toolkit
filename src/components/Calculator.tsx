@@ -3483,7 +3483,7 @@ const CalculatorComponent: React.FC = () => {
             }}
           >
             {/* Value Section */}
-            <Box sx={{ mb: 2 }}>
+            <Box sx={{ mb: 3 }}>
               <Typography
                 variant="overline"
                 sx={{
@@ -3492,19 +3492,19 @@ const CalculatorComponent: React.FC = () => {
                   fontSize: '0.72rem',
                   fontWeight: 600,
                   color: theme.palette.text.secondary,
-                  mb: 0.6,
+                  mb: 1,
                 }}
               >
                 {label}
               </Typography>
               <Typography
-                variant="h5"
+                variant="h4"
                 sx={{
                   fontWeight: 700,
-                  fontSize: '1.95rem',
+                  fontSize: '2.2rem',
                   color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
                   fontFamily: 'Inter, sans-serif',
-                  lineHeight: 1.15,
+                  lineHeight: 1.1,
                 }}
               >
                 {value}
@@ -3512,9 +3512,9 @@ const CalculatorComponent: React.FC = () => {
                   <Box
                     component="span"
                     sx={{
-                      fontSize: '1.25rem',
+                      fontSize: '1.4rem',
                       fontWeight: 600,
-                      ml: 0.45,
+                      ml: 0.5,
                       opacity: 0.85,
                     }}
                   >
@@ -3531,19 +3531,19 @@ const CalculatorComponent: React.FC = () => {
                 alignItems: 'center',
                 gap: 0.85,
                 borderRadius: '999px',
-                px: 1.4,
-                py: 0.6,
+                px: 1.6,
+                py: 0.8,
                 background: statusVisual.background,
                 border: `1px solid ${statusVisual.border}`,
-                mb: 2,
+                mb: 3,
               }}
             >
-              <StatusIcon sx={{ fontSize: 19, color: statusVisual.color }} />
+              <StatusIcon sx={{ fontSize: 20, color: statusVisual.color }} />
               <Typography
                 variant="body2"
                 sx={{
                   fontWeight: 600,
-                  fontSize: '0.92rem',
+                  fontSize: '0.95rem',
                   color: statusVisual.color,
                   letterSpacing: 0.15,
                 }}
@@ -3552,18 +3552,29 @@ const CalculatorComponent: React.FC = () => {
               </Typography>
             </Box>
 
+            {/* Divider */}
+            <Box
+              sx={{
+                height: '1px',
+                background: alpha(theme.palette.divider, 0.2),
+                mb: 3,
+                mx: -1,
+              }}
+            />
+
             {/* Range Description */}
             <Typography
-              variant="caption"
+              variant="body2"
               sx={{
-                fontSize: '0.75rem',
-                lineHeight: 1.3,
-                color: alpha(theme.palette.text.secondary, 0.9),
+                fontSize: '0.8rem',
+                lineHeight: 1.5,
+                color: alpha(theme.palette.text.secondary, 0.95),
                 whiteSpace: 'pre-line',
                 textAlign: 'left',
-                letterSpacing: 0.12,
+                letterSpacing: 0.1,
                 wordBreak: 'break-word',
                 hyphens: 'auto',
+                fontWeight: 400,
               }}
             >
               {rangeDescription.replace(/-/g, '–')}
