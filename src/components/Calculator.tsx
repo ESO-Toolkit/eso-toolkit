@@ -1973,9 +1973,10 @@ const CalculatorComponent: React.FC = () => {
       };
 
       Object.keys(data).forEach((category) => {
-        filteredData[category as keyof CalculatorData] = data[
-          category as keyof CalculatorData
-        ].filter((item) => allowedItems.includes(item.name));
+        const categoryKey = category as keyof CalculatorData;
+        filteredData[categoryKey] = data[categoryKey]
+          .map((item, originalIndex) => ({ ...item, originalIndex }))
+          .filter((item) => allowedItems.includes(item.name));
       });
 
       return filteredData;
@@ -4175,8 +4176,8 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const itemIndex = filteredPenData[category].indexOf(item);
-                          updatePenItem(category, itemIndex, { enabled: true });
+                          const originalIndex = (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                          updatePenItem(category, originalIndex, { enabled: true });
                         });
                       }}
                       startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
@@ -4213,8 +4214,8 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const itemIndex = filteredPenData[category].indexOf(item);
-                          updatePenItem(category, itemIndex, { enabled: false });
+                          const originalIndex = (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                          updatePenItem(category, originalIndex, { enabled: false });
                         });
                       }}
                       startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
