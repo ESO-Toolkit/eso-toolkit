@@ -576,6 +576,7 @@ const QuantityInput: React.FC<{
   ) => void;
   isMobile: boolean;
 }> = ({ item, category, resolvedIndex, updateFunction, isMobile }) => {
+  const theme = useTheme();
   const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
 
   // Local state for quantity input to prevent keyboard dismissal on mobile
@@ -634,6 +635,8 @@ const QuantityInput: React.FC<{
   const handleBlur = useCallback(() => {
     _setIsFocused(false);
 
+    if (!hasQuantity) return;
+
     // Final validation on blur
     const numValue = parseInt(localQuantity);
     if (
@@ -645,7 +648,7 @@ const QuantityInput: React.FC<{
       // Reset to valid value
       setLocalQuantity(item.quantity.toString());
     }
-  }, [localQuantity, item.minQuantity, item.maxQuantity, item.quantity]);
+  }, [localQuantity, item.minQuantity, item.maxQuantity, item.quantity, hasQuantity]);
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -656,55 +659,88 @@ const QuantityInput: React.FC<{
     };
   }, []);
 
-  if (!hasQuantity) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: 40,
-          height: 32,
-          color: 'text.secondary',
-          fontSize: '0.875rem',
-        }}
-      >
-        -
-      </Box>
-    );
-  }
-
   return (
     <TextField
+      size={isMobile ? 'medium' : 'small'}
       type="number"
-      value={localQuantity}
-      onChange={handleQuantityChange}
-      onFocus={handleFocus}
-      onBlur={handleBlur}
+      value={hasQuantity ? localQuantity : '-'}
+      onChange={hasQuantity ? handleQuantityChange : undefined}
+      onFocus={hasQuantity ? handleFocus : undefined}
+      onBlur={hasQuantity ? handleBlur : undefined}
       error={showError}
-      size="small"
-      variant="outlined"
-      InputProps={{
+      disabled={!hasQuantity || item.locked}
+      placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
+      inputProps={{
+        min: hasQuantity ? item.minQuantity || 0 : 0,
+        max: hasQuantity ? item.maxQuantity || 100 : 0,
+        step: hasQuantity ? item.step || 1 : 1,
+        readOnly: !hasQuantity,
         style: {
-          width: 60,
-          height: 32,
-          fontSize: '0.875rem',
+          fontSize: isMobile ? '18px' : '14px',
+          fontWeight: isMobile ? 500 : 400,
           textAlign: 'center',
-        },
-        inputProps: {
-          min: item.minQuantity || 0,
-          max: item.maxQuantity || 100,
-          style: {
-            textAlign: 'center',
-            padding: '4px 8px',
-          },
+          padding: isMobile ? '8px 4px' : '4px 2px',
         },
       }}
       sx={{
-        '& .MuiOutlinedInput-root': {
-          borderRadius: 1,
+        width: isMobile
+          ? hasQuantity && (item.maxQuantity || 0) >= 100
+            ? '70px'
+            : '60px'
+          : '56px',
+        minWidth: isMobile
+          ? hasQuantity && (item.maxQuantity || 0) >= 100
+            ? '70px'
+            : '60px'
+          : '56px',
+        '& .MuiInputBase-root': {
+          fontSize: isMobile ? '18px' : '14px',
+          padding: isMobile ? '8px 4px' : '4px 2px',
+          height: isMobile ? '48px' : '32px',
+          minHeight: isMobile ? '48px' : '32px',
+          boxSizing: 'border-box',
+          backgroundColor: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(30, 41, 59, 0.5)'
+              : 'rgba(241, 245, 249, 0.8)'
+            : 'transparent',
+          opacity: !hasQuantity ? 0.6 : 1,
+          '&:hover': {
+            backgroundColor: !hasQuantity
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(30, 41, 59, 0.5)'
+                : 'rgba(241, 245, 249, 0.8)'
+              : 'rgba(40 145 200, 0.05)',
+          },
         },
-        '& .Mui-error .MuiOutlinedInput-notchedOutline': {
+        '& .MuiInputBase-input': {
+          padding: isMobile ? '8px 4px' : '4px 2px',
+          textAlign: 'center',
+          fontSize: isMobile ? '18px' : '14px',
+          fontWeight: 500,
+          color: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.8)'
+              : 'rgba(100, 116, 139, 0.8)'
+            : 'inherit',
+          cursor: !hasQuantity ? 'not-allowed' : 'text',
+          '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+            WebkitAppearance: 'none',
+            margin: 0,
+          },
+          '&[type=number]': {
+            MozAppearance: 'textfield',
+          },
+        },
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.3)'
+              : 'rgba(148, 163, 184, 0.4)'
+            : 'rgba(156, 163, 175, 0.3)',
+          borderWidth: '1px',
+        },
+        '&.Mui-error .MuiOutlinedInput-notchedOutline': {
           borderColor: 'error.main',
         },
       }}
