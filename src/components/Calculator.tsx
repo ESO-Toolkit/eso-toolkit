@@ -546,14 +546,17 @@ const MODE_FILTER = {
 type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number; id?: string };
 
 // Helper function to generate unique ID for items
-const generateItemId = (category: string, name: string, index: number): string => {
+const _generateItemId = (category: string, name: string, index: number): string => {
   return `${category}-${name}-${index}`;
 };
 
 // Helper function to find item by ID in any category
-const findItemById = (data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+const _findItemById = (
+  data: CalculatorData,
+  id: string,
+): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
   for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-    const index = data[category].findIndex(item => (item as any).id === id);
+    const index = data[category].findIndex((item) => (item as any).id === id);
     if (index !== -1) {
       return { category, index, item: data[category][index] };
     }
@@ -561,12 +564,159 @@ const findItemById = (data: CalculatorData, id: string): { category: keyof Calcu
   return null;
 };
 
+// Quantity input component to manage local state properly
+const QuantityInput: React.FC<{
+  item: CalculatorItem;
+  category: keyof CalculatorData;
+  resolvedIndex: number;
+  updateFunction: (
+    category: keyof CalculatorData,
+    index: number,
+    updates: Partial<CalculatorItem>,
+  ) => void;
+  isMobile: boolean;
+}> = ({ item, category, resolvedIndex, updateFunction, isMobile }) => {
+  const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
+
+  // Local state for quantity input to prevent keyboard dismissal on mobile
+  const [localQuantity, setLocalQuantity] = useState<string>(
+    hasQuantity ? item.quantity.toString() : '-',
+  );
+  const [_isFocused, _setIsFocused] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced update function to prevent keyboard dismissal on mobile
+  const debouncedUpdate = useCallback(
+    (value: number) => {
+      updateFunction(category, resolvedIndex, { quantity: value });
+    },
+    [category, resolvedIndex, updateFunction],
+  );
+
+  // Handle quantity input change with debouncing
+  const handleQuantityChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!hasQuantity) return;
+
+      const newValue = e.target.value;
+      setLocalQuantity(newValue);
+
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Parse and validate the input
+      const numValue = parseInt(newValue);
+      if (!isNaN(numValue)) {
+        const clampedValue = Math.max(
+          item.minQuantity || 0,
+          Math.min(item.maxQuantity || 100, numValue),
+        );
+
+        // Debounce the update (longer delay for mobile)
+        const delay = isMobile ? 500 : 300;
+        timeoutRef.current = setTimeout(() => {
+          debouncedUpdate(clampedValue);
+        }, delay);
+      }
+    },
+    [hasQuantity, item.minQuantity, item.maxQuantity, debouncedUpdate, isMobile],
+  );
+
+  // Handle input focus/blur events
+  const handleFocus = useCallback(() => {
+    _setIsFocused(true);
+    setShowError(false);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    _setIsFocused(false);
+
+    // Final validation on blur
+    const numValue = parseInt(localQuantity);
+    if (
+      isNaN(numValue) ||
+      numValue < (item.minQuantity || 0) ||
+      numValue > (item.maxQuantity || 100)
+    ) {
+      setShowError(true);
+      // Reset to valid value
+      setLocalQuantity(item.quantity.toString());
+    }
+  }, [localQuantity, item.minQuantity, item.maxQuantity, item.quantity]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  if (!hasQuantity) {
+    return (
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 40,
+          height: 32,
+          color: 'text.secondary',
+          fontSize: '0.875rem',
+        }}
+      >
+        -
+      </Box>
+    );
+  }
+
+  return (
+    <TextField
+      type="number"
+      value={localQuantity}
+      onChange={handleQuantityChange}
+      onFocus={handleFocus}
+      onBlur={handleBlur}
+      error={showError}
+      size="small"
+      variant="outlined"
+      InputProps={{
+        style: {
+          width: 60,
+          height: 32,
+          fontSize: '0.875rem',
+          textAlign: 'center',
+        },
+        inputProps: {
+          min: item.minQuantity || 0,
+          max: item.maxQuantity || 100,
+          style: {
+            textAlign: 'center',
+            padding: '4px 8px',
+          },
+        },
+      }}
+      sx={{
+        '& .MuiOutlinedInput-root': {
+          borderRadius: 1,
+        },
+        '& .Mui-error .MuiOutlinedInput-notchedOutline': {
+          borderColor: 'error.main',
+        },
+      }}
+    />
+  );
+};
+
 // Helper function to validate calculator data integrity
-const validateCalculatorData = (data: CalculatorData): boolean => {
+const _validateCalculatorData = (data: CalculatorData): boolean => {
   let isValid = true;
   const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
 
-  
   // Check for duplicate items in each category and track all items
   for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
     const items = data[category];
@@ -589,7 +739,10 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
     // Check for duplicates within category
     for (const [name, indices] of nameMap.entries()) {
       if (indices.length > 1) {
-        console.error(`❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`);
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
+        );
         isValid = false;
       }
     }
@@ -598,8 +751,11 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   // Check for cross-category duplicates (should only exist for specific items like armor passives)
   for (const [itemName, locations] of itemTracker.entries()) {
     if (locations.length > 1 && !itemName.includes('Armor Passive')) {
-      console.error(`❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
-        locations.map(loc => `${loc.category}[${loc.index}]`).join(', '));
+      // eslint-disable-next-line no-console
+      console.error(
+        `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+        locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
+      );
       isValid = false;
     }
   }
@@ -612,11 +768,15 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
 
   if (lightArmorPassives.length > 1) {
+    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
     isValid = false;
   }
 
   if (heavyArmorPassives.length > 1) {
+    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
     isValid = false;
   }
@@ -624,15 +784,34 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
 
   // Validate gear category structure
   const expectedGearItems = [
-    'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
-    'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
-    'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt',
+    'Light Helm',
+    'Light Chest',
+    'Light Shoulders',
+    'Light Gloves',
+    'Light Boots',
+    'Light Belt',
+    'Medium Helm',
+    'Medium Chest',
+    'Medium Shoulders',
+    'Medium Gloves',
+    'Medium Boots',
+    'Medium Belt',
+    'Heavy Helm',
+    'Heavy Chest',
+    'Heavy Shoulders',
+    'Heavy Gloves',
+    'Heavy Boots',
+    'Heavy Belt',
   ];
 
   expectedGearItems.forEach((expectedName, expectedIndex) => {
     const actualItem = data.gear[expectedIndex];
     if (!actualItem || actualItem.name !== expectedName) {
-      console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
+      // eslint-disable-next-line no-console
+      console.error(
+        `❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`,
+        actualItem?.name || 'undefined',
+      );
       isValid = false;
     }
   });
@@ -640,8 +819,11 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   // Check for missing or invalid resistance values
   for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
     data[category].forEach((item, index) => {
-      if (!item.resistanceValue || item.resistanceValue === "-") {
-        console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
+      if (!item.resistanceValue || item.resistanceValue === '-') {
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`,
+        );
         isValid = false;
       }
     });
@@ -649,7 +831,6 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
 
   return isValid;
 };
-
 
 // Mode type
 type GameMode = 'pve' | 'pvp' | 'both';
@@ -1030,12 +1211,21 @@ type GearProps = {
   color?: string;
 };
 
-const Gear = ({ size = "20", color = "#000000" }: GearProps) => (
-  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 20 20" fill={color}>
+const Gear = ({ size = '20', color = '#000000' }: GearProps): React.JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill={color}
+  >
     <g fill={color} fillRule="evenodd" clipRule="evenodd">
-      <path d="M11.558 3.5a.75.75 0 0 1 .685.447l.443 1c.044.1.065.202.065.302a6.2 6.2 0 0 1 1.254.52.751.751 0 0 1 .219-.151l.97-.443a.75.75 0 0 1 .843.151l.837.838a.75.75 0 0 1 .17.8l-.395 1.02a.748.748 0 0 1-.168.26c.218.398.393.818.52 1.255a.75.75 0 0 1 .261.048l1 .373a.75.75 0 0 1 .488.703v1.184a.75.75 0 0 1-.447.686l-1 .443a.748.748 0 0 1-.302.065 6.227 6.227 0 0 1-.52 1.254c.06.061.112.134.151.219l.444.97a.75.75 0 0 1-.152.843l-.838.837a.75.75 0 0 1-.8.17l-1.02-.395a.749.749 0 0 1-.26-.168 6.225 6.225 0 0 1-1.255.52.75.75 0 0 1-.048.261l-.373 1a.75.75 0 0 1-.703.488h-1.184a.75.75 0 0 1-.686-.447l-.443-1a.748.748 0 0 1-.065-.302 6.226 6.226 0 0 1-1.254-.52.752.752 0 0 1-.219.151l-.97.443a.75.75 0 0 1-.843-.151l-.837-.838a.75.75 0 0 1-.17-.8l.395-1.02a.75.75 0 0 1 .168-.26A6.224 6.224 0 0 1 4.999 13a.752.752 0 0 1-.261-.048l-1-.373a.75.75 0 0 1-.488-.703v-1.184a.75.75 0 0 1 .447-.686l1-.443a.748.748 0 0 1 .302-.065 6.2 6.2 0 0 1 .52-1.254.75.75 0 0 1-.15-.219l-.444-.97a.75.75 0 0 1 .152-.843l.837-.837a.75.75 0 0 1 .801-.17l1.02.395c.102.04.189.097.26.168a6.224 6.224 0 0 1 1.254-.52.75.75 0 0 1 .048-.261l.373-1a.75.75 0 0 1 .703-.488h1.185Z" opacity=".2"/>
-      <path d="M8.232 11.768A2.493 2.493 0 0 0 10 12.5c.672 0 1.302-.267 1.768-.732A2.493 2.493 0 0 0 12.5 10c0-.672-.267-1.302-.732-1.768A2.493 2.493 0 0 0 10 7.5c-.672 0-1.302.267-1.768.732A2.493 2.493 0 0 0 7.5 10c0 .672.267 1.302.732 1.768Zm2.829-.707c-.28.28-.657.439-1.061.439-.404 0-.78-.16-1.06-.44S8.5 10.405 8.5 10s.16-.78.44-1.06.656-.44 1.06-.44.78.16 1.06.44.44.656.44 1.06-.16.78-.44 1.06Z"/>
-      <path d="m14.216 3.773-1.27.714a6.213 6.213 0 0 0-1.166-.48l-.47-1.414a.5.5 0 0 0-.474-.343H9.06a.5.5 0 0 0-.481.365l-.392 1.403a6.214 6.214 0 0 0-1.164.486L5.69 3.835a.5.5 0 0 0-.578.094L3.855 5.185a.5.5 0 0 0-.082.599l.714 1.27c-.199.37-.36.76-.48 1.166l-1.414.47a.5.5 0 0 0-.343.474v1.777a.5.5 0 0 0 .365.481l1.403.392c.122.405.285.794.486 1.164l-.669 1.333a.5.5 0 0 0 .094.578l1.256 1.256a.5.5 0 0 0 .599.082l1.27-.714c.37.199.76.36 1.166.48l.47 1.414a.5.5 0 0 0 .474.343h1.777a.5.5 0 0 0 .481-.365l.392-1.403a6.21 6.21 0 0 0 1.164-.486l1.333.669a.5.5 0 0 0 .578-.093l1.256-1.257a.5.5 0 0 0 .082-.599l-.714-1.27c.199-.37.36-.76.48-1.166l1.414-.47a.5.5 0 0 0 .343-.474V9.06a.5.5 0 0 0-.365-.481l-1.403-.392a6.208 6.208 0 0 0-.486-1.164l.669-1.333a.5.5 0 0 0-.093-.578l-1.257-1.256a.5.5 0 0 0-.599-.082Zm-1.024 1.724l1.184-.667.733.733-.627 1.25a.5.5 0 0 0 .019.482c.265.44.464.918.59 1.418a.5.5 0 0 0 .35.36l1.309.366v1.037l-1.327.44a.5.5 0 0 0-.328.354 5.216 5.216 0 0 1-.585 1.42.5.5 0 0 0-.007.502l.667 1.184-.733.733-1.25-.627a.5.5 0 0 0-.482.019c-.44.265-.918.464-1.418.59a.5.5 0 0 0-.36.35l-.366 1.309H9.525l-.44-1.327a.5.5 0 0 0-.355-.328 5.217 5.217 0 0 1-1.42-.585.5.5 0 0 0-.502-.007l-1.184.667-.733-.733.627-1.25a.5.5 0 0 0-.019-.482 5.216 5.216 0 0 1-.59-1.418a.5.5 0 0 0-.35-.36l-1.309-.366V9.525l1.327-.44a.5.5 0 0 0 .327-.355c.125-.5.323-.979.586-1.42a.5.5 0 0 0 .007-.502L4.83 5.624l.733-.733 1.25.627a.5.5 0 0 0 .482-.019c.44-.265.918-.464 1.418-.59a.5.5 0 0 0 .36-.35l.366-1.309h1.037l.44 1.327a.5.5 0 0 0 .354.327c.5.125.979.323 1.42.586a.5.5 0 0 0 .502.007Z"/>
+      <path
+        d="M11.558 3.5a.75.75 0 0 1 .685.447l.443 1c.044.1.065.202.065.302a6.2 6.2 0 0 1 1.254.52.751.751 0 0 1 .219-.151l.97-.443a.75.75 0 0 1 .843.151l.837.838a.75.75 0 0 1 .17.8l-.395 1.02a.748.748 0 0 1-.168.26c.218.398.393.818.52 1.255a.75.75 0 0 1 .261.048l1 .373a.75.75 0 0 1 .488.703v1.184a.75.75 0 0 1-.447.686l-1 .443a.748.748 0 0 1-.302.065 6.227 6.227 0 0 1-.52 1.254c.06.061.112.134.151.219l.444.97a.75.75 0 0 1-.152.843l-.838.837a.75.75 0 0 1-.8.17l-1.02-.395a.749.749 0 0 1-.26-.168 6.225 6.225 0 0 1-1.255.52.75.75 0 0 1-.048.261l-.373 1a.75.75 0 0 1-.703.488h-1.184a.75.75 0 0 1-.686-.447l-.443-1a.748.748 0 0 1-.065-.302 6.226 6.226 0 0 1-1.254-.52.752.752 0 0 1-.219.151l-.97.443a.75.75 0 0 1-.843-.151l-.837-.838a.75.75 0 0 1-.17-.8l.395-1.02a.75.75 0 0 1 .168-.26A6.224 6.224 0 0 1 4.999 13a.752.752 0 0 1-.261-.048l-1-.373a.75.75 0 0 1-.488-.703v-1.184a.75.75 0 0 1 .447-.686l1-.443a.748.748 0 0 1 .302-.065 6.2 6.2 0 0 1 .52-1.254.75.75 0 0 1-.15-.219l-.444-.97a.75.75 0 0 1 .152-.843l.837-.837a.75.75 0 0 1 .801-.17l1.02.395c.102.04.189.097.26.168a6.224 6.224 0 0 1 1.254-.52.75.75 0 0 1 .048-.261l.373-1a.75.75 0 0 1 .703-.488h1.185Z"
+        opacity=".2"
+      />
+      <path d="M8.232 11.768A2.493 2.493 0 0 0 10 12.5c.672 0 1.302-.267 1.768-.732A2.493 2.493 0 0 0 12.5 10c0-.672-.267-1.302-.732-1.768A2.493 2.493 0 0 0 10 7.5c-.672 0-1.302.267-1.768.732A2.493 2.493 0 0 0 7.5 10c0 .672.267 1.302.732 1.768Zm2.829-.707c-.28.28-.657.439-1.061.439-.404 0-.78-.16-1.06-.44S8.5 10.405 8.5 10s.16-.78.44-1.06.656-.44 1.06-.44.78.16 1.06.44.44.656.44 1.06-.16.78-.44 1.06Z" />
+      <path d="m14.216 3.773-1.27.714a6.213 6.213 0 0 0-1.166-.48l-.47-1.414a.5.5 0 0 0-.474-.343H9.06a.5.5 0 0 0-.481.365l-.392 1.403a6.214 6.214 0 0 0-1.164.486L5.69 3.835a.5.5 0 0 0-.578.094L3.855 5.185a.5.5 0 0 0-.082.599l.714 1.27c-.199.37-.36.76-.48 1.166l-1.414.47a.5.5 0 0 0-.343.474v1.777a.5.5 0 0 0 .365.481l1.403.392c.122.405.285.794.486 1.164l-.669 1.333a.5.5 0 0 0 .094.578l1.256 1.256a.5.5 0 0 0 .599.082l1.27-.714c.37.199.76.36 1.166.48l.47 1.414a.5.5 0 0 0 .474.343h1.777a.5.5 0 0 0 .481-.365l.392-1.403a6.21 6.21 0 0 0 1.164-.486l1.333.669a.5.5 0 0 0 .578-.093l1.256-1.257a.5.5 0 0 0 .082-.599l-.714-1.27c.199-.37.36-.76.48-1.166l1.414-.47a.5.5 0 0 0 .343-.474V9.06a.5.5 0 0 0-.365-.481l-1.403-.392a6.208 6.208 0 0 0-.486-1.164l.669-1.333a.5.5 0 0 0-.093-.578l-1.257-1.256a.5.5 0 0 0-.599-.082Zm-1.024 1.724l1.184-.667.733.733-.627 1.25a.5.5 0 0 0 .019.482c.265.44.464.918.59 1.418a.5.5 0 0 0 .35.36l1.309.366v1.037l-1.327.44a.5.5 0 0 0-.328.354 5.216 5.216 0 0 1-.585 1.42.5.5 0 0 0-.007.502l.667 1.184-.733.733-1.25-.627a.5.5 0 0 0-.482.019c-.44.265-.918.464-1.418.59a.5.5 0 0 0-.36.35l-.366 1.309H9.525l-.44-1.327a.5.5 0 0 0-.355-.328 5.217 5.217 0 0 1-1.42-.585.5.5 0 0 0-.502-.007l-1.184.667-.733-.733.627-1.25a.5.5 0 0 0-.019-.482 5.216 5.216 0 0 1-.59-1.418a.5.5 0 0 0-.35-.36l-1.309-.366V9.525l1.327-.44a.5.5 0 0 0 .327-.355c.125-.5.323-.979.586-1.42a.5.5 0 0 0 .007-.502L4.83 5.624l.733-.733 1.25.627a.5.5 0 0 0 .482-.019c.44-.265.918-.464 1.418-.59a.5.5 0 0 0 .36-.35l.366-1.309h1.037l.44 1.327a.5.5 0 0 0 .354.327c.5.125.979.323 1.42.586a.5.5 0 0 0 .502.007Z" />
     </g>
   </svg>
 );
@@ -1053,22 +1243,27 @@ const CalculatorComponent: React.FC = () => {
   }, []);
 
   // Helper function to find item by ID
-  const findItemById = useCallback((data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
-    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-      const index = data[category].findIndex(item => (item as any).id === id);
-      if (index !== -1) {
-        return { category, index, item: data[category][index] };
+  const findItemById = useCallback(
+    (
+      data: CalculatorData,
+      id: string,
+    ): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+      for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+        const index = data[category].findIndex((item) => (item as any).id === id);
+        if (index !== -1) {
+          return { category, index, item: data[category][index] };
+        }
       }
-    }
-    return null;
-  }, []);
+      return null;
+    },
+    [],
+  );
 
   // Helper function to validate calculator data integrity
   const validateCalculatorData = useCallback((data: CalculatorData): boolean => {
     let isValid = true;
     const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
 
-    
     // Check for duplicate items in each category and track all items
     for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       const items = data[category];
@@ -1091,7 +1286,10 @@ const CalculatorComponent: React.FC = () => {
       // Check for duplicates within category
       for (const [name, indices] of nameMap.entries()) {
         if (indices.length > 1) {
-          console.error(`❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`);
+          // eslint-disable-next-line no-console
+          console.error(
+            `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
+          );
           isValid = false;
         }
       }
@@ -1100,8 +1298,11 @@ const CalculatorComponent: React.FC = () => {
     // Check for cross-category duplicates (should only exist for specific items like armor passives)
     for (const [itemName, locations] of itemTracker.entries()) {
       if (locations.length > 1 && !itemName.includes('Armor Passive')) {
-        console.error(`❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
-          locations.map(loc => `${loc.category}[${loc.index}]`).join(', '));
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+          locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
+        );
         isValid = false;
       }
     }
@@ -1114,12 +1315,14 @@ const CalculatorComponent: React.FC = () => {
     const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
 
     if (lightArmorPassives.length > 1) {
-      console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
+      // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
       isValid = false;
     }
 
     if (heavyArmorPassives.length > 1) {
-      console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
+      // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
       isValid = false;
     }
     */
@@ -1137,7 +1340,8 @@ const CalculatorComponent: React.FC = () => {
     expectedGearItems.forEach((expectedName, expectedIndex) => {
       const actualItem = data.gear[expectedIndex];
       if (!actualItem || actualItem.name !== expectedName) {
-        console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
+        // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
         isValid = false;
       }
     });
@@ -1150,14 +1354,15 @@ const CalculatorComponent: React.FC = () => {
     for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       data[category].forEach((item, index) => {
         if (!item.resistanceValue || item.resistanceValue === "-") {
-          console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
+          // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
           isValid = false;
         }
       });
     }
     */
 
-        return isValid;
+    return isValid;
   }, []);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
@@ -1175,26 +1380,30 @@ const CalculatorComponent: React.FC = () => {
   // ID-based update function for armor resistance items
   const updateArmorResistanceItemById = useCallback(
     (id: string, updates: Partial<CalculatorItem>) => {
-      
       setArmorResistanceData((prev: CalculatorData) => {
         // TEMPORARILY DISABLED: Validate previous state before making changes
         // if (!validateCalculatorData(prev)) {
+        //   // eslint-disable-next-line no-console
         //   console.error(`❌ [UPDATE] Previous state validation failed - aborting update`);
         //   return prev;
         // }
 
         const location = findItemById(prev, id);
         if (!location) {
+          // eslint-disable-next-line no-console
           console.warn(`⚠️ [UPDATE] Item with ID ${id} not found`);
           return prev;
         }
 
-        
         const newCategoryItems = [...prev[location.category]];
         const originalItem = newCategoryItems[location.index];
 
         // Validate we're not corrupting the array
-        if (originalItem.name !== (updates.name && updates.name !== originalItem.name ? updates.name : originalItem.name)) {
+        if (
+          originalItem.name !==
+          (updates.name && updates.name !== originalItem.name ? updates.name : originalItem.name)
+        ) {
+          // eslint-disable-next-line no-console
           console.error(`❌ [UPDATE] Name mismatch detected - potential corruption`);
           return prev;
         }
@@ -1209,6 +1418,7 @@ const CalculatorComponent: React.FC = () => {
 
         // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
         // if (!validateCalculatorData(updatedData)) {
+        //   // eslint-disable-next-line no-console
         //   console.error(`❌ [UPDATE] Intermediate state validation failed - aborting update`);
         //   return prev;
         // }
@@ -1228,13 +1438,14 @@ const CalculatorComponent: React.FC = () => {
         const lightArmorPassiveIndex = updatedData.gear.findIndex(
           (item) => item.name === 'Light Armor Passive',
         );
-                if (lightArmorPassiveIndex !== -1) {
+        if (lightArmorPassiveIndex !== -1) {
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
             quantity: lightArmorCount,
             enabled: lightArmorCount > 0, // Auto-enable if there are light armor pieces
           };
         } else {
+          // eslint-disable-next-line no-console
           console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
         }
 
@@ -1242,23 +1453,25 @@ const CalculatorComponent: React.FC = () => {
         const heavyArmorPassiveIndex = updatedData.gear.findIndex(
           (item) => item.name === 'Heavy Armor Passive',
         );
-                if (heavyArmorPassiveIndex !== -1) {
+        if (heavyArmorPassiveIndex !== -1) {
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
             quantity: heavyArmorCount,
             enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
           };
         } else {
+          // eslint-disable-next-line no-console
           console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
         }
 
         // Final validation before returning
         if (!validateCalculatorData(updatedData)) {
+          // eslint-disable-next-line no-console
           console.error(`❌ [UPDATE] Final validation failed - reverting to previous state`);
           return prev;
         }
 
-                return updatedData;
+        return updatedData;
       });
     },
     [validateCalculatorData, findItemById],
@@ -1312,9 +1525,7 @@ const CalculatorComponent: React.FC = () => {
   const filteredPassives = useMemo(
     () =>
       armorResistanceData.passives
-        .filter(
-          (item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name),
-        )
+        .filter((item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name))
         .map((item) => {
           const originalIndex = armorResistanceData.passives.findIndex(
             (originalItem) => originalItem.name === item.name,
@@ -1560,6 +1771,7 @@ const CalculatorComponent: React.FC = () => {
       setArmorResistanceData((prev: CalculatorData) => {
         // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
         // if (!validateCalculatorData(prev)) {
+        //   // eslint-disable-next-line no-console
         //   console.error(`❌ [LEGACY_UPDATE] Previous state validation failed - aborting update`);
         //   return prev;
         // }
@@ -1568,7 +1780,10 @@ const CalculatorComponent: React.FC = () => {
 
         // Add validation to prevent index out of bounds
         if (index < 0 || index >= newCategoryItems.length) {
-          console.warn(`⚠️ [LEGACY_UPDATE] Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`);
+          // eslint-disable-next-line no-console
+          console.warn(
+            `⚠️ [LEGACY_UPDATE] Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`,
+          );
           return prev;
         }
 
@@ -1584,6 +1799,7 @@ const CalculatorComponent: React.FC = () => {
 
         // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
         // if (!validateCalculatorData(updatedData)) {
+        //   // eslint-disable-next-line no-console
         //   console.error(`❌ [LEGACY_UPDATE] Intermediate state validation failed - aborting update`);
         //   return prev;
         // }
@@ -1608,9 +1824,11 @@ const CalculatorComponent: React.FC = () => {
         );
 
         if (lightArmorPassives.length > 1) {
+          // eslint-disable-next-line no-console
           console.warn('Multiple Light Armor Passive items found, using first one');
         }
         if (heavyArmorPassives.length > 1) {
+          // eslint-disable-next-line no-console
           console.warn('Multiple Heavy Armor Passive items found, using first one');
         }
 
@@ -1638,7 +1856,6 @@ const CalculatorComponent: React.FC = () => {
           };
         }
 
-        
         return updatedData;
       });
     },
@@ -1646,7 +1863,7 @@ const CalculatorComponent: React.FC = () => {
   );
 
   // Create a wrapper update function that tries ID-based updates first for gear items
-  const updateArmorResistanceItemWithFallback = useCallback(
+  const _updateArmorResistanceItemWithFallback = useCallback(
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
       // For gear items, try ID-based update first
       if (category === 'gear') {
@@ -1758,12 +1975,12 @@ const CalculatorComponent: React.FC = () => {
       }
 
       // Find the variant index by name with case-insensitive fallback
-      let variantIndex = variants.findIndex(v => v.name === variantName);
+      let variantIndex = variants.findIndex((v) => v.name === variantName);
 
       // If not found, try case-insensitive matching
       if (variantIndex === -1) {
-        variantIndex = variants.findIndex(v =>
-          v.name.toLowerCase() === variantName.toLowerCase(),
+        variantIndex = variants.findIndex(
+          (v) => v.name.toLowerCase() === variantName.toLowerCase(),
         );
       }
 
@@ -1773,7 +1990,7 @@ const CalculatorComponent: React.FC = () => {
 
       const selectedVariant = variants[variantIndex];
       item.selectedVariant = variantIndex;
-  
+
       // Update quality and value based on selected variant
       const qualityLevel =
         typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
@@ -2133,105 +2350,9 @@ const CalculatorComponent: React.FC = () => {
       const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
 
       // Use the original update function directly for now
-      const enhancedUpdateFunction = updateFunction;
+      const _enhancedUpdateFunction = updateFunction;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
       const key = `${category}-${resolvedIndex}-${item.enabled}-${item.quantity}-${hasQuantity}`;
-
-      // Local state for quantity input to prevent keyboard dismissal on mobile
-      const [localQuantity, setLocalQuantity] = useState<string>(hasQuantity ? item.quantity.toString() : '-');
-      const [isFocused, setIsFocused] = useState<boolean>(false);
-      const [showError, setShowError] = useState<boolean>(false);
-      const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-      // Debounced update function to prevent keyboard dismissal on mobile
-      const debouncedUpdate = useCallback((value: number) => {
-        updateFunction(category, resolvedIndex, { quantity: value });
-      }, [category, resolvedIndex, updateFunction]);
-
-      // Handle quantity input change with debouncing
-      const handleQuantityChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-        if (!hasQuantity) return;
-
-        const newValue = e.target.value;
-        setLocalQuantity(newValue);
-
-        // Clear existing timeout
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-        }
-
-        // Parse and validate the input
-        const numValue = parseInt(newValue);
-        if (!isNaN(numValue)) {
-          const clampedValue = Math.max(
-            item.minQuantity || 0,
-            Math.min(item.maxQuantity || 100, numValue),
-          );
-
-          // Debounce the update (longer delay for mobile)
-          const delay = isMobile ? 500 : 300;
-          timeoutRef.current = setTimeout(() => {
-            debouncedUpdate(clampedValue);
-          }, delay);
-        }
-      }, [hasQuantity, item.minQuantity, item.maxQuantity, debouncedUpdate, isMobile]);
-
-      // Handle blur to finalize input
-      const handleQuantityBlur = useCallback(() => {
-        setIsFocused(false);
-
-        if (!hasQuantity) return;
-
-        // Final validation on blur
-        const numValue = parseInt(localQuantity);
-        if (!isNaN(numValue)) {
-          const clampedValue = Math.max(
-            item.minQuantity || 0,
-            Math.min(item.maxQuantity || 100, numValue),
-          );
-          setLocalQuantity(clampedValue.toString());
-          debouncedUpdate(clampedValue);
-          setShowError(false);
-        } else {
-          // Reset to current value if invalid
-          setLocalQuantity(item.quantity.toString());
-          setShowError(true);
-          // Hide error after 2 seconds
-          setTimeout(() => setShowError(false), 2000);
-        }
-
-        // Clear timeout
-        if (timeoutRef.current) {
-          clearTimeout(timeoutRef.current);
-          timeoutRef.current = null;
-        }
-      }, [hasQuantity, localQuantity, item.minQuantity, item.maxQuantity, item.quantity, debouncedUpdate]);
-
-      // Handle key events
-      const handleQuantityKeyDown = useCallback((e: React.KeyboardEvent) => {
-        if (!hasQuantity) return;
-
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          handleQuantityBlur();
-        }
-      }, [hasQuantity, handleQuantityBlur]);
-
-      // Cleanup on unmount
-      useEffect(() => {
-        return () => {
-          if (timeoutRef.current) {
-            clearTimeout(timeoutRef.current);
-          }
-        };
-      }, []);
-
-      // Update local value when prop changes (but not when focused)
-      useEffect(() => {
-        if (!isFocused && hasQuantity) {
-          setLocalQuantity(item.quantity.toString());
-        }
-      }, [item.quantity, hasQuantity, isFocused]);
 
       const variants = item.variants ?? [];
       const hasVariants = variants.length > 0;
@@ -2307,16 +2428,10 @@ const CalculatorComponent: React.FC = () => {
 
       // Optimized text input styling for all mobile sizes
       const controlSlotWidth = liteMode ? 36 : isExtraSmall ? 44 : isMobile ? 56 : 60;
-      const textFieldStyles = {
+      const _textFieldStyles = {
         width: controlSlotWidth,
         '& .MuiInputBase-root': {
-          fontSize: liteMode
-            ? '0.75rem'
-            : isExtraSmall
-              ? '0.8rem'
-              : isMobile
-                ? '0.9rem'
-                : '0.8rem',
+          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.8rem' : isMobile ? '0.9rem' : '0.8rem',
           padding: liteMode
             ? '6px 6px'
             : isExtraSmall
@@ -2352,13 +2467,7 @@ const CalculatorComponent: React.FC = () => {
                 ? '10px 14px'
                 : '2px 4px',
           textAlign: 'center',
-          fontSize: liteMode
-            ? '0.75rem'
-            : isExtraSmall
-              ? '0.85rem'
-              : isMobile
-                ? '1rem'
-                : '0.75rem',
+          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.85rem' : isMobile ? '1rem' : '0.75rem',
           fontWeight: 500,
           // Hide spin buttons for a cleaner look
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
@@ -2420,7 +2529,11 @@ const CalculatorComponent: React.FC = () => {
                   let currentVariant = 'Regular'; // Default fallback
 
                   // Try to get the selected variant from the fresh data
-                  if (freshItem && freshItem.selectedVariant !== undefined && freshItem.selectedVariant !== null) {
+                  if (
+                    freshItem &&
+                    freshItem.selectedVariant !== undefined &&
+                    freshItem.selectedVariant !== null
+                  ) {
                     const variantIndex = freshItem.selectedVariant;
                     if (freshItem.variants && freshItem.variants[variantIndex]) {
                       currentVariant = freshItem.variants[variantIndex].name;
@@ -2494,11 +2607,7 @@ const CalculatorComponent: React.FC = () => {
                   color={theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145  200)'}
                 />
               ) : (
-                <Typography
-                  component="span"
-                  fontWeight={600}
-                  fontSize="0.7rem"
-                >
+                <Typography component="span" fontWeight={600} fontSize="0.7rem">
                   {currentVariant.name}
                 </Typography>
               )}
@@ -2677,159 +2786,12 @@ const CalculatorComponent: React.FC = () => {
               placement="top"
               arrow
             >
-              <TextField
-                size={isMobile ? 'medium' : 'small'}
-                type="number"
-                value={localQuantity}
-                onChange={hasQuantity ? handleQuantityChange : undefined}
-                onBlur={hasQuantity ? handleQuantityBlur : undefined}
-                onKeyDown={hasQuantity ? handleQuantityKeyDown : undefined}
-                onFocus={() => hasQuantity && setIsFocused(true)}
-                disabled={!hasQuantity || item.locked}
-                placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-                inputProps={{
-                  min: hasQuantity ? item.minQuantity || 0 : 0,
-                  max: hasQuantity ? item.maxQuantity || 100 : 0,
-                  step: hasQuantity ? item.step || 1 : 1,
-                  readOnly: !hasQuantity,
-                  inputMode: hasQuantity ? 'numeric' : 'text',
-                  pattern: hasQuantity ? '[0-9]*' : undefined,
-                  style: {
-                    fontSize: isMobile ? '18px' : '14px',
-                    fontWeight: isMobile ? 500 : 400,
-                    textAlign: 'center',
-                    padding: isMobile ? '8px 4px' : '4px 2px',
-                  },
-                }}
-                sx={{
-                  ...textFieldStyles,
-                  width: isMobile ? (hasQuantity && (item.maxQuantity || 0) >= 100 ? '70px' : '60px') : '56px',
-                  minWidth: isMobile ? (hasQuantity && (item.maxQuantity || 0) >= 100 ? '70px' : '60px') : '56px',
-                  '& .MuiInputBase-root': {
-                    ...textFieldStyles['& .MuiInputBase-root'],
-                    backgroundColor: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.5)'
-                        : liteMode
-                          ? 'rgb(136 164 192 / 15%)'
-                          : 'rgba(241, 245, 249, 0.8)'
-                      : showError
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(239, 68, 68, 0.2)'
-                          : 'rgba(239, 68, 68, 0.1)'
-                        : isFocused
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.25)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.18)'
-                              : 'rgba(40 145 200, 0.18)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.15)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.12)'
-                              : 'rgba(40 145 200, 0.12)',
-                    opacity: !hasQuantity ? 0.6 : 1,
-                    '&:hover': {
-                      backgroundColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(30, 41, 59, 0.5)'
-                          : liteMode
-                            ? 'rgb(136 164 192 / 15%)'
-                            : 'rgba(241, 245, 249, 0.8)'
-                        : showError
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(239, 68, 68, 0.3)'
-                            : 'rgba(239, 68, 68, 0.15)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.25)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.18)'
-                              : 'rgba(40 145 200, 0.18)',
-                    },
-                    '&.Mui-focused': {
-                      backgroundColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(30, 41, 59, 0.5)'
-                          : liteMode
-                            ? 'rgb(136 164 192 / 15%)'
-                            : 'rgba(241, 245, 249, 0.8)'
-                        : showError
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(239, 68, 68, 0.25)'
-                            : 'rgba(239, 68, 68, 0.12)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.22)'
-                              : 'rgba(40 145 200, 0.22)',
-                    },
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
-                    borderColor: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.3)'
-                        : 'rgba(148, 163, 184, 0.4)'
-                      : showError
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(239, 68, 68, 0.8)'
-                          : 'rgba(239, 68, 68, 0.6)'
-                        : isFocused
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.8)'
-                              : 'rgba(40 145 200, 0.8)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.4)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.4)'
-                              : 'rgba(40 145 200, 0.4)',
-                    '&:hover': {
-                      borderColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(148, 163, 184, 0.4)'
-                          : 'rgba(148, 163, 184, 0.5)'
-                        : showError
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(239, 68, 68, 0.9)'
-                            : 'rgba(239, 68, 68, 0.7)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.9)'
-                            : liteMode
-                              ? 'rgba(40 145 200, 0.9)'
-                              : 'rgba(40 145 200, 0.9)',
-                    },
-                    '&.Mui-focused': {
-                      borderColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(148, 163, 184, 0.4)'
-                          : 'rgba(148, 163, 184, 0.5)'
-                        : showError
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgb(239, 68, 68)'
-                            : 'rgb(239, 68, 68)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgb(56, 189, 248)'
-                            : liteMode
-                              ? 'rgb(40 145 200)'
-                              : 'rgb(40 145 200)',
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    ...textFieldStyles['& .MuiInputBase-input'],
-                    color: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.8)'
-                        : 'rgba(100, 116, 139, 0.8)'
-                      : showError
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgb(239, 68, 68)'
-                          : 'rgb(220, 38, 38)'
-                        : 'inherit',
-                    cursor: !hasQuantity ? 'not-allowed' : 'text',
-                  },
-                }}
+              <QuantityInput
+                item={item}
+                category={category}
+                resolvedIndex={resolvedIndex}
+                updateFunction={updateFunction}
+                isMobile={isMobile}
               />
             </Tooltip>
           )}
@@ -4818,29 +4780,50 @@ const CalculatorComponent: React.FC = () => {
                         updateArmorResistanceItem,
                       )}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Sets</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Sets
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceSets.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
                       {/* Passives */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Passives</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Passives
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {filteredPassives.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Champion Points */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Champion Points
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {filteredCp.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
@@ -4852,7 +4835,9 @@ const CalculatorComponent: React.FC = () => {
                     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
                       {/* Group Buffs */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Group Buffs</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Group Buffs
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceData.groupBuffs.map((item, index) =>
                             renderItem(item, index, 'groupBuffs', updateArmorResistanceItem),
@@ -4862,57 +4847,94 @@ const CalculatorComponent: React.FC = () => {
 
                       {/* Light Armor */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Light Armor</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Light Armor
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.light.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Medium Armor */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Medium Armor</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Medium Armor
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.medium.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Heavy Armor */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Heavy Armor</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Heavy Armor
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.heavy.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Shield */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Shield</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Shield
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.shield.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Set Items */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Set Items</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Set Items
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceSets.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Class Passives */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Class Passives</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Class Passives
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceData.classPassives.map((item, index) =>
                             renderItem(item, index, 'classPassives', updateArmorResistanceItem),
@@ -4922,20 +4944,34 @@ const CalculatorComponent: React.FC = () => {
 
                       {/* Other Passives */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Other Passives</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Other Passives
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {filteredPassives.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
 
                       {/* Champion Points */}
                       <Box>
-                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Champion Points
+                        </Typography>
                         <List sx={{ p: 0 }}>
                           {filteredCp.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
                           )}
                         </List>
                       </Box>
