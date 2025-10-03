@@ -157,7 +157,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       per: 726,
       maxQuantity: 7,
       step: 1,
-      isFlat: true,
+      isFlat: false,
       category: 'gear',
       tooltip: 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
     },
@@ -169,7 +169,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       per: 343,
       maxQuantity: 7,
       step: 1,
-      isFlat: true,
+      isFlat: false,
       category: 'gear',
       tooltip:
         'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
