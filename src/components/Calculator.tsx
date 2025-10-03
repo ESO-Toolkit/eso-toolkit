@@ -3841,7 +3841,12 @@ const CalculatorComponent: React.FC = () => {
                   arrow
                   placement="top"
                 >
-                  <span>
+                  <span
+                    sx={{
+                      display: 'inline-block',
+                      width: { xs: '100%', sm: 'auto' },
+                    }}
+                  >
                     <ButtonGroup
                       size={
                         isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
