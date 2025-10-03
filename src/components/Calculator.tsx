@@ -5466,73 +5466,13 @@ const CalculatorComponent: React.FC = () => {
                           ? 'Target: 100%+'
                           : 'PvE: 125%+\nPvP: 100%+',
                   })}
-                {selectedTab === 2 && (
-                  <>
-                    {renderSummaryFooter({
-                      label: 'Total Armor Resistance',
-                      value: armorResistanceTotal.toLocaleString(),
-                      status: armorResistanceStatus,
-                      rangeDescription: 'Target: 33,100–33,500\nCap: 33,500',
-                    })}
-                    {/* Additional armor metrics */}
-                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                      {/* Over-Resistance Display */}
-                      {overResistanceAmount > 0 && (
-                        <Box
-                          sx={{
-                            flex: 1,
-                            minWidth: 200,
-                            p: 2,
-                            borderRadius: '8px',
-                            background: alpha(theme.palette.warning.main, 0.1),
-                            border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
-                          }}
-                        >
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                            Over-Resistance
-                          </Typography>
-                          <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.warning.main }}>
-                            {overResistanceAmount.toLocaleString()}
-                            <Box component="span" sx={{ fontSize: '0.8rem', fontWeight: 600, ml: 0.5 }}>
-                              caps
-                            </Box>
-                          </Typography>
-                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                            Above optimal threshold
-                          </Typography>
-                        </Box>
-                      )}
-                      {/* Damage Mitigation Display */}
-                      <Box
-                        sx={{
-                          flex: 1,
-                          minWidth: 200,
-                          p: 2,
-                          borderRadius: '8px',
-                          background: alpha(theme.palette.success.main, 0.1),
-                          border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
-                        }}
-                      >
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
-                          Damage Mitigation
-                        </Typography>
-                        <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.success.main }}>
-                          {damageMitigationPercentage.toLocaleString()}%
-                          {damageMitigationPercentage >= MAX_DAMAGE_MITIGATION && (
-                            <Box component="span" sx={{ fontSize: '0.8rem', fontWeight: 600, ml: 0.5 }}>
-                              (Max)
-                            </Box>
-                          )}
-                        </Typography>
-                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
-                          {damageMitigationPercentage >= MAX_DAMAGE_MITIGATION
-                            ? 'Maximum mitigation reached'
-                            : `${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of maximum`}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </>
-                )}
+                {selectedTab === 2 &&
+                  renderSummaryFooter({
+                    label: 'Total Armor Resistance',
+                    value: armorResistanceTotal.toLocaleString(),
+                    status: armorResistanceStatus,
+                    rangeDescription: `Target: 33,100–33,500\nCap: 33,500${overResistanceAmount > 0 ? `\n\n⚠️ Over-Resistance: ${overResistanceAmount.toLocaleString()} caps` : ''}\n\n🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ` (${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of max)`}`,
+                  })}
               </Box>
             </Box>
 
