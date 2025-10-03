@@ -1676,6 +1676,34 @@ const CalculatorComponent: React.FC = () => {
   // Use a ref to track the latest armor resistance data for modal state reading
   const armorResistanceDataRef = useRef(armorResistanceData);
 
+  // Initialize heavy armor passive quantity on component mount
+  useEffect(() => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      // Count enabled heavy armor items (excluding the passive itself)
+      const heavyArmorCount = prev.gear.filter(
+        item => item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled
+      ).length;
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = prev.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
+
+      if (heavyArmorPassiveIndex !== -1) {
+        const updatedData = { ...prev };
+        updatedData.gear = [...prev.gear];
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
+        };
+        return updatedData;
+      }
+
+      return prev;
+    });
+  }, []); // Empty dependency array ensures this runs only once on mount
+
   // ID-based update function for armor resistance items
   const updateArmorResistanceItemById = useCallback(
     (id: string, updates: Partial<CalculatorItem>) => {
