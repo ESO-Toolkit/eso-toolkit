@@ -1,11 +1,8 @@
 import { Box, Container, Skeleton, useMediaQuery, useTheme } from '@mui/material';
 import React from 'react';
 
-const CATEGORY_WIDTHS = [188, 224, 204, 236];
 const ITEM_NAME_WIDTHS = [228, 256, 212, 242, 218];
 const PER_WIDTHS = [26, 30, 34];
-const ARMOR_VARIANT_WIDTHS = [120, 140, 130, 150];
-const ARMOR_QUALITY_WIDTHS = [80, 90, 85, 95];
 
 interface CalculatorSkeletonProps {
   /** Test ID for testing */
@@ -34,301 +31,405 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
     theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 20%)' : 'rgb(40 145 200 / 15%)';
   const sectionBackground =
     theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.94)';
-  const actionBarBackground =
-    theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.3)' : 'rgba(255, 255, 255, 0.5)';
   
-  const renderTabButtons = (): React.JSX.Element => (
+  const renderHeaderControls = (): React.JSX.Element => (
     <Box
       sx={{
         display: 'flex',
         alignItems: 'center',
-        justifyContent: isMobile ? 'space-between' : 'flex-start',
-        gap: isExtraSmall ? 0.5 : isMobile ? 1 : 2,
-        flexWrap: isMobile ? 'nowrap' : 'wrap',
-        flexDirection: isMobile ? 'row' : 'column',
-        width: isMobile ? '100%' : 'auto',
+        justifyContent: 'space-between',
+        mb: isMobile ? 3 : 4,
+        flexWrap: 'wrap',
+        gap: isMobile ? 2 : 3,
+        p: isExtraSmall ? 1.5 : isMobile ? 2 : 4,
+        borderBottom: '1px solid',
+        borderColor: controlsBorderColor,
+        background: controlsBackground,
+        borderRadius: '16px 16px 0 0',
+        position: 'relative',
+        backdropFilter: 'blur(10px)',
+        WebkitBackdropFilter: 'blur(10px)',
       }}
     >
-      {['Penetration', 'Critical', 'Armor Resistance'].map((label) => (
+      {/* Lite Mode Toggle */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+        <Skeleton variant="text" width={72} height={24} />
+        <Skeleton variant="rectangular" width={56} height={32} sx={{ borderRadius: 16 }} />
+      </Box>
+
+      {/* Export Button */}
+      <Skeleton
+        variant="rectangular"
+        width={isExtraSmall ? 90 : isMobile ? 100 : 120}
+        height={isExtraSmall ? 36 : isMobile ? 40 : 44}
+        sx={{ borderRadius: 2 }}
+      />
+    </Box>
+  );
+
+  const renderGameModeSelector = (): React.JSX.Element => (
+    <Box sx={{ mb: 3, px: 1 }}>
+      <Skeleton variant="text" width={100} height={16} sx={{ mb: 1, opacity: 0.8 }} />
+      <Box sx={{ display: 'flex', gap: isExtraSmall ? 1 : 2 }}>
+        {['PvE', 'PvP', 'Both'].map((label) => (
+          <Skeleton
+            key={label}
+            variant="rectangular"
+            width={isExtraSmall ? 70 : isMobile ? 80 : 90}
+            height={isExtraSmall ? 32 : isMobile ? 36 : 40}
+            sx={{ borderRadius: 2 }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+
+  const renderTabNavigation = (): React.JSX.Element => (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        mb: 4,
+        px: 4,
+        borderBottom: '1px solid',
+        borderColor: controlsBorderColor,
+        background: controlsBackground,
+        borderRadius: '8px 8px 0 0',
+        position: 'relative',
+      }}
+    >
+      {/* Tab Buttons Container */}
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          p: 0.5,
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(30, 41, 59, 0.8)'
+              : 'rgba(248, 250, 252, 0.8)',
+          borderRadius: '10px',
+          border: '1px solid rgba(148, 163, 184, 0.2)',
+          flex: 1,
+          maxWidth: { xs: '100%', sm: '400px' },
+        }}
+      >
+        {['Penetration', 'Critical', 'Armor Resistance'].map((label) => (
+          <Skeleton
+            key={label}
+            variant="rectangular"
+            width={isExtraSmall ? 70 : isMobile ? 85 : isTablet ? 95 : 110}
+            height={isExtraSmall ? 32 : isMobile ? 36 : isTablet ? 38 : 40}
+            sx={{
+              borderRadius: '8px',
+              flex: 1,
+            }}
+          />
+        ))}
+      </Box>
+
+      {/* Bulk Actions - Show for all tabs as placeholder */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          borderRadius: '10px',
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.3)'
+              : 'rgba(255, 255, 255, 0.5)',
+          borderColor: controlsBorderColor,
+          flexWrap: 'wrap',
+          justifyContent: 'flex-end',
+          px: 2,
+          py: 1,
+          minWidth: { xs: '100%', sm: '200px' },
+          mt: { xs: 2, sm: 0 },
+        }}
+      >
         <Skeleton
-          key={label}
           variant="rectangular"
-          width={isExtraSmall ? 80 : isMobile ? 95 : isTablet ? 110 : 128}
-          height={isExtraSmall ? 36 : isMobile ? 40 : isTablet ? 42 : 44}
-          sx={{
-            borderRadius: 2,
-            flex: isMobile ? 1 : 'none',
-            minWidth: isMobile ? 'auto' : '80px',
-          }}
+          width={isExtraSmall ? 80 : isMobile ? 90 : 100}
+          height={isExtraSmall ? 30 : isMobile ? 32 : 36}
+          sx={{ borderRadius: 2, mr: 1 }}
         />
-      ))}
+        <Skeleton
+          variant="rectangular"
+          width={isExtraSmall ? 70 : isMobile ? 80 : 90}
+          height={isExtraSmall ? 30 : isMobile ? 32 : 36}
+          sx={{ borderRadius: 2 }}
+        />
+      </Box>
     </Box>
   );
 
-  const renderArmorResistanceControls = (): React.JSX.Element => (
-    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      {/* Variant Selector Skeleton */}
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 60 : isMobile ? 80 : 120}
-        height={isExtraSmall ? 28 : isMobile ? 32 : 36}
-        sx={{ borderRadius: 1 }}
-      />
-      {/* Quality Selector Skeleton */}
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 50 : isMobile ? 60 : 80}
-        height={isExtraSmall ? 28 : isMobile ? 32 : 36}
-        sx={{ borderRadius: 1 }}
-      />
-      {/* Quantity Input Skeleton */}
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 40 : isMobile ? 45 : 60}
-        height={isExtraSmall ? 28 : isMobile ? 32 : 36}
-        sx={{ borderRadius: 1 }}
-      />
-    </Box>
-  );
+  const renderAccordionSection = (title: string, itemCount: number = 3): React.JSX.Element => (
+    <Box
+      sx={{
+        mb: 3,
+        border: `1px solid ${sectionBorderColor}`,
+        borderRadius: 2,
+        background: sectionBackground,
+        overflow: 'hidden',
+        '&:last-child': {
+          mb: 2,
+        },
+      }}
+    >
+      {/* Accordion Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${sectionBorderColor}`,
+          cursor: 'pointer',
+          '&:hover': {
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.05)'
+                : 'rgba(40, 145, 200, 0.03)',
+          },
+        }}
+      >
+        <Skeleton
+          variant="text"
+          width={title.length * 8 + 40}
+          height={24}
+          sx={{ fontWeight: 600 }}
+        />
+        <Skeleton variant="circular" width={24} height={24} />
+      </Box>
 
-  const renderPenetrationItems = (): React.JSX.Element => (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {[0, 1, 2, 3].map((categoryIndex) => (
-        <Box
-          key={categoryIndex}
-          sx={{
-            border: `1px solid ${sectionBorderColor}`,
-            borderRadius: 2,
-            background: sectionBackground,
-            overflow: 'hidden',
-          }}
-        >
+      {/* Accordion Content */}
+      <Box sx={{ pb: 2.5, pt: 1, px: isMobile ? 1 : 2 }}>
+        {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
+            key={itemIndex}
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              p: 2,
-              borderBottom: `1px solid ${sectionBorderColor}`,
+              gap: 2,
+              minHeight: 48,
+              py: 1,
+              px: 1,
+              borderRadius: 1,
+              '&:hover': {
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.05)'
+                    : 'rgba(40, 145, 200, 0.03)',
+              },
             }}
           >
+            {/* Checkbox */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', width: 24 }}>
+              <Skeleton variant="circular" width={18} height={18} />
+            </Box>
+
+            {/* Quantity Input */}
+            <Skeleton
+              variant="rectangular"
+              width={52}
+              height={34}
+              sx={{ borderRadius: 1 }}
+            />
+
+            {/* Item Name */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+              <Skeleton
+                variant="text"
+                width={ITEM_NAME_WIDTHS[itemIndex % ITEM_NAME_WIDTHS.length]}
+                height={16}
+              />
+              {itemIndex % 3 === 0 && (
+                <Skeleton variant="circular" width={16} height={16} />
+              )}
+            </Box>
+
+            {/* Value */}
+            <Skeleton variant="text" width={44} height={16} />
+
+            {/* Per/Quantity */}
             <Skeleton
               variant="text"
-              width={CATEGORY_WIDTHS[categoryIndex % CATEGORY_WIDTHS.length]}
-              height={24}
+              width={PER_WIDTHS[itemIndex % PER_WIDTHS.length]}
+              height={14}
             />
-            <Skeleton variant="circular" width={20} height={20} />
           </Box>
-          <Box sx={{ pb: 2.5, pt: 1, px: isMobile ? 1 : 2 }}>
-            {Array.from({ length: 3 + Math.floor(Math.random() * 2) }).map((_, itemIndex) => (
-              <Box
-                key={itemIndex}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 60px 1fr auto auto',
-                  alignItems: 'center',
-                  gap: 2,
-                  minHeight: 48,
-                  py: 1,
-                  px: 1,
-                  borderRadius: 1,
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.05)'
-                        : 'rgba(40, 145, 200, 0.03)',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'center', width: 24 }}>
-                  <Skeleton variant="circular" width={18} height={18} />
-                </Box>
-                <Skeleton
-                  variant="rectangular"
-                  width={52}
-                  height={34}
-                  sx={{ borderRadius: 1 }}
-                />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Skeleton
-                    variant="text"
-                    width={
-                      ITEM_NAME_WIDTHS[
-                        (itemIndex + categoryIndex) % ITEM_NAME_WIDTHS.length
-                      ]
-                    }
-                    height={16}
-                  />
-                  {(itemIndex + categoryIndex) % 3 === 0 && (
-                    <Skeleton variant="circular" width={16} height={16} />
-                  )}
-                </Box>
-                <Skeleton variant="text" width={44} height={16} />
-                <Skeleton
-                  variant="text"
-                  width={PER_WIDTHS[(itemIndex + categoryIndex) % PER_WIDTHS.length]}
-                  height={14}
-                />
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      ))}
+        ))}
+      </Box>
     </Box>
   );
 
-  const renderArmorResistanceItems = (): React.JSX.Element => (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-      {/* Armor Resistance has more complex categories */}
-      {['Light Armor', 'Medium Armor', 'Heavy Armor', 'Jewelry', 'Weapons', 'Sets', 'Buffs', 'Passives'].map((category, categoryIndex) => (
-        <Box
-          key={category}
-          sx={{
-            border: `1px solid ${sectionBorderColor}`,
-            borderRadius: 2,
-            background: sectionBackground,
-            overflow: 'hidden',
-          }}
-        >
+  const renderArmorResistanceSection = (title: string, itemCount: number = 2): React.JSX.Element => (
+    <Box
+      sx={{
+        mb: 3,
+        border: `1px solid ${sectionBorderColor}`,
+        borderRadius: 2,
+        background: sectionBackground,
+        overflow: 'hidden',
+        '&:last-child': {
+          mb: 2,
+        },
+      }}
+    >
+      {/* Accordion Header */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          p: 2,
+          borderBottom: `1px solid ${sectionBorderColor}`,
+          cursor: 'pointer',
+          '&:hover': {
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.05)'
+                : 'rgba(40, 145, 200, 0.03)',
+          },
+        }}
+      >
+        <Skeleton
+          variant="text"
+          width={title.length * 8 + 40}
+          height={24}
+          sx={{ fontWeight: 600 }}
+        />
+        <Skeleton variant="circular" width={24} height={24} />
+      </Box>
+
+      {/* Accordion Content */}
+      <Box sx={{ pb: 2.5, pt: 1, px: isMobile ? 1 : 2 }}>
+        {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
+            key={itemIndex}
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'space-between',
-              p: 2,
-              borderBottom: `1px solid ${sectionBorderColor}`,
+              gap: 2,
+              minHeight: 48,
+              py: 1,
+              px: 1,
+              borderRadius: 1,
+              '&:hover': {
+                background:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.05)'
+                    : 'rgba(40, 145, 200, 0.03)',
+              },
             }}
           >
+            {/* Checkbox */}
+            <Box sx={{ display: 'flex', justifyContent: 'center', width: 24 }}>
+              <Skeleton variant="circular" width={18} height={18} />
+            </Box>
+
+            {/* Quantity Input */}
             <Skeleton
-              variant="text"
-              width={ARMOR_VARIANT_WIDTHS[categoryIndex % ARMOR_VARIANT_WIDTHS.length]}
-              height={24}
+              variant="rectangular"
+              width={52}
+              height={34}
+              sx={{ borderRadius: 1 }}
             />
-            <Skeleton variant="circular" width={20} height={20} />
+
+            {/* Item Name with variant/quality */}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
+              <Skeleton
+                variant="text"
+                width={ITEM_NAME_WIDTHS[(itemIndex + 2) % ITEM_NAME_WIDTHS.length]}
+                height={16}
+              />
+              {/* Armor variant/quality indicators */}
+              <Skeleton variant="rectangular" width={40} height={16} sx={{ borderRadius: 1 }} />
+              <Skeleton variant="circular" width={12} height={12} />
+            </Box>
+
+            {/* Armor Value */}
+            <Skeleton variant="text" width={35} height={16} />
+
+            {/* Armor Control Button */}
+            <Skeleton
+              variant="rectangular"
+              width={30}
+              height={24}
+              sx={{ borderRadius: 1 }}
+            />
           </Box>
-          <Box sx={{ pb: 2.5, pt: 1, px: isMobile ? 1 : 2 }}>
-            {Array.from({ length: 2 + Math.floor(Math.random() * 3) }).map((_, itemIndex) => (
-              <Box
-                key={itemIndex}
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: 'auto 60px 1fr auto auto auto',
-                  alignItems: 'center',
-                  gap: isMobile ? 1 : 2,
-                  minHeight: 48,
-                  py: 1,
-                  px: 1,
-                  borderRadius: 1,
-                  '&:hover': {
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.05)'
-                        : 'rgba(40, 145, 200, 0.03)',
-                  },
-                }}
-              >
-                <Box sx={{ display: 'flex', justifyContent: 'center', width: 24 }}>
-                  <Skeleton variant="circular" width={18} height={18} />
-                </Box>
-                <Skeleton
-                  variant="rectangular"
-                  width={52}
-                  height={34}
-                  sx={{ borderRadius: 1 }}
-                />
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <Skeleton
-                    variant="text"
-                    width={
-                      ARMOR_QUALITY_WIDTHS[
-                        (itemIndex + categoryIndex) % ARMOR_QUALITY_WIDTHS.length
-                      ]
-                    }
-                    height={16}
-                  />
-                  {/* Armor items have variant/quality indicators */}
-                  {categoryIndex < 6 && (
-                    <>
-                      <Skeleton variant="rectangular" width={40} height={16} sx={{ borderRadius: 1 }} />
-                      <Skeleton variant="circular" width={12} height={12} />
-                    </>
-                  )}
-                </Box>
-                <Skeleton variant="text" width={44} height={16} />
-                <Skeleton variant="text" width={35} height={14} />
-                {/* Armor Resistance has additional controls */}
-                {categoryIndex < 6 && (
-                  <Skeleton variant="rectangular" width={30} height={24} sx={{ borderRadius: 1 }} />
-                )}
-              </Box>
-            ))}
-          </Box>
-        </Box>
-      ))}
+        ))}
+      </Box>
     </Box>
   );
 
   const renderSummaryGrid = (): React.JSX.Element => (
     <Box
       sx={{
-        display: 'grid',
-        gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
-        gap: 2,
-        mb: 3,
+        mt: 4,
+        p: 3,
+        background:
+          theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        borderRadius: 2,
+        border: `1px solid ${sectionBorderColor}`,
+        boxShadow:
+          theme.palette.mode === 'dark'
+            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)',
       }}
     >
-      {/* Top Left: Main Value */}
+      {/* 2x2 Grid Layout */}
       <Box
         sx={{
-          gridArea: { xs: 'auto', sm: '1 / 1 / 2 / 2' },
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: 2,
-          p: 2,
-          border: `1px solid ${sectionBorderColor}`,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' },
+          gap: 2,
+          mb: 2,
         }}
       >
-        <Skeleton variant="text" width={120} height={20} sx={{ mb: 1 }} />
-        <Skeleton variant="text" width={80} height={32} />
-        <Skeleton variant="text" width={140} height={16} sx={{ mt: 1, opacity: 0.8 }} />
-      </Box>
-
-      {/* Top Right: Status */}
-      <Box
-        sx={{
-          gridArea: { xs: 'auto', sm: '1 / 2 / 2 / 3' },
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: 2,
-          p: 2,
-          border: `1px solid ${sectionBorderColor}`,
-        }}
-      >
-        <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Skeleton variant="circular" width={16} height={16} />
-          <Skeleton variant="text" width={60} height={16} />
+        {/* Top Left: Main Value */}
+        <Box>
+          <Skeleton variant="text" width={120} height={20} sx={{ mb: 1 }} />
+          <Skeleton variant="text" width={80} height={32} />
+          <Skeleton variant="text" width={140} height={16} sx={{ mt: 1, opacity: 0.8 }} />
         </Box>
-        <Skeleton variant="text" width={90} height={14} sx={{ mt: 1, opacity: 0.8 }} />
-      </Box>
 
-      {/* Bottom: Target Info (spans 2 columns) */}
-      <Box
-        sx={{
-          gridArea: { xs: 'auto', sm: '2 / 1 / 3 / 3' },
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: 2,
-          p: 2,
-          border: `1px solid ${sectionBorderColor}`,
-        }}
-      >
-        <Skeleton variant="text" width={110} height={18} sx={{ mb: 1.5 }} />
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        {/* Top Right: Status */}
+        <Box>
+          <Skeleton variant="text" width={100} height={20} sx={{ mb: 1 }} />
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Skeleton variant="circular" width={12} height={12} />
-            <Skeleton variant="text" width={80} height={14} />
+            <Skeleton variant="circular" width={16} height={16} />
+            <Skeleton variant="text" width={60} height={16} />
           </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Skeleton variant="circular" width={12} height={12} />
-            <Skeleton variant="text" width={65} height={14} />
+          <Skeleton variant="text" width={90} height={14} sx={{ mt: 1, opacity: 0.8 }} />
+        </Box>
+
+        {/* Bottom: Target Info (spans 2 columns) */}
+        <Box
+          sx={{
+            gridColumn: { xs: '1', sm: '1 / -1' },
+            p: 1.5,
+            background: 'rgba(255, 255, 255, 0.05)',
+            borderRadius: 1,
+            border: `1px solid ${sectionBorderColor}`,
+          }}
+        >
+          <Skeleton variant="text" width={110} height={18} sx={{ mb: 1.5 }} />
+          <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Skeleton variant="circular" width={12} height={12} />
+              <Skeleton variant="text" width={80} height={14} />
+            </Box>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Skeleton variant="circular" width={12} height={12} />
+              <Skeleton variant="text" width={65} height={14} />
+            </Box>
           </Box>
         </Box>
       </Box>
@@ -380,129 +481,50 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
           }}
         >
           {/* Header Controls */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: isMobile ? 3 : 4,
-              flexWrap: 'wrap',
-              gap: isMobile ? 2 : 3,
-              p: isExtraSmall ? 1.5 : isMobile ? 2 : 4,
-              borderBottom: '1px solid',
-              borderColor: controlsBorderColor,
-              background: controlsBackground,
-              borderRadius: '16px 16px 0 0',
-              position: 'relative',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-              <Skeleton variant="text" width={isExtraSmall ? 72 : 96} height={24} />
-              <Skeleton variant="rectangular" width={56} height={32} sx={{ borderRadius: 16 }} />
-            </Box>
+          {renderHeaderControls()}
 
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: isExtraSmall ? 1 : 1.5,
-                flexWrap: 'wrap',
-                justifyContent: { xs: 'stretch', sm: 'flex-end' },
-                width: { xs: '100%', sm: 'auto' },
-              }}
-            >
-              {['PvE', 'PvP', 'Both'].map((label) => (
-                <Skeleton
-                  key={label}
-                  variant="rectangular"
-                  width={isExtraSmall ? 76 : isMobile ? 88 : 104}
-                  height={isExtraSmall ? 38 : isMobile ? 42 : 44}
-                  sx={{ borderRadius: 2 }}
-                />
-              ))}
-            </Box>
-          </Box>
+          {/* Game Mode Selector */}
+          {renderGameModeSelector()}
 
           {/* Tab Navigation */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: isMobile ? 'stretch' : 'flex-start',
-              justifyContent: 'space-between',
-              mb: 4,
-              px: 4,
-              borderBottom: '1px solid',
-              borderColor: controlsBorderColor,
-              background: controlsBackground,
-              borderRadius: '8px 8px 0 0',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              flexDirection: isMobile ? 'column' : 'row',
-              gap: isMobile ? 2 : 0,
-            }}
-          >
-            {renderTabButtons()}
-
-            {/* Bulk Actions */}
-            <Box
-              sx={{
-                display: 'flex',
-                gap: 2,
-                p: 2,
-                alignItems: 'center',
-                backgroundColor: actionBarBackground,
-                borderBottom: '1px solid',
-                borderColor: controlsBorderColor,
-                borderRadius: 2,
-              }}
-            >
-              <Skeleton variant="rectangular" width={108} height={36} sx={{ borderRadius: 2 }} />
-              <Skeleton variant="rectangular" width={124} height={36} sx={{ borderRadius: 2 }} />
-            </Box>
-          </Box>
+          {renderTabNavigation()}
 
           {/* Tab Content */}
-          <Box sx={{ px: isMobile ? 1 : 3, pb: 3 }}>
-            {/* Penetration Tab */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {renderPenetrationItems()}
-              </Box>
+          <Box sx={{ px: { xs: 1.5, sm: 3.75 }, pb: 3 }}>
+            {/* Penetration Tab Content */}
+            <Box>
+              {renderAccordionSection('Group Buffs', 2)}
+              {renderAccordionSection('Gear & Enchantments', 3)}
+              {renderAccordionSection('Passives & Skills', 2)}
+              {renderAccordionSection('Champion Points', 3)}
             </Box>
 
-            {/* Critical Tab - similar to penetration */}
-            <Box sx={{ mb: 4 }}>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {renderPenetrationItems()}
-              </Box>
+            {/* Critical Tab Content (similar structure) */}
+            <Box>
+              {renderAccordionSection('Group Buffs', 2)}
+              {renderAccordionSection('Gear & Enchantments', 3)}
+              {renderAccordionSection('Passives & Skills', 2)}
+              {renderAccordionSection('Champion Points', 3)}
             </Box>
 
-            {/* Armor Resistance Tab with enhanced controls */}
-            <Box sx={{ mb: 4 }}>
-              {/* Armor Resistance has special header controls */}
-              <Box sx={{ mb: 3, p: 2, background: sectionBackground, borderRadius: 2 }}>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                  <Skeleton variant="text" width={180} height={24} />
-                  <Skeleton variant="rectangular" width={120} height={32} sx={{ borderRadius: 2 }} />
-                </Box>
-                {renderArmorResistanceControls()}
-              </Box>
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-                {renderArmorResistanceItems()}
-              </Box>
+            {/* Armor Resistance Tab Content */}
+            <Box>
+              {renderArmorResistanceSection('Light Armor', 2)}
+              {renderArmorResistanceSection('Medium Armor', 2)}
+              {renderArmorResistanceSection('Heavy Armor', 2)}
+              {renderArmorResistanceSection('Jewelry', 2)}
+              {renderArmorResistanceSection('Weapons', 2)}
+              {renderArmorResistanceSection('Armor Sets', 3)}
+              {renderArmorResistanceSection('Group Buffs', 2)}
+              {renderArmorResistanceSection('Passives & Skills', 3)}
+              {renderArmorResistanceSection('Champion Points', 2)}
             </Box>
           </Box>
 
-          {/* Summary Footer - 2x2 Grid Layout */}
-          <Box sx={{ mt: 4, px: 3, pb: 4 }}>
-            <Skeleton variant="text" width={240} height={24} sx={{ mb: 2 }} />
-            {renderSummaryGrid()}
-          </Box>
+          {/* Summary Footer */}
+          {renderSummaryGrid()}
         </Box>
       </Container>
-
-      </Box>
+    </Box>
   );
 };

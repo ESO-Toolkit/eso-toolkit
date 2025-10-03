@@ -1,7 +1,6 @@
 import { Box, Skeleton, useTheme, useMediaQuery } from '@mui/material';
 import React from 'react';
 
-const MOBILE_TAB_WIDTHS = [85, 75, 110];
 const MOBILE_ITEM_WIDTHS = [140, 160, 150, 170, 145];
 const ARMOR_VARIANT_WIDTHS = [100, 120, 110, 130];
 
@@ -27,18 +26,75 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
   const sectionBorderColor =
     theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 20%)' : 'rgb(40 145 200 / 15%)';
 
-  const renderMobileTabNavigation = (): React.JSX.Element => (
-    <Box sx={{ mb: 3 }}>
-      <Skeleton variant="text" width={120} height={20} sx={{ mb: 2, fontWeight: 600 }} />
-      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'nowrap' }}>
-        {['Penetration', 'Critical', 'Armor'].map((label, index) => (
+  const renderHeaderControls = (): React.JSX.Element => (
+    <Box
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        mb: 3,
+        gap: 1,
+        p: 2,
+        borderBottom: `1px solid ${sectionBorderColor}`,
+        background: sectionBackground,
+        borderRadius: '4px 4px 0 0',
+      }}
+    >
+      {/* Lite Mode Toggle */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Skeleton variant="text" width={60} height={20} />
+        <Skeleton variant="rectangular" width={40} height={24} sx={{ borderRadius: 12 }} />
+      </Box>
+
+      {/* Export & Mode Controls */}
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <Skeleton variant="rectangular" width={80} height={28} sx={{ borderRadius: 1 }} />
+        <Skeleton variant="rectangular" width={50} height={28} sx={{ borderRadius: 1 }} />
+      </Box>
+    </Box>
+  );
+
+  const renderGameModeSelector = (): React.JSX.Element => (
+    <Box sx={{ mb: 3, px: 1 }}>
+      <Skeleton variant="text" width={100} height={16} sx={{ mb: 1, opacity: 0.8 }} />
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {['PvE', 'PvP', 'Both'].map((label) => (
           <Skeleton
             key={label}
             variant="rectangular"
-            width={MOBILE_TAB_WIDTHS[index]}
+            width={isExtraSmall ? 45 : 50}
+            height={30}
+            sx={{ borderRadius: 1, flex: 1 }}
+          />
+        ))}
+      </Box>
+    </Box>
+  );
+
+  const renderTabNavigation = (): React.JSX.Element => (
+    <Box sx={{ mb: 3 }}>
+      <Skeleton variant="text" width={120} height={20} sx={{ mb: 2, fontWeight: 600 }} />
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 1,
+          p: 0.5,
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(30, 41, 59, 0.8)'
+              : 'rgba(248, 250, 252, 0.8)',
+          borderRadius: '10px',
+          border: '1px solid rgba(148, 163, 184, 0.2)',
+        }}
+      >
+        {['Penetration', 'Critical', 'Armor'].map((label) => (
+          <Skeleton
+            key={label}
+            variant="rectangular"
+            width={isExtraSmall ? 70 : 85}
             height={36}
             sx={{
-              borderRadius: 2,
+              borderRadius: '8px',
               flex: 1,
               minWidth: '70px',
             }}
@@ -48,19 +104,46 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
     </Box>
   );
 
-  const renderMobileItems = (categoryName: string, itemCount: number = 3): React.JSX.Element => (
+  const renderMobileBulkActions = (): React.JSX.Element => (
+    <Box
+      sx={{
+        display: 'flex',
+        gap: 1,
+        mb: 2,
+        p: 1.5,
+        background: sectionBackground,
+        borderRadius: 2,
+        border: `1px solid ${sectionBorderColor}`,
+      }}
+    >
+      <Skeleton
+        variant="rectangular"
+        width={isExtraSmall ? 70 : 80}
+        height={32}
+        sx={{ borderRadius: 2, flex: 1 }}
+      />
+      <Skeleton
+        variant="rectangular"
+        width={isExtraSmall ? 70 : 80}
+        height={32}
+        sx={{ borderRadius: 2, flex: 1 }}
+      />
+    </Box>
+  );
+
+  const renderMobileSection = (title: string, itemCount: number = 2): React.JSX.Element => (
     <Box sx={{ mb: 2 }}>
-      {/* Category Title - simplified for mobile */}
+      {/* Section Title */}
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={80 + Math.random() * 60}
+          width={title.length * 7 + 30}
           height={16}
           sx={{ fontWeight: 600 }}
         />
       </Box>
 
-      {/* Mobile Items - compact layout */}
+      {/* Mobile Items - Compact Layout */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
@@ -96,7 +179,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
               />
             </Box>
 
-            {/* Item Name and Details */}
+            {/* Item Text */}
             <Box sx={{ flex: 1, mr: 1 }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
                 <Skeleton
@@ -104,12 +187,12 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
                   width={MOBILE_ITEM_WIDTHS[itemIndex % MOBILE_ITEM_WIDTHS.length]}
                   height={14}
                 />
-                {/* Help Icon - smaller on mobile */}
+                {/* Help Icon */}
                 {itemIndex % 4 === 0 && (
                   <Skeleton variant="circular" width={10} height={10} />
                 )}
               </Box>
-              {/* Subtitle - very compact */}
+              {/* Subtitle */}
               <Skeleton
                 variant="text"
                 width={40 + Math.random() * 30}
@@ -129,13 +212,13 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
     </Box>
   );
 
-  const renderArmorResistanceItems = (): React.JSX.Element => (
+  const renderMobileArmorSection = (title: string, itemCount: number = 2): React.JSX.Element => (
     <Box sx={{ mb: 2 }}>
-      {/* Armor Resistance Category Header */}
+      {/* Section Title */}
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={100 + Math.random() * 50}
+          width={title.length * 7 + 30}
           height={16}
           sx={{ fontWeight: 600 }}
         />
@@ -143,7 +226,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
       {/* Armor Items with variant/quality controls */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {Array.from({ length: 2 + Math.floor(Math.random() * 2) }).map((_, itemIndex) => (
+        {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
             key={itemIndex}
             sx={{
@@ -266,33 +349,6 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
     </Box>
   );
 
-  const renderMobileBulkActions = (): React.JSX.Element => (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        mb: 2,
-        p: 1.5,
-        background: sectionBackground,
-        borderRadius: 2,
-        border: `1px solid ${sectionBorderColor}`,
-      }}
-    >
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 70 : 80}
-        height={32}
-        sx={{ borderRadius: 2, flex: 1 }}
-      />
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 70 : 80}
-        height={32}
-        sx={{ borderRadius: 2, flex: 1 }}
-      />
-    </Box>
-  );
-
   return (
     <Box
       data-testid={dataTestId}
@@ -333,104 +389,46 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
         }}
       >
         {/* Mobile Header Controls */}
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            mb: 3,
-            gap: 1,
-            p: 2,
-            borderBottom: `1px solid ${sectionBorderColor}`,
-            background: sectionBackground,
-            borderRadius: '4px 4px 0 0',
-          }}
-        >
-          {/* Lite Mode Toggle */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Skeleton variant="text" width={60} height={20} />
-            <Skeleton variant="rectangular" width={40} height={24} sx={{ borderRadius: 12 }} />
-          </Box>
-
-          {/* Export & Mode Controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Skeleton variant="rectangular" width={80} height={28} sx={{ borderRadius: 1 }} />
-            <Skeleton variant="rectangular" width={50} height={28} sx={{ borderRadius: 1 }} />
-          </Box>
-        </Box>
+        {renderHeaderControls()}
 
         {/* Game Mode Selector */}
-        <Box sx={{ mb: 3, px: 1 }}>
-          <Skeleton variant="text" width={100} height={16} sx={{ mb: 1, opacity: 0.8 }} />
-          <Box sx={{ display: 'flex', gap: 1 }}>
-            {['PvE', 'PvP', 'Both'].map((label) => (
-              <Skeleton
-                key={label}
-                variant="rectangular"
-                width={isExtraSmall ? 45 : 50}
-                height={30}
-                sx={{ borderRadius: 1, flex: 1 }}
-              />
-            ))}
-          </Box>
-        </Box>
+        {renderGameModeSelector()}
 
         {/* Mobile Tab Navigation */}
-        {renderMobileTabNavigation()}
+        {renderTabNavigation()}
 
         {/* Mobile Bulk Actions */}
         {renderMobileBulkActions()}
 
-        {/* Mobile Calculator Content */}
+        {/* Mobile Calculator Content - Lite Mode (Flattened List) */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
           {/* Penetration Items - Mobile */}
           <Box sx={{ mb: 3 }}>
-            {['Buffs', 'Debuffs', 'Gear'].map((category) => (
-              <Box key={category}>
-                {renderMobileItems(category, 2 + Math.floor(Math.random() * 2))}
-              </Box>
-            ))}
+            {renderMobileSection('Group Buffs', 2)}
+            {renderMobileSection('Gear & Enchantments', 3)}
+            {renderMobileSection('Passives & Skills', 2)}
+            {renderMobileSection('Champion Points', 3)}
           </Box>
 
           {/* Critical Items - Mobile */}
           <Box sx={{ mb: 3 }}>
-            {['Buffs', 'Gear', 'Passives'].map((category) => (
-              <Box key={category}>
-                {renderMobileItems(category, 2 + Math.floor(Math.random() * 2))}
-              </Box>
-            ))}
+            {renderMobileSection('Group Buffs', 2)}
+            {renderMobileSection('Gear & Enchantments', 3)}
+            {renderMobileSection('Passives & Skills', 2)}
+            {renderMobileSection('Champion Points', 3)}
           </Box>
 
           {/* Armor Resistance Items - Mobile with Enhanced Controls */}
           <Box sx={{ mb: 3 }}>
-            {/* Armor Resistance Special Header */}
-            <Box
-              sx={{
-                mb: 2,
-                p: 1.5,
-                background: sectionBackground,
-                borderRadius: 1,
-                border: `1px solid ${sectionBorderColor}`,
-              }}
-            >
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-                <Skeleton variant="text" width={120} height={18} sx={{ fontWeight: 600 }} />
-                <Skeleton variant="rectangular" width={60} height={24} sx={{ borderRadius: 1 }} />
-              </Box>
-              {/* Armor Controls */}
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
-                <Skeleton variant="rectangular" width={50} height={20} sx={{ borderRadius: 1 }} />
-                <Skeleton variant="rectangular" width={40} height={20} sx={{ borderRadius: 1 }} />
-                <Skeleton variant="rectangular" width={30} height={20} sx={{ borderRadius: 1 }} />
-              </Box>
-            </Box>
-
-            {/* Armor Categories */}
-            {['Light', 'Medium', 'Heavy', 'Jewelry'].map((category) => (
-              <Box key={category}>
-                {renderArmorResistanceItems()}
-              </Box>
-            ))}
+            {renderMobileArmorSection('Light Armor', 2)}
+            {renderMobileArmorSection('Medium Armor', 2)}
+            {renderMobileArmorSection('Heavy Armor', 2)}
+            {renderMobileArmorSection('Jewelry', 2)}
+            {renderMobileArmorSection('Weapons', 2)}
+            {renderMobileArmorSection('Armor Sets', 3)}
+            {renderMobileArmorSection('Group Buffs', 2)}
+            {renderMobileArmorSection('Passives & Skills', 3)}
+            {renderMobileArmorSection('Champion Points', 2)}
           </Box>
         </Box>
 
@@ -453,7 +451,6 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           </Box>
         </Box>
       </Box>
-
-      </Box>
+    </Box>
   );
 };
