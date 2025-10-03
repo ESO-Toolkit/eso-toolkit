@@ -1,196 +1,165 @@
 [vite] connecting...
 [vite] connected.
-2025-09-26T00:35:15.902Z [Sentry] [INFO] Sentry disabled - not in production build
-2025-09-26T00:35:16.026Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
-2025-09-26T00:35:16.032Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
-[Komodo] CS Register csid_t366ys_nh6cfa_2_8_3
-[sticky-footer metrics] {"cardTop":145,"cardBottom":2633,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":2633,"boundaryOverlap":0,"thresholds":{"enter":496,"exit":173}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2633,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":45,"cardBottom":2512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-55,"cardBottom":2412,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-155,"cardBottom":2312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-255,"cardBottom":2212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-355,"cardBottom":2112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-455,"cardBottom":2012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-555,"cardBottom":1912,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-755,"cardBottom":1712,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-855,"cardBottom":1612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-955,"cardBottom":1512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1155,"cardBottom":1312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1255,"cardBottom":1212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1355,"cardBottom":1112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1655,"cardBottom":812,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":73,"cardTop":-1855,"cardBottom":612,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-invariant.ts:42 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[NEW] Explain Console errors by using Copilot in Edge: click
+2025-10-03T01:20:31.473Z [Sentry] [INFO] Sentry disabled - not in production build
+2025-10-03T01:20:31.511Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
+2025-10-03T01:20:31.513Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
+2025-10-03T01:20:31.514Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-03T01:20:31.514Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-03T01:20:31.582Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+2025-10-03T01:20:31.582Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+2025-10-03T01:20:31.583Z [ESO-Logger][EsoLogsClient] [INFO] Updating EsoLogsClient access token
+2025-10-03T01:20:31.586Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+2025-10-03T01:20:31.586Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+2025-10-03T01:20:31.586Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-03T01:20:31.586Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+[Komodo] CS Register csid_t3j7q7_ecrbjg_2_8_3
+🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
+🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
+The specified value "-" cannot be parsed, or is out of range.
 
-         to explain an error.
-        Learn more
-        Don't show again
-
-scheduler.development.js:14 [Violation] 'message' handler took 511ms
+🔄 [LEGACY_UPDATE] Updating cp[1] {enabled: true}
+📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Fortified
+📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Fortified
+📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
+🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
+chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 524ms
+🔄 [LEGACY_UPDATE] Updating cp[2] {enabled: true}
+📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Bulwark
+📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Bulwark
+📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
+🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
+Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
+🔄 [LEGACY_UPDATE] Updating passives[6] {enabled: true}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Armor Line Bonus
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Armor Line Bonus
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 541ms
+🔄 [LEGACY_UPDATE] Updating passives[5] {enabled: true}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Defending Trait
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Defending Trait
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 544ms
+🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Armor Potions
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Armor Potions
+📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+🔄 [LEGACY_UPDATE] Updating passives[0] {enabled: true}
+📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+📍 [LEGACY_UPDATE] Found item: Runic Sunder
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Runic Sunder
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[2] {enabled: true}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[2] {enabled: true}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
+Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
+Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
+react-dom-client.development.js:16244 [Violation] 'click' handler took 515ms
+Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating cp[0] {enabled: true}
+Calculator.tsx:1568 📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Master
+Calculator.tsx:1650 📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1568 📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
+Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Master
+Calculator.tsx:1650 📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
+Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
+Calculator.tsx:1339 🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
+Calculator.tsx:1339 🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2

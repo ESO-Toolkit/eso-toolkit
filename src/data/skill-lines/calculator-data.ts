@@ -24,6 +24,8 @@ export interface CalculatorItem {
   }[];
   selectedVariant?: number;
   qualityLevel?: number;
+  originalIndex?: number;
+  resistanceValue?: string | number;
 }
 
 export interface CalculatorData {
@@ -39,6 +41,10 @@ export const PEN_OPTIMAL_MIN_PVE = 18200;
 export const PEN_OPTIMAL_MAX_PVE = 18999;
 export const PEN_OPTIMAL_MIN_PVP = 33300;
 export const PEN_OPTIMAL_MAX_PVP = 37000;
+
+// Enemy mitigation constants (from Penetration_Crit.csv analysis)
+export const MAX_PENETRATION_PVE = 18200; // Maximum effective penetration before diminishing returns
+export const PENETRATION_DAMAGE_LOSS_DIVISOR = 380; // Approximate divisor for damage loss calculation
 export const CRIT_OPTIMAL_MIN = 125;
 export const CRIT_OPTIMAL_MAX = 127;
 

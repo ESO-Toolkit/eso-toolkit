@@ -157,7 +157,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       per: 726,
       maxQuantity: 7,
       step: 1,
-      isFlat: true,
+      isFlat: false,
       category: 'gear',
       tooltip: 'Each piece of light armor grants <strong>726</strong> Spell Resistance.',
     },
@@ -169,7 +169,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       per: 343,
       maxQuantity: 7,
       step: 1,
-      isFlat: true,
+      isFlat: false,
       category: 'gear',
       tooltip:
         'Each piece of heavy armor grants <strong>343</strong> Physical and Spell Resistance.',
@@ -522,7 +522,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       quantity: 1,
       maxQuantity: 6,
       value: 1240,
-      isFlat: true,
+      per: 1240,
+      isFlat: false,
       category: 'classPassives',
       tooltip:
         '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by <strong>1240</strong> for each Winter\'s Embrace ability slotted.',
@@ -629,7 +630,9 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       enabled: false,
       quantity: 1,
       value: 1487,
-      isFlat: true,
+      per: 1487,
+      maxQuantity: 6,
+      isFlat: false,
       category: 'passives',
       tooltip:
         'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
@@ -750,6 +753,12 @@ applyArmorQualityData(ARMOR_RESISTANCE_DATA);
 export const ARMOR_RESISTANCE_OPTIMAL_MIN = 33100;
 export const ARMOR_RESISTANCE_OPTIMAL_MAX = 33500;
 export const ARMOR_RESISTANCE_CAP = 33500;
+
+// Over-resistance and damage mitigation constants (from Elder Tools - Resistances.csv)
+export const MAX_ARMOR_VALUE = 33100; // Maximum armor value before diminishing returns
+export const OVER_RESISTANCE_DIVISOR = 109; // Over-resistance calculation divisor
+export const MAX_DAMAGE_MITIGATION = 50; // Maximum damage mitigation percentage
+export const DAMAGE_MITIGATION_DIVISOR = 662; // 33100 / 50 - for percentage calculation
 
 // Tooltip data for armor resistance items
 export const ARMOR_RESISTANCE_TOOLTIPS = {
