@@ -566,8 +566,7 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   let isValid = true;
   const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
 
-  console.log('🔍 [VALIDATION] Starting data integrity check...');
-
+  
   // Check for duplicate items in each category and track all items
   for (const category of Object.keys(data) as keyof CalculatorData[]) {
     const items = data[category];
@@ -648,7 +647,6 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
     });
   }
 
-  console.log(`🔍 [VALIDATION] Check completed - ${isValid ? 'PASSED' : 'FAILED'}`);
   return isValid;
 };
 
@@ -1070,8 +1068,7 @@ const CalculatorComponent: React.FC = () => {
     let isValid = true;
     const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
 
-    console.log('🔍 [VALIDATION] Starting data integrity check...');
-
+    
     // Check for duplicate items in each category and track all items
     for (const category of Object.keys(data) as keyof CalculatorData[]) {
       const items = data[category];
@@ -1160,12 +1157,7 @@ const CalculatorComponent: React.FC = () => {
     }
     */
 
-    if (!isValid) {
-      console.log(`🔍 [VALIDATION] Debug - current gear array:`, data.gear.map((item, i) => `${i}: ${item.name} (resistance: "${item.resistanceValue}")`));
-    }
-
-    console.log(`🔍 [VALIDATION] Check completed - ${isValid ? 'PASSED' : 'FAILED'}`);
-    return isValid;
+        return isValid;
   }, []);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
@@ -1183,8 +1175,7 @@ const CalculatorComponent: React.FC = () => {
   // ID-based update function for armor resistance items
   const updateArmorResistanceItemById = useCallback(
     (id: string, updates: Partial<CalculatorItem>) => {
-      console.log(`🔄 [UPDATE] Updating item by ID: ${id}`, updates);
-
+      
       setArmorResistanceData((prev: CalculatorData) => {
         // TEMPORARILY DISABLED: Validate previous state before making changes
         // if (!validateCalculatorData(prev)) {
@@ -1198,8 +1189,7 @@ const CalculatorComponent: React.FC = () => {
           return prev;
         }
 
-        console.log(`📍 [UPDATE] Found item: ${location.category}[${location.index}] (${prev[location.category][location.index].name})`);
-
+        
         const newCategoryItems = [...prev[location.category]];
         const originalItem = newCategoryItems[location.index];
 
@@ -1238,8 +1228,7 @@ const CalculatorComponent: React.FC = () => {
         const lightArmorPassiveIndex = updatedData.gear.findIndex(
           (item) => item.name === 'Light Armor Passive',
         );
-        console.log(`🛡️ [PASSIVE] Light armor count: ${lightArmorCount}, passive index: ${lightArmorPassiveIndex}`);
-        if (lightArmorPassiveIndex !== -1) {
+                if (lightArmorPassiveIndex !== -1) {
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
             quantity: lightArmorCount,
@@ -1253,8 +1242,7 @@ const CalculatorComponent: React.FC = () => {
         const heavyArmorPassiveIndex = updatedData.gear.findIndex(
           (item) => item.name === 'Heavy Armor Passive',
         );
-        console.log(`🛡️ [PASSIVE] Heavy armor count: ${heavyArmorCount}, passive index: ${heavyArmorPassiveIndex}`);
-        if (heavyArmorPassiveIndex !== -1) {
+                if (heavyArmorPassiveIndex !== -1) {
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
             quantity: heavyArmorCount,
@@ -1270,8 +1258,7 @@ const CalculatorComponent: React.FC = () => {
           return prev;
         }
 
-        console.log(`✅ [UPDATE] Successfully updated item ${id}`);
-        return updatedData;
+                return updatedData;
       });
     },
     [validateCalculatorData, findItemById],
@@ -1570,10 +1557,7 @@ const CalculatorComponent: React.FC = () => {
 
   const updateArmorResistanceItem = useCallback(
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
-      console.log(`🔄 [LEGACY_UPDATE] Updating ${category}[${index}]`, updates);
-
       setArmorResistanceData((prev: CalculatorData) => {
-        console.log(`📊 [STATE] Previous ${category} state:`, prev[category].map(item => ({ name: item.name, enabled: item.enabled })));
         // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
         // if (!validateCalculatorData(prev)) {
         //   console.error(`❌ [LEGACY_UPDATE] Previous state validation failed - aborting update`);
@@ -1589,7 +1573,6 @@ const CalculatorComponent: React.FC = () => {
         }
 
         const originalItem = newCategoryItems[index];
-        console.log(`📍 [LEGACY_UPDATE] Found item: ${originalItem.name}`);
 
         newCategoryItems[index] = { ...originalItem, ...updates };
 
@@ -1655,13 +1638,7 @@ const CalculatorComponent: React.FC = () => {
           };
         }
 
-        console.log(`📊 [STATE] Final ${category} state:`, updatedData[category].map(item => ({ name: item.name, enabled: item.enabled })));
-        console.log(`📊 [STATE] Full updated data:`, {
-          gear: updatedData.gear.map(item => ({ name: item.name, enabled: item.enabled })),
-          cp: updatedData.cp.map(item => ({ name: item.name, enabled: item.enabled })),
-          passives: updatedData.passives.map(item => ({ name: item.name, enabled: item.enabled }))
-        });
-
+        
         return updatedData;
       });
     },
@@ -1671,23 +1648,14 @@ const CalculatorComponent: React.FC = () => {
   // Create a wrapper update function that tries ID-based updates first for gear items
   const updateArmorResistanceItemWithFallback = useCallback(
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
-      console.log(`🔄 [FALLBACK] Attempting update for ${category}[${index}]:`, updates);
       // For gear items, try ID-based update first
       if (category === 'gear') {
         const item = armorResistanceData.gear[index];
-        console.log(`🔍 [FALLBACK] Checking gear item at index ${index}:`, {
-          name: item?.name,
-          hasId: !!(item as any)?.id,
-          id: (item as any)?.id,
-          enabled: item?.enabled
-        });
         if (item && (item as any).id) {
-          console.log(`✅ [FALLBACK] Found ID ${(item as any).id} for item ${item.name}, using ID-based update`);
           updateArmorResistanceItemById((item as any).id, updates);
           return;
         }
       }
-      console.log(`⚠️ [FALLBACK] No ID found or not gear category, falling back to index-based update`);
       updateArmorResistanceItem(category, index, updates);
     },
     [armorResistanceData.gear, updateArmorResistanceItemById, updateArmorResistanceItem],
