@@ -1451,34 +1451,6 @@ const CalculatorComponent: React.FC = () => {
 
         newCategoryItems[location.index] = { ...originalItem, ...updates };
 
-        // Mutually exclusive armor logic: disable conflicting items when enabling an armor piece
-        if (
-          updates.enabled === true &&
-          location.category === 'gear' &&
-          isMutuallyExclusiveArmorItem(originalItem)
-        ) {
-          const slotKey = extractSlotFromItemName(originalItem.name);
-          if (slotKey) {
-            // Find and disable other items in the same slot
-            const conflictingItems = findConflictingItems(originalItem, newCategoryItems);
-            conflictingItems.forEach((conflictingItem) => {
-              const conflictingIndex = newCategoryItems.findIndex(
-                (item) => item.name === conflictingItem.name,
-              );
-              if (conflictingIndex !== -1 && newCategoryItems[conflictingIndex].enabled) {
-                newCategoryItems[conflictingIndex] = {
-                  ...newCategoryItems[conflictingIndex],
-                  enabled: false,
-                };
-                // eslint-disable-next-line no-console
-                console.log(
-                  `🔀 [MUTUAL_EXCLUSIVE] Disabled "${conflictingItem.name}" when enabling "${originalItem.name}" (slot: ${slotKey})`,
-                );
-              }
-            });
-          }
-        }
-
         // Create updated data to calculate armor passives
         const updatedData = {
           ...prev,
@@ -1859,6 +1831,34 @@ const CalculatorComponent: React.FC = () => {
         const originalItem = newCategoryItems[index];
 
         newCategoryItems[index] = { ...originalItem, ...updates };
+
+        // Mutually exclusive armor logic: disable conflicting items when enabling an armor piece
+        if (
+          updates.enabled === true &&
+          category === 'gear' &&
+          isMutuallyExclusiveArmorItem(originalItem)
+        ) {
+          const slotKey = extractSlotFromItemName(originalItem.name);
+          if (slotKey) {
+            // Find and disable other items in the same slot
+            const conflictingItems = findConflictingItems(originalItem, newCategoryItems);
+            conflictingItems.forEach((conflictingItem) => {
+              const conflictingIndex = newCategoryItems.findIndex(
+                (item) => item.name === conflictingItem.name,
+              );
+              if (conflictingIndex !== -1 && newCategoryItems[conflictingIndex].enabled) {
+                newCategoryItems[conflictingIndex] = {
+                  ...newCategoryItems[conflictingIndex],
+                  enabled: false,
+                };
+                // eslint-disable-next-line no-console
+                console.log(
+                  `🔀 [MUTUAL_EXCLUSIVE] Disabled "${conflictingItem.name}" when enabling "${originalItem.name}" (slot: ${slotKey})`,
+                );
+              }
+            });
+          }
+        }
 
         // Create updated data to calculate armor passives
         const updatedData = {
