@@ -912,7 +912,6 @@ const QuantityInput: React.FC<{
       sx={{
         width: '95px',
         minWidth: '95px',
-        position: 'relative',
         '& .MuiInputBase-root': {
           fontSize: isMobile ? '14px' : '13px',
           padding: isMobile ? '6px 1px' : '4px 1px',
