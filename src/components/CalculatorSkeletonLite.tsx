@@ -95,6 +95,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           alignItems: 'center',
           justifyContent: 'center',
           width: '100%',
+          mb: 2, // Add margin on mobile to create space before separator line
         }}
       >
         {/* ButtonGroup skeleton */}

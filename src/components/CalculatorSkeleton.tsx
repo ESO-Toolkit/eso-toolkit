@@ -2,6 +2,7 @@ import { Box, Container, Skeleton, useMediaQuery, useTheme } from '@mui/material
 import React from 'react';
 
 const ITEM_NAME_WIDTHS = [228, 256, 212, 242, 218];
+const ARMOR_ITEM_WIDTHS = [180, 200, 190, 210];
 const PER_WIDTHS = [26, 30, 34];
 
 interface CalculatorSkeletonProps {
@@ -34,7 +35,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         display: 'flex',
         alignItems: { xs: 'flex-start', sm: 'center' },
         justifyContent: 'space-between',
-        mb: isMobile ? 3 : 4,
+        mb: 4,
         flexWrap: 'wrap',
         gap: { xs: 2, sm: 3 },
         p: isExtraSmall ? 1.5 : isMobile ? 2 : 4,
@@ -101,6 +102,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
           alignItems: 'center',
           justifyContent: { xs: 'center', sm: 'flex-end' },
           width: { xs: '100%', sm: 'auto' },
+          mb: { xs: 2, sm: 0 }, // Add margin on mobile to create space before separator line
         }}
       >
         <Box
@@ -213,29 +215,41 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
     <Box
       sx={{
         mb: 3,
-        border: `1px solid ${sectionBorderColor}`,
-        borderRadius: 2,
-        background: sectionBackground,
-        overflow: 'hidden',
         '&:last-child': {
           mb: 2,
         },
+        '&.Mui-expanded': {
+          mb: 4,
+          '&:last-child': {
+            mb: 3,
+          },
+        },
       }}
     >
-      {/* Accordion Header */}
+      {/* Accordion Summary */}
       <Box
         sx={{
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
           p: 2,
-          borderBottom: `1px solid ${sectionBorderColor}`,
+          minHeight: 48,
           cursor: 'pointer',
+          border: `1px solid ${sectionBorderColor}`,
+          borderRadius: 2,
+          background: sectionBackground,
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
             background:
               theme.palette.mode === 'dark'
                 ? 'rgba(56, 189, 248, 0.05)'
                 : 'rgba(40, 145, 200, 0.03)',
+          },
+          '&:active': {
+            background:
+              theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.08)'
+                : 'rgba(40, 145, 200, 0.05)',
           },
         }}
       >
@@ -245,11 +259,36 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
           height={24}
           sx={{ fontWeight: 600 }}
         />
-        <Skeleton variant="circular" width={24} height={24} />
+
+        {/* Expand/Collapse Icon - chevron-like shape */}
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'transform 0.2s ease-in-out',
+          }}
+        >
+          <Skeleton
+            variant="rectangular"
+            width={24}
+            height={24}
+            sx={{
+              borderRadius: 1,
+              transform: 'rotate(0deg)',
+            }}
+          />
+        </Box>
       </Box>
 
-      {/* Accordion Content */}
-      <Box sx={{ pb: 2.5, pt: 1, px: isMobile ? 1 : 2 }}>
+      {/* Accordion Details */}
+      <Box
+        sx={{
+          pb: 2.5,
+          pt: 1,
+          px: isMobile ? 1 : 2,
+        }}
+      >
         {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
             key={itemIndex}
@@ -261,6 +300,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
               py: 1,
               px: 1,
               borderRadius: 1,
+              transition: 'background 0.2s ease',
               '&:hover': {
                 background:
                   theme.palette.mode === 'dark'
@@ -357,6 +397,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
               py: 1,
               px: 1,
               borderRadius: 1,
+              transition: 'background 0.2s ease',
               '&:hover': {
                 background:
                   theme.palette.mode === 'dark'
@@ -377,7 +418,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
               <Skeleton
                 variant="text"
-                width={ITEM_NAME_WIDTHS[(itemIndex + 2) % ITEM_NAME_WIDTHS.length]}
+                width={ARMOR_ITEM_WIDTHS[itemIndex % ARMOR_ITEM_WIDTHS.length]}
                 height={16}
               />
               {/* Armor variant/quality indicators */}
