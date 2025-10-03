@@ -23,63 +23,115 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
     theme.palette.mode === 'dark'
       ? 'linear-gradient(180deg, rgba(15,23,42,0.66) 0%, rgba(3,7,18,0.66) 100%)'
       : 'linear-gradient(180deg, rgb(40 145 200 / 6%) 0%, rgba(248, 250, 252, 0.9) 100%)';
-  const controlsBackground =
-    theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.98)';
-  const controlsBorderColor =
-    theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 20%)' : 'rgb(40 145 200 / 15%)';
   const sectionBorderColor =
     theme.palette.mode === 'dark' ? 'rgb(128 211 255 / 20%)' : 'rgb(40 145 200 / 15%)';
   const sectionBackground =
     theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.94)';
-  
+
   const renderHeaderControls = (): React.JSX.Element => (
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: { xs: 'flex-start', sm: 'center' },
         justifyContent: 'space-between',
         mb: isMobile ? 3 : 4,
         flexWrap: 'wrap',
-        gap: isMobile ? 2 : 3,
+        gap: { xs: 2, sm: 3 },
         p: isExtraSmall ? 1.5 : isMobile ? 2 : 4,
-        borderBottom: '1px solid',
-        borderColor: controlsBorderColor,
-        background: controlsBackground,
-        borderRadius: '16px 16px 0 0',
+        borderRadius: '10px',
+        borderColor: sectionBorderColor,
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.98)',
         position: 'relative',
-        backdropFilter: 'blur(10px)',
-        WebkitBackdropFilter: 'blur(10px)',
+        flexDirection: { xs: 'column', sm: 'row' },
+        '@media (max-width: 380px)': {
+          flexDirection: 'column',
+          alignItems: 'stretch',
+          gap: 1.5,
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 16,
+          right: 16,
+          height: '1px',
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+              : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+          opacity: 0.7,
+        },
       }}
     >
-      {/* Lite Mode Toggle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
-        <Skeleton variant="text" width={72} height={24} />
-        <Skeleton variant="rectangular" width={56} height={32} sx={{ borderRadius: 16 }} />
+      {/* Lite Mode Switch */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          flexWrap: 'wrap',
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: { xs: 'space-between', sm: 'flex-start' },
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Skeleton variant="rectangular" width={44} height={24} sx={{ borderRadius: 12 }} />
+          <Skeleton
+            variant="text"
+            width={isExtraSmall ? 60 : 80}
+            height={16}
+            sx={{ fontWeight: 600 }}
+          />
+        </Box>
+
+        {/* Mobile Action Buttons - Only show on mobile */}
+        {isMobile && (
+          <Box sx={{ display: 'flex', gap: 1 }}>
+            <Skeleton variant="rectangular" width={70} height={24} sx={{ borderRadius: 1 }} />
+            <Skeleton variant="rectangular" width={40} height={24} sx={{ borderRadius: 1 }} />
+          </Box>
+        )}
       </Box>
 
-      {/* Export Button */}
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 90 : isMobile ? 100 : 120}
-        height={isExtraSmall ? 36 : isMobile ? 40 : 44}
-        sx={{ borderRadius: 2 }}
-      />
-    </Box>
-  );
-
-  const renderGameModeSelector = (): React.JSX.Element => (
-    <Box sx={{ mb: 3, px: 1 }}>
-      <Skeleton variant="text" width={100} height={16} sx={{ mb: 1, opacity: 0.8 }} />
-      <Box sx={{ display: 'flex', gap: isExtraSmall ? 1 : 2 }}>
-        {['PvE', 'PvP', 'Both'].map((label) => (
-          <Skeleton
-            key={label}
-            variant="rectangular"
-            width={isExtraSmall ? 70 : isMobile ? 80 : 90}
-            height={isExtraSmall ? 32 : isMobile ? 36 : 40}
-            sx={{ borderRadius: 2 }}
-          />
-        ))}
+      {/* Game Mode Selector */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: { xs: 'center', sm: 'flex-end' },
+          width: { xs: '100%', sm: 'auto' },
+        }}
+      >
+        <Box
+          sx={{
+            width: { xs: '100%', sm: 'auto' },
+            display: 'flex',
+          }}
+        >
+          {/* ButtonGroup skeleton */}
+          <Box
+            sx={{
+              display: 'flex',
+              width: '100%',
+            }}
+          >
+            {['PvE', 'PvP', 'Both'].map((label) => (
+              <Skeleton
+                key={label}
+                variant="rectangular"
+                width={isExtraSmall ? 50 : isMobile ? 60 : 70}
+                height={isExtraSmall ? 28 : isMobile ? 32 : 36}
+                sx={{
+                  borderRadius: 0,
+                  '&:first-of-type': { borderRadius: '4px 0 0 4px' },
+                  '&:last-of-type': { borderRadius: '0 4px 4px 0' },
+                  flex: 1,
+                }}
+              />
+            ))}
+          </Box>
+        </Box>
       </Box>
     </Box>
   );
@@ -93,10 +145,13 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         mb: 4,
         px: 4,
         borderBottom: '1px solid',
-        borderColor: controlsBorderColor,
-        background: controlsBackground,
+        borderColor: sectionBorderColor,
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.95)',
         borderRadius: '8px 8px 0 0',
         position: 'relative',
+        flexDirection: isMobile ? 'column' : 'row',
+        gap: isMobile ? 2 : 0,
       }}
     >
       {/* Tab Buttons Container */}
@@ -106,9 +161,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
           gap: 1,
           p: 0.5,
           backgroundColor:
-            theme.palette.mode === 'dark'
-              ? 'rgba(30, 41, 59, 0.8)'
-              : 'rgba(248, 250, 252, 0.8)',
+            theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
           borderRadius: '10px',
           border: '1px solid rgba(148, 163, 184, 0.2)',
           flex: 1,
@@ -129,38 +182,30 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         ))}
       </Box>
 
-      {/* Bulk Actions - Show for all tabs as placeholder */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          borderRadius: '10px',
-          backgroundColor:
-            theme.palette.mode === 'dark'
-              ? 'rgba(15, 23, 42, 0.3)'
-              : 'rgba(255, 255, 255, 0.5)',
-          borderColor: controlsBorderColor,
-          flexWrap: 'wrap',
-          justifyContent: 'flex-end',
-          px: 2,
-          py: 1,
-          minWidth: { xs: '100%', sm: '200px' },
-          mt: { xs: 2, sm: 0 },
-        }}
-      >
-        <Skeleton
-          variant="rectangular"
-          width={isExtraSmall ? 80 : isMobile ? 90 : 100}
-          height={isExtraSmall ? 30 : isMobile ? 32 : 36}
-          sx={{ borderRadius: 2, mr: 1 }}
-        />
-        <Skeleton
-          variant="rectangular"
-          width={isExtraSmall ? 70 : isMobile ? 80 : 90}
-          height={isExtraSmall ? 30 : isMobile ? 32 : 36}
-          sx={{ borderRadius: 2 }}
-        />
-      </Box>
+      {/* Desktop Bulk Actions - Only show on desktop */}
+      {!isMobile && (
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            borderRadius: '10px',
+            backgroundColor:
+              theme.palette.mode === 'dark'
+                ? 'rgba(21, 34, 50, 0.55)'
+                : 'rgba(235, 244, 252, 0.85)',
+            border: `1px solid ${
+              theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(40, 145, 200, 0.18)'
+            }`,
+            boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+            px: 2,
+            py: 1,
+            minWidth: '200px',
+          }}
+        >
+          <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 2, mr: 1 }} />
+          <Skeleton variant="rectangular" width={50} height={32} sx={{ borderRadius: 2 }} />
+        </Box>
+      )}
     </Box>
   );
 
@@ -230,12 +275,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
             </Box>
 
             {/* Quantity Input */}
-            <Skeleton
-              variant="rectangular"
-              width={52}
-              height={34}
-              sx={{ borderRadius: 1 }}
-            />
+            <Skeleton variant="rectangular" width={52} height={34} sx={{ borderRadius: 1 }} />
 
             {/* Item Name */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
@@ -244,9 +284,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
                 width={ITEM_NAME_WIDTHS[itemIndex % ITEM_NAME_WIDTHS.length]}
                 height={16}
               />
-              {itemIndex % 3 === 0 && (
-                <Skeleton variant="circular" width={16} height={16} />
-              )}
+              {itemIndex % 3 === 0 && <Skeleton variant="circular" width={16} height={16} />}
             </Box>
 
             {/* Value */}
@@ -264,7 +302,10 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
     </Box>
   );
 
-  const renderArmorResistanceSection = (title: string, itemCount: number = 2): React.JSX.Element => (
+  const renderArmorResistanceSection = (
+    title: string,
+    itemCount: number = 2,
+  ): React.JSX.Element => (
     <Box
       sx={{
         mb: 3,
@@ -330,12 +371,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
             </Box>
 
             {/* Quantity Input */}
-            <Skeleton
-              variant="rectangular"
-              width={52}
-              height={34}
-              sx={{ borderRadius: 1 }}
-            />
+            <Skeleton variant="rectangular" width={52} height={34} sx={{ borderRadius: 1 }} />
 
             {/* Item Name with variant/quality */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flex: 1 }}>
@@ -353,12 +389,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
             <Skeleton variant="text" width={35} height={16} />
 
             {/* Armor Control Button */}
-            <Skeleton
-              variant="rectangular"
-              width={30}
-              height={24}
-              sx={{ borderRadius: 1 }}
-            />
+            <Skeleton variant="rectangular" width={30} height={24} sx={{ borderRadius: 1 }} />
           </Box>
         ))}
       </Box>
@@ -482,9 +513,6 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         >
           {/* Header Controls */}
           {renderHeaderControls()}
-
-          {/* Game Mode Selector */}
-          {renderGameModeSelector()}
 
           {/* Tab Navigation */}
           {renderTabNavigation()}

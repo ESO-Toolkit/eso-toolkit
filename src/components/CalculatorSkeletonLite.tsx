@@ -30,59 +30,109 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
     <Box
       sx={{
         display: 'flex',
-        alignItems: 'center',
+        alignItems: 'flex-start',
         justifyContent: 'space-between',
         mb: 3,
-        gap: 1,
+        flexWrap: 'wrap',
+        gap: 2,
         p: 2,
-        borderBottom: `1px solid ${sectionBorderColor}`,
-        background: sectionBackground,
-        borderRadius: '4px 4px 0 0',
+        borderRadius: '10px',
+        borderColor: sectionBorderColor,
+        background:
+          theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.9)' : 'rgba(255, 255, 255, 0.98)',
+        position: 'relative',
+        flexDirection: 'column',
+        '@media (max-width: 380px)': {
+          alignItems: 'stretch',
+          gap: 1.5,
+        },
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          top: 0,
+          left: 16,
+          right: 16,
+          height: '1px',
+          background:
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(90deg, rgb(128 211 255 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(40 145 200 / 60%) 100%)'
+              : 'linear-gradient(90deg, rgb(40 145 200 / 60%) 0%, rgb(56 189 248 / 60%) 50%, rgb(128 211 255 / 60%) 100%)',
+          opacity: 0.7,
+        },
       }}
     >
-      {/* Lite Mode Toggle */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Skeleton variant="text" width={60} height={20} />
-        <Skeleton variant="rectangular" width={40} height={24} sx={{ borderRadius: 12 }} />
-      </Box>
-
-      {/* Export & Mode Controls */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-        <Skeleton variant="rectangular" width={80} height={28} sx={{ borderRadius: 1 }} />
-        <Skeleton variant="rectangular" width={50} height={28} sx={{ borderRadius: 1 }} />
-      </Box>
-    </Box>
-  );
-
-  const renderGameModeSelector = (): React.JSX.Element => (
-    <Box sx={{ mb: 3, px: 1 }}>
-      <Skeleton variant="text" width={100} height={16} sx={{ mb: 1, opacity: 0.8 }} />
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        {['PvE', 'PvP', 'Both'].map((label) => (
+      {/* Lite Mode Switch */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+          justifyContent: 'space-between',
+          width: '100%',
+        }}
+      >
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+          <Skeleton variant="rectangular" width={40} height={20} sx={{ borderRadius: 10 }} />
           <Skeleton
-            key={label}
-            variant="rectangular"
-            width={isExtraSmall ? 45 : 50}
-            height={30}
-            sx={{ borderRadius: 1, flex: 1 }}
+            variant="text"
+            width={isExtraSmall ? 55 : 70}
+            height={14}
+            sx={{ fontWeight: 600 }}
           />
-        ))}
+        </Box>
+
+        {/* Mobile Action Buttons - Always show on mobile lite */}
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Skeleton variant="rectangular" width={65} height={20} sx={{ borderRadius: 1 }} />
+          <Skeleton variant="rectangular" width={35} height={20} sx={{ borderRadius: 1 }} />
+        </Box>
+      </Box>
+
+      {/* Game Mode Selector */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '100%',
+        }}
+      >
+        {/* ButtonGroup skeleton */}
+        <Box
+          sx={{
+            display: 'flex',
+            width: '100%',
+          }}
+        >
+          {['PvE', 'PvP', 'Both'].map((label) => (
+            <Skeleton
+              key={label}
+              variant="rectangular"
+              width={isExtraSmall ? 45 : 50}
+              height={isExtraSmall ? 24 : 28}
+              sx={{
+                borderRadius: 0,
+                '&:first-of-type': { borderRadius: '4px 0 0 4px' },
+                '&:last-of-type': { borderRadius: '0 4px 4px 0' },
+                flex: 1,
+              }}
+            />
+          ))}
+        </Box>
       </Box>
     </Box>
   );
 
   const renderTabNavigation = (): React.JSX.Element => (
     <Box sx={{ mb: 3 }}>
-      <Skeleton variant="text" width={120} height={20} sx={{ mb: 2, fontWeight: 600 }} />
+      {/* Tab navigation container */}
       <Box
         sx={{
           display: 'flex',
           gap: 1,
           p: 0.5,
           backgroundColor:
-            theme.palette.mode === 'dark'
-              ? 'rgba(30, 41, 59, 0.8)'
-              : 'rgba(248, 250, 252, 0.8)',
+            theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
           borderRadius: '10px',
           border: '1px solid rgba(148, 163, 184, 0.2)',
         }}
@@ -91,43 +141,16 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           <Skeleton
             key={label}
             variant="rectangular"
-            width={isExtraSmall ? 70 : 85}
-            height={36}
+            width={isExtraSmall ? 60 : 70}
+            height={32}
             sx={{
               borderRadius: '8px',
               flex: 1,
-              minWidth: '70px',
+              minWidth: '60px',
             }}
           />
         ))}
       </Box>
-    </Box>
-  );
-
-  const renderMobileBulkActions = (): React.JSX.Element => (
-    <Box
-      sx={{
-        display: 'flex',
-        gap: 1,
-        mb: 2,
-        p: 1.5,
-        background: sectionBackground,
-        borderRadius: 2,
-        border: `1px solid ${sectionBorderColor}`,
-      }}
-    >
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 70 : 80}
-        height={32}
-        sx={{ borderRadius: 2, flex: 1 }}
-      />
-      <Skeleton
-        variant="rectangular"
-        width={isExtraSmall ? 70 : 80}
-        height={32}
-        sx={{ borderRadius: 2, flex: 1 }}
-      />
     </Box>
   );
 
@@ -137,7 +160,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={title.length * 7 + 30}
+          width={title.length * 6 + 25}
           height={16}
           sx={{ fontWeight: 600 }}
         />
@@ -171,12 +194,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
             {/* Compact Quantity Input */}
             <Box sx={{ mr: 1 }}>
-              <Skeleton
-                variant="rectangular"
-                width={32}
-                height={24}
-                sx={{ borderRadius: 1 }}
-              />
+              <Skeleton variant="rectangular" width={28} height={22} sx={{ borderRadius: 1 }} />
             </Box>
 
             {/* Item Text */}
@@ -188,14 +206,12 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
                   height={14}
                 />
                 {/* Help Icon */}
-                {itemIndex % 4 === 0 && (
-                  <Skeleton variant="circular" width={10} height={10} />
-                )}
+                {itemIndex % 4 === 0 && <Skeleton variant="circular" width={10} height={10} />}
               </Box>
               {/* Subtitle */}
               <Skeleton
                 variant="text"
-                width={40 + Math.random() * 30}
+                width={30 + Math.random() * 25}
                 height={10}
                 sx={{
                   fontSize: '0.6rem',
@@ -205,7 +221,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
             </Box>
 
             {/* Value Display */}
-            <Skeleton variant="text" width={30} height={12} />
+            <Skeleton variant="text" width={25} height={12} />
           </Box>
         ))}
       </Box>
@@ -218,7 +234,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={title.length * 7 + 30}
+          width={title.length * 6 + 25}
           height={16}
           sx={{ fontWeight: 600 }}
         />
@@ -252,12 +268,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
             {/* Quantity Input */}
             <Box sx={{ mr: 1 }}>
-              <Skeleton
-                variant="rectangular"
-                width={32}
-                height={24}
-                sx={{ borderRadius: 1 }}
-              />
+              <Skeleton variant="rectangular" width={28} height={22} sx={{ borderRadius: 1 }} />
             </Box>
 
             {/* Item Details with variant/quality */}
@@ -271,22 +282,17 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
               </Box>
               {/* Armor variant and quality indicators - compact */}
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Skeleton variant="rectangular" width={35} height={12} sx={{ borderRadius: 1 }} />
-                <Skeleton variant="circular" width={8} height={8} />
-                <Skeleton variant="rectangular" width={25} height={12} sx={{ borderRadius: 1 }} />
+                <Skeleton variant="rectangular" width={30} height={10} sx={{ borderRadius: 1 }} />
+                <Skeleton variant="circular" width={6} height={6} />
+                <Skeleton variant="rectangular" width={20} height={10} sx={{ borderRadius: 1 }} />
               </Box>
             </Box>
 
             {/* Armor Value */}
-            <Skeleton variant="text" width={25} height={12} sx={{ mr: 1 }} />
+            <Skeleton variant="text" width={20} height={12} sx={{ mr: 1 }} />
 
             {/* Armor Control Button */}
-            <Skeleton
-              variant="rectangular"
-              width={24}
-              height={20}
-              sx={{ borderRadius: 1 }}
-            />
+            <Skeleton variant="rectangular" width={20} height={18} sx={{ borderRadius: 1 }} />
           </Box>
         ))}
       </Box>
@@ -304,7 +310,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
       }}
     >
       {/* Summary Title */}
-      <Skeleton variant="text" width={140} height={18} sx={{ mb: 2, fontWeight: 600 }} />
+      <Skeleton variant="text" width={120} height={18} sx={{ mb: 2, fontWeight: 600 }} />
 
       {/* Mobile Summary Grid - 2x2 layout */}
       <Box
@@ -317,17 +323,25 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
       >
         {/* Main Value */}
         <Box sx={{ textAlign: 'center' }}>
-          <Skeleton variant="text" width={60} height={24} sx={{ mx: 'auto', mb: 0.5 }} />
-          <Skeleton variant="text" width={80} height={14} sx={{ mx: 'auto', opacity: 0.8 }} />
+          <Skeleton variant="text" width={50} height={24} sx={{ mx: 'auto', mb: 0.5 }} />
+          <Skeleton variant="text" width={70} height={14} sx={{ mx: 'auto', opacity: 0.8 }} />
         </Box>
 
         {/* Status */}
         <Box sx={{ textAlign: 'center' }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 0.5, mb: 0.5 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 0.5,
+              mb: 0.5,
+            }}
+          >
             <Skeleton variant="circular" width={12} height={12} />
-            <Skeleton variant="text" width={50} height={16} />
+            <Skeleton variant="text" width={45} height={16} />
           </Box>
-          <Skeleton variant="text" width={70} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
+          <Skeleton variant="text" width={60} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
         </Box>
       </Box>
 
@@ -340,10 +354,10 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           border: `1px solid ${sectionBorderColor}`,
         }}
       >
-        <Skeleton variant="text" width={90} height={14} sx={{ mb: 1 }} />
+        <Skeleton variant="text" width={80} height={14} sx={{ mb: 1 }} />
         <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+          <Skeleton variant="text" width={40} height={12} />
           <Skeleton variant="text" width={45} height={12} />
-          <Skeleton variant="text" width={50} height={12} />
         </Box>
       </Box>
     </Box>
@@ -391,14 +405,8 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
         {/* Mobile Header Controls */}
         {renderHeaderControls()}
 
-        {/* Game Mode Selector */}
-        {renderGameModeSelector()}
-
         {/* Mobile Tab Navigation */}
         {renderTabNavigation()}
-
-        {/* Mobile Bulk Actions */}
-        {renderMobileBulkActions()}
 
         {/* Mobile Calculator Content - Lite Mode (Flattened List) */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -439,15 +447,15 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
         <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap', px: 1 }}>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Skeleton variant="circular" width={8} height={8} />
-            <Skeleton variant="text" width={60} height={10} />
-          </Box>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            <Skeleton variant="circular" width={8} height={8} />
-            <Skeleton variant="text" width={45} height={10} />
+            <Skeleton variant="text" width={55} height={10} />
           </Box>
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
             <Skeleton variant="circular" width={8} height={8} />
             <Skeleton variant="text" width={40} height={10} />
+          </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            <Skeleton variant="circular" width={8} height={8} />
+            <Skeleton variant="text" width={35} height={10} />
           </Box>
         </Box>
       </Box>
