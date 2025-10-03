@@ -65,6 +65,12 @@ import {
   ARMOR_QUALITY_LABELS,
 } from '../data/skill-lines/calculator-data';
 import {
+  MAX_ARMOR_VALUE,
+  OVER_RESISTANCE_DIVISOR,
+  MAX_DAMAGE_MITIGATION,
+  DAMAGE_MITIGATION_DIVISOR,
+} from '../data/skill-lines/armor-resistance-data';
+import {
   extractSlotFromItemName,
   isMutuallyExclusiveArmorItem,
   findConflictingItems,
@@ -1876,6 +1882,12 @@ const CalculatorComponent: React.FC = () => {
       // Penetration = Ultimate × 23
       const ult = parseFloat(item.quantity.toString()) || 0;
       return Math.round(ult * 23);
+    } else if (item.name === 'Warden Passive Per Skill') {
+      // 1240 resistance per skill slotted
+      return item.quantity * 1240;
+    } else if (item.name === 'Armor Line Bonus') {
+      // 1487 resistance per armor line bonus
+      return item.quantity * 1487;
     } else if (item.variants && item.selectedVariant !== undefined) {
       // Use the selected variant value with quality scaling
       const variant = item.variants[item.selectedVariant];
@@ -2040,9 +2052,25 @@ const CalculatorComponent: React.FC = () => {
     return 'under-cap';
   }, []);
 
+  // Calculate over-resistance amount (amount above MAX_ARMOR_VALUE)
+  const getOverResistanceAmount = useCallback((total: number) => {
+    const overAmount = Math.max(0, total - MAX_ARMOR_VALUE);
+    return Math.floor(overAmount / OVER_RESISTANCE_DIVISOR);
+  }, []);
+
+  // Calculate damage mitigation percentage (capped at MAX_DAMAGE_MITIGATION)
+  const getDamageMitigationPercentage = useCallback((total: number) => {
+    const percentage = total / DAMAGE_MITIGATION_DIVISOR;
+    return Math.min(MAX_DAMAGE_MITIGATION, Math.floor(percentage * 10) / 10); // Round to 1 decimal place
+  }, []);
+
   const penStatus = getPenStatus(penTotal, gameMode);
   const critStatus = getCritStatus(critTotal);
   const armorResistanceStatus = getArmorResistanceStatus(armorResistanceTotal);
+
+  // Calculate additional armor metrics
+  const overResistanceAmount = getOverResistanceAmount(armorResistanceTotal);
+  const damageMitigationPercentage = getDamageMitigationPercentage(armorResistanceTotal);
 
   // Update item handlers - optimized for performance
   const updatePenItem = useCallback(
@@ -5438,13 +5466,73 @@ const CalculatorComponent: React.FC = () => {
                           ? 'Target: 100%+'
                           : 'PvE: 125%+\nPvP: 100%+',
                   })}
-                {selectedTab === 2 &&
-                  renderSummaryFooter({
-                    label: 'Total Armor Resistance',
-                    value: armorResistanceTotal.toLocaleString(),
-                    status: armorResistanceStatus,
-                    rangeDescription: 'Target: 33,100–33,500\nCap: 33,500',
-                  })}
+                {selectedTab === 2 && (
+                  <>
+                    {renderSummaryFooter({
+                      label: 'Total Armor Resistance',
+                      value: armorResistanceTotal.toLocaleString(),
+                      status: armorResistanceStatus,
+                      rangeDescription: 'Target: 33,100–33,500\nCap: 33,500',
+                    })}
+                    {/* Additional armor metrics */}
+                    <Box sx={{ mt: 2, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                      {/* Over-Resistance Display */}
+                      {overResistanceAmount > 0 && (
+                        <Box
+                          sx={{
+                            flex: 1,
+                            minWidth: 200,
+                            p: 2,
+                            borderRadius: '8px',
+                            background: alpha(theme.palette.warning.main, 0.1),
+                            border: `1px solid ${alpha(theme.palette.warning.main, 0.3)}`,
+                          }}
+                        >
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                            Over-Resistance
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.warning.main }}>
+                            {overResistanceAmount.toLocaleString()}
+                            <Box component="span" sx={{ fontSize: '0.8rem', fontWeight: 600, ml: 0.5 }}>
+                              caps
+                            </Box>
+                          </Typography>
+                          <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                            Above optimal threshold
+                          </Typography>
+                        </Box>
+                      )}
+                      {/* Damage Mitigation Display */}
+                      <Box
+                        sx={{
+                          flex: 1,
+                          minWidth: 200,
+                          p: 2,
+                          borderRadius: '8px',
+                          background: alpha(theme.palette.success.main, 0.1),
+                          border: `1px solid ${alpha(theme.palette.success.main, 0.3)}`,
+                        }}
+                      >
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontWeight: 600 }}>
+                          Damage Mitigation
+                        </Typography>
+                        <Typography variant="h6" sx={{ fontWeight: 700, color: theme.palette.success.main }}>
+                          {damageMitigationPercentage.toLocaleString()}%
+                          {damageMitigationPercentage >= MAX_DAMAGE_MITIGATION && (
+                            <Box component="span" sx={{ fontSize: '0.8rem', fontWeight: 600, ml: 0.5 }}>
+                              (Max)
+                            </Box>
+                          )}
+                        </Typography>
+                        <Typography variant="caption" sx={{ color: 'text.secondary', fontSize: '0.75rem' }}>
+                          {damageMitigationPercentage >= MAX_DAMAGE_MITIGATION
+                            ? 'Maximum mitigation reached'
+                            : `${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of maximum`}
+                        </Typography>
+                      </Box>
+                    </Box>
+                  </>
+                )}
               </Box>
             </Box>
 

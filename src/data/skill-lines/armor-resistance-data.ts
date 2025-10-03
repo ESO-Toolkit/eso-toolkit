@@ -752,6 +752,12 @@ export const ARMOR_RESISTANCE_OPTIMAL_MIN = 33100;
 export const ARMOR_RESISTANCE_OPTIMAL_MAX = 33500;
 export const ARMOR_RESISTANCE_CAP = 33500;
 
+// Over-resistance and damage mitigation constants (from Elder Tools - Resistances.csv)
+export const MAX_ARMOR_VALUE = 33100; // Maximum armor value before diminishing returns
+export const OVER_RESISTANCE_DIVISOR = 109; // Over-resistance calculation divisor
+export const MAX_DAMAGE_MITIGATION = 50; // Maximum damage mitigation percentage
+export const DAMAGE_MITIGATION_DIVISOR = 662; // 33100 / 50 - for percentage calculation
+
 // Tooltip data for armor resistance items
 export const ARMOR_RESISTANCE_TOOLTIPS = {
   'Heavy Armor Passive':
