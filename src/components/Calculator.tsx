@@ -48,6 +48,12 @@ import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
 import {
+  MAX_ARMOR_VALUE,
+  OVER_RESISTANCE_DIVISOR,
+  MAX_DAMAGE_MITIGATION,
+  DAMAGE_MITIGATION_DIVISOR,
+} from '../data/skill-lines/armor-resistance-data';
+import {
   CalculatorItem,
   CalculatorData,
   PENETRATION_DATA,
@@ -66,12 +72,6 @@ import {
   ARMOR_RESISTANCE_CAP,
   ARMOR_QUALITY_LABELS,
 } from '../data/skill-lines/calculator-data';
-import {
-  MAX_ARMOR_VALUE,
-  OVER_RESISTANCE_DIVISOR,
-  MAX_DAMAGE_MITIGATION,
-  DAMAGE_MITIGATION_DIVISOR,
-} from '../data/skill-lines/armor-resistance-data';
 import {
   extractSlotFromItemName,
   isMutuallyExclusiveArmorItem,
@@ -595,81 +595,6 @@ const QuantityInput: React.FC<{
   const theme = useTheme();
   const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
 
-  // Check if this is an armor passive item
-  const isArmorPassive = item.name === 'Light Armor Passive' || item.name === 'Heavy Armor Passive';
-
-  // For armor passives, show a static display instead of input
-  if (isArmorPassive) {
-    return (
-      <Tooltip title="Auto-calculated based on equipped armor pieces" arrow>
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: isMobile ? '50px' : '56px',
-            height: isMobile ? '36px' : '32px',
-            px: isMobile ? 1 : 2,
-            borderRadius: 1,
-            fontWeight: 700,
-            fontSize: isMobile ? '14px' : '16px',
-            color: item.enabled
-              ? '#f472b6' // Pink for both light and heavy armor
-              : theme.palette.mode === 'dark'
-                ? 'rgba(148, 163, 184, 0.5)'
-                : 'rgba(100, 116, 139, 0.5)',
-            backgroundColor: item.enabled
-              ? item.name === 'Light Armor Passive'
-                ? theme.palette.mode === 'dark'
-                  ? 'rgba(167, 139, 250, 0.15)'
-                  : 'rgba(167, 139, 250, 0.1)'
-                : theme.palette.mode === 'dark'
-                  ? 'rgba(244, 114, 182, 0.15)'
-                  : 'rgba(244, 114, 182, 0.1)'
-              : theme.palette.mode === 'dark'
-                ? 'rgba(30, 41, 59, 0.3)'
-                : 'rgba(241, 245, 249, 0.5)',
-            border: `2px dashed ${
-              item.enabled
-                ? item.name === 'Light Armor Passive'
-                  ? 'rgba(167, 139, 250, 0.5)'
-                  : 'rgba(244, 114, 182, 0.5)'
-                : theme.palette.mode === 'dark'
-                  ? 'rgba(148, 163, 184, 0.2)'
-                  : 'rgba(148, 163, 184, 0.3)'
-            }`,
-            transition: 'all 0.2s ease',
-            cursor: 'default',
-            position: 'relative',
-            '&::before': {
-              content: '"🔒"',
-              position: 'absolute',
-              top: isMobile ? '-6px' : '-6px',
-              right: isMobile ? '-6px' : '-6px',
-              fontSize: isMobile ? '10px' : '12px',
-              opacity: item.enabled ? 0.7 : 0.4,
-            },
-            '&:hover': {
-              backgroundColor: item.enabled
-                ? item.name === 'Light Armor Passive'
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(167, 139, 250, 0.25)'
-                    : 'rgba(167, 139, 250, 0.2)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(244, 114, 182, 0.25)'
-                    : 'rgba(244, 114, 182, 0.2)'
-                : theme.palette.mode === 'dark'
-                  ? 'rgba(30, 41, 59, 0.4)'
-                  : 'rgba(241, 245, 249, 0.6)',
-            },
-          }}
-        >
-          {item.quantity > 0 ? item.quantity : '-'}
-        </Box>
-      </Tooltip>
-    );
-  }
-
   // Local state for quantity input to prevent keyboard dismissal on mobile
   const [localQuantity, setLocalQuantity] = useState<string>(
     hasQuantity ? item.quantity.toString() : '-',
@@ -770,6 +695,81 @@ const QuantityInput: React.FC<{
     };
   }, []);
 
+  // Check if this is an armor passive item
+  const isArmorPassive = item.name === 'Light Armor Passive' || item.name === 'Heavy Armor Passive';
+
+  // For armor passives, show a static display instead of input
+  if (isArmorPassive) {
+    return (
+      <Tooltip title="Auto-calculated based on equipped armor pieces" arrow>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: isMobile ? '50px' : '56px',
+            height: isMobile ? '36px' : '32px',
+            px: isMobile ? 1 : 2,
+            borderRadius: 1,
+            fontWeight: 700,
+            fontSize: isMobile ? '14px' : '16px',
+            color: item.enabled
+              ? '#f472b6' // Pink for both light and heavy armor
+              : theme.palette.mode === 'dark'
+                ? 'rgba(148, 163, 184, 0.5)'
+                : 'rgba(100, 116, 139, 0.5)',
+            backgroundColor: item.enabled
+              ? item.name === 'Light Armor Passive'
+                ? theme.palette.mode === 'dark'
+                  ? 'rgba(167, 139, 250, 0.15)'
+                  : 'rgba(167, 139, 250, 0.1)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(244, 114, 182, 0.15)'
+                  : 'rgba(244, 114, 182, 0.1)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(30, 41, 59, 0.3)'
+                : 'rgba(241, 245, 249, 0.5)',
+            border: `2px dashed ${
+              item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? 'rgba(167, 139, 250, 0.5)'
+                  : 'rgba(244, 114, 182, 0.5)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.2)'
+                  : 'rgba(148, 163, 184, 0.3)'
+            }`,
+            transition: 'all 0.2s ease',
+            cursor: 'default',
+            position: 'relative',
+            '&::before': {
+              content: '"🔒"',
+              position: 'absolute',
+              top: isMobile ? '-6px' : '-6px',
+              right: isMobile ? '-6px' : '-6px',
+              fontSize: isMobile ? '10px' : '12px',
+              opacity: item.enabled ? 0.7 : 0.4,
+            },
+            '&:hover': {
+              backgroundColor: item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(167, 139, 250, 0.25)'
+                    : 'rgba(167, 139, 250, 0.2)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(244, 114, 182, 0.25)'
+                    : 'rgba(244, 114, 182, 0.2)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(30, 41, 59, 0.4)'
+                  : 'rgba(241, 245, 249, 0.6)',
+            },
+          }}
+        >
+          {item.quantity > 0 ? item.quantity : '-'}
+        </Box>
+      </Tooltip>
+    );
+  }
+
   const minValue = item.minQuantity || 0;
   const maxValue = item.maxQuantity || 100;
   const currentValue = parseInt(localQuantity) || 0;
@@ -815,42 +815,51 @@ const QuantityInput: React.FC<{
                 minWidth: isMobile ? '24px' : '20px',
                 minHeight: isMobile ? '24px' : '20px',
                 borderRadius: '4px',
-                backgroundColor: theme.palette.mode === 'dark'
-                  ? 'rgba(15, 23, 42, 1)'
-                  : 'rgba(241, 245, 249, 0.8)',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(15, 23, 42, 1)'
+                    : 'rgba(241, 245, 249, 0.8)',
                 border: `1px solid ${
                   theme.palette.mode === 'dark'
                     ? 'rgba(56, 189, 248, 0.3)'
                     : 'rgba(40, 145, 200, 0.2)'
                 }`,
-                color: isMinDisabled || item.locked
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(148, 163, 184, 0.4)'
-                    : 'rgba(100, 116, 139, 0.4)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.8)'
-                    : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMinDisabled || item.locked) ? {
-                  backgroundColor: theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.2)'
-                    : 'rgba(40, 145, 200, 0.15)',
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.5)'
-                    : 'rgba(40, 145, 200, 0.4)',
-                  color: theme.palette.mode === 'dark'
-                    ? 'rgb(199, 234, 255)'
-                    : 'rgb(40, 145, 200)',
-                } : {},
-                '&:active': !(isMinDisabled || item.locked) ? {
-                  transform: 'scale(0.95)',
-                } : {},
+                color:
+                  isMinDisabled || item.locked
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.4)'
+                      : 'rgba(100, 116, 139, 0.4)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.8)'
+                      : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMinDisabled || item.locked)
+                  ? {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.15)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.5)'
+                          : 'rgba(40, 145, 200, 0.4)',
+                      color:
+                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
+                    }
+                  : {},
+                '&:active': !(isMinDisabled || item.locked)
+                  ? {
+                      transform: 'scale(0.95)',
+                    }
+                  : {},
                 '&.Mui-disabled': {
-                  backgroundColor: theme.palette.mode === 'dark'
-                    ? 'rgba(30, 41, 59, 0.4)'
-                    : 'rgba(241, 245, 249, 0.6)',
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgba(148, 163, 184, 0.2)'
-                    : 'rgba(148, 163, 184, 0.3)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(30, 41, 59, 0.4)'
+                      : 'rgba(241, 245, 249, 0.6)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.2)'
+                      : 'rgba(148, 163, 184, 0.3)',
                 },
               }}
             >
@@ -873,42 +882,51 @@ const QuantityInput: React.FC<{
                 minWidth: isMobile ? '24px' : '20px',
                 minHeight: isMobile ? '24px' : '20px',
                 borderRadius: '4px',
-                backgroundColor: theme.palette.mode === 'dark'
-                  ? 'rgba(15, 23, 42, 1)'
-                  : 'rgba(241, 245, 249, 0.8)',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(15, 23, 42, 1)'
+                    : 'rgba(241, 245, 249, 0.8)',
                 border: `1px solid ${
                   theme.palette.mode === 'dark'
                     ? 'rgba(56, 189, 248, 0.3)'
                     : 'rgba(40, 145, 200, 0.2)'
                 }`,
-                color: isMaxDisabled || item.locked
-                  ? theme.palette.mode === 'dark'
-                    ? 'rgba(148, 163, 184, 0.4)'
-                    : 'rgba(100, 116, 139, 0.4)'
-                  : theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.8)'
-                    : 'rgba(40, 145, 200, 0.8)',
-                '&:hover': !(isMaxDisabled || item.locked) ? {
-                  backgroundColor: theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.2)'
-                    : 'rgba(40, 145, 200, 0.15)',
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.5)'
-                    : 'rgba(40, 145, 200, 0.4)',
-                  color: theme.palette.mode === 'dark'
-                    ? 'rgb(199, 234, 255)'
-                    : 'rgb(40, 145, 200)',
-                } : {},
-                '&:active': !(isMaxDisabled || item.locked) ? {
-                  transform: 'scale(0.95)',
-                } : {},
+                color:
+                  isMaxDisabled || item.locked
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.4)'
+                      : 'rgba(100, 116, 139, 0.4)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.8)'
+                      : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMaxDisabled || item.locked)
+                  ? {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.15)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.5)'
+                          : 'rgba(40, 145, 200, 0.4)',
+                      color:
+                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
+                    }
+                  : {},
+                '&:active': !(isMaxDisabled || item.locked)
+                  ? {
+                      transform: 'scale(0.95)',
+                    }
+                  : {},
                 '&.Mui-disabled': {
-                  backgroundColor: theme.palette.mode === 'dark'
-                    ? 'rgba(30, 41, 59, 0.4)'
-                    : 'rgba(241, 245, 249, 0.6)',
-                  borderColor: theme.palette.mode === 'dark'
-                    ? 'rgba(148, 163, 184, 0.2)'
-                    : 'rgba(148, 163, 184, 0.3)',
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(30, 41, 59, 0.4)'
+                      : 'rgba(241, 245, 249, 0.6)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.2)'
+                      : 'rgba(148, 163, 184, 0.3)',
                 },
               }}
             >
@@ -961,15 +979,14 @@ const QuantityInput: React.FC<{
               : undefined,
           },
           '&.Mui-focused': {
-            backgroundColor: theme.palette.mode === 'dark'
-              ? 'rgba(15, 23, 42, 0.6)'
-              : 'rgba(255, 255, 255, 1)',
-            borderColor: theme.palette.mode === 'dark'
-              ? 'rgba(56, 189, 248, 0.6)'
-              : 'rgba(40, 145, 200, 0.5)',
-            boxShadow: theme.palette.mode === 'dark'
-              ? '0 0 0 2px rgba(56, 189, 248, 0.2)'
-              : '0 0 0 2px rgba(40, 145, 200, 0.15)',
+            backgroundColor:
+              theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 1)',
+            borderColor:
+              theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(40, 145, 200, 0.5)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? '0 0 0 2px rgba(56, 189, 248, 0.2)'
+                : '0 0 0 2px rgba(40, 145, 200, 0.15)',
           },
         },
         '& .MuiInputBase-input': {
@@ -1004,9 +1021,8 @@ const QuantityInput: React.FC<{
           borderWidth: '1px',
         },
         '&.Mui-error .MuiOutlinedInput-notchedOutline': {
-          borderColor: theme.palette.mode === 'dark'
-            ? 'rgba(248, 113, 113, 0.6)'
-            : 'rgba(239, 68, 68, 0.6)',
+          borderColor:
+            theme.palette.mode === 'dark' ? 'rgba(248, 113, 113, 0.6)' : 'rgba(239, 68, 68, 0.6)',
         },
       }}
     />
@@ -1684,7 +1700,8 @@ const CalculatorComponent: React.FC = () => {
     setArmorResistanceData((prev: CalculatorData) => {
       // Count enabled heavy armor items (excluding the passive itself)
       const heavyArmorCount = prev.gear.filter(
-        item => item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
       ).length;
 
       // Find and update Heavy Armor Passive
@@ -1771,11 +1788,11 @@ const CalculatorComponent: React.FC = () => {
         console.log('🔍 [ARMOR_PASSIVE_DEBUG] ID-based update function:', {
           id,
           location,
-          lightArmorItems: lightArmorItems.map(item => item.name),
-          heavyArmorItems: heavyArmorItems.map(item => item.name),
+          lightArmorItems: lightArmorItems.map((item) => item.name),
+          heavyArmorItems: heavyArmorItems.map((item) => item.name),
           lightArmorCount,
           heavyArmorCount,
-          updates
+          updates,
         });
 
         // Find and update Light Armor Passive with validation
@@ -2103,21 +2120,24 @@ const CalculatorComponent: React.FC = () => {
   }, []);
 
   // Calculate damage loss percentage due to incomplete resistance shred
-  const getDamageLossPercentage = useCallback((total: number) => {
-    const underAmount = getUnderpenetrationAmount(total);
-    if (underAmount === 0) return 0;
+  const getDamageLossPercentage = useCallback(
+    (total: number) => {
+      const underAmount = getUnderpenetrationAmount(total);
+      if (underAmount === 0) return 0;
 
-    // Formula based on CSV analysis: damage loss percentage
-    const damageLoss = underAmount / PENETRATION_DAMAGE_LOSS_DIVISOR;
-    return Math.floor(damageLoss * 10) / 10; // Round to 1 decimal place
-  }, [getUnderpenetrationAmount]);
+      // Formula based on CSV analysis: damage loss percentage
+      const damageLoss = underAmount / PENETRATION_DAMAGE_LOSS_DIVISOR;
+      return Math.floor(damageLoss * 10) / 10; // Round to 1 decimal place
+    },
+    [getUnderpenetrationAmount],
+  );
 
   const penStatus = getPenStatus(penTotal, gameMode);
   const critStatus = getCritStatus(critTotal);
   const armorResistanceStatus = getArmorResistanceStatus(armorResistanceTotal);
 
   // Calculate additional armor metrics
-  const overResistanceAmount = getOverResistanceAmount(armorResistanceTotal);
+  const _overResistanceAmount = getOverResistanceAmount(armorResistanceTotal);
   const damageMitigationPercentage = getDamageMitigationPercentage(armorResistanceTotal);
 
   // Calculate additional penetration metrics
@@ -2235,13 +2255,13 @@ const CalculatorComponent: React.FC = () => {
         // Debug logging
         // eslint-disable-next-line no-console
         console.log('🔍 [ARMOR_PASSIVE_DEBUG] Main update function:', {
-          lightArmorItems: lightArmorItems.map(item => item.name),
-          heavyArmorItems: heavyArmorItems.map(item => item.name),
+          lightArmorItems: lightArmorItems.map((item) => item.name),
+          heavyArmorItems: heavyArmorItems.map((item) => item.name),
           lightArmorCount,
           heavyArmorCount,
           updateCategory: category,
           updateIndex: index,
-          updates
+          updates,
         });
 
         // Validate no duplicate passive items exist
@@ -2279,7 +2299,7 @@ const CalculatorComponent: React.FC = () => {
             oldQuantity,
             newQuantity: lightArmorCount,
             oldEnabled,
-            newEnabled: lightArmorCount > 0
+            newEnabled: lightArmorCount > 0,
           });
         } else {
           // eslint-disable-next-line no-console
@@ -2304,7 +2324,7 @@ const CalculatorComponent: React.FC = () => {
             oldQuantity,
             newQuantity: heavyArmorCount,
             oldEnabled,
-            newEnabled: heavyArmorCount > 0
+            newEnabled: heavyArmorCount > 0,
           });
         } else {
           // eslint-disable-next-line no-console
@@ -2392,10 +2412,10 @@ const CalculatorComponent: React.FC = () => {
       console.log('🔍 [ARMOR_PASSIVE_DEBUG] Cycle variant function:', {
         index,
         itemName: target.name,
-        lightArmorItems: lightArmorItems.map(item => item.name),
-        heavyArmorItems: heavyArmorItems.map(item => item.name),
+        lightArmorItems: lightArmorItems.map((item) => item.name),
+        heavyArmorItems: heavyArmorItems.map((item) => item.name),
         lightArmorCount,
-        heavyArmorCount
+        heavyArmorCount,
       });
 
       // Find and update Light Armor Passive
@@ -3011,9 +3031,10 @@ const CalculatorComponent: React.FC = () => {
                   setCurrentEditingIndex(resolvedIndex);
                   setTempSelectedVariant(currentVariant);
                   // Initialize temp quality level from current item
-                  const currentQualityLevel = freshItem?.qualityLevel !== undefined
-                    ? freshItem.qualityLevel
-                    : ARMOR_QUALITY_LABELS.length - 1;
+                  const currentQualityLevel =
+                    freshItem?.qualityLevel !== undefined
+                      ? freshItem.qualityLevel
+                      : ARMOR_QUALITY_LABELS.length - 1;
                   setTempQualityLevel(currentQualityLevel);
                   setVariantModalOpen(true);
                 }
@@ -3546,7 +3567,15 @@ const CalculatorComponent: React.FC = () => {
             }}
           >
             {/* Value and Status Section */}
-            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+            <Box
+              sx={{
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
+              }}
+            >
               <Box sx={{ flex: 1 }}>
                 <Typography
                   variant="overline"
@@ -3632,7 +3661,7 @@ const CalculatorComponent: React.FC = () => {
             {quadrantData ? (
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
                 {/* Bottom Left: Damage Mitigation or Over-Resistance Info */}
-                {(quadrantData.overResistInfo) && (
+                {quadrantData.overResistInfo && (
                   <Typography
                     variant="body2"
                     sx={{
@@ -3744,7 +3773,15 @@ const CalculatorComponent: React.FC = () => {
             </Box>
 
             {/* Top Right: Status Badge */}
-            <Box sx={{ gridArea: 'status', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', pt: 0.5 }}>
+            <Box
+              sx={{
+                gridArea: 'status',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-end',
+                pt: 0.5,
+              }}
+            >
               <Box
                 sx={{
                   display: 'inline-flex',
@@ -3768,12 +3805,14 @@ const CalculatorComponent: React.FC = () => {
 
             {/* Bottom Left: Underpen Info or Over-Resistance Info */}
             {(quadrantData.underpenInfo || quadrantData.overResistInfo) && (
-              <Box sx={{
-                gridArea: 'underpen',
-                display: 'flex',
-                alignItems: 'flex-end',
-                pb: 0.5
-              }}>
+              <Box
+                sx={{
+                  gridArea: 'underpen',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  pb: 0.5,
+                }}
+              >
                 <Typography
                   variant="body2"
                   sx={{
@@ -3785,7 +3824,10 @@ const CalculatorComponent: React.FC = () => {
                     fontWeight: 400,
                   }}
                 >
-                  {(quadrantData.underpenInfo || quadrantData.overResistInfo || '').replace(/-/g, '–')}
+                  {(quadrantData.underpenInfo || quadrantData.overResistInfo || '').replace(
+                    /-/g,
+                    '–',
+                  )}
                 </Typography>
               </Box>
             )}
@@ -3803,7 +3845,8 @@ const CalculatorComponent: React.FC = () => {
                   fontWeight: 400,
                 }}
               >
-                {quadrantData.targetRanges?.replace(/-/g, '–') || rangeDescription.replace(/-/g, '–')}
+                {quadrantData.targetRanges?.replace(/-/g, '–') ||
+                  rangeDescription.replace(/-/g, '–')}
               </Typography>
             </Box>
           </Box>
@@ -3830,118 +3873,118 @@ const CalculatorComponent: React.FC = () => {
               margin: '0 auto',
             }}
           >
-          <Box
-            sx={{
-              gridArea: 'value',
-              minWidth: 0,
-              textAlign: { xs: 'left', sm: 'left' },
-              pr: { xs: 1, sm: 0 },
-            }}
-          >
-            <Typography
-              variant="overline"
-              sx={{
-                display: 'block',
-                letterSpacing: { xs: '0.07em', sm: '0.08em' },
-                fontSize: { xs: '0.72rem', sm: '0.75rem' },
-                fontWeight: 600,
-                color: theme.palette.text.secondary,
-                mb: { xs: 0.6, sm: 0.75 },
-              }}
-            >
-              {label}
-            </Typography>
-            <Typography
-              variant={isMobile ? 'h5' : 'h4'}
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: '1.95rem', sm: '2.25rem' },
-                color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                fontFamily: 'Inter, sans-serif',
-                lineHeight: 1.15,
-              }}
-            >
-              {value}
-              {valueSuffix ? (
-                <Box
-                  component="span"
-                  sx={{
-                    fontSize: { xs: '1.25rem', sm: '1.3rem' },
-                    fontWeight: 600,
-                    ml: 0.45,
-                    opacity: 0.85,
-                  }}
-                >
-                  {valueSuffix}
-                </Box>
-              ) : null}
-            </Typography>
-          </Box>
-
-          <Stack
-            spacing={{ xs: 1.1, sm: 1 }}
-            alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
-            justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
-            sx={{
-              gridArea: 'status',
-              minWidth: { sm: 220 },
-              borderLeft: {
-                xs: 'none',
-                sm: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
-              },
-              pl: { xs: 0, sm: 3 },
-              ml: { xs: 0, sm: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: { xs: 1, sm: 1 },
-              alignSelf: { xs: 'stretch', sm: 'center' },
-            }}
-          >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: { xs: 'flex-end', sm: 'flex-end' },
-                gap: { xs: 0.85, sm: 1 },
-                borderRadius: '999px',
-                px: { xs: 1.4, sm: 1.75 },
-                py: { xs: 0.6, sm: 0.7 },
-                background: statusVisual.background,
-                border: `1px solid ${statusVisual.border}`,
+                gridArea: 'value',
+                minWidth: 0,
+                textAlign: { xs: 'left', sm: 'left' },
+                pr: { xs: 1, sm: 0 },
               }}
             >
-              <StatusIcon sx={{ fontSize: { xs: 19, sm: 20 }, color: statusVisual.color }} />
               <Typography
-                variant="body2"
+                variant="overline"
                 sx={{
+                  display: 'block',
+                  letterSpacing: { xs: '0.07em', sm: '0.08em' },
+                  fontSize: { xs: '0.72rem', sm: '0.75rem' },
                   fontWeight: 600,
-                  fontSize: { xs: '0.92rem', sm: '0.85rem' },
-                  color: statusVisual.color,
-                  letterSpacing: 0.15,
+                  color: theme.palette.text.secondary,
+                  mb: { xs: 0.6, sm: 0.75 },
                 }}
               >
-                {statusVisual.label}
+                {label}
+              </Typography>
+              <Typography
+                variant={isMobile ? 'h5' : 'h4'}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.95rem', sm: '2.25rem' },
+                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.15,
+                }}
+              >
+                {value}
+                {valueSuffix ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: { xs: '1.25rem', sm: '1.3rem' },
+                      fontWeight: 600,
+                      ml: 0.45,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {valueSuffix}
+                  </Box>
+                ) : null}
               </Typography>
             </Box>
-            <Typography
-              variant="caption"
+
+            <Stack
+              spacing={{ xs: 1.1, sm: 1 }}
+              alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
+              justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
               sx={{
-                fontSize: { xs: isArmorTab ? '0.75rem' : '0.82rem', sm: '0.8rem' },
-                lineHeight: { xs: isArmorTab ? 1.3 : 1.42, sm: 1.4 },
-                color: alpha(theme.palette.text.secondary, 0.9),
-                whiteSpace: 'pre-line',
-                textAlign: { xs: isArmorTab ? 'left' : 'right', sm: 'right' },
-                letterSpacing: 0.12,
-                pr: { xs: isArmorTab ? 0 : 0.25, sm: 0 },
-                wordBreak: isArmorTab ? 'break-word' : 'normal',
-                hyphens: isArmorTab ? 'auto' : 'manual',
+                gridArea: 'status',
+                minWidth: { sm: 220 },
+                borderLeft: {
+                  xs: 'none',
+                  sm: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
+                },
+                pl: { xs: 0, sm: 3 },
+                ml: { xs: 0, sm: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: { xs: 1, sm: 1 },
+                alignSelf: { xs: 'stretch', sm: 'center' },
               }}
             >
-              {rangeDescription.replace(/-/g, '–')}
-            </Typography>
-          </Stack>
-        </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+                  gap: { xs: 0.85, sm: 1 },
+                  borderRadius: '999px',
+                  px: { xs: 1.4, sm: 1.75 },
+                  py: { xs: 0.6, sm: 0.7 },
+                  background: statusVisual.background,
+                  border: `1px solid ${statusVisual.border}`,
+                }}
+              >
+                <StatusIcon sx={{ fontSize: { xs: 19, sm: 20 }, color: statusVisual.color }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.92rem', sm: '0.85rem' },
+                    color: statusVisual.color,
+                    letterSpacing: 0.15,
+                  }}
+                >
+                  {statusVisual.label}
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: { xs: isArmorTab ? '0.75rem' : '0.82rem', sm: '0.8rem' },
+                  lineHeight: { xs: isArmorTab ? 1.3 : 1.42, sm: 1.4 },
+                  color: alpha(theme.palette.text.secondary, 0.9),
+                  whiteSpace: 'pre-line',
+                  textAlign: { xs: isArmorTab ? 'left' : 'right', sm: 'right' },
+                  letterSpacing: 0.12,
+                  pr: { xs: isArmorTab ? 0 : 0.25, sm: 0 },
+                  wordBreak: isArmorTab ? 'break-word' : 'normal',
+                  hyphens: isArmorTab ? 'auto' : 'manual',
+                }}
+              >
+                {rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            </Stack>
+          </Box>
         )}
       </Box>
     );
@@ -4176,7 +4219,8 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const originalIndex = (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                          const originalIndex =
+                            (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
                           updatePenItem(category, originalIndex, { enabled: true });
                         });
                       }}
@@ -4201,7 +4245,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                     Select All
+                      Select All
                     </Button>
                     <Button
                       size="small"
@@ -4214,7 +4258,8 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const originalIndex = (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                          const originalIndex =
+                            (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
                           updatePenItem(category, originalIndex, { enabled: false });
                         });
                       }}
@@ -4271,7 +4316,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                     Select All
+                      Select All
                     </Button>
                     <Button
                       size="small"
@@ -4381,15 +4426,16 @@ const CalculatorComponent: React.FC = () => {
                   width: { xs: '100%', sm: 'auto' },
                 }}
               >
-                <div
-                  style={{ width: '100%' }}
+                <Box
                   sx={{
                     width: { xs: '100%', sm: 'auto' },
                     display: 'flex',
                   }}
                 >
                   <ButtonGroup
-                    size={isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'}
+                    size={
+                      isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
+                    }
                     variant="outlined"
                     disabled={selectedTab === 2}
                     sx={{
@@ -4434,114 +4480,114 @@ const CalculatorComponent: React.FC = () => {
                         pointerEvents: 'none',
                       }),
                     }}
-                >
-                  <Button
-                    variant={gameMode === 'pve' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('pve')}
-                    startIcon={
-                      <Typography
-                        fontSize={
-                          isExtraSmall
-                            ? '0.75rem'
-                            : liteMode
-                              ? '0.8rem'
-                              : isMobile
-                                ? '0.9rem'
-                                : '1rem'
-                        }
-                      >
-                        🗡️
-                      </Typography>
-                    }
-                    sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'pve'
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'pve' ? 'rgb(128 211 255 / 80%)' : undefined,
-                      color: gameMode === 'pve' ? 'inherit' : 'inherit',
-                    }}
                   >
-                    PvE
-                  </Button>
-                  <Button
-                    variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('pvp')}
-                    startIcon={
-                      <Typography
-                        fontSize={
-                          isExtraSmall
-                            ? '0.75rem'
-                            : liteMode
-                              ? '0.8rem'
-                              : isMobile
-                                ? '0.9rem'
-                                : '1rem'
-                        }
-                      >
-                        🛡️
-                      </Typography>
-                    }
-                    sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'pvp'
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'pvp' ? 'rgb(128 211 255 / 80%)' : undefined,
-                      color: gameMode === 'pvp' ? 'inherit' : 'inherit',
-                    }}
-                  >
-                    PvP
-                  </Button>
-                  <Button
-                    variant={gameMode === 'both' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('both')}
-                    sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'both'
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'both' ? 'rgb(56 189 248 / 80%)' : undefined,
-                      color: gameMode === 'both' ? 'inherit' : 'inherit',
-                    }}
-                  >
-                    Both
-                  </Button>
-                </ButtonGroup>
-                </div>
+                    <Button
+                      variant={gameMode === 'pve' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('pve')}
+                      startIcon={
+                        <Typography
+                          fontSize={
+                            isExtraSmall
+                              ? '0.75rem'
+                              : liteMode
+                                ? '0.8rem'
+                                : isMobile
+                                  ? '0.9rem'
+                                  : '1rem'
+                          }
+                        >
+                          🗡️
+                        </Typography>
+                      }
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'pve'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'pve' ? 'rgb(128 211 255 / 80%)' : undefined,
+                        color: gameMode === 'pve' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      PvE
+                    </Button>
+                    <Button
+                      variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('pvp')}
+                      startIcon={
+                        <Typography
+                          fontSize={
+                            isExtraSmall
+                              ? '0.75rem'
+                              : liteMode
+                                ? '0.8rem'
+                                : isMobile
+                                  ? '0.9rem'
+                                  : '1rem'
+                          }
+                        >
+                          🛡️
+                        </Typography>
+                      }
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'pvp'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'pvp' ? 'rgb(128 211 255 / 80%)' : undefined,
+                        color: gameMode === 'pvp' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      PvP
+                    </Button>
+                    <Button
+                      variant={gameMode === 'both' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('both')}
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'both'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'both' ? 'rgb(56 189 248 / 80%)' : undefined,
+                        color: gameMode === 'both' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      Both
+                    </Button>
+                  </ButtonGroup>
+                </Box>
               </Box>
             </Box>
 
@@ -5788,9 +5834,10 @@ const CalculatorComponent: React.FC = () => {
                     status: penStatus,
                     rangeDescription: '', // Not used in quadrant layout
                     quadrantData: {
-                      underpenInfo: (gameMode === 'pve' || gameMode === 'both') && underpenetrationAmount > 0
-                        ? `Underpen: ${underpenetrationAmount.toLocaleString()}\nDamage Loss: ${damageLossPercentage}%`
-                        : undefined,
+                      underpenInfo:
+                        (gameMode === 'pve' || gameMode === 'both') && underpenetrationAmount > 0
+                          ? `Underpen: ${underpenetrationAmount.toLocaleString()}\nDamage Loss: ${damageLossPercentage}%`
+                          : undefined,
                       targetRanges:
                         gameMode === 'pve'
                           ? 'Target: 18,200–18,999'
@@ -5874,9 +5921,7 @@ const CalculatorComponent: React.FC = () => {
         {(() => {
           // Calculate current item information for the modal title
           const currentItem =
-            currentEditingIndex !== null
-              ? armorResistanceData.gear[currentEditingIndex]
-              : null;
+            currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
 
           // Calculate the current display value for the item using temporary states
           let currentDisplayValue: number | null = null;
@@ -5886,14 +5931,17 @@ const CalculatorComponent: React.FC = () => {
 
             // Find the temporary variant and its values
             const currentVariant = currentItem.variants?.find(
-              (v: any) => v.name === tempSelectedVariant
+              (v: any) => v.name === tempSelectedVariant,
             );
             const variantQualityValues = currentVariant?.qualityValues;
 
             // Calculate display value using the same logic as renderItem
             if (currentVariant) {
               currentDisplayValue =
-                variantQualityValues?.[qualityLevel] ?? currentVariant.value ?? currentItem.value ?? 0;
+                variantQualityValues?.[qualityLevel] ??
+                currentVariant.value ??
+                currentItem.value ??
+                0;
             } else if (currentItem.isFlat) {
               currentDisplayValue = currentItem.value || 0;
             } else {
@@ -5903,237 +5951,241 @@ const CalculatorComponent: React.FC = () => {
 
           return (
             <Dialog
-          open={variantModalOpen}
-          onClose={() => {
-            setVariantModalOpen(false);
-            setCurrentEditingIndex(null);
-            setTempSelectedVariant('Regular');
-            setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
-          }}
-          fullWidth
-          maxWidth="xs"
-          PaperProps={{
-            sx: {
-              borderRadius: '12px',
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.3)'
-                  : 'rgba(40, 145, 200, 0.2)'
-              }`,
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
-            },
-          }}
-        >
-          <DialogTitle
-            sx={{
-              textAlign: 'center',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
-              pb: 1,
-            }}
-          >
-            {currentItem ? `${currentItem.name}: ${currentDisplayValue?.toLocaleString()}${currentItem.isPercent ? '%' : ''}` : 'Select Armor Variant'}
-          </DialogTitle>
-          <DialogContent sx={{ py: 2 }}>
-            <Stack spacing={3}>
-              {['Regular', 'Reinforced', 'Nirnhoned'].map((variant) => {
-                const isSelected = tempSelectedVariant === variant;
-
-                // Quality rating is handled globally below
-
-                return (
-                  <Box key={variant}>
-                    <Button
-                      fullWidth
-                      size="large"
-                      onClick={() => {
-                        setTempSelectedVariant(variant);
-                      }}
-                      sx={{
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        py: 1.5,
-                        border: '2px solid',
-                        borderColor: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8)'
-                            : 'rgba(40, 145, 200, 0.6)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3)'
-                            : 'rgba(40, 145, 200, 0.2)',
-                        background: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
-                          : 'transparent',
-                        color: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgb(199 234 255)'
-                            : 'rgb(40, 145, 200)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.7)'
-                            : theme.palette.text.secondary,
-                        '&:hover': {
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.6)'
-                              : 'rgba(40, 145, 200, 0.4)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
-                        },
-                      }}
-                    >
-                      {variant === 'Regular'
-                        ? 'Regular'
-                        : variant === 'Reinforced'
-                          ? 'Reinforced'
-                          : 'Nirnhoned'}
-                    </Button>
-                  </Box>
-                );
-              })}
-
-              {/* Divider */}
-              <Divider
-                sx={{
-                  borderColor:
+              open={variantModalOpen}
+              onClose={() => {
+                setVariantModalOpen(false);
+                setCurrentEditingIndex(null);
+                setTempSelectedVariant('Regular');
+                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+              }}
+              fullWidth
+              maxWidth="xs"
+              PaperProps={{
+                sx: {
+                  borderRadius: '12px',
+                  background:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.2)'
-                      : 'rgba(40, 145, 200, 0.2)',
-                }}
-              />
-
-              {/* Single Quality Rating */}
-              <Box
+                      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                },
+              }}
+            >
+              <DialogTitle
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pt: 1,
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
+                  pb: 1,
                 }}
               >
-                                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    px: 2,
-                    pb: 3,
-                  }}
-                >
-                  {(() => {
-                    // Calculate quality rating values using temporary state
-                    const qualityLevel = tempQualityLevel;
-                    const ratingValue = qualityLevel + 1;
-                    const qualityLabel =
-                      ARMOR_QUALITY_LABELS[qualityLevel] ??
-                      ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
+                {currentItem
+                  ? `${currentItem.name}: ${currentDisplayValue?.toLocaleString()}${currentItem.isPercent ? '%' : ''}`
+                  : 'Select Armor Variant'}
+              </DialogTitle>
+              <DialogContent sx={{ py: 2 }}>
+                <Stack spacing={3}>
+                  {['Regular', 'Reinforced', 'Nirnhoned'].map((variant) => {
+                    const isSelected = tempSelectedVariant === variant;
+
+                    // Quality rating is handled globally below
 
                     return (
-                      <>
-                        <Tooltip title={`Gear Quality: ${qualityLabel}`}>
-                          <Rating
-                            name="modal-armor-quality"
-                            value={ratingValue}
-                            max={ARMOR_QUALITY_LABELS.length}
-                            precision={1}
-                            size="large"
-                            onChange={(event, newValue) => {
-                              event.stopPropagation();
-                              if (typeof newValue === 'number') {
-                                setTempQualityLevel(newValue - 1);
-                              }
-                            }}
-                            onClick={(event) => event.stopPropagation()}
-                            onMouseDown={(event) => event.stopPropagation()}
-                            onTouchStart={(event) => event.stopPropagation()}
-                            getLabelText={(value: number) =>
-                              `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
-                            }
-                            sx={{
-                              '& .MuiRating-iconFilled': {
-                                color: 'rgb(255 222 148)',
-                              },
-                              '& .MuiRating-iconHover': {
-                                color: 'rgb(255 234 179)',
-                              },
-                            }}
-                          />
-                        </Tooltip>
-                        <Typography
-                          variant="h6"
+                      <Box key={variant}>
+                        <Button
+                          fullWidth
+                          size="large"
+                          onClick={() => {
+                            setTempSelectedVariant(variant);
+                          }}
                           sx={{
-                            ml: 2,
+                            borderRadius: '8px',
+                            textTransform: 'none',
                             fontWeight: 600,
-                            color:
-                              theme.palette.mode === 'dark'
+                            fontSize: '1rem',
+                            py: 1.5,
+                            border: '2px solid',
+                            borderColor: isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.8)'
+                                : 'rgba(40, 145, 200, 0.6)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.3)'
+                                : 'rgba(40, 145, 200, 0.2)',
+                            background: isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
+                              : 'transparent',
+                            color: isSelected
+                              ? theme.palette.mode === 'dark'
                                 ? 'rgb(199 234 255)'
-                                : 'rgb(40, 145, 200)',
+                                : 'rgb(40, 145, 200)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.7)'
+                                : theme.palette.text.secondary,
+                            '&:hover': {
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.6)'
+                                  : 'rgba(40, 145, 200, 0.4)',
+                              background:
+                                theme.palette.mode === 'dark'
+                                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+                            },
                           }}
                         >
-                          {qualityLabel}
-                        </Typography>
-                      </>
+                          {variant === 'Regular'
+                            ? 'Regular'
+                            : variant === 'Reinforced'
+                              ? 'Reinforced'
+                              : 'Nirnhoned'}
+                        </Button>
+                      </Box>
                     );
-                  })()}
-                </Box>
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}>
-            <Button
-              onClick={() => {
-                setVariantModalOpen(false);
-                setCurrentEditingIndex(null);
-                setTempSelectedVariant('Regular');
-                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
-              }}
-              sx={{
-                borderRadius: '6px',
-                textTransform: 'none',
-                fontWeight: 500,
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={() => {
-                if (currentEditingIndex !== null) {
-                  // Apply both variant and quality changes
-                  setArmorResistanceVariant(currentEditingIndex, tempSelectedVariant);
-                  updateArmorResistanceQuality(currentEditingIndex, tempQualityLevel);
-                }
-                setVariantModalOpen(false);
-                setCurrentEditingIndex(null);
-                setTempSelectedVariant('Regular');
-                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
-              }}
-              sx={{
-                borderRadius: '6px',
-                textTransform: 'none',
-                fontWeight: 600,
-              }}
-              variant="outlined"
-            >
-              Apply
-            </Button>
-          </DialogActions>
-        </Dialog>
+                  })}
+
+                  {/* Divider */}
+                  <Divider
+                    sx={{
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.2)',
+                    }}
+                  />
+
+                  {/* Single Quality Rating */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pt: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        px: 2,
+                        pb: 3,
+                      }}
+                    >
+                      {(() => {
+                        // Calculate quality rating values using temporary state
+                        const qualityLevel = tempQualityLevel;
+                        const ratingValue = qualityLevel + 1;
+                        const qualityLabel =
+                          ARMOR_QUALITY_LABELS[qualityLevel] ??
+                          ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
+
+                        return (
+                          <>
+                            <Tooltip title={`Gear Quality: ${qualityLabel}`}>
+                              <Rating
+                                name="modal-armor-quality"
+                                value={ratingValue}
+                                max={ARMOR_QUALITY_LABELS.length}
+                                precision={1}
+                                size="large"
+                                onChange={(event, newValue) => {
+                                  event.stopPropagation();
+                                  if (typeof newValue === 'number') {
+                                    setTempQualityLevel(newValue - 1);
+                                  }
+                                }}
+                                onClick={(event) => event.stopPropagation()}
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onTouchStart={(event) => event.stopPropagation()}
+                                getLabelText={(value: number) =>
+                                  `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
+                                }
+                                sx={{
+                                  '& .MuiRating-iconFilled': {
+                                    color: 'rgb(255 222 148)',
+                                  },
+                                  '& .MuiRating-iconHover': {
+                                    color: 'rgb(255 234 179)',
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                ml: 2,
+                                fontWeight: 600,
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)',
+                              }}
+                            >
+                              {qualityLabel}
+                            </Typography>
+                          </>
+                        );
+                      })()}
+                    </Box>
+                  </Box>
+                </Stack>
+              </DialogContent>
+              <DialogActions
+                sx={{ px: 3, pb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}
+              >
+                <Button
+                  onClick={() => {
+                    setVariantModalOpen(false);
+                    setCurrentEditingIndex(null);
+                    setTempSelectedVariant('Regular');
+                    setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+                  }}
+                  sx={{
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (currentEditingIndex !== null) {
+                      // Apply both variant and quality changes
+                      setArmorResistanceVariant(currentEditingIndex, tempSelectedVariant);
+                      updateArmorResistanceQuality(currentEditingIndex, tempQualityLevel);
+                    }
+                    setVariantModalOpen(false);
+                    setCurrentEditingIndex(null);
+                    setTempSelectedVariant('Regular');
+                    setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+                  }}
+                  sx={{
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                  }}
+                  variant="outlined"
+                >
+                  Apply
+                </Button>
+              </DialogActions>
+            </Dialog>
           );
         })()}
       </CalculatorContainer>
