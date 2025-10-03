@@ -2118,15 +2118,28 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Auto-calculate armor passive quantities based on enabled gear pieces
-      const lightArmorCount = updatedData.gear.filter(
+      const lightArmorItems = updatedData.gear.filter(
         (item) =>
           item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
-      ).length;
-
-      const heavyArmorCount = updatedData.gear.filter(
+      );
+      const heavyArmorItems = updatedData.gear.filter(
         (item) =>
           item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
-      ).length;
+      );
+
+      const lightArmorCount = lightArmorItems.length;
+      const heavyArmorCount = heavyArmorItems.length;
+
+      // Debug logging
+      // eslint-disable-next-line no-console
+      console.log('🔍 [ARMOR_PASSIVE_DEBUG] Cycle variant function:', {
+        index,
+        itemName: target.name,
+        lightArmorItems: lightArmorItems.map(item => item.name),
+        heavyArmorItems: heavyArmorItems.map(item => item.name),
+        lightArmorCount,
+        heavyArmorCount
+      });
 
       // Find and update Light Armor Passive
       const lightArmorPassiveIndex = updatedData.gear.findIndex(
