@@ -1,24 +1,24 @@
- [vite] connecting...
- [vite] connected.
- 2025-10-02T19:17:58.158Z [Sentry] [INFO] Sentry disabled - not in production build
- 2025-10-02T19:17:58.222Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
- 2025-10-02T19:17:58.226Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
- 2025-10-02T19:17:58.227Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
- 2025-10-02T19:17:58.227Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
- 2025-10-02T19:17:58.354Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
- 2025-10-02T19:17:58.354Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
- 2025-10-02T19:17:58.354Z [ESO-Logger][EsoLogsClient] [INFO] Updating EsoLogsClient access token
- 2025-10-02T19:17:58.359Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
- 2025-10-02T19:17:58.359Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
- 2025-10-02T19:17:58.360Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
- 2025-10-02T19:17:58.360Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
- [Komodo]   CS Register csid_t3iqxy_3s24az_2_8_3
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
+[vite] connecting...
+[vite] connected.
+2025-10-02T19:17:58.158Z [Sentry] [INFO] Sentry disabled - not in production build
+2025-10-02T19:17:58.222Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
+2025-10-02T19:17:58.226Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
+2025-10-02T19:17:58.227Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-02T19:17:58.227Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-02T19:17:58.354Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+2025-10-02T19:17:58.354Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+2025-10-02T19:17:58.354Z [ESO-Logger][EsoLogsClient] [INFO] Updating EsoLogsClient access token
+2025-10-02T19:17:58.359Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
+2025-10-02T19:17:58.359Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
+2025-10-02T19:17:58.360Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+2025-10-02T19:17:58.360Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
+[Komodo] CS Register csid_t3iqxy_3s24az_2_8_3
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
 The specified value "-" cannot be parsed, or is out of range.
 The specified value "-" cannot be parsed, or is out of range.
 The specified value "-" cannot be parsed, or is out of range.
@@ -1991,114 +1991,114 @@ The specified value "-" cannot be parsed, or is out of range.
 The specified value "-" cannot be parsed, or is out of range.
 The specified value "-" cannot be parsed, or is out of range.
 The specified value "-" cannot be parsed, or is out of range.
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
- DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
+DEBUG - Button Selection: Object
 Calculator.tsx:4464 DEBUG - Button Selection: Object
 Calculator.tsx:4464 DEBUG - Button Selection: Object
 Calculator.tsx:4464 DEBUG - Button Selection: Object
@@ -2180,10 +2180,11 @@ Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Regular', tempSel
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Reinforced', tempSelectedVariant: 'Regular', isSelected: false}
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempSelectedVariant: 'Regular', isSelected: false}
 [NEW] Explain Console errors by using Copilot in Edge: click
-         
-         to explain an error. 
+
+         to explain an error.
         Learn more
         Don't show again
+
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Regular', tempSelectedVariant: 'Regular', isSelected: true}
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Reinforced', tempSelectedVariant: 'Regular', isSelected: false}
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempSelectedVariant: 'Regular', isSelected: false}
@@ -2361,6 +2362,6 @@ Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempS
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Regular', tempSelectedVariant: 'Regular', isSelected: true}
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Reinforced', tempSelectedVariant: 'Regular', isSelected: false}
 Calculator.tsx:4464 DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempSelectedVariant: 'Regular', isSelected: false}
- DEBUG - Button Selection: {buttonVariant: 'Regular', tempSelectedVariant: 'Regular', isSelected: true}
- DEBUG - Button Selection: {buttonVariant: 'Reinforced', tempSelectedVariant: 'Regular', isSelected: false}
- DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempSelectedVariant: 'Regular', isSelected: false}
+DEBUG - Button Selection: {buttonVariant: 'Regular', tempSelectedVariant: 'Regular', isSelected: true}
+DEBUG - Button Selection: {buttonVariant: 'Reinforced', tempSelectedVariant: 'Regular', isSelected: false}
+DEBUG - Button Selection: {buttonVariant: 'Nirnhoned', tempSelectedVariant: 'Regular', isSelected: false}

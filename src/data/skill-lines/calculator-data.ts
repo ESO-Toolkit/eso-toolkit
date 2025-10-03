@@ -24,6 +24,8 @@ export interface CalculatorItem {
   }[];
   selectedVariant?: number;
   qualityLevel?: number;
+  originalIndex?: number;
+  resistanceValue?: string | number;
 }
 
 export interface CalculatorData {

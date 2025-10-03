@@ -552,7 +552,7 @@ const generateItemId = (category: string, name: string, index: number): string =
 
 // Helper function to find item by ID in any category
 const findItemById = (data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
-  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
     const index = data[category].findIndex(item => (item as any).id === id);
     if (index !== -1) {
       return { category, index, item: data[category][index] };
@@ -568,7 +568,7 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
 
   
   // Check for duplicate items in each category and track all items
-  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
     const items = data[category];
     const nameMap = new Map<string, number[]>();
 
@@ -626,7 +626,7 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   const expectedGearItems = [
     'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
     'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
-    'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt'
+    'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt',
   ];
 
   expectedGearItems.forEach((expectedName, expectedIndex) => {
@@ -638,7 +638,7 @@ const validateCalculatorData = (data: CalculatorData): boolean => {
   });
 
   // Check for missing or invalid resistance values
-  for (const category of Object.keys(data) as keyof CalculatorData[]) {
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
     data[category].forEach((item, index) => {
       if (!item.resistanceValue || item.resistanceValue === "-") {
         console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
@@ -1054,7 +1054,7 @@ const CalculatorComponent: React.FC = () => {
 
   // Helper function to find item by ID
   const findItemById = useCallback((data: CalculatorData, id: string): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
-    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       const index = data[category].findIndex(item => (item as any).id === id);
       if (index !== -1) {
         return { category, index, item: data[category][index] };
@@ -1070,7 +1070,7 @@ const CalculatorComponent: React.FC = () => {
 
     
     // Check for duplicate items in each category and track all items
-    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       const items = data[category];
       const nameMap = new Map<string, number[]>();
 
@@ -1147,7 +1147,7 @@ const CalculatorComponent: React.FC = () => {
     // This is preventing armor items from being clicked/enabled
     // TODO: Fix resistance calculation logic
     /*
-    for (const category of Object.keys(data) as keyof CalculatorData[]) {
+    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       data[category].forEach((item, index) => {
         if (!item.resistanceValue || item.resistanceValue === "-") {
           console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
@@ -1601,10 +1601,10 @@ const CalculatorComponent: React.FC = () => {
 
         // Validate no duplicate passive items exist
         const lightArmorPassives = updatedData.gear.filter(
-          (item) => item.name === 'Light Armor Passive'
+          (item) => item.name === 'Light Armor Passive',
         );
         const heavyArmorPassives = updatedData.gear.filter(
-          (item) => item.name === 'Heavy Armor Passive'
+          (item) => item.name === 'Heavy Armor Passive',
         );
 
         if (lightArmorPassives.length > 1) {
@@ -1763,7 +1763,7 @@ const CalculatorComponent: React.FC = () => {
       // If not found, try case-insensitive matching
       if (variantIndex === -1) {
         variantIndex = variants.findIndex(v =>
-          v.name.toLowerCase() === variantName.toLowerCase()
+          v.name.toLowerCase() === variantName.toLowerCase(),
         );
       }
 
@@ -2165,7 +2165,7 @@ const CalculatorComponent: React.FC = () => {
         if (!isNaN(numValue)) {
           const clampedValue = Math.max(
             item.minQuantity || 0,
-            Math.min(item.maxQuantity || 100, numValue)
+            Math.min(item.maxQuantity || 100, numValue),
           );
 
           // Debounce the update (longer delay for mobile)
@@ -2187,7 +2187,7 @@ const CalculatorComponent: React.FC = () => {
         if (!isNaN(numValue)) {
           const clampedValue = Math.max(
             item.minQuantity || 0,
-            Math.min(item.maxQuantity || 100, numValue)
+            Math.min(item.maxQuantity || 100, numValue),
           );
           setLocalQuantity(clampedValue.toString());
           debouncedUpdate(clampedValue);
@@ -4821,7 +4821,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Sets</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceSets.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4830,7 +4830,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Passives</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredPassives.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4840,7 +4840,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredCp.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4855,7 +4855,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Group Buffs</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceData.groupBuffs.map((item, index) =>
-                            renderItem(item, index, 'groupBuffs', updateArmorResistanceItem)
+                            renderItem(item, index, 'groupBuffs', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4865,7 +4865,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Light Armor</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.light.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4875,7 +4875,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Medium Armor</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.medium.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4885,7 +4885,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Heavy Armor</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.heavy.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4895,7 +4895,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Shield</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceGearSections.shield.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, 'gear', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4905,7 +4905,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Set Items</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceSets.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4915,7 +4915,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Class Passives</Typography>
                         <List sx={{ p: 0 }}>
                           {armorResistanceData.classPassives.map((item, index) =>
-                            renderItem(item, index, 'classPassives', updateArmorResistanceItem)
+                            renderItem(item, index, 'classPassives', updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4925,7 +4925,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Other Passives</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredPassives.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
@@ -4935,7 +4935,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredCp.map((item, index) =>
-                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem),
                           )}
                         </List>
                       </Box>
