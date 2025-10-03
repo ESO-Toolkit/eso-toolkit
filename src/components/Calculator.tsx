@@ -1303,10 +1303,20 @@ const CalculatorComponent: React.FC = () => {
     () => [
       ...armorResistanceData.cp
         .filter((item) => item.name === 'Armor Master')
-        .map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+        .map((item) => {
+          const originalIndex = armorResistanceData.cp.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'cp', originalIndex };
+        }),
       ...armorResistanceData.passives
         .filter((item) => ['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name))
-        .map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+        .map((item) => {
+          const originalIndex = armorResistanceData.passives.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'passives', originalIndex };
+        }),
     ],
     [armorResistanceData.cp, armorResistanceData.passives],
   );
@@ -1314,14 +1324,29 @@ const CalculatorComponent: React.FC = () => {
   // Filter out set items from their original categories
   const filteredPassives = useMemo(
     () =>
-      armorResistanceData.passives.filter(
-        (item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name),
-      ),
+      armorResistanceData.passives
+        .filter(
+          (item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name),
+        )
+        .map((item) => {
+          const originalIndex = armorResistanceData.passives.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'passives', originalIndex };
+        }),
     [armorResistanceData.passives],
   );
 
   const filteredCp = useMemo(
-    () => armorResistanceData.cp.filter((item) => item.name !== 'Armor Master'),
+    () =>
+      armorResistanceData.cp
+        .filter((item) => item.name !== 'Armor Master')
+        .map((item) => {
+          const originalIndex = armorResistanceData.cp.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'cp', originalIndex };
+        }),
     [armorResistanceData.cp],
   );
 
@@ -1548,6 +1573,7 @@ const CalculatorComponent: React.FC = () => {
       console.log(`🔄 [LEGACY_UPDATE] Updating ${category}[${index}]`, updates);
 
       setArmorResistanceData((prev: CalculatorData) => {
+        console.log(`📊 [STATE] Previous ${category} state:`, prev[category].map(item => ({ name: item.name, enabled: item.enabled })));
         // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
         // if (!validateCalculatorData(prev)) {
         //   console.error(`❌ [LEGACY_UPDATE] Previous state validation failed - aborting update`);
@@ -1628,6 +1654,13 @@ const CalculatorComponent: React.FC = () => {
             enabled: heavyArmorCount > 0,
           };
         }
+
+        console.log(`📊 [STATE] Final ${category} state:`, updatedData[category].map(item => ({ name: item.name, enabled: item.enabled })));
+        console.log(`📊 [STATE] Full updated data:`, {
+          gear: updatedData.gear.map(item => ({ name: item.name, enabled: item.enabled })),
+          cp: updatedData.cp.map(item => ({ name: item.name, enabled: item.enabled })),
+          passives: updatedData.passives.map(item => ({ name: item.name, enabled: item.enabled }))
+        });
 
         return updatedData;
       });
@@ -2127,13 +2160,9 @@ const CalculatorComponent: React.FC = () => {
         typeof indexedItem.originalIndex === 'number' ? indexedItem.originalIndex : index;
 
       // Armor passive detection for disabling manual interaction
+      // Only the actual auto-calculated armor passives should be blocked
       const isLightArmorPassive = item.name === 'Light Armor Passive';
       const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
-
-      // Debug logging to identify which items are being blocked
-      if (isLightArmorPassive || isHeavyArmorPassive) {
-        console.log(`🛡️ [DEBUG] Armor passive detected: ${item.name} (Light: ${isLightArmorPassive}, Heavy: ${isHeavyArmorPassive})`);
-      }
 
       // Use the original update function directly for now
       const enhancedUpdateFunction = updateFunction;
@@ -2590,15 +2619,11 @@ const CalculatorComponent: React.FC = () => {
 
         // Don't allow manual clicking for armor passives - these are auto-calculated
         if (isLightArmorPassive || isHeavyArmorPassive) {
-          console.log(`🛡️ [DEBUG] Click blocked for armor passive: ${item.name} (Light: ${isLightArmorPassive}, Heavy: ${isHeavyArmorPassive})`);
           return;
         }
 
         if (!item.locked) {
-          console.log(`🛡️ [DEBUG] Click allowed for: ${item.name} (locked: ${item.locked})`);
           updateFunction(category, resolvedIndex, { enabled: !item.enabled });
-        } else {
-          console.log(`🛡️ [DEBUG] Click blocked for locked item: ${item.name} (locked: ${item.locked})`);
         }
       };
 
@@ -2655,10 +2680,6 @@ const CalculatorComponent: React.FC = () => {
                   },
                 };
               }}
-              onChange={(e) =>
-                enhancedUpdateFunction(category, resolvedIndex, { enabled: e.target.checked })
-              }
-              onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
           </ListItemIcon>
 
@@ -4828,24 +4849,33 @@ const CalculatorComponent: React.FC = () => {
                         'gear',
                         updateArmorResistanceItem,
                       )}
-                      {renderSection(
-                        'Sets',
-                        armorResistanceSets,
-                        'gear',
-                        updateArmorResistanceItem,
-                      )}
-                      {renderSection(
-                        'Passives',
-                        filteredPassives,
-                        'passives',
-                        updateArmorResistanceItem,
-                      )}
-                      {renderSection(
-                        'Champion Points',
-                        filteredCp,
-                        'cp',
-                        updateArmorResistanceItem,
-                      )}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Sets</Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceSets.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+                      {/* Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Passives</Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredPassives.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Champion Points */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredCp.map((item, index) =>
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
+                          )}
+                        </List>
+                      </Box>
                     </>
                   )}
 
@@ -4927,7 +4957,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Other Passives</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredPassives.map((item, index) =>
-                            renderItem(item, index, 'passives', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
                           )}
                         </List>
                       </Box>
@@ -4937,7 +4967,7 @@ const CalculatorComponent: React.FC = () => {
                         <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>Champion Points</Typography>
                         <List sx={{ p: 0 }}>
                           {filteredCp.map((item, index) =>
-                            renderItem(item, index, 'cp', updateArmorResistanceItem)
+                            renderItem(item, item.originalIndex ?? index, item.category as keyof CalculatorData, updateArmorResistanceItem)
                           )}
                         </List>
                       </Box>
