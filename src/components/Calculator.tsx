@@ -1540,15 +1540,29 @@ const CalculatorComponent: React.FC = () => {
         // }
 
         // Auto-calculate armor passive quantities and enabled state
-        const lightArmorCount = updatedData.gear.filter(
+        const lightArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
-        ).length;
-
-        const heavyArmorCount = updatedData.gear.filter(
+        );
+        const heavyArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
-        ).length;
+        );
+
+        const lightArmorCount = lightArmorItems.length;
+        const heavyArmorCount = heavyArmorItems.length;
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log('🔍 [ARMOR_PASSIVE_DEBUG] ID-based update function:', {
+          id,
+          location,
+          lightArmorItems: lightArmorItems.map(item => item.name),
+          heavyArmorItems: heavyArmorItems.map(item => item.name),
+          lightArmorCount,
+          heavyArmorCount,
+          updates
+        });
 
         // Find and update Light Armor Passive with validation
         const lightArmorPassiveIndex = updatedData.gear.findIndex(
@@ -1949,15 +1963,29 @@ const CalculatorComponent: React.FC = () => {
         // }
 
         // Auto-calculate armor passive quantities and enabled state
-        const lightArmorCount = updatedData.gear.filter(
+        const lightArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
-        ).length;
-
-        const heavyArmorCount = updatedData.gear.filter(
+        );
+        const heavyArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
-        ).length;
+        );
+
+        const lightArmorCount = lightArmorItems.length;
+        const heavyArmorCount = heavyArmorItems.length;
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log('🔍 [ARMOR_PASSIVE_DEBUG] Main update function:', {
+          lightArmorItems: lightArmorItems.map(item => item.name),
+          heavyArmorItems: heavyArmorItems.map(item => item.name),
+          lightArmorCount,
+          heavyArmorCount,
+          updateCategory: category,
+          updateIndex: index,
+          updates
+        });
 
         // Validate no duplicate passive items exist
         const lightArmorPassives = updatedData.gear.filter(
@@ -1981,11 +2009,24 @@ const CalculatorComponent: React.FC = () => {
           (item) => item.name === 'Light Armor Passive',
         );
         if (lightArmorPassiveIndex !== -1) {
+          const oldQuantity = updatedData.gear[lightArmorPassiveIndex].quantity;
+          const oldEnabled = updatedData.gear[lightArmorPassiveIndex].enabled;
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
             quantity: lightArmorCount,
             enabled: lightArmorCount > 0,
           };
+          // eslint-disable-next-line no-console
+          console.log('✅ [LIGHT_ARMOR_PASSIVE] Updated:', {
+            index: lightArmorPassiveIndex,
+            oldQuantity,
+            newQuantity: lightArmorCount,
+            oldEnabled,
+            newEnabled: lightArmorCount > 0
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
         }
 
         // Find and update Heavy Armor Passive
@@ -1993,11 +2034,24 @@ const CalculatorComponent: React.FC = () => {
           (item) => item.name === 'Heavy Armor Passive',
         );
         if (heavyArmorPassiveIndex !== -1) {
+          const oldQuantity = updatedData.gear[heavyArmorPassiveIndex].quantity;
+          const oldEnabled = updatedData.gear[heavyArmorPassiveIndex].enabled;
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
             quantity: heavyArmorCount,
             enabled: heavyArmorCount > 0,
           };
+          // eslint-disable-next-line no-console
+          console.log('✅ [HEAVY_ARMOR_PASSIVE] Updated:', {
+            index: heavyArmorPassiveIndex,
+            oldQuantity,
+            newQuantity: heavyArmorCount,
+            oldEnabled,
+            newEnabled: heavyArmorCount > 0
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
         }
 
         return updatedData;
