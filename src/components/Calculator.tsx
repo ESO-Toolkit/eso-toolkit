@@ -3431,12 +3431,14 @@ const CalculatorComponent: React.FC = () => {
     valueSuffix = '',
     status,
     rangeDescription,
+    isArmorTab = false,
   }: {
     label: string;
     value: string;
     valueSuffix?: string;
     status: SummaryStatus;
     rangeDescription: string;
+    isArmorTab?: boolean;
   }): React.JSX.Element => {
     const statusVisual = getStatusVisuals(status);
     const StatusIcon = statusVisual.Icon;
@@ -3590,13 +3592,15 @@ const CalculatorComponent: React.FC = () => {
             <Typography
               variant="caption"
               sx={{
-                fontSize: { xs: '0.82rem', sm: '0.8rem' },
-                lineHeight: { xs: 1.42, sm: 1.4 },
+                fontSize: { xs: isArmorTab ? '0.75rem' : '0.82rem', sm: '0.8rem' },
+                lineHeight: { xs: isArmorTab ? 1.3 : 1.42, sm: 1.4 },
                 color: alpha(theme.palette.text.secondary, 0.9),
                 whiteSpace: 'pre-line',
-                textAlign: 'right',
+                textAlign: { xs: isArmorTab ? 'left' : 'right', sm: 'right' },
                 letterSpacing: 0.12,
-                pr: { xs: 0.25, sm: 0 },
+                pr: { xs: isArmorTab ? 0 : 0.25, sm: 0 },
+                wordBreak: isArmorTab ? 'break-word' : 'normal',
+                hyphens: isArmorTab ? 'auto' : 'manual',
               }}
             >
               {rangeDescription.replace(/-/g, '–')}
@@ -5472,6 +5476,7 @@ const CalculatorComponent: React.FC = () => {
                     value: armorResistanceTotal.toLocaleString(),
                     status: armorResistanceStatus,
                     rangeDescription: `Target: 33,100–33,500\nCap: 33,500${overResistanceAmount > 0 ? `\n\n⚠️ Over-Resistance: ${overResistanceAmount.toLocaleString()} caps` : ''}\n\n🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ` (${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of max)`}`,
+                    isArmorTab: true,
                   })}
               </Box>
             </Box>
