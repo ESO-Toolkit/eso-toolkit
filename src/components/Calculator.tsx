@@ -57,6 +57,8 @@ import {
   PEN_OPTIMAL_MAX_PVE,
   PEN_OPTIMAL_MIN_PVP,
   PEN_OPTIMAL_MAX_PVP,
+  MAX_PENETRATION_PVE,
+  PENETRATION_DAMAGE_LOSS_DIVISOR,
   CRIT_OPTIMAL_MIN,
   CRIT_OPTIMAL_MAX,
   ARMOR_RESISTANCE_OPTIMAL_MIN,
@@ -2092,6 +2094,22 @@ const CalculatorComponent: React.FC = () => {
     return Math.min(MAX_DAMAGE_MITIGATION, Math.floor(percentage * 10) / 10); // Round to 1 decimal place
   }, []);
 
+  // Calculate underpenetration amount (amount below MAX_PENETRATION_PVE)
+  const getUnderpenetrationAmount = useCallback((total: number) => {
+    const underAmount = Math.max(0, MAX_PENETRATION_PVE - total);
+    return underAmount;
+  }, []);
+
+  // Calculate damage loss percentage due to incomplete resistance shred
+  const getDamageLossPercentage = useCallback((total: number) => {
+    const underAmount = getUnderpenetrationAmount(total);
+    if (underAmount === 0) return 0;
+
+    // Formula based on CSV analysis: damage loss percentage
+    const damageLoss = underAmount / PENETRATION_DAMAGE_LOSS_DIVISOR;
+    return Math.floor(damageLoss * 10) / 10; // Round to 1 decimal place
+  }, [getUnderpenetrationAmount]);
+
   const penStatus = getPenStatus(penTotal, gameMode);
   const critStatus = getCritStatus(critTotal);
   const armorResistanceStatus = getArmorResistanceStatus(armorResistanceTotal);
@@ -2099,6 +2117,10 @@ const CalculatorComponent: React.FC = () => {
   // Calculate additional armor metrics
   const overResistanceAmount = getOverResistanceAmount(armorResistanceTotal);
   const damageMitigationPercentage = getDamageMitigationPercentage(armorResistanceTotal);
+
+  // Calculate additional penetration metrics
+  const underpenetrationAmount = getUnderpenetrationAmount(penTotal);
+  const damageLossPercentage = getDamageLossPercentage(penTotal);
 
   // Update item handlers - optimized for performance
   const updatePenItem = useCallback(
@@ -3460,6 +3482,7 @@ const CalculatorComponent: React.FC = () => {
     status,
     rangeDescription,
     isArmorTab = false,
+    quadrantData,
   }: {
     label: string;
     value: string;
@@ -3467,6 +3490,11 @@ const CalculatorComponent: React.FC = () => {
     status: SummaryStatus;
     rangeDescription: string;
     isArmorTab?: boolean;
+    quadrantData?: {
+      underpenInfo?: string;
+      overResistInfo?: string;
+      targetRanges?: string;
+    };
   }): React.JSX.Element => {
     const statusVisual = getStatusVisuals(status);
     const StatusIcon = statusVisual.Icon;
@@ -3593,23 +3621,184 @@ const CalculatorComponent: React.FC = () => {
               }}
             />
 
-            {/* Range Description */}
-            <Typography
-              variant="body2"
-              sx={{
-                fontSize: '0.8rem',
-                lineHeight: 1.5,
-                color: alpha(theme.palette.text.secondary, 0.95),
-                whiteSpace: 'pre-line',
-                textAlign: 'left',
-                letterSpacing: 0.1,
-                wordBreak: 'break-word',
-                hyphens: 'auto',
-                fontWeight: 400,
-              }}
-            >
-              {rangeDescription.replace(/-/g, '–')}
-            </Typography>
+            {/* Range Description or Quadrant Data */}
+            {quadrantData ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                {/* Bottom Left: Damage Mitigation or Over-Resistance Info */}
+                {(quadrantData.overResistInfo) && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8rem',
+                      lineHeight: 1.5,
+                      color: alpha(theme.palette.text.secondary, 0.95),
+                      whiteSpace: 'pre-line',
+                      letterSpacing: 0.1,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {quadrantData.overResistInfo.replace(/-/g, '–')}
+                  </Typography>
+                )}
+
+                {/* Bottom Right: Target Ranges */}
+                {quadrantData.targetRanges && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8rem',
+                      lineHeight: 1.5,
+                      color: alpha(theme.palette.text.secondary, 0.95),
+                      whiteSpace: 'pre-line',
+                      letterSpacing: 0.1,
+                      fontWeight: 400,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {quadrantData.targetRanges.replace(/-/g, '–')}
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  color: alpha(theme.palette.text.secondary, 0.95),
+                  whiteSpace: 'pre-line',
+                  textAlign: 'left',
+                  letterSpacing: 0.1,
+                  wordBreak: 'break-word',
+                  hyphens: 'auto',
+                  fontWeight: 400,
+                }}
+              >
+                {rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            )}
+          </Box>
+        ) : quadrantData ? (
+          // 2x2 Grid Layout for Penetration Summary
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gridTemplateAreas: '"value status" "underpen targets"',
+              gap: 2,
+              padding: {
+                xs: liteMode ? '18px 20px' : '22px 26px',
+                sm: liteMode ? '20px 28px' : '24px 32px',
+              },
+              maxWidth: { xs: 460, sm: '100%' },
+              margin: '0 auto',
+            }}
+          >
+            {/* Top Left: Pen Value */}
+            <Box sx={{ gridArea: 'value' }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  letterSpacing: '0.08em',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: theme.palette.text.secondary,
+                  mb: 0.75,
+                }}
+              >
+                {label}
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '2rem',
+                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.1,
+                }}
+              >
+                {value}
+                {valueSuffix ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '1.3rem',
+                      fontWeight: 600,
+                      ml: 0.5,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {valueSuffix}
+                  </Box>
+                ) : null}
+              </Typography>
+            </Box>
+
+            {/* Top Right: Status Badge */}
+            <Box sx={{ gridArea: 'status', display: 'flex', alignItems: 'flex-start', justifyContent: 'flex-end', pt: 0.5 }}>
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                  borderRadius: '999px',
+                  py: 0.5,
+                  px: 1.2,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor: alpha(statusVisual.color, 0.15),
+                  color: statusVisual.color,
+                  border: `1px solid ${alpha(statusVisual.color, 0.3)}`,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <StatusIcon sx={{ fontSize: 16, color: statusVisual.color }} />
+                <Typography variant="body2">{statusVisual.label}</Typography>
+              </Box>
+            </Box>
+
+            {/* Bottom Left: Underpen Info or Over-Resistance Info */}
+            {(quadrantData.underpenInfo || quadrantData.overResistInfo) && (
+              <Box sx={{
+                gridArea: 'underpen',
+                display: 'flex',
+                alignItems: 'flex-end',
+                pb: 0.5
+              }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.8rem',
+                    lineHeight: 1.5,
+                    color: alpha(theme.palette.text.secondary, 0.95),
+                    whiteSpace: 'pre-line',
+                    letterSpacing: 0.1,
+                    fontWeight: 400,
+                  }}
+                >
+                  {(quadrantData.underpenInfo || quadrantData.overResistInfo || '').replace(/-/g, '–')}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Bottom Right: Target Ranges */}
+            <Box sx={{ gridArea: 'targets', textAlign: 'right' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  color: alpha(theme.palette.text.secondary, 0.95),
+                  whiteSpace: 'pre-line',
+                  letterSpacing: 0.1,
+                  fontWeight: 400,
+                }}
+              >
+                {quadrantData.targetRanges?.replace(/-/g, '–') || rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            </Box>
           </Box>
         ) : (
           <Box
@@ -5590,12 +5779,18 @@ const CalculatorComponent: React.FC = () => {
                     label: 'Total Penetration',
                     value: penTotal.toLocaleString(),
                     status: penStatus,
-                    rangeDescription:
-                      gameMode === 'pve'
-                        ? 'Target: 18,200–18,999'
-                        : gameMode === 'pvp'
-                          ? 'Target: 33,100–33,500'
-                          : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
+                    rangeDescription: '', // Not used in quadrant layout
+                    quadrantData: {
+                      underpenInfo: (gameMode === 'pve' || gameMode === 'both') && underpenetrationAmount > 0
+                        ? `Underpen: ${underpenetrationAmount.toLocaleString()}\nDamage Loss: ${damageLossPercentage}%`
+                        : undefined,
+                      targetRanges:
+                        gameMode === 'pve'
+                          ? 'Target: 18,200–18,999'
+                          : gameMode === 'pvp'
+                            ? 'Target: 33,100–33,500'
+                            : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
+                    },
                   })}
                 {selectedTab === 1 &&
                   renderSummaryFooter({
@@ -5603,20 +5798,27 @@ const CalculatorComponent: React.FC = () => {
                     value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
                     valueSuffix: '%',
                     status: critStatus,
-                    rangeDescription:
-                      gameMode === 'pve'
-                        ? 'Target: 125%+'
-                        : gameMode === 'pvp'
-                          ? 'Target: 100%+'
-                          : 'PvE: 125%+\nPvP: 100%+',
+                    rangeDescription: '', // Not used in quadrant layout
+                    quadrantData: {
+                      targetRanges:
+                        gameMode === 'pve'
+                          ? 'Target: 125%+'
+                          : gameMode === 'pvp'
+                            ? 'Target: 100%+'
+                            : 'PvE: 125%+\nPvP: 100%+',
+                    },
                   })}
                 {selectedTab === 2 &&
                   renderSummaryFooter({
                     label: 'Total Armor Resistance',
                     value: armorResistanceTotal.toLocaleString(),
                     status: armorResistanceStatus,
-                    rangeDescription: `Target: 33,100–33,500\nCap: 33,500${overResistanceAmount > 0 ? `\n\n⚠️ Over-Resistance: ${overResistanceAmount.toLocaleString()} caps` : ''}\n\n🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ` (${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of max)`}`,
+                    rangeDescription: '', // Not used in quadrant layout
                     isArmorTab: true,
+                    quadrantData: {
+                      overResistInfo: `🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ` (${((damageMitigationPercentage / MAX_DAMAGE_MITIGATION) * 100).toFixed(0)}% of max)`}`,
+                      targetRanges: `Target: 33,100–33,500\nCap: 33,500${overResistanceAmount > 0 ? `\n\n⚠️ Over-Resistance: ${overResistanceAmount.toLocaleString()} caps` : ''}`,
+                    },
                   })}
               </Box>
             </Box>
