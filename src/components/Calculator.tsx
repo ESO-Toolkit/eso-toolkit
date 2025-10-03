@@ -1670,6 +1670,7 @@ const CalculatorComponent: React.FC = () => {
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
   const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('Regular');
+  const [tempQualityLevel, setTempQualityLevel] = useState<number>(ARMOR_QUALITY_LABELS.length - 1);
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] =
@@ -3008,6 +3009,11 @@ const CalculatorComponent: React.FC = () => {
 
                   setCurrentEditingIndex(resolvedIndex);
                   setTempSelectedVariant(currentVariant);
+                  // Initialize temp quality level from current item
+                  const currentQualityLevel = freshItem?.qualityLevel !== undefined
+                    ? freshItem.qualityLevel
+                    : ARMOR_QUALITY_LABELS.length - 1;
+                  setTempQualityLevel(currentQualityLevel);
                   setVariantModalOpen(true);
                 }
               } else {
@@ -5864,11 +5870,44 @@ const CalculatorComponent: React.FC = () => {
         </Container>
 
         {/* Armor Variant Selection Modal for Mobile */}
-        <Dialog
+        {(() => {
+          // Calculate current item information for the modal title
+          const currentItem =
+            currentEditingIndex !== null
+              ? armorResistanceData.gear[currentEditingIndex]
+              : null;
+
+          // Calculate the current display value for the item using temporary states
+          let currentDisplayValue: number | null = null;
+          if (currentItem) {
+            // Use temporary quality level instead of current item's quality level
+            const qualityLevel = tempQualityLevel;
+
+            // Find the temporary variant and its values
+            const currentVariant = currentItem.variants?.find(
+              (v: any) => v.name === tempSelectedVariant
+            );
+            const variantQualityValues = currentVariant?.qualityValues;
+
+            // Calculate display value using the same logic as renderItem
+            if (currentVariant) {
+              currentDisplayValue =
+                variantQualityValues?.[qualityLevel] ?? currentVariant.value ?? currentItem.value ?? 0;
+            } else if (currentItem.isFlat) {
+              currentDisplayValue = currentItem.value || 0;
+            } else {
+              currentDisplayValue = currentItem.quantity * (currentItem.per || 0);
+            }
+          }
+
+          return (
+            <Dialog
           open={variantModalOpen}
           onClose={() => {
             setVariantModalOpen(false);
             setCurrentEditingIndex(null);
+            setTempSelectedVariant('Regular');
+            setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
           }}
           fullWidth
           maxWidth="xs"
@@ -5902,7 +5941,7 @@ const CalculatorComponent: React.FC = () => {
               pb: 1,
             }}
           >
-            Select Armor Variant
+            {currentItem ? `${currentItem.name}: ${currentDisplayValue?.toLocaleString()}${currentItem.isPercent ? '%' : ''}` : 'Select Armor Variant'}
           </DialogTitle>
           <DialogContent sx={{ py: 2 }}>
             <Stack spacing={3}>
@@ -5987,38 +6026,18 @@ const CalculatorComponent: React.FC = () => {
                   pt: 1,
                 }}
               >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.9)'
-                        : theme.palette.text.primary,
-                    textAlign: 'center',
-                  }}
-                >
-                  Gear Quality
-                </Typography>
-                <Box
+                                <Box
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     px: 2,
+                    pb: 3,
                   }}
                 >
                   {(() => {
-                    // Calculate quality rating values once for the current item
-                    const currentItem =
-                      currentEditingIndex !== null
-                        ? armorResistanceData.gear[currentEditingIndex]
-                        : null;
-                    const qualityLevel =
-                      typeof currentItem?.qualityLevel === 'number'
-                        ? currentItem.qualityLevel
-                        : ARMOR_QUALITY_LABELS.length - 1;
+                    // Calculate quality rating values using temporary state
+                    const qualityLevel = tempQualityLevel;
                     const ratingValue = qualityLevel + 1;
                     const qualityLabel =
                       ARMOR_QUALITY_LABELS[qualityLevel] ??
@@ -6035,8 +6054,8 @@ const CalculatorComponent: React.FC = () => {
                             size="large"
                             onChange={(event, newValue) => {
                               event.stopPropagation();
-                              if (typeof newValue === 'number' && currentEditingIndex !== null) {
-                                updateArmorResistanceQuality(currentEditingIndex, newValue - 1);
+                              if (typeof newValue === 'number') {
+                                setTempQualityLevel(newValue - 1);
                               }
                             }}
                             onClick={(event) => event.stopPropagation()}
@@ -6081,6 +6100,7 @@ const CalculatorComponent: React.FC = () => {
                 setVariantModalOpen(false);
                 setCurrentEditingIndex(null);
                 setTempSelectedVariant('Regular');
+                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
               }}
               sx={{
                 borderRadius: '6px',
@@ -6093,12 +6113,14 @@ const CalculatorComponent: React.FC = () => {
             <Button
               onClick={() => {
                 if (currentEditingIndex !== null) {
-                  // Direct variant setting instead of complex cycling
+                  // Apply both variant and quality changes
                   setArmorResistanceVariant(currentEditingIndex, tempSelectedVariant);
+                  updateArmorResistanceQuality(currentEditingIndex, tempQualityLevel);
                 }
                 setVariantModalOpen(false);
                 setCurrentEditingIndex(null);
                 setTempSelectedVariant('Regular');
+                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
               }}
               sx={{
                 borderRadius: '6px',
@@ -6111,6 +6133,8 @@ const CalculatorComponent: React.FC = () => {
             </Button>
           </DialogActions>
         </Dialog>
+          );
+        })()}
       </CalculatorContainer>
     </>
   );
