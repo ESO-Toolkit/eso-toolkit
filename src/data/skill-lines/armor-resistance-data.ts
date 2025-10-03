@@ -522,7 +522,8 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       quantity: 1,
       maxQuantity: 6,
       value: 1240,
-      isFlat: true,
+      per: 1240,
+      isFlat: false,
       category: 'classPassives',
       tooltip:
         '<div class="tt-head">Winter\'s Embrace</div><strong>Frozen Armor</strong><br/>Increases your Physical and Spell Resistance by <strong>1240</strong> for each Winter\'s Embrace ability slotted.',
@@ -629,8 +630,9 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       enabled: false,
       quantity: 1,
       value: 1487,
+      per: 1487,
       maxQuantity: 6,
-      isFlat: true,
+      isFlat: false,
       category: 'passives',
       tooltip:
         'Armor line bonus (e.g., Crimson Oath) grants <strong>1487</strong> Physical and Spell Resistance.',
