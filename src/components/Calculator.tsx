@@ -3836,71 +3836,58 @@ const CalculatorComponent: React.FC = () => {
                   width: { xs: '100%', sm: 'auto' },
                 }}
               >
-                <Tooltip
-                  title={selectedTab === 2 ? "Game mode selection is not available for Armor Resistance" : ""}
-                  arrow
-                  placement="top"
+                <div
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },
+                    display: 'flex',
+                  }}
                 >
-                  <span
+                  <ButtonGroup
+                    size={isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'}
+                    variant="outlined"
+                    disabled={selectedTab === 2}
                     sx={{
-                      display: { xs: 'block', sm: 'inline-block' },
-                      width: { xs: '100%', sm: 'auto' },
-                    }}
-                  >
-                    <ButtonGroup
-                      size={
-                        isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
-                      }
-                      variant="outlined"
-                      disabled={selectedTab === 2}
-                      sx={{
-                        width: { xs: '100%', sm: 'auto' },
-                        display: 'flex',
-                        '& .MuiButtonGroup-grouped': {
-                          flex: { xs: 1, sm: 'none' },
+                      width: '100%',
+                      display: 'flex',
+                      '& .MuiButtonGroup-grouped': {
+                        flex: 1,
+                        minWidth: 0,
+                      },
+                      '& .MuiButton-root': {
+                        border: liteMode
+                          ? theme.palette.mode === 'dark'
+                            ? '1px solid rgb(128 211 255 / 25%)'
+                            : '1px solid rgb(40 145 200 / 20%)'
+                          : theme.palette.mode === 'dark'
+                            ? '1px solid rgb(128 211 255 / 30%)'
+                            : '1px solid rgb(40 145 200 / 25%)',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
+                        minWidth: 0,
+                        fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
+                        px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
+                        flex: 1,
+                        '&:hover': {
+                          transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
+                          borderColor: 'rgb(128 211 255 / 80%)',
                         },
-                        '& .MuiButton-root': {
-                          border: liteMode
-                            ? theme.palette.mode === 'dark'
-                              ? '1px solid rgb(128 211 255 / 25%)'
-                              : '1px solid rgb(40 145 200 / 20%)'
-                            : theme.palette.mode === 'dark'
-                              ? '1px solid rgb(128 211 255 / 30%)'
-                              : '1px solid rgb(40 145 200 / 25%)',
-                          // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
-                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                          // Enhanced mobile touch targets
-                          minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                          minWidth: {
-                            xs: 0,
-                            sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
-                          },
-                          fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
-                          px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
-                          flex: { xs: 1, sm: 'none' },
-                          '&:hover': {
-                            transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
-                            borderColor: 'rgb(128 211 255 / 80%)',
-                          },
-                          '&:active': {
-                            transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
-                          },
-                          // Disabled state styling for armor tab
-                          ...(selectedTab === 2 && {
-                            opacity: 0.5,
-                            cursor: 'not-allowed',
-                            '&:hover': {
-                              transform: 'none',
-                              borderColor: 'inherit',
-                            },
-                          }),
+                        '&:active': {
+                          transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
                         },
-                        // ButtonGroup disabled styling
                         ...(selectedTab === 2 && {
-                          opacity: 0.6,
-                          pointerEvents: 'none',
+                          opacity: 0.5,
+                          cursor: 'not-allowed',
+                          '&:hover': {
+                            transform: 'none',
+                            borderColor: 'inherit',
+                          },
                         }),
-                      }}
+                      },
+                      ...(selectedTab === 2 && {
+                        opacity: 0.6,
+                        pointerEvents: 'none',
+                      }),
+                    }}
                 >
                   <Button
                     variant={gameMode === 'pve' ? 'contained' : 'outlined'}
@@ -4008,8 +3995,7 @@ const CalculatorComponent: React.FC = () => {
                     Both
                   </Button>
                 </ButtonGroup>
-                  </span>
-                </Tooltip>
+                </div>
               </Box>
             </Box>
 
