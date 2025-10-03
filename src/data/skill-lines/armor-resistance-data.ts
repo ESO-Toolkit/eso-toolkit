@@ -629,6 +629,7 @@ export const ARMOR_RESISTANCE_DATA: CalculatorData = {
       enabled: false,
       quantity: 1,
       value: 1487,
+      maxQuantity: 6,
       isFlat: true,
       category: 'passives',
       tooltip:
