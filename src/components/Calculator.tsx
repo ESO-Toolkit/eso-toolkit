@@ -7,6 +7,8 @@ import {
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,
   Autorenew as AutorenewIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -39,6 +41,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  InputAdornment,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
@@ -675,6 +678,26 @@ const QuantityInput: React.FC<{
     [category, resolvedIndex, updateFunction],
   );
 
+  // Handle decrement
+  const handleDecrement = useCallback(() => {
+    if (!hasQuantity) return;
+
+    const currentValue = parseInt(localQuantity) || 0;
+    const next = Math.max(item.minQuantity || 0, currentValue - (item.step || 1));
+    setLocalQuantity(next.toString());
+    debouncedUpdate(next);
+  }, [hasQuantity, localQuantity, item.minQuantity, item.step, debouncedUpdate]);
+
+  // Handle increment
+  const handleIncrement = useCallback(() => {
+    if (!hasQuantity) return;
+
+    const currentValue = parseInt(localQuantity) || 0;
+    const next = Math.min(item.maxQuantity || 100, currentValue + (item.step || 1));
+    setLocalQuantity(next.toString());
+    debouncedUpdate(next);
+  }, [hasQuantity, localQuantity, item.maxQuantity, item.step, debouncedUpdate]);
+
   // Handle quantity input change with debouncing
   const handleQuantityChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -739,6 +762,12 @@ const QuantityInput: React.FC<{
     };
   }, []);
 
+  const minValue = item.minQuantity || 0;
+  const maxValue = item.maxQuantity || 100;
+  const currentValue = parseInt(localQuantity) || 0;
+  const isMinDisabled = currentValue <= minValue;
+  const isMaxDisabled = currentValue >= maxValue;
+
   return (
     <TextField
       size={isMobile ? 'medium' : 'small'}
@@ -751,8 +780,8 @@ const QuantityInput: React.FC<{
       disabled={!hasQuantity || item.locked}
       placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
       inputProps={{
-        min: hasQuantity ? item.minQuantity || 0 : 0,
-        max: hasQuantity ? item.maxQuantity || 100 : 0,
+        min: hasQuantity ? minValue : 0,
+        max: hasQuantity ? maxValue : 0,
         step: hasQuantity ? item.step || 1 : 1,
         readOnly: !hasQuantity,
         style: {
@@ -762,47 +791,192 @@ const QuantityInput: React.FC<{
           padding: isMobile ? '8px 4px' : '4px 2px',
         },
       }}
+      InputProps={{
+        startAdornment: hasQuantity ? (
+          <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
+            <IconButton
+              size="small"
+              onClick={handleDecrement}
+              disabled={isMinDisabled || item.locked}
+              edge="start"
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: isMobile ? '24px' : '20px',
+                height: isMobile ? '24px' : '20px',
+                minWidth: isMobile ? '24px' : '20px',
+                minHeight: isMobile ? '24px' : '20px',
+                borderRadius: '4px',
+                backgroundColor: theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 1)'
+                  : 'rgba(241, 245, 249, 0.8)',
+                border: `1px solid ${
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(40, 145, 200, 0.2)'
+                }`,
+                color: isMinDisabled || item.locked
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(148, 163, 184, 0.4)'
+                    : 'rgba(100, 116, 139, 0.4)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.8)'
+                    : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMinDisabled || item.locked) ? {
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.2)'
+                    : 'rgba(40, 145, 200, 0.15)',
+                  borderColor: theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.5)'
+                    : 'rgba(40, 145, 200, 0.4)',
+                  color: theme.palette.mode === 'dark'
+                    ? 'rgb(199, 234, 255)'
+                    : 'rgb(40, 145, 200)',
+                } : {},
+                '&:active': !(isMinDisabled || item.locked) ? {
+                  transform: 'scale(0.95)',
+                } : {},
+                '&.Mui-disabled': {
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? 'rgba(30, 41, 59, 0.4)'
+                    : 'rgba(241, 245, 249, 0.6)',
+                  borderColor: theme.palette.mode === 'dark'
+                    ? 'rgba(148, 163, 184, 0.2)'
+                    : 'rgba(148, 163, 184, 0.3)',
+                },
+              }}
+            >
+              <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+            </IconButton>
+          </InputAdornment>
+        ) : undefined,
+        endAdornment: hasQuantity ? (
+          <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
+            <IconButton
+              size="small"
+              onClick={handleIncrement}
+              disabled={isMaxDisabled || item.locked}
+              edge="end"
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: isMobile ? '24px' : '20px',
+                height: isMobile ? '24px' : '20px',
+                minWidth: isMobile ? '24px' : '20px',
+                minHeight: isMobile ? '24px' : '20px',
+                borderRadius: '4px',
+                backgroundColor: theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 1)'
+                  : 'rgba(241, 245, 249, 0.8)',
+                border: `1px solid ${
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(40, 145, 200, 0.2)'
+                }`,
+                color: isMaxDisabled || item.locked
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(148, 163, 184, 0.4)'
+                    : 'rgba(100, 116, 139, 0.4)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.8)'
+                    : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMaxDisabled || item.locked) ? {
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.2)'
+                    : 'rgba(40, 145, 200, 0.15)',
+                  borderColor: theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.5)'
+                    : 'rgba(40, 145, 200, 0.4)',
+                  color: theme.palette.mode === 'dark'
+                    ? 'rgb(199, 234, 255)'
+                    : 'rgb(40, 145, 200)',
+                } : {},
+                '&:active': !(isMaxDisabled || item.locked) ? {
+                  transform: 'scale(0.95)',
+                } : {},
+                '&.Mui-disabled': {
+                  backgroundColor: theme.palette.mode === 'dark'
+                    ? 'rgba(30, 41, 59, 0.4)'
+                    : 'rgba(241, 245, 249, 0.6)',
+                  borderColor: theme.palette.mode === 'dark'
+                    ? 'rgba(148, 163, 184, 0.2)'
+                    : 'rgba(148, 163, 184, 0.3)',
+                },
+              }}
+            >
+              <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+            </IconButton>
+          </InputAdornment>
+        ) : undefined,
+      }}
       sx={{
-        width: isMobile
-          ? hasQuantity && (item.maxQuantity || 0) >= 100
-            ? '60px'
-            : '50px'
-          : '56px',
-        minWidth: isMobile
-          ? hasQuantity && (item.maxQuantity || 0) >= 100
-            ? '60px'
-            : '50px'
-          : '56px',
+        width: '95px',
+        minWidth: '95px',
+        position: 'relative',
         '& .MuiInputBase-root': {
-          fontSize: isMobile ? '14px' : '14px',
-          padding: isMobile ? '6px 3px' : '4px 2px',
-          height: isMobile ? '36px' : '32px',
-          minHeight: isMobile ? '36px' : '32px',
+          fontSize: isMobile ? '14px' : '13px',
+          padding: isMobile ? '6px 1px' : '4px 1px',
+          height: isMobile ? '36px' : '30px',
+          minHeight: isMobile ? '36px' : '30px',
           boxSizing: 'border-box',
+          borderRadius: '8px',
           backgroundColor: !hasQuantity
             ? theme.palette.mode === 'dark'
-              ? 'rgba(30, 41, 59, 0.5)'
-              : 'rgba(241, 245, 249, 0.8)'
-            : 'transparent',
-          opacity: !hasQuantity ? 0.6 : 1,
+              ? 'rgba(30, 41, 59, 0.6)'
+              : 'rgba(241, 245, 249, 0.9)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.4)'
+              : 'rgba(255, 255, 255, 0.8)',
+          opacity: !hasQuantity ? 0.7 : 1,
+          border: !hasQuantity
+            ? `1px solid ${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.2)'
+                  : 'rgba(148, 163, 184, 0.3)'
+              }`
+            : `1px solid ${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.3)'
+                  : 'rgba(40, 145, 200, 0.2)'
+              }`,
           '&:hover': {
             backgroundColor: !hasQuantity
               ? theme.palette.mode === 'dark'
-                ? 'rgba(30, 41, 59, 0.5)'
-                : 'rgba(241, 245, 249, 0.8)'
-              : 'rgba(40 145 200, 0.05)',
+                ? 'rgba(30, 41, 59, 0.7)'
+                : 'rgba(241, 245, 249, 1)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(15, 23, 42, 0.5)'
+                : 'rgba(255, 255, 255, 0.95)',
+            borderColor: hasQuantity
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.5)'
+                : 'rgba(40, 145, 200, 0.4)'
+              : undefined,
+          },
+          '&.Mui-focused': {
+            backgroundColor: theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.6)'
+              : 'rgba(255, 255, 255, 1)',
+            borderColor: theme.palette.mode === 'dark'
+              ? 'rgba(56, 189, 248, 0.6)'
+              : 'rgba(40, 145, 200, 0.5)',
+            boxShadow: theme.palette.mode === 'dark'
+              ? '0 0 0 2px rgba(56, 189, 248, 0.2)'
+              : '0 0 0 2px rgba(40, 145, 200, 0.15)',
           },
         },
         '& .MuiInputBase-input': {
-          padding: isMobile ? '6px 3px' : '4px 2px',
+          padding: isMobile ? '6px 1px' : '4px 1px',
           textAlign: 'center',
-          fontSize: isMobile ? '14px' : '14px',
-          fontWeight: 500,
+          fontSize: isMobile ? '14px' : '13px',
+          fontWeight: 600,
           color: !hasQuantity
             ? theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.8)'
-              : 'rgba(100, 116, 139, 0.8)'
-            : 'inherit',
+              ? 'rgba(148, 163, 184, 0.7)'
+              : 'rgba(100, 116, 139, 0.7)'
+            : theme.palette.mode === 'dark'
+              ? 'rgb(199, 234, 255)'
+              : 'rgb(40, 145, 200)',
           cursor: !hasQuantity ? 'not-allowed' : 'text',
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
             WebkitAppearance: 'none',
@@ -815,13 +989,17 @@ const QuantityInput: React.FC<{
         '& .MuiOutlinedInput-notchedOutline': {
           borderColor: !hasQuantity
             ? theme.palette.mode === 'dark'
-              ? 'rgba(148, 163, 184, 0.3)'
-              : 'rgba(148, 163, 184, 0.4)'
-            : 'rgba(156, 163, 175, 0.3)',
+              ? 'rgba(148, 163, 184, 0.2)'
+              : 'rgba(148, 163, 184, 0.3)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(56, 189, 248, 0.3)'
+              : 'rgba(40, 145, 200, 0.2)',
           borderWidth: '1px',
         },
         '&.Mui-error .MuiOutlinedInput-notchedOutline': {
-          borderColor: 'error.main',
+          borderColor: theme.palette.mode === 'dark'
+            ? 'rgba(248, 113, 113, 0.6)'
+            : 'rgba(239, 68, 68, 0.6)',
         },
       }}
     />
