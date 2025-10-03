@@ -3850,6 +3850,10 @@ const CalculatorComponent: React.FC = () => {
                       disabled={selectedTab === 2}
                       sx={{
                         width: { xs: '100%', sm: 'auto' },
+                        display: 'flex',
+                        '& .MuiButtonGroup-grouped': {
+                          flex: { xs: 1, sm: 'none' },
+                        },
                         '& .MuiButton-root': {
                           border: liteMode
                             ? theme.palette.mode === 'dark'
@@ -3863,7 +3867,7 @@ const CalculatorComponent: React.FC = () => {
                           // Enhanced mobile touch targets
                           minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
                           minWidth: {
-                            xs: 'auto',
+                            xs: 0,
                             sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
                           },
                           fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
