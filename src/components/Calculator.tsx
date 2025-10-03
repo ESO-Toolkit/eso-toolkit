@@ -3837,6 +3837,7 @@ const CalculatorComponent: React.FC = () => {
                 }}
               >
                 <div
+                  style={{ width: '100%' }}
                   sx={{
                     width: { xs: '100%', sm: 'auto' },
                     display: 'flex',
