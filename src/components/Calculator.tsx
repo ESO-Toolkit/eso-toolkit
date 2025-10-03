@@ -3482,74 +3482,77 @@ const CalculatorComponent: React.FC = () => {
               margin: '0 auto',
             }}
           >
-            {/* Value Section */}
-            <Box sx={{ mb: 3 }}>
-              <Typography
-                variant="overline"
-                sx={{
-                  display: 'block',
-                  letterSpacing: '0.07em',
-                  fontSize: '0.72rem',
-                  fontWeight: 600,
-                  color: theme.palette.text.secondary,
-                  mb: 1,
-                }}
-              >
-                {label}
-              </Typography>
-              <Typography
-                variant="h4"
-                sx={{
-                  fontWeight: 700,
-                  fontSize: '2.2rem',
-                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                  fontFamily: 'Inter, sans-serif',
-                  lineHeight: 1.1,
-                }}
-              >
-                {value}
-                {valueSuffix ? (
-                  <Box
-                    component="span"
-                    sx={{
-                      fontSize: '1.4rem',
-                      fontWeight: 600,
-                      ml: 0.5,
-                      opacity: 0.85,
-                    }}
-                  >
-                    {valueSuffix}
-                  </Box>
-                ) : null}
-              </Typography>
-            </Box>
+            {/* Value and Status Section */}
+            <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2 }}>
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="overline"
+                  sx={{
+                    display: 'block',
+                    letterSpacing: '0.07em',
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    color: theme.palette.text.secondary,
+                    mb: 0.5,
+                  }}
+                >
+                  {label}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '2rem',
+                    color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                    fontFamily: 'Inter, sans-serif',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {value}
+                  {valueSuffix ? (
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '1.3rem',
+                        fontWeight: 600,
+                        ml: 0.5,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {valueSuffix}
+                    </Box>
+                  ) : null}
+                </Typography>
+              </Box>
 
-            {/* Status Badge */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: 0.85,
-                borderRadius: '999px',
-                px: 1.6,
-                py: 0.8,
-                background: statusVisual.background,
-                border: `1px solid ${statusVisual.border}`,
-                mb: 3,
-              }}
-            >
-              <StatusIcon sx={{ fontSize: 20, color: statusVisual.color }} />
-              <Typography
-                variant="body2"
+              {/* Status Badge */}
+              <Box
                 sx={{
-                  fontWeight: 600,
-                  fontSize: '0.95rem',
-                  color: statusVisual.color,
-                  letterSpacing: 0.15,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                  borderRadius: '999px',
+                  px: 1.2,
+                  py: 0.6,
+                  background: statusVisual.background,
+                  border: `1px solid ${statusVisual.border}`,
+                  flexShrink: 0,
                 }}
               >
-                {statusVisual.label}
-              </Typography>
+                <StatusIcon sx={{ fontSize: 16, color: statusVisual.color }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    color: statusVisual.color,
+                    letterSpacing: 0.1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {statusVisual.label}
+                </Typography>
+              </Box>
             </Box>
 
             {/* Divider */}
@@ -3557,7 +3560,7 @@ const CalculatorComponent: React.FC = () => {
               sx={{
                 height: '1px',
                 background: alpha(theme.palette.divider, 0.2),
-                mb: 3,
+                mb: 2,
                 mx: -1,
               }}
             />
