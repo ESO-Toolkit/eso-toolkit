@@ -5808,9 +5808,9 @@ const CalculatorComponent: React.FC = () => {
                     quadrantData: {
                       targetRanges:
                         gameMode === 'pve'
-                          ? 'Target: 125%+'
+                          ? 'Target: 125%'
                           : gameMode === 'pvp'
-                            ? 'Target: 100%+'
+                            ? 'Target: 125%'
                             : 'PvE: 125%+\nPvP: 100%+',
                     },
                   })}
@@ -5823,7 +5823,7 @@ const CalculatorComponent: React.FC = () => {
                     isArmorTab: true,
                     quadrantData: {
                       overResistInfo: `🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ''}`,
-                      targetRanges: `Target: 33,100–33,500\nCap: 33,500`,
+                      targetRanges: `Target: 33,100–33,500\nCap: 33,100`,
                     },
                   })}
               </Box>
