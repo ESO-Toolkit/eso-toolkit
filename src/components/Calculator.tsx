@@ -3843,7 +3843,7 @@ const CalculatorComponent: React.FC = () => {
                 >
                   <span
                     sx={{
-                      display: 'inline-block',
+                      display: { xs: 'block', sm: 'inline-block' },
                       width: { xs: '100%', sm: 'auto' },
                     }}
                   >
