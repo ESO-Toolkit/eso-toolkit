@@ -584,6 +584,81 @@ const QuantityInput: React.FC<{
   const theme = useTheme();
   const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
 
+  // Check if this is an armor passive item
+  const isArmorPassive = item.name === 'Light Armor Passive' || item.name === 'Heavy Armor Passive';
+
+  // For armor passives, show a static display instead of input
+  if (isArmorPassive) {
+    return (
+      <Tooltip title="Auto-calculated based on equipped armor pieces" arrow>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: isMobile ? '50px' : '56px',
+            height: isMobile ? '36px' : '32px',
+            px: isMobile ? 1 : 2,
+            borderRadius: 1,
+            fontWeight: 700,
+            fontSize: isMobile ? '14px' : '16px',
+            color: item.enabled
+              ? '#f472b6' // Pink for both light and heavy armor
+              : theme.palette.mode === 'dark'
+                ? 'rgba(148, 163, 184, 0.5)'
+                : 'rgba(100, 116, 139, 0.5)',
+            backgroundColor: item.enabled
+              ? item.name === 'Light Armor Passive'
+                ? theme.palette.mode === 'dark'
+                  ? 'rgba(167, 139, 250, 0.15)'
+                  : 'rgba(167, 139, 250, 0.1)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(244, 114, 182, 0.15)'
+                  : 'rgba(244, 114, 182, 0.1)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(30, 41, 59, 0.3)'
+                : 'rgba(241, 245, 249, 0.5)',
+            border: `2px dashed ${
+              item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? 'rgba(167, 139, 250, 0.5)'
+                  : 'rgba(244, 114, 182, 0.5)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.2)'
+                  : 'rgba(148, 163, 184, 0.3)'
+            }`,
+            transition: 'all 0.2s ease',
+            cursor: 'default',
+            position: 'relative',
+            '&::before': {
+              content: '"🔒"',
+              position: 'absolute',
+              top: isMobile ? '-6px' : '-6px',
+              right: isMobile ? '-6px' : '-6px',
+              fontSize: isMobile ? '10px' : '12px',
+              opacity: item.enabled ? 0.7 : 0.4,
+            },
+            '&:hover': {
+              backgroundColor: item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(167, 139, 250, 0.25)'
+                    : 'rgba(167, 139, 250, 0.2)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(244, 114, 182, 0.25)'
+                    : 'rgba(244, 114, 182, 0.2)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(30, 41, 59, 0.4)'
+                  : 'rgba(241, 245, 249, 0.6)',
+            },
+          }}
+        >
+          {item.quantity > 0 ? item.quantity : '-'}
+        </Box>
+      </Tooltip>
+    );
+  }
+
   // Local state for quantity input to prevent keyboard dismissal on mobile
   const [localQuantity, setLocalQuantity] = useState<string>(
     hasQuantity ? item.quantity.toString() : '-',
@@ -690,19 +765,19 @@ const QuantityInput: React.FC<{
       sx={{
         width: isMobile
           ? hasQuantity && (item.maxQuantity || 0) >= 100
-            ? '70px'
-            : '60px'
+            ? '60px'
+            : '50px'
           : '56px',
         minWidth: isMobile
           ? hasQuantity && (item.maxQuantity || 0) >= 100
-            ? '70px'
-            : '60px'
+            ? '60px'
+            : '50px'
           : '56px',
         '& .MuiInputBase-root': {
-          fontSize: isMobile ? '18px' : '14px',
-          padding: isMobile ? '8px 4px' : '4px 2px',
-          height: isMobile ? '48px' : '32px',
-          minHeight: isMobile ? '48px' : '32px',
+          fontSize: isMobile ? '14px' : '14px',
+          padding: isMobile ? '6px 3px' : '4px 2px',
+          height: isMobile ? '36px' : '32px',
+          minHeight: isMobile ? '36px' : '32px',
           boxSizing: 'border-box',
           backgroundColor: !hasQuantity
             ? theme.palette.mode === 'dark'
@@ -719,9 +794,9 @@ const QuantityInput: React.FC<{
           },
         },
         '& .MuiInputBase-input': {
-          padding: isMobile ? '8px 4px' : '4px 2px',
+          padding: isMobile ? '6px 3px' : '4px 2px',
           textAlign: 'center',
-          fontSize: isMobile ? '18px' : '14px',
+          fontSize: isMobile ? '14px' : '14px',
           fontWeight: 500,
           color: !hasQuantity
             ? theme.palette.mode === 'dark'
