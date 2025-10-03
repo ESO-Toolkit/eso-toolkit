@@ -3836,41 +3836,62 @@ const CalculatorComponent: React.FC = () => {
                   width: { xs: '100%', sm: 'auto' },
                 }}
               >
-                <ButtonGroup
-                  size={
-                    isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
-                  }
-                  variant="outlined"
-                  sx={{
-                    width: { xs: '100%', sm: 'auto' },
-                    '& .MuiButton-root': {
-                      border: liteMode
-                        ? theme.palette.mode === 'dark'
-                          ? '1px solid rgb(128 211 255 / 25%)'
-                          : '1px solid rgb(40 145 200 / 20%)'
-                        : theme.palette.mode === 'dark'
-                          ? '1px solid rgb(128 211 255 / 30%)'
-                          : '1px solid rgb(40 145 200 / 25%)',
-                      // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      // Enhanced mobile touch targets
-                      minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                      minWidth: {
-                        xs: 'auto',
-                        sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
-                      },
-                      fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
-                      px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
-                        borderColor: 'rgb(128 211 255 / 80%)',
-                      },
-                      '&:active': {
-                        transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
-                      },
-                    },
-                  }}
+                <Tooltip
+                  title={selectedTab === 2 ? "Game mode selection is not available for Armor Resistance" : ""}
+                  arrow
+                  placement="top"
+                >
+                  <span>
+                    <ButtonGroup
+                      size={
+                        isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
+                      }
+                      variant="outlined"
+                      disabled={selectedTab === 2}
+                      sx={{
+                        width: { xs: '100%', sm: 'auto' },
+                        '& .MuiButton-root': {
+                          border: liteMode
+                            ? theme.palette.mode === 'dark'
+                              ? '1px solid rgb(128 211 255 / 25%)'
+                              : '1px solid rgb(40 145 200 / 20%)'
+                            : theme.palette.mode === 'dark'
+                              ? '1px solid rgb(128 211 255 / 30%)'
+                              : '1px solid rgb(40 145 200 / 25%)',
+                          // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
+                          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                          // Enhanced mobile touch targets
+                          minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
+                          minWidth: {
+                            xs: 'auto',
+                            sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
+                          },
+                          fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
+                          px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
+                          flex: { xs: 1, sm: 'none' },
+                          '&:hover': {
+                            transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
+                            borderColor: 'rgb(128 211 255 / 80%)',
+                          },
+                          '&:active': {
+                            transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
+                          },
+                          // Disabled state styling for armor tab
+                          ...(selectedTab === 2 && {
+                            opacity: 0.5,
+                            cursor: 'not-allowed',
+                            '&:hover': {
+                              transform: 'none',
+                              borderColor: 'inherit',
+                            },
+                          }),
+                        },
+                        // ButtonGroup disabled styling
+                        ...(selectedTab === 2 && {
+                          opacity: 0.6,
+                          pointerEvents: 'none',
+                        }),
+                      }}
                 >
                   <Button
                     variant={gameMode === 'pve' ? 'contained' : 'outlined'}
@@ -3978,6 +3999,8 @@ const CalculatorComponent: React.FC = () => {
                     Both
                   </Button>
                 </ButtonGroup>
+                  </span>
+                </Tooltip>
               </Box>
             </Box>
 
