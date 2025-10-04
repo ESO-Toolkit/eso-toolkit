@@ -134,7 +134,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const castsUrl = React.useCallback((rid?: string, fid?: string | null) => {
       if (!rid) return undefined;
       const fightParam = fid ? `&fight=${encodeURIComponent(fid)}` : '';
-      return `https://www.esologs.com/reports/${encodeURIComponent(rid)}?type=casts${fightParam}&pins=${CASTS_PINS}`;
+      return `https://www.esologs.com/reports/${encodeURIComponent(rid)}?type=casts${fightParam}`;
     }, []);
 
     const talents = React.useMemo(
