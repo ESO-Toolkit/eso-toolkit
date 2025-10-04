@@ -3216,6 +3216,7 @@ const CalculatorComponent: React.FC = () => {
               size={isMobile ? 'medium' : 'small'}
               disableRipple
               disableTouchRipple
+              onChange={() => updateFunction(category, resolvedIndex, { enabled: !item.enabled })}
               sx={(theme) => {
                 return {
                   ...checkboxStyles,
