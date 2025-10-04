@@ -162,129 +162,109 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
     </Box>
   );
 
-  const renderMobileSection = (title: string, itemCount: number = 2): React.JSX.Element => (
-    <Box sx={{ mb: 2 }}>
-      {/* Section Title - Matches h6 variant from actual calculator */}
-      <Box sx={{ mb: 1.5, pl: 1 }}>
-        <Skeleton
-          variant="text"
-          width={title.length * 8 + 40}
-          height={22}
+  const renderMobileItems = (itemCount: number = 2): React.JSX.Element => (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+      {Array.from({ length: itemCount }).map((_, itemIndex) => (
+        <Box
+          key={itemIndex}
           sx={{
-            fontWeight: 600,
-            fontSize: '1.05rem',
-            letterSpacing: '0.0075em',
-            lineHeight: 1.3,
-          }}
-        />
-      </Box>
-
-      {/* Mobile Items - Matches actual ListItem structure */}
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-        {Array.from({ length: itemCount }).map((_, itemIndex) => (
-          <Box
-            key={itemIndex}
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: 'auto minmax(50px, max-content) 1fr auto',
-              alignItems: 'center',
-              gap: 0.625,
-              minHeight: 52,
-              p: 0.125,
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(15, 23, 42, 0.6)'
-                  : 'rgba(241, 245, 249, 0.8)',
+            display: 'grid',
+            gridTemplateColumns: 'auto minmax(50px, max-content) 1fr auto',
+            alignItems: 'center',
+            gap: 0.625,
+            minHeight: 52,
+            p: 0.125,
+            background:
+              theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(241, 245, 249, 0.8)',
+            border:
+              theme.palette.mode === 'dark'
+                ? '1px solid rgba(255, 255, 255, 0.12)'
+                : '1px solid rgba(203, 213, 225, 0.3)',
+            borderRadius: '8px !important',
+            mb: 0.625,
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            position: 'relative',
+            '&:hover': {
+              transform: 'translateY(-1px)',
               border:
                 theme.palette.mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.12)'
-                  : '1px solid rgba(203, 213, 225, 0.3)',
-              borderRadius: '8px !important',
-              mb: 0.625,
-              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-              position: 'relative',
-              '&:hover': {
-                transform: 'translateY(-1px)',
-                border:
-                  theme.palette.mode === 'dark'
-                    ? '1px solid rgba(56, 189, 248, 0.2)'
-                    : '1px solid rgb(40 145 200 / 30%)',
-                boxShadow:
-                  theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                    : '0 4px 12px rgb(40 145 200 / 25%)',
-              },
+                  ? '1px solid rgba(56, 189, 248, 0.2)'
+                  : '1px solid rgb(40 145 200 / 30%)',
+              boxShadow:
+                theme.palette.mode === 'dark'
+                  ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                  : '0 4px 12px rgb(40 145 200 / 25%)',
+            },
+          }}
+        >
+          {/* Mobile Checkbox - ListItemIcon structure */}
+          <Box sx={{ minWidth: 'auto' }}>
+            <Skeleton variant="circular" width={20} height={20} />
+          </Box>
+
+          {/* Mobile Quantity Input */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
             }}
           >
-            {/* Mobile Checkbox - ListItemIcon structure */}
-            <Box sx={{ minWidth: 'auto' }}>
-              <Skeleton variant="circular" width={20} height={20} />
-            </Box>
+            <Skeleton variant="rectangular" width={56} height={38} sx={{ borderRadius: 1 }} />
+          </Box>
 
-            {/* Mobile Quantity Input */}
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Skeleton variant="rectangular" width={56} height={38} sx={{ borderRadius: 1 }} />
-            </Box>
-
-            {/* Mobile Item Details - ListItemText structure */}
-            <Box sx={{ minWidth: 0 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 1.5,
-                    flex: 1,
-                  }}
-                >
-                  <Skeleton
-                    variant="text"
-                    width={MOBILE_ITEM_WIDTHS[itemIndex % MOBILE_ITEM_WIDTHS.length]}
-                    height={16}
-                    sx={{
-                      fontSize: '0.875rem',
-                      fontWeight: 400,
-                      lineHeight: 1.43,
-                    }}
-                  />
-                  {/* Mobile Help Icon */}
-                  {itemIndex % 3 === 0 && <Skeleton variant="circular" width={14} height={14} />}
-                </Box>
-                {/* Mobile Locked Chip */}
-                {itemIndex % 5 === 0 && (
-                  <Skeleton variant="rectangular" width={18} height={14} sx={{ borderRadius: 1 }} />
-                )}
-              </Box>
-            </Box>
-
-            {/* Mobile Value Display - Typography variant */}
-            <Box
-              sx={{
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'flex-end',
-              }}
-            >
-              {/* Main value - body2 variant */}
-              <Skeleton
-                variant="text"
-                width={35}
-                height={14}
+          {/* Mobile Item Details - ListItemText structure */}
+          <Box sx={{ minWidth: 0 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+              <Box
                 sx={{
-                  fontSize: '0.875rem',
-                  fontWeight: 500,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 1.5,
+                  flex: 1,
                 }}
-              />
+              >
+                <Skeleton
+                  variant="text"
+                  width={MOBILE_ITEM_WIDTHS[itemIndex % MOBILE_ITEM_WIDTHS.length]}
+                  height={16}
+                  sx={{
+                    fontSize: '0.875rem',
+                    fontWeight: 400,
+                    lineHeight: 1.43,
+                  }}
+                />
+                {/* Mobile Help Icon */}
+                {itemIndex % 3 === 0 && <Skeleton variant="circular" width={14} height={14} />}
+              </Box>
+              {/* Mobile Locked Chip */}
+              {itemIndex % 5 === 0 && (
+                <Skeleton variant="rectangular" width={18} height={14} sx={{ borderRadius: 1 }} />
+              )}
             </Box>
           </Box>
-        ))}
-      </Box>
+
+          {/* Mobile Value Display - Typography variant */}
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'flex-end',
+            }}
+          >
+            {/* Main value - body2 variant */}
+            <Skeleton
+              variant="text"
+              width={35}
+              height={14}
+              sx={{
+                fontSize: '0.875rem',
+                fontWeight: 500,
+              }}
+            />
+          </Box>
+        </Box>
+      ))}
     </Box>
   );
 
@@ -433,12 +413,12 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
         {/* Mobile Calculator Content - Lite Mode (Flattened List) */}
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-          {/* Penetration Items - Mobile (Default Tab) */}
+          {/* Penetration Items - Mobile (Default Tab) - Flattened list like actual lite mode */}
           <Box sx={{ mb: 3 }}>
-            {renderMobileSection('Group Buffs', 2)}
-            {renderMobileSection('Gear & Enchantments', 3)}
-            {renderMobileSection('Passives & Skills', 2)}
-            {renderMobileSection('Champion Points', 3)}
+            {renderMobileItems(2)} {/* Group Buffs */}
+            {renderMobileItems(3)} {/* Gear & Enchantments */}
+            {renderMobileItems(2)} {/* Passives & Skills */}
+            {renderMobileItems(3)} {/* Champion Points */}
           </Box>
         </Box>
 
