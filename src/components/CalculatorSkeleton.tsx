@@ -158,32 +158,39 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         gap: isMobile ? 2 : 0,
       }}
     >
-      {/* Tab Buttons Container */}
+      {/* Tab Buttons Container - Actual ButtonGroup structure */}
       <Box
         sx={{
+          width: { xs: '100%', sm: 'auto' },
           display: 'flex',
-          gap: 1,
-          p: 0.5,
-          backgroundColor:
-            theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
-          borderRadius: '10px',
-          border: '1px solid rgba(148, 163, 184, 0.2)',
-          flex: 1,
-          maxWidth: { xs: '100%', sm: '400px' },
         }}
       >
-        {['Penetration', 'Critical', 'Armor Resistance'].map((label) => (
-          <Skeleton
-            key={label}
-            variant="rectangular"
-            width={isExtraSmall ? 70 : isMobile ? 85 : isTablet ? 95 : 110}
-            height={isExtraSmall ? 32 : isMobile ? 36 : isTablet ? 38 : 40}
-            sx={{
-              borderRadius: '8px',
-              flex: 1,
-            }}
-          />
-        ))}
+        <Box
+          sx={{
+            display: 'flex',
+            width: '100%',
+          }}
+        >
+          {['Penetration', 'Critical', 'Armor'].map((label) => (
+            <Skeleton
+              key={label}
+              variant="rectangular"
+              width={isExtraSmall ? 70 : isMobile ? 85 : isTablet ? 95 : 110}
+              height={isExtraSmall ? 40 : isMobile ? 44 : 48}
+              sx={{
+                borderRadius: 0,
+                '&:first-of-type': { borderRadius: '4px 0 0 4px' },
+                '&:last-of-type': { borderRadius: '0 4px 4px 0' },
+                flex: 1,
+                border: `1px solid ${
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(128, 211, 255, 25%)'
+                    : 'rgba(40, 145, 200, 20%)'
+                }`,
+              }}
+            />
+          ))}
+        </Box>
       </Box>
 
       {/* Desktop Bulk Actions - Only show on desktop */}
@@ -201,13 +208,44 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
               theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(40, 145, 200, 0.18)'
             }`,
             boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
-            px: 2,
-            py: 1,
+            px: 0,
+            py: 0,
             minWidth: '200px',
           }}
         >
-          <Skeleton variant="rectangular" width={80} height={32} sx={{ borderRadius: 2, mr: 1 }} />
-          <Skeleton variant="rectangular" width={50} height={32} sx={{ borderRadius: 2 }} />
+          {/* ButtonGroup structure for bulk actions */}
+          <Box
+            sx={{
+              display: 'flex',
+              width: '100%',
+            }}
+          >
+            <Skeleton
+              variant="rectangular"
+              width={80}
+              height={40}
+              sx={{
+                borderRadius: 0,
+                '&:first-of-type': { borderRadius: '10px 0 0 10px' },
+                border: `1px solid ${
+                  theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(40, 145, 200, 0.2)'
+                }`,
+              }}
+            />
+            <Skeleton
+              variant="rectangular"
+              width={50}
+              height={40}
+              sx={{
+                borderRadius: 0,
+                '&:last-of-type': { borderRadius: '0 10px 10px 0' },
+                border: `1px solid ${
+                  theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.2)' : 'rgba(40, 145, 200, 0.2)'
+                }`,
+                borderLeft: 'none',
+              }}
+            />
+          </Box>
         </Box>
       )}
     </Box>
