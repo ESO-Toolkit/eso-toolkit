@@ -35,7 +35,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         display: 'flex',
         alignItems: { xs: 'flex-start', sm: 'center' },
         justifyContent: 'space-between',
-        mb: 4,
+        mb: isMobile ? 3 : 4,
         flexWrap: 'wrap',
         gap: { xs: 2, sm: 3 },
         p: isExtraSmall ? 1.5 : isMobile ? 2 : 4,
@@ -147,7 +147,9 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         mb: 4,
         px: 4,
         borderBottom: '1px solid',
-        borderColor: sectionBorderColor,
+        borderColor: theme.palette.mode === 'dark'
+          ? 'rgb(128 211 255 / 18%)'
+          : 'rgb(40 145 200 / 15%)',
         background:
           theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.7)' : 'rgba(255, 255, 255, 0.95)',
         borderRadius: '8px 8px 0 0',
