@@ -46,7 +46,6 @@ import { analyzeAllPlayersScribingSkills } from '../../../utils/Scribing';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
-
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {

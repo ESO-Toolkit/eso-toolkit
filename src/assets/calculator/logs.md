@@ -1,165 +1,430 @@
-[vite] connecting...
-[vite] connected.
-2025-10-03T01:20:31.473Z [Sentry] [INFO] Sentry disabled - not in production build
-2025-10-03T01:20:31.511Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
-2025-10-03T01:20:31.513Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
-2025-10-03T01:20:31.514Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
-2025-10-03T01:20:31.514Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
-2025-10-03T01:20:31.582Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
-2025-10-03T01:20:31.582Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
-2025-10-03T01:20:31.583Z [ESO-Logger][EsoLogsClient] [INFO] Updating EsoLogsClient access token
-2025-10-03T01:20:31.586Z [ESO-Logger][WorkerManager] [DEBUG] WorkerManager logger configured
-2025-10-03T01:20:31.586Z [ESO-Logger][WorkerManager] [DEBUG] Worker manager initialized with logger
-2025-10-03T01:20:31.586Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
-2025-10-03T01:20:31.586Z [ESO-Logger][EsoLogsClient] [DEBUG] EsoLogsClient context value updated Object
-[Komodo] CS Register csid_t3j7q7_ecrbjg_2_8_3
-🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
-🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
-The specified value "-" cannot be parsed, or is out of range.
-
-🔄 [LEGACY_UPDATE] Updating cp[1] {enabled: true}
-📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Fortified
-📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Fortified
-📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
-🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
-chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 524ms
-🔄 [LEGACY_UPDATE] Updating cp[2] {enabled: true}
-📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Bulwark
-📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Bulwark
-📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
-🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
-Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
-🔄 [LEGACY_UPDATE] Updating passives[6] {enabled: true}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Armor Line Bonus
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Armor Line Bonus
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 541ms
-🔄 [LEGACY_UPDATE] Updating passives[5] {enabled: true}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Defending Trait
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Defending Trait
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-chunk-QKVRGLAZ.js?v=db4e02f7:11645 [Violation] 'click' handler took 544ms
-🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Armor Potions
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Armor Potions
-📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-🔄 [LEGACY_UPDATE] Updating passives[0] {enabled: true}
-📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-📍 [LEGACY_UPDATE] Found item: Runic Sunder
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Runic Sunder
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[2] {enabled: true}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[2] {enabled: true}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Lord Warden
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating passives[1] {enabled: true}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Potions
-Calculator.tsx:1650 📊 [STATE] Final passives state: (7) [{…}, {…}, {…}, {…}, {…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Runic Sunder, originalIndex: 0
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Potions, originalIndex: 1
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Defending Trait, originalIndex: 5
-Calculator.tsx:1325 🔍 [FILTERED_PASSIVES] Item: Armor Line Bonus, originalIndex: 6
-react-dom-client.development.js:16244 [Violation] 'click' handler took 515ms
-Calculator.tsx:1565 🔄 [LEGACY_UPDATE] Updating cp[0] {enabled: true}
-Calculator.tsx:1568 📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Master
-Calculator.tsx:1650 📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1568 📊 [STATE] Previous cp state: (3) [{…}, {…}, {…}]
-Calculator.tsx:1584 📍 [LEGACY_UPDATE] Found item: Armor Master
-Calculator.tsx:1650 📊 [STATE] Final cp state: (3) [{…}, {…}, {…}]
-Calculator.tsx:1651 📊 [STATE] Full updated data: {gear: Array(24), cp: Array(3), passives: Array(7)}
-Calculator.tsx:1339 🔍 [FILTERED_CP] Item: Fortified, originalIndex: 1
-Calculator.tsx:1339 🔍 [FILTERED_CP] Item: Bulwark, originalIndex: 2
+[ENCHANT DEBUG] Item: "Nazaray Mask", Slot: 0, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Epaulets", Slot: 2, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Amulet", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 8, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 9, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Sword", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Shield", Slot: 11, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ice Staff", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Mask", Slot: 0, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Epaulets", Slot: 2, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Amulet", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 8, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 9, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Sword", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Shield", Slot: 11, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ice Staff", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
