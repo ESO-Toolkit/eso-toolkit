@@ -822,7 +822,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
           <Box sx={{ px: { xs: 1.5, sm: 3.75 }, pb: 3 }}>
             {/* Penetration Tab Content */}
             <Box>
-              {renderAccordionSection('Group Buffs', 2)}
+              {renderAccordionSection('Group Buffs', 5)}
               {renderAccordionSection('Gear & Enchantments', 3)}
               {renderAccordionSection('Passives & Skills', 2)}
               {renderAccordionSection('Champion Points', 3)}
@@ -830,7 +830,7 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
 
             {/* Critical Tab Content (similar structure) */}
             <Box>
-              {renderAccordionSection('Group Buffs', 2)}
+              {renderAccordionSection('Group Buffs', 5)}
               {renderAccordionSection('Gear & Enchantments', 3)}
               {renderAccordionSection('Passives & Skills', 2)}
               {renderAccordionSection('Champion Points', 3)}
