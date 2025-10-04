@@ -5836,7 +5836,7 @@ const CalculatorComponent: React.FC = () => {
                     rangeDescription: '', // Not used in quadrant layout
                     quadrantData: {
                       underpenInfo:
-                        (gameMode === 'pve' || gameMode === 'both')
+                        gameMode === 'pve' || gameMode === 'both'
                           ? `Underpen: ${underpenetrationAmount.toLocaleString()}\nDamage Loss: ${damageLossPercentage}%`
                           : undefined,
                       targetRanges:

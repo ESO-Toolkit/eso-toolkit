@@ -145,19 +145,19 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
             border: '1px solid rgba(148, 163, 184, 0.2)',
           }}
         >
-        {['Penetration', 'Critical', 'Armor'].map((label) => (
-          <Skeleton
-            key={label}
-            variant="rectangular"
-            width={isExtraSmall ? 60 : 70}
-            height={32}
-            sx={{
-              borderRadius: '8px',
-              flex: 1,
-              minWidth: '60px',
-            }}
-          />
-        ))}
+          {['Penetration', 'Critical', 'Armor'].map((label) => (
+            <Skeleton
+              key={label}
+              variant="rectangular"
+              width={isExtraSmall ? 60 : 70}
+              height={32}
+              sx={{
+                borderRadius: '8px',
+                flex: 1,
+                minWidth: '60px',
+              }}
+            />
+          ))}
         </Box>
       </Box>
     </Box>
@@ -165,72 +165,124 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
   const renderMobileSection = (title: string, itemCount: number = 2): React.JSX.Element => (
     <Box sx={{ mb: 2 }}>
-      {/* Section Title */}
+      {/* Section Title - Matches h6 variant from actual calculator */}
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={title.length * 6 + 25}
-          height={16}
-          sx={{ fontWeight: 600 }}
+          width={title.length * 8 + 40}
+          height={22}
+          sx={{
+            fontWeight: 600,
+            fontSize: '1.05rem',
+            letterSpacing: '0.0075em',
+            lineHeight: 1.3,
+          }}
         />
       </Box>
 
-      {/* Mobile Items - Compact Layout */}
+      {/* Mobile Items - Matches actual ListItem structure */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
             key={itemIndex}
             sx={{
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: 'auto minmax(50px, max-content) 1fr auto',
               alignItems: 'center',
-              minHeight: 32,
-              py: 0.75,
-              px: 1,
-              borderRadius: 1,
-              pl: 1.5,
+              gap: 0.625,
+              minHeight: 52,
+              p: 0.125,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 0.6)'
+                  : 'rgba(241, 245, 249, 0.8)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.12)'
+                  : '1px solid rgba(203, 213, 225, 0.3)',
+              borderRadius: '8px !important',
+              mb: 0.625,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
               '&:hover': {
-                background:
+                transform: 'translateY(-1px)',
+                border:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.05)'
-                    : 'rgba(40, 145, 200, 0.03)',
+                    ? '1px solid rgba(56, 189, 248, 0.2)'
+                    : '1px solid rgb(40 145 200 / 30%)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                    : '0 4px 12px rgb(40 145 200 / 25%)',
               },
             }}
           >
-            {/* Compact Checkbox */}
-            <Box sx={{ minWidth: 'auto', mr: 1 }}>
-              <Skeleton variant="circular" width={14} height={14} />
+            {/* Mobile Checkbox - ListItemIcon structure */}
+            <Box sx={{ minWidth: 'auto' }}>
+              <Skeleton variant="circular" width={20} height={20} />
             </Box>
 
-            {/* Compact Quantity Input */}
-            <Box sx={{ mr: 1 }}>
-              <Skeleton variant="rectangular" width={28} height={22} sx={{ borderRadius: 1 }} />
+            {/* Mobile Quantity Input */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Skeleton variant="rectangular" width={56} height={38} sx={{ borderRadius: 1 }} />
             </Box>
 
-            {/* Item Text */}
-            <Box sx={{ flex: 1, mr: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25 }}>
-                <Skeleton
-                  variant="text"
-                  width={MOBILE_ITEM_WIDTHS[itemIndex % MOBILE_ITEM_WIDTHS.length]}
-                  height={14}
-                />
-                {/* Help Icon */}
-                {itemIndex % 4 === 0 && <Skeleton variant="circular" width={10} height={10} />}
+            {/* Mobile Item Details - ListItemText structure */}
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    flex: 1,
+                  }}
+                >
+                  <Skeleton
+                    variant="text"
+                    width={MOBILE_ITEM_WIDTHS[itemIndex % MOBILE_ITEM_WIDTHS.length]}
+                    height={16}
+                    sx={{
+                      fontSize: '0.875rem',
+                      fontWeight: 400,
+                      lineHeight: 1.43,
+                    }}
+                  />
+                  {/* Mobile Help Icon */}
+                  {itemIndex % 3 === 0 && <Skeleton variant="circular" width={14} height={14} />}
+                </Box>
+                {/* Mobile Locked Chip */}
+                {itemIndex % 5 === 0 && (
+                  <Skeleton variant="rectangular" width={18} height={14} sx={{ borderRadius: 1 }} />
+                )}
               </Box>
-              {/* Subtitle */}
+            </Box>
+
+            {/* Mobile Value Display - Typography variant */}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'flex-end',
+              }}
+            >
+              {/* Main value - body2 variant */}
               <Skeleton
                 variant="text"
-                width={30 + Math.random() * 25}
-                height={10}
+                width={35}
+                height={14}
                 sx={{
-                  fontSize: '0.6rem',
-                  opacity: 0.7,
+                  fontSize: '0.875rem',
+                  fontWeight: 500,
                 }}
               />
             </Box>
-
-            {/* Value Display */}
-            <Skeleton variant="text" width={25} height={12} />
           </Box>
         ))}
       </Box>
@@ -239,68 +291,110 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
   const renderMobileArmorSection = (title: string, itemCount: number = 2): React.JSX.Element => (
     <Box sx={{ mb: 2 }}>
-      {/* Section Title */}
+      {/* Section Title - Matches h6 variant from actual calculator */}
       <Box sx={{ mb: 1.5, pl: 1 }}>
         <Skeleton
           variant="text"
-          width={title.length * 6 + 25}
-          height={16}
-          sx={{ fontWeight: 600 }}
+          width={title.length * 8 + 40}
+          height={22}
+          sx={{
+            fontWeight: 600,
+            fontSize: '1.05rem',
+            letterSpacing: '0.0075em',
+            lineHeight: 1.3,
+          }}
         />
       </Box>
 
-      {/* Armor Items with variant/quality controls */}
+      {/* Armor Items - Matches actual ListItem structure */}
       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
         {Array.from({ length: itemCount }).map((_, itemIndex) => (
           <Box
             key={itemIndex}
             sx={{
-              display: 'flex',
+              display: 'grid',
+              gridTemplateColumns: 'auto minmax(50px, max-content) 1fr auto auto',
               alignItems: 'center',
-              minHeight: 40,
-              py: 1,
-              px: 1,
-              borderRadius: 1,
-              pl: 1.5,
+              gap: 0.625,
+              minHeight: 52,
+              p: 0.125,
+              background:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(15, 23, 42, 0.6)'
+                  : 'rgba(241, 245, 249, 0.8)',
+              border:
+                theme.palette.mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.12)'
+                  : '1px solid rgba(203, 213, 225, 0.3)',
+              borderRadius: '8px !important',
+              mb: 0.625,
+              transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+              position: 'relative',
               '&:hover': {
-                background:
+                transform: 'translateY(-1px)',
+                border:
                   theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.05)'
-                    : 'rgba(40, 145, 200, 0.03)',
+                    ? '1px solid rgba(56, 189, 248, 0.2)'
+                    : '1px solid rgb(40 145 200 / 30%)',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                    : '0 4px 12px rgb(40 145 200 / 25%)',
               },
             }}
           >
-            {/* Checkbox */}
-            <Box sx={{ minWidth: 'auto', mr: 1 }}>
-              <Skeleton variant="circular" width={14} height={14} />
+            {/* Mobile Armor Checkbox */}
+            <Box sx={{ minWidth: 'auto' }}>
+              <Skeleton variant="circular" width={20} height={20} />
             </Box>
 
-            {/* Quantity Input */}
-            <Box sx={{ mr: 1 }}>
-              <Skeleton variant="rectangular" width={28} height={22} sx={{ borderRadius: 1 }} />
+            {/* Mobile Armor Quantity Input */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <Skeleton variant="rectangular" width={56} height={38} sx={{ borderRadius: 1 }} />
             </Box>
 
-            {/* Item Details with variant/quality */}
-            <Box sx={{ flex: 1, mr: 1 }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                <Skeleton
-                  variant="text"
-                  width={ARMOR_VARIANT_WIDTHS[itemIndex % ARMOR_VARIANT_WIDTHS.length]}
-                  height={14}
-                />
+            {/* Mobile Armor Details */}
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flex: 1 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
+                    flex: 1,
+                  }}
+                >
+                  <Skeleton
+                    variant="text"
+                    width={ARMOR_VARIANT_WIDTHS[itemIndex % ARMOR_VARIANT_WIDTHS.length]}
+                    height={14}
+                  />
+                  {/* Mobile Help Icon */}
+                  {itemIndex % 4 === 0 && <Skeleton variant="circular" width={14} height={14} />}
+                </Box>
+                {/* Mobile Locked Chip */}
+                {itemIndex % 6 === 0 && (
+                  <Skeleton variant="rectangular" width={18} height={14} sx={{ borderRadius: 1 }} />
+                )}
               </Box>
-              {/* Armor variant and quality indicators - compact */}
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+              {/* Armor variant and quality indicators */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
                 <Skeleton variant="rectangular" width={30} height={10} sx={{ borderRadius: 1 }} />
                 <Skeleton variant="circular" width={6} height={6} />
                 <Skeleton variant="rectangular" width={20} height={10} sx={{ borderRadius: 1 }} />
               </Box>
             </Box>
 
-            {/* Armor Value */}
-            <Skeleton variant="text" width={20} height={12} sx={{ mr: 1 }} />
+            {/* Mobile Armor Value */}
+            <Skeleton variant="text" width={30} height={14} />
 
-            {/* Armor Control Button */}
+            {/* Mobile Armor Control Button */}
             <Skeleton variant="rectangular" width={20} height={18} sx={{ borderRadius: 1 }} />
           </Box>
         ))}
@@ -318,26 +412,37 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
         border: `1px solid ${sectionBorderColor}`,
       }}
     >
-      {/* Summary Title */}
-      <Skeleton variant="text" width={120} height={18} sx={{ mb: 2, fontWeight: 600 }} />
+      {/* Summary Title - Typography variant h6 */}
+      <Skeleton
+        variant="text"
+        width={120}
+        height={22}
+        sx={{
+          mb: 2,
+          fontWeight: 600,
+          fontSize: '1.05rem',
+          letterSpacing: '0.0075em',
+        }}
+      />
 
-      {/* Mobile Summary Grid - 2x2 layout */}
+      {/* Mobile Summary Grid - Matches actual renderSummaryFooter structure */}
       <Box
         sx={{
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
+          gridTemplateAreas: '"value status" "underpen targets"',
           gap: 2,
           mb: 2,
         }}
       >
-        {/* Main Value */}
-        <Box sx={{ textAlign: 'center' }}>
+        {/* Main Value - Area "value" */}
+        <Box sx={{ textAlign: 'center', gridArea: 'value' }}>
           <Skeleton variant="text" width={50} height={24} sx={{ mx: 'auto', mb: 0.5 }} />
           <Skeleton variant="text" width={70} height={14} sx={{ mx: 'auto', opacity: 0.8 }} />
         </Box>
 
-        {/* Status */}
-        <Box sx={{ textAlign: 'center' }}>
+        {/* Status - Area "status" */}
+        <Box sx={{ textAlign: 'center', gridArea: 'status' }}>
           <Box
             sx={{
               display: 'flex',
@@ -352,21 +457,44 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
           </Box>
           <Skeleton variant="text" width={60} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
         </Box>
+
+        {/* Underpen/Overpen Info - Area "underpen" */}
+        <Box sx={{ gridArea: 'underpen' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Skeleton variant="circular" width={10} height={10} />
+            <Skeleton variant="text" width={40} height={12} />
+          </Box>
+          <Skeleton variant="text" width={55} height={10} sx={{ ml: 2, opacity: 0.8 }} />
+        </Box>
+
+        {/* Target Range Info - Area "targets" */}
+        <Box sx={{ gridArea: 'targets' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+            <Skeleton variant="circular" width={10} height={10} />
+            <Skeleton variant="text" width={45} height={12} />
+          </Box>
+          <Skeleton variant="text" width={50} height={10} sx={{ ml: 2, opacity: 0.8 }} />
+        </Box>
       </Box>
 
-      {/* Target Range Info */}
-      <Box
-        sx={{
-          p: 1.5,
-          background: 'rgba(255, 255, 255, 0.05)',
-          borderRadius: 1,
-          border: `1px solid ${sectionBorderColor}`,
-        }}
-      >
-        <Skeleton variant="text" width={80} height={14} sx={{ mb: 1 }} />
-        <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
-          <Skeleton variant="text" width={40} height={12} />
-          <Skeleton variant="text" width={45} height={12} />
+      {/* Progress Bar */}
+      <Box sx={{ mb: 2 }}>
+        <Skeleton variant="rectangular" width="100%" height={8} sx={{ borderRadius: 1 }} />
+      </Box>
+
+      {/* Additional Stats - Mobile optimized */}
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 1 }}>
+        <Box sx={{ textAlign: 'center' }}>
+          <Skeleton variant="text" width={30} height={16} sx={{ mx: 'auto', mb: 0.5 }} />
+          <Skeleton variant="text" width={25} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
+        </Box>
+        <Box sx={{ textAlign: 'center' }}>
+          <Skeleton variant="text" width={30} height={16} sx={{ mx: 'auto', mb: 0.5 }} />
+          <Skeleton variant="text" width={25} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
+        </Box>
+        <Box sx={{ textAlign: 'center' }}>
+          <Skeleton variant="text" width={30} height={16} sx={{ mx: 'auto', mb: 0.5 }} />
+          <Skeleton variant="text" width={25} height={12} sx={{ mx: 'auto', opacity: 0.8 }} />
         </Box>
       </Box>
     </Box>
