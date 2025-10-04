@@ -81,7 +81,10 @@
       "mcp__chrome-devtools__get_computed_styles",
       "mcp__chrome-devtools__get_element_attributes",
       "mcp__chrome-devtools__get_element_at_position",
-      "mcp__chrome-devtools__monitor_console_live"
+      "mcp__chrome-devtools__monitor_console_live",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npm run test:*)",
+      "WebFetch(domain:www.esologs.com)"
     ],
     "deny": [],
     "ask": []

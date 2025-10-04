@@ -46,16 +46,6 @@ import { analyzeAllPlayersScribingSkills } from '../../../utils/Scribing';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
-// Exclusion list extracted from the provided pins filter
-const CPM_EXCLUSION_LIST = Object.freeze(
-  new Set<number>([
-    16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572, 23196, 95040,
-    39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
-    16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
-    16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
-  ]),
-);
-
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {
@@ -245,7 +235,7 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData]);
 
-  // Compute CPM (casts per minute) per player for the current fight, excluding specific abilities per provided filter
+  // Compute CPM (casts per minute) per player for the current fight, including all casts
   const cpmByPlayer = React.useMemo(() => {
     const result: Record<string, number> = {};
     if (!fight) return result;
@@ -253,10 +243,7 @@ export const PlayersPanel: React.FC = () => {
     for (const ev of castEvents) {
       if (ev.type === 'cast' && !ev.fake) {
         const src = ev.sourceID;
-        const abilityId: number | undefined = ev.abilityGameID;
-        if (!CPM_EXCLUSION_LIST.has(abilityId)) {
-          result[src] = (result[src] || 0) + 1;
-        }
+        result[src] = (result[src] || 0) + 1;
       }
     }
 
