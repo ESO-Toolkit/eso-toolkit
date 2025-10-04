@@ -100,7 +100,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   30: 'Reduce Feat Cost', // FIXED: User said jewelry enchant should be "Reduce Feat Cost" instead of "Increase Magicka"
   31: 'Increase Stamina',
   32: 'Reduce Physical Harm',
-  33: 'Reduce Magical Harm',
+  33: 'Reduce Spell Cost', // FIXED: User said enchantment ID 33 should be "Reduce Spell Cost" instead of "Reduce Magical Harm"
   34: 'Increase Armor',
   35: 'Increase Stamina', // FIXED: User said "Increase Spell Resistance" should be "Increase Stamina"
   36: 'Stamina Recovery',
