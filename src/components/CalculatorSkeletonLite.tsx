@@ -126,18 +126,25 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
 
   const renderTabNavigation = (): React.JSX.Element => (
     <Box sx={{ mb: 3 }}>
-      {/* Tab navigation container */}
+      {/* Tab navigation container - Mobile Tabs */}
       <Box
         sx={{
-          display: 'flex',
-          gap: 1,
-          p: 0.5,
-          backgroundColor:
-            theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
-          borderRadius: '10px',
-          border: '1px solid rgba(148, 163, 184, 0.2)',
+          mb: 3,
+          px: 2,
+          width: '100%',
         }}
       >
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 1,
+            p: 0.5,
+            backgroundColor:
+              theme.palette.mode === 'dark' ? 'rgba(30, 41, 59, 0.8)' : 'rgba(248, 250, 252, 0.8)',
+            borderRadius: '10px',
+            border: '1px solid rgba(148, 163, 184, 0.2)',
+          }}
+        >
         {['Penetration', 'Critical', 'Armor'].map((label) => (
           <Skeleton
             key={label}
@@ -151,6 +158,7 @@ export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
             }}
           />
         ))}
+        </Box>
       </Box>
     </Box>
   );

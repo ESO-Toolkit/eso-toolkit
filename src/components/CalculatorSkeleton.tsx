@@ -144,8 +144,8 @@ export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        mb: 4,
-        px: 4,
+        mb: isMobile ? 3 : 4,
+        px: isMobile ? 2 : 4,
         borderBottom: '1px solid',
         borderColor: theme.palette.mode === 'dark'
           ? 'rgb(128 211 255 / 18%)'
