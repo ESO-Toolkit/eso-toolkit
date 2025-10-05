@@ -86,9 +86,9 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   18: 'Chilled',
   19: 'Weapon Damage', // FIXED: User said "Concussion" should be "Weapon Damage"
   20: 'Enervate',
-  21: 'Sickened',
+  21: 'Reduce Spell Cost', // FIXED: User said enchantment should be "Reduce Spell Cost" instead of "Sickened"
   22: 'Increase Magicka', // FIXED: User said armor enchant "Burning" should be "Increase Magicka"
-  23: 'Force Shock',
+  23: 'Magicka Recovery', // FIXED: User said enchantment ID 23 should be "Magicka Recovery" instead of "Force Shock"
   24: 'Poison', // FIXED: User said "Prismatic Onslaught" should be "Poison"
   25: 'Poison Damage',
   26: 'Prismatic Defense', // FIXED: User said "Soul Trap" on armor should be "Prismatic Defense"
@@ -100,7 +100,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   30: 'Reduce Feat Cost', // FIXED: User said jewelry enchant should be "Reduce Feat Cost" instead of "Increase Magicka"
   31: 'Increase Stamina',
   32: 'Reduce Physical Harm',
-  33: 'Reduce Magical Harm',
+  33: 'Reduce Spell Cost', // FIXED: User said enchantment ID 33 should be "Reduce Spell Cost" instead of "Reduce Magical Harm"
   34: 'Increase Armor',
   35: 'Increase Stamina', // FIXED: User said "Increase Spell Resistance" should be "Increase Stamina"
   36: 'Stamina Recovery',
