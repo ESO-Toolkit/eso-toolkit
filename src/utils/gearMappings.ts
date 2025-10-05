@@ -88,7 +88,7 @@ export const ENCHANTMENT_NAMES: Record<number, string> = {
   20: 'Enervate',
   21: 'Reduce Spell Cost', // FIXED: User said enchantment should be "Reduce Spell Cost" instead of "Sickened"
   22: 'Increase Magicka', // FIXED: User said armor enchant "Burning" should be "Increase Magicka"
-  23: 'Force Shock',
+  23: 'Magicka Recovery', // FIXED: User said enchantment ID 23 should be "Magicka Recovery" instead of "Force Shock"
   24: 'Poison', // FIXED: User said "Prismatic Onslaught" should be "Poison"
   25: 'Poison Damage',
   26: 'Prismatic Defense', // FIXED: User said "Soul Trap" on armor should be "Prismatic Defense"
