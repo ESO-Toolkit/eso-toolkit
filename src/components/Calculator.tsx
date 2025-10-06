@@ -779,7 +779,7 @@ const QuantityInput: React.FC<{
   return (
     <TextField
       size={isMobile ? 'medium' : 'small'}
-      type="number"
+      type={hasQuantity ? "number" : "text"}
       value={hasQuantity ? localQuantity : '-'}
       onChange={hasQuantity ? handleQuantityChange : undefined}
       onFocus={hasQuantity ? handleFocus : undefined}
