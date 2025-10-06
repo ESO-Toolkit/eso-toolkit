@@ -19,11 +19,13 @@ import type { SxProps, Theme } from '@mui/material';
 import React from 'react';
 
 export interface StatChecklistSource {
+  id?: string;
   name: string;
   wasActive: boolean;
   description: string;
   link?: string;
-  sourceType?: 'not_implemented' | 'always_on' | string; // Add source type information
+  sourceType?: 'not_implemented' | 'always_on' | string;
+  interactive?: boolean;
 }
 
 interface StatChecklistProps {
@@ -31,6 +33,7 @@ interface StatChecklistProps {
   title?: string;
   loading?: boolean;
   titleSx?: SxProps<Theme>;
+  onToggleSource?: (sourceId: string, nextValue: boolean) => void;
 }
 
 export const StatChecklist: React.FC<StatChecklistProps> = ({
@@ -38,12 +41,13 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
   title = 'Sources',
   loading = false,
   titleSx,
+  onToggleSource,
 }) => {
   const [showUnchecked, setShowUnchecked] = React.useState(false);
   const missedCount = React.useMemo(() => sources.filter((s) => !s.wasActive).length, [sources]);
 
   const visibleSources = React.useMemo(
-    () => sources.filter((s) => s.wasActive || showUnchecked),
+    () => sources.filter((s) => s.wasActive || showUnchecked || s.interactive),
     [sources, showUnchecked],
   );
 
@@ -126,13 +130,21 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
                 source.sourceType === 'not_implemented' ||
                 source.description.includes('[NOT FULLY IMPLEMENTED');
               const isAlwaysOn = source.sourceType === 'always_on';
+              const sourceId = source.id ?? source.name;
+              const isInteractive = Boolean(source.interactive && onToggleSource);
+              const showAlwaysOnLabel = isAlwaysOn && !source.interactive;
 
               return (
                 <ListItem key={index} disablePadding>
                   <ListItemIcon sx={{ minWidth: 36 }}>
                     <Checkbox
                       checked={source.wasActive}
-                      disabled
+                      disabled={!isInteractive}
+                      onChange={(event) => {
+                        if (isInteractive) {
+                          onToggleSource?.(sourceId, event.target.checked);
+                        }
+                      }}
                       size="small"
                       color={source.wasActive ? 'success' : 'default'}
                     />
@@ -160,7 +172,7 @@ export const StatChecklist: React.FC<StatChecklistProps> = ({
                             />
                           </Tooltip>
                         )}
-                        {isAlwaysOn && (
+                        {showAlwaysOnLabel && (
                           <Tooltip title="This source is treated as always being active.">
                             <Typography
                               variant="caption"
