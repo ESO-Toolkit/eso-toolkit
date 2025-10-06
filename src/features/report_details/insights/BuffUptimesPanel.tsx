@@ -20,6 +20,7 @@ const IMPORTANT_BUFF_ABILITIES = new Set([
   KnownAbilities.MINOR_SORCERY,
   KnownAbilities.PEARLESCENT_WARD,
   KnownAbilities.LUCENT_ECHOES,
+  KnownAbilities.LUCENT_ECHOES_GROUP,
   KnownAbilities.MAJOR_COURAGE,
 
   KnownAbilities.MAJOR_RESOLVE,

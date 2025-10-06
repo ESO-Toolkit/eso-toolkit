@@ -43,6 +43,26 @@ describe('CritDamageUtils with BuffLookup', () => {
       const buffLookup = createBuffLookup(buffEvents);
       expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(true);
     });
+
+    it('should detect alternate Lucent Echoes ability ID', () => {
+      const buffEvents: BuffEvent[] = [
+        {
+          timestamp: 2000,
+          type: 'applybuff',
+          sourceID: 3,
+          sourceIsFriendly: true,
+          targetID: 4,
+          targetIsFriendly: true,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES_GROUP,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ];
+
+      const buffLookup = createBuffLookup(buffEvents);
+      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(true);
+      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES_GROUP)).toBe(true);
+    });
   });
 
   describe('getEnabledCriticalDamageSources', () => {
@@ -98,6 +118,30 @@ describe('CritDamageUtils with BuffLookup', () => {
       ).toBe(true);
       expect(
         sources.some((s) => 'ability' in s && s.ability === KnownAbilities.MINOR_BRITTLE),
+      ).toBe(true);
+    });
+
+    it('should map alternate Lucent Echoes ability IDs to the same source', () => {
+      const buffEvents: BuffEvent[] = [
+        {
+          timestamp: 1500,
+          type: 'applybuff',
+          sourceID: 5,
+          sourceIsFriendly: true,
+          targetID: 6,
+          targetIsFriendly: true,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES_GROUP,
+          fight: 1,
+          extraAbilityGameID: 0,
+        },
+      ];
+
+      const debuffLookup = createDebuffLookup([]);
+      const buffLookup = createBuffLookup(buffEvents);
+
+      const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, null);
+      expect(
+        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES),
       ).toBe(true);
     });
   });

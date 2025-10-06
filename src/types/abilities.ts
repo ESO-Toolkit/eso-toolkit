@@ -214,6 +214,7 @@ export enum KnownAbilities {
 
   // Lucent Echoes - Buff that provides 11% critical damage
   LUCENT_ECHOES = 220015,
+  LUCENT_ECHOES_GROUP = 220061,
 
   // Piercing Spear - Passive that provides 12% critical damage
   PIERCING_SPEAR = 44046,
