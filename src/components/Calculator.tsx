@@ -779,7 +779,7 @@ const QuantityInput: React.FC<{
   return (
     <TextField
       size={isMobile ? 'medium' : 'small'}
-      type={hasQuantity ? "number" : "text"}
+      type={hasQuantity ? 'number' : 'text'}
       value={hasQuantity ? localQuantity : '-'}
       onChange={hasQuantity ? handleQuantityChange : undefined}
       onFocus={hasQuantity ? handleFocus : undefined}
@@ -1213,7 +1213,6 @@ const useStickyFooter = (
   const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
 
   const rafRef = useRef<number | null>(null);
-  const tickerRef = useRef<number | null>(null);
   const cardRectSignatureRef = useRef<string>('');
   const placeholderWidthRef = useRef<number>(0);
 
@@ -1269,7 +1268,7 @@ const useStickyFooter = (
     if (cache.viewportHeight !== viewportHeight || now - cache.timestamp > 50) {
       cardRect = calculatorCard.getBoundingClientRect();
       footerRect = footerEl.getBoundingClientRect();
-      placeholderRect = placeholderEl?.getBoundingClientRect();
+      placeholderRect = placeholderEl?.getBoundingClientRect() || null;
 
       measurementCacheRef.current = {
         cardRect,
@@ -1278,6 +1277,11 @@ const useStickyFooter = (
         viewportHeight,
         timestamp: now,
       };
+    }
+
+    // Add null checks for safety
+    if (!cardRect || !footerRect) {
+      return;
     }
 
     const cardBottomThreshold = viewportHeight - 8;
