@@ -2,8 +2,8 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { usePlayerData } from '../../../hooks';
-import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 import { CriticalDamageValues } from '../../../types/abilities';
+import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 
 import {
   PlayerCriticalDamageDetailsView,
@@ -122,14 +122,11 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       : undefined;
   }, [adjustedCriticalDamageSources]);
 
-  const handleSourceToggle = React.useCallback(
-    (sourceName: string, nextValue: boolean) => {
-      if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
-        setFightingFinesseEnabled(nextValue);
-      }
-    },
-    [],
-  );
+  const handleSourceToggle = React.useCallback((sourceName: string, nextValue: boolean) => {
+    if (sourceName === FIGHTING_FINESSE_SOURCE_NAME) {
+      setFightingFinesseEnabled(nextValue);
+    }
+  }, []);
 
   if (!player) {
     return null;
