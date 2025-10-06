@@ -300,6 +300,53 @@ export const PlayersPanel: React.FC = () => {
     return counts;
   }, [castEvents]);
 
+  // Calculate the latest aura snapshot per player from combatantinfo events
+  const aurasByPlayer = React.useMemo(() => {
+    const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
+
+    if (!playerData?.playersById || !combatantInfoEvents || !abilitiesById) {
+      return result;
+    }
+
+    Object.values(playerData.playersById).forEach((actor) => {
+      if (!actor?.id) {
+        return;
+      }
+
+      const playerId = String(actor.id);
+      result[playerId] = [];
+
+      const latestCombatantInfo = combatantInfoEvents
+        .filter((event): event is CombatantInfoEvent => {
+          return (
+            event.type === 'combatantinfo' &&
+            'sourceID' in event &&
+            String(event.sourceID) === playerId
+          );
+        })
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+
+      if (!latestCombatantInfo?.auras) {
+        return;
+      }
+
+      latestCombatantInfo.auras.forEach((aura) => {
+        const ability = abilitiesById[aura.ability];
+        const auraName = ability?.name || aura.name || `Unknown Aura (${aura.ability})`;
+
+        result[playerId].push({
+          name: auraName,
+          id: aura.ability,
+          stacks: aura.stacks,
+        });
+      });
+
+      result[playerId].sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    return result;
+  }, [abilitiesById, combatantInfoEvents, playerData?.playersById]);
+
   const playerGear = React.useMemo(() => {
     const result: Record<number, PlayerGearSetRecord[]> = {};
 
@@ -763,6 +810,7 @@ export const PlayersPanel: React.FC = () => {
       deathsByPlayer={deathsByPlayer}
       resurrectsByPlayer={resurrectsByPlayer}
       cpmByPlayer={cpmByPlayer}
+      aurasByPlayer={aurasByPlayer}
       maxHealthByPlayer={maxHealthByPlayer}
       maxStaminaByPlayer={maxStaminaByPlayer}
       maxMagickaByPlayer={maxMagickaByPlayer}

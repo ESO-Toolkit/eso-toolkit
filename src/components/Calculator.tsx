@@ -3217,7 +3217,7 @@ const CalculatorComponent: React.FC = () => {
               disableRipple
               disableTouchRipple
               onChange={() => updateFunction(category, resolvedIndex, { enabled: !item.enabled })}
-              sx={(theme) => {
+              sx={(theme: Theme) => {
                 return {
                   ...checkboxStyles,
                   '&.Mui-checked': {
