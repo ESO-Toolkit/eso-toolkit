@@ -1217,7 +1217,34 @@ const useStickyFooter = (
   const cardRectSignatureRef = useRef<string>('');
   const placeholderWidthRef = useRef<number>(0);
 
+  // Cache for measurements to avoid redundant DOM queries
+  const measurementCacheRef = useRef<{
+    cardRect: DOMRect | null;
+    footerRect: DOMRect | null;
+    placeholderRect: DOMRect | null;
+    viewportHeight: number;
+    timestamp: number;
+  }>({
+    cardRect: null,
+    footerRect: null,
+    placeholderRect: null,
+    viewportHeight: 0,
+    timestamp: 0,
+  });
+
+  // Throttle measurements to avoid excessive calculations
+  const lastMeasurementTimeRef = useRef<number>(0);
+  const MEASUREMENT_THROTTLE = 16; // ~60fps
+
   const runMeasurement = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle measurements to 60fps
+    if (now - lastMeasurementTimeRef.current < MEASUREMENT_THROTTLE) {
+      return;
+    }
+    lastMeasurementTimeRef.current = now;
+
     const footerEl = footerRef.current;
     const placeholderEl = placeholderRef.current;
 
@@ -1230,10 +1257,28 @@ const useStickyFooter = (
       return;
     }
 
-    const cardRect = calculatorCard.getBoundingClientRect();
-    const footerRect = footerEl.getBoundingClientRect();
-    const placeholderRect = placeholderEl?.getBoundingClientRect();
+    // Use cached measurements if available and recent
+    const cache = measurementCacheRef.current;
     const viewportHeight = window.innerHeight;
+
+    let cardRect = cache.cardRect;
+    let footerRect = cache.footerRect;
+    let placeholderRect = cache.placeholderRect;
+
+    // Only recalculate if viewport changed or cache is stale
+    if (cache.viewportHeight !== viewportHeight || now - cache.timestamp > 50) {
+      cardRect = calculatorCard.getBoundingClientRect();
+      footerRect = footerEl.getBoundingClientRect();
+      placeholderRect = placeholderEl?.getBoundingClientRect();
+
+      measurementCacheRef.current = {
+        cardRect,
+        footerRect,
+        placeholderRect,
+        viewportHeight,
+        timestamp: now,
+      };
+    }
 
     const cardBottomThreshold = viewportHeight - 8;
     const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
@@ -1268,50 +1313,54 @@ const useStickyFooter = (
     const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
     const clampedBottom = Math.min(desiredBottom, maxBottom);
 
-    const nextStyle: React.CSSProperties = {
-      position: 'fixed',
-      left: `${Math.round(left)}px`,
-      width: `${Math.round(width)}px`,
-      bottom: `${Math.round(clampedBottom)}px`,
-      zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
-      boxSizing: 'border-box',
-      // Preserve background styling - prevent transparency in full mode
-      background: liteMode
-        ? 'transparent'
-        : theme.palette.mode === 'dark'
-          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-      borderRadius: liteMode ? '0' : '12px',
-      boxShadow: liteMode
-        ? 'none'
-        : theme.palette.mode === 'dark'
-          ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-    };
-
+    // Batch all state updates together
     const footerHeight = `${Math.round(footerRect.height)}px`;
-    if (placeholderHeight !== footerHeight) {
-      setPlaceholderHeight(footerHeight);
-    }
-
-    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}`;
+    const newSignature = `${Math.round(cardRect.left)}|${Math.round(cardRect.width)}|${Math.round(cardRect.top)}`;
     const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
-    if (cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky) {
-      cardRectSignatureRef.current = newSignature;
-      placeholderWidthRef.current = width;
-      setFooterStyle(nextStyle);
-      if (!isSticky) {
-        setIsSticky(true);
-      }
-    } else {
-      // small positional adjustments
-      setFooterStyle((prev) => ({ ...prev, ...nextStyle }));
-      if (!isSticky) {
-        setIsSticky(true);
-      }
+    const styleChanged = cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky;
+
+    // Only update state if something actually changed
+    if (styleChanged || placeholderHeight !== footerHeight) {
+      const nextStyle: React.CSSProperties = {
+        position: 'fixed',
+        left: `${Math.round(left)}px`,
+        width: `${Math.round(width)}px`,
+        bottom: `${Math.round(clampedBottom)}px`,
+        zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
+        boxSizing: 'border-box',
+        // Preserve background styling - prevent transparency in full mode
+        background: liteMode
+          ? 'transparent'
+          : theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        borderRadius: liteMode ? '0' : '12px',
+        boxShadow: liteMode
+          ? 'none'
+          : theme.palette.mode === 'dark'
+            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+      };
+
+      // Batch state updates
+      requestAnimationFrame(() => {
+        if (placeholderHeight !== footerHeight) {
+          setPlaceholderHeight(footerHeight);
+        }
+
+        if (styleChanged) {
+          cardRectSignatureRef.current = newSignature;
+          placeholderWidthRef.current = width;
+          setFooterStyle(nextStyle);
+          if (!isSticky) {
+            setIsSticky(true);
+          }
+        }
+      });
     }
   }, [isSticky, placeholderHeight, liteMode, theme.palette.mode, isMobile]);
 
+  // Debounced measurement scheduler
   const scheduleMeasurement = useCallback(() => {
     if (rafRef.current !== null) {
       return;
@@ -1322,64 +1371,110 @@ const useStickyFooter = (
     });
   }, [runMeasurement]);
 
+  // Throttled scroll handler
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTimeRef = useRef<number>(0);
+  const SCROLL_THROTTLE = 16; // ~60fps
+
+  const handleScroll = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle scroll events
+    if (now - lastScrollTimeRef.current < SCROLL_THROTTLE) {
+      return;
+    }
+    lastScrollTimeRef.current = now;
+
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Debounce the actual measurement
+    scrollTimeoutRef.current = setTimeout(() => {
+      scheduleMeasurement();
+    }, 32); // ~30fps for smooth scrolling
+  }, [scheduleMeasurement]);
+
+  // Throttled resize handler
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastResizeTimeRef = useRef<number>(0);
+  const RESIZE_THROTTLE = 100; // Slower for resize events
+
+  const handleResize = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle resize events more aggressively
+    if (now - lastResizeTimeRef.current < RESIZE_THROTTLE) {
+      return;
+    }
+    lastResizeTimeRef.current = now;
+
+    // Clear any pending timeout
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current);
+    }
+
+    // Invalidate cache on resize to force recalculation
+    measurementCacheRef.current.timestamp = 0;
+
+    // Debounce the actual measurement
+    resizeTimeoutRef.current = setTimeout(() => {
+      scheduleMeasurement();
+    }, 150);
+  }, [scheduleMeasurement]);
+
   useEffect(() => {
+    // Initial measurement
     runMeasurement();
 
-    const handleScroll = (): void => {
-      runMeasurement();
-      scheduleMeasurement();
-    };
-    const handleResize = (): void => {
-      runMeasurement();
-      scheduleMeasurement();
-    };
-
+    // Add event listeners with passive option for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+
+      // Cleanup timeouts
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      // Cleanup RAF
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
     };
-  }, [runMeasurement, scheduleMeasurement]);
+  }, [runMeasurement, handleScroll, handleResize, scheduleMeasurement]);
 
-  useEffect(() => {
-    if (!isSticky) {
-      if (tickerRef.current !== null) {
-        cancelAnimationFrame(tickerRef.current);
-        tickerRef.current = null;
-      }
-      return;
-    }
-
-    const tick = (): void => {
-      runMeasurement();
-      tickerRef.current = window.requestAnimationFrame(tick);
-    };
-
-    tickerRef.current = window.requestAnimationFrame(tick);
-
-    return () => {
-      if (tickerRef.current !== null) {
-        cancelAnimationFrame(tickerRef.current);
-        tickerRef.current = null;
-      }
-    };
-  }, [isSticky, runMeasurement]);
-
+  // Optimized ResizeObserver with debouncing
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
+    let resizeTimeout: NodeJS.Timeout | null = null;
+
     const observer = new ResizeObserver(() => {
-      runMeasurement();
+      // Invalidate cache on resize to force recalculation
+      measurementCacheRef.current.timestamp = 0;
+
+      // Debounce resize observer callbacks
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+
+      resizeTimeout = setTimeout(() => {
+        scheduleMeasurement();
+      }, 100); // Debounce resize observer events
     });
 
+    // Only observe elements that actually exist
     if (footerRef.current) {
       observer.observe(footerRef.current);
     }
@@ -1393,8 +1488,11 @@ const useStickyFooter = (
 
     return () => {
       observer.disconnect();
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
     };
-  }, [runMeasurement]);
+  }, [scheduleMeasurement]);
 
   return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
 };
