@@ -58,6 +58,12 @@ const Logs = React.lazy(() =>
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
+const ScribingSimulatorPage = React.lazy(() =>
+  import('./pages/ScribingSimulatorPage').then((module) => ({
+    default: module.ScribingSimulatorPage,
+  })),
+);
+
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
@@ -305,6 +311,17 @@ const AppRoutes: React.FC = () => {
                 </AuthenticatedRoute>
               }
             />
+            <Route
+              path="/scribing-simulator"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ScribingSimulatorPage />
+                  </Suspense>
+                </ErrorBoundary>
+              }
+            />
+
           </Route>
         </Routes>
       </ErrorBoundary>

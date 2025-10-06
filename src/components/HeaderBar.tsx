@@ -578,6 +578,16 @@ export const HeaderBar: React.FC = () => {
       path: '/calculator',
     },
     {
+      text: 'Scribing Simulator',
+      icon: '📜',
+      path: '/scribing-simulator',
+    },
+    {
+      text: 'Scribing Analysis',
+      icon: '📊',
+      path: '/scribing-analysis',
+    },
+    {
       text: 'Logs',
       icon: '📋',
       path: '/logs',

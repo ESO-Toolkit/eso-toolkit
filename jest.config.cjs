@@ -11,6 +11,9 @@ module.exports = {
     '\\.(css|less|scss|sass)$': 'identity-obj-proxy',
     '\\.(jpg|jpeg|png|gif|eot|otf|webp|svg|ttf|woff|woff2|mp4|webm|wav|mp3|m4a|aac|oga)$':
       '<rootDir>/src/test/__mocks__/fileMock.js',
+    // Worker mocks - Mock web workers that use import.meta.url
+    '^.*/workers$': '<rootDir>/src/test/__mocks__/workersMock.js',
+    '^.*/workers/(.*)$': '<rootDir>/src/test/__mocks__/workersMock.js',
     // Path mappings - After asset mocks
     '^@/(.*)$': '<rootDir>/src/$1',
     '^@components/(.*)$': '<rootDir>/src/components/$1',
@@ -92,6 +95,9 @@ module.exports = {
 
   // Ignore patterns
   testPathIgnorePatterns: ['/node_modules/', '/build/'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(.*\\.mjs$|@?react-three-fiber|three))',
+  ],
 
   // Watch plugins
   watchPlugins: ['jest-watch-typeahead/filename', 'jest-watch-typeahead/testname'],

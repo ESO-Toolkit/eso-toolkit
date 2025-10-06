@@ -13,3 +13,6 @@ export * from './calculations';
 export * from './abilities';
 export * from './combatlogEvents';
 export * from './playerDetails';
+
+// Scribing system types
+export * from '../features/scribing/types/scribing-enhanced';

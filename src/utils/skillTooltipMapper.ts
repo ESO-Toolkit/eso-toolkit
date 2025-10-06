@@ -3,7 +3,8 @@ import React from 'react';
 import { SkillStat, SkillTooltipProps, ScribedSkillData } from '../components/SkillTooltip';
 
 import { abilityIdMapper } from './abilityIdMapper';
-import { GRIMOIRE_NAME_PATTERNS, getAllGrimoires, SCRIBING_BLACKLIST } from './Scribing';
+import { analyzeScribingSkillWithSignature } from '../features/scribing/utils/enhancedScribingAnalysis';
+import { GRIMOIRE_NAME_PATTERNS, getAllGrimoires, SCRIBING_BLACKLIST, getScribingSkillByAbilityId } from '../features/scribing/utils/Scribing';
 import { findSkillByName, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
@@ -219,14 +220,23 @@ export function buildTooltipPropsFromAbilityId(
     return null;
   }
 
-  // Check if this is a scribed skill and use provided data or detect grimoire
-  const detectedGrimoire = abilityData.name ? detectScribedSkillGrimoire(abilityData.name) : null;
+  // Check if this is a scribed skill using ability ID lookup from scribing database
+  const scribingInfo = getScribingSkillByAbilityId(abilityId);
   const finalScribedSkillData =
     scribedSkillData ||
-    (detectedGrimoire
+    (scribingInfo
       ? {
-          grimoireName: detectedGrimoire,
+          grimoireName: scribingInfo.grimoire,
           effects: [],
+          recipe: {
+            grimoire: scribingInfo.grimoire,
+            transformation: scribingInfo.transformation,
+            transformationType: scribingInfo.transformationType,
+            confidence: 1.0, // 100% confidence since we have exact ability ID match
+            matchMethod: 'ability-id-match',
+            recipeSummary: `📖 ${scribingInfo.grimoire} + 🔄 ${scribingInfo.transformation}`,
+            tooltipInfo: `📖 Grimoire: ${scribingInfo.grimoire}\n🔄 ${scribingInfo.transformationType}: ${scribingInfo.transformation}`,
+          },
         }
       : undefined);
 
@@ -254,7 +264,7 @@ export function buildTooltipPropsFromAbilityId(
     description: `${abilityData.name || 'Unknown Ability'} (ID: ${abilityId})`,
     abilityId,
     iconUrl: abilityIdMapper.getIconUrl(abilityId) || undefined,
-    lineText: detectedGrimoire ? 'Scribing' : 'Unknown Skill Line',
+    lineText: scribingInfo ? 'Scribing' : 'Unknown Skill Line',
     stats: [],
     scribedSkillData: finalScribedSkillData,
   };
@@ -266,16 +276,42 @@ export function buildTooltipPropsFromClassAndName(
   abilityName: string,
   scribedSkillData?: ScribedSkillData,
 ): SkillTooltipProps | null {
-  // Check if this is a scribed skill and use provided data or detect grimoire
-  const detectedGrimoire = detectScribedSkillGrimoire(abilityName);
+  // Check if this is a scribed skill - first try ability ID lookup, then fallback to heuristics
+  const abilityData = abilityIdMapper.getAbilityByName(abilityName);
+  const scribingInfo = abilityData?.gameID ? getScribingSkillByAbilityId(abilityData.gameID) : null;
+  const detectedGrimoire = scribingInfo ? null : detectScribedSkillGrimoire(abilityName);
+  
   const finalScribedSkillData =
     scribedSkillData ||
-    (detectedGrimoire
+    (scribingInfo
       ? {
-          grimoireName: detectedGrimoire,
+          grimoireName: scribingInfo.grimoire,
           effects: [],
+          recipe: {
+            grimoire: scribingInfo.grimoire,
+            transformation: scribingInfo.transformation,
+            transformationType: scribingInfo.transformationType,
+            confidence: 1.0, // 100% confidence since we have exact ability ID match
+            matchMethod: 'ability-id-match',
+            recipeSummary: `📖 ${scribingInfo.grimoire} + 🔄 ${scribingInfo.transformation}`,
+            tooltipInfo: `📖 Grimoire: ${scribingInfo.grimoire}\n🔄 ${scribingInfo.transformationType}: ${scribingInfo.transformation}`,
+          },
         }
-      : undefined);
+      : detectedGrimoire
+        ? {
+            grimoireName: detectedGrimoire,
+            effects: [],
+            recipe: {
+              grimoire: detectedGrimoire,
+              transformation: 'Unknown',
+              transformationType: 'Focus Script',
+              confidence: 0.7, // Lower confidence for heuristic-based detection
+              matchMethod: 'name-pattern-match',
+              recipeSummary: `📖 ${detectedGrimoire} + 🔄 Unknown Focus Script`,
+              tooltipInfo: `📖 Grimoire: ${detectedGrimoire}\n🔄 Focus Script: Unknown (detected by name pattern)`,
+            },
+          }
+        : undefined);
 
   // First try to find by name in skill lines
   const found = findSkillByName(abilityName);
@@ -283,8 +319,7 @@ export function buildTooltipPropsFromClassAndName(
     const { node, skillLineName, skillLineData, parent } = found;
     const className = getClassKey(skillLineData);
 
-    // Get ability ID and icon if available
-    const abilityData = abilityIdMapper.getAbilityByName(abilityName);
+    // abilityData is already defined above, use it for ability ID and icon
 
     return mapSkillToTooltipProps({
       className: skillLineData.class || skillLineData.weapon || capitalCase(className),
@@ -310,10 +345,11 @@ export function buildTooltipPropsFromClassAndName(
   }
 
   // If this is a scribed skill but not found in skill lines, create a basic scribed skill tooltip
-  if (detectedGrimoire) {
+  if (scribingInfo || detectedGrimoire) {
+    const grimoireName = scribingInfo?.grimoire || detectedGrimoire;
     return {
       name: abilityName,
-      description: `${abilityName} - A scribed skill from the ${detectedGrimoire} grimoire.`,
+      description: `${abilityName} - A scribed skill from the ${grimoireName} grimoire.`,
       lineText: 'Scribing',
       stats: [],
       scribedSkillData: finalScribedSkillData,
@@ -321,6 +357,71 @@ export function buildTooltipPropsFromClassAndName(
   }
 
   return null;
+}
+
+/**
+ * Enhanced scribing tooltip mapper that includes signature script detection
+ * This function can be used when you have access to the full combat log data
+ */
+export function enhancedScribingTooltipMapper(
+  abilityId: number,
+  talent: any,
+  allReportAbilities: any[],
+  allDebuffEvents: any[],
+  allBuffEvents: any[],
+  allResourceEvents: any[],
+  allDamageEvents: any[],
+  allCastEvents: any[],
+  allHealingEvents: any[],
+  playerId = 1,
+): SkillTooltipProps | null {
+  // First try to get enhanced scribing data with signature script detection
+  const enhancedScribingData = analyzeScribingSkillWithSignature(
+    talent,
+    allReportAbilities,
+    allDebuffEvents,
+    allBuffEvents,
+    allResourceEvents,
+    allDamageEvents,
+    allCastEvents,
+    allHealingEvents,
+    playerId,
+  );
+
+  // Use the enhanced scribing data to build tooltip props
+  return buildTooltipPropsFromAbilityId(abilityId, enhancedScribingData || undefined);
+}
+
+/**
+ * Helper function to enrich existing ScribedSkillData with signature script information
+ * Use this when you have basic scribing data but want to add signature script detection
+ */
+export function enrichScribedSkillData(
+  baseScribingData: ScribedSkillData,
+  abilityId?: number,
+): ScribedSkillData {
+  const enhanced: ScribedSkillData = { ...baseScribingData };
+
+  // If we have an ability ID, try to get more detailed scribing information
+  if (abilityId) {
+    const scribingInfo = getScribingSkillByAbilityId(abilityId);
+    if (scribingInfo && !enhanced.recipe) {
+      enhanced.recipe = {
+        grimoire: scribingInfo.grimoire,
+        transformation: scribingInfo.transformation,
+        transformationType: scribingInfo.transformationType,
+        confidence: 1.0,
+        matchMethod: 'ability-id-lookup',
+        recipeSummary: `📖 ${scribingInfo.grimoire} + 🔄 ${scribingInfo.transformation}`,
+        tooltipInfo: `📖 Grimoire: ${scribingInfo.grimoire}\n🔄 ${scribingInfo.transformationType}: ${scribingInfo.transformation}`,
+      };
+    }
+  }
+
+  // TODO: Add signature script detection here when we have access to combat log data
+  // For now, we can only enhance with basic ability ID lookup
+
+  return enhanced;
 }
 
 // Enhanced function that can work with either ID or name
