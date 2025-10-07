@@ -1,12 +1,13 @@
+import { Box } from '@mui/material';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
-import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -62,8 +63,12 @@ const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
-// Loading fallback component - use skeleton for consistency
-const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+// Loading fallback component - use custom spinner to prevent theme flashing
+const LoadingFallback: React.FC = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+    <MemoizedLoadingSpinner size={40} />
+  </Box>
+);
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
@@ -295,9 +300,7 @@ const AppRoutes: React.FC = () => {
               element={
                 <AuthenticatedRoute>
                   <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <UserReports />
-                    </Suspense>
+                    <UserReports />
                   </ErrorBoundary>
                 </AuthenticatedRoute>
               }

@@ -102,6 +102,7 @@ export interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
+  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;

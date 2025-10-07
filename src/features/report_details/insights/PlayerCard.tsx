@@ -46,6 +46,7 @@ interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
+  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -112,6 +113,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     player,
     mundusBuffs,
     championPoints,
+    auras,
     scribingSkills,
     buildIssues,
     classAnalysis,
@@ -157,7 +159,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
 
-    const foodAura = detectFoodFromAuras([]);
+    const foodAura = detectFoodFromAuras(auras);
 
     // Memoize tooltip props lookup to avoid repeated function calls
     const tooltipPropsLookup = React.useMemo(() => {

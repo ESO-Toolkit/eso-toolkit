@@ -114,6 +114,8 @@ interface PlayerCriticalDamageDetailsViewProps {
   isLoading: boolean;
   criticalDamageData: PlayerCriticalDamageData | null;
   criticalDamageSources: CriticalDamageSourceWithActiveState[];
+  toggleableSourceNames?: Set<string>;
+  onSourceToggle?: (sourceId: string, nextValue: boolean) => void;
   criticalMultiplier: CriticalMultiplierInfo | null;
   fightDurationSeconds: number;
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
@@ -126,6 +128,8 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
   isLoading,
   criticalDamageData,
   criticalDamageSources,
+  toggleableSourceNames,
+  onSourceToggle,
   criticalMultiplier,
   fightDurationSeconds,
   player,
@@ -135,18 +139,25 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
 
   // Transform critical damage sources to StatChecklistSource format
   const statChecklistSources = React.useMemo(() => {
-    return criticalDamageSources.map((source) => ({
-      name: source.name,
-      wasActive: source.wasActive,
-      description: source.description,
-      sourceType: source.source,
-      // Add link if it's a known ability that can be looked up
-      link:
-        'ability' in source
-          ? `https://www.esoui.com/downloads/info7-ESOUIAddOnCollection.html`
-          : undefined,
-    }));
-  }, [criticalDamageSources]);
+    return criticalDamageSources.map((source) => {
+      const sourceId = source.name;
+      const isInteractive = toggleableSourceNames?.has(sourceId) ?? false;
+
+      return {
+        id: sourceId,
+        name: source.name,
+        wasActive: source.wasActive,
+        description: source.description,
+        sourceType: source.source,
+        interactive: isInteractive,
+        // Add link if it's a known ability that can be looked up
+        link:
+          'ability' in source
+            ? `https://www.esoui.com/downloads/info7-ESOUIAddOnCollection.html`
+            : undefined,
+      };
+    });
+  }, [criticalDamageSources, toggleableSourceNames]);
 
   // Memoize expensive chart data transformations to prevent recalculation on every render
   const chartLabels = React.useMemo(() => {
@@ -366,6 +377,7 @@ export const PlayerCriticalDamageDetailsView: React.FC<PlayerCriticalDamageDetai
               sources={statChecklistSources}
               title="Critical Damage Sources"
               loading={isLoading}
+              onToggleSource={onSourceToggle}
             />
 
             {/* Critical Multiplier Information */}
