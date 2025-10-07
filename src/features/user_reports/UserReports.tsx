@@ -419,30 +419,43 @@ export const UserReports: React.FC = () => {
         </Typography>
       </Box>
 
-      {/* Loading indicator for pagination */}
-      {state.loading && !state.initialLoading && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            mb: 2,
-            py: 1,
-            // Smooth fade-in animation
-            animation: 'fadeIn 0.3s ease-out',
-            '@keyframes fadeIn': {
-              '0%': { opacity: 0 },
-              '100%': { opacity: 1 },
-            },
-          }}
-        >
-          <MemoizedLoadingSpinner size={20} thickness={2} />
-          <Typography variant="body2" color="text.secondary">
-            Loading page {state.pagination.currentPage} of {state.pagination.totalPages}...
-          </Typography>
-        </Box>
-      )}
+      {/* Loading indicator for pagination - fixed height to prevent layout shift */}
+      <Box
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+          mb: 2,
+          py: 1,
+          // Fixed height to maintain layout consistency
+          minHeight: '48px',
+          // Smooth transitions for content changes
+          transition: 'opacity 0.3s ease-out',
+        }}
+      >
+        {state.loading && !state.initialLoading && (
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 1,
+              // Fade in animation for loading content
+              animation: 'fadeIn 0.3s ease-out',
+              '@keyframes fadeIn': {
+                '0%': { opacity: 0 },
+                '100%': { opacity: 1 },
+              },
+            }}
+          >
+            <MemoizedLoadingSpinner size={20} thickness={2} />
+            <Typography variant="body2" color="text.secondary">
+              Loading page {state.pagination.currentPage} of {state.pagination.totalPages}...
+            </Typography>
+          </Box>
+        )}
+      </Box>
 
       {/* Error Alert */}
       {state.error && (
