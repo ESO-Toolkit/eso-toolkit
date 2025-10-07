@@ -225,27 +225,22 @@ export const LatestReports: React.FC = () => {
                   <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Title
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Zone
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ width: '20%', whiteSpace: 'normal' }}>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            Start Time
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>
+                          <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Duration
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Visibility
                           </Typography>
@@ -299,6 +294,19 @@ export const LatestReports: React.FC = () => {
                               >
                                 {`Owner: ${report.owner?.name || 'Unknown'}`}
                               </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.25,
+                                  whiteSpace: 'nowrap',
+                                  textOverflow: 'ellipsis',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                {formatReportDateTime(report.startTime)}
+                              </Typography>
                             </Box>
                           </TableCell>
                           <TableCell
@@ -312,12 +320,7 @@ export const LatestReports: React.FC = () => {
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
-                            <Typography variant="body2" sx={{ whiteSpace: 'inherit' }}>
-                              {formatReportDateTime(report.startTime)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                            <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                             <Typography variant="body2">
                               {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>

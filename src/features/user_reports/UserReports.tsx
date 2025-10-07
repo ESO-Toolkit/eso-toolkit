@@ -558,11 +558,10 @@ export const UserReports: React.FC = () => {
               <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>Title</TableCell>
-                    <TableCell sx={{ width: '27%', whiteSpace: 'normal' }}>Zone</TableCell>
-                    <TableCell sx={{ width: '25%', whiteSpace: 'normal' }}>Date</TableCell>
-                    <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Duration</TableCell>
-                    <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Visibility</TableCell>
+                    <TableCell sx={{ width: '37%', whiteSpace: 'normal' }}>Title</TableCell>
+                    <TableCell sx={{ width: '33%', whiteSpace: 'normal' }}>Zone</TableCell>
+                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Duration</TableCell>
+                    <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Visibility</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -605,6 +604,9 @@ export const UserReports: React.FC = () => {
                               <Typography variant="body2" color="text.secondary">
                                 {report.code}
                               </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+                                {formatReportDateTime(report.startTime)}
+                              </Typography>
                             </Box>
                           </TableCell>
                           <TableCell>
@@ -612,12 +614,7 @@ export const UserReports: React.FC = () => {
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
                           </TableCell>
-                          <TableCell>
-                            <Typography variant="body2">
-                              {formatReportDateTime(report.startTime)}
-                            </Typography>
-                          </TableCell>
-                          <TableCell>
+                            <TableCell>
                             <Typography variant="body2">
                               {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>
