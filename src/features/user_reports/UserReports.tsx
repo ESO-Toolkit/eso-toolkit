@@ -277,39 +277,7 @@ export const UserReports: React.FC = () => {
     </Box>
   );
 
-  const renderPaginationStatus = (insideCard: boolean): React.ReactElement => (
-    <Box
-      sx={{
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: insideCard ? 'flex-start' : 'center',
-        gap: 1,
-        mb: insideCard ? 1.5 : 2,
-        py: insideCard ? 0.5 : 1,
-        minHeight: insideCard ? 'auto' : '48px',
-        transition: 'opacity 0.3s ease-out',
-      }}
-    >
-      {state.loading && !state.initialLoading && (
-        <Box
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            animation: 'fadeIn 0.3s ease-out',
-            '@keyframes fadeIn': {
-              '0%': { opacity: 0 },
-              '100%': { opacity: 1 },
-            },
-          }}
-        >
-          <MemoizedLoadingSpinner size={20} thickness={2} />
-        </Box>
-      )}
-    </Box>
-  );
-
+  
   const [state, setState] = useState<UserReportsState>({
     reports: [],
     loading: false, // Let useEffect handle initial loading
@@ -496,8 +464,7 @@ export const UserReports: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {!isDesktop && renderHeaderContent(false)}
 
-      {!isDesktop && renderPaginationStatus(false)}
-
+  
       {/* Error Alert */}
       {state.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -541,8 +508,7 @@ export const UserReports: React.FC = () => {
         >
           {isDesktop && renderHeaderContent(true)}
 
-          {isDesktop && renderPaginationStatus(true)}
-
+  
           {isDesktop ? (
             <TableContainer
               component={Paper}
