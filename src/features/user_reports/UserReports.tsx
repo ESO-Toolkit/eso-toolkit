@@ -601,9 +601,6 @@ export const UserReports: React.FC = () => {
                               <Typography variant="body1" fontWeight="medium">
                                 {report.title || 'Untitled Report'}
                               </Typography>
-                              <Typography variant="body2" color="text.secondary">
-                                {report.code}
-                              </Typography>
                               <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
                                 {formatReportDateTime(report.startTime)}
                               </Typography>
