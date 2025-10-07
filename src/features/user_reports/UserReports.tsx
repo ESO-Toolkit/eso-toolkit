@@ -20,7 +20,6 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { format } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -29,6 +28,13 @@ import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetUserReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
 import { GetUserReportsDocument } from '../../graphql/reports.generated';
 import { useAuth } from '../auth/AuthContext';
+import { ReportListMobile } from '../reports/components/ReportListMobile';
+import {
+  formatReportDateTime,
+  formatReportDuration,
+  getReportVisibilityColor,
+} from '../reports/reportFormatting';
+import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 interface UserReportsState {
   reports: UserReportSummaryFragment[];
@@ -84,22 +90,65 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTab
     >
       <TableCell>
         <Box>
-          <Skeleton variant="text" width={200} height={24} sx={{ mb: 0.5 }} />
-          <Skeleton variant="text" width={120} height={16} />
+          <Skeleton
+            variant="text"
+            height={24}
+            sx={{
+              mb: 0.25,
+              width: { xs: '92%', md: '80%' },
+              maxWidth: 220,
+            }}
+          />
+          <Skeleton
+            variant="text"
+            height={20}
+            sx={{
+              width: { xs: '88%', md: '75%' },
+              maxWidth: 120,
+            }}
+          />
         </Box>
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={150} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '95%', md: '85%' },
+            maxWidth: 150,
+          }}
+        />
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={140} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '90%', md: '80%' },
+            maxWidth: 140,
+          }}
+        />
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={80} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '85%', md: '75%' },
+            maxWidth: 80,
+          }}
+        />
       </TableCell>
       <TableCell>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Skeleton variant="rounded" width={60} height={24} />
+          <Skeleton
+            variant="rounded"
+            height={24}
+            sx={{
+              width: { xs: '90%', md: '80%' },
+              maxWidth: 60,
+            }}
+          />
           {/* Small loading indicator to show active loading state */}
           <MemoizedLoadingSpinner size={16} thickness={2} />
         </Box>
@@ -107,6 +156,8 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTab
     </TableRow>
   );
 };
+ReportsTableSkeletonRow.displayName = 'ReportsTableSkeletonRow';
+
 ReportsTableSkeletonRow.displayName = 'ReportsTableSkeletonRow';
 
 // Memoized skeleton row to prevent unnecessary re-renders
@@ -162,44 +213,69 @@ const LoadingOverlayComponent: React.FC = () => {
 const LoadingOverlay = React.memo(LoadingOverlayComponent);
 LoadingOverlay.displayName = 'LoadingOverlay';
 
-// Utility functions
-const formatDateTime = (timestamp: number): string => {
-  return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
-};
-
-const formatDuration = (startTime: number, endTime: number): string => {
-  const durationMs = endTime - startTime;
-  const totalMinutes = Math.floor(durationMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
-};
-
-const getVisibilityColor = (
-  visibility: string,
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  switch (visibility) {
-    case 'public':
-      return 'success';
-    case 'private':
-      return 'error';
-    case 'unlisted':
-      return 'warning';
-    default:
-      return 'default';
-  }
-};
-
 export const UserReports: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { isLoggedIn, currentUser, userLoading, userError } = useAuth();
   const client = useEsoLogsClientInstance();
+  const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
+
+  const renderHeaderContent = (insideCard: boolean): React.ReactElement => (
+    <Box sx={{ mb: insideCard ? 3 : isDesktop ? 4 : 3 }}>
+      <Box
+        sx={{
+          ...headerStackSx,
+          mb: insideCard ? 1.5 : 1.5,
+        }}
+      >
+        <Box>
+          <Typography
+            variant={isDesktop ? 'h4' : 'h5'}
+            component="h1"
+            sx={{ mb: insideCard ? 1.5 : 2 }}
+          >
+            My Reports
+          </Typography>
+          {currentUser && (
+            <Typography variant="body1" color="text.secondary">
+              Reports for {currentUser.name}
+              {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
+              {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
+            </Typography>
+          )}
+        </Box>
+
+        <Box sx={actionGroupSx}>
+          <IconButton
+            onClick={handleRefresh}
+            disabled={state.loading}
+            aria-label="refresh"
+            size={isDesktop ? 'medium' : 'large'}
+            sx={{
+              backgroundColor: theme.palette.action.hover,
+              '&:hover': {
+                backgroundColor: theme.palette.action.selected,
+              },
+              width: isDesktop ? 'auto' : '100%',
+            }}
+          >
+            <RefreshIcon />
+          </IconButton>
+        </Box>
+      </Box>
+
+      {!currentUser && !userLoading && (
+        <Alert severity="info" sx={{ mb: insideCard ? 2 : 1.5 }}>
+          Note: Unable to load user profile information from ESO Logs API, but you can still view
+          your reports below.
+        </Alert>
+      )}
+
+      <Typography variant="body2" color="text.secondary" sx={{ mt: currentUser ? 1 : 0 }}>
+        Total: {state.pagination.totalReports} reports
+      </Typography>
+    </Box>
+  );
 
   const [state, setState] = useState<UserReportsState>({
     reports: [],
@@ -385,79 +461,7 @@ export const UserReports: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {/* Header */}
-      <Box sx={{ mb: 4 }}>
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="h4" component="h1">
-            My Reports
-          </Typography>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={state.loading}
-            aria-label="refresh"
-            sx={{ color: theme.palette.primary.main }}
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-
-        {currentUser ? (
-          <Typography variant="body1" color="text.secondary">
-            Reports for {currentUser.name}
-            {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
-            {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
-          </Typography>
-        ) : (
-          !userLoading && (
-            <Alert severity="info" sx={{ mb: 2 }}>
-              Note: Unable to load user profile information from ESO Logs API, but you can still
-              view your reports below.
-            </Alert>
-          )
-        )}
-
-        <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-          Total: {state.pagination.totalReports} reports
-        </Typography>
-      </Box>
-
-      {/* Loading indicator for pagination - fixed height to prevent layout shift */}
-      <Box
-        sx={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 1,
-          mb: 2,
-          py: 1,
-          // Fixed height to maintain layout consistency
-          minHeight: '48px',
-          // Smooth transitions for content changes
-          transition: 'opacity 0.3s ease-out',
-        }}
-      >
-        {state.loading && !state.initialLoading && (
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 1,
-              // Fade in animation for loading content
-              animation: 'fadeIn 0.3s ease-out',
-              '@keyframes fadeIn': {
-                '0%': { opacity: 0 },
-                '100%': { opacity: 1 },
-              },
-            }}
-          >
-            <MemoizedLoadingSpinner size={20} thickness={2} />
-            <Typography variant="body2" color="text.secondary">
-              Loading page {state.pagination.currentPage} of {state.pagination.totalPages}...
-            </Typography>
-          </Box>
-        )}
-      </Box>
+      {!isDesktop && renderHeaderContent(false)}
 
       {/* Error Alert */}
       {state.error && (
@@ -469,11 +473,10 @@ export const UserReports: React.FC = () => {
       {/* Reports Table */}
       <Card
         sx={{
-          // Smooth transitions when not initially loading, disabled during initial load
+          ...cardSx,
           transition: state.initialLoading
             ? 'none !important'
             : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          // Complete isolation during initial loading to prevent flashing
           ...(state.initialLoading && {
             isolation: 'isolate',
             contain: 'strict',
@@ -494,102 +497,105 @@ export const UserReports: React.FC = () => {
               },
         }}
       >
-        <CardContent sx={{ p: 0 }}>
-          <TableContainer
-            component={Paper}
-            elevation={0}
-            sx={{
-              // Remove opacity transitions - we'll use skeleton instead
-              transition: 'none',
-            }}
-          >
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Title</TableCell>
-                  <TableCell>Zone</TableCell>
-                  <TableCell>Date</TableCell>
-                  <TableCell>Duration</TableCell>
-                  <TableCell>Visibility</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {/* Show skeleton rows during loading, real content otherwise */}
-                {state.loading
-                  ? // Show skeleton rows matching the table structure
-                    Array.from({ length: state.reports.length || REPORTS_PER_PAGE }).map(
-                      (_, index) => <MemoizedSkeletonRow key={`skeleton-${index}`} index={index} />,
-                    )
-                  : // Show actual report data
-                    state.reports.map((report) => (
-                      <TableRow
-                        key={report.code}
-                        hover
-                        onClick={() => handleReportClick(report.code)}
-                        sx={{
-                          cursor: 'pointer',
-                          // Smooth fade-in animation for real data appearing
-                          animation: !state.loading ? `fadeIn 0.3s ease-out both` : 'none',
-                          '@keyframes fadeIn': {
-                            '0%': {
-                              opacity: 0,
+        <CardContent
+          sx={{
+            ...cardContentSx,
+            p: isDesktop ? 4 : 0,
+            position: 'relative',
+          }}
+        >
+          {isDesktop && renderHeaderContent(true)}
+
+          {isDesktop ? (
+            <TableContainer
+              component={Paper}
+              elevation={0}
+              sx={{
+                transition: 'none',
+                overflowX: 'hidden',
+              }}
+            >
+              <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ width: '37%', whiteSpace: 'normal' }}>Title</TableCell>
+                    <TableCell sx={{ width: '33%', whiteSpace: 'normal' }}>Zone</TableCell>
+                    <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Duration</TableCell>
+                    <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Visibility</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {state.loading
+                    ? Array.from({ length: state.reports.length || REPORTS_PER_PAGE }).map(
+                        (_, index) => (
+                          <MemoizedSkeletonRow key={`skeleton-${index}`} index={index} />
+                        ),
+                      )
+                    : state.reports.map((report) => (
+                        <TableRow
+                          key={report.code}
+                          hover
+                          onClick={() => handleReportClick(report.code)}
+                          sx={{
+                            cursor: 'pointer',
+                            animation: !state.loading ? 'fadeIn 0.3s ease-out both' : 'none',
+                            '@keyframes fadeIn': {
+                              '0%': { opacity: 0 },
+                              '100%': { opacity: 1 },
                             },
-                            '100%': {
-                              opacity: 1,
+                            transition: 'all 0.15s ease-in-out',
+                            '&:hover': {
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.05)'
+                                  : 'rgba(25, 118, 210, 0.04)',
+                              boxShadow: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? '0 2px 8px rgba(56, 189, 248, 0.15)'
+                                  : '0 2px 8px rgba(25, 118, 210, 0.1)',
                             },
-                          },
-                          // Smooth transitions for table rows
-                          transition: 'all 0.15s ease-in-out',
-                          '&:hover': {
-                            backgroundColor: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? 'rgba(56, 189, 248, 0.05)'
-                                : 'rgba(25, 118, 210, 0.04)',
-                            boxShadow: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? '0 2px 8px rgba(56, 189, 248, 0.15)'
-                                : '0 2px 8px rgba(25, 118, 210, 0.1)',
-                          },
-                        }}
-                      >
-                        <TableCell>
-                          <Box>
-                            <Typography variant="body1" fontWeight="medium">
-                              {report.title || 'Untitled Report'}
+                          }}
+                        >
+                          <TableCell>
+                            <Box>
+                              <Typography variant="body1" fontWeight="medium">
+                                {report.title || 'Untitled Report'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.25, display: 'block' }}
+                              >
+                                {formatReportDateTime(report.startTime)}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {report.zone?.name || 'Unknown Zone'}
                             </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              {report.code}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {report.zone?.name || 'Unknown Zone'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {formatDateTime(report.startTime)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {formatDuration(report.startTime, report.endTime)}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={report.visibility}
-                            size="small"
-                            color={getVisibilityColor(report.visibility)}
-                            variant="outlined"
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              label={report.visibility}
+                              size="small"
+                              color={getReportVisibilityColor(report.visibility)}
+                              variant="outlined"
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          ) : (
+            <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
+          )}
 
           {/* Loading overlay - only shows during initial load, not pagination */}
           {state.initialLoading && <LoadingOverlay />}
@@ -603,11 +609,9 @@ export const UserReports: React.FC = () => {
             mt: 3,
             display: 'flex',
             justifyContent: 'center',
-            // Smooth transitions when not initially loading, disabled during initial load
             transition: state.initialLoading
               ? 'none !important'
               : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-            // Complete isolation during initial load only
             ...(state.initialLoading && {
               isolation: 'isolate',
               contain: 'strict',

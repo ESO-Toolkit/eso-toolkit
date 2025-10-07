@@ -261,8 +261,6 @@ describe('UserReports Component', () => {
       await waitFor(() => {
         expect(screen.getByText('Test Report 1')).toBeInTheDocument();
         expect(screen.getByText('Test Report 2')).toBeInTheDocument();
-        expect(screen.getByText('ABC123')).toBeInTheDocument();
-        expect(screen.getByText('DEF456')).toBeInTheDocument();
         expect(screen.getByText('Cloudrest')).toBeInTheDocument();
         expect(screen.getByText('Sunspire')).toBeInTheDocument();
       });
