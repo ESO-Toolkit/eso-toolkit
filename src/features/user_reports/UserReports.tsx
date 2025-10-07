@@ -5,6 +5,7 @@ import {
   Card,
   CardContent,
   Chip,
+  CircularProgress,
   Container,
   IconButton,
   Pagination,
@@ -23,8 +24,8 @@ import { format } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { MemoizedLoadingSpinner } from '../../components/CustomLoadingSpinner';
+import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetUserReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
 import { GetUserReportsDocument } from '../../graphql/reports.generated';
 import { useAuth } from '../auth/AuthContext';
@@ -46,7 +47,9 @@ interface UserReportsState {
 const REPORTS_PER_PAGE = 10;
 
 // Skeleton row component that matches the exact table structure
-const ReportsTableSkeletonRow: React.FC<{ index: number }> = ({ index }) => {
+const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTableSkeletonRow({
+  index,
+}) {
   return (
     <TableRow
       sx={{
@@ -104,12 +107,14 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = ({ index }) => {
     </TableRow>
   );
 };
+ReportsTableSkeletonRow.displayName = 'ReportsTableSkeletonRow';
 
 // Memoized skeleton row to prevent unnecessary re-renders
 const MemoizedSkeletonRow = React.memo(ReportsTableSkeletonRow);
+MemoizedSkeletonRow.displayName = 'MemoizedReportsTableSkeletonRow';
 
 // Memoized loading overlay component to prevent unnecessary re-renders and theme flashing
-const LoadingOverlay = React.memo(() => {
+const LoadingOverlayComponent: React.FC = () => {
   // Get theme mode without React context to avoid re-renders during loading
   const getThemeMode = (): 'dark' | 'light' => {
     if (typeof window !== 'undefined' && window.matchMedia) {
@@ -134,20 +139,14 @@ const LoadingOverlay = React.memo(() => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        zIndex: 100, // Lower z-index to allow content transitions
-        // Complete CSS isolation to prevent any theme interference
+        zIndex: 100,
         isolation: 'isolate',
         contain: 'strict',
-        // Smooth transition for overlay appearance
         transition: 'opacity 0.2s ease-in-out',
         animation: 'none !important',
-        // Force hardware acceleration
         transform: 'translateZ(0)',
         willChange: 'transform, opacity',
-        // Prevent any pointer events during loading
         pointerEvents: 'none',
-        // Create a new stacking context
-        position: 'absolute',
         // Override any global transitions except opacity
         '&, & *': {
           transition: 'opacity 0.2s ease-in-out !important',
@@ -158,7 +157,10 @@ const LoadingOverlay = React.memo(() => {
       <MemoizedLoadingSpinner size={30} thickness={3} forceTheme={isDarkMode} />
     </Box>
   );
-});
+};
+
+const LoadingOverlay = React.memo(LoadingOverlayComponent);
+LoadingOverlay.displayName = 'LoadingOverlay';
 
 // Utility functions
 const formatDateTime = (timestamp: number): string => {
@@ -361,7 +363,7 @@ export const UserReports: React.FC = () => {
   if (userLoading && !state.loading) {
     return (
       <Container maxWidth="md" sx={{ mt: 4, mb: 4, textAlign: 'center' }}>
-        <MemoizedLoadingSpinner size={40} />
+        <CircularProgress size={40} />
         <Typography variant="h6" sx={{ mt: 2 }}>
           Loading user information...
         </Typography>
@@ -468,7 +470,9 @@ export const UserReports: React.FC = () => {
       <Card
         sx={{
           // Smooth transitions when not initially loading, disabled during initial load
-          transition: state.initialLoading ? 'none !important' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: state.initialLoading
+            ? 'none !important'
+            : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           // Complete isolation during initial loading to prevent flashing
           ...(state.initialLoading && {
             isolation: 'isolate',
@@ -479,12 +483,15 @@ export const UserReports: React.FC = () => {
             },
           }),
           // Hover effect when not initially loading (allow hover during pagination)
-          '&:hover': state.initialLoading ? {} : {
-            transform: 'translateY(-2px)',
-            boxShadow: theme => theme.palette.mode === 'dark'
-              ? '0 8px 32px rgba(56, 189, 248, 0.15)'
-              : '0 8px 32px rgba(25, 118, 210, 0.1)',
-          },
+          '&:hover': state.initialLoading
+            ? {}
+            : {
+                transform: 'translateY(-2px)',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 8px 32px rgba(56, 189, 248, 0.15)'
+                    : '0 8px 32px rgba(25, 118, 210, 0.1)',
+              },
         }}
       >
         <CardContent sx={{ p: 0 }}>
@@ -510,11 +517,11 @@ export const UserReports: React.FC = () => {
                 {/* Show skeleton rows during loading, real content otherwise */}
                 {state.loading
                   ? // Show skeleton rows matching the table structure
-                    Array.from({ length: state.reports.length || REPORTS_PER_PAGE }).map((_, index) => (
-                      <MemoizedSkeletonRow key={`skeleton-${index}`} index={index} />
-                    ))
+                    Array.from({ length: state.reports.length || REPORTS_PER_PAGE }).map(
+                      (_, index) => <MemoizedSkeletonRow key={`skeleton-${index}`} index={index} />,
+                    )
                   : // Show actual report data
-                    state.reports.map((report, index) => (
+                    state.reports.map((report) => (
                       <TableRow
                         key={report.code}
                         hover
@@ -534,46 +541,52 @@ export const UserReports: React.FC = () => {
                           // Smooth transitions for table rows
                           transition: 'all 0.15s ease-in-out',
                           '&:hover': {
-                            backgroundColor: theme => theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.05)'
-                              : 'rgba(25, 118, 210, 0.04)',
-                            boxShadow: theme => theme.palette.mode === 'dark'
-                              ? '0 2px 8px rgba(56, 189, 248, 0.15)'
-                              : '0 2px 8px rgba(25, 118, 210, 0.1)',
+                            backgroundColor: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.05)'
+                                : 'rgba(25, 118, 210, 0.04)',
+                            boxShadow: (theme) =>
+                              theme.palette.mode === 'dark'
+                                ? '0 2px 8px rgba(56, 189, 248, 0.15)'
+                                : '0 2px 8px rgba(25, 118, 210, 0.1)',
                           },
                         }}
                       >
-                    <TableCell>
-                      <Box>
-                        <Typography variant="body1" fontWeight="medium">
-                          {report.title || 'Untitled Report'}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {report.code}
-                        </Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{report.zone?.name || 'Unknown Zone'}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">{formatDateTime(report.startTime)}</Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Typography variant="body2">
-                        {formatDuration(report.startTime, report.endTime)}
-                      </Typography>
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={report.visibility}
-                        size="small"
-                        color={getVisibilityColor(report.visibility)}
-                        variant="outlined"
-                      />
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        <TableCell>
+                          <Box>
+                            <Typography variant="body1" fontWeight="medium">
+                              {report.title || 'Untitled Report'}
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              {report.code}
+                            </Typography>
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {report.zone?.name || 'Unknown Zone'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {formatDateTime(report.startTime)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {formatDuration(report.startTime, report.endTime)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={report.visibility}
+                            size="small"
+                            color={getVisibilityColor(report.visibility)}
+                            variant="outlined"
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
               </TableBody>
             </Table>
           </TableContainer>
@@ -591,7 +604,9 @@ export const UserReports: React.FC = () => {
             display: 'flex',
             justifyContent: 'center',
             // Smooth transitions when not initially loading, disabled during initial load
-            transition: state.initialLoading ? 'none !important' : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            transition: state.initialLoading
+              ? 'none !important'
+              : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
             // Complete isolation during initial load only
             ...(state.initialLoading && {
               isolation: 'isolate',
@@ -618,17 +633,20 @@ export const UserReports: React.FC = () => {
                 transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
                 '&:hover:not(.Mui-selected):not(:disabled)': {
                   transform: 'translateY(-1px)',
-                  boxShadow: theme => theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(56, 189, 248, 0.25)'
-                    : '0 4px 12px rgba(25, 118, 210, 0.2)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.25)'
+                      : '0 4px 12px rgba(25, 118, 210, 0.2)',
                 },
                 '&.Mui-selected': {
-                  backgroundColor: theme => theme.palette.mode === 'dark'
-                    ? 'rgba(56, 189, 248, 0.15)'
-                    : 'rgba(25, 118, 210, 0.15)',
-                  boxShadow: theme => theme.palette.mode === 'dark'
-                    ? '0 4px 12px rgba(56, 189, 248, 0.3)'
-                    : '0 4px 12px rgba(25, 118, 210, 0.2)',
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.15)'
+                      : 'rgba(25, 118, 210, 0.15)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                      : '0 4px 12px rgba(25, 118, 210, 0.2)',
                 },
               },
               // Force isolation during initial load only

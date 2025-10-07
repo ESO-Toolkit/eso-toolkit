@@ -11,7 +11,7 @@ interface CustomLoadingSpinnerProps {
 export const CustomLoadingSpinner: React.FC<CustomLoadingSpinnerProps> = ({
   size = 40,
   thickness = 4,
-  forceTheme
+  forceTheme,
 }) => {
   // Detect system theme preference without React context to avoid re-renders
   const getThemeMode = (): 'dark' | 'light' => {
@@ -29,6 +29,8 @@ export const CustomLoadingSpinner: React.FC<CustomLoadingSpinnerProps> = ({
 
   return (
     <Box
+      role="progressbar"
+      aria-label="loading"
       sx={{
         width: size,
         height: size,
