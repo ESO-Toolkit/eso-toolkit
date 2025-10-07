@@ -13,7 +13,10 @@ export interface ReportPageLayoutResult {
 
 export const useReportPageLayout = (): ReportPageLayoutResult => {
   const theme = useTheme();
-  const isDesktop = useMediaQuery(theme.breakpoints.up('md'));
+  const isDesktop = useMediaQuery(theme.breakpoints.up('md'), {
+    defaultMatches: true,
+    noSsr: true,
+  });
 
   const cardSx = useMemo<SxProps<Theme>>(
     () => ({
