@@ -305,9 +305,6 @@ export const UserReports: React.FC = () => {
           }}
         >
           <MemoizedLoadingSpinner size={20} thickness={2} />
-          <Typography variant="body2" color="text.secondary">
-            Loading page {state.pagination.currentPage} of {state.pagination.totalPages}...
-          </Typography>
         </Box>
       )}
     </Box>
