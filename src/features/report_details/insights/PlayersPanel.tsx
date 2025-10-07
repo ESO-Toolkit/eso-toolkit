@@ -457,6 +457,18 @@ export const PlayersPanel: React.FC = () => {
 
       const playerId = String(player.id);
       const gear = player?.combatantInfo?.gear ?? [];
+
+      // Extract auras for this player from combatant info events
+      const playerAuras: CombatantAura[] = [];
+      if (combatantInfoEvents) {
+        const playerCombatantInfo = combatantInfoEvents.find(
+          (event) => event.sourceID === player.id,
+        );
+        if (playerCombatantInfo?.auras) {
+          playerAuras.push(...playerCombatantInfo.auras);
+        }
+      }
+
       const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
 
       const buildIssues = detectBuildIssues(
@@ -464,15 +476,24 @@ export const PlayersPanel: React.FC = () => {
         friendlyBuffLookup || emptyBuffLookup,
         fight.startTime,
         fight.endTime,
-        [],
+        playerAuras,
         player.role,
+        damageEvents,
+        player.id,
       );
 
       result[playerId] = buildIssues;
     });
 
     return result;
-  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime]);
+  }, [
+    playerData?.playersById,
+    friendlyBuffLookup,
+    fight?.startTime,
+    fight?.endTime,
+    damageEvents,
+    combatantInfoEvents,
+  ]);
 
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {

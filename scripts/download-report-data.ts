@@ -901,12 +901,10 @@ Output:
 
 // Run the script if executed directly
 console.log('🔍 Checking if this is main module...');
-console.log('📍 import.meta.url:', import.meta.url);
 console.log('📍 process.argv[1]:', process.argv[1]);
-console.log('📍 file:// + argv[1]:', `file://${process.argv[1]}`);
 
 if (
-  import.meta.url === `file://${process.argv[1]}` ||
+  require.main === module ||
   process.argv[1].includes('download-report-data')
 ) {
   console.log('✅ Running as main module, calling main()...');

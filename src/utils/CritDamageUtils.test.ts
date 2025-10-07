@@ -78,20 +78,16 @@ describe('CritDamageUtils with BuffLookup', () => {
       expect(sources.some((s) => s.name === 'Fighting Finesse')).toBe(true);
     });
 
-    it('should return sources based on buff and debuff lookups', () => {
-      const buffEvents: BuffEvent[] = [
-        {
-          timestamp: 1000,
-          type: 'applybuff',
-          sourceID: 1,
-          sourceIsFriendly: true,
-          targetID: 2,
-          targetIsFriendly: true,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
-          fight: 1,
-          extraAbilityGameID: 0,
-        },
-      ];
+    it('should return sources based on aura and debuff lookups', () => {
+      const combatant = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.LUCENT_ECHOES,
+            name: 'Lucent Echoes',
+            icon: 'ability_mage_065',
+          }),
+        ],
+      });
 
       const debuffEvents: DebuffEvent[] = [
         {
@@ -103,18 +99,22 @@ describe('CritDamageUtils with BuffLookup', () => {
           targetIsFriendly: false,
           abilityGameID: KnownAbilities.MINOR_BRITTLE,
           fight: 1,
+          extraAbilityGameID: 0,
         },
       ];
 
-      const buffLookup = createBuffLookup(buffEvents);
+      const buffLookup = createBuffLookup([]);
       const debuffLookup = createDebuffLookup(debuffEvents);
 
-      const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, null);
+      const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, combatant);
 
-      // Should find both Lucent Echoes (buff) and Minor Brittle (debuff) + always-on sources
+      // Should find both Lucent Echoes (aura) and Minor Brittle (debuff) + always-on sources
       expect(sources).toHaveLength(4);
       expect(
-        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES),
+        sources.some(
+          (s) =>
+            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+        ),
       ).toBe(true);
       expect(
         sources.some((s) => 'ability' in s && s.ability === KnownAbilities.MINOR_BRITTLE),
@@ -122,26 +122,25 @@ describe('CritDamageUtils with BuffLookup', () => {
     });
 
     it('should map alternate Lucent Echoes ability IDs to the same source', () => {
-      const buffEvents: BuffEvent[] = [
-        {
-          timestamp: 1500,
-          type: 'applybuff',
-          sourceID: 5,
-          sourceIsFriendly: true,
-          targetID: 6,
-          targetIsFriendly: true,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES_GROUP,
-          fight: 1,
-          extraAbilityGameID: 0,
-        },
-      ];
+      const combatant = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.LUCENT_ECHOES_GROUP,
+            name: 'Lucent Echoes',
+            icon: 'ability_mage_065',
+          }),
+        ],
+      });
 
       const debuffLookup = createDebuffLookup([]);
-      const buffLookup = createBuffLookup(buffEvents);
+      const buffLookup = createBuffLookup([]);
 
-      const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, null);
+      const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, combatant);
       expect(
-        sources.some((s) => 'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES),
+        sources.some(
+          (s) =>
+            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+        ),
       ).toBe(true);
     });
   });
@@ -219,6 +218,36 @@ describe('CritDamageUtils with BuffLookup', () => {
       });
 
       expect(isAuraActive(combatantWithAura, KnownAbilities.FELINE_AMBUSH)).toBe(true);
+    });
+
+    it('should detect Lucent Echoes as aura for critical damage calculation', () => {
+      const combatant = createMockCombatantInfoEvent({
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.LUCENT_ECHOES,
+            name: 'Lucent Echoes',
+            icon: 'ability_mage_065',
+          }),
+        ],
+      });
+
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+
+      const sources = getEnabledCriticalDamageSources(
+        emptyBuffLookup,
+        emptyDebuffLookup,
+        combatant,
+      );
+
+      // Should find Lucent Echoes as aura source + always-on sources
+      expect(sources).toHaveLength(3);
+      expect(
+        sources.some(
+          (s) =>
+            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+        ),
+      ).toBe(true);
     });
   });
 });

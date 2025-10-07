@@ -1,4 +1,4 @@
-import { CombatantAura } from '../types/combatlogEvents';
+import { CombatantAura, DamageEvent } from '../types/combatlogEvents';
 import { PlayerGear, GearSlot } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActive } from './BuffLookupUtils';
@@ -39,7 +39,7 @@ const ROLE_SPECIFIC_BUFFS = {
     { abilityId: 61687, name: 'Major Sorcery' }, // Corrected from 28932 (was wrong ability)
     { abilityId: 61689, name: 'Major Prophecy' }, // Corrected from 42435 (didn't exist)
     { abilityId: 61667, name: 'Major Savagery' }, // Corrected from 68257 (didn't exist)
-    { abilityId: 183049, name: 'Major Brutality' }, // Corrected from 68253 (didn't exist)
+    { abilityId: 183049, name: 'Major Brutality' }, // Passive Major Brutality from slotted abilities (appears in auras)
   ],
   healer: [
     // No specific minor buffs required for healers currently
@@ -62,6 +62,28 @@ function isBuffActiveInAuras(
 }
 
 /**
+ * Helper function to check if an ability ID is present in damage event buff strings
+ */
+function isAbilityInDamageEventBuffs(
+  damageEvents: DamageEvent[] | undefined,
+  abilityId: number,
+  playerId: number,
+): boolean {
+  if (!damageEvents) return false;
+
+  const abilityIdStr = abilityId.toString();
+
+  // Check damage events from this player for the ability in buff strings
+  return damageEvents.some((event) => {
+    if (event.sourceID !== playerId || !event.buffs) return false;
+
+    // Check if ability ID appears in the dot-separated buff string
+    const buffIds = event.buffs.split('.');
+    return buffIds.includes(abilityIdStr);
+  });
+}
+
+/**
  * Detects various build issues for a player including gear problems and missing buffs.
  *
  * @param gear - Player's equipped gear
@@ -70,6 +92,8 @@ function isBuffActiveInAuras(
  * @param fightEndTime - Fight end time for buff checking
  * @param auras - Aura data for checking passive buffs/abilities
  * @param role - Player's role (tank, dps, healer) for role-specific buff checks
+ * @param damageEvents - Damage events for checking buffs in damage event data
+ * @param playerId - Player ID for filtering damage events
  * @returns Array of detected build issues
  */
 export function detectBuildIssues(
@@ -79,6 +103,8 @@ export function detectBuildIssues(
   fightEndTime: number | undefined,
   auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }>,
   role: 'dps' | 'tank' | 'healer',
+  damageEvents?: DamageEvent[],
+  playerId?: number,
 ): BuildIssue[] {
   const issues: BuildIssue[] = [];
 
@@ -131,17 +157,22 @@ export function detectBuildIssues(
 
   // Check for missing required buffs based on role
   if (buffLookup && fightStartTime && fightEndTime) {
-    const fightDuration = fightEndTime - fightStartTime;
-    const sampleTimestamp = fightStartTime + Math.floor(fightDuration * 0.5); // Check at 50% through fight
-
     // Check role-specific minor buffs
     const roleBuffs = ROLE_SPECIFIC_BUFFS[role];
     roleBuffs.forEach((buff) => {
-      // Check both buff events and auras
-      const isActiveInBuffs = isBuffActive(buffLookup, buff.abilityId, sampleTimestamp);
-      const isActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
+      // Use single-tier detection: check if buff was ever active during the fight
+      // This handles both persistent passive effects and timing-sensitive buffs
+      const isEverActiveInBuffs = isBuffActive(buffLookup, buff.abilityId);
+      const isEverActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
 
-      if (!isActiveInBuffs && !isActiveInAuras) {
+      // Enhanced detection for Minor Slayer (and similar abilities) that appear in damage event buff strings
+      const isInDamageEventBuffs = playerId
+        ? isAbilityInDamageEventBuffs(damageEvents, buff.abilityId, playerId)
+        : false;
+
+      const isDetected = isEverActiveInBuffs || isEverActiveInAuras || isInDamageEventBuffs;
+
+      if (!isDetected) {
         const roleDescription =
           role === 'tank' ? 'tanks' : role === 'dps' ? 'DPS players' : 'healers';
         issues.push({
