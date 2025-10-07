@@ -483,23 +483,6 @@ export const UserReports: React.FC = () => {
               ) : (
                 <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
               )}
-
-              {/* Pagination */}
-              <Box display="flex" justifyContent="center" mt={isDesktop ? 3 : 2}>
-                <Pagination
-                  count={state.pagination.totalPages}
-                  page={state.pagination.currentPage}
-                  onChange={handlePageChange}
-                  disabled={state.loading}
-                  color="primary"
-                  size={isDesktop ? 'large' : 'medium'}
-                  sx={{
-                    '& .MuiPaginationItem-root': {
-                      borderRadius: 2,
-                    },
-                  }}
-                />
-              </Box>
             </>
           ) : (
             !state.loading && <Alert severity="info">No reports found.</Alert>
@@ -524,6 +507,20 @@ export const UserReports: React.FC = () => {
           )}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {state.pagination.totalPages > 1 && (
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+          <Pagination
+            count={state.pagination.totalPages}
+            page={state.pagination.currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            disabled={state.loading}
+          />
+        </Box>
+      )}
     </Container>
   );
 };
