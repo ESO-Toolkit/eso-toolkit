@@ -277,7 +277,6 @@ export const UserReports: React.FC = () => {
     </Box>
   );
 
-  
   const [state, setState] = useState<UserReportsState>({
     reports: [],
     loading: false, // Let useEffect handle initial loading
@@ -464,7 +463,6 @@ export const UserReports: React.FC = () => {
     <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
       {!isDesktop && renderHeaderContent(false)}
 
-  
       {/* Error Alert */}
       {state.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -508,7 +506,6 @@ export const UserReports: React.FC = () => {
         >
           {isDesktop && renderHeaderContent(true)}
 
-  
           {isDesktop ? (
             <TableContainer
               component={Paper}
@@ -523,7 +520,7 @@ export const UserReports: React.FC = () => {
                   <TableRow>
                     <TableCell sx={{ width: '37%', whiteSpace: 'normal' }}>Title</TableCell>
                     <TableCell sx={{ width: '33%', whiteSpace: 'normal' }}>Zone</TableCell>
-                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Duration</TableCell>
+                    <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Duration</TableCell>
                     <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>Visibility</TableCell>
                   </TableRow>
                 </TableHead>
@@ -564,7 +561,11 @@ export const UserReports: React.FC = () => {
                               <Typography variant="body1" fontWeight="medium">
                                 {report.title || 'Untitled Report'}
                               </Typography>
-                              <Typography variant="caption" color="text.secondary" sx={{ mt: 0.25, display: 'block' }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ mt: 0.25, display: 'block' }}
+                              >
                                 {formatReportDateTime(report.startTime)}
                               </Typography>
                             </Box>
@@ -574,7 +575,7 @@ export const UserReports: React.FC = () => {
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
                           </TableCell>
-                            <TableCell>
+                          <TableCell>
                             <Typography variant="body2">
                               {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>

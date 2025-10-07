@@ -235,7 +235,7 @@ export const LatestReports: React.FC = () => {
                             Zone
                           </Typography>
                         </TableCell>
-                          <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Duration
                           </Typography>
@@ -320,7 +320,7 @@ export const LatestReports: React.FC = () => {
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
                           </TableCell>
-                            <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
                             <Typography variant="body2">
                               {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>
