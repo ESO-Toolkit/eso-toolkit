@@ -39,7 +39,7 @@ const ROLE_SPECIFIC_BUFFS = {
     { abilityId: 61687, name: 'Major Sorcery' }, // Corrected from 28932 (was wrong ability)
     { abilityId: 61689, name: 'Major Prophecy' }, // Corrected from 42435 (didn't exist)
     { abilityId: 61667, name: 'Major Savagery' }, // Corrected from 68257 (didn't exist)
-    { abilityId: 36894, name: 'Major Brutality' }, // Standard Major Brutality buff (matches test constants)
+    { abilityId: 183049, name: 'Major Brutality' }, // Passive Major Brutality from slotted abilities (appears in auras)
   ],
   healer: [
     // No specific minor buffs required for healers currently
