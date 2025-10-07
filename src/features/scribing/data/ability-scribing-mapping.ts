@@ -51,6 +51,16 @@ export class AbilityScribingMapper {
   }
 
   /**
+   * Create an AbilityScribingMapper instance with provided data (for testing)
+   */
+  static createWithData(scribingData: any): AbilityScribingMapper {
+    const mapper = new AbilityScribingMapper();
+    mapper.scribingData = scribingData;
+    mapper.buildMappings();
+    return mapper;
+  }
+
+  /**
    * Initialize the mapper with scribing database
    */
   private async initializeMapper(): Promise<void> {
@@ -78,7 +88,7 @@ export class AbilityScribingMapper {
   /**
    * Build all ability ID mappings from scribing data
    */
-  private buildMappings(): void {
+  public buildMappings(): void {
     if (!this.scribingData) return;
 
     this.buildGrimoireMappings();
@@ -280,18 +290,28 @@ export class AbilityScribingMapper {
       }
     }
     
-    // Add signature IDs
-    for (const [abilityId, mapping] of this.lookup.signatures.entries()) {
-      if (mapping.grimoireKey === grimoireKey) {
-        abilityIds.push(abilityId);
-      }
+    // Add signature IDs - check original data for compatibility
+    if (this.scribingData.signatureScripts) {
+      Object.entries(this.scribingData.signatureScripts).forEach(([signatureKey, signature]: [string, any]) => {
+        if (signature.abilityIds && Array.isArray(signature.abilityIds) && 
+            signature.compatibleGrimoires && signature.compatibleGrimoires.includes(grimoireKey)) {
+          signature.abilityIds.forEach((abilityId: number) => {
+            abilityIds.push(abilityId);
+          });
+        }
+      });
     }
     
-    // Add affix IDs
-    for (const [abilityId, mapping] of this.lookup.affixes.entries()) {
-      if (mapping.grimoireKey === grimoireKey) {
-        abilityIds.push(abilityId);
-      }
+    // Add affix IDs - check original data for compatibility
+    if (this.scribingData.affixScripts) {
+      Object.entries(this.scribingData.affixScripts).forEach(([affixKey, affix]: [string, any]) => {
+        if (affix.abilityIds && Array.isArray(affix.abilityIds) && 
+            affix.compatibleGrimoires && affix.compatibleGrimoires.includes(grimoireKey)) {
+          affix.abilityIds.forEach((abilityId: number) => {
+            abilityIds.push(abilityId);
+          });
+        }
+      });
     }
     
     return [...new Set(abilityIds)]; // Remove duplicates

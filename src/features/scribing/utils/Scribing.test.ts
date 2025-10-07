@@ -12,7 +12,7 @@ import {
   Effect,
   ScribingSkillAnalysis,
 } from './Scribing';
-import { ReportAbility } from '../graphql/generated';
+import { ReportAbility } from '../../../graphql/generated';
 import {
   BuffEvent,
   CastEvent,
@@ -20,8 +20,22 @@ import {
   DebuffEvent,
   HealEvent,
   ResourceChangeEvent,
-} from '../types/combatlogEvents';
-import { PlayerTalent } from '../types/playerDetails';
+} from '../../../types/combatlogEvents';
+import { PlayerTalent } from '../../../types/playerDetails';
+
+// Mock the abilityIdMapper
+jest.mock('../../../utils/abilityIdMapper', () => ({
+  abilityIdMapper: {
+    getAbilityById: jest.fn((id: number) => ({
+      id,
+      name: `MockAbility${id}`,
+      icon: 'mock-icon.png',
+      type: 1,
+    })),
+    ensureLoaded: jest.fn().mockResolvedValue(undefined),
+    loadAbilitiesData: jest.fn().mockResolvedValue(undefined),
+  },
+}));
 
 describe('Scribing utilities', () => {
   describe('DamageType enum', () => {

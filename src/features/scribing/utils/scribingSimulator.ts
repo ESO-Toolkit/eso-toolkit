@@ -14,7 +14,7 @@ import {
   validateAffixScript,
   validateCalculatedSkill,
   safeParseScribingData,
-} from '../types/scribing-schemas.js';
+} from '../types/scribing-schemas';
 
 /**
  * ESO Scribing Simulation Engine

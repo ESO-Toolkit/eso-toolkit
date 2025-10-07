@@ -101,11 +101,29 @@ export async function findScribingRecipe(
 
     // Search through all grimoires and their transformations
     for (const [_grimoireKey, grimoire] of Object.entries(database.grimoires)) {
+      // Check for exact grimoire ID match first
+      if (grimoire.id === abilityId) {
+        const match: ScribingRecipeMatch = {
+          grimoire: {
+            name: grimoire.name,
+            id: grimoire.id,
+            skillType: grimoire.skillType,
+            school: grimoire.school,
+            cost: grimoire.cost,
+            resource: grimoire.resource,
+          },
+          transformation: null, // No specific transformation for base grimoire
+          matchConfidence: 1.0,
+          matchMethod: 'exact-id',
+        };
+        return match; // Return immediately on exact grimoire ID match
+      }
+
       if (!grimoire.nameTransformations) continue;
 
       // Check each transformation
       for (const [transformationType, transformation] of Object.entries(grimoire.nameTransformations)) {
-        // Check for exact ability ID match
+        // Check for exact ability ID match in transformations
         if (transformation.abilityIds?.includes(abilityId)) {
           const match: ScribingRecipeMatch = {
             grimoire: {
