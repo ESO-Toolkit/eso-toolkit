@@ -70,13 +70,13 @@ function isAbilityInDamageEventBuffs(
   playerId: number,
 ): boolean {
   if (!damageEvents) return false;
-  
+
   const abilityIdStr = abilityId.toString();
-  
+
   // Check damage events from this player for the ability in buff strings
-  return damageEvents.some(event => {
+  return damageEvents.some((event) => {
     if (event.sourceID !== playerId || !event.buffs) return false;
-    
+
     // Check if ability ID appears in the dot-separated buff string
     const buffIds = event.buffs.split('.');
     return buffIds.includes(abilityIdStr);
@@ -164,9 +164,11 @@ export function detectBuildIssues(
       // This handles both persistent passive effects and timing-sensitive buffs
       const isEverActiveInBuffs = isBuffActive(buffLookup, buff.abilityId);
       const isEverActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
-      
+
       // Enhanced detection for Minor Slayer (and similar abilities) that appear in damage event buff strings
-      const isInDamageEventBuffs = playerId ? isAbilityInDamageEventBuffs(damageEvents, buff.abilityId, playerId) : false;
+      const isInDamageEventBuffs = playerId
+        ? isAbilityInDamageEventBuffs(damageEvents, buff.abilityId, playerId)
+        : false;
 
       const isDetected = isEverActiveInBuffs || isEverActiveInAuras || isInDamageEventBuffs;
 

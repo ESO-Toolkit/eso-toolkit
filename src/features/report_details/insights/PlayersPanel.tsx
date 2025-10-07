@@ -457,11 +457,13 @@ export const PlayersPanel: React.FC = () => {
 
       const playerId = String(player.id);
       const gear = player?.combatantInfo?.gear ?? [];
-      
+
       // Extract auras for this player from combatant info events
       const playerAuras: CombatantAura[] = [];
       if (combatantInfoEvents) {
-        const playerCombatantInfo = combatantInfoEvents.find(event => event.sourceID === player.id);
+        const playerCombatantInfo = combatantInfoEvents.find(
+          (event) => event.sourceID === player.id,
+        );
         if (playerCombatantInfo?.auras) {
           playerAuras.push(...playerCombatantInfo.auras);
         }
@@ -484,7 +486,14 @@ export const PlayersPanel: React.FC = () => {
     });
 
     return result;
-  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime, damageEvents, combatantInfoEvents]);
+  }, [
+    playerData?.playersById,
+    friendlyBuffLookup,
+    fight?.startTime,
+    fight?.endTime,
+    damageEvents,
+    combatantInfoEvents,
+  ]);
 
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {

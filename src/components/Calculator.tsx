@@ -567,12 +567,15 @@ const _generateItemId = (category: string, name: string, index: number): string 
 };
 
 // Helper function to find item by ID in any category
+// Type for items that have been enhanced with an ID
+type CalculatorItemWithId = CalculatorItem & { id: string };
+
 const _findItemById = (
   data: CalculatorData,
   id: string,
 ): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
   for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-    const index = data[category].findIndex((item) => (item as any).id === id);
+    const index = data[category].findIndex((item) => (item as CalculatorItemWithId).id === id);
     if (index !== -1) {
       return { category, index, item: data[category][index] };
     }
@@ -1044,7 +1047,7 @@ const _validateCalculatorData = (data: CalculatorData): boolean => {
       if (!itemTracker.has(item.name)) {
         itemTracker.set(item.name, []);
       }
-      itemTracker.get(item.name)!.push({ category, index, id: (item as any).id });
+      itemTracker.get(item.name)!.push({ category, index, id: (item as CalculatorItemWithId).id });
 
       // Check within category duplicates
       if (!nameMap.has(item.name)) {
@@ -1668,7 +1671,7 @@ const CalculatorComponent: React.FC = () => {
       id: string,
     ): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
       for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-        const index = data[category].findIndex((item) => (item as any).id === id);
+        const index = data[category].findIndex((item) => (item as CalculatorItemWithId).id === id);
         if (index !== -1) {
           return { category, index, item: data[category][index] };
         }
@@ -1693,7 +1696,9 @@ const CalculatorComponent: React.FC = () => {
         if (!itemTracker.has(item.name)) {
           itemTracker.set(item.name, []);
         }
-        itemTracker.get(item.name)!.push({ category, index, id: (item as any).id });
+        itemTracker
+          .get(item.name)!
+          .push({ category, index, id: (item as CalculatorItemWithId).id });
 
         // Check within category duplicates
         if (!nameMap.has(item.name)) {
@@ -1948,7 +1953,7 @@ const CalculatorComponent: React.FC = () => {
         originalIndex: gearIndex,
         id: generateItemId('gear', item.name, gearIndex),
       })),
-    [armorResistanceData.gear],
+    [armorResistanceData.gear, generateItemId],
   );
 
   const armorResistanceGearSections = useMemo(
@@ -2445,8 +2450,8 @@ const CalculatorComponent: React.FC = () => {
       // For gear items, try ID-based update first
       if (category === 'gear') {
         const item = armorResistanceData.gear[index];
-        if (item && (item as any).id) {
-          updateArmorResistanceItemById((item as any).id, updates);
+        if (item && (item as CalculatorItemWithId).id) {
+          updateArmorResistanceItemById((item as CalculatorItemWithId).id, updates);
           return;
         }
       }
@@ -3497,6 +3502,7 @@ const CalculatorComponent: React.FC = () => {
       theme.palette.text.secondary,
       cycleArmorResistanceVariant,
       updateArmorResistanceQuality,
+      armorResistanceData.gear,
     ],
   );
 
@@ -4323,7 +4329,8 @@ const CalculatorComponent: React.FC = () => {
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
                           const originalIndex =
-                            (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                            (item as CalculatorItemWithId).originalIndex ??
+                            filteredPenData[category].indexOf(item);
                           updatePenItem(category, originalIndex, { enabled: true });
                         });
                       }}
@@ -4362,7 +4369,8 @@ const CalculatorComponent: React.FC = () => {
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
                           const originalIndex =
-                            (item as any).originalIndex ?? filteredPenData[category].indexOf(item);
+                            (item as CalculatorItemWithId).originalIndex ??
+                            filteredPenData[category].indexOf(item);
                           updatePenItem(category, originalIndex, { enabled: false });
                         });
                       }}
@@ -6034,7 +6042,8 @@ const CalculatorComponent: React.FC = () => {
 
             // Find the temporary variant and its values
             const currentVariant = currentItem.variants?.find(
-              (v: any) => v.name === tempSelectedVariant,
+              (v: { name: string; value: number; qualityValues?: number[] }) =>
+                v.name === tempSelectedVariant,
             );
             const variantQualityValues = currentVariant?.qualityValues;
 
