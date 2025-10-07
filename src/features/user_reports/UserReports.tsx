@@ -92,16 +92,16 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTab
         <Box>
           <Skeleton
             variant="text"
-            height={24}
+            height={20}
             sx={{
-              mb: 0.5,
+              mb: 0.25,
               width: { xs: '92%', md: '80%' },
               maxWidth: 220,
             }}
           />
           <Skeleton
             variant="text"
-            height={16}
+            height={14}
             sx={{
               width: { xs: '88%', md: '75%' },
               maxWidth: 120,
