@@ -225,12 +225,12 @@ export const LatestReports: React.FC = () => {
                   <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                     <TableHead>
                       <TableRow>
-                        <TableCell sx={{ width: '32%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Title
                           </Typography>
                         </TableCell>
-                        <TableCell sx={{ width: '24%', whiteSpace: 'normal' }}>
+                        <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>
                           <Typography variant="subtitle2" fontWeight="bold">
                             Zone
                           </Typography>

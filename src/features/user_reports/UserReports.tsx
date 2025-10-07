@@ -558,9 +558,9 @@ export const UserReports: React.FC = () => {
               <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>Title</TableCell>
-                    <TableCell sx={{ width: '25%', whiteSpace: 'normal' }}>Zone</TableCell>
-                    <TableCell sx={{ width: '20%', whiteSpace: 'normal' }}>Date</TableCell>
+                    <TableCell sx={{ width: '28%', whiteSpace: 'normal' }}>Title</TableCell>
+                    <TableCell sx={{ width: '27%', whiteSpace: 'normal' }}>Zone</TableCell>
+                    <TableCell sx={{ width: '25%', whiteSpace: 'normal' }}>Date</TableCell>
                     <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Duration</TableCell>
                     <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Visibility</TableCell>
                   </TableRow>
