@@ -524,7 +524,9 @@ export const UserReports: React.FC = () => {
                             backgroundColor: theme => theme.palette.mode === 'dark'
                               ? 'rgba(56, 189, 248, 0.05)'
                               : 'rgba(25, 118, 210, 0.04)',
-                            transform: 'scale(1.005)',
+                            boxShadow: theme => theme.palette.mode === 'dark'
+                              ? '0 2px 8px rgba(56, 189, 248, 0.15)'
+                              : '0 2px 8px rgba(25, 118, 210, 0.1)',
                           },
                         }}
                       >
@@ -608,10 +610,12 @@ export const UserReports: React.FC = () => {
                     : '0 4px 12px rgba(25, 118, 210, 0.2)',
                 },
                 '&.Mui-selected': {
-                  transform: 'scale(1.05)',
+                  backgroundColor: theme => theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.15)'
+                    : 'rgba(25, 118, 210, 0.15)',
                   boxShadow: theme => theme.palette.mode === 'dark'
-                    ? '0 6px 16px rgba(56, 189, 248, 0.4)'
-                    : '0 6px 16px rgba(25, 118, 210, 0.3)',
+                    ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                    : '0 4px 12px rgba(25, 118, 210, 0.2)',
                 },
               },
               // Force isolation during initial load only
