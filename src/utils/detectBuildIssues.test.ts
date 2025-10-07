@@ -361,5 +361,26 @@ describe('detectBuildIssues', () => {
       const hasMajorBrutalityIssueWithoutAura = dpsIssuesWithoutMajorBrutality.some((issue) => issue.message.includes('Major Brutality'));
       expect(hasMajorBrutalityIssueWithoutAura).toBe(true); // Should report as missing
     });
+
+    it('should detect Minor Aegis from auras for tank players (passive from slotted abilities)', () => {
+      // Mock auras with Minor Aegis from slotted abilities (like what appears in real combat logs)
+      const mockAurasWithMinorAegis = [
+        { name: 'Minor Aegis', id: 147225, stacks: 1 },
+        { name: 'Major Resolve', id: 61694, stacks: 1 }
+      ];
+
+      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, mockAurasWithMinorAegis, 'tank', [], 8);
+      const hasMinorAegisIssue = tankIssues.some((issue) => issue.message.includes('Minor Aegis'));
+      expect(hasMinorAegisIssue).toBe(false); // Should NOT report as missing since it's found in auras
+
+      // Test without Minor Aegis in auras
+      const mockAurasWithoutMinorAegis = [
+        { name: 'Major Resolve', id: 61694, stacks: 1 }
+      ];
+
+      const tankIssuesWithoutMinorAegis = detectBuildIssues([], mockBuffLookup, 1000, 2000, mockAurasWithoutMinorAegis, 'tank', [], 8);
+      const hasMinorAegisIssueWithoutAura = tankIssuesWithoutMinorAegis.some((issue) => issue.message.includes('Minor Aegis'));
+      expect(hasMinorAegisIssueWithoutAura).toBe(true); // Should report as missing
+    });
   });
 });
