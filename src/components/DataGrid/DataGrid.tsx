@@ -208,6 +208,7 @@ const DataGridPagination = <T,>({ table }: { table: TanStackTable<T> }): React.J
 
   return (
     <Box
+      className="data-grid-pagination"
       sx={{
         display: 'flex',
         alignItems: 'center',

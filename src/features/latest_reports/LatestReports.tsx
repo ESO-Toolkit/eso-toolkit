@@ -200,7 +200,8 @@ export const LatestReports: React.FC = () => {
                 mb={isDesktop ? 3 : 2}
               >
                 <Typography variant="body1" color="text.secondary">
-                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} - {state.pagination.totalReports} total reports
+                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} -{' '}
+                  {state.pagination.totalReports} total reports
                 </Typography>
 
                 <Chip
@@ -300,7 +301,13 @@ export const LatestReports: React.FC = () => {
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal', wordBreak: 'break-word' }}>
+                          <TableCell
+                            sx={{
+                              verticalAlign: 'top',
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                            }}
+                          >
                             <Typography variant="body2" sx={{ whiteSpace: 'inherit' }}>
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
@@ -330,11 +337,7 @@ export const LatestReports: React.FC = () => {
                   </Table>
                 </TableContainer>
               ) : (
-                <ReportListMobile
-                  reports={state.reports}
-                  onSelect={handleReportClick}
-                  showOwner
-                />
+                <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
               )}
 
               {/* Pagination */}
