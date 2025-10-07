@@ -221,7 +221,30 @@ export const UserReports: React.FC = () => {
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
   const renderHeaderContent = (insideCard: boolean): React.ReactElement => (
-    <Box sx={{ mb: insideCard ? 3 : isDesktop ? 4 : 3 }}>
+    <Box sx={{ mb: insideCard ? 3 : isDesktop ? 4 : 3, position: 'relative' }}>
+      {/* Mobile Floating Refresh Button */}
+      {!isDesktop && insideCard && (
+        <IconButton
+          onClick={handleRefresh}
+          disabled={state.loading}
+          aria-label="refresh"
+          color="primary"
+          sx={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            zIndex: 1,
+            backgroundColor: theme.palette.background.paper,
+            boxShadow: theme.shadows[2],
+            '&:hover': {
+              backgroundColor: theme.palette.action.hover,
+            },
+          }}
+        >
+          <RefreshIcon />
+        </IconButton>
+      )}
+
       <Box
         sx={{
           ...headerStackSx,
@@ -232,12 +255,19 @@ export const UserReports: React.FC = () => {
           <Typography
             variant={isDesktop ? 'h4' : 'h5'}
             component="h1"
-            sx={{ mb: insideCard ? 1.5 : 2 }}
+            sx={{ mb: insideCard ? 1.5 : 2, pr: (!isDesktop && insideCard) ? 5 : 0 }} // Add right padding for floating button
           >
             My Reports
           </Typography>
           {currentUser && (
-            <Typography variant="body1" color="text.secondary">
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                maxWidth: isDesktop ? 'none' : '26ch',
+                pr: (!isDesktop && insideCard) ? 1 : 0, // Add right padding on mobile when inside card
+              }}
+            >
               Reports for {currentUser.name}
               {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
               {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
@@ -245,23 +275,21 @@ export const UserReports: React.FC = () => {
           )}
         </Box>
 
-        <Box sx={actionGroupSx}>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={state.loading}
-            aria-label="refresh"
-            size={isDesktop ? 'medium' : 'large'}
-            sx={{
-              backgroundColor: theme.palette.action.hover,
-              '&:hover': {
-                backgroundColor: theme.palette.action.selected,
-              },
-              width: isDesktop ? 'auto' : '100%',
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
+        {isDesktop && (
+          <Box sx={actionGroupSx}>
+            <IconButton
+              onClick={handleRefresh}
+              disabled={state.loading}
+              aria-label="refresh"
+              size="medium"
+              sx={{
+                width: 'auto',
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          </Box>
+        )}
       </Box>
 
       {!currentUser && !userLoading && (

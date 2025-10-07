@@ -64,7 +64,21 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
               variant="filled"
               label={report.visibility}
               color={getReportVisibilityColor(report.visibility)}
-              sx={{ textTransform: 'capitalize' }}
+              sx={{
+                textTransform: 'capitalize',
+                // Override default chip text color with higher specificity
+                '& .MuiChip-label': {
+                  ...(report.visibility === 'public' && {
+                    color: 'rgba(255, 255, 255, 1) !important' // White text on green background in both modes
+                  }),
+                  ...(report.visibility === 'private' && {
+                    color: 'rgba(255, 255, 255, 1) !important' // White text on red background in both modes
+                  }),
+                  ...(report.visibility === 'unlisted' && {
+                    color: 'rgba(0, 0, 0, 0.87) !important' // Dark text on orange/yellow background in both modes
+                  }),
+                },
+              }}
             />
           </Box>
 
