@@ -466,13 +466,15 @@ export const PlayersPanel: React.FC = () => {
         fight.endTime,
         [],
         player.role,
+        damageEvents,
+        player.id,
       );
 
       result[playerId] = buildIssues;
     });
 
     return result;
-  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime]);
+  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime, damageEvents]);
 
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {

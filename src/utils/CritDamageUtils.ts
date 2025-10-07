@@ -193,7 +193,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     value: CriticalDamageValues.LUCENT_ECHOES,
     name: 'Lucent Echoes',
     description: 'Critical damage from Lucent Echoes set bonus (11%)',
-    source: 'buff',
+    source: 'aura',
   },
   {
     ability: KnownAbilities.MINOR_FORCE,
@@ -230,7 +230,9 @@ export function isAuraActive(
   abilityId: KnownAbilities,
 ): boolean {
   if (!combatantInfo || !combatantInfo.auras) return false;
-  return combatantInfo.auras.some((aura) => aura.ability === abilityId);
+  return getBuffAbilityVariants(abilityId).some((id) =>
+    combatantInfo.auras.some((aura) => aura.ability === id),
+  );
 }
 
 export function isBuffActive(buffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {

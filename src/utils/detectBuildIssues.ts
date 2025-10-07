@@ -1,4 +1,4 @@
-import { CombatantAura } from '../types/combatlogEvents';
+import { CombatantAura, DamageEvent } from '../types/combatlogEvents';
 import { PlayerGear, GearSlot } from '../types/playerDetails';
 
 import { BuffLookupData, isBuffActive } from './BuffLookupUtils';
@@ -62,6 +62,28 @@ function isBuffActiveInAuras(
 }
 
 /**
+ * Helper function to check if an ability ID is present in damage event buff strings
+ */
+function isAbilityInDamageEventBuffs(
+  damageEvents: DamageEvent[] | undefined,
+  abilityId: number,
+  playerId: number,
+): boolean {
+  if (!damageEvents) return false;
+  
+  const abilityIdStr = abilityId.toString();
+  
+  // Check damage events from this player for the ability in buff strings
+  return damageEvents.some(event => {
+    if (event.sourceID !== playerId || !event.buffs) return false;
+    
+    // Check if ability ID appears in the dot-separated buff string
+    const buffIds = event.buffs.split('.');
+    return buffIds.includes(abilityIdStr);
+  });
+}
+
+/**
  * Detects various build issues for a player including gear problems and missing buffs.
  *
  * @param gear - Player's equipped gear
@@ -70,6 +92,8 @@ function isBuffActiveInAuras(
  * @param fightEndTime - Fight end time for buff checking
  * @param auras - Aura data for checking passive buffs/abilities
  * @param role - Player's role (tank, dps, healer) for role-specific buff checks
+ * @param damageEvents - Damage events for checking buffs in damage event data
+ * @param playerId - Player ID for filtering damage events
  * @returns Array of detected build issues
  */
 export function detectBuildIssues(
@@ -79,6 +103,8 @@ export function detectBuildIssues(
   fightEndTime: number | undefined,
   auras: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }>,
   role: 'dps' | 'tank' | 'healer',
+  damageEvents?: DamageEvent[],
+  playerId?: number,
 ): BuildIssue[] {
   const issues: BuildIssue[] = [];
 
@@ -141,8 +167,11 @@ export function detectBuildIssues(
       // This handles both persistent passive effects and timing-sensitive buffs
       const isEverActiveInBuffs = isBuffActive(buffLookup, buff.abilityId);
       const isEverActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
+      
+      // Enhanced detection for Minor Slayer (and similar abilities) that appear in damage event buff strings
+      const isInDamageEventBuffs = playerId ? isAbilityInDamageEventBuffs(damageEvents, buff.abilityId, playerId) : false;
 
-      const isDetected = isEverActiveInBuffs || isEverActiveInAuras;
+      const isDetected = isEverActiveInBuffs || isEverActiveInAuras || isInDamageEventBuffs;
 
       if (!isDetected) {
         const roleDescription =

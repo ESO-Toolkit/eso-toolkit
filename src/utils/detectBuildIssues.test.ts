@@ -313,5 +313,30 @@ describe('detectBuildIssues', () => {
       );
       expect(hasMajorBuffIssuesHealer).toBe(false);
     });
+
+    it('should detect Minor Slayer from damage event buff strings', () => {
+      const mockDamageEvents = [
+        {
+          sourceID: 9,
+          buffs: '172621.163401.147226.61665.61687.61799.61662.62800.92503.76518.61685.' // Contains Minor Slayer (147226)
+        } as any // Simplified for testing
+      ];
+
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps', mockDamageEvents, 9);
+      const hasMinorSlayerIssue = dpsIssues.some((issue) => issue.message.includes('Minor Slayer'));
+      expect(hasMinorSlayerIssue).toBe(false); // Should NOT report as missing since it's found in damage events
+
+      // Test without Minor Slayer in damage events
+      const mockDamageEventsWithoutMinorSlayer = [
+        {
+          sourceID: 9,
+          buffs: '172621.163401.61665.61687.61799.61662.62800.92503.76518.61685.' // No Minor Slayer (147226)
+        } as any // Simplified for testing
+      ];
+
+      const dpsIssuesWithoutMinorSlayer = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps', mockDamageEventsWithoutMinorSlayer, 9);
+      const hasMinorSlayerIssueWithoutBuff = dpsIssuesWithoutMinorSlayer.some((issue) => issue.message.includes('Minor Slayer'));
+      expect(hasMinorSlayerIssueWithoutBuff).toBe(true); // Should report as missing
+    });
   });
 });
