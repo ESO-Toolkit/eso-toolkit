@@ -338,5 +338,28 @@ describe('detectBuildIssues', () => {
       const hasMinorSlayerIssueWithoutBuff = dpsIssuesWithoutMinorSlayer.some((issue) => issue.message.includes('Minor Slayer'));
       expect(hasMinorSlayerIssueWithoutBuff).toBe(true); // Should report as missing
     });
+
+    it('should detect Major Brutality from auras (passive from slotted abilities)', () => {
+      // Mock auras with Major Brutality from slotted abilities (like what appears in real combat logs)
+      const mockAurasWithMajorBrutality = [
+        { name: 'Major Brutality', id: 183049, stacks: 1 },
+        { name: 'Major Prophecy', id: 203342, stacks: 1 },
+        { name: 'Minor Slayer', id: 147226, stacks: 1 }
+      ];
+
+      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, mockAurasWithMajorBrutality, 'dps', [], 9);
+      const hasMajorBrutalityIssue = dpsIssues.some((issue) => issue.message.includes('Major Brutality'));
+      expect(hasMajorBrutalityIssue).toBe(false); // Should NOT report as missing since it's found in auras
+
+      // Test without Major Brutality in auras
+      const mockAurasWithoutMajorBrutality = [
+        { name: 'Major Prophecy', id: 203342, stacks: 1 },
+        { name: 'Minor Slayer', id: 147226, stacks: 1 }
+      ];
+
+      const dpsIssuesWithoutMajorBrutality = detectBuildIssues([], mockBuffLookup, 1000, 2000, mockAurasWithoutMajorBrutality, 'dps', [], 9);
+      const hasMajorBrutalityIssueWithoutAura = dpsIssuesWithoutMajorBrutality.some((issue) => issue.message.includes('Major Brutality'));
+      expect(hasMajorBrutalityIssueWithoutAura).toBe(true); // Should report as missing
+    });
   });
 });
