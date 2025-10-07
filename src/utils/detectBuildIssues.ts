@@ -137,11 +137,14 @@ export function detectBuildIssues(
     // Check role-specific minor buffs
     const roleBuffs = ROLE_SPECIFIC_BUFFS[role];
     roleBuffs.forEach((buff) => {
-      // Check both buff events and auras
-      const isActiveInBuffs = isBuffActive(buffLookup, buff.abilityId, sampleTimestamp);
-      const isActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
+      // Use single-tier detection: check if buff was ever active during the fight
+      // This handles both persistent passive effects and timing-sensitive buffs
+      const isEverActiveInBuffs = isBuffActive(buffLookup, buff.abilityId);
+      const isEverActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
 
-      if (!isActiveInBuffs && !isActiveInAuras) {
+      const isDetected = isEverActiveInBuffs || isEverActiveInAuras;
+
+      if (!isDetected) {
         const roleDescription =
           role === 'tank' ? 'tanks' : role === 'dps' ? 'DPS players' : 'healers';
         issues.push({
