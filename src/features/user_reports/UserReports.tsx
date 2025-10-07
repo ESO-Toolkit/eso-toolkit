@@ -90,22 +90,65 @@ const ReportsTableSkeletonRow: React.FC<{ index: number }> = function ReportsTab
     >
       <TableCell>
         <Box>
-          <Skeleton variant="text" width={200} height={24} sx={{ mb: 0.5 }} />
-          <Skeleton variant="text" width={120} height={16} />
+          <Skeleton
+            variant="text"
+            height={24}
+            sx={{
+              mb: 0.5,
+              width: { xs: '92%', md: '80%' },
+              maxWidth: 220,
+            }}
+          />
+          <Skeleton
+            variant="text"
+            height={16}
+            sx={{
+              width: { xs: '88%', md: '75%' },
+              maxWidth: 120,
+            }}
+          />
         </Box>
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={150} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '95%', md: '85%' },
+            maxWidth: 150,
+          }}
+        />
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={140} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '90%', md: '80%' },
+            maxWidth: 140,
+          }}
+        />
       </TableCell>
       <TableCell>
-        <Skeleton variant="text" width={80} height={20} />
+        <Skeleton
+          variant="text"
+          height={20}
+          sx={{
+            width: { xs: '85%', md: '75%' },
+            maxWidth: 80,
+          }}
+        />
       </TableCell>
       <TableCell>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-          <Skeleton variant="rounded" width={60} height={24} />
+          <Skeleton
+            variant="rounded"
+            height={24}
+            sx={{
+              width: { xs: '90%', md: '80%' },
+              maxWidth: 60,
+            }}
+          />
           {/* Small loading indicator to show active loading state */}
           <MemoizedLoadingSpinner size={16} thickness={2} />
         </Box>
@@ -509,17 +552,17 @@ export const UserReports: React.FC = () => {
               elevation={0}
               sx={{
                 transition: 'none',
-                overflowX: 'auto',
+                overflowX: 'hidden',
               }}
             >
-              <Table>
+              <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>Title</TableCell>
-                    <TableCell>Zone</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Duration</TableCell>
-                    <TableCell>Visibility</TableCell>
+                    <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>Title</TableCell>
+                    <TableCell sx={{ width: '25%', whiteSpace: 'normal' }}>Zone</TableCell>
+                    <TableCell sx={{ width: '20%', whiteSpace: 'normal' }}>Date</TableCell>
+                    <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Duration</TableCell>
+                    <TableCell sx={{ width: '10%', whiteSpace: 'normal' }}>Visibility</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
