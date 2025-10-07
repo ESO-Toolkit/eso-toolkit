@@ -157,9 +157,6 @@ export function detectBuildIssues(
 
   // Check for missing required buffs based on role
   if (buffLookup && fightStartTime && fightEndTime) {
-    const fightDuration = fightEndTime - fightStartTime;
-    const sampleTimestamp = fightStartTime + Math.floor(fightDuration * 0.5); // Check at 50% through fight
-
     // Check role-specific minor buffs
     const roleBuffs = ROLE_SPECIFIC_BUFFS[role];
     roleBuffs.forEach((buff) => {
