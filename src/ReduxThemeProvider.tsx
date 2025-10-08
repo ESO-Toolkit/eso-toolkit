@@ -821,13 +821,13 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
           },
           // DataGrid pagination controls styling
           '.data-grid-pagination': {
-            '& .MuiIconButton-root': {
+            '& .MuiPaginationItem-root': {
               transition: 'all 0.1s ease-in-out !important',
               backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
               border: darkMode
                 ? '1px solid rgba(56, 189, 248, 0.2)'
                 : '1px solid rgba(25, 118, 210, 0.2)',
-              color: darkMode ? tokens.text : '#000000',
+              color: darkMode ? tokens.text : tokens.text,
               '&:hover:not(:disabled)': {
                 backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)',
                 borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(25, 118, 210, 0.4)',
@@ -837,10 +837,16 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(0, 0, 0, 0.05)',
                 color: darkMode ? 'rgba(229, 231, 235, 0.4)' : 'rgba(0, 0, 0, 0.4)',
               },
-            },
-            '& .MuiTypography-root': {
-              transition: 'color 0.1s ease-in-out !important',
-              color: darkMode ? tokens.text : '#000000',
+              '&.Mui-selected': {
+                backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(25, 118, 210, 0.15)',
+                borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(25, 118, 210, 0.3)',
+                color: darkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.87)',
+                fontWeight: 600,
+                '&:hover': {
+                  backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(25, 118, 210, 0.25)',
+                  borderColor: darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(25, 118, 210, 0.5)',
+                },
+              },
             },
           },
         }}
