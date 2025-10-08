@@ -103,8 +103,6 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
-
-
   // Sanity's Edge bosses
   if (
     ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
@@ -527,8 +525,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
-
-
 
       // SIMPLIFIED APPROACH: Don't try to separate trial instances
       // Just group all bosses from the same trial together
