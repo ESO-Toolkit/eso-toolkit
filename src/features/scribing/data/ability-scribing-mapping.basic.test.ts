@@ -1,6 +1,6 @@
 /**
  * Basic functionality tests for AbilityScribingMapper
- * 
+ *
  * This test suite focuses on core business logic without complex mocking
  */
 
@@ -10,10 +10,10 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should have all required public methods', () => {
       // Test that the class exports exist and have expected structure
       const { AbilityScribingMapper } = require('./ability-scribing-mapping');
-      
+
       expect(typeof AbilityScribingMapper).toBe('function');
       expect(typeof AbilityScribingMapper.create).toBe('function');
-      
+
       // Test instance methods exist (we'll call them on a mock instance)
       const mockInstance = {
         getScribingComponent: jest.fn(),
@@ -28,16 +28,16 @@ describe('AbilityScribingMapper Basic Functionality', () => {
         getStats: jest.fn(),
         isReady: jest.fn(),
       };
-      
+
       // Verify all methods exist and are functions
-      Object.keys(mockInstance).forEach(methodName => {
+      Object.keys(mockInstance).forEach((methodName) => {
         expect(typeof mockInstance[methodName as keyof typeof mockInstance]).toBe('function');
       });
     });
-    
+
     it('should export required interfaces and types', () => {
       const module = require('./ability-scribing-mapping');
-      
+
       // Check that key exports exist
       expect(module.AbilityScribingMapper).toBeDefined();
       expect(module.getAbilityScribingMapper).toBeDefined();
@@ -50,7 +50,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should handle empty lookup maps gracefully', () => {
       // Test the core lookup logic with empty maps
       const emptyMap = new Map();
-      
+
       // Test that looking up non-existent items returns expected defaults
       expect(emptyMap.get(999999)).toBeUndefined();
       expect(emptyMap.has(999999)).toBe(false);
@@ -60,8 +60,8 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should handle ability ID number validation', () => {
       // Test number handling for ability IDs
       const testIds = [192001, 0, -1, 999999];
-      
-      testIds.forEach(id => {
+
+      testIds.forEach((id) => {
         expect(typeof id).toBe('number');
         expect(Number.isInteger(id)).toBe(true);
       });
@@ -76,7 +76,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
         componentKey: 'test-component',
         name: 'Test Grimoire',
         category: 'grimoire',
-        description: 'Test description'
+        description: 'Test description',
       };
 
       expect(typeof mockMapping.abilityId).toBe('number');
@@ -94,7 +94,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       // Test the Set-based deduplication used in getAbilityIdsForGrimoire
       const testArray = [1, 2, 2, 3, 3, 3, 4];
       const uniqueArray = [...new Set(testArray)];
-      
+
       expect(uniqueArray).toEqual([1, 2, 3, 4]);
       expect(uniqueArray.length).toBe(4);
     });
@@ -104,7 +104,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       const testMap = new Map();
       testMap.set(1, { id: 1, name: 'Test1' });
       testMap.set(2, { id: 2, name: 'Test2' });
-      
+
       const entries = [...testMap.entries()];
       expect(entries.length).toBe(2);
       expect(entries[0][0]).toBe(1);
@@ -115,7 +115,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       // Test Object.entries patterns used in building mappings
       const testObject = {
         key1: { name: 'Value1', id: 1 },
-        key2: { name: 'Value2', id: 2 }
+        key2: { name: 'Value2', id: 2 },
       };
 
       const entries = Object.entries(testObject);
@@ -131,7 +131,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       // Test null/undefined handling patterns
       const testData: any = null;
       const result = testData?.grimoires || {};
-      
+
       expect(result).toEqual({});
     });
 
@@ -139,7 +139,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       // Test array validation patterns
       const testObject: any = { name: 'test' }; // Missing abilityIds array
       const abilityIds = testObject.abilityIds;
-      
+
       if (abilityIds && Array.isArray(abilityIds)) {
         // This branch should not execute
         expect(false).toBe(true);
@@ -156,13 +156,13 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       const mixedArray = [192001, 'invalid', 192002];
 
       expect(Array.isArray(validArray)).toBe(true);
-      expect(validArray.every(id => typeof id === 'number')).toBe(true);
-      
+      expect(validArray.every((id) => typeof id === 'number')).toBe(true);
+
       expect(Array.isArray(invalidArray)).toBe(true);
-      expect(invalidArray.every(id => typeof id === 'number')).toBe(false);
-      
+      expect(invalidArray.every((id) => typeof id === 'number')).toBe(false);
+
       expect(Array.isArray(mixedArray)).toBe(true);
-      expect(mixedArray.every(id => typeof id === 'number')).toBe(false);
+      expect(mixedArray.every((id) => typeof id === 'number')).toBe(false);
     });
   });
 
@@ -173,9 +173,9 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       const testMap = new Map();
       testMap.set(192001, { name: 'Test1' });
       testMap.set(192002, { name: 'Test2' });
-      
+
       const obj = Object.fromEntries(testMap.entries());
-      
+
       expect(obj['192001']).toBeDefined();
       expect(obj['192001'].name).toBe('Test1');
       expect(obj['192002'].name).toBe('Test2');
@@ -184,11 +184,26 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should build statistics object correctly', () => {
       // Test stats calculation pattern
       const mockLookup = {
-        grimoires: new Map([[1, {}], [2, {}]]),
+        grimoires: new Map([
+          [1, {}],
+          [2, {}],
+        ]),
         transformations: new Map([[3, {}]]),
-        signatures: new Map([[4, {}], [5, {}], [6, {}]]),
+        signatures: new Map([
+          [4, {}],
+          [5, {}],
+          [6, {}],
+        ]),
         affixes: new Map([[7, {}]]),
-        all: new Map([[1, {}], [2, {}], [3, {}], [4, {}], [5, {}], [6, {}], [7, {}]])
+        all: new Map([
+          [1, {}],
+          [2, {}],
+          [3, {}],
+          [4, {}],
+          [5, {}],
+          [6, {}],
+          [7, {}],
+        ]),
       };
 
       const stats = {
@@ -196,7 +211,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
         totalTransformations: mockLookup.transformations.size,
         totalSignatures: mockLookup.signatures.size,
         totalAffixes: mockLookup.affixes.size,
-        totalMappings: mockLookup.all.size
+        totalMappings: mockLookup.all.size,
       };
 
       expect(stats.totalGrimoires).toBe(2);
@@ -213,7 +228,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
       // Test environment detection pattern used in initialization
       const isNode = typeof window === 'undefined';
       const isBrowser = typeof window !== 'undefined';
-      
+
       // Test environment may have JSDOM with window object
       // Just verify the logic works correctly
       expect(typeof isNode).toBe('boolean');
@@ -227,7 +242,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
         try {
           const fs = await import('fs');
           const path = await import('path');
-          
+
           expect(typeof fs.readFileSync).toBe('function');
           expect(typeof path.join).toBe('function');
         } catch (error) {
@@ -243,7 +258,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should handle async initialization pattern correctly', async () => {
       // Test async factory pattern
       const mockAsyncFactory = async () => {
-        return new Promise(resolve => {
+        return new Promise((resolve) => {
           setTimeout(() => resolve({ ready: true }), 1);
         });
       };
@@ -255,7 +270,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
     it('should handle singleton pattern correctly', () => {
       // Test singleton pattern basics
       let instance: any = null;
-      
+
       const getInstance = () => {
         if (!instance) {
           instance = { id: Math.random() };
@@ -265,7 +280,7 @@ describe('AbilityScribingMapper Basic Functionality', () => {
 
       const first = getInstance();
       const second = getInstance();
-      
+
       expect(first).toBe(second);
       expect(first.id).toBe(second.id);
     });

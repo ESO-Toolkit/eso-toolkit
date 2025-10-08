@@ -20,7 +20,7 @@ describe('EsoLogParser', () => {
     reportData: {
       report: {
         events: {
-          data: events.map(event => ({
+          data: events.map((event) => ({
             timestamp: 1000,
             type: 'cast',
             sourceID: 1,
@@ -65,7 +65,7 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseCastEvents('/test/cast-events.json');
 
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'cast')).toBe(true);
+      expect(result.events.every((e) => e.type === 'cast')).toBe(true);
       expect(result.totalEvents).toBe(2);
       expect(result.eventsByType['cast']).toBe(2);
       expect(result.errors).toHaveLength(0);
@@ -114,7 +114,9 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseBuffEvents('/test/buff-events.json');
 
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'applybuff' || e.type === 'removebuff')).toBe(true);
+      expect(result.events.every((e) => e.type === 'applybuff' || e.type === 'removebuff')).toBe(
+        true,
+      );
     });
   });
 
@@ -134,7 +136,9 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseDebuffEvents('/test/debuff-events.json');
 
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'applydebuff' || e.type === 'removedebuff')).toBe(true);
+      expect(
+        result.events.every((e) => e.type === 'applydebuff' || e.type === 'removedebuff'),
+      ).toBe(true);
     });
   });
 
@@ -154,7 +158,7 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseDamageEvents('/test/damage-events.json');
 
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'damage')).toBe(true);
+      expect(result.events.every((e) => e.type === 'damage')).toBe(true);
     });
   });
 
@@ -174,7 +178,7 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseHealingEvents('/test/healing-events.json');
 
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'heal')).toBe(true);
+      expect(result.events.every((e) => e.type === 'heal')).toBe(true);
     });
   });
 
@@ -196,17 +200,17 @@ describe('EsoLogParser', () => {
       const result = await EsoLogParser.parseAllEvents('/test/all-events.json');
 
       expect(result.events).toHaveLength(4);
-      expect(result.events.map(e => e.type)).toContain('cast');
-      expect(result.events.map(e => e.type)).toContain('applybuff');
-      expect(result.events.map(e => e.type)).toContain('damage');
-      expect(result.events.map(e => e.type)).toContain('heal');
+      expect(result.events.map((e) => e.type)).toContain('cast');
+      expect(result.events.map((e) => e.type)).toContain('applybuff');
+      expect(result.events.map((e) => e.type)).toContain('damage');
+      expect(result.events.map((e) => e.type)).toContain('heal');
     });
   });
 
   describe('event validation', () => {
     it('should validate events and filter invalid ones', async () => {
       const validEvent = createMockEvent({ abilityGameID: 123 });
-      
+
       const mockData = {
         reportData: {
           report: {
@@ -216,7 +220,14 @@ describe('EsoLogParser', () => {
                 validEvent,
                 // Invalid events - missing required fields
                 { timestamp: 1000, type: 'cast', abilityGameID: 456 }, // Missing sourceID, targetID, etc.
-                { sourceID: 1, targetID: 2, timestamp: 2000, type: 'damage', abilityGameID: 999, fight: 1 }, // Missing sourceIsFriendly, targetIsFriendly
+                {
+                  sourceID: 1,
+                  targetID: 2,
+                  timestamp: 2000,
+                  type: 'damage',
+                  abilityGameID: 999,
+                  fight: 1,
+                }, // Missing sourceIsFriendly, targetIsFriendly
                 { timestamp: 3000, sourceID: 1, targetID: 2 }, // Missing type, fight, etc.
               ],
             },
@@ -263,14 +274,20 @@ describe('EsoLogParser', () => {
       createMockEvent({ sourceID: 1, targetID: 2, abilityGameID: 123, timestamp: 1000 }),
       createMockEvent({ sourceID: 2, targetID: 3, abilityGameID: 456, timestamp: 2000 }),
       createMockEvent({ sourceID: 1, targetID: 3, abilityGameID: 789, timestamp: 3000 }),
-      createMockEvent({ sourceID: 3, targetID: 1, abilityGameID: 123, timestamp: 4000, extraAbilityGameID: 999 }),
+      createMockEvent({
+        sourceID: 3,
+        targetID: 1,
+        abilityGameID: 123,
+        timestamp: 4000,
+        extraAbilityGameID: 999,
+      }),
     ];
 
     describe('filterEventsByPlayer', () => {
       it('should filter events by source or target player ID', () => {
         const filtered = EsoLogParser.filterEventsByPlayer(testEvents, 1);
         expect(filtered).toHaveLength(3);
-        expect(filtered.every(e => e.sourceID === 1 || e.targetID === 1)).toBe(true);
+        expect(filtered.every((e) => e.sourceID === 1 || e.targetID === 1)).toBe(true);
       });
 
       it('should return empty array for non-existent player', () => {
@@ -283,7 +300,9 @@ describe('EsoLogParser', () => {
       it('should filter events by ability ID', () => {
         const filtered = EsoLogParser.filterEventsByAbility(testEvents, 123);
         expect(filtered).toHaveLength(2);
-        expect(filtered.every(e => e.abilityGameID === 123 || e.extraAbilityGameID === 123)).toBe(true);
+        expect(filtered.every((e) => e.abilityGameID === 123 || e.extraAbilityGameID === 123)).toBe(
+          true,
+        );
       });
 
       it('should filter by extraAbilityGameID', () => {
@@ -343,7 +362,9 @@ describe('EsoLogParser', () => {
       it('should get events within time range of timestamp', () => {
         const nearEvents = EsoLogParser.getEventsNearTimestamp(testEvents, 2000, 1000);
         expect(nearEvents).toHaveLength(3);
-        expect(nearEvents.map(e => e.timestamp)).toEqual(expect.arrayContaining([1000, 2000, 3000]));
+        expect(nearEvents.map((e) => e.timestamp)).toEqual(
+          expect.arrayContaining([1000, 2000, 3000]),
+        );
       });
 
       it('should handle exact timestamp match', () => {

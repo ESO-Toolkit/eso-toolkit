@@ -3,10 +3,7 @@
  * Focuses on improving coverage for the getScribingSkillByAbilityId function
  */
 
-import {
-  getScribingSkillByAbilityId,
-  ScribingSkillInfo,
-} from './Scribing';
+import { getScribingSkillByAbilityId, ScribingSkillInfo } from './Scribing';
 
 // Mock the scribing database
 jest.mock('../../../../data/scribing-complete.json', () => ({
@@ -23,7 +20,7 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
           name: 'Frost Banner',
           abilityIds: [123459, 123460],
         },
-        'healing': {
+        healing: {
           name: 'Healing Banner',
           abilityIds: [123461, 123462],
         },
@@ -69,11 +66,11 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
     },
   },
   affixScripts: {
-    'breaching': {
+    breaching: {
       name: 'Breaching',
       abilityIds: [456789, 456790],
     },
-    'lingering': {
+    lingering: {
       name: 'Lingering',
       abilityIds: [456791, 456792],
     },
@@ -84,7 +81,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
   describe('getScribingSkillByAbilityId', () => {
     it('should return base grimoire information for base ability IDs', () => {
       const result = getScribingSkillByAbilityId(123456);
-      
+
       expect(result).toEqual({
         grimoire: 'Banner Bearer',
         transformation: 'Base Ability',
@@ -96,7 +93,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
 
     it('should return focus script information for name transformation IDs', () => {
       const result = getScribingSkillByAbilityId(123457);
-      
+
       expect(result).toEqual({
         grimoire: 'Banner Bearer',
         transformation: 'Fire Banner',
@@ -125,7 +122,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
 
     it('should return signature script information', () => {
       const result = getScribingSkillByAbilityId(345678);
-      
+
       expect(result).toEqual({
         grimoire: 'Unknown Grimoire',
         transformation: 'Astral Immunity',
@@ -137,7 +134,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
 
     it('should return affix script information', () => {
       const result = getScribingSkillByAbilityId(456789);
-      
+
       expect(result).toEqual({
         grimoire: 'Unknown Grimoire',
         transformation: 'Breaching',
@@ -154,14 +151,14 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
 
     it('should handle unknown transformation types and log warnings', () => {
       const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-      
+
       const result = getScribingSkillByAbilityId(222223);
-      
+
       expect(result?.transformationType).toBe('Focus Script'); // Should default
       expect(consoleWarnSpy).toHaveBeenCalledWith(
-        'Unknown scribing transformation type: unknown-transformation-type'
+        'Unknown scribing transformation type: unknown-transformation-type',
       );
-      
+
       consoleWarnSpy.mockRestore();
     });
 
@@ -173,13 +170,13 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
 
     it('should handle database access errors gracefully', () => {
       const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
-      
+
       // Test error handling by accessing a property that might not exist
       const result = getScribingSkillByAbilityId(-1); // Invalid ID that shouldn't exist
-      
+
       // Should still return null without crashing
       expect(result).toBeNull();
-      
+
       consoleSpy.mockRestore();
     });
 
@@ -191,7 +188,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
         { id: 456791, type: 'Affix Script', transformation: 'Lingering' },
       ];
 
-      tests.forEach(test => {
+      tests.forEach((test) => {
         const result = getScribingSkillByAbilityId(test.id);
         expect(result).not.toBeNull();
         expect(result?.transformation).toBe(test.transformation);
@@ -218,7 +215,7 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
       // Test that both IDs in the same transformation work
       const result1 = getScribingSkillByAbilityId(123457);
       const result2 = getScribingSkillByAbilityId(123458);
-      
+
       expect(result1?.transformation).toBe('Fire Banner');
       expect(result2?.transformation).toBe('Fire Banner');
       expect(result1?.grimoireId).toBe(result2?.grimoireId);

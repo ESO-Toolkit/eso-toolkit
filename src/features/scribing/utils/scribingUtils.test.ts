@@ -1,6 +1,6 @@
 import '@testing-library/jest-dom';
 
-import { 
+import {
   loadScribingData,
   getAllGrimoires,
   getGrimoiresBySkillLine,
@@ -131,7 +131,6 @@ const mockScribingData = {
     },
   },
 
-
   luminousInk: {
     costs: {
       newSkill: 50,
@@ -190,25 +189,28 @@ describe('scribingUtils (Basic Functions)', () => {
   describe('getAllGrimoires', () => {
     it('should return all grimoires as an array', () => {
       const grimoires = getAllGrimoires(mockScribingData as any);
-      
+
       expect(grimoires).toHaveLength(3);
-      expect(grimoires.map(g => g.name)).toContain('Trample');
-      expect(grimoires.map(g => g.name)).toContain('Elemental Explosion');
-      expect(grimoires.map(g => g.name)).toContain('Vault');
+      expect(grimoires.map((g) => g.name)).toContain('Trample');
+      expect(grimoires.map((g) => g.name)).toContain('Elemental Explosion');
+      expect(grimoires.map((g) => g.name)).toContain('Vault');
     });
   });
 
   describe('getGrimoiresBySkillLine', () => {
     it('should filter grimoires by skill line', () => {
       const assaultGrimoires = getGrimoiresBySkillLine(mockScribingData as any, 'Assault');
-      
+
       expect(assaultGrimoires).toHaveLength(1);
       expect(assaultGrimoires[0].name).toBe('Trample');
     });
 
     it('should return empty array for non-existent skill line', () => {
-      const nonExistentGrimoires = getGrimoiresBySkillLine(mockScribingData as any, 'non-existent' as any);
-      
+      const nonExistentGrimoires = getGrimoiresBySkillLine(
+        mockScribingData as any,
+        'non-existent' as any,
+      );
+
       expect(nonExistentGrimoires).toHaveLength(0);
     });
   });
@@ -216,43 +218,43 @@ describe('scribingUtils (Basic Functions)', () => {
   describe('getScriptsByType', () => {
     it('should return focus scripts', () => {
       const focusScripts = getScriptsByType(mockScribingData as any, 'Focus');
-      
+
       expect(focusScripts).toHaveLength(3);
-      expect(focusScripts.map(s => s.name)).toContain('Physical Damage');
-      expect(focusScripts.map(s => s.name)).toContain('Fire Damage');
-      expect(focusScripts.map(s => s.name)).toContain('Magic Damage');
+      expect(focusScripts.map((s) => s.name)).toContain('Physical Damage');
+      expect(focusScripts.map((s) => s.name)).toContain('Fire Damage');
+      expect(focusScripts.map((s) => s.name)).toContain('Magic Damage');
     });
 
     it('should return signature scripts', () => {
       const signatureScripts = getScriptsByType(mockScribingData as any, 'Signature');
-      
+
       expect(signatureScripts).toHaveLength(3);
-      expect(signatureScripts.map(s => s.name)).toContain('Berserker Frenzy');
-      expect(signatureScripts.map(s => s.name)).toContain('Elemental Burst');
-      expect(signatureScripts.map(s => s.name)).toContain('Swift Movement');
+      expect(signatureScripts.map((s) => s.name)).toContain('Berserker Frenzy');
+      expect(signatureScripts.map((s) => s.name)).toContain('Elemental Burst');
+      expect(signatureScripts.map((s) => s.name)).toContain('Swift Movement');
     });
 
     it('should return affix scripts', () => {
       const affixScripts = getScriptsByType(mockScribingData as any, 'Affix');
-      
+
       expect(affixScripts).toHaveLength(3);
-      expect(affixScripts.map(s => s.name)).toContain('Piercing Damage');
-      expect(affixScripts.map(s => s.name)).toContain('Area Damage');
-      expect(affixScripts.map(s => s.name)).toContain('Healing Boost');
+      expect(affixScripts.map((s) => s.name)).toContain('Piercing Damage');
+      expect(affixScripts.map((s) => s.name)).toContain('Area Damage');
+      expect(affixScripts.map((s) => s.name)).toContain('Healing Boost');
     });
   });
 
   describe('getGrimoire', () => {
     it('should return grimoire by id', () => {
       const grimoire = getGrimoire(mockScribingData as any, 'trample');
-      
+
       expect(grimoire).not.toBeNull();
       expect(grimoire!.name).toBe('Trample');
     });
 
     it('should return null for non-existent grimoire', () => {
       const grimoire = getGrimoire(mockScribingData as any, 'non-existent');
-      
+
       expect(grimoire).toBeNull();
     });
   });
@@ -260,14 +262,14 @@ describe('scribingUtils (Basic Functions)', () => {
   describe('getScript', () => {
     it('should return script by id and type', () => {
       const script = getScript(mockScribingData as any, 'physical-damage', 'Focus');
-      
+
       expect(script).not.toBeNull();
       expect(script!.name).toBe('Physical Damage');
     });
 
     it('should return null for non-existent script', () => {
       const script = getScript(mockScribingData as any, 'non-existent', 'Focus');
-      
+
       expect(script).toBeNull();
     });
   });
@@ -275,9 +277,9 @@ describe('scribingUtils (Basic Functions)', () => {
   describe('Basic functionality', () => {
     it('should preserve data structure', () => {
       const grimoires = getAllGrimoires(mockScribingData as any);
-      
+
       // Verify structure is preserved
-      grimoires.forEach(grimoire => {
+      grimoires.forEach((grimoire) => {
         expect(grimoire).toHaveProperty('id');
         expect(grimoire).toHaveProperty('name');
         expect(grimoire).toHaveProperty('skillLine');
@@ -288,19 +290,19 @@ describe('scribingUtils (Basic Functions)', () => {
       const focusScripts = getScriptsByType(mockScribingData as any, 'Focus');
       const signatureScripts = getScriptsByType(mockScribingData as any, 'Signature');
       const affixScripts = getScriptsByType(mockScribingData as any, 'Affix');
-      
+
       // All focus scripts should have type 'Focus'
-      focusScripts.forEach(script => {
+      focusScripts.forEach((script) => {
         expect(script.type).toBe('Focus');
       });
-      
+
       // All signature scripts should have type 'Signature'
-      signatureScripts.forEach(script => {
+      signatureScripts.forEach((script) => {
         expect(script.type).toBe('Signature');
       });
-      
+
       // All affix scripts should have type 'Affix'
-      affixScripts.forEach(script => {
+      affixScripts.forEach((script) => {
         expect(script.type).toBe('Affix');
       });
     });
@@ -310,36 +312,44 @@ describe('scribingUtils (Basic Functions)', () => {
   describe('getCompatibleScripts', () => {
     it('should return compatible focus scripts for grimoire', () => {
       const compatibleFocus = getCompatibleScripts(mockScribingData as any, 'trample', 'Focus');
-      
+
       expect(compatibleFocus).toHaveLength(1);
       expect(compatibleFocus[0].id).toBe('physical-damage');
     });
 
     it('should return compatible signature scripts for grimoire', () => {
-      const compatibleSignature = getCompatibleScripts(mockScribingData as any, 'trample', 'Signature');
-      
+      const compatibleSignature = getCompatibleScripts(
+        mockScribingData as any,
+        'trample',
+        'Signature',
+      );
+
       expect(compatibleSignature).toHaveLength(2);
-      expect(compatibleSignature.map(s => s.id)).toContain('berserker-frenzy');
-      expect(compatibleSignature.map(s => s.id)).toContain('swift-movement');
+      expect(compatibleSignature.map((s) => s.id)).toContain('berserker-frenzy');
+      expect(compatibleSignature.map((s) => s.id)).toContain('swift-movement');
     });
 
     it('should return compatible affix scripts for grimoire', () => {
-      const compatibleAffix = getCompatibleScripts(mockScribingData as any, 'elemental-explosion', 'Affix');
-      
+      const compatibleAffix = getCompatibleScripts(
+        mockScribingData as any,
+        'elemental-explosion',
+        'Affix',
+      );
+
       expect(compatibleAffix).toHaveLength(2);
-      expect(compatibleAffix.map(s => s.id)).toContain('piercing-damage');
-      expect(compatibleAffix.map(s => s.id)).toContain('area-damage');
+      expect(compatibleAffix.map((s) => s.id)).toContain('piercing-damage');
+      expect(compatibleAffix.map((s) => s.id)).toContain('area-damage');
     });
 
     it('should return empty array for non-existent grimoire', () => {
       const compatible = getCompatibleScripts(mockScribingData as any, 'non-existent', 'Focus');
-      
+
       expect(compatible).toHaveLength(0);
     });
 
     it('should return empty array for grimoire with no compatible scripts of type', () => {
       const compatible = getCompatibleScripts(mockScribingData as any, 'vault', 'Affix');
-      
+
       expect(compatible).toHaveLength(1);
       expect(compatible[0].id).toBe('healing-boost');
     });
@@ -418,9 +428,9 @@ describe('scribingUtils (Basic Functions)', () => {
       const combinations = getValidCombinations(mockScribingData as any, 'elemental-explosion');
 
       expect(combinations.length).toBeGreaterThan(0);
-      
+
       // Check that all combinations are valid
-      combinations.forEach(combination => {
+      combinations.forEach((combination) => {
         expect(isValidCombination(mockScribingData as any, combination)).toBe(true);
         expect(combination.grimoire).toBe('elemental-explosion');
       });
@@ -436,11 +446,11 @@ describe('scribingUtils (Basic Functions)', () => {
       const combinations = getValidCombinations(mockScribingData as any, 'vault');
 
       expect(combinations.length).toBeGreaterThan(0);
-      
+
       // Should have at least one combination with each compatible script type
-      const hasFocus = combinations.some(c => c.focusScript);
-      const hasSignature = combinations.some(c => c.signatureScript);
-      const hasAffix = combinations.some(c => c.affixScript);
+      const hasFocus = combinations.some((c) => c.focusScript);
+      const hasSignature = combinations.some((c) => c.signatureScript);
+      const hasAffix = combinations.some((c) => c.affixScript);
 
       expect(hasFocus).toBe(true);
       expect(hasSignature).toBe(true);
@@ -468,7 +478,7 @@ describe('scribingUtils (Basic Functions)', () => {
 
       expect(trampleCount).toBeGreaterThan(0);
       expect(vaultCount).toBeGreaterThan(0);
-      
+
       // Different grimoires should potentially have different counts
       // (though they might be equal depending on compatibility)
       expect(typeof trampleCount).toBe('number');
@@ -481,14 +491,14 @@ describe('scribingUtils (Basic Functions)', () => {
       const questScripts = getQuestScripts(mockScribingData as any);
 
       expect(questScripts.length).toBeGreaterThan(0);
-      expect(questScripts.map(s => s.id)).toContain('swift-movement');
-      expect(questScripts.map(s => s.id)).toContain('healing-boost');
-      expect(questScripts.map(s => s.id)).toContain('piercing-damage');
+      expect(questScripts.map((s) => s.id)).toContain('swift-movement');
+      expect(questScripts.map((s) => s.id)).toContain('healing-boost');
+      expect(questScripts.map((s) => s.id)).toContain('piercing-damage');
     });
 
     it('should return unique scripts even if in multiple quests', () => {
       const questScripts = getQuestScripts(mockScribingData as any);
-      const scriptIds = questScripts.map(s => s.id);
+      const scriptIds = questScripts.map((s) => s.id);
       const uniqueIds = [...new Set(scriptIds)];
 
       expect(scriptIds.length).toBe(uniqueIds.length);
@@ -498,15 +508,24 @@ describe('scribingUtils (Basic Functions)', () => {
       const emptyData = {
         ...mockScribingData,
         focusScripts: { ...mockScribingData.focusScripts },
-        signatureScripts: { 
+        signatureScripts: {
           'berserker-frenzy': { ...mockScribingData.signatureScripts['berserker-frenzy'] },
           'elemental-burst': { ...mockScribingData.signatureScripts['elemental-burst'] },
-          'swift-movement': { ...mockScribingData.signatureScripts['swift-movement'], questReward: false },
+          'swift-movement': {
+            ...mockScribingData.signatureScripts['swift-movement'],
+            questReward: false,
+          },
         },
         affixScripts: {
-          'piercing-damage': { ...mockScribingData.affixScripts['piercing-damage'], questReward: false },
+          'piercing-damage': {
+            ...mockScribingData.affixScripts['piercing-damage'],
+            questReward: false,
+          },
           'area-damage': { ...mockScribingData.affixScripts['area-damage'] },
-          'healing-boost': { ...mockScribingData.affixScripts['healing-boost'], questReward: false },
+          'healing-boost': {
+            ...mockScribingData.affixScripts['healing-boost'],
+            questReward: false,
+          },
         },
       };
 
@@ -529,11 +548,17 @@ describe('scribingUtils (Basic Functions)', () => {
         ...mockScribingData,
         vendors: {
           chronicler: {
-            scripts: ['physical-damage', 'fire-damage', 'magic-damage', 'berserker-frenzy', 'elemental-burst'],
+            scripts: [
+              'physical-damage',
+              'fire-damage',
+              'magic-damage',
+              'berserker-frenzy',
+              'elemental-burst',
+            ],
           },
         },
         questRewards: {
-          'quest1': ['swift-movement', 'piercing-damage', 'area-damage', 'healing-boost'],
+          quest1: ['swift-movement', 'piercing-damage', 'area-damage', 'healing-boost'],
         },
       };
 
@@ -584,8 +609,8 @@ describe('scribingUtils (Basic Functions)', () => {
       const results = searchScripts(mockScribingData as any, 'damage');
 
       expect(results.length).toBeGreaterThan(0);
-      expect(results.some(r => r.id === 'physical-damage')).toBe(true);
-      expect(results.some(r => r.id === 'fire-damage')).toBe(true);
+      expect(results.some((r) => r.id === 'physical-damage')).toBe(true);
+      expect(results.some((r) => r.id === 'fire-damage')).toBe(true);
     });
 
     it('should perform case-insensitive search', () => {
@@ -604,8 +629,8 @@ describe('scribingUtils (Basic Functions)', () => {
     it('should search across all script types', () => {
       const results = searchScripts(mockScribingData as any, 'damage');
 
-      const focusResults = results.filter(r => r.type === 'Focus');
-      const affixResults = results.filter(r => r.type === 'Affix');
+      const focusResults = results.filter((r) => r.type === 'Focus');
+      const affixResults = results.filter((r) => r.type === 'Affix');
 
       expect(focusResults.length).toBeGreaterThan(0);
       expect(affixResults.length).toBeGreaterThan(0);
@@ -650,7 +675,12 @@ describe('scribingUtils (Basic Functions)', () => {
 
     it('should work with different script types', () => {
       const focusCost = getVendorCosts(mockScribingData as any, 'chronicler', 'Focus', true);
-      const signatureCost = getVendorCosts(mockScribingData as any, 'chronicler', 'Signature', true);
+      const signatureCost = getVendorCosts(
+        mockScribingData as any,
+        'chronicler',
+        'Signature',
+        true,
+      );
       const affixCost = getVendorCosts(mockScribingData as any, 'chronicler', 'Affix', true);
 
       expect(typeof focusCost).toBe('number');

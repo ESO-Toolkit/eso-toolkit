@@ -27,26 +27,26 @@ describe('ScribingSimulator', () => {
         nameTransformations: {
           'test-focus': {
             name: 'Test Transformed',
-            abilityIds: [123456]
+            abilityIds: [123456],
           },
           'damage-shield': {
             name: 'Shield Transformed',
-            abilityIds: [123457]
+            abilityIds: [123457],
           },
-          'healing': {
+          healing: {
             name: 'Healing Transformed',
-            abilityIds: [123458]
+            abilityIds: [123458],
           },
-          'mitigation': {
+          mitigation: {
             name: 'Mitigation Transformed',
-            abilityIds: [123459]
+            abilityIds: [123459],
           },
-          'dispel': {
+          dispel: {
             name: 'Dispel Transformed',
-            abilityIds: [123460]
-          }
-        }
-      }
+            abilityIds: [123460],
+          },
+        },
+      },
     },
     focusScripts: {
       'test-focus': {
@@ -57,8 +57,8 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           damageType: 'magic',
           multiplier: 1.0,
-          effects: ['test-effect']
-        }
+          effects: ['test-effect'],
+        },
       },
       'damage-shield': {
         id: 'damage-shield',
@@ -68,10 +68,10 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           shieldType: 'damage',
           multiplier: 1.0,
-          effects: ['shield-effect']
-        }
+          effects: ['shield-effect'],
+        },
       },
-      'healing': {
+      healing: {
         id: 'healing',
         name: 'Healing',
         category: 'healing',
@@ -79,10 +79,10 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           healingType: 'direct',
           multiplier: 1.0,
-          effects: ['heal-effect']
-        }
+          effects: ['heal-effect'],
+        },
       },
-      'mitigation': {
+      mitigation: {
         id: 'mitigation',
         name: 'Mitigation',
         category: 'mitigation',
@@ -90,10 +90,10 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           mitigationType: 'percent',
           value: 10,
-          effects: ['mitigation-effect']
-        }
+          effects: ['mitigation-effect'],
+        },
       },
-      'dispel': {
+      dispel: {
         id: 'dispel',
         name: 'Dispel',
         category: 'dispel',
@@ -101,9 +101,9 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           dispelType: 'negative',
           count: 2,
-          effects: ['dispel-effect']
-        }
-      }
+          effects: ['dispel-effect'],
+        },
+      },
     },
     signatureScripts: {
       'test-signature': {
@@ -113,8 +113,8 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           damageType: 'physical',
           multiplier: 1.2,
-          effects: ['test-signature-effect']
-        }
+          effects: ['test-signature-effect'],
+        },
       },
       'healing-signature': {
         id: 'healing-signature',
@@ -123,8 +123,8 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           healingType: 'direct',
           multiplier: 1.3,
-          effects: ['healing-signature-effect']
-        }
+          effects: ['healing-signature-effect'],
+        },
       },
       'duration-signature': {
         id: 'duration-signature',
@@ -133,9 +133,9 @@ describe('ScribingSimulator', () => {
         mechanicalEffect: {
           durationType: 'extend',
           multiplier: 1.5,
-          effects: ['duration-effect']
-        }
-      }
+          effects: ['duration-effect'],
+        },
+      },
     },
     affixScripts: {
       'test-affix': {
@@ -144,9 +144,9 @@ describe('ScribingSimulator', () => {
         category: 'damage',
         mechanicalEffect: {
           statusEffect: 'test-buff',
-          effects: ['test-affix-effect']
-        }
-      }
+          effects: ['test-affix-effect'],
+        },
+      },
     },
     questRewards: {},
     freeScriptLocations: {},
@@ -155,17 +155,17 @@ describe('ScribingSimulator', () => {
     luminousInk: {
       costs: {
         newSkill: 3,
-        modifySkill: 1
+        modifySkill: 1,
       },
-      sources: []
+      sources: [],
     },
     system: {
       maxCombinations: 1000,
       totalGrimoires: 1,
       totalFocusScripts: 1,
       totalSignatureScripts: 1,
-      totalAffixScripts: 1
-    }
+      totalAffixScripts: 1,
+    },
   };
 
   describe('constructor', () => {
@@ -173,8 +173,6 @@ describe('ScribingSimulator', () => {
       const simulator = new ScribingSimulator(mockScribingData);
       expect(simulator).toBeInstanceOf(ScribingSimulator);
     });
-
-
 
     it('should handle invalid data gracefully', () => {
       expect(() => {
@@ -201,7 +199,7 @@ describe('ScribingSimulator', () => {
         'test-grimoire',
         'test-focus',
         'test-signature',
-        'test-affix'
+        'test-affix',
       );
 
       if (result) {
@@ -278,7 +276,7 @@ describe('ScribingSimulator', () => {
     it('should have calculation methods available', () => {
       // These are private methods, but we can test they exist through calculateSkill
       const result = simulator.calculateSkill('test-grimoire', 'test-focus');
-      
+
       // The fact that calculateSkill runs without error indicates calculation methods exist
       expect(result === null || result === undefined || typeof result === 'object').toBe(true);
     });
@@ -293,7 +291,7 @@ describe('ScribingSimulator', () => {
 
     it('should generate names correctly', () => {
       const result = simulator.calculateSkill('test-grimoire', 'test-focus');
-      
+
       if (result) {
         expect(typeof result.name).toBe('string');
         expect(result.name.length).toBeGreaterThan(0);
@@ -302,7 +300,7 @@ describe('ScribingSimulator', () => {
 
     it('should generate tooltips', () => {
       const result = simulator.calculateSkill('test-grimoire', 'test-focus');
-      
+
       if (result) {
         expect(typeof result.tooltip).toBe('string');
       }
@@ -313,7 +311,7 @@ describe('ScribingSimulator', () => {
     it('should handle corrupted data gracefully', () => {
       const corruptedData = {
         ...mockScribingData,
-        grimoires: {} as any // Empty object instead of null
+        grimoires: {} as any, // Empty object instead of null
       };
 
       expect(() => {
@@ -336,13 +334,13 @@ describe('ScribingSimulator', () => {
     it('should handle very large datasets', () => {
       const largeData = { ...mockScribingData };
       largeData.grimoires = {};
-      
+
       // Create many grimoires
       for (let i = 0; i < 100; i++) {
         largeData.grimoires[`grimoire-${i}`] = {
           ...mockScribingData.grimoires['test-grimoire'],
           id: `grimoire-${i}`,
-          name: `Grimoire ${i}`
+          name: `Grimoire ${i}`,
         };
       }
 
@@ -368,10 +366,10 @@ describe('ScribingSimulator', () => {
   describe('integration with schema validation', () => {
     it('should use schema validation functions', () => {
       const { validateScribingData } = require('../types/scribing-schemas');
-      
+
       const simulator = new ScribingSimulator(mockScribingData);
       simulator.calculateSkill('test-grimoire');
-      
+
       // Validation functions should be available (mocked)
       expect(validateScribingData).toBeDefined();
     });
@@ -381,14 +379,14 @@ describe('ScribingSimulator', () => {
     it('should handle multiple calculations efficiently', () => {
       const simulator = new ScribingSimulator(mockScribingData);
       const startTime = performance.now();
-      
+
       // Run multiple calculations
       for (let i = 0; i < 100; i++) {
         simulator.calculateSkill('test-grimoire', 'test-focus');
       }
-      
+
       const duration = performance.now() - startTime;
-      
+
       // Should complete calculations quickly (under 100ms for 100 calculations)
       expect(duration).toBeLessThan(100);
     });
@@ -396,15 +394,15 @@ describe('ScribingSimulator', () => {
     it('should not cause memory leaks with repeated calculations', () => {
       const simulator = new ScribingSimulator(mockScribingData);
       const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
-      
+
       for (let i = 0; i < 1000; i++) {
         simulator.calculateSkill('test-grimoire');
       }
-      
+
       if ((performance as any).memory) {
         const finalMemory = (performance as any).memory.usedJSHeapSize;
         const memoryGrowth = finalMemory - initialMemory;
-        
+
         // Allow some memory growth but not excessive (10MB threshold)
         expect(memoryGrowth).toBeLessThan(10 * 1024 * 1024);
       }
@@ -414,16 +412,16 @@ describe('ScribingSimulator', () => {
   // Helper function to create grimoire with nameTransformations
   const createGrimoireWithTransformations = (focusIds: string[]) => {
     const nameTransformations: Record<string, any> = {};
-    focusIds.forEach(id => {
+    focusIds.forEach((id) => {
       nameTransformations[id] = {
         name: `${id} Transformed`,
-        abilityIds: [123456]
+        abilityIds: [123456],
       };
     });
 
     return {
       ...mockScribingData.grimoires['test-grimoire'],
-      nameTransformations
+      nameTransformations,
     };
   };
 
@@ -437,14 +435,14 @@ describe('ScribingSimulator', () => {
     it('should handle string-based cost values', () => {
       const grimoireWithStringCost = {
         ...mockScribingData.grimoires['test-grimoire'],
-        cost: 'highest-resource'
+        cost: 'highest-resource',
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: {
-          'test-grimoire': grimoireWithStringCost
-        }
+          'test-grimoire': grimoireWithStringCost,
+        },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -457,14 +455,14 @@ describe('ScribingSimulator', () => {
     it('should handle unknown string cost values', () => {
       const grimoireWithUnknownCost = {
         ...mockScribingData.grimoires['test-grimoire'],
-        cost: 'unknown-cost-type'
+        cost: 'unknown-cost-type',
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: {
-          'test-grimoire': grimoireWithUnknownCost
-        }
+          'test-grimoire': grimoireWithUnknownCost,
+        },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -479,35 +477,39 @@ describe('ScribingSimulator', () => {
         ...mockScribingData.focusScripts['test-focus'],
         mechanicalEffect: {
           ...mockScribingData.focusScripts['test-focus'].mechanicalEffect,
-          costModifier: 1.5
-        }
+          costModifier: 1.5,
+        },
       };
 
       const signatureWithCostModifier = {
         ...mockScribingData.signatureScripts['test-signature'],
         mechanicalEffect: {
-          costModifier: 0.8
-        }
+          costModifier: 0.8,
+        },
       };
 
-      const grimoireWithTransformations = createGrimoireWithTransformations(['cost-modifier-focus']);
+      const grimoireWithTransformations = createGrimoireWithTransformations([
+        'cost-modifier-focus',
+      ]);
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': grimoireWithTransformations },
         focusScripts: { 'cost-modifier-focus': focusWithCostModifier },
-        signatureScripts: { 'cost-modifier-signature': signatureWithCostModifier }
+        signatureScripts: { 'cost-modifier-signature': signatureWithCostModifier },
       };
 
       const simulator = new ScribingSimulator(testData);
       const result = simulator.calculateSkill(
         'test-grimoire',
         'cost-modifier-focus',
-        'cost-modifier-signature'
+        'cost-modifier-signature',
       );
 
       // The method currently has issues but we test for coverage
-      expect(() => simulator.calculateSkill('test-grimoire', 'test-focus', 'cost-signature')).not.toThrow();
+      expect(() =>
+        simulator.calculateSkill('test-grimoire', 'test-focus', 'cost-signature'),
+      ).not.toThrow();
     });
   });
 
@@ -522,13 +524,13 @@ describe('ScribingSimulator', () => {
       const nonDamageFocus = {
         ...mockScribingData.focusScripts['test-focus'],
         id: 'damage-shield',
-        category: 'defense'
+        category: 'defense',
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['damage-shield']) },
-        focusScripts: { 'damage-shield': nonDamageFocus }
+        focusScripts: { 'damage-shield': nonDamageFocus },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -542,22 +544,22 @@ describe('ScribingSimulator', () => {
       const signatureWithMultiplier = {
         ...mockScribingData.signatureScripts['test-signature'],
         mechanicalEffect: {
-          multiplier: 1.25
-        }
+          multiplier: 1.25,
+        },
       };
 
       const affixWithMultiplier = {
         ...mockScribingData.affixScripts['test-affix'],
         mechanicalEffect: {
-          multiplier: 1.1
-        }
+          multiplier: 1.1,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['test-focus']) },
         signatureScripts: { 'damage-signature': signatureWithMultiplier },
-        affixScripts: { 'damage-affix': affixWithMultiplier }
+        affixScripts: { 'damage-affix': affixWithMultiplier },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -565,11 +567,13 @@ describe('ScribingSimulator', () => {
         'test-grimoire',
         'test-focus',
         'damage-signature',
-        'damage-affix'
+        'damage-affix',
       );
 
       // The method currently has issues but we test for coverage
-      expect(() => simulator.calculateSkill('test-grimoire', 'test-focus', 'damage-signature')).not.toThrow();
+      expect(() =>
+        simulator.calculateSkill('test-grimoire', 'test-focus', 'damage-signature'),
+      ).not.toThrow();
     });
   });
 
@@ -587,14 +591,14 @@ describe('ScribingSimulator', () => {
         category: 'defense',
         mechanicalEffect: {
           ...mockScribingData.focusScripts['test-focus'].mechanicalEffect,
-          shieldValue: 1000
-        }
+          shieldValue: 1000,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['damage-shield']) },
-        focusScripts: { 'damage-shield': shieldFocus }
+        focusScripts: { 'damage-shield': shieldFocus },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -611,14 +615,14 @@ describe('ScribingSimulator', () => {
         category: 'restoration',
         mechanicalEffect: {
           ...mockScribingData.focusScripts['test-focus'].mechanicalEffect,
-          healingValue: 800
-        }
+          healingValue: 800,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['healing']) },
-        focusScripts: { 'healing': healingFocus }
+        focusScripts: { healing: healingFocus },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -634,29 +638,31 @@ describe('ScribingSimulator', () => {
         id: 'healing',
         category: 'restoration',
         mechanicalEffect: {
-          healingValue: 800
-        }
+          healingValue: 800,
+        },
       };
 
       const healingSignature = {
         ...mockScribingData.signatureScripts['test-signature'],
         mechanicalEffect: {
-          healingMultiplier: 1.3
-        }
+          healingMultiplier: 1.3,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['healing']) },
-        focusScripts: { 'healing': healingFocus },
-        signatureScripts: { 'healing-signature': healingSignature }
+        focusScripts: { healing: healingFocus },
+        signatureScripts: { 'healing-signature': healingSignature },
       };
 
       const simulator = new ScribingSimulator(testData);
       const result = simulator.calculateSkill('test-grimoire', 'healing', 'healing-signature');
 
       // The method currently has issues but we test for coverage
-      expect(() => simulator.calculateSkill('test-grimoire', 'healing', 'healing-signature')).not.toThrow();
+      expect(() =>
+        simulator.calculateSkill('test-grimoire', 'healing', 'healing-signature'),
+      ).not.toThrow();
     });
   });
 
@@ -673,14 +679,14 @@ describe('ScribingSimulator', () => {
         id: 'mitigation',
         category: 'defense',
         mechanicalEffect: {
-          reductionPercent: 15
-        }
+          reductionPercent: 15,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['mitigation']) },
-        focusScripts: { 'mitigation': mitigationFocus }
+        focusScripts: { mitigation: mitigationFocus },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -696,14 +702,14 @@ describe('ScribingSimulator', () => {
         id: 'dispel',
         category: 'utility',
         mechanicalEffect: {
-          effectCount: 3
-        }
+          effectCount: 3,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['dispel']) },
-        focusScripts: { 'dispel': dispelFocus }
+        focusScripts: { dispel: dispelFocus },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -725,21 +731,23 @@ describe('ScribingSimulator', () => {
       const durationSignature = {
         ...mockScribingData.signatureScripts['test-signature'],
         mechanicalEffect: {
-          durationModifier: 1.5
-        }
+          durationModifier: 1.5,
+        },
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['test-focus']) },
-        signatureScripts: { 'duration-signature': durationSignature }
+        signatureScripts: { 'duration-signature': durationSignature },
       };
 
       const simulator = new ScribingSimulator(testData);
       const result = simulator.calculateSkill('test-grimoire', 'test-focus', 'duration-signature');
 
       // The method currently has issues but we test for coverage
-      expect(() => simulator.calculateSkill('test-grimoire', 'test-focus', 'duration-signature')).not.toThrow();
+      expect(() =>
+        simulator.calculateSkill('test-grimoire', 'test-focus', 'duration-signature'),
+      ).not.toThrow();
     });
   });
 
@@ -768,9 +776,9 @@ describe('ScribingSimulator', () => {
       const combinations = simulator.getValidCombinations('test-grimoire');
 
       // Should include combinations with undefined values for optional scripts
-      expect(combinations.some(combo => combo.focus === undefined)).toBe(true);
-      expect(combinations.some(combo => combo.signature === undefined)).toBe(true);
-      expect(combinations.some(combo => combo.affix === undefined)).toBe(true);
+      expect(combinations.some((combo) => combo.focus === undefined)).toBe(true);
+      expect(combinations.some((combo) => combo.signature === undefined)).toBe(true);
+      expect(combinations.some((combo) => combo.affix === undefined)).toBe(true);
     });
   });
 
@@ -925,7 +933,7 @@ describe('ScribingSimulator', () => {
       mockValidation.validateFocusScript.mockImplementation(() => {
         throw new Error('Invalid focus script');
       });
-      
+
       simulator = new ScribingSimulator(mockScribingData);
     });
 
@@ -953,12 +961,12 @@ describe('ScribingSimulator', () => {
       // Use a simulator with updated test data that has nameTransformations
       const testData = {
         ...mockScribingData,
-        grimoires: { 'test-grimoire': createGrimoireWithTransformations(['test-focus']) }
+        grimoires: { 'test-grimoire': createGrimoireWithTransformations(['test-focus']) },
       };
 
       const testSimulator = new ScribingSimulator(testData);
       const result = testSimulator.calculateSkill('test-grimoire', 'test-focus');
-      
+
       // The method currently has issues but we test for coverage
       expect(() => testSimulator.calculateSkill('test-grimoire', 'test-focus')).not.toThrow();
     });
@@ -966,18 +974,18 @@ describe('ScribingSimulator', () => {
     it('should fall back to grimoire name when no transformation exists', () => {
       const focusWithoutTransformation = {
         ...mockScribingData.focusScripts['test-focus'],
-        id: 'no-transformation'
+        id: 'no-transformation',
       };
 
       const grimoireWithoutTransformation = {
         ...mockScribingData.grimoires['test-grimoire'],
-        nameTransformations: {} // Empty transformations
+        nameTransformations: {}, // Empty transformations
       };
 
       const testData = {
         ...mockScribingData,
         grimoires: { 'test-grimoire': grimoireWithoutTransformation },
-        focusScripts: { 'no-transformation': focusWithoutTransformation }
+        focusScripts: { 'no-transformation': focusWithoutTransformation },
       };
 
       const testSimulator = new ScribingSimulator(testData);
@@ -998,12 +1006,12 @@ describe('ScribingSimulator', () => {
       // Create a grimoire without nameTransformations for the focus
       const grimoireWithoutTransformation = {
         ...mockScribingData.grimoires['test-grimoire'],
-        nameTransformations: {} // Empty transformations
+        nameTransformations: {}, // Empty transformations
       };
 
       const testData = {
         ...mockScribingData,
-        grimoires: { 'incompatible-grimoire': grimoireWithoutTransformation }
+        grimoires: { 'incompatible-grimoire': grimoireWithoutTransformation },
       };
 
       const simulator = new ScribingSimulator(testData);
@@ -1022,7 +1030,7 @@ describe('ScribingSimulator', () => {
         grimoires: {},
         focusScripts: {},
         signatureScripts: {},
-        affixScripts: {}
+        affixScripts: {},
       };
 
       expect(() => {
@@ -1033,7 +1041,7 @@ describe('ScribingSimulator', () => {
 
     it('should handle special characters in IDs', () => {
       const simulator = new ScribingSimulator(mockScribingData);
-      
+
       expect(() => {
         simulator.calculateSkill('test-grimoire-with-special-chars-!@#$%');
       }).not.toThrow();
@@ -1041,7 +1049,7 @@ describe('ScribingSimulator', () => {
 
     it('should handle Unicode characters', () => {
       const simulator = new ScribingSimulator(mockScribingData);
-      
+
       expect(() => {
         simulator.calculateSkill('тест-гримуар-русский');
       }).not.toThrow();
@@ -1052,7 +1060,7 @@ describe('ScribingSimulator', () => {
         ...mockScribingData,
         grimoires: { 'test-grimoire': createGrimoireWithTransformations(['test-focus']) },
         signatureScripts: undefined,
-        affixScripts: undefined
+        affixScripts: undefined,
       };
 
       const simulator = new ScribingSimulator(dataWithoutOptionalScripts);

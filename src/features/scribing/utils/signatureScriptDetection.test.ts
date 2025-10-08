@@ -76,14 +76,14 @@ describe('signatureScriptDetection', () => {
       gameID: 123456,
       name: 'Burning Torment',
       type: 1,
-      icon: 'test-icon.png'
+      icon: 'test-icon.png',
     },
     {
       gameID: 123457,
       name: 'Frost Explosion',
       type: 1,
-      icon: 'test-icon-2.png'
-    }
+      icon: 'test-icon-2.png',
+    },
   ];
 
   const mockDamageEvents: DamageEvent[] = [
@@ -95,7 +95,7 @@ describe('signatureScriptDetection', () => {
       amount: 1500,
       type: 'damage',
       tick: true, // DoT damage
-      damageTypeFlags: 2 // Fire damage
+      damageTypeFlags: 2, // Fire damage
     } as any,
     {
       timestamp: 1100,
@@ -104,8 +104,8 @@ describe('signatureScriptDetection', () => {
       abilityGameID: 123457,
       amount: 2000,
       type: 'damage',
-      damageTypeFlags: 4 // Frost damage
-    } as any
+      damageTypeFlags: 4, // Frost damage
+    } as any,
   ];
 
   const mockHealEvents: HealEvent[] = [
@@ -116,8 +116,8 @@ describe('signatureScriptDetection', () => {
       abilityGameID: 123458,
       amount: 800,
       type: 'heal',
-      tick: true // HoT healing
-    } as any
+      tick: true, // HoT healing
+    } as any,
   ];
 
   const mockBuffEvents: BuffEvent[] = [
@@ -126,8 +126,8 @@ describe('signatureScriptDetection', () => {
       sourceID: 1,
       targetID: 1,
       abilityGameID: 123459,
-      type: 'applybuff'
-    } as any
+      type: 'applybuff',
+    } as any,
   ];
 
   const mockDebuffEvents: DebuffEvent[] = [
@@ -136,8 +136,8 @@ describe('signatureScriptDetection', () => {
       sourceID: 1,
       targetID: 2,
       abilityGameID: 123460,
-      type: 'applydebuff'
-    } as any
+      type: 'applydebuff',
+    } as any,
   ];
 
   const mockResourceEvents: ResourceChangeEvent[] = [
@@ -145,8 +145,8 @@ describe('signatureScriptDetection', () => {
       timestamp: 1500,
       sourceID: 1,
       resourceType: 0,
-      resourceChange: 200
-    } as any
+      resourceChange: 200,
+    } as any,
   ];
 
   describe('SignatureScript enum', () => {
@@ -171,10 +171,10 @@ describe('signatureScriptDetection', () => {
         'void-explosion',
         'spectral-explosion',
         'soul-explosion',
-        'blood-explosion'
+        'blood-explosion',
       ];
 
-      expectedScripts.forEach(script => {
+      expectedScripts.forEach((script) => {
         expect(Object.values(SignatureScript)).toContain(script);
       });
 
@@ -184,7 +184,7 @@ describe('signatureScriptDetection', () => {
 
   describe('SIGNATURE_SCRIPT_PATTERNS', () => {
     it('should have patterns for all signature scripts', () => {
-      Object.values(SignatureScript).forEach(script => {
+      Object.values(SignatureScript).forEach((script) => {
         expect(SIGNATURE_SCRIPT_PATTERNS[script]).toBeDefined();
         expect(SIGNATURE_SCRIPT_PATTERNS[script]).toBeInstanceOf(Array);
         expect(SIGNATURE_SCRIPT_PATTERNS[script].length).toBeGreaterThan(0);
@@ -197,21 +197,21 @@ describe('signatureScriptDetection', () => {
           expect(effect.type).toMatch(/^(damage|heal|buff|debuff|resource)$/);
           expect(effect.keywords).toBeInstanceOf(Array);
           expect(effect.keywords.length).toBeGreaterThan(0);
-          
+
           if (effect.subtype) {
             expect(effect.subtype).toMatch(/^(dot|hot|aoe|single|instant|over-time)$/);
           }
-          
+
           if (effect.damageTypes) {
             expect(effect.damageTypes).toBeInstanceOf(Array);
-            effect.damageTypes.forEach(damageType => {
+            effect.damageTypes.forEach((damageType) => {
               expect(typeof damageType).toBe('number');
             });
           }
-          
+
           if (effect.abilityNamePatterns) {
             expect(effect.abilityNamePatterns).toBeInstanceOf(Array);
-            effect.abilityNamePatterns.forEach(pattern => {
+            effect.abilityNamePatterns.forEach((pattern) => {
               expect(pattern).toBeInstanceOf(RegExp);
             });
           }
@@ -226,9 +226,9 @@ describe('signatureScriptDetection', () => {
           expect.objectContaining({
             type: 'damage',
             subtype: 'dot',
-            keywords: expect.arrayContaining(['torment', 'lingering'])
-          })
-        ])
+            keywords: expect.arrayContaining(['torment', 'lingering']),
+          }),
+        ]),
       );
 
       expect(SIGNATURE_SCRIPT_PATTERNS[SignatureScript.BURNING_EMBERS]).toEqual(
@@ -236,9 +236,9 @@ describe('signatureScriptDetection', () => {
           expect.objectContaining({
             type: 'damage',
             subtype: 'dot',
-            damageTypes: [2] // Fire damage
-          })
-        ])
+            damageTypes: [2], // Fire damage
+          }),
+        ]),
       );
 
       expect(SIGNATURE_SCRIPT_PATTERNS[SignatureScript.FROST_EXPLOSION]).toEqual(
@@ -246,9 +246,9 @@ describe('signatureScriptDetection', () => {
           expect.objectContaining({
             type: 'damage',
             subtype: 'aoe',
-            damageTypes: [4] // Frost damage
-          })
-        ])
+            damageTypes: [4], // Frost damage
+          }),
+        ]),
       );
     });
   });
@@ -260,18 +260,11 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Lingering Torment',
           type: 1,
-          icon: 'test-icon.png'
-        }
+          icon: 'test-icon.png',
+        },
       ];
 
-      const result = detectSignatureScript(
-        abilitiesWithTorment,
-        [],
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(abilitiesWithTorment, [], [], [], [], []);
 
       expect(result.detectedScript).toBe(SignatureScript.LINGERING_TORMENT);
       expect(result.confidence).toBeGreaterThan(0);
@@ -279,9 +272,9 @@ describe('signatureScriptDetection', () => {
         expect.arrayContaining([
           expect.objectContaining({
             type: 'ability-name',
-            value: 'Lingering Torment'
-          })
-        ])
+            value: 'Lingering Torment',
+          }),
+        ]),
       );
     });
 
@@ -291,8 +284,8 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Fire Skill',
           type: 1,
-          icon: 'test-icon.png'
-        }
+          icon: 'test-icon.png',
+        },
       ];
 
       const fireDamageEvents: DamageEvent[] = [
@@ -303,18 +296,11 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123456,
           amount: 1500,
           type: 'damage',
-          damageTypeFlags: 2 // Fire damage
-        } as any
+          damageTypeFlags: 2, // Fire damage
+        } as any,
       ];
 
-      const result = detectSignatureScript(
-        fireAbilities,
-        fireDamageEvents,
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(fireAbilities, fireDamageEvents, [], [], [], []);
 
       // Should detect fire-related signature scripts
       expect(result.detectedScript).toMatch(/burning-embers|elemental-burst/);
@@ -330,8 +316,8 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123456,
           amount: 1500,
           type: 'damage',
-          tick: true // DoT indicator
-        } as any
+          tick: true, // DoT indicator
+        } as any,
       ];
 
       const hotHealEvents: HealEvent[] = [
@@ -342,18 +328,11 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123457,
           amount: 800,
           type: 'heal',
-          tick: true // HoT indicator
-        } as any
+          tick: true, // HoT indicator
+        } as any,
       ];
 
-      const result = detectSignatureScript(
-        [],
-        dotDamageEvents,
-        hotHealEvents,
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript([], dotDamageEvents, hotHealEvents, [], [], []);
 
       expect(result.confidence).toBeGreaterThan(0);
       expect(result.evidence.length).toBeGreaterThan(0);
@@ -374,25 +353,18 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: null as any,
           type: 1,
-          icon: 'test-icon.png'
+          icon: 'test-icon.png',
         },
         {
           gameID: 123457,
           name: undefined as any,
           type: 1,
-          icon: 'test-icon-2.png'
-        }
+          icon: 'test-icon-2.png',
+        },
       ];
 
       expect(() => {
-        detectSignatureScript(
-          abilitiesWithEmptyName,
-          [],
-          [],
-          [],
-          [],
-          []
-        );
+        detectSignatureScript(abilitiesWithEmptyName, [], [], [], [], []);
       }).not.toThrow();
     });
 
@@ -402,8 +374,8 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Burning Embers',
           type: 1,
-          icon: 'test-icon.png'
-        }
+          icon: 'test-icon.png',
+        },
       ];
 
       const fireDamageEvents: DamageEvent[] = [
@@ -415,18 +387,11 @@ describe('signatureScriptDetection', () => {
           amount: 1500,
           type: 'damage',
           tick: true, // DoT
-          damageTypeFlags: 2 // Fire damage
-        } as any
+          damageTypeFlags: 2, // Fire damage
+        } as any,
       ];
 
-      const result = detectSignatureScript(
-        strongMatchAbilities,
-        fireDamageEvents,
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(strongMatchAbilities, fireDamageEvents, [], [], [], []);
 
       expect(result.confidence).toBeGreaterThan(0.5); // Should be high confidence
       expect(result.detectedScript).toBe(SignatureScript.BURNING_EMBERS);
@@ -438,14 +403,14 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Frost Explosion',
           type: 1,
-          icon: 'test-icon.png'
+          icon: 'test-icon.png',
         },
         {
           gameID: 123457,
           name: 'Ice Shard',
           type: 1,
-          icon: 'test-icon-2.png'
-        }
+          icon: 'test-icon-2.png',
+        },
       ];
 
       const frostDamageEvents: DamageEvent[] = [
@@ -456,18 +421,11 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123456,
           amount: 2000,
           type: 'damage',
-          damageTypeFlags: 4 // Frost damage
-        } as any
+          damageTypeFlags: 4, // Frost damage
+        } as any,
       ];
 
-      const result = detectSignatureScript(
-        multipleAbilities,
-        frostDamageEvents,
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(multipleAbilities, frostDamageEvents, [], [], [], []);
 
       expect(result.detectedScript).toBe(SignatureScript.FROST_EXPLOSION);
       expect(result.evidence.length).toBeGreaterThan(1);
@@ -480,8 +438,8 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Shock Lightning Storm', // Should strongly suggest shock
           type: 1,
-          icon: 'test-icon.png'
-        }
+          icon: 'test-icon.png',
+        },
       ];
 
       const fireDamageEvents: DamageEvent[] = [
@@ -492,18 +450,11 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123456,
           amount: 1500,
           type: 'damage',
-          damageTypeFlags: 2 // Fire damage (conflicting with ability name)
-        } as any
+          damageTypeFlags: 2, // Fire damage (conflicting with ability name)
+        } as any,
       ];
 
-      const result = detectSignatureScript(
-        conflictingAbilities,
-        fireDamageEvents,
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(conflictingAbilities, fireDamageEvents, [], [], [], []);
 
       // Should prioritize ability name match
       expect(result.detectedScript).toBe(SignatureScript.SHOCKING_EXPLOSION);
@@ -515,7 +466,7 @@ describe('signatureScriptDetection', () => {
       const mockTalent = {
         id: 1,
         name: 'Burning Test Skill',
-        abilityId: 123456
+        abilityId: 123456,
       };
 
       const result = analyzeScribingSkillWithSignatureDetection(
@@ -527,7 +478,7 @@ describe('signatureScriptDetection', () => {
         mockDamageEvents,
         [], // castEvents
         mockHealEvents,
-        1 // playerId
+        1, // playerId
       );
 
       if (result) {
@@ -555,7 +506,7 @@ describe('signatureScriptDetection', () => {
           mockDamageEvents,
           [],
           mockHealEvents,
-          1
+          1,
         );
       }).toThrow();
     });
@@ -564,7 +515,7 @@ describe('signatureScriptDetection', () => {
       const mockTalent = {
         id: 1,
         name: 'Test Skill',
-        abilityId: 123456
+        abilityId: 123456,
       };
 
       const result = analyzeScribingSkillWithSignatureDetection(
@@ -576,7 +527,7 @@ describe('signatureScriptDetection', () => {
         mockDamageEvents,
         [],
         mockHealEvents,
-        1
+        1,
       );
 
       expect(result).toBeNull(); // Should return null when no related abilities found
@@ -586,7 +537,7 @@ describe('signatureScriptDetection', () => {
       const mockTalent = {
         id: 1,
         name: 'Test Skill',
-        abilityId: 123456
+        abilityId: 123456,
       };
 
       const result = analyzeScribingSkillWithSignatureDetection(
@@ -598,7 +549,7 @@ describe('signatureScriptDetection', () => {
         [], // empty damage events
         [], // empty cast events
         [], // empty heal events
-        1
+        1,
       );
 
       if (result) {
@@ -610,7 +561,7 @@ describe('signatureScriptDetection', () => {
       const mockTalent = {
         id: 1,
         name: 'Test Skill',
-        abilityId: 123456
+        abilityId: 123456,
       };
 
       const abilitiesWithMatching: ReportAbility[] = [
@@ -619,14 +570,14 @@ describe('signatureScriptDetection', () => {
           gameID: 123456, // Matches talent abilityId
           name: 'Matching Skill',
           type: 1,
-          icon: 'matching-icon.png'
+          icon: 'matching-icon.png',
         },
         {
           gameID: 999999, // Doesn't match
           name: 'Unrelated Skill',
           type: 1,
-          icon: 'unrelated-icon.png'
-        }
+          icon: 'unrelated-icon.png',
+        },
       ];
 
       const result = analyzeScribingSkillWithSignatureDetection(
@@ -638,7 +589,7 @@ describe('signatureScriptDetection', () => {
         mockDamageEvents,
         [],
         mockHealEvents,
-        1
+        1,
       );
 
       if (result) {
@@ -650,7 +601,7 @@ describe('signatureScriptDetection', () => {
       const mockTalent = {
         id: 1,
         name: 'Comprehensive Test Skill',
-        abilityId: 123456
+        abilityId: 123456,
       };
 
       const result = analyzeScribingSkillWithSignatureDetection(
@@ -662,7 +613,7 @@ describe('signatureScriptDetection', () => {
         mockDamageEvents,
         [],
         mockHealEvents,
-        1
+        1,
       );
 
       if (result) {
@@ -671,7 +622,7 @@ describe('signatureScriptDetection', () => {
           grimoire: expect.any(String),
           effects: expect.any(Array),
           talentName: expect.any(String),
-          talentGuid: expect.any(Number)
+          talentGuid: expect.any(Number),
         });
 
         if (result.signatureScript) {
@@ -683,7 +634,7 @@ describe('signatureScriptDetection', () => {
             detectedScript: expect.any(String || null),
             confidence: expect.any(Number),
             evidence: expect.any(Array),
-            matchingPatterns: expect.any(Array)
+            matchingPatterns: expect.any(Array),
           });
         }
       }
@@ -695,7 +646,14 @@ describe('signatureScriptDetection', () => {
       // The current implementation doesn't handle null events gracefully
       // Only test with events that won't cause null reference errors
       const malformedDamageEvents = [
-        { timestamp: 1000, sourceID: 1, targetID: 2, abilityGameID: 123, amount: 1500, type: 'damage' }, // Missing damageTypeFlags
+        {
+          timestamp: 1000,
+          sourceID: 1,
+          targetID: 2,
+          abilityGameID: 123,
+          amount: 1500,
+          type: 'damage',
+        }, // Missing damageTypeFlags
         {
           timestamp: 1000,
           sourceID: 1,
@@ -703,19 +661,12 @@ describe('signatureScriptDetection', () => {
           abilityGameID: 123456,
           amount: 1500,
           type: 'damage',
-          damageTypeFlags: undefined // undefined damageTypeFlags
-        }
+          damageTypeFlags: undefined, // undefined damageTypeFlags
+        },
       ] as any[];
 
       expect(() => {
-        detectSignatureScript(
-          mockReportAbilities,
-          malformedDamageEvents,
-          [],
-          [],
-          [],
-          []
-        );
+        detectSignatureScript(mockReportAbilities, malformedDamageEvents, [], [], [], []);
       }).not.toThrow();
     });
 
@@ -727,20 +678,20 @@ describe('signatureScriptDetection', () => {
         abilityGameID: 123456,
         amount: 1500,
         type: 'damage',
-        damageTypeFlags: 2
+        damageTypeFlags: 2,
       }));
 
       const startTime = performance.now();
-      
+
       const result = detectSignatureScript(
         mockReportAbilities,
         largeDamageEvents as any,
         [],
         [],
         [],
-        []
+        [],
       );
-      
+
       const endTime = performance.now();
       const executionTime = endTime - startTime;
 
@@ -754,49 +705,44 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Tørment with Ñørdic characters',
           type: 1,
-          icon: 'test-icon.png'
+          icon: 'test-icon.png',
         },
         {
           gameID: 123457,
           name: 'Skill with émojis 🔥❄️⚡',
           type: 1,
-          icon: 'test-icon-2.png'
-        }
+          icon: 'test-icon-2.png',
+        },
       ];
 
       expect(() => {
-        detectSignatureScript(
-          specialCharAbilities,
-          [],
-          [],
-          [],
-          [],
-          []
-        );
+        detectSignatureScript(specialCharAbilities, [], [], [], [], []);
       }).not.toThrow();
     });
 
     it('should validate signature script enum completeness', () => {
       // Ensure all signature scripts in patterns have corresponding enum values
-      Object.keys(SIGNATURE_SCRIPT_PATTERNS).forEach(scriptKey => {
+      Object.keys(SIGNATURE_SCRIPT_PATTERNS).forEach((scriptKey) => {
         expect(Object.values(SignatureScript)).toContain(scriptKey);
       });
     });
 
     it('should handle concurrent detection calls', async () => {
       const promises = Array.from({ length: 10 }, () =>
-        Promise.resolve(detectSignatureScript(
-          mockReportAbilities,
-          mockDamageEvents,
-          mockHealEvents,
-          mockBuffEvents,
-          mockDebuffEvents,
-          mockResourceEvents
-        ))
+        Promise.resolve(
+          detectSignatureScript(
+            mockReportAbilities,
+            mockDamageEvents,
+            mockHealEvents,
+            mockBuffEvents,
+            mockDebuffEvents,
+            mockResourceEvents,
+          ),
+        ),
       );
 
       const results = await Promise.all(promises);
-      
+
       // All results should be consistent
       results.forEach((result, index) => {
         expect(result).toBeDefined();
@@ -811,27 +757,20 @@ describe('signatureScriptDetection', () => {
   describe('performance and optimization', () => {
     it('should efficiently handle repeated pattern matching', () => {
       const repeatedAbilities = new Array(1000).fill(mockReportAbilities[0]);
-      
+
       const startTime = performance.now();
-      
-      const result = detectSignatureScript(
-        repeatedAbilities,
-        [],
-        [],
-        [],
-        [],
-        []
-      );
-      
+
+      const result = detectSignatureScript(repeatedAbilities, [], [], [], [], []);
+
       const endTime = performance.now();
-      
+
       expect(result).toBeDefined();
       expect(endTime - startTime).toBeLessThan(1000); // Should be fast even with many abilities
     });
 
     it('should have reasonable memory usage', () => {
       const initialMemory = (performance as any).memory?.usedJSHeapSize || 0;
-      
+
       // Run detection multiple times
       for (let i = 0; i < 100; i++) {
         detectSignatureScript(
@@ -840,13 +779,13 @@ describe('signatureScriptDetection', () => {
           mockHealEvents,
           mockBuffEvents,
           mockDebuffEvents,
-          mockResourceEvents
+          mockResourceEvents,
         );
       }
-      
+
       const finalMemory = (performance as any).memory?.usedJSHeapSize || 0;
       const memoryIncrease = finalMemory - initialMemory;
-      
+
       // Memory increase should be reasonable (less than 50MB)
       if (initialMemory > 0) {
         expect(memoryIncrease).toBeLessThan(50 * 1024 * 1024);
@@ -862,18 +801,11 @@ describe('signatureScriptDetection', () => {
           gameID: 123456,
           name: 'Scribing Skill: Burning Torment',
           type: 1,
-          icon: 'scribing-icon.png'
-        }
+          icon: 'scribing-icon.png',
+        },
       ];
 
-      const result = detectSignatureScript(
-        realisticAbilities,
-        [],
-        [],
-        [],
-        [],
-        []
-      );
+      const result = detectSignatureScript(realisticAbilities, [], [], [], [], []);
 
       expect(result.confidence).toBeGreaterThan(0);
     });
@@ -885,7 +817,7 @@ describe('signatureScriptDetection', () => {
         mockHealEvents,
         mockBuffEvents,
         mockDebuffEvents,
-        mockResourceEvents
+        mockResourceEvents,
       );
 
       if (result.detectedScript) {
@@ -895,7 +827,7 @@ describe('signatureScriptDetection', () => {
       }
 
       // Evidence should have proper structure
-      result.evidence.forEach(evidence => {
+      result.evidence.forEach((evidence) => {
         expect(evidence.type).toMatch(/^(ability-name|damage-type|effect-type|buff-debuff)$/);
         expect(typeof evidence.value).toMatch(/^(string|number)$/);
         expect(typeof evidence.pattern).toBe('string');

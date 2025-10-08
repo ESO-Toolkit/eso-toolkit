@@ -1,7 +1,7 @@
 /**
  * Signature Script Detection for ESO Scribing System
- * 
- * This utility analyzes ability usage patterns in combat logs to determine 
+ *
+ * This utility analyzes ability usage patterns in combat logs to determine
  * which signature script was used for scribed skills.
  */
 
@@ -14,13 +14,29 @@ import {
   HealEvent,
   ResourceChangeEvent,
 } from '@/types/combatlogEvents';
+import { PlayerTalent } from '@/types/playerDetails';
+
+import { Effect } from './Scribing';
+
+// Extended event interfaces with optional properties for signature script detection
+interface ExtendedDamageEvent extends DamageEvent {
+  damageTypeFlags?: number;
+  isDot?: boolean;
+  periodicDamage?: boolean;
+}
+
+interface ExtendedHealEvent extends HealEvent {
+  tick?: boolean;
+  isHot?: boolean;
+  periodicHealing?: boolean;
+}
 
 /**
  * Signature script types and their characteristic effects
  */
 export enum SignatureScript {
   LINGERING_TORMENT = 'lingering-torment',
-  HUNTERS_SNARE = 'hunters-snare', 
+  HUNTERS_SNARE = 'hunters-snare',
   KNIGHTS_VALOR = 'knights-valor',
   LEECHING_THIRST = 'leeching-thirst',
   ECHOING_VIGOR = 'echoing-vigor',
@@ -38,7 +54,7 @@ export enum SignatureScript {
   VOID_EXPLOSION = 'void-explosion',
   SPECTRAL_EXPLOSION = 'spectral-explosion',
   SOUL_EXPLOSION = 'soul-explosion',
-  BLOOD_EXPLOSION = 'blood-explosion'
+  BLOOD_EXPLOSION = 'blood-explosion',
 }
 
 /**
@@ -247,30 +263,32 @@ export function detectSignatureScript(
   healEvents: HealEvent[],
   buffEvents: BuffEvent[],
   debuffEvents: DebuffEvent[],
-  resourceEvents: ResourceChangeEvent[],
+  _resourceEvents: ResourceChangeEvent[],
 ): SignatureScriptDetectionResult {
-  
   const evidence: SignatureScriptEvidence[] = [];
-  const patternMatches: Record<SignatureScript, { score: number; matches: string[] }> = {} as any;
-  
+  const patternMatches: Record<SignatureScript, { score: number; matches: string[] }> =
+    {} as Record<SignatureScript, { score: number; matches: string[] }>;
+
   // Initialize pattern matches
-  Object.values(SignatureScript).forEach(script => {
+  Object.values(SignatureScript).forEach((script) => {
     patternMatches[script] = { score: 0, matches: [] };
   });
 
   // Analyze ability names for signature script patterns
-  relatedAbilities.forEach(ability => {
+  relatedAbilities.forEach((ability) => {
     if (!ability.name) return;
-    
+
     Object.entries(SIGNATURE_SCRIPT_PATTERNS).forEach(([script, patterns]) => {
-      patterns.forEach(pattern => {
+      patterns.forEach((pattern) => {
         if (pattern.abilityNamePatterns) {
-          pattern.abilityNamePatterns.forEach(regex => {
+          pattern.abilityNamePatterns.forEach((regex) => {
             if (regex.test(ability.name!)) {
               const weight = 0.8; // High weight for ability name matches
               patternMatches[script as SignatureScript].score += weight;
-              patternMatches[script as SignatureScript].matches.push(`ability-name: ${ability.name}`);
-              
+              patternMatches[script as SignatureScript].matches.push(
+                `ability-name: ${ability.name}`,
+              );
+
               evidence.push({
                 type: 'ability-name',
                 value: ability.name!,
@@ -285,16 +303,20 @@ export function detectSignatureScript(
   });
 
   // Analyze damage types
-  damageEvents.forEach(event => {
+  damageEvents.forEach((event) => {
     Object.entries(SIGNATURE_SCRIPT_PATTERNS).forEach(([script, patterns]) => {
-      patterns.forEach(pattern => {
+      patterns.forEach((pattern) => {
         // Use damageTypeFlags from extended properties if available
-        const damageTypeFlags = (event as any).damageTypeFlags;
-        if (pattern.damageTypes && damageTypeFlags && pattern.damageTypes.includes(damageTypeFlags)) {
+        const damageTypeFlags = (event as ExtendedDamageEvent).damageTypeFlags;
+        if (
+          pattern.damageTypes &&
+          damageTypeFlags &&
+          pattern.damageTypes.includes(damageTypeFlags)
+        ) {
           const weight = 0.6; // Medium weight for damage type matches
           patternMatches[script as SignatureScript].score += weight;
           patternMatches[script as SignatureScript].matches.push(`damage-type: ${damageTypeFlags}`);
-          
+
           evidence.push({
             type: 'damage-type',
             value: damageTypeFlags,
@@ -307,21 +329,27 @@ export function detectSignatureScript(
   });
 
   // Analyze effect types (damage over time, heals over time, etc.)
-  const hasDoT = damageEvents.some(event => 
-    event.tick || (event as any).isDot || (event as any).periodicDamage,
+  const hasDoT = damageEvents.some(
+    (event) =>
+      event.tick ||
+      (event as ExtendedDamageEvent).isDot ||
+      (event as ExtendedDamageEvent).periodicDamage,
   );
-  
-  const hasHoT = healEvents.some(event => 
-    (event as any).tick || (event as any).isHot || (event as any).periodicHealing,
+
+  const hasHoT = healEvents.some(
+    (event) =>
+      (event as ExtendedHealEvent).tick ||
+      (event as ExtendedHealEvent).isHot ||
+      (event as ExtendedHealEvent).periodicHealing,
   );
-  
+
   if (hasDoT) {
     // DoT effects suggest certain signature scripts
-    [SignatureScript.LINGERING_TORMENT, SignatureScript.BURNING_EMBERS].forEach(script => {
+    [SignatureScript.LINGERING_TORMENT, SignatureScript.BURNING_EMBERS].forEach((script) => {
       const weight = 0.7;
       patternMatches[script].score += weight;
       patternMatches[script].matches.push('effect-type: damage-over-time');
-      
+
       evidence.push({
         type: 'effect-type',
         value: 'damage-over-time',
@@ -330,14 +358,14 @@ export function detectSignatureScript(
       });
     });
   }
-  
+
   if (hasHoT) {
     // HoT effects suggest healing signature scripts
-    [SignatureScript.ECHOING_VIGOR].forEach(script => {
+    [SignatureScript.ECHOING_VIGOR].forEach((script) => {
       const weight = 0.7;
       patternMatches[script].score += weight;
       patternMatches[script].matches.push('effect-type: heal-over-time');
-      
+
       evidence.push({
         type: 'effect-type',
         value: 'heal-over-time',
@@ -350,13 +378,13 @@ export function detectSignatureScript(
   // Analyze buff/debuff effects
   const hasBuffs = buffEvents.length > 0;
   const hasDebuffs = debuffEvents.length > 0;
-  
+
   if (hasDebuffs) {
-    [SignatureScript.HUNTERS_SNARE].forEach(script => {
+    [SignatureScript.HUNTERS_SNARE].forEach((script) => {
       const weight = 0.5;
       patternMatches[script].score += weight;
       patternMatches[script].matches.push('effect-type: debuff');
-      
+
       evidence.push({
         type: 'buff-debuff',
         value: 'debuff',
@@ -365,13 +393,17 @@ export function detectSignatureScript(
       });
     });
   }
-  
+
   if (hasBuffs) {
-    [SignatureScript.KNIGHTS_VALOR, SignatureScript.HEROIC_RESOLVE, SignatureScript.BRUTAL_WEAPON].forEach(script => {
+    [
+      SignatureScript.KNIGHTS_VALOR,
+      SignatureScript.HEROIC_RESOLVE,
+      SignatureScript.BRUTAL_WEAPON,
+    ].forEach((script) => {
       const weight = 0.4;
       patternMatches[script].score += weight;
       patternMatches[script].matches.push('effect-type: buff');
-      
+
       evidence.push({
         type: 'buff-debuff',
         value: 'buff',
@@ -385,7 +417,7 @@ export function detectSignatureScript(
   let bestScript: SignatureScript | null = null;
   let bestScore = 0;
   let bestMatches: string[] = [];
-  
+
   Object.entries(patternMatches).forEach(([script, data]) => {
     if (data.score > bestScore) {
       bestScore = data.score;
@@ -396,7 +428,7 @@ export function detectSignatureScript(
 
   // Calculate confidence based on score and number of matches
   const confidence = Math.min(bestScore / 2, 1); // Normalize to 0-1 scale
-  
+
   return {
     detectedScript: confidence > 0.3 ? bestScript : null, // Only return if confidence > 30%
     confidence,
@@ -413,7 +445,7 @@ export interface EnhancedScribingSkillAnalysis {
   focusScript?: string;
   signatureScript?: SignatureScript;
   signatureScriptConfidence?: number;
-  effects: any[];
+  effects: Effect[];
   talentName: string;
   talentGuid: number;
   detectionDetails?: SignatureScriptDetectionResult;
@@ -423,7 +455,7 @@ export interface EnhancedScribingSkillAnalysis {
  * Analyze scribing skill and detect signature script
  */
 export function analyzeScribingSkillWithSignatureDetection(
-  talent: any,
+  talent: PlayerTalent,
   allReportAbilities: ReportAbility[],
   allDebuffEvents: DebuffEvent[],
   allBuffEvents: BuffEvent[],
@@ -433,54 +465,53 @@ export function analyzeScribingSkillWithSignatureDetection(
   allHealingEvents: HealEvent[],
   playerId = 1,
 ): EnhancedScribingSkillAnalysis | null {
-  
   // First, get the basic scribing analysis
   // This would call your existing analyzeScribingSkillEffects function
   // For now, let's create a simplified version
-  
+
   // Find related abilities for this talent
-  const relatedAbilities = allReportAbilities.filter(ability => 
-    ability.name && ability.name.includes(talent.name?.split(' ')[0] || ''),
+  const relatedAbilities = allReportAbilities.filter(
+    (ability) => ability.name && ability.name.includes(talent.name?.split(' ')[0] || ''),
   );
-  
+
   if (relatedAbilities.length === 0) {
     return null;
   }
-  
+
   // Find events related to this talent
-  const relatedDamage = allDamageEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+  const relatedDamage = allDamageEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
-  
-  const relatedHealing = allHealingEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+
+  const relatedHealing = allHealingEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
-  
-  const relatedBuffs = allBuffEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+
+  const relatedBuffs = allBuffEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
-  
-  const relatedDebuffs = allDebuffEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+
+  const relatedDebuffs = allDebuffEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
-  
-  const relatedResources = allResourceEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+
+  const relatedResources = allResourceEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
 
   // Detect signature script

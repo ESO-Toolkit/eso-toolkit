@@ -2,13 +2,14 @@
  * React hook for unified scribing detection
  */
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 
-import { 
-  UnifiedScribingResult, 
-  UnifiedScribingDetectionService,
-} from '../algorithms/unified-scribing-service';
 import { ScribedSkillData } from '../../../components/SkillTooltip';
+import {
+  UnifiedScribingResult,
+  UnifiedScribingDetectionService,
+  UnifiedScribingDetection,
+} from '../algorithms/unified-scribing-service';
 
 export interface UseScribingDetectionOptions {
   fightId?: string;
@@ -32,13 +33,13 @@ export function useScribingDetection(
   options: UseScribingDetectionOptions = {},
 ): UseScribingDetectionResult {
   const { fightId, playerId, abilityId, enabled = true } = options;
-  
+
   const [data, setData] = useState<UnifiedScribingResult | null>(null);
   const [scribedSkillData, setScribedSkillData] = useState<ScribedSkillData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const service = new UnifiedScribingDetectionService();
+
+  const service = useMemo(() => new UnifiedScribingDetectionService(), []);
 
   const fetchScribingData = useCallback(async () => {
     if (!enabled || !fightId) {
@@ -57,11 +58,13 @@ export function useScribingDetection(
       if (playerId && abilityId) {
         // Use the service method that properly maps ability ID to grimoire
         const skillData = await service.getScribingDataForSkill(fightId, playerId, abilityId);
-        
+
         if (skillData) {
           // Find the specific player data for tooltip conversion
-          const playerData = detectionResult.players.find((p: any) => p.playerId === playerId);
-          
+          const playerData = detectionResult.players.find(
+            (p: UnifiedScribingDetection) => p.playerId === playerId,
+          );
+
           if (playerData) {
             // Use the service data directly - it's already the specific combination we need!
             const scribedData: ScribedSkillData = {
@@ -81,26 +84,25 @@ export function useScribingDetection(
                 name: skillData.signature, // ← This is the correct signature script!
                 confidence: skillData.confidence * 0.95,
                 detectionMethod: 'Multi-event correlation analysis',
-                evidence: [
-                  'Signature events detected',
-                  'Enhanced timing correlation',
-                ],
+                evidence: ['Signature events detected', 'Enhanced timing correlation'],
               },
-              affixScripts: [{
-                id: 'affix-1',
-                name: skillData.affix, // ← This is the correct affix script!
-                description: 'Detected affix script',
-                confidence: skillData.confidence,
-                detectionMethod: 'Enhanced Unified Detection',
-                evidence: {
-                  buffIds: [],
-                  debuffIds: [],
-                  abilityNames: [],
-                  occurrenceCount: 1,
+              affixScripts: [
+                {
+                  id: 'affix-1',
+                  name: skillData.affix, // ← This is the correct affix script!
+                  description: 'Detected affix script',
+                  confidence: skillData.confidence,
+                  detectionMethod: 'Enhanced Unified Detection',
+                  evidence: {
+                    buffIds: [],
+                    debuffIds: [],
+                    abilityNames: [],
+                    occurrenceCount: 1,
+                  },
                 },
-              }],
+              ],
             };
-            
+
             // Setting scribedSkillData with wasCastInFight = ${scribedData.wasCastInFight}
             setScribedSkillData(scribedData);
           } else {
@@ -127,7 +129,7 @@ export function useScribingDetection(
     } finally {
       setLoading(false);
     }
-  }, [fightId, playerId, abilityId, enabled]);
+  }, [fightId, playerId, abilityId, enabled, service]);
 
   const refetch = useCallback(async () => {
     await fetchScribingData();
@@ -151,7 +153,7 @@ export function useScribingDetection(
  */
 export function useSkillScribingData(
   fightId?: string,
-  playerId?: number, 
+  playerId?: number,
   abilityId?: number,
 ): {
   scribedSkillData: ScribedSkillData | null;

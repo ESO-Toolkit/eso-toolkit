@@ -1,6 +1,6 @@
 /**
  * Comprehensive Error Handling and Logging System
- * 
+ *
  * This module provides robust error handling, logging, and recovery mechanisms
  * for edge cases in ESO log data processing, ensuring the system gracefully
  * handles malformed data and provides useful diagnostic information.
@@ -14,7 +14,7 @@ export enum LogLevel {
   WARN = 1,
   INFO = 2,
   DEBUG = 3,
-  TRACE = 4
+  TRACE = 4,
 }
 
 export enum ErrorCategory {
@@ -27,21 +27,26 @@ export enum ErrorCategory {
   FILE_SYSTEM_ERROR = 'FILE_SYSTEM_ERROR',
   ALGORITHM_ERROR = 'ALGORITHM_ERROR',
   CONFIGURATION_ERROR = 'CONFIGURATION_ERROR',
-  UNKNOWN_ERROR = 'UNKNOWN_ERROR'
+  UNKNOWN_ERROR = 'UNKNOWN_ERROR',
 }
 
 export enum ErrorSeverity {
-  CRITICAL = 'CRITICAL',    // System cannot continue
-  HIGH = 'HIGH',            // Major functionality affected
-  MEDIUM = 'MEDIUM',        // Minor functionality affected
-  LOW = 'LOW',              // Minimal impact
-  INFO = 'INFO'             // Informational only
+  CRITICAL = 'CRITICAL', // System cannot continue
+  HIGH = 'HIGH', // Major functionality affected
+  MEDIUM = 'MEDIUM', // Minor functionality affected
+  LOW = 'LOW', // Minimal impact
+  INFO = 'INFO', // Informational only
 }
 
 export interface ErrorContext {
   component: string;
   method: string;
-  parameters?: Record<string, any>;
+  parameters?: Record<string, unknown> & {
+    filePath?: string;
+    attempt?: number;
+    maxRetries?: number;
+    retriesExhausted?: boolean;
+  };
   timestamp: number;
   correlationId?: string;
   userId?: number;
@@ -58,15 +63,15 @@ export interface LogEntry {
   error?: Error;
   context: ErrorContext;
   stackTrace?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
-export interface ErrorRecoveryStrategy {
+export interface ErrorRecoveryStrategy<T = unknown> {
   category: ErrorCategory;
-  handler: (error: Error, context: ErrorContext) => Promise<any>;
+  handler: (error: Error, context: ErrorContext) => Promise<T>;
   maxRetries: number;
   backoffMultiplier: number;
-  fallbackValue?: any;
+  fallbackValue?: T;
 }
 
 export interface LoggingConfig {
@@ -86,9 +91,9 @@ export class ScribingErrorHandler {
   private config: LoggingConfig;
   private logEntries: LogEntry[] = [];
   private errorCounts: Map<ErrorCategory, number> = new Map();
-  private recoveryStrategies: Map<ErrorCategory, ErrorRecoveryStrategy> = new Map();
+  private recoveryStrategies: Map<ErrorCategory, ErrorRecoveryStrategy<unknown>> = new Map();
   private correlationId: string = '';
-  
+
   constructor(config?: Partial<LoggingConfig>) {
     this.config = {
       logLevel: LogLevel.INFO,
@@ -102,21 +107,21 @@ export class ScribingErrorHandler {
       rotateDaily: true,
       ...config,
     };
-    
+
     this.initializeErrorHandling();
     this.setupRecoveryStrategies();
-    
+
     // Generate a unique correlation ID for this session
     this.correlationId = this.generateCorrelationId();
   }
-  
+
   public static getInstance(config?: Partial<LoggingConfig>): ScribingErrorHandler {
     if (!ScribingErrorHandler.instance) {
       ScribingErrorHandler.instance = new ScribingErrorHandler(config);
     }
     return ScribingErrorHandler.instance;
   }
-  
+
   /**
    * Initialize error handling system
    */
@@ -125,7 +130,7 @@ export class ScribingErrorHandler {
     if (this.config.logToFile && !fs.existsSync(this.config.logDirectory)) {
       fs.mkdirSync(this.config.logDirectory, { recursive: true });
     }
-    
+
     // Set up global error handlers
     process.on('uncaughtException', (error) => {
       this.logError(error, ErrorCategory.UNKNOWN_ERROR, ErrorSeverity.CRITICAL, {
@@ -134,7 +139,7 @@ export class ScribingErrorHandler {
         timestamp: Date.now(),
       });
     });
-    
+
     process.on('unhandledRejection', (reason, promise) => {
       this.logError(
         new Error(`Unhandled rejection: ${reason}`),
@@ -149,7 +154,7 @@ export class ScribingErrorHandler {
       );
     });
   }
-  
+
   /**
    * Set up default recovery strategies
    */
@@ -165,7 +170,7 @@ export class ScribingErrorHandler {
       backoffMultiplier: 1.5,
       fallbackValue: null,
     });
-    
+
     // Missing data recovery
     this.addRecoveryStrategy({
       category: ErrorCategory.MISSING_DATA,
@@ -177,7 +182,7 @@ export class ScribingErrorHandler {
       backoffMultiplier: 1,
       fallbackValue: {},
     });
-    
+
     // File system error recovery
     this.addRecoveryStrategy({
       category: ErrorCategory.FILE_SYSTEM_ERROR,
@@ -195,7 +200,7 @@ export class ScribingErrorHandler {
       maxRetries: 2,
       backoffMultiplier: 1.5,
     });
-    
+
     // Data corruption recovery
     this.addRecoveryStrategy({
       category: ErrorCategory.DATA_CORRUPTION,
@@ -209,14 +214,14 @@ export class ScribingErrorHandler {
       fallbackValue: { corrupted: true, data: null },
     });
   }
-  
+
   /**
    * Add a custom recovery strategy
    */
-  public addRecoveryStrategy(strategy: ErrorRecoveryStrategy): void {
+  public addRecoveryStrategy(strategy: ErrorRecoveryStrategy<unknown>): void {
     this.recoveryStrategies.set(strategy.category, strategy);
   }
-  
+
   /**
    * Execute operation with error handling and recovery
    */
@@ -228,7 +233,7 @@ export class ScribingErrorHandler {
   ): Promise<T | null> {
     let lastError: Error | null = null;
     let attempt = 0;
-    
+
     while (attempt <= maxRetries) {
       try {
         this.logDebug(`Executing operation ${context.method} (attempt ${attempt + 1})`, context);
@@ -236,12 +241,12 @@ export class ScribingErrorHandler {
       } catch (error) {
         lastError = error instanceof Error ? error : new Error(String(error));
         attempt++;
-        
+
         this.logError(lastError, category, ErrorSeverity.MEDIUM, {
           ...context,
           parameters: { ...context.parameters, attempt, maxRetries },
         });
-        
+
         if (attempt <= maxRetries) {
           // Try recovery strategy
           const strategy = this.recoveryStrategies.get(category);
@@ -250,7 +255,7 @@ export class ScribingErrorHandler {
               const recoveryResult = await strategy.handler(lastError, context);
               if (recoveryResult !== undefined) {
                 this.logInfo(`Recovery successful for ${category}`, context);
-                return recoveryResult;
+                return recoveryResult as T;
               }
             } catch (recoveryError) {
               this.logError(
@@ -261,27 +266,25 @@ export class ScribingErrorHandler {
               );
             }
           }
-          
+
           // Wait before retry
           const delay = Math.pow(2, attempt) * 1000; // Exponential backoff
           await this.sleep(delay);
         }
       }
     }
-    
+
     // All retries exhausted
-    this.logError(
-      lastError || new Error('Unknown error'),
-      category,
-      ErrorSeverity.HIGH,
-      { ...context, parameters: { ...context.parameters, retriesExhausted: true } },
-    );
-    
+    this.logError(lastError || new Error('Unknown error'), category, ErrorSeverity.HIGH, {
+      ...context,
+      parameters: { ...context.parameters, retriesExhausted: true },
+    });
+
     // Return fallback value if available
     const strategy = this.recoveryStrategies.get(category);
-    return strategy?.fallbackValue ?? null;
+    return (strategy?.fallbackValue as T) ?? null;
   }
-  
+
   /**
    * Log an error with full context
    */
@@ -290,32 +293,64 @@ export class ScribingErrorHandler {
     category: ErrorCategory,
     severity: ErrorSeverity,
     context: ErrorContext,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): void {
     this.log(LogLevel.ERROR, category, severity, error.message, context, error, metadata);
   }
-  
+
   /**
    * Log a warning message
    */
-  public logWarning(message: string, context: ErrorContext, metadata?: Record<string, any>): void {
-    this.log(LogLevel.WARN, ErrorCategory.UNKNOWN_ERROR, ErrorSeverity.LOW, message, context, undefined, metadata);
+  public logWarning(
+    message: string,
+    context: ErrorContext,
+    metadata?: Record<string, unknown>,
+  ): void {
+    this.log(
+      LogLevel.WARN,
+      ErrorCategory.UNKNOWN_ERROR,
+      ErrorSeverity.LOW,
+      message,
+      context,
+      undefined,
+      metadata,
+    );
   }
-  
+
   /**
    * Log an info message
    */
-  public logInfo(message: string, context: ErrorContext, metadata?: Record<string, any>): void {
-    this.log(LogLevel.INFO, ErrorCategory.UNKNOWN_ERROR, ErrorSeverity.INFO, message, context, undefined, metadata);
+  public logInfo(message: string, context: ErrorContext, metadata?: Record<string, unknown>): void {
+    this.log(
+      LogLevel.INFO,
+      ErrorCategory.UNKNOWN_ERROR,
+      ErrorSeverity.INFO,
+      message,
+      context,
+      undefined,
+      metadata,
+    );
   }
-  
+
   /**
    * Log a debug message
    */
-  public logDebug(message: string, context: ErrorContext, metadata?: Record<string, any>): void {
-    this.log(LogLevel.DEBUG, ErrorCategory.UNKNOWN_ERROR, ErrorSeverity.INFO, message, context, undefined, metadata);
+  public logDebug(
+    message: string,
+    context: ErrorContext,
+    metadata?: Record<string, unknown>,
+  ): void {
+    this.log(
+      LogLevel.DEBUG,
+      ErrorCategory.UNKNOWN_ERROR,
+      ErrorSeverity.INFO,
+      message,
+      context,
+      undefined,
+      metadata,
+    );
   }
-  
+
   /**
    * Core logging method
    */
@@ -326,13 +361,13 @@ export class ScribingErrorHandler {
     message: string,
     context: ErrorContext,
     error?: Error,
-    metadata?: Record<string, any>,
+    metadata?: Record<string, unknown>,
   ): void {
     // Check if we should log this level
     if (level > this.config.logLevel) {
       return;
     }
-    
+
     const logEntry: LogEntry = {
       id: this.generateLogId(),
       timestamp: Date.now(),
@@ -345,27 +380,27 @@ export class ScribingErrorHandler {
       stackTrace: this.config.enableStackTrace && error ? error.stack : undefined,
       metadata: this.config.enableMetadata ? metadata : undefined,
     };
-    
+
     // Store log entry
     this.logEntries.push(logEntry);
-    
+
     // Update error counts
     this.errorCounts.set(category, (this.errorCounts.get(category) || 0) + 1);
-    
+
     // Output to console if enabled
     if (this.config.logToConsole) {
       this.outputToConsole(logEntry);
     }
-    
+
     // Output to file if enabled
     if (this.config.logToFile) {
       this.outputToFile(logEntry);
     }
-    
+
     // Rotate logs if needed
     this.rotateLogs();
   }
-  
+
   /**
    * Output log entry to console
    */
@@ -373,71 +408,79 @@ export class ScribingErrorHandler {
     const timestamp = new Date(entry.timestamp).toISOString();
     const levelName = LogLevel[entry.level];
     const severityName = entry.severity;
-    
+
     let output = `[${timestamp}] [${levelName}] [${severityName}] ${entry.message}`;
-    
+
     if (entry.context) {
       output += ` | ${entry.context.component}.${entry.context.method}`;
       if (entry.context.correlationId) {
         output += ` | ${entry.context.correlationId.substring(0, 8)}`;
       }
     }
-    
+
     switch (entry.level) {
       case LogLevel.ERROR:
+        // eslint-disable-next-line no-console
         console.error(output);
         if (entry.error && entry.stackTrace) {
+          // eslint-disable-next-line no-console
           console.error(entry.stackTrace);
         }
         break;
       case LogLevel.WARN:
+        // eslint-disable-next-line no-console
         console.warn(output);
         break;
       case LogLevel.INFO:
+        // eslint-disable-next-line no-console
         console.info(output);
         break;
       case LogLevel.DEBUG:
       case LogLevel.TRACE:
+        // eslint-disable-next-line no-console
         console.debug(output);
         break;
     }
   }
-  
+
   /**
    * Output log entry to file
    */
   private outputToFile(entry: LogEntry): void {
     try {
-      const logFileName = this.config.rotateDaily 
+      const logFileName = this.config.rotateDaily
         ? `scribing-${new Date().toISOString().split('T')[0]}.log`
         : 'scribing.log';
-      
+
       const logFilePath = path.join(this.config.logDirectory, logFileName);
-      
-      const logLine = JSON.stringify({
-        ...entry,
-        timestamp: new Date(entry.timestamp).toISOString(),
-      }) + '\n';
-      
+
+      const logLine =
+        JSON.stringify({
+          ...entry,
+          timestamp: new Date(entry.timestamp).toISOString(),
+        }) + '\n';
+
       fs.appendFileSync(logFilePath, logLine);
     } catch (fileError) {
+      // eslint-disable-next-line no-console
       console.error('Failed to write to log file:', fileError);
     }
   }
-  
+
   /**
    * Rotate log files if they exceed size limit
    */
   private rotateLogs(): void {
     try {
-      const logFiles = fs.readdirSync(this.config.logDirectory)
-        .filter(file => file.endsWith('.log'))
+      const logFiles = fs
+        .readdirSync(this.config.logDirectory)
+        .filter((file) => file.endsWith('.log'))
         .sort();
-      
+
       for (const file of logFiles) {
         const filePath = path.join(this.config.logDirectory, file);
         const stats = fs.statSync(filePath);
-        
+
         if (stats.size > this.config.maxLogFileSize) {
           // Rotate the file
           const rotatedName = `${file}.${Date.now()}`;
@@ -445,53 +488,56 @@ export class ScribingErrorHandler {
           fs.renameSync(filePath, rotatedPath);
         }
       }
-      
+
       // Remove old log files if we exceed the limit
-      const allLogFiles = fs.readdirSync(this.config.logDirectory)
-        .filter(file => file.includes('.log'))
-        .map(file => ({
+      const allLogFiles = fs
+        .readdirSync(this.config.logDirectory)
+        .filter((file) => file.includes('.log'))
+        .map((file) => ({
           name: file,
           path: path.join(this.config.logDirectory, file),
           mtime: fs.statSync(path.join(this.config.logDirectory, file)).mtime,
         }))
         .sort((a, b) => b.mtime.getTime() - a.mtime.getTime());
-      
+
       if (allLogFiles.length > this.config.maxLogFiles) {
         const filesToDelete = allLogFiles.slice(this.config.maxLogFiles);
-        filesToDelete.forEach(file => {
+        filesToDelete.forEach((file) => {
           try {
             fs.unlinkSync(file.path);
           } catch (deleteError) {
+            // eslint-disable-next-line no-console
             console.error(`Failed to delete old log file ${file.name}:`, deleteError);
           }
         });
       }
     } catch (rotateError) {
+      // eslint-disable-next-line no-console
       console.error('Failed to rotate logs:', rotateError);
     }
   }
-  
+
   /**
    * Generate a unique log ID
    */
   private generateLogId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
-  
+
   /**
    * Generate a unique correlation ID
    */
   private generateCorrelationId(): string {
     return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   }
-  
+
   /**
    * Sleep for specified milliseconds
    */
   private sleep(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(resolve, ms));
+    return new Promise((resolve) => setTimeout(resolve, ms));
   }
-  
+
   /**
    * Get error statistics
    */
@@ -501,13 +547,14 @@ export class ScribingErrorHandler {
     recentErrors: LogEntry[];
     criticalErrors: LogEntry[];
   } {
-    const totalErrors = this.logEntries.filter(entry => entry.level === LogLevel.ERROR).length;
+    const totalErrors = this.logEntries.filter((entry) => entry.level === LogLevel.ERROR).length;
     const recentErrors = this.logEntries
-      .filter(entry => entry.level === LogLevel.ERROR)
+      .filter((entry) => entry.level === LogLevel.ERROR)
       .slice(-10);
-    const criticalErrors = this.logEntries
-      .filter(entry => entry.severity === ErrorSeverity.CRITICAL);
-    
+    const criticalErrors = this.logEntries.filter(
+      (entry) => entry.severity === ErrorSeverity.CRITICAL,
+    );
+
     return {
       totalErrors,
       errorsByCategory: new Map(this.errorCounts),
@@ -515,7 +562,7 @@ export class ScribingErrorHandler {
       criticalErrors,
     };
   }
-  
+
   /**
    * Generate error report
    */
@@ -538,13 +585,13 @@ export class ScribingErrorHandler {
       'ERRORS BY CATEGORY',
       '='.repeat(40),
     ];
-    
+
     Array.from(stats.errorsByCategory.entries())
       .sort((a, b) => b[1] - a[1])
       .forEach(([category, count]) => {
         lines.push(`${category}: ${count}`);
       });
-    
+
     if (stats.criticalErrors.length > 0) {
       lines.push('', 'CRITICAL ERRORS', '='.repeat(40));
       stats.criticalErrors.forEach((entry, index) => {
@@ -554,19 +601,19 @@ export class ScribingErrorHandler {
         }
       });
     }
-    
+
     if (stats.recentErrors.length > 0) {
       lines.push('', 'RECENT ERRORS', '='.repeat(40));
       stats.recentErrors.forEach((entry, index) => {
         lines.push(`${index + 1}. ${new Date(entry.timestamp).toISOString()}: ${entry.message}`);
       });
     }
-    
+
     lines.push('', '='.repeat(80));
-    
+
     return lines.join('\n');
   }
-  
+
   /**
    * Clear all log entries (for testing)
    */
@@ -580,31 +627,29 @@ export class ScribingErrorHandler {
 export const errorHandler = ScribingErrorHandler.getInstance();
 
 // Utility function for wrapping methods with error handling
-export function withErrorHandling<T extends any[], R>(
+export function withErrorHandling<T extends unknown[], R>(
   component: string,
   method: string,
   category: ErrorCategory = ErrorCategory.UNKNOWN_ERROR,
 ) {
-  return function(target: any, propertyKey: string, descriptor: PropertyDescriptor) {
+  return function (target: unknown, propertyKey: string, descriptor: PropertyDescriptor) {
     const originalMethod = descriptor.value;
-    
-    descriptor.value = async function(...args: T): Promise<R | null> {
+
+    descriptor.value = async function (...args: T): Promise<R | null> {
       const context: ErrorContext = {
         component,
         method: method || propertyKey,
         timestamp: Date.now(),
         parameters: args.length > 0 ? { args } : undefined,
       };
-      
+
       return errorHandler.executeWithRecovery(
         () => originalMethod.apply(this, args),
         category,
         context,
       );
     };
-    
+
     return descriptor;
   };
 }
-
-export default ScribingErrorHandler;

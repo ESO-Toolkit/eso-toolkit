@@ -1,11 +1,11 @@
 /**
  * Grimoire Detection Algorithm
- * 
+ *
  * This module implements algorithms to identify which ESO scribing grimoire
  * was used by analyzing cast events and matching ability IDs.
  */
 
-import { abilityScribingMapper, AbilityScribingMapping } from '../data/ability-scribing-mapping';
+import { abilityScribingMapper } from '../data/ability-scribing-mapping';
 import { ParsedLogEvent } from '../parsers/eso-log-parser';
 
 export interface GrimoireDetection {
@@ -82,7 +82,7 @@ export class GrimoireDetector {
           detectionType: 'transformation-cast',
           focusScriptType: component.componentKey,
           transformedSkillName: component.name,
-          confidence: 0.90, // Slightly lower confidence for transformations
+          confidence: 0.9, // Slightly lower confidence for transformations
           timestamp: event.timestamp,
           sourcePlayer: event.sourceID,
           event,
@@ -96,7 +96,9 @@ export class GrimoireDetector {
   /**
    * Detect all grimoire usage from a collection of cast events
    */
-  public async detectGrimoiresFromEvents(events: ParsedLogEvent[]): Promise<GrimoireDetectionResult> {
+  public async detectGrimoiresFromEvents(
+    events: ParsedLogEvent[],
+  ): Promise<GrimoireDetectionResult> {
     const startTime = Date.now();
     const detections: GrimoireDetection[] = [];
     const errors: string[] = [];
@@ -105,7 +107,7 @@ export class GrimoireDetector {
     const playerGrimoires = new Map<number, Set<string>>();
 
     // Filter to cast events only, ensuring events are valid
-    const castEvents = events.filter(event => event && event.type === 'cast');
+    const castEvents = events.filter((event) => event && event.type === 'cast');
     let totalCasts = castEvents.length;
 
     for (const event of castEvents) {
@@ -150,8 +152,11 @@ export class GrimoireDetector {
   /**
    * Detect grimoires from a specific player's events
    */
-  public async detectGrimoiresForPlayer(events: ParsedLogEvent[], playerId: number): Promise<GrimoireDetectionResult> {
-    const playerEvents = events.filter(event => event.sourceID === playerId);
+  public async detectGrimoiresForPlayer(
+    events: ParsedLogEvent[],
+    playerId: number,
+  ): Promise<GrimoireDetectionResult> {
+    const playerEvents = events.filter((event) => event.sourceID === playerId);
     return await this.detectGrimoiresFromEvents(playerEvents);
   }
 
@@ -165,7 +170,9 @@ export class GrimoireDetector {
   /**
    * Group grimoire detections by player
    */
-  public groupDetectionsByPlayer(detections: GrimoireDetection[]): Map<number, GrimoireDetection[]> {
+  public groupDetectionsByPlayer(
+    detections: GrimoireDetection[],
+  ): Map<number, GrimoireDetection[]> {
     const playerDetections = new Map<number, GrimoireDetection[]>();
 
     for (const detection of detections) {
@@ -182,12 +189,12 @@ export class GrimoireDetector {
    * Find potential scribing skill rotations
    */
   public findScribingRotations(
-    detections: GrimoireDetection[], 
-    playerId: number, 
+    detections: GrimoireDetection[],
+    playerId: number,
     timeWindowMs: number = 10000,
   ): GrimoireDetection[][] {
     const playerDetections = detections
-      .filter(d => d.sourcePlayer === playerId)
+      .filter((d) => d.sourcePlayer === playerId)
       .sort((a, b) => a.timestamp - b.timestamp);
 
     const rotations: GrimoireDetection[][] = [];
@@ -225,13 +232,13 @@ export class GrimoireDetector {
    * Enhance detections with context from surrounding events
    */
   public enhanceDetectionsWithContext(
-    detections: GrimoireDetection[], 
+    detections: GrimoireDetection[],
     allEvents: ParsedLogEvent[],
     contextWindowMs: number = 3000,
   ): GrimoireDetection[] {
-    return detections.map(detection => {
+    return detections.map((detection) => {
       // Find events within the context window
-      const supportingEvents = allEvents.filter(event => {
+      const supportingEvents = allEvents.filter((event) => {
         const timeDiff = Math.abs(event.timestamp - detection.timestamp);
         return (
           timeDiff <= contextWindowMs &&
@@ -285,7 +292,6 @@ export class GrimoireDetector {
           }
           continue;
         }
-
       } catch (error) {
         validationErrors.push(`Validation error for detection at ${detection.timestamp}: ${error}`);
         invalid.push(detection);
@@ -337,7 +343,8 @@ export class GrimoireDetector {
       totalDetections: result.detections.length,
       uniqueGrimoires: result.uniqueGrimoires.size,
       uniquePlayers: result.playerGrimoires.size,
-      averageConfidence: result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
+      averageConfidence:
+        result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
       detectionsByGrimoire,
       detectionsByPlayer,
       detectionTypes,
@@ -349,5 +356,3 @@ export class GrimoireDetector {
  * Singleton instance for global access
  */
 export const grimoireDetector = new GrimoireDetector();
-
-export default GrimoireDetector;

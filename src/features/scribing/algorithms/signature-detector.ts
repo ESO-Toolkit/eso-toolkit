@@ -1,6 +1,6 @@
 /**
  * Signature Script Detection Algorithm
- * 
+ *
  * This module implements algorithms to identify which ESO scribing signature script
  * was used by analyzing secondary ability casts, buffs, and debuffs applied after
  * the main scribing skill cast.
@@ -21,7 +21,12 @@ export interface SignatureScriptDetection {
   confidence: number;
   timestamp: number;
   sourcePlayer: number;
-  detectionMethod: 'direct-ability' | 'buff-analysis' | 'debuff-analysis' | 'damage-pattern' | 'timing-analysis';
+  detectionMethod:
+    | 'direct-ability'
+    | 'buff-analysis'
+    | 'debuff-analysis'
+    | 'damage-pattern'
+    | 'timing-analysis';
   triggeringEvent: ParsedLogEvent;
   supportingEvents: ParsedLogEvent[];
   grimoireDetection?: GrimoireDetection;
@@ -40,10 +45,27 @@ export interface SignatureScriptDetectionResult {
   warnings: string[];
 }
 
+export interface SignatureDetectionCriteria {
+  buffTypes?: string[];
+  debuffTypes?: string[];
+  resourceTypes?: string[];
+  timingWindow?: number;
+  expectedEvents: string[];
+  requiredAbilityIds?: number[];
+  excludeAbilityIds?: number[];
+  minConfidence?: number;
+}
+
+export interface SignaturePattern {
+  name: string;
+  description: string;
+  detectionCriteria: SignatureDetectionCriteria;
+}
+
 /**
  * Known signature script patterns and their detection criteria
  */
-const SIGNATURE_SCRIPT_PATTERNS = {
+const SIGNATURE_SCRIPT_PATTERNS: Record<string, SignaturePattern> = {
   'lingering-torment': {
     name: 'Lingering Torment',
     description: 'Adds damage over time effect',
@@ -73,7 +95,7 @@ const SIGNATURE_SCRIPT_PATTERNS = {
       expectedEvents: ['applydebuff'],
     },
   },
-  'taunt': {
+  taunt: {
     name: 'Taunt',
     description: 'Forces enemy to attack caster',
     detectionCriteria: {
@@ -140,14 +162,23 @@ export class SignatureScriptDetector {
     const relevantEvents = this.getEventsAfterGrimoire(grimoireDetection, allEvents);
 
     // Try enhanced direct ability ID mapping with grimoire validation
-    const directDetection = await this.detectByEnhancedAbilityMapping(grimoireDetection, relevantEvents);
+    const directDetection = await this.detectByEnhancedAbilityMapping(
+      grimoireDetection,
+      relevantEvents,
+    );
     if (directDetection) {
       detections.push(directDetection);
     }
 
     // Try direct ability ID mapping (fallback)
-    const fallbackDirectDetection = await this.detectByDirectAbilityMapping(grimoireDetection, relevantEvents);
-    if (fallbackDirectDetection && !detections.some(d => d.signatureScriptKey === fallbackDirectDetection.signatureScriptKey)) {
+    const fallbackDirectDetection = await this.detectByDirectAbilityMapping(
+      grimoireDetection,
+      relevantEvents,
+    );
+    if (
+      fallbackDirectDetection &&
+      !detections.some((d) => d.signatureScriptKey === fallbackDirectDetection.signatureScriptKey)
+    ) {
       detections.push(fallbackDirectDetection);
     }
 
@@ -179,8 +210,11 @@ export class SignatureScriptDetector {
 
     for (const grimoireDetection of grimoireDetections) {
       try {
-        const signatureDetections = await this.detectSignatureScriptFromGrimoire(grimoireDetection, allEvents);
-        
+        const signatureDetections = await this.detectSignatureScriptFromGrimoire(
+          grimoireDetection,
+          allEvents,
+        );
+
         for (const detection of signatureDetections) {
           detections.push(detection);
           uniqueSignatureScripts.add(detection.signatureScriptKey);
@@ -198,7 +232,9 @@ export class SignatureScriptDetector {
           grimoireSignatureScripts.get(detection.grimoireKey)?.add(detection.signatureScriptKey);
         }
       } catch (error) {
-        errors.push(`Error processing grimoire detection at ${grimoireDetection.timestamp}: ${error}`);
+        errors.push(
+          `Error processing grimoire detection at ${grimoireDetection.timestamp}: ${error}`,
+        );
       }
     }
 
@@ -234,11 +270,12 @@ export class SignatureScriptDetector {
     const startTime = grimoireDetection.timestamp + this.MIN_TIMING_DELAY;
     const endTime = grimoireDetection.timestamp + this.ANALYSIS_WINDOW_MS;
 
-    return allEvents.filter(event => 
-      event.sourceID === grimoireDetection.sourcePlayer &&
-      event.timestamp >= startTime &&
-      event.timestamp <= endTime &&
-      event.timestamp !== grimoireDetection.timestamp, // Exclude the original cast
+    return allEvents.filter(
+      (event) =>
+        event.sourceID === grimoireDetection.sourcePlayer &&
+        event.timestamp >= startTime &&
+        event.timestamp <= endTime &&
+        event.timestamp !== grimoireDetection.timestamp, // Exclude the original cast
     );
   }
 
@@ -251,19 +288,20 @@ export class SignatureScriptDetector {
   ): Promise<SignatureScriptDetection | null> {
     // Look for signature abilities specifically for this grimoire
     const signatureAbilityIds = this.getKnownSignatureAbilityIds(grimoireDetection.grimoireKey);
-    
+
     for (const event of events) {
       // Check if this ability ID is a known signature for this grimoire
       if (signatureAbilityIds.has(event.abilityGameID)) {
-        const signatureMapping = await this.scribingMapper.getSignatureByAbilityId(event.abilityGameID);
-        
+        const signatureMapping = await this.scribingMapper.getSignatureByAbilityId(
+          event.abilityGameID,
+        );
+
         if (signatureMapping && signatureMapping.grimoireKey === grimoireDetection.grimoireKey) {
           // Validate timing - signature effects should occur shortly after grimoire cast
           const timingDelay = event.timestamp - grimoireDetection.timestamp;
           if (timingDelay >= this.MIN_TIMING_DELAY && timingDelay <= this.ANALYSIS_WINDOW_MS) {
-            
             // Higher confidence for well-timed signature events
-            let confidence = 0.90;
+            let confidence = 0.9;
             if (timingDelay < 2000) confidence = 0.95; // Very quick signature effects are most reliable
 
             return {
@@ -295,13 +333,13 @@ export class SignatureScriptDetector {
    */
   private getKnownSignatureAbilityIds(grimoireKey: string): Set<number> {
     const abilityIds = new Set<number>();
-    
+
     // This would ideally come from the scribing data, but for now use known mappings
     // Based on the signature scripts data structure
     const knownSignatureIds: Record<string, number[]> = {
       'traveling-knife': [214982, 214986, 214988, 214991, 214993], // Common signature IDs
-      'vault': [216833, 217243], // Vault signature IDs
-      'smash': [217095, 217188], // Smash signature IDs  
+      vault: [216833, 217243], // Vault signature IDs
+      smash: [217095, 217188], // Smash signature IDs
       'shield-throw': [217241, 217471], // Shield Throw signature IDs
       'elemental-explosion': [217461, 217621], // Elemental Explosion signature IDs
       'soul-burst': [217638, 217688], // Soul Burst signature IDs
@@ -309,7 +347,7 @@ export class SignatureScriptDetector {
     };
 
     const ids = knownSignatureIds[grimoireKey] || [];
-    ids.forEach(id => abilityIds.add(id));
+    ids.forEach((id) => abilityIds.add(id));
 
     return abilityIds;
   }
@@ -322,8 +360,10 @@ export class SignatureScriptDetector {
     events: ParsedLogEvent[],
   ): Promise<SignatureScriptDetection | null> {
     for (const event of events) {
-      const signatureMapping = await this.scribingMapper.getSignatureByAbilityId(event.abilityGameID);
-      
+      const signatureMapping = await this.scribingMapper.getSignatureByAbilityId(
+        event.abilityGameID,
+      );
+
       if (signatureMapping && signatureMapping.grimoireKey === grimoireDetection.grimoireKey) {
         return {
           signatureScriptKey: signatureMapping.componentKey,
@@ -373,7 +413,7 @@ export class SignatureScriptDetector {
     grimoireDetection: GrimoireDetection,
     events: ParsedLogEvent[],
     signatureKey: string,
-    pattern: any,
+    pattern: SignaturePattern,
   ): SignatureScriptDetection | null {
     const criteria = pattern.detectionCriteria;
     const relevantEvents: ParsedLogEvent[] = [];
@@ -383,14 +423,14 @@ export class SignatureScriptDetector {
     // Look for events that match the expected pattern
     for (const event of events) {
       const timeDiff = event.timestamp - grimoireDetection.timestamp;
-      
-      if (timeDiff > criteria.timingWindow) continue;
+
+      if (criteria.timingWindow && timeDiff > criteria.timingWindow) continue;
 
       // Check if event type matches expected events
       if (criteria.expectedEvents?.includes(event.type)) {
         relevantEvents.push(event);
         matchScore += 1;
-        
+
         if (!triggeringEvent || event.timestamp < triggeringEvent.timestamp) {
           triggeringEvent = event;
         }
@@ -405,20 +445,23 @@ export class SignatureScriptDetector {
 
     // Calculate confidence based on match score and timing
     if (matchScore > 0 && triggeringEvent) {
-      const confidence = Math.min(0.8, 0.4 + (matchScore * 0.15));
-      
+      const confidence = Math.min(0.8, 0.4 + matchScore * 0.15);
+
       return {
         signatureScriptKey: signatureKey,
         signatureScriptName: pattern.name,
         signatureScriptDescription: pattern.description,
         grimoireKey: grimoireDetection.grimoireKey,
         grimoireName: grimoireDetection.grimoireName,
-        detectedAbilityIds: relevantEvents.map(e => e.abilityGameID),
+        detectedAbilityIds: relevantEvents.map((e) => e.abilityGameID),
         confidence,
         timestamp: triggeringEvent.timestamp,
         sourcePlayer: triggeringEvent.sourceID,
-        detectionMethod: triggeringEvent.type.includes('buff') ? 'buff-analysis' : 
-                       triggeringEvent.type.includes('debuff') ? 'debuff-analysis' : 'damage-pattern',
+        detectionMethod: triggeringEvent.type.includes('buff')
+          ? 'buff-analysis'
+          : triggeringEvent.type.includes('debuff')
+            ? 'debuff-analysis'
+            : 'damage-pattern',
         triggeringEvent,
         supportingEvents: relevantEvents.slice(1), // Exclude the triggering event
         grimoireDetection,
@@ -437,13 +480,17 @@ export class SignatureScriptDetector {
     events: ParsedLogEvent[],
   ): SignatureScriptDetection[] {
     const detections: SignatureScriptDetection[] = [];
-    
+
     // Group events by timing windows
     const timeWindows = this.groupEventsByTiming(grimoireDetection, events);
-    
+
     for (const [windowStart, windowEvents] of timeWindows.entries()) {
       // Look for consistent patterns that might indicate signature scripts
-      const patternDetection = this.analyzeTimingPattern(grimoireDetection, windowStart, windowEvents);
+      const patternDetection = this.analyzeTimingPattern(
+        grimoireDetection,
+        windowStart,
+        windowEvents,
+      );
       if (patternDetection) {
         detections.push(patternDetection);
       }
@@ -465,7 +512,7 @@ export class SignatureScriptDetector {
     for (const event of events) {
       const relativeTime = event.timestamp - grimoireDetection.timestamp;
       const windowStart = Math.floor(relativeTime / windowSize) * windowSize;
-      
+
       if (!windows.has(windowStart)) {
         windows.set(windowStart, []);
       }
@@ -485,23 +532,23 @@ export class SignatureScriptDetector {
   ): SignatureScriptDetection | null {
     // This is a simplified pattern analysis
     // In a real implementation, this would use more sophisticated pattern recognition
-    
+
     if (events.length >= 2) {
       // Look for buff/debuff applications that might be signature effects
-      const buffDebuffEvents = events.filter(e => 
-        e.type === 'applybuff' || e.type === 'applydebuff',
+      const buffDebuffEvents = events.filter(
+        (e) => e.type === 'applybuff' || e.type === 'applydebuff',
       );
 
       if (buffDebuffEvents.length > 0) {
         const firstEvent = buffDebuffEvents[0];
-        
+
         return {
           signatureScriptKey: 'unknown-signature',
           signatureScriptName: 'Unknown Signature Effect',
           signatureScriptDescription: 'Detected signature script effect based on timing analysis',
           grimoireKey: grimoireDetection.grimoireKey,
           grimoireName: grimoireDetection.grimoireName,
-          detectedAbilityIds: buffDebuffEvents.map(e => e.abilityGameID),
+          detectedAbilityIds: buffDebuffEvents.map((e) => e.abilityGameID),
           confidence: 0.4, // Lower confidence for timing-based detection
           timestamp: firstEvent.timestamp,
           sourcePlayer: firstEvent.sourceID,
@@ -552,8 +599,10 @@ export class SignatureScriptDetector {
       totalDetections: result.detections.length,
       uniqueSignatureScripts: result.uniqueSignatureScripts.size,
       detectionsByMethod,
-      averageTimingDelay: result.detections.length > 0 ? totalTimingDelay / result.detections.length : 0,
-      averageConfidence: result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
+      averageTimingDelay:
+        result.detections.length > 0 ? totalTimingDelay / result.detections.length : 0,
+      averageConfidence:
+        result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
       signatureScriptsByGrimoire,
     };
   }
@@ -563,5 +612,3 @@ export class SignatureScriptDetector {
  * Singleton instance for global access
  */
 export const signatureScriptDetector = new SignatureScriptDetector();
-
-export default SignatureScriptDetector;

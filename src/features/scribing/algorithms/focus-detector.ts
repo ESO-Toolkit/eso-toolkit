@@ -1,11 +1,11 @@
 /**
  * Focus Script Detection Algorithm
- * 
+ *
  * This module implements algorithms to identify which ESO scribing focus script
  * was used by analyzing the transformed skill names and ability ID combinations.
  */
 
-import { abilityScribingMapper } from '../data/ability-scribing-mapping';
+import { abilityScribingMapper, AbilityScribingMapping } from '../data/ability-scribing-mapping';
 import { ParsedLogEvent } from '../parsers/eso-log-parser';
 
 import { GrimoireDetection } from './grimoire-detector';
@@ -83,7 +83,7 @@ const FOCUS_SCRIPT_PATTERNS: Record<string, FocusScriptPattern> = {
     keywords: ['burning', 'flame', 'fire', 'igniting'],
     damageType: 'flame',
   },
-  'trauma': {
+  trauma: {
     keywords: ['traumatic', 'trauma'],
     effect: 'debuff',
   },
@@ -91,19 +91,19 @@ const FOCUS_SCRIPT_PATTERNS: Record<string, FocusScriptPattern> = {
     keywords: ['multi', 'area', 'explosive', 'spreading'],
     effect: 'aoe',
   },
-  'taunt': {
+  taunt: {
     keywords: ['taunting', 'provoking'],
     effect: 'taunt',
   },
-  'knockback': {
+  knockback: {
     keywords: ['knocking', 'pushing', 'repelling'],
     effect: 'displacement',
   },
-  'immobilize': {
+  immobilize: {
     keywords: ['binding', 'rooting', 'immobilizing'],
     effect: 'control',
   },
-  'healing': {
+  healing: {
     keywords: ['healing', 'mending', 'restorative'],
     effect: 'heal',
   },
@@ -111,7 +111,7 @@ const FOCUS_SCRIPT_PATTERNS: Record<string, FocusScriptPattern> = {
     keywords: ['restorative', 'energizing', 'restoring'],
     effect: 'resource',
   },
-  'dispel': {
+  dispel: {
     keywords: ['dispelling', 'cleansing', 'purifying'],
     effect: 'utility',
   },
@@ -130,19 +130,23 @@ export class FocusScriptDetector {
   /**
    * Detect focus script from a grimoire detection
    */
-  public detectFocusScriptFromGrimoire(grimoireDetection: GrimoireDetection): FocusScriptDetection | null {
+  public async detectFocusScriptFromGrimoire(
+    grimoireDetection: GrimoireDetection,
+  ): Promise<FocusScriptDetection | null> {
     // Validate input
     if (!grimoireDetection) {
       return null;
     }
-    
+
     // If the grimoire detection already includes focus script info
     if (grimoireDetection.focusScriptType && grimoireDetection.transformedSkillName) {
       return this.createDetectionFromTransformation(grimoireDetection);
     }
 
     // Try to detect focus script from the ability ID
-    const mapping = this.scribingMapper.getTransformationByAbilityId(grimoireDetection.detectedAbilityId);
+    const mapping = await this.scribingMapper.getTransformationByAbilityId(
+      grimoireDetection.detectedAbilityId,
+    );
     if (mapping) {
       return this.createDetectionFromMapping(grimoireDetection, mapping);
     }
@@ -158,7 +162,9 @@ export class FocusScriptDetector {
   /**
    * Detect focus scripts from multiple grimoire detections
    */
-  public detectFocusScriptsFromGrimoires(grimoireDetections: GrimoireDetection[]): FocusScriptDetectionResult {
+  public async detectFocusScriptsFromGrimoires(
+    grimoireDetections: GrimoireDetection[],
+  ): Promise<FocusScriptDetectionResult> {
     const startTime = Date.now();
     const detections: FocusScriptDetection[] = [];
     const errors: string[] = [];
@@ -169,7 +175,7 @@ export class FocusScriptDetector {
 
     for (const grimoireDetection of grimoireDetections) {
       try {
-        const focusDetection = this.detectFocusScriptFromGrimoire(grimoireDetection);
+        const focusDetection = await this.detectFocusScriptFromGrimoire(grimoireDetection);
         if (focusDetection) {
           detections.push(focusDetection);
           uniqueFocusScripts.add(focusDetection.focusScriptKey);
@@ -217,7 +223,9 @@ export class FocusScriptDetector {
   /**
    * Create detection from existing transformation info
    */
-  private createDetectionFromTransformation(grimoireDetection: GrimoireDetection): FocusScriptDetection {
+  private createDetectionFromTransformation(
+    grimoireDetection: GrimoireDetection,
+  ): FocusScriptDetection {
     const focusScriptInfo = this.getFocusScriptInfo(grimoireDetection.focusScriptType!);
 
     return {
@@ -240,7 +248,14 @@ export class FocusScriptDetector {
   /**
    * Create detection from ability mapping
    */
-  private createDetectionFromMapping(grimoireDetection: GrimoireDetection, mapping: any): FocusScriptDetection {
+  private createDetectionFromMapping(
+    grimoireDetection: GrimoireDetection,
+    mapping: AbilityScribingMapping | null,
+  ): FocusScriptDetection | null {
+    if (!mapping) {
+      return null;
+    }
+
     const focusScriptInfo = this.getFocusScriptInfo(mapping.componentKey);
 
     return {
@@ -251,7 +266,7 @@ export class FocusScriptDetector {
       grimoireName: grimoireDetection.grimoireName,
       transformedSkillName: mapping.name,
       detectedAbilityId: grimoireDetection.detectedAbilityId,
-      confidence: 0.90, // High confidence from direct mapping
+      confidence: 0.9, // High confidence from direct mapping
       timestamp: grimoireDetection.timestamp,
       sourcePlayer: grimoireDetection.sourcePlayer,
       detectionMethod: 'ability-mapping',
@@ -263,14 +278,16 @@ export class FocusScriptDetector {
   /**
    * Detect focus script by analyzing skill name patterns
    */
-  private detectFocusScriptByName(grimoireDetection: GrimoireDetection): FocusScriptDetection | null {
+  private detectFocusScriptByName(
+    grimoireDetection: GrimoireDetection,
+  ): FocusScriptDetection | null {
     const skillName = grimoireDetection.transformedSkillName?.toLowerCase() || '';
-    
+
     for (const [focusKey, pattern] of Object.entries(FOCUS_SCRIPT_PATTERNS)) {
       for (const keyword of pattern.keywords) {
         if (skillName.includes(keyword.toLowerCase())) {
           const focusScriptInfo = this.getFocusScriptInfo(focusKey);
-          
+
           return {
             focusScriptKey: focusKey,
             focusScriptName: focusScriptInfo.name,
@@ -298,18 +315,28 @@ export class FocusScriptDetector {
    */
   private getFocusScriptInfo(focusKey: string): { name: string; category: string } {
     const pattern = FOCUS_SCRIPT_PATTERNS[focusKey];
-    
+
     if (pattern) {
       let category = 'damage';
       if (pattern.effect) {
-        category = pattern.effect === 'heal' ? 'healing' : 
-                   pattern.effect === 'resource' ? 'utility' :
-                   pattern.effect === 'debuff' ? 'debuff' :
-                   pattern.effect === 'aoe' ? 'utility' :
-                   pattern.effect === 'taunt' ? 'control' :
-                   pattern.effect === 'displacement' ? 'control' :
-                   pattern.effect === 'control' ? 'control' :
-                   pattern.effect === 'utility' ? 'utility' : 'damage';
+        category =
+          pattern.effect === 'heal'
+            ? 'healing'
+            : pattern.effect === 'resource'
+              ? 'utility'
+              : pattern.effect === 'debuff'
+                ? 'debuff'
+                : pattern.effect === 'aoe'
+                  ? 'utility'
+                  : pattern.effect === 'taunt'
+                    ? 'control'
+                    : pattern.effect === 'displacement'
+                      ? 'control'
+                      : pattern.effect === 'control'
+                        ? 'control'
+                        : pattern.effect === 'utility'
+                          ? 'utility'
+                          : 'damage';
       }
 
       return {
@@ -330,7 +357,7 @@ export class FocusScriptDetector {
   private formatFocusScriptName(key: string): string {
     return key
       .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
       .join(' ');
   }
 
@@ -376,7 +403,8 @@ export class FocusScriptDetector {
       focusScriptsByCategory,
       focusScriptsByGrimoire,
       detectionMethods,
-      averageConfidence: result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
+      averageConfidence:
+        result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
     };
   }
 
@@ -402,8 +430,10 @@ export class FocusScriptDetector {
           questionable.push(detection);
         } else if (detection.confidence >= 0.5) {
           // Check if detection method is reliable
-          if (detection.detectionMethod === 'name-transformation' || 
-              detection.detectionMethod === 'ability-mapping') {
+          if (
+            detection.detectionMethod === 'name-transformation' ||
+            detection.detectionMethod === 'ability-mapping'
+          ) {
             questionable.push(detection);
           } else {
             invalid.push(detection);
@@ -430,5 +460,3 @@ export class FocusScriptDetector {
  * Singleton instance for global access
  */
 export const focusScriptDetector = new FocusScriptDetector();
-
-export default FocusScriptDetector;

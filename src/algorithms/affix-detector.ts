@@ -1,17 +1,19 @@
 /**
  * Affix Script Detection Algorithm
- * 
+ *
  * This module implements algorithms to identify which ESO scribing affix script
  * was used by analyzing persistent buffs, debuffs, and combat effects applied
  * by the scribing skill.
  */
 
-import { abilityScribingMapper } from '../data/ability-scribing-mapping';
-import { getAffixScriptByEffectId } from '../data/affix-script-buff-mappings';
-import { ParsedLogEvent } from '../parsers/eso-log-parser';
-
-import { GrimoireDetection } from './grimoire-detector';
-
+import {
+  AffixPattern,
+  AffixDetectionCriteria,
+} from '../features/scribing/algorithms/affix-detector';
+import { GrimoireDetection } from '../features/scribing/algorithms/grimoire-detector';
+import { abilityScribingMapper } from '../features/scribing/data/ability-scribing-mapping';
+import { getAffixScriptByEffectId } from '../features/scribing/data/affix-script-buff-mappings';
+import { ParsedLogEvent } from '../features/scribing/parsers/eso-log-parser';
 
 export interface AffixScriptDetection {
   affixScriptKey: string;
@@ -23,7 +25,12 @@ export interface AffixScriptDetection {
   confidence: number;
   timestamp: number;
   sourcePlayer: number;
-  detectionMethod: 'direct-ability' | 'buff-pattern' | 'debuff-pattern' | 'combat-effect' | 'duration-analysis';
+  detectionMethod:
+    | 'direct-ability'
+    | 'buff-pattern'
+    | 'debuff-pattern'
+    | 'combat-effect'
+    | 'duration-analysis';
   triggeringEvent: ParsedLogEvent;
   supportingEvents: ParsedLogEvent[];
   grimoireDetection?: GrimoireDetection;
@@ -55,7 +62,7 @@ export interface AffixScriptDetectionResult {
 /**
  * Known affix script patterns and their detection criteria
  */
-const AFFIX_SCRIPT_PATTERNS = {
+const AFFIX_SCRIPT_PATTERNS: Record<string, AffixPattern> = {
   'off-balance': {
     name: 'Off Balance',
     description: 'Applies Off Balance debuff to enemies',
@@ -66,7 +73,7 @@ const AFFIX_SCRIPT_PATTERNS = {
       expectedEvents: ['applydebuff'],
     },
   },
-  'interrupt': {
+  interrupt: {
     name: 'Interrupt',
     description: 'Interrupts enemy casting',
     detectionCriteria: {
@@ -86,7 +93,7 @@ const AFFIX_SCRIPT_PATTERNS = {
       expectedEvents: ['applybuff'],
     },
   },
-  'expedition': {
+  expedition: {
     name: 'Expedition',
     description: 'Provides Major Expedition (movement speed) buff',
     detectionCriteria: {
@@ -96,7 +103,7 @@ const AFFIX_SCRIPT_PATTERNS = {
       expectedEvents: ['applybuff'],
     },
   },
-  'berserk': {
+  berserk: {
     name: 'Berserk',
     description: 'Provides Major Berserk (damage increase) buff',
     detectionCriteria: {
@@ -116,7 +123,7 @@ const AFFIX_SCRIPT_PATTERNS = {
       expectedEvents: ['applybuff'],
     },
   },
-  'heroism': {
+  heroism: {
     name: 'Heroism',
     description: 'Provides Major Heroism (ultimate generation) buff',
     detectionCriteria: {
@@ -126,7 +133,7 @@ const AFFIX_SCRIPT_PATTERNS = {
       expectedEvents: ['applybuff'],
     },
   },
-  'lifesteal': {
+  lifesteal: {
     name: 'Lifesteal',
     description: 'Heals caster when dealing damage',
     detectionCriteria: {
@@ -144,7 +151,7 @@ const AFFIX_SCRIPT_PATTERNS = {
 const KNOWN_EFFECT_IDS = {
   // Major Buffs - expanded with more comprehensive ESO ability IDs
   'major-savagery': [61687, 61693, 20301, 20302], // Major Savagery (Weapon Crit)
-  'major-prophecy': [61687, 61693, 20297, 20298], // Major Prophecy (Spell Crit) 
+  'major-prophecy': [61687, 61693, 20297, 20298], // Major Prophecy (Spell Crit)
   'major-expedition': [61693, 61694, 7938, 7959], // Major Expedition (Speed)
   'major-berserk': [61691, 61692, 155150], // Major Berserk (Damage)
   'major-brutality': [61685, 61686, 20232, 20233], // Major Brutality (Weapon Damage)
@@ -153,7 +160,7 @@ const KNOWN_EFFECT_IDS = {
   'major-intellect': [20200, 20201], // Major Intellect (Magicka)
   'major-endurance': [20203, 20204], // Major Endurance (Stamina)
   'major-fortitude': [20206, 20207], // Major Fortitude (Health)
-  
+
   // Major Debuffs
   'off-balance': [61723, 61724, 134599], // Off Balance
   'major-breach': [61710, 61711, 20313, 20314], // Major Breach (Spell Resist)
@@ -161,7 +168,7 @@ const KNOWN_EFFECT_IDS = {
   'major-vulnerability': [20236, 20237], // Major Vulnerability (All Damage)
   'major-maim': [20240, 20241], // Major Maim (Damage Done)
   'major-defile': [20244, 20245], // Major Defile (Healing Received)
-  
+
   // Minor effects
   'minor-savagery': [20304, 20305], // Minor Savagery
   'minor-prophecy': [20300, 20301], // Minor Prophecy
@@ -196,17 +203,23 @@ export class AffixScriptDetector {
     const relevantEvents = this.getEventsAfterGrimoire(grimoireDetection, allEvents);
 
     // Try direct ability ID mapping first (though affix scripts typically don't have direct IDs)
-    const directDetection = await this.detectByDirectAbilityMapping(grimoireDetection, relevantEvents);
+    const directDetection = await this.detectByDirectAbilityMapping(
+      grimoireDetection,
+      relevantEvents,
+    );
     if (directDetection) {
       allDetections.push(directDetection);
     }
-    
+
     // Try buff/debuff ID mapping (primary detection method for affix scripts)
     const buffDetections = this.detectByBuffDebuffIds(grimoireDetection, relevantEvents);
     allDetections.push(...buffDetections);
 
     // Use enhanced effect pattern detection (most reliable)
-    const effectPatternDetections = this.detectAffixByEffectPattern(grimoireDetection, relevantEvents);
+    const effectPatternDetections = this.detectAffixByEffectPattern(
+      grimoireDetection,
+      relevantEvents,
+    );
     allDetections.push(...effectPatternDetections);
 
     // Analyze buff/debuff patterns (fallback)
@@ -227,7 +240,7 @@ export class AffixScriptDetector {
     }
 
     // Multiple detections found - keep only the highest confidence one
-    const bestDetection = allDetections.reduce((best, current) => 
+    const bestDetection = allDetections.reduce((best, current) =>
       current.confidence > best.confidence ? current : best,
     );
 
@@ -254,22 +267,29 @@ export class AffixScriptDetector {
 
     for (const grimoireDetection of grimoireDetections) {
       try {
-        const affixDetections = await this.detectAffixScriptFromGrimoire(grimoireDetection, allEvents);
-        
+        const affixDetections = await this.detectAffixScriptFromGrimoire(
+          grimoireDetection,
+          allEvents,
+        );
+
         for (const detection of affixDetections) {
           const playerGrimoireKey = `${detection.sourcePlayer}-${detection.grimoireKey}`;
-          
+
           // Only keep the highest confidence detection per player/grimoire combination
           const existing = playerGrimoireDetections.get(playerGrimoireKey);
           if (!existing || detection.confidence > existing.confidence) {
             if (existing) {
-              warnings.push(`Multiple affix scripts detected for player ${detection.sourcePlayer} with ${detection.grimoireKey}, keeping highest confidence: ${detection.affixScriptName}`);
+              warnings.push(
+                `Multiple affix scripts detected for player ${detection.sourcePlayer} with ${detection.grimoireKey}, keeping highest confidence: ${detection.affixScriptName}`,
+              );
             }
             playerGrimoireDetections.set(playerGrimoireKey, detection);
           }
         }
       } catch (error) {
-        errors.push(`Error processing grimoire detection at ${grimoireDetection.timestamp}: ${error}`);
+        errors.push(
+          `Error processing grimoire detection at ${grimoireDetection.timestamp}: ${error}`,
+        );
       }
     }
 
@@ -323,10 +343,11 @@ export class AffixScriptDetector {
     const startTime = grimoireDetection.timestamp;
     const endTime = grimoireDetection.timestamp + this.ANALYSIS_WINDOW_MS;
 
-    return allEvents.filter(event => 
-      event.sourceID === grimoireDetection.sourcePlayer &&
-      event.timestamp >= startTime &&
-      event.timestamp <= endTime,
+    return allEvents.filter(
+      (event) =>
+        event.sourceID === grimoireDetection.sourcePlayer &&
+        event.timestamp >= startTime &&
+        event.timestamp <= endTime,
     );
   }
 
@@ -339,10 +360,14 @@ export class AffixScriptDetector {
   ): Promise<AffixScriptDetection | null> {
     for (const event of events) {
       const affixMapping = await this.scribingMapper.getAffixByAbilityId(event.abilityGameID);
-      
+
       if (affixMapping && affixMapping.grimoireKey === grimoireDetection.grimoireKey) {
         const effect: AffixEffect = {
-          type: event.type.includes('buff') ? 'buff' : event.type.includes('debuff') ? 'debuff' : 'passive',
+          type: event.type.includes('buff')
+            ? 'buff'
+            : event.type.includes('debuff')
+              ? 'debuff'
+              : 'passive',
           name: affixMapping.name,
           abilityId: event.abilityGameID,
           startTime: event.timestamp,
@@ -377,9 +402,9 @@ export class AffixScriptDetector {
     grimoireDetection: GrimoireDetection,
     events: ParsedLogEvent[],
   ): AffixScriptDetection[] {
-    const detections: AffixScriptDetection[] = [];
-    const buffEvents = events.filter(e => e.type === 'applybuff');
-    const debuffEvents = events.filter(e => e.type === 'applydebuff');
+    const _detections: AffixScriptDetection[] = [];
+    const buffEvents = events.filter((e) => e.type === 'applybuff');
+    const debuffEvents = events.filter((e) => e.type === 'applydebuff');
     const allEffectEvents = [...buffEvents, ...debuffEvents];
 
     // Keep track of detected affix scripts to ensure only one per player/grimoire
@@ -388,10 +413,13 @@ export class AffixScriptDetector {
     // Check each effect event for affix script matches
     for (const event of allEffectEvents) {
       const affixMapping = getAffixScriptByEffectId(event.abilityGameID);
-      
-      if (affixMapping && affixMapping.compatibleGrimoires.includes(grimoireDetection.grimoireKey)) {
+
+      if (
+        affixMapping &&
+        affixMapping.compatibleGrimoires.includes(grimoireDetection.grimoireKey)
+      ) {
         const playerGrimoireKey = `${event.sourceID}-${grimoireDetection.grimoireKey}`;
-        
+
         const effect: AffixEffect = {
           type: event.type === 'applybuff' ? 'buff' : 'debuff',
           name: affixMapping.name,
@@ -442,7 +470,7 @@ export class AffixScriptDetector {
       const detection = this.matchAffixPattern(grimoireDetection, events, affixKey, pattern);
       if (detection) {
         const playerGrimoireKey = `${detection.sourcePlayer}-${detection.grimoireKey}`;
-        
+
         // Only keep the highest confidence detection per player/grimoire combination
         const existing = playerGrimoireDetections.get(playerGrimoireKey);
         if (!existing || detection.confidence > existing.confidence) {
@@ -461,7 +489,7 @@ export class AffixScriptDetector {
     grimoireDetection: GrimoireDetection,
     events: ParsedLogEvent[],
     affixKey: string,
-    pattern: any,
+    pattern: AffixPattern,
   ): AffixScriptDetection | null {
     const criteria = pattern.detectionCriteria;
     const matchingEvents: ParsedLogEvent[] = [];
@@ -475,7 +503,11 @@ export class AffixScriptDetector {
         if (effectMatch) {
           matchingEvents.push(event);
           effects.push({
-            type: event.type.includes('buff') ? 'buff' : event.type.includes('debuff') ? 'debuff' : 'passive',
+            type: event.type.includes('buff')
+              ? 'buff'
+              : event.type.includes('debuff')
+                ? 'debuff'
+                : 'passive',
             name: effectMatch.effectName,
             abilityId: event.abilityGameID,
             startTime: event.timestamp,
@@ -512,11 +544,17 @@ export class AffixScriptDetector {
   /**
    * Check if an ability ID matches known effect IDs
    */
-  private matchKnownEffectId(abilityId: number, criteria: any): { effectName: string } | null {
+  private matchKnownEffectId(
+    abilityId: number,
+    criteria: AffixDetectionCriteria,
+  ): { effectName: string } | null {
     for (const [effectName, ids] of Object.entries(KNOWN_EFFECT_IDS)) {
       if ((ids as number[]).includes(abilityId)) {
         // Check if this effect type is expected for this affix
-        if (criteria.buffTypes?.includes(effectName) || criteria.debuffTypes?.includes(effectName)) {
+        if (
+          criteria.buffTypes?.includes(effectName) ||
+          criteria.debuffTypes?.includes(effectName)
+        ) {
           return { effectName };
         }
       }
@@ -532,8 +570,8 @@ export class AffixScriptDetector {
     events: ParsedLogEvent[],
   ): AffixScriptDetection[] {
     const detections: AffixScriptDetection[] = [];
-    const buffEvents = events.filter(e => e.type === 'applybuff');
-    const debuffEvents = events.filter(e => e.type === 'applydebuff');
+    const buffEvents = events.filter((e) => e.type === 'applybuff');
+    const debuffEvents = events.filter((e) => e.type === 'applydebuff');
 
     // Check for common affix patterns based on major/minor effects
     const effectPatterns = {
@@ -545,7 +583,7 @@ export class AffixScriptDetector {
       },
       'brutality-and-sorcery': {
         name: 'Brutality and Sorcery',
-        description: 'Provides Major Brutality and Major Sorcery buffs', 
+        description: 'Provides Major Brutality and Major Sorcery buffs',
         requiredBuffs: ['major-brutality', 'major-sorcery'],
         confidence: 0.9,
       },
@@ -555,31 +593,31 @@ export class AffixScriptDetector {
         requiredBuffs: ['major-intellect', 'major-endurance'],
         confidence: 0.9,
       },
-      'berserk': {
+      berserk: {
         name: 'Berserk',
         description: 'Provides Major Berserk buff',
         requiredBuffs: ['major-berserk'],
         confidence: 0.85,
       },
-      'breach': {
-        name: 'Breach', 
+      breach: {
+        name: 'Breach',
         description: 'Applies Major Breach debuff',
         requiredDebuffs: ['major-breach'],
         confidence: 0.85,
       },
-      'vulnerability': {
+      vulnerability: {
         name: 'Vulnerability',
         description: 'Applies Major Vulnerability debuff',
-        requiredDebuffs: ['major-vulnerability'], 
+        requiredDebuffs: ['major-vulnerability'],
         confidence: 0.85,
       },
-      'maim': {
+      maim: {
         name: 'Maim',
         description: 'Applies Major Maim debuff',
         requiredDebuffs: ['major-maim'],
         confidence: 0.85,
       },
-      'defile': {
+      defile: {
         name: 'Defile',
         description: 'Applies Major Defile debuff',
         requiredDebuffs: ['major-defile'],
@@ -598,8 +636,8 @@ export class AffixScriptDetector {
       if ('requiredBuffs' in pattern && pattern.requiredBuffs) {
         for (const requiredBuff of pattern.requiredBuffs) {
           const effectIds = KNOWN_EFFECT_IDS[requiredBuff as keyof typeof KNOWN_EFFECT_IDS] || [];
-          const matchingEvent = buffEvents.find(e => effectIds.includes(e.abilityGameID));
-          
+          const matchingEvent = buffEvents.find((e) => effectIds.includes(e.abilityGameID));
+
           if (matchingEvent) {
             matchedEffects.push({
               type: 'buff',
@@ -619,8 +657,8 @@ export class AffixScriptDetector {
       if ('requiredDebuffs' in pattern && pattern.requiredDebuffs && hasAllRequired) {
         for (const requiredDebuff of pattern.requiredDebuffs) {
           const effectIds = KNOWN_EFFECT_IDS[requiredDebuff as keyof typeof KNOWN_EFFECT_IDS] || [];
-          const matchingEvent = debuffEvents.find(e => effectIds.includes(e.abilityGameID));
-          
+          const matchingEvent = debuffEvents.find((e) => effectIds.includes(e.abilityGameID));
+
           if (matchingEvent) {
             matchedEffects.push({
               type: 'debuff',
@@ -638,13 +676,13 @@ export class AffixScriptDetector {
 
       // If we found all required effects, create a detection
       if (hasAllRequired && matchedEffects.length > 0) {
-        const triggeringEvent = buffEvents.concat(debuffEvents).find(e => 
-          matchedEffects.some(effect => effect.abilityId === e.abilityGameID),
-        );
+        const triggeringEvent = buffEvents
+          .concat(debuffEvents)
+          .find((e) => matchedEffects.some((effect) => effect.abilityId === e.abilityGameID));
 
         if (triggeringEvent) {
           const playerGrimoireKey = `${triggeringEvent.sourceID}-${grimoireDetection.grimoireKey}`;
-          
+
           const detection: AffixScriptDetection = {
             affixScriptKey: affixKey,
             affixScriptName: pattern.name,
@@ -659,7 +697,7 @@ export class AffixScriptDetector {
             triggeringEvent,
             supportingEvents: [],
             grimoireDetection,
-            effectDuration: Math.max(...matchedEffects.map(e => e.duration || 0)),
+            effectDuration: Math.max(...matchedEffects.map((e) => e.duration || 0)),
           };
 
           // Only keep the highest confidence detection per player/grimoire combination
@@ -680,9 +718,9 @@ export class AffixScriptDetector {
   /**
    * Calculate confidence based on pattern matches
    */
-  private calculateAffixConfidence(matchCount: number, criteria: any): number {
+  private calculateAffixConfidence(matchCount: number, criteria: AffixDetectionCriteria): number {
     let confidence = 0.5; // Base confidence
-    
+
     if (matchCount >= 1) confidence = 0.6;
     if (matchCount >= 2) confidence = 0.75;
     if (matchCount >= 3) confidence = 0.85;
@@ -699,12 +737,16 @@ export class AffixScriptDetector {
   /**
    * Calculate effect duration from events
    */
-  private calculateEffectDuration(events: ParsedLogEvent[], triggeringEvent: ParsedLogEvent): number {
+  private calculateEffectDuration(
+    events: ParsedLogEvent[],
+    triggeringEvent: ParsedLogEvent,
+  ): number {
     // Look for corresponding remove events
-    const removeEvent = events.find(event => 
-      event.abilityGameID === triggeringEvent.abilityGameID &&
-      event.type.includes('remove') &&
-      event.timestamp > triggeringEvent.timestamp,
+    const removeEvent = events.find(
+      (event) =>
+        event.abilityGameID === triggeringEvent.abilityGameID &&
+        event.type.includes('remove') &&
+        event.timestamp > triggeringEvent.timestamp,
     );
 
     if (removeEvent) {
@@ -724,16 +766,16 @@ export class AffixScriptDetector {
   ): AffixScriptDetection[] {
     // Map to ensure only one detection per player/grimoire combination
     const playerGrimoireDetections = new Map<string, AffixScriptDetection>();
-    
+
     // Look for buff/debuff pairs (apply/remove) that indicate persistent effects
     const persistentEffects = this.findPersistentEffects(grimoireDetection, allEvents);
-    
+
     for (const effect of persistentEffects) {
       if (effect.duration && effect.duration >= this.MIN_EFFECT_DURATION) {
         const detection = this.createDetectionFromPersistentEffect(grimoireDetection, effect);
         if (detection) {
           const playerGrimoireKey = `${detection.sourcePlayer}-${detection.grimoireKey}`;
-          
+
           // Only keep the highest confidence detection per player/grimoire combination
           const existing = playerGrimoireDetections.get(playerGrimoireKey);
           if (!existing || detection.confidence > existing.confidence) {
@@ -754,25 +796,27 @@ export class AffixScriptDetector {
     allEvents: ParsedLogEvent[],
   ): AffixEffect[] {
     const effects: AffixEffect[] = [];
-    const applyEvents = allEvents.filter(event => 
-      event.sourceID === grimoireDetection.sourcePlayer &&
-      (event.type === 'applybuff' || event.type === 'applydebuff') &&
-      event.timestamp >= grimoireDetection.timestamp &&
-      event.timestamp <= grimoireDetection.timestamp + this.ANALYSIS_WINDOW_MS,
+    const applyEvents = allEvents.filter(
+      (event) =>
+        event.sourceID === grimoireDetection.sourcePlayer &&
+        (event.type === 'applybuff' || event.type === 'applydebuff') &&
+        event.timestamp >= grimoireDetection.timestamp &&
+        event.timestamp <= grimoireDetection.timestamp + this.ANALYSIS_WINDOW_MS,
     );
 
     for (const applyEvent of applyEvents) {
       // Find corresponding remove event
-      const removeEvent = allEvents.find(event => 
-        event.sourceID === applyEvent.sourceID &&
-        event.abilityGameID === applyEvent.abilityGameID &&
-        (event.type === 'removebuff' || event.type === 'removedebuff') &&
-        event.timestamp > applyEvent.timestamp,
+      const removeEvent = allEvents.find(
+        (event) =>
+          event.sourceID === applyEvent.sourceID &&
+          event.abilityGameID === applyEvent.abilityGameID &&
+          (event.type === 'removebuff' || event.type === 'removedebuff') &&
+          event.timestamp > applyEvent.timestamp,
       );
 
-      const duration = removeEvent ? 
-        removeEvent.timestamp - applyEvent.timestamp : 
-        this.ANALYSIS_WINDOW_MS; // Assume effect lasts for analysis window if no remove event
+      const duration = removeEvent
+        ? removeEvent.timestamp - applyEvent.timestamp
+        : this.ANALYSIS_WINDOW_MS; // Assume effect lasts for analysis window if no remove event
 
       effects.push({
         type: applyEvent.type === 'applybuff' ? 'buff' : 'debuff',
@@ -796,7 +840,7 @@ export class AffixScriptDetector {
   ): AffixScriptDetection | null {
     // This is a simplified implementation
     // In reality, we'd match against known affix patterns based on duration and effect type
-    
+
     return {
       affixScriptKey: 'persistent-effect',
       affixScriptName: 'Persistent Effect',
@@ -858,8 +902,10 @@ export class AffixScriptDetector {
       totalDetections: result.detections.length,
       uniqueAffixScripts: result.uniqueAffixScripts.size,
       detectionsByMethod,
-      averageEffectDuration: result.detections.length > 0 ? totalEffectDuration / result.detections.length : 0,
-      averageConfidence: result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
+      averageEffectDuration:
+        result.detections.length > 0 ? totalEffectDuration / result.detections.length : 0,
+      averageConfidence:
+        result.detections.length > 0 ? totalConfidence / result.detections.length : 0,
       affixScriptsByGrimoire,
       effectTypeDistribution,
     };
@@ -870,5 +916,3 @@ export class AffixScriptDetector {
  * Singleton instance for global access
  */
 export const affixScriptDetector = new AffixScriptDetector();
-
-export default AffixScriptDetector;

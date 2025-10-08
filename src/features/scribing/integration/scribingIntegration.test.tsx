@@ -9,7 +9,7 @@ import { ScribingSimulator } from '../components/ScribingSimulator/ScribingSimul
 
 // Mock the ScribingSimulator component to avoid complex validation
 jest.mock('../components/ScribingSimulator/ScribingSimulator', () => ({
-  ScribingSimulator: () => <div data-testid="scribing-simulator">Mocked ScribingSimulator</div>
+  ScribingSimulator: () => <div data-testid="scribing-simulator">Mocked ScribingSimulator</div>,
 }));
 
 // Mock the scribing data module
@@ -26,8 +26,8 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
       nameTransformations: {
         'physical-damage': {
           name: 'Physical Trample',
-          abilityIds: [12345]
-        }
+          abilityIds: [12345],
+        },
       },
     },
   },
@@ -49,14 +49,14 @@ describe('Scribing Feature Integration', () => {
         render(
           <Provider store={store}>
             <div>Scribing Feature Test</div>
-          </Provider>
+          </Provider>,
         );
       }).not.toThrow();
     });
 
     it('should access store state', () => {
       const state = store.getState();
-      
+
       expect(state).toHaveProperty('ui');
       expect(state).toHaveProperty('events');
       expect(state).toHaveProperty('report');
@@ -68,9 +68,9 @@ describe('Scribing Feature Integration', () => {
       render(
         <Provider store={store}>
           <ScribingSimulator />
-        </Provider>
+        </Provider>,
       );
-      
+
       // Should render the mocked component
       expect(screen.getByTestId('scribing-simulator')).toBeInTheDocument();
       expect(screen.getByText('Mocked ScribingSimulator')).toBeInTheDocument();
@@ -80,12 +80,12 @@ describe('Scribing Feature Integration', () => {
       render(
         <Provider store={store}>
           <ScribingSimulator />
-        </Provider>
+        </Provider>,
       );
-      
+
       // Dispatch an action to test integration
       store.dispatch({ type: 'ui/setDarkMode', payload: true });
-      
+
       const state = store.getState();
       expect(state.ui.darkMode).toBe(true);
     });
@@ -98,10 +98,10 @@ describe('Scribing Feature Integration', () => {
         render(
           <Provider store={store}>
             <ScribingSimulator />
-          </Provider>
+          </Provider>,
         );
       }).not.toThrow();
-      
+
       // Verify mocked component renders
       expect(screen.getByTestId('scribing-simulator')).toBeInTheDocument();
     });
@@ -110,7 +110,7 @@ describe('Scribing Feature Integration', () => {
   describe('Store Configuration', () => {
     it('should have correct reducer structure', () => {
       const state = store.getState();
-      
+
       // Verify all expected reducers are present
       expect(state).toHaveProperty('ui');
       expect(state).toHaveProperty('events');
@@ -122,20 +122,20 @@ describe('Scribing Feature Integration', () => {
 
     it('should handle actions correctly', () => {
       const initialDarkMode = store.getState().ui.darkMode;
-      
+
       store.dispatch({ type: 'ui/toggleDarkMode' });
-      
+
       const newDarkMode = store.getState().ui.darkMode;
       expect(newDarkMode).toBe(!initialDarkMode);
     });
 
     it('should maintain state immutability', () => {
       const stateBefore = store.getState();
-      
+
       store.dispatch({ type: 'ui/setDarkMode', payload: false });
-      
+
       const stateAfter = store.getState();
-      
+
       // States should be different objects
       expect(stateBefore).not.toBe(stateAfter);
       // UI state should be different
@@ -147,7 +147,7 @@ describe('Scribing Feature Integration', () => {
     it('should handle scribing-related state updates', () => {
       // Test any scribing-specific state management
       const state = store.getState();
-      
+
       // Verify initial state structure
       expect(state.ui).toBeDefined();
       expect(typeof state.ui.darkMode).toBe('boolean');
@@ -156,7 +156,7 @@ describe('Scribing Feature Integration', () => {
     it('should persist important scribing configurations', () => {
       // Test that important settings would persist
       store.dispatch({ type: 'ui/setSelectedTabId', payload: 5 });
-      
+
       const state = store.getState();
       expect(state.ui.selectedTabId).toBe(5);
     });

@@ -1,6 +1,6 @@
 /**
  * ESO Log Event Parser
- * 
+ *
  * This module provides functionality to parse and extract relevant events
  * from ESO combat log data files for scribing recipe analysis.
  */
@@ -129,8 +129,11 @@ export class EsoLogParser {
   /**
    * Parse a complete fight directory containing all event files
    */
-  public static async parseFightDirectory(basePath: string, fightNumber: number): Promise<FightEventData> {
-    const startTime = Date.now();
+  public static async parseFightDirectory(
+    basePath: string,
+    fightNumber: number,
+  ): Promise<FightEventData> {
+    const _startTime = Date.now();
     const errors: string[] = [];
     const warnings: string[] = [];
 
@@ -165,10 +168,16 @@ export class EsoLogParser {
               castEvents.push(...result.events);
               break;
             case 'buff':
-              buffEvents.push(...result.events.filter(e => e.type === 'applybuff' || e.type === 'removebuff'));
+              buffEvents.push(
+                ...result.events.filter((e) => e.type === 'applybuff' || e.type === 'removebuff'),
+              );
               break;
             case 'debuff':
-              debuffEvents.push(...result.events.filter(e => e.type === 'applydebuff' || e.type === 'removedebuff'));
+              debuffEvents.push(
+                ...result.events.filter(
+                  (e) => e.type === 'applydebuff' || e.type === 'removedebuff',
+                ),
+              );
               break;
             case 'damage':
               damageEvents.push(...result.events);
@@ -202,7 +211,6 @@ export class EsoLogParser {
         endTime,
         duration,
       };
-
     } catch (error) {
       throw new Error(`Failed to parse fight directory: ${error}`);
     }
@@ -211,7 +219,10 @@ export class EsoLogParser {
   /**
    * Parse batch of fights from a report directory
    */
-  public static async parseBatchFights(basePath: string, fightNumbers: number[]): Promise<FightEventData[]> {
+  public static async parseBatchFights(
+    basePath: string,
+    fightNumbers: number[],
+  ): Promise<FightEventData[]> {
     const results: FightEventData[] = [];
     const errors: string[] = [];
 
@@ -225,7 +236,7 @@ export class EsoLogParser {
     }
 
     if (errors.length > 0) {
-      console.warn('Batch parsing completed with errors:', errors);
+      // console.warn('Batch parsing completed with errors:', errors);
     }
 
     return results;
@@ -234,7 +245,10 @@ export class EsoLogParser {
   /**
    * Generic event file parser
    */
-  private static async parseEventFile(filePath: string, allowedTypes?: string[]): Promise<ParseResult> {
+  private static async parseEventFile(
+    filePath: string,
+    allowedTypes?: string[],
+  ): Promise<ParseResult> {
     const startTime = Date.now();
     const errors: string[] = [];
     const warnings: string[] = [];
@@ -247,7 +261,7 @@ export class EsoLogParser {
       }
 
       const data: LogFileData = await response.json();
-      
+
       if (!data.reportData?.report?.events?.data) {
         throw new Error('Invalid log file structure');
       }
@@ -258,7 +272,11 @@ export class EsoLogParser {
       // Filter and validate events
       for (const rawEvent of rawEvents) {
         if (!this.validateEvent(rawEvent)) {
-          warnings.push(`Invalid event structure at timestamp ${rawEvent.timestamp || 'unknown'}`);
+          const timestamp =
+            typeof rawEvent === 'object' && rawEvent !== null && 'timestamp' in rawEvent
+              ? (rawEvent as Record<string, unknown>).timestamp
+              : 'unknown';
+          warnings.push(`Invalid event structure at timestamp ${timestamp}`);
           continue;
         }
 
@@ -296,7 +314,6 @@ export class EsoLogParser {
         errors,
         warnings,
       };
-
     } catch (error) {
       errors.push(`Parse error: ${error}`);
       return {
@@ -314,17 +331,22 @@ export class EsoLogParser {
   /**
    * Validate event structure
    */
-  private static validateEvent(event: any): boolean {
+  private static validateEvent(event: unknown): event is ParsedLogEvent {
+    if (typeof event !== 'object' || event === null) {
+      return false;
+    }
+
+    const eventRecord = event as Record<string, unknown>;
+
     return (
-      typeof event === 'object' &&
-      typeof event.timestamp === 'number' &&
-      typeof event.type === 'string' &&
-      typeof event.sourceID === 'number' &&
-      typeof event.targetID === 'number' &&
-      typeof event.abilityGameID === 'number' &&
-      typeof event.fight === 'number' &&
-      typeof event.sourceIsFriendly === 'boolean' &&
-      typeof event.targetIsFriendly === 'boolean'
+      typeof eventRecord.timestamp === 'number' &&
+      typeof eventRecord.type === 'string' &&
+      typeof eventRecord.sourceID === 'number' &&
+      typeof eventRecord.targetID === 'number' &&
+      typeof eventRecord.abilityGameID === 'number' &&
+      typeof eventRecord.fight === 'number' &&
+      typeof eventRecord.sourceIsFriendly === 'boolean' &&
+      typeof eventRecord.targetIsFriendly === 'boolean'
     );
   }
 
@@ -332,16 +354,18 @@ export class EsoLogParser {
    * Filter events by player ID
    */
   public static filterEventsByPlayer(events: ParsedLogEvent[], playerId: number): ParsedLogEvent[] {
-    return events.filter(event => event.sourceID === playerId || event.targetID === playerId);
+    return events.filter((event) => event.sourceID === playerId || event.targetID === playerId);
   }
 
   /**
    * Filter events by ability ID
    */
-  public static filterEventsByAbility(events: ParsedLogEvent[], abilityId: number): ParsedLogEvent[] {
-    return events.filter(event => 
-      event.abilityGameID === abilityId || 
-      event.extraAbilityGameID === abilityId,
+  public static filterEventsByAbility(
+    events: ParsedLogEvent[],
+    abilityId: number,
+  ): ParsedLogEvent[] {
+    return events.filter(
+      (event) => event.abilityGameID === abilityId || event.extraAbilityGameID === abilityId,
     );
   }
 
@@ -349,20 +373,18 @@ export class EsoLogParser {
    * Filter events by time window
    */
   public static filterEventsByTimeWindow(
-    events: ParsedLogEvent[], 
-    startTime: number, 
+    events: ParsedLogEvent[],
+    startTime: number,
     endTime: number,
   ): ParsedLogEvent[] {
-    return events.filter(event => 
-      event.timestamp >= startTime && event.timestamp <= endTime,
-    );
+    return events.filter((event) => event.timestamp >= startTime && event.timestamp <= endTime);
   }
 
   /**
    * Group events by time windows for analysis
    */
   public static groupEventsByTimeWindow(
-    events: ParsedLogEvent[], 
+    events: ParsedLogEvent[],
     windowSizeMs: number = 2000,
   ): ParsedLogEvent[][] {
     if (events.length === 0) return [];
@@ -374,7 +396,7 @@ export class EsoLogParser {
 
     for (let i = 1; i < sorted.length; i++) {
       const event = sorted[i];
-      
+
       if (event.timestamp - groupStartTime <= windowSizeMs) {
         currentGroup.push(event);
       } else {
@@ -395,14 +417,10 @@ export class EsoLogParser {
    * Get events within time range of a specific event
    */
   public static getEventsNearTimestamp(
-    events: ParsedLogEvent[], 
-    timestamp: number, 
+    events: ParsedLogEvent[],
+    timestamp: number,
     windowMs: number = 2000,
   ): ParsedLogEvent[] {
-    return events.filter(event => 
-      Math.abs(event.timestamp - timestamp) <= windowMs,
-    );
+    return events.filter((event) => Math.abs(event.timestamp - timestamp) <= windowMs);
   }
 }
-
-export default EsoLogParser;

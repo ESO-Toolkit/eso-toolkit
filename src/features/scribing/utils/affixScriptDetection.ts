@@ -1,32 +1,45 @@
 /**
  * Affix Script Detection for Scribing Tooltips
- * 
+ *
  * This module integrates the affix script detection logic from our standalone detector
  * into the existing scribing tooltip system to provide real-time affix script identification
  * in skill tooltips.
  */
 
-import { ReportAbility } from '@/graphql/generated';
 import {
   BuffEvent,
   UnifiedCastEvent,
   DamageEvent,
   DebuffEvent,
   HealEvent,
-  ResourceChangeEvent,
 } from '@/types/combatlogEvents';
 import { PlayerTalent } from '@/types/playerDetails';
+
+import scribingData from '../../../../data/scribing-complete.json';
 import { AffixScript } from '../types/scribing-schemas';
 
 // Import scribing data dynamically to handle module resolution
-import scribingData from '../../../../data/scribing-complete.json';
 
 import { getScribingSkillByAbilityId } from './Scribing';
+
+// Type for grimoire transformations
+interface GrimoireTransformation {
+  name?: string;
+  abilityIds?: number[];
+  [key: string]: unknown;
+}
+
+// Type for grimoire
+interface Grimoire {
+  nameTransformations?: Record<string, GrimoireTransformation>;
+  [key: string]: unknown;
+}
 
 // Type for our scribing database
 interface ScribingDatabase {
   affixScripts: Record<string, AffixScript>;
-  [key: string]: any;
+  grimoires?: Record<string, Grimoire>;
+  [key: string]: unknown;
 }
 
 // Cast the imported data to our expected type
@@ -96,23 +109,25 @@ class AffixScriptDetector {
     this.loadScribingDatabase();
   }
 
-  private loadScribingDatabase() {
+  private loadScribingDatabase(): void {
     // Load affix scripts
     Object.entries(SCRIBING_DATABASE.affixScripts || {}).forEach(([key, affix]) => {
       this.affixScripts.set(key, affix);
     });
 
     // Load scribing abilities from grimoires with their name transformations
-    const grimoires = (SCRIBING_DATABASE as any).grimoires || {};
-    Object.values(grimoires).forEach((grimoire: any) => {
+    const grimoires = SCRIBING_DATABASE.grimoires || {};
+    Object.values(grimoires).forEach((grimoire: Grimoire) => {
       if (grimoire.nameTransformations) {
-        Object.values(grimoire.nameTransformations).forEach((transformation: any) => {
-          if (transformation.abilityIds && Array.isArray(transformation.abilityIds)) {
-            transformation.abilityIds.forEach((id: number) => {
-              this.scribingAbilities.set(id, transformation.name);
-            });
-          }
-        });
+        Object.values(grimoire.nameTransformations).forEach(
+          (transformation: GrimoireTransformation) => {
+            if (transformation.abilityIds && Array.isArray(transformation.abilityIds)) {
+              transformation.abilityIds.forEach((id: number) => {
+                this.scribingAbilities.set(id, transformation.name || 'Unknown Transformation');
+              });
+            }
+          },
+        );
       }
     });
   }
@@ -149,17 +164,29 @@ class AffixScriptDetector {
       const affixDetection = this.matchEventToAffixScript(event, talent);
       if (affixDetection) {
         // Check if we already have this affix script (avoid duplicates)
-        const existingIndex = results.findIndex(r => r.affixScript.id === affixDetection.affixScript.id);
+        const existingIndex = results.findIndex(
+          (r) => r.affixScript.id === affixDetection.affixScript.id,
+        );
         if (existingIndex >= 0) {
           // Merge evidence and increase confidence
           results[existingIndex].evidence.buffIds = [
-            ...new Set([...results[existingIndex].evidence.buffIds, ...affixDetection.evidence.buffIds]),
+            ...new Set([
+              ...results[existingIndex].evidence.buffIds,
+              ...affixDetection.evidence.buffIds,
+            ]),
           ];
           results[existingIndex].evidence.debuffIds = [
-            ...new Set([...results[existingIndex].evidence.debuffIds, ...affixDetection.evidence.debuffIds]),
+            ...new Set([
+              ...results[existingIndex].evidence.debuffIds,
+              ...affixDetection.evidence.debuffIds,
+            ]),
           ];
-          results[existingIndex].evidence.occurrenceCount += affixDetection.evidence.occurrenceCount;
-          results[existingIndex].confidence = Math.min(1.0, results[existingIndex].confidence + 0.15);
+          results[existingIndex].evidence.occurrenceCount +=
+            affixDetection.evidence.occurrenceCount;
+          results[existingIndex].confidence = Math.min(
+            1.0,
+            results[existingIndex].confidence + 0.15,
+          );
         } else {
           results.push(affixDetection);
         }
@@ -184,18 +211,18 @@ class AffixScriptDetector {
     playerId: number,
   ): Array<BuffEvent | DebuffEvent> {
     const related: Array<BuffEvent | DebuffEvent> = [];
-    
+
     // Only include buff/debuff events that are directly caused by the scribed skill
     // This means the event's abilityGameID should match the scribed skill's ability ID
     // or be a known affix script effect that can be applied by this scribing ability
-    
-    [...buffEvents, ...debuffEvents].forEach(event => {
+
+    [...buffEvents, ...debuffEvents].forEach((event) => {
       // Check if this buff/debuff event is from the same player
       if (event.sourceID === playerId) {
         // Only include events that could plausibly be from this scribed skill
         // We'll check this more carefully in the matching phase
         const isPlausibleAffixEffect = this.isPlausibleAffixEffect(event.abilityGameID);
-        
+
         if (isPlausibleAffixEffect) {
           related.push(event);
         }
@@ -211,30 +238,30 @@ class AffixScriptDetector {
   private isPlausibleAffixEffect(abilityId: number): boolean {
     // Check against known affix script ability IDs
     // This is a more conservative approach to avoid false positives
-    
+
     const knownAffixAbilityIds = new Set([
       // Major/Minor Brutality and Sorcery
       217790, 61694, 61685,
-      
-      // Major/Minor Savagery and Prophecy  
+
+      // Major/Minor Savagery and Prophecy
       218015, 218016, 217673, 61694, 61687,
-      
+
       // Major/Minor Endurance and Intellect
       227123, 217662, 61708, 61704,
-      
+
       // Breach
       216945, 148803, 61743,
-      
+
       // Maim
       217105, 218990, 61723,
-      
+
       // Vulnerability
       68359, 106754,
-      
+
       // Berserk
       218988, 61747,
-      
-      // Defile  
+
+      // Defile
       21927, 61729,
     ]);
 
@@ -247,10 +274,10 @@ class AffixScriptDetector {
   ): AffixScriptDetectionResult | null {
     // Map common buff/debuff ability IDs to affix scripts
     const affixMappings = this.createAffixMappings();
-    
+
     // Get the ability ID from the event
     const eventAbilityId = event.abilityGameID;
-    
+
     // Try to match the event ability ID to known affix patterns
     // We'll use the ability ID as the primary matching method
     for (const [pattern, affixKey] of affixMappings.entries()) {
@@ -264,21 +291,29 @@ class AffixScriptDetector {
               name: affixScript.name,
               description: affixScript.description,
               category: affixScript.category,
-              mechanicalEffect: typeof affixScript.mechanicalEffect === 'string' ? affixScript.mechanicalEffect : undefined,
+              mechanicalEffect:
+                typeof affixScript.mechanicalEffect === 'string'
+                  ? affixScript.mechanicalEffect
+                  : undefined,
             },
             confidence: 0.8, // High confidence for direct ID match
             detectionMethod: 'pattern-matching',
             evidence: {
-              buffIds: event.type.includes('buff') && !event.type.includes('debuff') ? [event.abilityGameID] : [],
+              buffIds:
+                event.type.includes('buff') && !event.type.includes('debuff')
+                  ? [event.abilityGameID]
+                  : [],
               debuffIds: event.type.includes('debuff') ? [event.abilityGameID] : [],
               abilityNames: [pattern], // Use the pattern name as a proxy
               occurrenceCount: 1,
             },
-            appliedToAbilities: [{
-              abilityId: talent.guid,
-              abilityName: talent.name,
-              grimoire: this.detectGrimoireFromTalent(talent),
-            }],
+            appliedToAbilities: [
+              {
+                abilityId: talent.guid,
+                abilityName: talent.name,
+                grimoire: this.detectGrimoireFromTalent(talent),
+              },
+            ],
           };
         }
       }
@@ -289,7 +324,7 @@ class AffixScriptDetector {
 
   private createAffixMappings(): Map<string, string> {
     const mappings = new Map<string, string>();
-    
+
     // Map buff/debuff names to affix script keys
     // These come from our analysis of the affix script database
     mappings.set('Major Berserk', 'berserk');
@@ -323,18 +358,18 @@ class AffixScriptDetector {
     // Map known ability IDs from our detection results to affix scripts
     // These IDs come from our analysis of the GPY4jVfpctLRgA32 report
     const knownAffixIds = new Map<number, string>();
-    
+
     // From our previous detection results:
     knownAffixIds.set(227123, 'intellect-and-endurance'); // Minor Endurance
-    knownAffixIds.set(218015, 'savagery-and-prophecy');  // Major Savagery
-    knownAffixIds.set(218016, 'savagery-and-prophecy');  // Major Prophecy
-    knownAffixIds.set(217673, 'savagery-and-prophecy');  // Major Prophecy
-    knownAffixIds.set(68359, 'vulnerability');           // Minor Vulnerability
-    knownAffixIds.set(148803, 'breach');                 // Minor Breach
-    knownAffixIds.set(216945, 'breach');                 // Major Breach
+    knownAffixIds.set(218015, 'savagery-and-prophecy'); // Major Savagery
+    knownAffixIds.set(218016, 'savagery-and-prophecy'); // Major Prophecy
+    knownAffixIds.set(217673, 'savagery-and-prophecy'); // Major Prophecy
+    knownAffixIds.set(68359, 'vulnerability'); // Minor Vulnerability
+    knownAffixIds.set(148803, 'breach'); // Minor Breach
+    knownAffixIds.set(216945, 'breach'); // Major Breach
     knownAffixIds.set(217662, 'intellect-and-endurance'); // Minor Endurance
-    knownAffixIds.set(218990, 'maim');                   // Minor Maim
-    knownAffixIds.set(21927, 'defile');                  // Minor Defile
+    knownAffixIds.set(218990, 'maim'); // Minor Maim
+    knownAffixIds.set(21927, 'defile'); // Minor Defile
 
     return knownAffixIds.get(abilityId) === affixKey;
   }
@@ -342,8 +377,14 @@ class AffixScriptDetector {
   private detectGrimoireFromTalent(talent: PlayerTalent): string | undefined {
     // Use existing grimoire detection logic
     const grimoires = [
-      'Wield Soul', 'Ulfsild\'s Contingency', 'Trample', 'Traveling Knife',
-      'Banner Bearer', 'Scribing Altar', 'Soul Burst', 'Torchbearer',
+      'Wield Soul',
+      "Ulfsild's Contingency",
+      'Trample',
+      'Traveling Knife',
+      'Banner Bearer',
+      'Scribing Altar',
+      'Soul Burst',
+      'Torchbearer',
       // Add more as needed
     ];
 
@@ -371,14 +412,12 @@ export function analyzeScribingSkillWithAffixScripts(
   allHealEvents?: HealEvent[],
   allCastEvents?: UnifiedCastEvent[],
   playerId: number = 1,
-  existingScribedData?: any,
+  existingScribedData?: ScribedSkillDataWithAffix,
 ): ScribedSkillDataWithAffix | null {
   // Check if this ability was actually cast by the player in the fight
-  const wasCastInFight = allCastEvents ? 
-    allCastEvents.some(cast => 
-      cast.sourceID === playerId && 
-      cast.abilityGameID === talent.guid,
-    ) : false;
+  const wasCastInFight = allCastEvents
+    ? allCastEvents.some((cast) => cast.sourceID === playerId && cast.abilityGameID === talent.guid)
+    : false;
 
   // Start with existing scribed skill data or create basic structure
   const baseData: ScribedSkillDataWithAffix = existingScribedData || {
@@ -412,16 +451,16 @@ export function analyzeScribingSkillWithAffixScripts(
 
     // Update recipe information to include affix scripts
     if (baseData.recipe) {
-      const affixNames = affixScripts.map(a => a.affixScript.name).join(', ');
+      const affixNames = affixScripts.map((a) => a.affixScript.name).join(', ');
       baseData.recipe.recipeSummary += ` + ${affixNames}`;
       baseData.recipe.tooltipInfo += `\nAffix Scripts: ${affixNames}`;
     } else {
       // Create recipe section if it doesn't exist
-      const affixNames = affixScripts.map(a => a.affixScript.name).join(', ');
-      
+      const affixNames = affixScripts.map((a) => a.affixScript.name).join(', ');
+
       // Check if we have ability ID mapping for better confidence
       const scribingInfo = getScribingSkillByAbilityId(talent.guid);
-      
+
       if (scribingInfo) {
         // Use database match with high confidence
         baseData.recipe = {
@@ -460,7 +499,7 @@ export function formatAffixScriptsForTooltip(affixScripts: AffixScriptDetectionR
   }
 
   return affixScripts
-    .map(affix => {
+    .map((affix) => {
       const confidencePercent = Math.round(affix.confidence * 100);
       return `🎭 ${affix.affixScript.name} (${confidencePercent}% confidence)`;
     })
@@ -470,8 +509,15 @@ export function formatAffixScriptsForTooltip(affixScripts: AffixScriptDetectionR
 /**
  * Create affix script chips for tooltip display
  */
-export function createAffixScriptChips(affixScripts: AffixScriptDetectionResult[]) {
-  return affixScripts.map(affix => ({
+export function createAffixScriptChips(affixScripts: AffixScriptDetectionResult[]): Array<{
+  id: string;
+  name: string;
+  description: string;
+  confidence: number;
+  count: number;
+  type: 'affix';
+}> {
+  return affixScripts.map((affix) => ({
     id: affix.affixScript.id,
     name: affix.affixScript.name,
     description: affix.affixScript.description,
@@ -481,4 +527,4 @@ export function createAffixScriptChips(affixScripts: AffixScriptDetectionResult[
   }));
 }
 
-export default affixDetector;
+export { affixDetector };

@@ -17,10 +17,35 @@ import {
 import { PlayerTalent } from '@/types/playerDetails';
 
 import scribingDatabase from '../../../../data/scribing-complete.json';
-
 import { abilityIdMapper } from '../../../utils/abilityIdMapper';
 
-// Import the scribing database
+// Type definitions for scribing database
+interface ScribingTransformation {
+  name?: string;
+  abilityIds?: number[];
+  [key: string]: unknown;
+}
+
+interface ScribingGrimoire {
+  name?: string;
+  id?: number;
+  abilityIds?: number[];
+  nameTransformations?: Record<string, ScribingTransformation>;
+  [key: string]: unknown;
+}
+
+interface ScribingScript {
+  name?: string;
+  abilityIds?: number[];
+  [key: string]: unknown;
+}
+
+interface ScribingDatabase {
+  grimoires?: Record<string, ScribingGrimoire>;
+  signatureScripts?: Record<string, ScribingScript>;
+  affixScripts?: Record<string, ScribingScript>;
+  [key: string]: unknown;
+}
 
 /**
  * Type definitions for function parameters
@@ -235,17 +260,17 @@ export function getAllGrimoires(): Grimoire[] {
  */
 export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInfo | null {
   try {
-    const database = scribingDatabase as any;
-    const grimoires = database.grimoires;
-    const signatureScripts = database.signatureScripts;
-    const affixScripts = database.affixScripts;
-    
+    const database = scribingDatabase as ScribingDatabase;
+    const grimoires = database.grimoires || {};
+    const signatureScripts = database.signatureScripts || {};
+    const affixScripts = database.affixScripts || {};
+
     // First check focus scripts (grimoire name transformations)
-    for (const [grimoireKey, grimoireData] of Object.entries(grimoires)) {
-      const grimoire = grimoireData as any;
-      
+    for (const [_grimoireKey, grimoireData] of Object.entries(grimoires)) {
+      const grimoire = grimoireData as ScribingGrimoire;
+
       // Check if this is the base grimoire ID
-      if (grimoire.id === abilityId) {
+      if (grimoire.id === abilityId && grimoire.name && grimoire.id !== undefined) {
         return {
           grimoire: grimoire.name,
           transformation: 'Base Ability',
@@ -254,16 +279,23 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
           grimoireId: grimoire.id,
         };
       }
-      
+
       // Check all name transformations (focus scripts)
       if (grimoire.nameTransformations) {
-        for (const [transformationKey, transformationData] of Object.entries(grimoire.nameTransformations)) {
-          const transformation = transformationData as any;
-          
+        for (const [transformationKey, transformationData] of Object.entries(
+          grimoire.nameTransformations,
+        )) {
+          const transformation = transformationData as ScribingTransformation;
+
           if (transformation.abilityIds && Array.isArray(transformation.abilityIds)) {
-            if (transformation.abilityIds.includes(abilityId)) {
+            if (
+              transformation.abilityIds.includes(abilityId) &&
+              grimoire.name &&
+              grimoire.id !== undefined &&
+              transformation.name
+            ) {
               const transformationType = getTransformationType(transformationKey);
-              
+
               return {
                 grimoire: grimoire.name,
                 transformation: transformation.name,
@@ -276,13 +308,13 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
         }
       }
     }
-    
+
     // Check signature scripts
     if (signatureScripts) {
-      for (const [scriptKey, scriptData] of Object.entries(signatureScripts)) {
-        const script = scriptData as any;
-        
-        if (script.abilityIds && Array.isArray(script.abilityIds)) {
+      for (const [_scriptKey, scriptData] of Object.entries(signatureScripts)) {
+        const script = scriptData as ScribingScript;
+
+        if (script.abilityIds && Array.isArray(script.abilityIds) && script.name) {
           if (script.abilityIds.includes(abilityId)) {
             return {
               grimoire: 'Unknown Grimoire', // We don't know which grimoire this belongs to from signature script alone
@@ -295,13 +327,13 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
         }
       }
     }
-    
+
     // Check affix scripts
     if (affixScripts) {
-      for (const [scriptKey, scriptData] of Object.entries(affixScripts)) {
-        const script = scriptData as any;
-        
-        if (script.abilityIds && Array.isArray(script.abilityIds)) {
+      for (const [_scriptKey, scriptData] of Object.entries(affixScripts)) {
+        const script = scriptData as ScribingScript;
+
+        if (script.abilityIds && Array.isArray(script.abilityIds) && script.name) {
           if (script.abilityIds.includes(abilityId)) {
             return {
               grimoire: 'Unknown Grimoire', // We don't know which grimoire this belongs to from affix script alone
@@ -314,10 +346,10 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
         }
       }
     }
-    
+
     return null;
-  } catch (error) {
-    console.error('Error looking up scribing skill by ability ID:', error);
+  } catch {
+    // console.error('Error looking up scribing skill by ability ID:', error);
     return null;
   }
 }
@@ -332,7 +364,7 @@ function getTransformationType(transformationKey: string): string {
   const knownFocusScripts = new Set([
     // Damage types
     'physical-damage',
-    'magic-damage', 
+    'magic-damage',
     'shock-damage',
     'flame-damage',
     'frost-damage',
@@ -359,7 +391,7 @@ function getTransformationType(transformationKey: string): string {
     return 'Focus Script';
   } else {
     // Log unknown transformation types for debugging
-    console.warn(`Unknown scribing transformation type: ${transformationKey}`);
+    // console.warn(`Unknown scribing transformation type: ${transformationKey}`);
     return 'Focus Script'; // Default to Focus Script since that's what our database contains
   }
 }

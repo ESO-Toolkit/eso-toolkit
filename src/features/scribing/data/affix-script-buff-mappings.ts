@@ -1,6 +1,6 @@
 /**
  * Affix Script to Buff/Debuff ID Mappings
- * 
+ *
  * Since affix scripts don't have direct ability IDs in the data, we map them
  * to the buff/debuff IDs they create when applied to targets.
  */
@@ -26,31 +26,67 @@ export const AFFIX_SCRIPT_BUFF_MAPPINGS: Record<string, AffixBuffMapping> = {
     description: 'Provides Major Savagery and Major Prophecy buffs',
     buffIds: [20400, 20401], // Major Savagery, Major Prophecy
     debuffIds: [],
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample', 'banner-bearer'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+      'banner-bearer',
+    ],
     detectionType: 'buff',
   },
-  
+
   'brutality-and-sorcery': {
     affixScriptKey: 'brutality-and-sorcery',
     name: 'Brutality and Sorcery',
     description: 'Provides Major Brutality and Major Sorcery buffs',
     buffIds: [20224, 20225], // Major Brutality, Major Sorcery
     debuffIds: [],
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample', 'banner-bearer'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+      'banner-bearer',
+    ],
     detectionType: 'buff',
   },
-  
+
   'intellect-and-endurance': {
     affixScriptKey: 'intellect-and-endurance',
     name: 'Intellect and Endurance',
     description: 'Provides Major Intellect and Major Endurance buffs',
     buffIds: [20228, 20229], // Major Intellect, Major Endurance
     debuffIds: [],
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample', 'banner-bearer'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+      'banner-bearer',
+    ],
     detectionType: 'buff',
   },
-  
-  'berserk': {
+
+  berserk: {
     affixScriptKey: 'berserk',
     name: 'Berserk',
     description: 'Provides Major Berserk (damage) buff',
@@ -59,8 +95,8 @@ export const AFFIX_SCRIPT_BUFF_MAPPINGS: Record<string, AffixBuffMapping> = {
     compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'banner-bearer'],
     detectionType: 'buff',
   },
-  
-  'expedition': {
+
+  expedition: {
     affixScriptKey: 'expedition',
     name: 'Expedition',
     description: 'Provides Major Expedition (movement speed) buff',
@@ -69,18 +105,25 @@ export const AFFIX_SCRIPT_BUFF_MAPPINGS: Record<string, AffixBuffMapping> = {
     compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'soul-burst', 'trample'],
     detectionType: 'buff',
   },
-  
-  'resolve': {
+
+  resolve: {
     affixScriptKey: 'resolve',
     name: 'Resolve',
     description: 'Provides Major Resolve (resistances) buff',
     buffIds: [20312], // Major Resolve
     debuffIds: [],
-    compatibleGrimoires: ['shield-throw', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'banner-bearer'],
+    compatibleGrimoires: [
+      'shield-throw',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'banner-bearer',
+    ],
     detectionType: 'buff',
   },
-  
-  'evasion': {
+
+  evasion: {
     affixScriptKey: 'evasion',
     name: 'Evasion',
     description: 'Provides Major Evasion (dodge chance) buff',
@@ -89,8 +132,8 @@ export const AFFIX_SCRIPT_BUFF_MAPPINGS: Record<string, AffixBuffMapping> = {
     compatibleGrimoires: ['vault', 'menders-bond', 'shield-throw', 'torchbearer'],
     detectionType: 'buff',
   },
-  
-  'vitality': {
+
+  vitality: {
     affixScriptKey: 'vitality',
     name: 'Vitality',
     description: 'Provides Major Vitality (healing received) buff',
@@ -99,49 +142,88 @@ export const AFFIX_SCRIPT_BUFF_MAPPINGS: Record<string, AffixBuffMapping> = {
     compatibleGrimoires: ['menders-bond', 'smash', 'shield-throw', 'wield-soul', 'torchbearer'],
     detectionType: 'buff',
   },
-  
+
   // Debuff-based affix scripts
-  'breach': {
+  breach: {
     affixScriptKey: 'breach',
     name: 'Breach',
     description: 'Applies Major Breach (resistances reduction) debuff to enemies',
     buffIds: [],
     debuffIds: [20316], // Major Breach
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+    ],
     detectionType: 'debuff',
   },
-  
-  'vulnerability': {
+
+  vulnerability: {
     affixScriptKey: 'vulnerability',
     name: 'Vulnerability',
     description: 'Applies Major Vulnerability debuff to enemies',
     buffIds: [],
     debuffIds: [20238], // Major Vulnerability
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+    ],
     detectionType: 'debuff',
   },
-  
-  'maim': {
+
+  maim: {
     affixScriptKey: 'maim',
     name: 'Maim',
     description: 'Applies Major Maim (damage reduction) debuff to enemies',
     buffIds: [],
     debuffIds: [20240], // Major Maim
-    compatibleGrimoires: ['traveling-knife', 'vault', 'smash', 'shield-throw', 'elemental-explosion', 'soul-burst', 'wield-soul', 'ulfsilds-contingency', 'torchbearer', 'trample'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'smash',
+      'shield-throw',
+      'elemental-explosion',
+      'soul-burst',
+      'wield-soul',
+      'ulfsilds-contingency',
+      'torchbearer',
+      'trample',
+    ],
     detectionType: 'debuff',
   },
-  
+
   'off-balance': {
     affixScriptKey: 'off-balance',
     name: 'Off Balance',
     description: 'Applies Off Balance debuff to enemies',
     buffIds: [],
     debuffIds: [129391], // Off Balance
-    compatibleGrimoires: ['traveling-knife', 'vault', 'shield-throw', 'elemental-explosion', 'trample'],
+    compatibleGrimoires: [
+      'traveling-knife',
+      'vault',
+      'shield-throw',
+      'elemental-explosion',
+      'trample',
+    ],
     detectionType: 'debuff',
   },
-  
-  'interrupt': {
+
+  interrupt: {
     affixScriptKey: 'interrupt',
     name: 'Interrupt',
     description: 'Interrupts enemy casting',
@@ -175,7 +257,10 @@ export function getEffectIdsForAffixScript(affixScriptKey: string): number[] {
 /**
  * Check if a grimoire is compatible with an affix script
  */
-export function isAffixCompatibleWithGrimoire(affixScriptKey: string, grimoireKey: string): boolean {
+export function isAffixCompatibleWithGrimoire(
+  affixScriptKey: string,
+  grimoireKey: string,
+): boolean {
   const mapping = AFFIX_SCRIPT_BUFF_MAPPINGS[affixScriptKey];
   return mapping ? mapping.compatibleGrimoires.includes(grimoireKey) : false;
 }
@@ -184,9 +269,7 @@ export function isAffixCompatibleWithGrimoire(affixScriptKey: string, grimoireKe
  * Get all affix scripts compatible with a grimoire
  */
 export function getCompatibleAffixScripts(grimoireKey: string): AffixBuffMapping[] {
-  return Object.values(AFFIX_SCRIPT_BUFF_MAPPINGS).filter(mapping => 
+  return Object.values(AFFIX_SCRIPT_BUFF_MAPPINGS).filter((mapping) =>
     mapping.compatibleGrimoires.includes(grimoireKey),
   );
 }
-
-export default AFFIX_SCRIPT_BUFF_MAPPINGS;

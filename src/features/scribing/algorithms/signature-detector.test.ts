@@ -74,7 +74,7 @@ describe('SignatureScriptDetector', () => {
       ];
 
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, events);
-      
+
       // Should execute without throwing
       expect(() => result).not.toThrow();
       expect(Array.isArray(result)).toBe(true);
@@ -98,7 +98,7 @@ describe('SignatureScriptDetector', () => {
   describe('detectSignatureScriptsFromGrimoires', () => {
     it('should handle empty grimoire detections array', async () => {
       const result = await detector.detectSignatureScriptsFromGrimoires([], []);
-      
+
       expect(result).toMatchObject({
         detections: [],
         totalAnalyzed: 0,
@@ -117,7 +117,7 @@ describe('SignatureScriptDetector', () => {
       const events = [createMockEvent()];
 
       const result = await detector.detectSignatureScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result).toMatchObject({
         detections: expect.any(Array),
         totalAnalyzed: 1,
@@ -135,7 +135,7 @@ describe('SignatureScriptDetector', () => {
   describe('error handling', () => {
     it('should handle null grimoire detection gracefully', async () => {
       const nullGrimoire = null as any;
-      
+
       try {
         const result = await detector.detectSignatureScriptFromGrimoire(nullGrimoire, []);
         // If it doesn't throw, expect empty result
@@ -159,7 +159,7 @@ describe('SignatureScriptDetector', () => {
 
       const grimoire = createMockGrimoire();
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, malformedEvents);
-      
+
       // Should not throw and return array result
       expect(() => result).not.toThrow();
       expect(Array.isArray(result)).toBe(true);
@@ -178,7 +178,7 @@ describe('SignatureScriptDetector', () => {
       ];
 
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, events);
-      
+
       expect(Array.isArray(result)).toBe(true);
     });
 
@@ -198,7 +198,7 @@ describe('SignatureScriptDetector', () => {
       ];
 
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, events);
-      
+
       expect(Array.isArray(result)).toBe(true);
     });
   });
@@ -216,7 +216,7 @@ describe('SignatureScriptDetector', () => {
       ];
 
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, events);
-      
+
       expect(Array.isArray(result)).toBe(true);
     });
 
@@ -231,7 +231,7 @@ describe('SignatureScriptDetector', () => {
       ];
 
       const result = await detector.detectSignatureScriptFromGrimoire(grimoire, events);
-      
+
       expect(Array.isArray(result)).toBe(true);
     });
   });

@@ -5,10 +5,10 @@
 
 import '@testing-library/jest-dom';
 
-import { 
+import {
   findMultipleScribingRecipes,
   formatScribingRecipeForDisplay,
-  ScribingRecipeMatch 
+  ScribingRecipeMatch,
 } from './scribingRecipeUtils';
 
 // Mock the global fetch function
@@ -65,7 +65,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
 
       const abilities = [{ id: 12345, name: 'Test' }];
       const results = await findMultipleScribingRecipes(abilities);
-      
+
       // Should return empty array when database loading fails
       expect(results).toEqual([]);
     });
@@ -77,7 +77,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
 
       const abilities = [{ id: 12345, name: 'Test' }];
       const results = await findMultipleScribingRecipes(abilities);
-      
+
       // Should return empty array when database is invalid
       expect(results).toEqual([]);
     });
@@ -93,7 +93,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
       ];
 
       const results = await findMultipleScribingRecipes(abilities);
-      
+
       // Should return an array (filtering happens in the loop)
       expect(Array.isArray(results)).toBe(true);
     });
@@ -114,7 +114,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
 
   // Test formatScribingRecipeForDisplay function (lines 255-274)
   describe('formatScribingRecipeForDisplay function', () => {
-    const createMockMatch = (overrides: Partial<ScribingRecipeMatch> = {}): ScribingRecipeMatch => ({
+    const createMockMatch = (
+      overrides: Partial<ScribingRecipeMatch> = {},
+    ): ScribingRecipeMatch => ({
       grimoire: {
         name: 'Test Grimoire',
         id: 12345,
@@ -136,16 +138,18 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
     it('should format complete scribing recipe match', () => {
       const match = createMockMatch();
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.grimoire).toBe('Test Grimoire');
       expect(display.transformation).toBe('Test Transformation');
       expect(display.transformationType).toBe('Physical Damage');
       expect(display.confidence).toBe(0.95);
       expect(display.matchMethod).toBe('exact-id');
       expect(display.recipeSummary).toBe('📖 Test Grimoire + 🔄 Physical Damage');
-      
+
       expect(display.tooltipInfo).toContain('📖 Grimoire: Test Grimoire');
-      expect(display.tooltipInfo).toContain('🔄 Focus Script: Test Transformation (Physical Damage)');
+      expect(display.tooltipInfo).toContain(
+        '🔄 Focus Script: Test Transformation (Physical Damage)',
+      );
       expect(display.tooltipInfo).toContain('🏫 School: assault');
       expect(display.tooltipInfo).toContain('⚡ Resource: stamina (2700)');
       expect(display.tooltipInfo).toContain('🎯 Match Confidence: 95%');
@@ -155,9 +159,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
       const match = createMockMatch({
         transformation: null,
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.transformation).toBe('Unknown Transformation');
       expect(display.transformationType).toBe('Unknown');
       expect(display.recipeSummary).toBe('📖 Test Grimoire + 🔄 Unknown');
@@ -172,9 +176,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
           abilityIds: [99999],
         },
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.transformationType).toBe('Fire Magic Damage Over Time');
       expect(display.recipeSummary).toBe('📖 Test Grimoire + 🔄 Fire Magic Damage Over Time');
     });
@@ -187,9 +191,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
           abilityIds: [88888],
         },
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.transformationType).toBe('Heal');
     });
 
@@ -201,9 +205,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
           abilityIds: [77777],
         },
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       // Empty string gets treated as 'unknown' by the || operator
       expect(display.transformationType).toBe('Unknown');
     });
@@ -212,9 +216,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
       const match = createMockMatch({
         matchConfidence: 0.876, // Should round to 88%
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.tooltipInfo).toContain('🎯 Match Confidence: 88%');
     });
 
@@ -222,14 +226,14 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
       const matchZero = createMockMatch({
         matchConfidence: 0,
       });
-      
+
       const displayZero = formatScribingRecipeForDisplay(matchZero);
       expect(displayZero.tooltipInfo).toContain('🎯 Match Confidence: 0%');
 
       const matchOne = createMockMatch({
         matchConfidence: 1.0,
       });
-      
+
       const displayOne = formatScribingRecipeForDisplay(matchOne);
       expect(displayOne.tooltipInfo).toContain('🎯 Match Confidence: 100%');
     });
@@ -242,9 +246,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
           abilityIds: [12345],
         },
       });
-      
+
       const display = formatScribingRecipeForDisplay(match);
-      
+
       expect(display.transformationType).toBe('Unknown');
     });
   });
@@ -258,21 +262,21 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
     });
 
     it('should work with findMultipleScribingRecipes and formatScribingRecipeForDisplay', async () => {
-      const abilities = [
-        { id: 12345, name: 'Trample' },
-      ];
+      const abilities = [{ id: 12345, name: 'Trample' }];
 
       const matches = await findMultipleScribingRecipes(abilities);
-      
+
       // Test that we can format any results we get
       if (matches.length > 0) {
-        const displays = matches.map(match => formatScribingRecipeForDisplay(match));
-        
+        const displays = matches.map((match) => formatScribingRecipeForDisplay(match));
+
         expect(displays).toHaveLength(matches.length);
-        expect(displays.every(display => display.recipeSummary.includes('📖'))).toBe(true);
-        expect(displays.every(display => display.tooltipInfo.includes('Match Confidence'))).toBe(true);
+        expect(displays.every((display) => display.recipeSummary.includes('📖'))).toBe(true);
+        expect(displays.every((display) => display.tooltipInfo.includes('Match Confidence'))).toBe(
+          true,
+        );
       }
-      
+
       // At minimum, ensure functions execute without throwing
       expect(Array.isArray(matches)).toBe(true);
     });
@@ -281,7 +285,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
       // The first test already used up the rejection, so this gets the cached valid data
       // Let's test that the function works with cached data instead
       const result = await findMultipleScribingRecipes([{ id: 99999 }]); // Use unknown ID
-      
+
       // Result should be empty array (no matches for unknown ID) or contain valid matches
       expect(Array.isArray(result)).toBe(true);
       // Functions should handle errors gracefully without throwing
@@ -292,7 +296,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
     it('should handle grimoire without nameTransformations', async () => {
       // Reset module and mock fresh data
       jest.resetModules();
-      
+
       // Mock fetch to return a database with a grimoire that lacks nameTransformations
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
@@ -302,9 +306,9 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
               id: 'test-grimoire',
               name: 'Test Grimoire',
               // Intentionally missing nameTransformations property
-            }
-          ]
-        })
+            },
+          ],
+        }),
       });
 
       // Re-import to get fresh module state
@@ -316,7 +320,7 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
     it('should handle empty/null parameters in name matching', async () => {
       // Reset module for clean state
       jest.resetModules();
-      
+
       // Mock a valid database with name transformations to reach the checkNameMatch function
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
@@ -328,17 +332,17 @@ describe('scribingRecipeUtils - Comprehensive Coverage Tests', () => {
               nameTransformations: {
                 'test-transformation': {
                   displayName: 'Test Transform',
-                  abilityNames: [''] // Empty string to trigger name matching with empty detected name
-                }
-              }
-            }
-          ]
-        })
+                  abilityNames: [''], // Empty string to trigger name matching with empty detected name
+                },
+              },
+            },
+          ],
+        }),
       });
 
       // Re-import to get fresh module state
       const { findScribingRecipe } = await import('./scribingRecipeUtils');
-      
+
       // This should trigger the checkNameMatch function with empty strings
       const result = await findScribingRecipe(888, '');
       expect(result).toBeNull();

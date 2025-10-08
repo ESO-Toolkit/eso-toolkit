@@ -17,7 +17,7 @@ jest.mock('./affixScriptDetection', () => ({
   analyzeScribingSkillWithAffixScripts: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
     effects: [],
-    affixScripts: []
+    affixScripts: [],
   })),
   AffixScriptDetectionResult: jest.fn(),
   ScribedSkillDataWithAffix: jest.fn(),
@@ -26,28 +26,28 @@ jest.mock('./affixScriptDetection', () => ({
 jest.mock('./enhancedScribingAnalysis', () => ({
   analyzeScribingSkillWithSignature: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
-    effects: []
+    effects: [],
   })),
 }));
 
 jest.mock('./enhancedTooltipMapper', () => ({
   createEnhancedScribedSkillData: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
-    effects: []
+    effects: [],
   })),
 }));
 
 jest.mock('./Scribing', () => ({
   getScribingSkillByAbilityId: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
-    effects: []
+    effects: [],
   })),
 }));
 
 jest.mock('../../../utils/skillTooltipMapper', () => ({
   buildTooltipProps: jest.fn(() => ({
     abilityName: 'Test Skill',
-    tooltip: 'Test tooltip content'
+    tooltip: 'Test tooltip content',
   })),
 }));
 
@@ -57,8 +57,6 @@ interface PlayerTalent {
   name: string;
   abilityId?: number;
 }
-
-
 
 interface SkillTooltipProps {
   abilityName: string;
@@ -82,43 +80,49 @@ describe('enhancedScribingTooltipMapper', () => {
   const mockTalent: PlayerTalent = {
     id: 1,
     name: 'Test Scribing Skill',
-    abilityId: 123456
+    abilityId: 123456,
   };
 
   const mockCombatEventData: CombatEventData = {
     allReportAbilities: [],
     allDebuffEvents: [],
-    allBuffEvents: [{
-      timestamp: 1000,
-      sourceID: 1,
-      targetID: 1,
-      abilityGameID: 61687,
-      type: 'applybuff'
-    }],
+    allBuffEvents: [
+      {
+        timestamp: 1000,
+        sourceID: 1,
+        targetID: 1,
+        abilityGameID: 61687,
+        type: 'applybuff',
+      },
+    ],
     allResourceEvents: [],
-    allDamageEvents: [{
-      timestamp: 1000,
-      sourceID: 1,
-      targetID: 2,
-      abilityGameID: 123456,
-      type: 'damage',
-      amount: 1000
-    }],
-    allCastEvents: [{
-      timestamp: 1000,
-      sourceID: 1,
-      targetID: 2,
-      abilityGameID: 123456,
-      type: 'cast'
-    }],
-    allHealingEvents: []
+    allDamageEvents: [
+      {
+        timestamp: 1000,
+        sourceID: 1,
+        targetID: 2,
+        abilityGameID: 123456,
+        type: 'damage',
+        amount: 1000,
+      },
+    ],
+    allCastEvents: [
+      {
+        timestamp: 1000,
+        sourceID: 1,
+        targetID: 2,
+        abilityGameID: 123456,
+        type: 'cast',
+      },
+    ],
+    allHealingEvents: [],
   };
 
   const mockAffixScriptResult: AffixScriptDetectionResult = {
     affixScript: {
       id: 'brutality',
       name: 'Brutality',
-      description: 'Increases Weapon Damage'
+      description: 'Increases Weapon Damage',
     },
     confidence: 0.9,
     detectionMethod: 'buff-debuff-pairing',
@@ -126,9 +130,9 @@ describe('enhancedScribingTooltipMapper', () => {
       buffIds: [61687],
       debuffIds: [],
       abilityNames: ['Test Ability'],
-      occurrenceCount: 1
+      occurrenceCount: 1,
     },
-    appliedToAbilities: []
+    appliedToAbilities: [],
   };
 
   beforeEach(() => {
@@ -141,7 +145,7 @@ describe('enhancedScribingTooltipMapper', () => {
       expect(analyzePlayerScribingSkillsWithAffixScripts).toBeDefined();
       expect(buildPlayerCardScribingTooltip).toBeDefined();
       expect(createAffixScriptUsageSummary).toBeDefined();
-      
+
       expect(typeof buildEnhancedScribingTooltipProps).toBe('function');
       expect(typeof analyzePlayerScribingSkillsWithAffixScripts).toBe('function');
       expect(typeof buildPlayerCardScribingTooltip).toBe('function');
@@ -157,12 +161,12 @@ describe('enhancedScribingTooltipMapper', () => {
         playerId: 1,
         classKey: 'sorcerer',
         abilityId: 123456,
-        abilityName: 'Test Ability'
+        abilityName: 'Test Ability',
       };
 
       try {
         const result = buildEnhancedScribingTooltipProps(options);
-        
+
         if (result) {
           expect(result).toHaveProperty('abilityName');
           expect(result).toHaveProperty('tooltip');
@@ -176,7 +180,7 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle missing optional parameters', () => {
       const options = {
         talent: mockTalent,
-        combatEventData: mockCombatEventData
+        combatEventData: mockCombatEventData,
       };
 
       expect(() => {
@@ -194,8 +198,8 @@ describe('enhancedScribingTooltipMapper', () => {
           allResourceEvents: [],
           allDamageEvents: [],
           allCastEvents: [],
-          allHealingEvents: []
-        }
+          allHealingEvents: [],
+        },
       };
 
       expect(() => {
@@ -206,12 +210,12 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle talent without guid gracefully', () => {
       const talentWithoutGuid = {
         ...mockTalent,
-        guid: undefined
+        guid: undefined,
       } as any;
 
       const options = {
         talent: talentWithoutGuid,
-        combatEventData: mockCombatEventData
+        combatEventData: mockCombatEventData,
       };
 
       expect(() => {
@@ -223,7 +227,7 @@ describe('enhancedScribingTooltipMapper', () => {
       const options = {
         talent: mockTalent,
         combatEventData: mockCombatEventData,
-        playerId: -1
+        playerId: -1,
       };
 
       expect(() => {
@@ -241,7 +245,7 @@ describe('enhancedScribingTooltipMapper', () => {
         const result = analyzePlayerScribingSkillsWithAffixScripts(
           playerTalents,
           playerCombatEvents,
-          1
+          1,
         );
 
         if (result) {
@@ -279,7 +283,7 @@ describe('enhancedScribingTooltipMapper', () => {
           mockTalent,
           mockCombatEventData,
           1,
-          'sorcerer'
+          'sorcerer',
         );
 
         if (result) {
@@ -293,12 +297,7 @@ describe('enhancedScribingTooltipMapper', () => {
 
     it('should handle missing class key', () => {
       expect(() => {
-        buildPlayerCardScribingTooltip(
-          mockTalent,
-          mockCombatEventData,
-          1,
-          undefined
-        );
+        buildPlayerCardScribingTooltip(mockTalent, mockCombatEventData, 1, undefined);
       }).not.toThrow();
     });
 
@@ -310,16 +309,11 @@ describe('enhancedScribingTooltipMapper', () => {
         allResourceEvents: [],
         allDamageEvents: [],
         allCastEvents: [],
-        allHealingEvents: []
+        allHealingEvents: [],
       };
 
       expect(() => {
-        buildPlayerCardScribingTooltip(
-          mockTalent,
-          emptyCombatEvents,
-          1,
-          'sorcerer'
-        );
+        buildPlayerCardScribingTooltip(mockTalent, emptyCombatEvents, 1, 'sorcerer');
       }).not.toThrow();
     });
   });
@@ -330,12 +324,12 @@ describe('enhancedScribingTooltipMapper', () => {
       affixScriptResults.set(1, {
         grimoireName: 'Test Grimoire',
         effects: [],
-        affixScripts: [mockAffixScriptResult]
+        affixScripts: [mockAffixScriptResult],
       } as any);
 
       try {
         const result = createAffixScriptUsageSummary(affixScriptResults);
-        
+
         expect(typeof result === 'string' || typeof result === 'object').toBe(true);
       } catch (error) {
         // Function may not be fully implemented yet
@@ -352,19 +346,19 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle malformed affix script data', () => {
       const malformedResults = new Map<number, any>();
       // Add data that won't break the function but tests edge cases
-      malformedResults.set(1, { 
-        grimoireName: 'Test', 
-        effects: [], 
-        affixScripts: [] 
+      malformedResults.set(1, {
+        grimoireName: 'Test',
+        effects: [],
+        affixScripts: [],
       });
-      malformedResults.set(2, { 
-        grimoireName: 'Test2', 
-        effects: [], 
-        affixScripts: undefined 
+      malformedResults.set(2, {
+        grimoireName: 'Test2',
+        effects: [],
+        affixScripts: undefined,
       });
-      malformedResults.set(3, { 
-        grimoireName: 'Test3', 
-        effects: [], 
+      malformedResults.set(3, {
+        grimoireName: 'Test3',
+        effects: [],
         // Missing affixScripts property
       });
 
@@ -379,7 +373,7 @@ describe('enhancedScribingTooltipMapper', () => {
         largeResults.set(i, {
           grimoireName: 'Test Grimoire',
           effects: [],
-          affixScripts: [mockAffixScriptResult]
+          affixScripts: [mockAffixScriptResult],
         } as any);
       }
 
@@ -398,13 +392,13 @@ describe('enhancedScribingTooltipMapper', () => {
         allResourceEvents: [],
         allDamageEvents: null as any,
         allCastEvents: [{ type: 'invalid' }] as any,
-        allHealingEvents: []
+        allHealingEvents: [],
       };
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: mockTalent,
-          combatEventData: malformedCombatData
+          combatEventData: malformedCombatData,
         });
       }).not.toThrow();
     });
@@ -416,7 +410,7 @@ describe('enhancedScribingTooltipMapper', () => {
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: circularTalent,
-          combatEventData: mockCombatEventData
+          combatEventData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -425,14 +419,14 @@ describe('enhancedScribingTooltipMapper', () => {
       const extremeTalent = {
         id: Number.MAX_SAFE_INTEGER,
         name: 'A'.repeat(10000), // Very long name
-        abilityId: Number.MAX_SAFE_INTEGER
+        abilityId: Number.MAX_SAFE_INTEGER,
       };
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: extremeTalent,
           combatEventData: mockCombatEventData,
-          playerId: Number.MAX_SAFE_INTEGER
+          playerId: Number.MAX_SAFE_INTEGER,
         });
       }).not.toThrow();
     });
@@ -441,10 +435,10 @@ describe('enhancedScribingTooltipMapper', () => {
   describe('integration with mocked dependencies', () => {
     it('should use mocked affix script detection', () => {
       const { analyzeScribingSkillWithAffixScripts } = require('./affixScriptDetection');
-      
+
       buildEnhancedScribingTooltipProps({
         talent: mockTalent,
-        combatEventData: mockCombatEventData
+        combatEventData: mockCombatEventData,
       });
 
       expect(analyzeScribingSkillWithAffixScripts).toBeDefined();
@@ -452,10 +446,10 @@ describe('enhancedScribingTooltipMapper', () => {
 
     it('should use mocked enhanced analysis', () => {
       const { analyzeScribingSkillWithSignature } = require('./enhancedScribingAnalysis');
-      
+
       buildEnhancedScribingTooltipProps({
         talent: mockTalent,
-        combatEventData: mockCombatEventData
+        combatEventData: mockCombatEventData,
       });
 
       expect(analyzeScribingSkillWithSignature).toBeDefined();
@@ -463,10 +457,10 @@ describe('enhancedScribingTooltipMapper', () => {
 
     it('should use mocked tooltip mapper', () => {
       const { buildTooltipProps } = require('../../../utils/skillTooltipMapper');
-      
+
       buildEnhancedScribingTooltipProps({
         talent: mockTalent,
-        combatEventData: mockCombatEventData
+        combatEventData: mockCombatEventData,
       });
 
       expect(buildTooltipProps).toBeDefined();
@@ -476,18 +470,18 @@ describe('enhancedScribingTooltipMapper', () => {
   describe('performance considerations', () => {
     it('should handle multiple tooltip builds efficiently', () => {
       const startTime = performance.now();
-      
+
       // Run multiple tooltip builds
       for (let i = 0; i < 50; i++) {
         buildEnhancedScribingTooltipProps({
           talent: { ...mockTalent, id: i },
           combatEventData: mockCombatEventData,
-          playerId: i
+          playerId: i,
         });
       }
-      
+
       const duration = performance.now() - startTime;
-      
+
       // Should complete builds quickly (under 200ms for 50 builds)
       expect(duration).toBeLessThan(200);
     });
@@ -500,18 +494,18 @@ describe('enhancedScribingTooltipMapper', () => {
         allResourceEvents: [],
         allDamageEvents: new Array(1000).fill(mockCombatEventData.allDamageEvents[0]),
         allCastEvents: new Array(1000).fill(mockCombatEventData.allCastEvents[0]),
-        allHealingEvents: []
+        allHealingEvents: [],
       };
 
       const startTime = performance.now();
-      
+
       buildEnhancedScribingTooltipProps({
         talent: mockTalent,
-        combatEventData: largeCombatData
+        combatEventData: largeCombatData,
       });
-      
+
       const duration = performance.now() - startTime;
-      
+
       // Should handle large datasets reasonably (under 500ms)
       expect(duration).toBeLessThan(500);
     });
@@ -521,13 +515,13 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle special characters in talent names', () => {
       const specialTalent = {
         ...mockTalent,
-        name: 'Test Skill with Special Characters !@#$%^&*()[]{}|\\:";\'<>?,./'
+        name: 'Test Skill with Special Characters !@#$%^&*()[]{}|\\:";\'<>?,./',
       };
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: specialTalent,
-          combatEventData: mockCombatEventData
+          combatEventData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -535,13 +529,13 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle Unicode characters', () => {
       const unicodeTalent = {
         ...mockTalent,
-        name: '测试技能 🎮 اختبار مهارة テストスキル'
+        name: '测试技能 🎮 اختبار مهارة テストスキル',
       };
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: unicodeTalent,
-          combatEventData: mockCombatEventData
+          combatEventData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -549,25 +543,25 @@ describe('enhancedScribingTooltipMapper', () => {
     it('should handle empty and whitespace strings', () => {
       const emptyTalent = {
         ...mockTalent,
-        name: ''
+        name: '',
       };
 
       const whitespaceTalent = {
         ...mockTalent,
-        name: '   \t\n\r   '
+        name: '   \t\n\r   ',
       };
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: emptyTalent,
-          combatEventData: mockCombatEventData
+          combatEventData: mockCombatEventData,
         });
       }).not.toThrow();
 
       expect(() => {
         buildEnhancedScribingTooltipProps({
           talent: whitespaceTalent,
-          combatEventData: mockCombatEventData
+          combatEventData: mockCombatEventData,
         });
       }).not.toThrow();
     });

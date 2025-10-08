@@ -28,7 +28,9 @@ jest.mock('../data/affix-script-buff-mappings', () => ({
 describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
   let detector: AffixScriptDetector;
   const mockScribingMapper = abilityScribingMapper as jest.Mocked<typeof abilityScribingMapper>;
-  const mockGetAffixScriptByEffectId = getAffixScriptByEffectId as jest.MockedFunction<typeof getAffixScriptByEffectId>;
+  const mockGetAffixScriptByEffectId = getAffixScriptByEffectId as jest.MockedFunction<
+    typeof getAffixScriptByEffectId
+  >;
 
   // Helper to create mock events
   const createMockEvent = (overrides: Partial<ParsedLogEvent> = {}): ParsedLogEvent => ({
@@ -87,7 +89,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       mockGetAffixScriptByEffectId.mockReturnValue(null);
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].affixScriptKey).toBe('test-affix');
       expect(result[0].affixScriptName).toBe('Test Affix Script');
@@ -169,7 +171,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       });
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].affixScriptKey).toBe('test-buff-affix');
       expect(result[0].detectedEffects[0].type).toBe('buff');
@@ -199,7 +201,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       });
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);
-      
+
       expect(result).toHaveLength(1);
       expect(result[0].detectedEffects[0].type).toBe('debuff');
     });
@@ -282,7 +284,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
         });
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);
-      
+
       // Should only return one detection (highest confidence)
       expect(result).toHaveLength(1);
     });
@@ -315,18 +317,18 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
   describe('detectAffixScriptsFromGrimoires - comprehensive scenarios', () => {
     it('should handle multiple grimoire detections with conflicts', async () => {
       const grimoireDetections = [
-        createMockGrimoire({ 
-          grimoireKey: 'banner-bearer', 
+        createMockGrimoire({
+          grimoireKey: 'banner-bearer',
           sourcePlayer: 123,
-          timestamp: 1000 
+          timestamp: 1000,
         }),
-        createMockGrimoire({ 
-          grimoireKey: 'banner-bearer', 
+        createMockGrimoire({
+          grimoireKey: 'banner-bearer',
           sourcePlayer: 123,
-          timestamp: 2000 
+          timestamp: 2000,
         }),
       ];
-      
+
       const events = [
         createMockEvent({
           timestamp: 1500,
@@ -363,7 +365,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
         });
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result.totalAnalyzed).toBe(2);
       // The test should work if both grimoires generate detections for the same player
       // Let's just verify the result structure without the warning expectation
@@ -372,10 +374,8 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
     });
 
     it('should handle errors in grimoire processing', async () => {
-      const grimoireDetections = [
-        createMockGrimoire({ grimoireKey: 'banner-bearer' }),
-      ];
-      
+      const grimoireDetections = [createMockGrimoire({ grimoireKey: 'banner-bearer' })];
+
       const events = [
         createMockEvent({
           timestamp: 1500,
@@ -385,26 +385,28 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       ];
 
       // Mock to throw an error
-      jest.spyOn(detector as any, 'detectAffixScriptFromGrimoire').mockRejectedValueOnce(new Error('Test error'));
+      jest
+        .spyOn(detector as any, 'detectAffixScriptFromGrimoire')
+        .mockRejectedValueOnce(new Error('Test error'));
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0]).toContain('Error processing grimoire detection');
     });
 
     it('should track unique affix scripts and player mappings', async () => {
       const grimoireDetections = [
-        createMockGrimoire({ 
-          grimoireKey: 'banner-bearer', 
-          sourcePlayer: 123 
+        createMockGrimoire({
+          grimoireKey: 'banner-bearer',
+          sourcePlayer: 123,
         }),
-        createMockGrimoire({ 
-          grimoireKey: 'elemental-explosion', 
-          sourcePlayer: 456 
+        createMockGrimoire({
+          grimoireKey: 'elemental-explosion',
+          sourcePlayer: 456,
         }),
       ];
-      
+
       const events = [
         createMockEvent({
           timestamp: 1500,
@@ -441,7 +443,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
         });
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result.uniqueAffixScripts.size).toBe(2);
       expect(result.playerAffixScripts.size).toBe(2);
       expect(result.grimoireAffixScripts.size).toBe(2);
@@ -449,10 +451,8 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
     });
 
     it('should calculate processing time and confidence', async () => {
-      const grimoireDetections = [
-        createMockGrimoire({ grimoireKey: 'banner-bearer' }),
-      ];
-      
+      const grimoireDetections = [createMockGrimoire({ grimoireKey: 'banner-bearer' })];
+
       const events = [
         createMockEvent({
           timestamp: 1500,
@@ -472,17 +472,15 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       });
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result.processingTime).toBeGreaterThanOrEqual(0); // Processing time should always be >= 0
       expect(result.confidence).toBeGreaterThanOrEqual(0); // Confidence should be >= 0
       expect(result.confidence).toBeLessThanOrEqual(1);
     });
 
     it('should handle empty results correctly', async () => {
-      const grimoireDetections = [
-        createMockGrimoire({ grimoireKey: 'banner-bearer' }),
-      ];
-      
+      const grimoireDetections = [createMockGrimoire({ grimoireKey: 'banner-bearer' })];
+
       const events = [
         createMockEvent({
           timestamp: 1500,
@@ -495,7 +493,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       mockScribingMapper.getAffixByAbilityId.mockResolvedValue(null);
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result.detections).toHaveLength(0);
       expect(result.uniqueAffixScripts.size).toBe(0);
       // Even with no detections, there may be a base confidence level
@@ -550,7 +548,7 @@ describe('AffixScriptDetector - Comprehensive Coverage Tests', () => {
       jest.spyOn(detector as any, 'detectAffixByEffectPattern').mockReturnValue([]);
       jest.spyOn(detector as any, 'detectByBuffDebuffPatterns').mockReturnValue([]);
       jest.spyOn(detector as any, 'detectByPersistentEffects').mockReturnValue([]);
-      
+
       mockScribingMapper.getAffixByAbilityId.mockRejectedValue(new Error('Mapping failed'));
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);

@@ -1,7 +1,22 @@
 /**
  * Comprehensive Ability ID to Scribing Component Mapping
  * 
- * This module provides reverse lookup mappings for ESO scribing components
+ * This module provides reverse lookup mappings for ESO scri      const id = grimoire.id;
+      const name = grimoire.name;
+      
+      if (typeof id === 'number' && typeof name === 'string') {
+        const mapping: AbilityScribingMapping = {
+          abilityId: id,
+          type: 'grimoire',
+          grimoireKey,
+          componentKey: grimoireKey,
+          name: name,
+          category: 'grimoire',
+          description: typeof grimoire.description === 'string' ? grimoire.description : undefined,
+        };
+
+        this.lookup.grimoires.set(id, mapping);
+      }ents
  * based on ability IDs found in combat logs.
  */
 
@@ -23,11 +38,41 @@ export interface ScribingComponentLookup {
   all: Map<number, AbilityScribingMapping[]>;
 }
 
+interface ScribingTransformation {
+  name?: string;
+  abilityIds?: number[];
+  [key: string]: unknown;
+}
+
+interface ScribingGrimoire {
+  id?: number;
+  name?: string;
+  abilityIds?: number[];
+  transformations?: Record<string, unknown>;
+  nameTransformations?: Record<string, ScribingTransformation>;
+  [key: string]: unknown;
+}
+
+interface ScribingScript {
+  name?: string;
+  description?: string;
+  abilityIds?: number[];
+  compatibleGrimoires?: string[];
+  [key: string]: unknown;
+}
+
+export interface ScribingData {
+  grimoires?: Record<string, ScribingGrimoire>;
+  signatureScripts?: Record<string, ScribingScript>;
+  affixScripts?: Record<string, ScribingScript>;
+  [key: string]: unknown;
+}
+
 /**
  * Class to build and maintain comprehensive scribing component mappings
  */
 export class AbilityScribingMapper {
-  private scribingData: any = null;
+  private scribingData: ScribingData | null = null;
   private lookup: ScribingComponentLookup = {
     grimoires: new Map(),
     transformations: new Map(),
@@ -53,7 +98,7 @@ export class AbilityScribingMapper {
   /**
    * Create an AbilityScribingMapper instance with provided data (for testing)
    */
-  static createWithData(scribingData: any): AbilityScribingMapper {
+  static createWithData(scribingData: ScribingData): AbilityScribingMapper {
     const mapper = new AbilityScribingMapper();
     mapper.scribingData = scribingData;
     mapper.buildMappings();
@@ -79,8 +124,8 @@ export class AbilityScribingMapper {
         this.scribingData = await response.json();
       }
       this.buildMappings();
-    } catch (error) {
-      console.error('Failed to initialize ability scribing mapper:', error);
+    } catch {
+      // console.error('Failed to initialize ability scribing mapper:', error);
       throw new Error('Ability scribing mapper initialization failed');
     }
   }
@@ -102,80 +147,95 @@ export class AbilityScribingMapper {
    * Build mappings for base grimoire ability IDs
    */
   private buildGrimoireMappings(): void {
-    if (!this.scribingData.grimoires) return;
+    if (!this.scribingData?.grimoires) return;
 
-    Object.entries(this.scribingData.grimoires).forEach(([grimoireKey, grimoire]: [string, any]) => {
-      const mapping: AbilityScribingMapping = {
-        abilityId: grimoire.id,
-        type: 'grimoire',
-        grimoireKey,
-        componentKey: grimoireKey,
-        name: grimoire.name,
-        category: 'grimoire',
-        description: `Base ability for ${grimoire.name} grimoire`,
-      };
+    Object.entries(this.scribingData.grimoires).forEach(
+      ([grimoireKey, grimoire]: [string, ScribingGrimoire]) => {
+        const id = grimoire.id;
+        const name = grimoire.name;
 
-      this.lookup.grimoires.set(grimoire.id, mapping);
-    });
+        if (typeof id === 'number' && typeof name === 'string') {
+          const mapping: AbilityScribingMapping = {
+            abilityId: id,
+            type: 'grimoire',
+            grimoireKey,
+            componentKey: grimoireKey,
+            name: name,
+            category: 'grimoire',
+            description: `Base ability for ${name} grimoire`,
+          };
+
+          this.lookup.grimoires.set(id, mapping);
+        }
+      },
+    );
   }
 
   /**
    * Build mappings for name transformation ability IDs (focus scripts)
    */
   private buildTransformationMappings(): void {
-    if (!this.scribingData.grimoires) return;
+    if (!this.scribingData || !this.scribingData.grimoires) return;
 
-    Object.entries(this.scribingData.grimoires).forEach(([grimoireKey, grimoire]: [string, any]) => {
-      if (grimoire.nameTransformations) {
-        Object.entries(grimoire.nameTransformations).forEach(([transformKey, transformation]: [string, any]) => {
-          if (transformation.abilityIds && Array.isArray(transformation.abilityIds)) {
-            transformation.abilityIds.forEach((abilityId: number) => {
-              const mapping: AbilityScribingMapping = {
-                abilityId,
-                type: 'transformation',
-                grimoireKey,
-                componentKey: transformKey,
-                name: transformation.name,
-                category: 'focus-script',
-                description: `${transformation.name} (${grimoireKey} with ${transformKey} focus)`,
-              };
+    Object.entries(this.scribingData.grimoires).forEach(
+      ([grimoireKey, grimoire]: [string, ScribingGrimoire]) => {
+        if (grimoire.nameTransformations) {
+          Object.entries(grimoire.nameTransformations).forEach(
+            ([transformKey, transformation]: [string, ScribingTransformation]) => {
+              if (transformation.abilityIds && Array.isArray(transformation.abilityIds)) {
+                transformation.abilityIds.forEach((abilityId: number) => {
+                  const mapping: AbilityScribingMapping = {
+                    abilityId,
+                    type: 'transformation',
+                    grimoireKey,
+                    componentKey: transformKey,
+                    name: transformation.name || transformKey,
+                    category: 'focus-script',
+                    description: `${transformation.name || transformKey} (${grimoireKey} with ${transformKey} focus)`,
+                  };
 
-              this.lookup.transformations.set(abilityId, mapping);
-            });
-          }
-        });
-      }
-    });
+                  this.lookup.transformations.set(abilityId, mapping);
+                });
+              }
+            },
+          );
+        }
+      },
+    );
   }
 
   /**
    * Build mappings for signature script ability IDs
    */
   private buildSignatureMappings(): void {
-    if (!this.scribingData.signatureScripts) return;
+    if (!this.scribingData || !this.scribingData.signatureScripts) return;
 
-    Object.entries(this.scribingData.signatureScripts).forEach(([signatureKey, signature]: [string, any]) => {
-      if (signature.abilityIds && Array.isArray(signature.abilityIds)) {
-        signature.abilityIds.forEach((abilityId: number) => {
-          // Find compatible grimoires for this signature
-          const compatibleGrimoires = signature.compatibleGrimoires || [];
-          
-          compatibleGrimoires.forEach((grimoireKey: string) => {
-            const mapping: AbilityScribingMapping = {
-              abilityId,
-              type: 'signature',
-              grimoireKey,
-              componentKey: signatureKey,
-              name: signature.name,
-              category: 'signature-script',
-              description: signature.description || `${signature.name} signature script effect`,
-            };
+    Object.entries(this.scribingData.signatureScripts).forEach(
+      ([signatureKey, signature]: [string, ScribingScript]) => {
+        if (signature.abilityIds && Array.isArray(signature.abilityIds)) {
+          signature.abilityIds.forEach((abilityId: number) => {
+            // Find compatible grimoires for this signature
+            const compatibleGrimoires = signature.compatibleGrimoires || [];
 
-            this.lookup.signatures.set(abilityId, mapping);
+            compatibleGrimoires.forEach((grimoireKey: string) => {
+              const mapping: AbilityScribingMapping = {
+                abilityId,
+                type: 'signature',
+                grimoireKey,
+                componentKey: signatureKey,
+                name: signature.name || signatureKey,
+                category: 'signature-script',
+                description:
+                  signature.description ||
+                  `${signature.name || signatureKey} signature script effect`,
+              };
+
+              this.lookup.signatures.set(abilityId, mapping);
+            });
           });
-        });
-      }
-    });
+        }
+      },
+    );
   }
 
   /**
@@ -184,31 +244,33 @@ export class AbilityScribingMapper {
    * but may have associated buff/debuff IDs
    */
   private buildAffixMappings(): void {
-    if (!this.scribingData.affixScripts) return;
+    if (!this.scribingData || !this.scribingData.affixScripts) return;
 
-    Object.entries(this.scribingData.affixScripts).forEach(([affixKey, affix]: [string, any]) => {
-      // Affix scripts typically manifest as buffs/debuffs rather than direct ability casts
-      // We'll map known affix-related ability IDs if they exist
-      if (affix.abilityIds && Array.isArray(affix.abilityIds)) {
-        affix.abilityIds.forEach((abilityId: number) => {
-          const compatibleGrimoires = affix.compatibleGrimoires || [];
-          
-          compatibleGrimoires.forEach((grimoireKey: string) => {
-            const mapping: AbilityScribingMapping = {
-              abilityId,
-              type: 'affix',
-              grimoireKey,
-              componentKey: affixKey,
-              name: affix.name,
-              category: 'affix-script',
-              description: affix.description || `${affix.name} affix script effect`,
-            };
+    Object.entries(this.scribingData.affixScripts).forEach(
+      ([affixKey, affix]: [string, ScribingScript]) => {
+        // Affix scripts typically manifest as buffs/debuffs rather than direct ability casts
+        // We'll map known affix-related ability IDs if they exist
+        if (affix.abilityIds && Array.isArray(affix.abilityIds)) {
+          affix.abilityIds.forEach((abilityId: number) => {
+            const compatibleGrimoires = affix.compatibleGrimoires || [];
 
-            this.lookup.affixes.set(abilityId, mapping);
+            compatibleGrimoires.forEach((grimoireKey: string) => {
+              const mapping: AbilityScribingMapping = {
+                abilityId,
+                type: 'affix',
+                grimoireKey,
+                componentKey: affixKey,
+                name: affix.name || affixKey,
+                category: 'affix-script',
+                description: affix.description || `${affix.name || affixKey} affix script effect`,
+              };
+
+              this.lookup.affixes.set(abilityId, mapping);
+            });
           });
-        });
-      }
-    });
+        }
+      },
+    );
   }
 
   /**
@@ -216,10 +278,11 @@ export class AbilityScribingMapper {
    */
   private buildCombinedMappings(): void {
     // Combine all mappings into a single lookup table
-    [...this.lookup.grimoires.entries(),
-     ...this.lookup.transformations.entries(),
-     ...this.lookup.signatures.entries(),
-     ...this.lookup.affixes.entries(),
+    [
+      ...this.lookup.grimoires.entries(),
+      ...this.lookup.transformations.entries(),
+      ...this.lookup.signatures.entries(),
+      ...this.lookup.affixes.entries(),
     ].forEach(([abilityId, mapping]) => {
       if (!this.lookup.all.has(abilityId)) {
         this.lookup.all.set(abilityId, []);
@@ -275,45 +338,57 @@ export class AbilityScribingMapper {
    */
   public getAbilityIdsForGrimoire(grimoireKey: string): number[] {
     const abilityIds: number[] = [];
-    
+
     // Add base grimoire ID
     for (const [abilityId, mapping] of this.lookup.grimoires.entries()) {
       if (mapping.grimoireKey === grimoireKey) {
         abilityIds.push(abilityId);
       }
     }
-    
+
     // Add transformation IDs
     for (const [abilityId, mapping] of this.lookup.transformations.entries()) {
       if (mapping.grimoireKey === grimoireKey) {
         abilityIds.push(abilityId);
       }
     }
-    
+
     // Add signature IDs - check original data for compatibility
-    if (this.scribingData.signatureScripts) {
-      Object.entries(this.scribingData.signatureScripts).forEach(([signatureKey, signature]: [string, any]) => {
-        if (signature.abilityIds && Array.isArray(signature.abilityIds) && 
-            signature.compatibleGrimoires && signature.compatibleGrimoires.includes(grimoireKey)) {
-          signature.abilityIds.forEach((abilityId: number) => {
-            abilityIds.push(abilityId);
-          });
-        }
-      });
+    if (this.scribingData && this.scribingData.signatureScripts) {
+      Object.entries(this.scribingData.signatureScripts).forEach(
+        ([_signatureKey, signature]: [string, ScribingScript]) => {
+          if (
+            signature.abilityIds &&
+            Array.isArray(signature.abilityIds) &&
+            signature.compatibleGrimoires &&
+            signature.compatibleGrimoires.includes(grimoireKey)
+          ) {
+            signature.abilityIds.forEach((abilityId: number) => {
+              abilityIds.push(abilityId);
+            });
+          }
+        },
+      );
     }
-    
+
     // Add affix IDs - check original data for compatibility
-    if (this.scribingData.affixScripts) {
-      Object.entries(this.scribingData.affixScripts).forEach(([affixKey, affix]: [string, any]) => {
-        if (affix.abilityIds && Array.isArray(affix.abilityIds) && 
-            affix.compatibleGrimoires && affix.compatibleGrimoires.includes(grimoireKey)) {
-          affix.abilityIds.forEach((abilityId: number) => {
-            abilityIds.push(abilityId);
-          });
-        }
-      });
+    if (this.scribingData && this.scribingData.affixScripts) {
+      Object.entries(this.scribingData.affixScripts).forEach(
+        ([_affixKey, affix]: [string, ScribingScript]) => {
+          if (
+            affix.abilityIds &&
+            Array.isArray(affix.abilityIds) &&
+            affix.compatibleGrimoires &&
+            affix.compatibleGrimoires.includes(grimoireKey)
+          ) {
+            affix.abilityIds.forEach((abilityId: number) => {
+              abilityIds.push(abilityId);
+            });
+          }
+        },
+      );
     }
-    
+
     return [...new Set(abilityIds)]; // Remove duplicates
   }
 
@@ -331,7 +406,7 @@ export class AbilityScribingMapper {
   /**
    * Export mapping data as JSON for external use
    */
-  public exportMappings(): any {
+  public exportMappings(): Record<string, unknown> {
     return {
       stats: {
         totalGrimoires: this.lookup.grimoires.size,
@@ -350,15 +425,27 @@ export class AbilityScribingMapper {
   /**
    * Get mapping statistics
    */
-  public getStats() {
+  public getStats(): {
+    totalGrimoires: number;
+    totalTransformations: number;
+    totalSignatures: number;
+    totalAffixes: number;
+    totalMappings: number;
+    databaseVersion: string;
+    lastUpdated: string;
+  } {
     return {
       totalGrimoires: this.lookup.grimoires.size,
       totalTransformations: this.lookup.transformations.size,
       totalSignatures: this.lookup.signatures.size,
       totalAffixes: this.lookup.affixes.size,
       totalMappings: this.lookup.all.size,
-      databaseVersion: this.scribingData?.version || 'unknown',
-      lastUpdated: this.scribingData?.lastUpdated || 'unknown',
+      databaseVersion:
+        typeof this.scribingData?.version === 'string' ? this.scribingData.version : 'unknown',
+      lastUpdated:
+        typeof this.scribingData?.lastUpdated === 'string'
+          ? this.scribingData.lastUpdated
+          : 'unknown',
     };
   }
 
@@ -405,27 +492,27 @@ class LazyAbilityScribingMapper {
     return this._mapper;
   }
 
-  async getScribingComponent(abilityId: number) {
+  async getScribingComponent(abilityId: number): Promise<AbilityScribingMapping[]> {
     const mapper = await this.ensureInitialized();
     return mapper.getScribingComponent(abilityId);
   }
 
-  async getGrimoireByAbilityId(abilityId: number) {
+  async getGrimoireByAbilityId(abilityId: number): Promise<AbilityScribingMapping | null> {
     const mapper = await this.ensureInitialized();
     return mapper.getGrimoireByAbilityId(abilityId);
   }
 
-  async getTransformationByAbilityId(abilityId: number) {
+  async getTransformationByAbilityId(abilityId: number): Promise<AbilityScribingMapping | null> {
     const mapper = await this.ensureInitialized();
     return mapper.getTransformationByAbilityId(abilityId);
   }
 
-  async getSignatureByAbilityId(abilityId: number) {
+  async getSignatureByAbilityId(abilityId: number): Promise<AbilityScribingMapping | null> {
     const mapper = await this.ensureInitialized();
     return mapper.getSignatureByAbilityId(abilityId);
   }
 
-  async getAffixByAbilityId(abilityId: number) {
+  async getAffixByAbilityId(abilityId: number): Promise<AbilityScribingMapping | null> {
     const mapper = await this.ensureInitialized();
     return mapper.getAffixByAbilityId(abilityId);
   }
@@ -435,7 +522,15 @@ class LazyAbilityScribingMapper {
     return mapper.isReady();
   }
 
-  async getStats() {
+  async getStats(): Promise<{
+    totalGrimoires: number;
+    totalTransformations: number;
+    totalSignatures: number;
+    totalAffixes: number;
+    totalMappings: number;
+    databaseVersion: string;
+    lastUpdated: string;
+  }> {
     const mapper = await this.ensureInitialized();
     return mapper.getStats();
   }
@@ -453,5 +548,3 @@ class LazyAbilityScribingMapper {
 
 // Keep backward compatibility for browser usage with lazy initialization
 export const abilityScribingMapper = new LazyAbilityScribingMapper();
-
-export default AbilityScribingMapper;

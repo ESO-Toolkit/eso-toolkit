@@ -1,11 +1,16 @@
 /**
  * Tests for AbilityScribingMapper functionality
- * 
+ *
  * Note: This test focuses on core functionality testing with mock data
  * to avoid complex file system and network dependencies.
  */
 
-import { AbilityScribingMapper, AbilityScribingMapping, getAbilityScribingMapper, abilityScribingMapper } from './ability-scribing-mapping';
+import {
+  AbilityScribingMapper,
+  AbilityScribingMapping,
+  getAbilityScribingMapper,
+  abilityScribingMapper,
+} from './ability-scribing-mapping';
 
 // Test setup for AbilityScribingMapper
 // Instead of mocking complex dynamic imports, we'll use the test-specific createWithData method
@@ -21,53 +26,53 @@ const mockScribingData = {
       nameTransformations: {
         'class-mastery': {
           name: 'Class Mastery Focus',
-          abilityIds: [192101, 192102]
+          abilityIds: [192101, 192102],
         },
         'traveling-knife': {
           name: 'Traveling Knife Focus',
-          abilityIds: [192201, 192202]
-        }
-      }
+          abilityIds: [192201, 192202],
+        },
+      },
     },
     'wield-soul': {
       id: 193001,
       name: 'Wield Soul',
       nameTransformations: {
-        'vault': {
+        vault: {
           name: 'Vault Focus',
-          abilityIds: [193101]
-        }
-      }
-    }
+          abilityIds: [193101],
+        },
+      },
+    },
   },
   signatureScripts: {
     'runic-jolt': {
       name: 'Runic Jolt',
       description: 'Lightning damage signature',
       abilityIds: [194001, 194002],
-      compatibleGrimoires: ['scholars-quill', 'wield-soul']
+      compatibleGrimoires: ['scholars-quill', 'wield-soul'],
     },
     'frost-breath': {
       name: 'Frost Breath',
       description: 'Frost damage signature',
       abilityIds: [194101],
-      compatibleGrimoires: ['wield-soul']
-    }
+      compatibleGrimoires: ['wield-soul'],
+    },
   },
   affixScripts: {
     'minor-heroism': {
       name: 'Minor Heroism',
       description: 'Grants Minor Heroism buff',
       abilityIds: [195001],
-      compatibleGrimoires: ['scholars-quill']
+      compatibleGrimoires: ['scholars-quill'],
     },
-    'lifesteal': {
+    lifesteal: {
       name: 'Lifesteal',
       description: 'Heals on damage',
       abilityIds: [195101, 195102],
-      compatibleGrimoires: ['scholars-quill', 'wield-soul']
-    }
-  }
+      compatibleGrimoires: ['scholars-quill', 'wield-soul'],
+    },
+  },
 };
 
 // Mock window object for environment detection
@@ -98,7 +103,7 @@ describe('AbilityScribingMapper', () => {
         componentKey: 'scholars-quill',
         name: "Scholar's Quill",
         category: 'grimoire',
-        description: "Base ability for Scholar's Quill grimoire"
+        description: "Base ability for Scholar's Quill grimoire",
       });
 
       const wieldSoul = mapper.getGrimoireByAbilityId(193001);
@@ -109,7 +114,7 @@ describe('AbilityScribingMapper', () => {
         componentKey: 'wield-soul',
         name: 'Wield Soul',
         category: 'grimoire',
-        description: 'Base ability for Wield Soul grimoire'
+        description: 'Base ability for Wield Soul grimoire',
       });
     });
 
@@ -121,9 +126,9 @@ describe('AbilityScribingMapper', () => {
     it('should handle missing grimoires data gracefully', () => {
       const dataWithoutGrimoires = { ...mockScribingData };
       (dataWithoutGrimoires as any).grimoires = undefined;
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithoutGrimoires);
-      
+
       const result = mapper.getGrimoireByAbilityId(192001);
       expect(result).toBeNull();
     });
@@ -145,7 +150,7 @@ describe('AbilityScribingMapper', () => {
         componentKey: 'class-mastery',
         name: 'Class Mastery Focus',
         category: 'focus-script',
-        description: 'Class Mastery Focus (scholars-quill with class-mastery focus)'
+        description: 'Class Mastery Focus (scholars-quill with class-mastery focus)',
       });
 
       const travelingKnife = mapper.getTransformationByAbilityId(192201);
@@ -156,14 +161,14 @@ describe('AbilityScribingMapper', () => {
         componentKey: 'traveling-knife',
         name: 'Traveling Knife Focus',
         category: 'focus-script',
-        description: 'Traveling Knife Focus (scholars-quill with traveling-knife focus)'
+        description: 'Traveling Knife Focus (scholars-quill with traveling-knife focus)',
       });
     });
 
     it('should handle multiple ability IDs for same transformation', () => {
       const classMastery1 = mapper.getTransformationByAbilityId(192101);
       const classMastery2 = mapper.getTransformationByAbilityId(192102);
-      
+
       expect(classMastery1?.componentKey).toBe('class-mastery');
       expect(classMastery2?.componentKey).toBe('class-mastery');
       expect(classMastery1?.name).toBe(classMastery2?.name);
@@ -177,10 +182,10 @@ describe('AbilityScribingMapper', () => {
     it('should get focus script type correctly', () => {
       const focusType = mapper.getFocusScriptType('scholars-quill', 192101);
       expect(focusType).toBe('class-mastery');
-      
+
       const nonExistent = mapper.getFocusScriptType('scholars-quill', 999999);
       expect(nonExistent).toBeNull();
-      
+
       const wrongGrimoire = mapper.getFocusScriptType('wrong-grimoire', 192101);
       expect(wrongGrimoire).toBeNull();
     });
@@ -206,8 +211,10 @@ describe('AbilityScribingMapper', () => {
       // Runic Jolt is compatible with both grimoires, so we should get mappings for both
       const allRunicJoltMappings = mapper.getScribingComponent(194001);
       expect(allRunicJoltMappings.length).toBeGreaterThan(0);
-      
-      const signatureMapping = allRunicJoltMappings.find((m: AbilityScribingMapping) => m.type === 'signature');
+
+      const signatureMapping = allRunicJoltMappings.find(
+        (m: AbilityScribingMapping) => m.type === 'signature',
+      );
       expect(signatureMapping).toBeDefined();
       expect(['scholars-quill', 'wield-soul']).toContain(signatureMapping!.grimoireKey);
     });
@@ -220,9 +227,9 @@ describe('AbilityScribingMapper', () => {
     it('should handle missing signature scripts data gracefully', () => {
       const dataWithoutSignatures = { ...mockScribingData };
       (dataWithoutSignatures as any).signatureScripts = undefined;
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithoutSignatures);
-      
+
       const result = mapper.getSignatureByAbilityId(194001);
       expect(result).toBeNull();
     });
@@ -247,7 +254,7 @@ describe('AbilityScribingMapper', () => {
     it('should handle affix scripts with multiple ability IDs', () => {
       const lifesteal1 = mapper.getAffixByAbilityId(195101);
       const lifesteal2 = mapper.getAffixByAbilityId(195102);
-      
+
       expect(lifesteal1?.componentKey).toBe('lifesteal');
       expect(lifesteal2?.componentKey).toBe('lifesteal');
       expect(lifesteal1?.name).toBe(lifesteal2?.name);
@@ -261,9 +268,9 @@ describe('AbilityScribingMapper', () => {
     it('should handle missing affix scripts data gracefully', () => {
       const dataWithoutAffixes = { ...mockScribingData };
       (dataWithoutAffixes as any).affixScripts = undefined;
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithoutAffixes);
-      
+
       const result = mapper.getAffixByAbilityId(195001);
       expect(result).toBeNull();
     });
@@ -280,8 +287,10 @@ describe('AbilityScribingMapper', () => {
       const components = mapper.getScribingComponent(194001);
       expect(Array.isArray(components)).toBe(true);
       expect(components.length).toBeGreaterThan(0);
-      
-      const signatureMapping = components.find((c: AbilityScribingMapping) => c.type === 'signature');
+
+      const signatureMapping = components.find(
+        (c: AbilityScribingMapping) => c.type === 'signature',
+      );
       expect(signatureMapping).toBeDefined();
     });
 
@@ -300,13 +309,13 @@ describe('AbilityScribingMapper', () => {
 
     it('should get all ability IDs for a grimoire', () => {
       const abilityIds = mapper.getAbilityIdsForGrimoire('scholars-quill');
-      
+
       expect(abilityIds).toContain(192001); // Base grimoire
       expect(abilityIds).toContain(192101); // Class mastery transformation
       expect(abilityIds).toContain(192201); // Traveling knife transformation
       expect(abilityIds).toContain(194001); // Runic jolt signature (compatible)
       expect(abilityIds).toContain(195001); // Minor heroism affix
-      
+
       // Should not contain duplicates
       const uniqueIds = [...new Set(abilityIds)];
       expect(abilityIds.length).toBe(uniqueIds.length);
@@ -319,14 +328,14 @@ describe('AbilityScribingMapper', () => {
 
     it('should export mappings correctly', () => {
       const exported = mapper.exportMappings();
-      
+
       expect(exported.stats).toBeDefined();
       expect(exported.stats.totalGrimoires).toBe(2);
       expect(exported.stats.totalTransformations).toBeGreaterThan(0);
       expect(exported.stats.totalSignatures).toBeGreaterThan(0);
       expect(exported.stats.totalAffixes).toBeGreaterThan(0);
       expect(exported.stats.totalMappings).toBeGreaterThan(0);
-      
+
       expect(exported.grimoires).toBeDefined();
       expect(exported.transformations).toBeDefined();
       expect(exported.signatures).toBeDefined();
@@ -335,7 +344,7 @@ describe('AbilityScribingMapper', () => {
 
     it('should return correct statistics', () => {
       const stats = mapper.getStats();
-      
+
       expect(stats.totalGrimoires).toBe(2);
       expect(stats.totalTransformations).toBeGreaterThan(0);
       expect(stats.totalSignatures).toBeGreaterThan(0);
@@ -347,7 +356,7 @@ describe('AbilityScribingMapper', () => {
 
     it('should handle empty scribing data', () => {
       const mapper = AbilityScribingMapper.createWithData({});
-      
+
       const stats = mapper.getStats();
       expect(stats.totalGrimoires).toBe(0);
       expect(stats.totalTransformations).toBe(0);
@@ -367,7 +376,7 @@ describe('AbilityScribingMapper', () => {
     it.skip('should create singleton instance through getAbilityScribingMapper', async () => {
       const mapper1 = await getAbilityScribingMapper();
       const mapper2 = await getAbilityScribingMapper();
-      
+
       expect(mapper1).toBe(mapper2); // Same instance
       expect(mapper1.isReady()).toBe(true);
     });
@@ -375,7 +384,7 @@ describe('AbilityScribingMapper', () => {
     it.skip('should handle lazy initialization through abilityScribingMapper', async () => {
       const component = await abilityScribingMapper.getScribingComponent(192001);
       expect(Array.isArray(component)).toBe(true);
-      
+
       const ready = await abilityScribingMapper.isReady();
       expect(ready).toBe(true);
     });
@@ -383,22 +392,22 @@ describe('AbilityScribingMapper', () => {
     it.skip('should provide all lazy wrapper methods', async () => {
       const grimoire = await abilityScribingMapper.getGrimoireByAbilityId(192001);
       expect(grimoire).not.toBeNull();
-      
+
       const transformation = await abilityScribingMapper.getTransformationByAbilityId(192101);
       expect(transformation).not.toBeNull();
-      
+
       const signature = await abilityScribingMapper.getSignatureByAbilityId(194001);
       expect(signature).not.toBeNull();
-      
+
       const affix = await abilityScribingMapper.getAffixByAbilityId(195001);
       expect(affix).not.toBeNull();
-      
+
       const stats = await abilityScribingMapper.getStats();
       expect(stats).toBeDefined();
-      
+
       const abilityIds = await abilityScribingMapper.getAbilityIdsForGrimoire('scholars-quill');
       expect(Array.isArray(abilityIds)).toBe(true);
-      
+
       const focusType = await abilityScribingMapper.getFocusScriptType('scholars-quill', 192101);
       expect(focusType).toBe('class-mastery');
     });
@@ -411,12 +420,12 @@ describe('AbilityScribingMapper', () => {
         grimoires: {
           'test-grimoire': {
             id: 999001,
-            name: 'Test Grimoire'
+            name: 'Test Grimoire',
             // No nameTransformations
-          }
-        }
+          },
+        },
       };
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithoutTransformations);
       const transformation = mapper.getTransformationByAbilityId(192101);
       expect(transformation).toBeNull();
@@ -429,11 +438,11 @@ describe('AbilityScribingMapper', () => {
           'test-signature': {
             name: 'Test Signature',
             abilityIds: 'not-an-array', // Invalid format
-            compatibleGrimoires: ['scholars-quill']
-          }
-        }
+            compatibleGrimoires: ['scholars-quill'],
+          },
+        },
       };
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithInvalidIds);
       // Should not crash, just not add invalid mappings
       expect(mapper.isReady()).toBe(true);
@@ -445,12 +454,12 @@ describe('AbilityScribingMapper', () => {
         signatureScripts: {
           'test-signature': {
             name: 'Test Signature',
-            abilityIds: [999001]
+            abilityIds: [999001],
             // No compatibleGrimoires
-          }
-        }
+          },
+        },
       };
-      
+
       const mapper = AbilityScribingMapper.createWithData(dataWithoutCompatible);
       const signature = mapper.getSignatureByAbilityId(999001);
       expect(signature).toBeNull(); // Should not create mappings without compatible grimoires

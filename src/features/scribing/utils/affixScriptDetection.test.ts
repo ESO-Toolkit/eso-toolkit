@@ -31,7 +31,7 @@ interface ReportAbility {
 // Mock the scribing data with comprehensive affix scripts
 jest.mock('../../../../data/scribing-complete.json', () => ({
   affixScripts: {
-    'berserk': {
+    berserk: {
       id: 'berserk',
       name: 'Berserk',
       description: 'Increases damage dealt.',
@@ -59,28 +59,28 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
       category: 'Recovery',
       mechanicalEffect: 'Major Intellect and Major Endurance',
     },
-    'breach': {
+    breach: {
       id: 'breach',
       name: 'Breach',
       description: 'Reduces enemy resistances.',
       category: 'Debuff',
       mechanicalEffect: 'Major/Minor Breach',
     },
-    'maim': {
+    maim: {
       id: 'maim',
       name: 'Maim',
       description: 'Reduces enemy damage dealt.',
       category: 'Debuff',
       mechanicalEffect: 'Major/Minor Maim',
     },
-    'vulnerability': {
+    vulnerability: {
       id: 'vulnerability',
       name: 'Vulnerability',
       description: 'Increases damage taken by enemy.',
       category: 'Debuff',
       mechanicalEffect: 'Major/Minor Vulnerability',
     },
-    'defile': {
+    defile: {
       id: 'defile',
       name: 'Defile',
       description: 'Reduces healing received by enemy.',
@@ -91,15 +91,15 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
   grimoires: {
     'traveling-knife': {
       nameTransformations: {
-        'base': {
+        base: {
           name: 'Traveling Knife',
           abilityIds: [12345, 12346],
         },
       },
     },
-    'vault': {
+    vault: {
       nameTransformations: {
-        'base': {
+        base: {
           name: 'Vault',
           abilityIds: [23456, 23457],
         },
@@ -114,7 +114,9 @@ jest.mock('./Scribing', () => ({
 }));
 
 import { getScribingSkillByAbilityId } from './Scribing';
-const mockGetScribingSkillByAbilityId = getScribingSkillByAbilityId as jest.MockedFunction<typeof getScribingSkillByAbilityId>;
+const mockGetScribingSkillByAbilityId = getScribingSkillByAbilityId as jest.MockedFunction<
+  typeof getScribingSkillByAbilityId
+>;
 
 describe('affixScriptDetection', () => {
   // Test data factories
@@ -138,7 +140,11 @@ describe('affixScriptDetection', () => {
     extraAbilityGameID: 0,
   });
 
-  const createMockDebuffEvent = (abilityGameID: number = 148803, sourceID = 1, targetID = 2): ApplyDebuffEvent => ({
+  const createMockDebuffEvent = (
+    abilityGameID: number = 148803,
+    sourceID = 1,
+    targetID = 2,
+  ): ApplyDebuffEvent => ({
     timestamp: 1000,
     type: 'applydebuff',
     sourceID,
@@ -170,15 +176,7 @@ describe('affixScriptDetection', () => {
       const talent = createMockTalent(12345);
       const castEvents = [createMockCastEvent(12345, 1)];
 
-      const result = analyzeScribingSkillWithAffixScripts(
-        talent,
-        [],
-        [],
-        [],
-        [],
-        castEvents,
-        1,
-      );
+      const result = analyzeScribingSkillWithAffixScripts(talent, [], [], [], [], castEvents, 1);
 
       expect(result?.wasCastInFight).toBe(true);
     });
@@ -187,15 +185,7 @@ describe('affixScriptDetection', () => {
       const talent = createMockTalent(12345);
       const castEvents = [createMockCastEvent(54321, 1)]; // Different ability
 
-      const result = analyzeScribingSkillWithAffixScripts(
-        talent,
-        [],
-        [],
-        [],
-        [],
-        castEvents,
-        1,
-      );
+      const result = analyzeScribingSkillWithAffixScripts(talent, [], [], [], [], castEvents, 1);
 
       expect(result?.wasCastInFight).toBe(false);
     });
@@ -286,15 +276,7 @@ describe('affixScriptDetection', () => {
       const talent = createMockTalent(12345);
       const buffEvents = [createMockBuffEvent(218015, 1)];
 
-      const result = analyzeScribingSkillWithAffixScripts(
-        talent,
-        buffEvents,
-        [],
-        [],
-        [],
-        [],
-        1,
-      );
+      const result = analyzeScribingSkillWithAffixScripts(talent, buffEvents, [], [], [], [], 1);
 
       expect(result?.wasCastInFight).toBe(false);
       expect(result?.affixScripts).toBeUndefined();
@@ -303,15 +285,7 @@ describe('affixScriptDetection', () => {
     it('should handle empty events arrays', () => {
       const talent = createMockTalent(12345);
 
-      const result = analyzeScribingSkillWithAffixScripts(
-        talent,
-        [],
-        [],
-        [],
-        [],
-        [],
-        1,
-      );
+      const result = analyzeScribingSkillWithAffixScripts(talent, [], [], [], [], [], 1);
 
       expect(result).toBeDefined();
       expect(result?.wasCastInFight).toBe(false);
@@ -412,7 +386,7 @@ describe('affixScriptDetection', () => {
       ];
 
       const chips = createAffixScriptChips(affixScripts);
-      
+
       expect(chips).toHaveLength(1);
       expect(chips[0]).toEqual({
         id: 'savagery-and-prophecy',
@@ -475,14 +449,12 @@ describe('affixScriptDetection', () => {
 
     it('should handle very large datasets efficiently', () => {
       const talent = createMockTalent(12345);
-      
+
       // Create large datasets
-      const largeBuffEvents = Array.from({ length: 1000 }, (_, i) => 
+      const largeBuffEvents = Array.from({ length: 1000 }, (_, i) =>
         createMockBuffEvent(218015, 1),
       );
-      const largeCastEvents = Array.from({ length: 100 }, (_, i) => 
-        createMockCastEvent(12345, 1),
-      );
+      const largeCastEvents = Array.from({ length: 100 }, (_, i) => createMockCastEvent(12345, 1));
 
       const startTime = Date.now();
       const result = analyzeScribingSkillWithAffixScripts(

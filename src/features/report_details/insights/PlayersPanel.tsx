@@ -55,15 +55,21 @@ import { PlayersPanelView } from './PlayersPanelView';
 export const PlayersPanel: React.FC = () => {
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
-    Record<string, Record<string, {
-      grimoire: string;
-      transformation: string;
-      transformationType: string;
-      confidence: number;
-      matchMethod: string;
-      recipeSummary: string;
-      tooltipInfo: string;
-    }>>
+    Record<
+      string,
+      Record<
+        string,
+        {
+          grimoire: string;
+          transformation: string;
+          transformationType: string;
+          confidence: number;
+          matchMethod: string;
+          recipeSummary: string;
+          tooltipInfo: string;
+        }
+      >
+    >
   >({});
 
   // Get report/fight context for CPM and deeplink
@@ -840,15 +846,21 @@ export const PlayersPanel: React.FC = () => {
   // Effect to lookup scribing recipes for detected skills
   React.useEffect(() => {
     const lookupRecipes = async (): Promise<void> => {
-      const newRecipes: Record<string, Record<string, {
-        grimoire: string;
-        transformation: string;
-        transformationType: string;
-        confidence: number;
-        matchMethod: string;
-        recipeSummary: string;
-        tooltipInfo: string;
-      }>> = {};
+      const newRecipes: Record<
+        string,
+        Record<
+          string,
+          {
+            grimoire: string;
+            transformation: string;
+            transformationType: string;
+            confidence: number;
+            matchMethod: string;
+            recipeSummary: string;
+            tooltipInfo: string;
+          }
+        >
+      > = {};
 
       for (const [playerId, grimoires] of Object.entries(scribingSkillsByPlayer)) {
         newRecipes[playerId] = {};
@@ -863,14 +875,18 @@ export const PlayersPanel: React.FC = () => {
             // Try recipe lookup with the skill's main ID first
             try {
               // eslint-disable-next-line no-console
-              console.log(`🔍 Looking up recipe for skill: ${skill.skillName} (ID: ${skill.skillId})`);
-              
+              console.log(
+                `🔍 Looking up recipe for skill: ${skill.skillName} (ID: ${skill.skillId})`,
+              );
+
               let recipeMatch = await findScribingRecipe(skill.skillId, skill.skillName);
-              
+
               // If that doesn't work, try with the first effect's ability ID
               if (!recipeMatch && effectWithId) {
                 // eslint-disable-next-line no-console
-                console.log(`🔍 Trying with effect ID: ${effectWithId.abilityId} (${effectWithId.abilityName})`);
+                console.log(
+                  `🔍 Trying with effect ID: ${effectWithId.abilityId} (${effectWithId.abilityName})`,
+                );
                 recipeMatch = await findScribingRecipe(
                   effectWithId.abilityId,
                   effectWithId.abilityName,
@@ -879,7 +895,9 @@ export const PlayersPanel: React.FC = () => {
 
               if (recipeMatch) {
                 // eslint-disable-next-line no-console
-                console.log(`✅ Found recipe: ${recipeMatch.grimoire.name} + ${recipeMatch.transformation?.name}`);
+                console.log(
+                  `✅ Found recipe: ${recipeMatch.grimoire.name} + ${recipeMatch.transformation?.name}`,
+                );
                 const recipeDisplay = formatScribingRecipeForDisplay(recipeMatch);
                 newRecipes[playerId][skill.skillId] = recipeDisplay;
               } else {

@@ -1,9 +1,9 @@
 import '@testing-library/jest-dom';
 
-import { 
-  loadScribingDatabase, 
+import {
+  loadScribingDatabase,
   findScribingRecipe,
-  ScribingRecipeMatch 
+  ScribingRecipeMatch,
 } from './scribingRecipeUtils';
 
 // Mock the global fetch function
@@ -72,7 +72,7 @@ describe('scribingRecipeUtils', () => {
   describe('loadScribingDatabase', () => {
     it('should load and return scribing data', async () => {
       const result = await loadScribingDatabase();
-      
+
       expect(fetch).toHaveBeenCalledWith('/data/scribing-complete.json');
       expect(result).toEqual(mockScribingData);
     });
@@ -83,17 +83,17 @@ describe('scribingRecipeUtils', () => {
       // First call should fetch
       await loadScribingDatabase();
       // expect(fetch).toHaveBeenCalledTimes(1);
-      
+
       // Second call should use cache (no additional fetch)
       await loadScribingDatabase();
       // expect(fetch).toHaveBeenCalledTimes(1);
-      
+
       // Just verify the function works
       expect(true).toBe(true);
     });
 
     it('should handle fetch errors', async () => {
-      // Import fresh module to avoid cache  
+      // Import fresh module to avoid cache
       jest.doMock('./scribingRecipeUtils', () => {
         let database: any = null;
         return {
@@ -104,10 +104,10 @@ describe('scribingRecipeUtils', () => {
           findScribingRecipe: jest.fn(),
         };
       });
-      
+
       const { loadScribingDatabase: freshLoader } = await import('./scribingRecipeUtils');
       await expect(freshLoader()).rejects.toThrow('Fetch failed');
-      
+
       jest.dontMock('./scribingRecipeUtils');
     });
 
@@ -122,7 +122,7 @@ describe('scribingRecipeUtils', () => {
   describe('findScribingRecipe', () => {
     it('should find exact ability ID match for base grimoire ability', async () => {
       const result = await findScribingRecipe(12345);
-      
+
       expect(result).not.toBeNull();
       expect(result?.grimoire.name).toBe('Trample');
       expect(result?.grimoire.id).toBe(12345);
@@ -132,7 +132,7 @@ describe('scribingRecipeUtils', () => {
 
     it('should find exact ability ID match for transformed ability', async () => {
       const result = await findScribingRecipe(12347);
-      
+
       expect(result).not.toBeNull();
       expect(result?.grimoire.name).toBe('Trample');
       expect(result?.transformation?.type).toBe('physical-damage');
@@ -142,7 +142,7 @@ describe('scribingRecipeUtils', () => {
 
     it('should find match by ability name pattern', async () => {
       const result = await findScribingRecipe(99999, 'Fire Trample');
-      
+
       expect(result).not.toBeNull();
       expect(result?.grimoire.name).toBe('Trample');
       expect(result?.transformation?.type).toBe('fire-damage');
@@ -152,13 +152,13 @@ describe('scribingRecipeUtils', () => {
 
     it('should return null for unknown ability', async () => {
       const result = await findScribingRecipe(99999, 'Unknown Ability');
-      
+
       expect(result).toBeNull();
     });
 
     it('should handle partial name matches', async () => {
       const result = await findScribingRecipe(99999, 'Frost Explosion Damage');
-      
+
       expect(result).not.toBeNull();
       expect(result?.grimoire.name).toBe('Elemental Explosion');
       expect(result?.transformation?.type).toBe('frost-damage');
@@ -169,7 +169,7 @@ describe('scribingRecipeUtils', () => {
 
     it('should prioritize exact ID matches over name matches', async () => {
       const result = await findScribingRecipe(12345, 'Some Other Name');
-      
+
       expect(result).not.toBeNull();
       expect(result?.matchMethod).toBe('exact-id');
       expect(result?.matchConfidence).toBe(1.0);
@@ -177,7 +177,7 @@ describe('scribingRecipeUtils', () => {
 
     it('should handle multiple transformation matches', async () => {
       const result = await findScribingRecipe(54323); // Fire Explosion ability ID
-      
+
       expect(result).not.toBeNull();
       expect(result?.grimoire.name).toBe('Elemental Explosion');
       expect(result?.transformation?.name).toBe('Fire Explosion');
@@ -187,20 +187,20 @@ describe('scribingRecipeUtils', () => {
 
   describe('ScribingRecipeMatch interface', () => {
     it('should have correct structure for complete match', async () => {
-      const result = await findScribingRecipe(12347) as ScribingRecipeMatch;
-      
+      const result = (await findScribingRecipe(12347)) as ScribingRecipeMatch;
+
       expect(result).toHaveProperty('grimoire');
       expect(result).toHaveProperty('transformation');
       expect(result).toHaveProperty('matchConfidence');
       expect(result).toHaveProperty('matchMethod');
-      
+
       expect(result.grimoire).toHaveProperty('name');
       expect(result.grimoire).toHaveProperty('id');
       expect(result.grimoire).toHaveProperty('skillType');
       expect(result.grimoire).toHaveProperty('school');
       expect(result.grimoire).toHaveProperty('cost');
       expect(result.grimoire).toHaveProperty('resource');
-      
+
       if (result.transformation) {
         expect(result.transformation).toHaveProperty('name');
         expect(result.transformation).toHaveProperty('type');
@@ -212,7 +212,7 @@ describe('scribingRecipeUtils', () => {
 
   describe('Error handling', () => {
     it('should handle empty scribing database', async () => {
-      // This test is complex due to module-level database caching. 
+      // This test is complex due to module-level database caching.
       // The empty database logic is present in the implementation.
       // In a real scenario with empty grimoires, the function would return null.
       expect(true).toBe(true);

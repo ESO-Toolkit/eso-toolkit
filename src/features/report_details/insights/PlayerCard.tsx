@@ -24,7 +24,6 @@ import { abbreviateFood, detectFoodFromAuras, getFoodColor } from '@/utils/foodD
 import { createGearSetTooltipProps } from '@/utils/gearSetTooltipMapper';
 import { buildVariantSx, getGearChipProps } from '@/utils/playerCardStyleUtils';
 
-
 import mundusIcon from '../../../assets/MundusStone.png';
 import { ClassIcon } from '../../../components/ClassIcon';
 import { GearDetailsPanel } from '../../../components/GearDetailsPanel';
@@ -47,12 +46,12 @@ import {
 } from '../../../store/selectors/eventsSelectors';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
-import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
-import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
+import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -178,15 +177,26 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const resourceEvents = useSelector(selectResourceEvents);
 
     // Combine combat event data
-    const combatEventData: CombatEventData = React.useMemo(() => ({
-      allReportAbilities: [], // This would need to come from abilities data if available
-      allDebuffEvents: debuffEvents,
-      allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
-      allResourceEvents: resourceEvents,
-      allDamageEvents: damageEvents,
-      allCastEvents: castEvents,
-      allHealingEvents: healingEvents,
-    }), [friendlyBuffEvents, hostileBuffEvents, debuffEvents, damageEvents, healingEvents, castEvents, resourceEvents]);
+    const combatEventData: CombatEventData = React.useMemo(
+      () => ({
+        allReportAbilities: [], // This would need to come from abilities data if available
+        allDebuffEvents: debuffEvents,
+        allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
+        allResourceEvents: resourceEvents,
+        allDamageEvents: damageEvents,
+        allCastEvents: castEvents,
+        allHealingEvents: healingEvents,
+      }),
+      [
+        friendlyBuffEvents,
+        hostileBuffEvents,
+        debuffEvents,
+        damageEvents,
+        healingEvents,
+        castEvents,
+        resourceEvents,
+      ],
+    );
 
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
@@ -236,7 +246,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               scribedSkillData,
             });
           }
-          
+
           if (tooltipProps) {
             lookup.set(key, tooltipProps);
           }

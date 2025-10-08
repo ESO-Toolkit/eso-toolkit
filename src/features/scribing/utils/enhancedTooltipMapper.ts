@@ -1,6 +1,6 @@
 /**
  * Enhanced Scribing Tooltip Mapper with Signature Script Detection
- * 
+ *
  * This module enhances the existing tooltip system to detect signature scripts
  * from combat log data and include them in the tooltip information.
  */
@@ -17,12 +17,13 @@ import {
 } from '@/types/combatlogEvents';
 import { PlayerTalent } from '@/types/playerDetails';
 
-import { analyzeScribingSkillWithSignature } from './enhancedScribingAnalysis';
 import {
   buildTooltipPropsFromAbilityId,
   buildTooltipPropsFromClassAndName,
   buildTooltipProps as originalBuildTooltipProps,
 } from '../../../utils/skillTooltipMapper';
+
+import { analyzeScribingSkillWithSignature } from './enhancedScribingAnalysis';
 
 /**
  * Interface for enhanced combat data used for signature script detection
@@ -49,14 +50,14 @@ export function buildEnhancedTooltipProps(options: {
   combatData?: CombatEventData;
   scribedSkillData?: ScribedSkillData;
 }): ReturnType<typeof originalBuildTooltipProps> {
-  const { 
-    abilityId, 
-    abilityName, 
-    classKey, 
-    talent, 
-    playerId = 1, 
-    combatData, 
-    scribedSkillData, 
+  const {
+    abilityId,
+    abilityName,
+    classKey,
+    talent,
+    playerId = 1,
+    combatData,
+    scribedSkillData,
   } = options;
 
   // If we have combat data and a talent, try to enhance the scribing analysis
@@ -70,7 +71,7 @@ export function buildEnhancedTooltipProps(options: {
       combatData.allBuffEvents,
       combatData.allResourceEvents,
       combatData.allDamageEvents,
-      combatData.allCastEvents.filter(event => event.type === 'cast'),
+      combatData.allCastEvents.filter((event) => event.type === 'cast'),
       combatData.allHealingEvents,
       playerId,
     );
@@ -99,7 +100,7 @@ export function analyzePlayerScribingSkills(
 ): Map<number, ScribedSkillData> {
   const results = new Map<number, ScribedSkillData>();
 
-  talents.forEach(talent => {
+  talents.forEach((talent) => {
     const analysis = analyzeScribingSkillWithSignature(
       talent,
       combatData.allReportAbilities,
@@ -107,7 +108,7 @@ export function analyzePlayerScribingSkills(
       combatData.allBuffEvents,
       combatData.allResourceEvents,
       combatData.allDamageEvents,
-      combatData.allCastEvents.filter(event => event.type === 'cast'),
+      combatData.allCastEvents.filter((event) => event.type === 'cast'),
       combatData.allHealingEvents,
       playerId,
     );
@@ -153,7 +154,7 @@ export function createEnhancedScribedSkillData(
       combatData.allBuffEvents,
       combatData.allResourceEvents,
       combatData.allDamageEvents,
-      combatData.allCastEvents.filter(event => event.type === 'cast'),
+      combatData.allCastEvents.filter((event) => event.type === 'cast'),
       combatData.allHealingEvents,
       playerId,
     );
@@ -170,7 +171,15 @@ export function createEnhancedScribedSkillData(
  * Helper to extract combat data from various data sources
  */
 export function extractCombatData(data: {
-  masterData?: any;
+  masterData?: {
+    reportData?: {
+      report?: {
+        masterData?: {
+          abilities?: ReportAbility[];
+        };
+      };
+    };
+  };
   damageEvents?: DamageEvent[];
   healingEvents?: HealEvent[];
   buffEvents?: BuffEvent[];
@@ -188,8 +197,8 @@ export function extractCombatData(data: {
       allResourceEvents: data.resourceEvents || [],
       allCastEvents: data.castEvents || [],
     };
-  } catch (error) {
-    console.error('Failed to extract combat data:', error);
+  } catch {
+    // console.error('Failed to extract combat data:', error);
     return null;
   }
 }
@@ -212,7 +221,7 @@ export function buildScribingTooltipProps(options: {
     combatData.allBuffEvents,
     combatData.allResourceEvents,
     combatData.allDamageEvents,
-    combatData.allCastEvents.filter(event => event.type === 'cast'),
+    combatData.allCastEvents.filter((event) => event.type === 'cast'),
     combatData.allHealingEvents,
     playerId,
   );

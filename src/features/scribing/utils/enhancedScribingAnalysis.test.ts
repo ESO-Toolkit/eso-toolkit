@@ -15,10 +15,10 @@ jest.mock('./Scribing', () => ({
   getAllGrimoires: jest.fn(() => []),
   GRIMOIRE_NAME_PATTERNS: {
     'Traveling Knife': /Knife/i,
-    'Vault': /Vault/i,
-    'Torchbearer': /Torch/i,
-    'Trample': /Trample/i,
-    'Test': /Test/i,
+    Vault: /Vault/i,
+    Torchbearer: /Torch/i,
+    Trample: /Trample/i,
+    Test: /Test/i,
     'Test Grimoire': /Test/i,
   },
   SCRIBING_BLACKLIST: new Set(['Blacklisted Ability']),
@@ -96,101 +96,115 @@ describe('enhancedScribingAnalysis', () => {
     guid: 123456,
     type: 1,
     abilityIcon: 'test-icon.png',
-    flags: 0
+    flags: 0,
   };
 
-  const mockAbilities: ReportAbility[] = [{
-    guid: 123456,
-    name: 'Test Scribing Ability',
-    type: 1
-  }];
+  const mockAbilities: ReportAbility[] = [
+    {
+      guid: 123456,
+      name: 'Test Scribing Ability',
+      type: 1,
+    },
+  ];
 
-  const mockDebuffEvents: DebuffEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 2,
-    abilityGameID: 123456,
-    type: 'applydebuff',
-    sourceIsFriendly: true,
-    targetIsFriendly: false,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestTarget', id: 2, petOwner: null }
-  }];
+  const mockDebuffEvents: DebuffEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 2,
+      abilityGameID: 123456,
+      type: 'applydebuff',
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestTarget', id: 2, petOwner: null },
+    },
+  ];
 
-  const mockBuffEvents: BuffEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 1,
-    abilityGameID: 61687,
-    type: 'applybuff',
-    sourceIsFriendly: true,
-    targetIsFriendly: true,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestPlayer', id: 1, petOwner: null }
-  }];
+  const mockBuffEvents: BuffEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 1,
+      abilityGameID: 61687,
+      type: 'applybuff',
+      sourceIsFriendly: true,
+      targetIsFriendly: true,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestPlayer', id: 1, petOwner: null },
+    },
+  ];
 
-  const mockResourceEvents: ResourceChangeEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 1,
-    abilityGameID: 123456,
-    type: 'resourcechange',
-    sourceIsFriendly: true,
-    targetIsFriendly: true,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestPlayer', id: 1, petOwner: null },
-    resourceType: 0,
-    resourceChange: 100
-  }];
+  const mockResourceEvents: ResourceChangeEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 1,
+      abilityGameID: 123456,
+      type: 'resourcechange',
+      sourceIsFriendly: true,
+      targetIsFriendly: true,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestPlayer', id: 1, petOwner: null },
+      resourceType: 0,
+      resourceChange: 100,
+    },
+  ];
 
-  const mockDamageEvents: DamageEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 2,
-    abilityGameID: 123456,
-    type: 'damage',
-    sourceIsFriendly: true,
-    targetIsFriendly: false,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestTarget', id: 2, petOwner: null },
-    amount: 1000,
-    unmitigatedAmount: 1200,
-    mitigated: 200,
-    hitType: 1,
-    damageType: 1
-  }];
+  const mockDamageEvents: DamageEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 2,
+      abilityGameID: 123456,
+      type: 'damage',
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestTarget', id: 2, petOwner: null },
+      amount: 1000,
+      unmitigatedAmount: 1200,
+      mitigated: 200,
+      hitType: 1,
+      damageType: 1,
+    },
+  ];
 
-  const mockCastEvents: UnifiedCastEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 2,
-    abilityGameID: 123456,
-    type: 'cast',
-    sourceIsFriendly: true,
-    targetIsFriendly: false,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestTarget', id: 2, petOwner: null }
-  }];
+  const mockCastEvents: UnifiedCastEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 2,
+      abilityGameID: 123456,
+      type: 'cast',
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestTarget', id: 2, petOwner: null },
+    },
+  ];
 
-  const mockHealEvents: HealEvent[] = [{
-    timestamp: 1000,
-    sourceID: 1,
-    targetID: 1,
-    abilityGameID: 123456,
-    type: 'heal',
-    sourceIsFriendly: true,
-    targetIsFriendly: true,
-    fight: 1,
-    source: { name: 'TestPlayer', id: 1, petOwner: null },
-    target: { name: 'TestPlayer', id: 1, petOwner: null },
-    amount: 500,
-    overhealing: 100
-  }];
+  const mockHealEvents: HealEvent[] = [
+    {
+      timestamp: 1000,
+      sourceID: 1,
+      targetID: 1,
+      abilityGameID: 123456,
+      type: 'heal',
+      sourceIsFriendly: true,
+      targetIsFriendly: true,
+      fight: 1,
+      source: { name: 'TestPlayer', id: 1, petOwner: null },
+      target: { name: 'TestPlayer', id: 1, petOwner: null },
+      amount: 500,
+      overhealing: 100,
+    },
+  ];
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -200,7 +214,7 @@ describe('enhancedScribingAnalysis', () => {
     it('should export required functions', () => {
       expect(analyzeScribingSkillWithSignature).toBeDefined();
       expect(analyzeAllPlayersScribingSkillsWithSignatures).toBeDefined();
-      
+
       expect(typeof analyzeScribingSkillWithSignature).toBe('function');
       expect(typeof analyzeAllPlayersScribingSkillsWithSignatures).toBe('function');
     });
@@ -218,7 +232,7 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          1
+          1,
         );
 
         // Function may return null if no scribing skill is detected
@@ -246,24 +260,14 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          1
+          1,
         );
       }).not.toThrow();
     });
 
     it('should handle empty event arrays', () => {
       expect(() => {
-        analyzeScribingSkillWithSignature(
-          mockTalent,
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          [],
-          1
-        );
+        analyzeScribingSkillWithSignature(mockTalent, [], [], [], [], [], [], [], 1);
       }).not.toThrow();
     });
 
@@ -278,7 +282,7 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          999
+          999,
         );
       }).not.toThrow();
     });
@@ -286,7 +290,7 @@ describe('enhancedScribingAnalysis', () => {
     it('should handle talents with missing guid gracefully', () => {
       const talentWithoutGuid = {
         ...mockTalent,
-        guid: undefined
+        guid: undefined,
       } as any;
 
       expect(() => {
@@ -299,7 +303,7 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          1
+          1,
         );
       }).not.toThrow();
     });
@@ -311,7 +315,7 @@ describe('enhancedScribingAnalysis', () => {
       const mockAllTalents = [
         { playerId: 1, talents: [mockTalent] },
         { playerId: 2, talents: [{ ...mockTalent, id: 2 }] },
-        { playerId: 3, talents: [{ ...mockTalent, id: 3 }] }
+        { playerId: 3, talents: [{ ...mockTalent, id: 3 }] },
       ];
 
       try {
@@ -323,7 +327,7 @@ describe('enhancedScribingAnalysis', () => {
           mockResourceEvents,
           mockDamageEvents,
           mockHealEvents,
-          mockCastEvents
+          mockCastEvents,
         );
 
         if (result) {
@@ -346,7 +350,7 @@ describe('enhancedScribingAnalysis', () => {
           mockResourceEvents,
           mockDamageEvents,
           mockHealEvents,
-          mockCastEvents
+          mockCastEvents,
         );
       }).not.toThrow();
     });
@@ -364,7 +368,7 @@ describe('enhancedScribingAnalysis', () => {
           mockResourceEvents,
           mockDamageEvents,
           mockHealEvents,
-          mockCastEvents
+          mockCastEvents,
         );
       }).not.toThrow();
     });
@@ -384,7 +388,7 @@ describe('enhancedScribingAnalysis', () => {
           emptyEvents,
           emptyEvents,
           emptyEvents,
-          1
+          1,
         );
       }).not.toThrow();
     });
@@ -402,7 +406,7 @@ describe('enhancedScribingAnalysis', () => {
           largeEventArray,
           largeEventArray,
           largeEventArray,
-          1
+          1,
         );
       }).not.toThrow();
     });
@@ -418,7 +422,7 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          -1
+          -1,
         );
       }).not.toThrow();
 
@@ -432,7 +436,7 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          0
+          0,
         );
       }).not.toThrow();
     });
@@ -441,7 +445,7 @@ describe('enhancedScribingAnalysis', () => {
   describe('integration with mocked dependencies', () => {
     it('should use mocked scribing utilities', () => {
       const { analyzeScribingSkillEffects, getScribingSkillByAbilityId } = require('./Scribing');
-      
+
       analyzeScribingSkillWithSignature(
         mockTalent,
         mockAbilities,
@@ -451,7 +455,7 @@ describe('enhancedScribingAnalysis', () => {
         mockDamageEvents,
         mockCastEvents,
         mockHealEvents,
-        1
+        1,
       );
 
       // Verify that mocked functions could be called
@@ -461,7 +465,7 @@ describe('enhancedScribingAnalysis', () => {
 
     it('should use mocked signature script detection', () => {
       const { detectSignatureScript } = require('./signatureScriptDetection');
-      
+
       analyzeScribingSkillWithSignature(
         mockTalent,
         mockAbilities,
@@ -471,7 +475,7 @@ describe('enhancedScribingAnalysis', () => {
         mockDamageEvents,
         mockCastEvents,
         mockHealEvents,
-        1
+        1,
       );
 
       expect(detectSignatureScript).toBeDefined();
@@ -652,7 +656,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('damage');
@@ -666,7 +678,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('heal');
@@ -680,7 +700,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('buff');
@@ -694,7 +722,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('debuff');
@@ -708,7 +744,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('resource');
@@ -722,7 +766,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.effects[0].type).toBe('aura');
@@ -743,7 +795,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.recipe).toMatchObject({
@@ -762,7 +822,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.recipe.transformation).toBe('unknown');
@@ -776,7 +844,15 @@ describe('enhancedScribingAnalysis', () => {
       });
 
       const result = analyzeScribingSkillWithSignature(
-        mockTalent, mockAbilities, [], [], [], [], [], [], 1,
+        mockTalent,
+        mockAbilities,
+        [],
+        [],
+        [],
+        [],
+        [],
+        [],
+        1,
       );
 
       expect(result?.recipe.recipeSummary).toContain('Torchbearer');
@@ -791,8 +867,12 @@ describe('enhancedScribingAnalysis', () => {
     });
 
     it('should filter related abilities by grimoire pattern', () => {
-      const { analyzeScribingSkillEffects, GRIMOIRE_NAME_PATTERNS, SCRIBING_BLACKLIST } = require('./Scribing');
-      
+      const {
+        analyzeScribingSkillEffects,
+        GRIMOIRE_NAME_PATTERNS,
+        SCRIBING_BLACKLIST,
+      } = require('./Scribing');
+
       // Mock patterns for testing
       GRIMOIRE_NAME_PATTERNS['Traveling Knife'] = /Knife/i;
       SCRIBING_BLACKLIST.clear();
@@ -886,11 +966,13 @@ describe('enhancedScribingAnalysis', () => {
       const { analyzeScribingSkillEffects } = require('./Scribing');
       analyzeScribingSkillEffects.mockReturnValue({
         grimoire: 'Test Grimoire',
-        effects: [{
-          abilityId: 123,
-          abilityName: 'Test Ability',
-          events: [{ sourceFile: 'damage-events' }],
-        }],
+        effects: [
+          {
+            abilityId: 123,
+            abilityName: 'Test Ability',
+            events: [{ sourceFile: 'damage-events' }],
+          },
+        ],
       });
 
       const mockPlayerDetails = {
@@ -942,11 +1024,13 @@ describe('enhancedScribingAnalysis', () => {
         if (callCount <= 2) {
           return {
             grimoire: 'Test Grimoire',
-            effects: [{
-              abilityId: 123 + callCount,
-              abilityName: `Test Ability ${callCount}`,
-              events: [{ sourceFile: 'damage-events' }],
-            }],
+            effects: [
+              {
+                abilityId: 123 + callCount,
+                abilityName: `Test Ability ${callCount}`,
+                events: [{ sourceFile: 'damage-events' }],
+              },
+            ],
           };
         }
         return null; // Third call returns null
@@ -1007,11 +1091,13 @@ describe('enhancedScribingAnalysis', () => {
         if (callCount === 1) {
           return {
             grimoire: 'Test Grimoire',
-            effects: [{
-              abilityId: 123,
-              abilityName: 'Test Ability',
-              events: [{ sourceFile: 'damage-events' }],
-            }],
+            effects: [
+              {
+                abilityId: 123,
+                abilityName: 'Test Ability',
+                events: [{ sourceFile: 'damage-events' }],
+              },
+            ],
           };
         }
         return null; // Second player has no scribing
@@ -1079,11 +1165,13 @@ describe('enhancedScribingAnalysis', () => {
       const { analyzeScribingSkillEffects } = require('./Scribing');
       analyzeScribingSkillEffects.mockReturnValue({
         grimoire: 'Test Grimoire',
-        effects: [{
-          abilityId: 123,
-          abilityName: 'Test Ability',
-          events: [{ sourceFile: 'damage-events' }],
-        }],
+        effects: [
+          {
+            abilityId: 123,
+            abilityName: 'Test Ability',
+            events: [{ sourceFile: 'damage-events' }],
+          },
+        ],
       });
 
       const mockPlayerDetails = {
@@ -1127,11 +1215,13 @@ describe('enhancedScribingAnalysis', () => {
       const { analyzeScribingSkillEffects } = require('./Scribing');
       analyzeScribingSkillEffects.mockReturnValue({
         grimoire: 'Test Grimoire',
-        effects: [{
-          abilityId: 123,
-          abilityName: 'Test Ability',
-          events: [{ sourceFile: 'damage-events' }],
-        }],
+        effects: [
+          {
+            abilityId: 123,
+            abilityName: 'Test Ability',
+            events: [{ sourceFile: 'damage-events' }],
+          },
+        ],
       });
 
       const mockPlayerDetails = {
@@ -1170,7 +1260,7 @@ describe('enhancedScribingAnalysis', () => {
   describe('performance considerations', () => {
     it('should handle multiple analyses efficiently', () => {
       const startTime = performance.now();
-      
+
       // Run multiple analyses
       for (let i = 0; i < 10; i++) {
         analyzeScribingSkillWithSignature(
@@ -1182,23 +1272,23 @@ describe('enhancedScribingAnalysis', () => {
           mockDamageEvents,
           mockCastEvents,
           mockHealEvents,
-          i + 1
+          i + 1,
         );
       }
-      
+
       const duration = performance.now() - startTime;
-      
+
       // Should complete analyses quickly (under 200ms for 10 analyses)
       expect(duration).toBeLessThan(200);
     });
 
     it('should handle batch analysis efficiently', () => {
       const startTime = performance.now();
-      
+
       const playerIds = [1, 2, 3, 4, 5];
-      const mockAllTalents = playerIds.map(id => ({
+      const mockAllTalents = playerIds.map((id) => ({
         playerId: id,
-        talents: [{ ...mockTalent, id }]
+        talents: [{ ...mockTalent, id }],
       }));
 
       analyzeAllPlayersScribingSkillsWithSignatures(
@@ -1209,11 +1299,11 @@ describe('enhancedScribingAnalysis', () => {
         mockResourceEvents,
         mockDamageEvents,
         mockHealEvents,
-        mockCastEvents
+        mockCastEvents,
       );
-      
+
       const duration = performance.now() - startTime;
-      
+
       // Batch analysis should also be reasonably fast
       expect(duration).toBeLessThan(300);
     });

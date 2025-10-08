@@ -14,7 +14,7 @@ const mockService = {
 
 jest.mock('../algorithms/unified-scribing-service', () => {
   return {
-    UnifiedScribingDetectionService: function() {
+    UnifiedScribingDetectionService: function () {
       return {
         detectScribingRecipes: mockDetectScribingRecipes,
         getSkillScribingData: mockGetSkillScribingData,
@@ -67,13 +67,20 @@ describe('useScribingDetection', () => {
     it('should fetch scribing data when enabled and fightId provided', async () => {
       const mockResult = {
         players: [],
-        summary: { totalCombinations: 0, totalCasts: 0, uniqueGrimoires: 0, uniqueFocusScripts: 0, uniqueSignatureScripts: 0, uniqueAffixScripts: 0 }
+        summary: {
+          totalCombinations: 0,
+          totalCasts: 0,
+          uniqueGrimoires: 0,
+          uniqueFocusScripts: 0,
+          uniqueSignatureScripts: 0,
+          uniqueAffixScripts: 0,
+        },
       };
 
       mockService.detectScribingRecipes.mockResolvedValue(mockResult);
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ enabled: true, fightId: 'test-fight' })
+      const { result } = renderHook(() =>
+        useScribingDetection({ enabled: true, fightId: 'test-fight' }),
       );
 
       // Manually trigger refetch to test service integration wrapped in act
@@ -95,8 +102,8 @@ describe('useScribingDetection', () => {
       const errorMessage = 'Failed to fetch scribing data';
       mockService.detectScribingRecipes!.mockRejectedValue(new Error(errorMessage));
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ enabled: true, fightId: 'test-fight' })
+      const { result } = renderHook(() =>
+        useScribingDetection({ enabled: true, fightId: 'test-fight' }),
       );
 
       await waitFor(() => {
@@ -109,14 +116,14 @@ describe('useScribingDetection', () => {
 
     it('should set loading state during fetch', async () => {
       let resolveFetch: (value: any) => void;
-      const fetchPromise = new Promise(resolve => {
+      const fetchPromise = new Promise((resolve) => {
         resolveFetch = resolve;
       });
 
       mockService.detectScribingRecipes!.mockReturnValue(fetchPromise);
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ enabled: true, fightId: 'test-fight' })
+      const { result } = renderHook(() =>
+        useScribingDetection({ enabled: true, fightId: 'test-fight' }),
       );
 
       // Initially should be loading
@@ -141,7 +148,14 @@ describe('useScribingDetection', () => {
     it('should fetch skill scribing data when player and ability specified', async () => {
       const mockResult = {
         players: [{ playerId: 123, playerName: 'Test Player' }],
-        summary: { totalCombinations: 1, totalCasts: 1, uniqueGrimoires: 1, uniqueFocusScripts: 1, uniqueSignatureScripts: 1, uniqueAffixScripts: 1 }
+        summary: {
+          totalCombinations: 1,
+          totalCasts: 1,
+          uniqueGrimoires: 1,
+          uniqueFocusScripts: 1,
+          uniqueSignatureScripts: 1,
+          uniqueAffixScripts: 1,
+        },
       };
       const mockSkillData = {
         grimoire: 'Trample',
@@ -155,13 +169,13 @@ describe('useScribingDetection', () => {
       mockService.detectScribingRecipes!.mockResolvedValue(mockResult);
       mockService.getScribingDataForSkill!.mockResolvedValue(mockSkillData);
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ 
-          enabled: true, 
+      const { result } = renderHook(() =>
+        useScribingDetection({
+          enabled: true,
           fightId: 'test-fight',
           playerId: 123,
-          abilityId: 12345 
-        })
+          abilityId: 12345,
+        }),
       );
 
       await waitFor(() => {
@@ -176,18 +190,25 @@ describe('useScribingDetection', () => {
     it('should handle skill data fetch errors', async () => {
       mockService.detectScribingRecipes!.mockResolvedValue({
         players: [{ playerId: 123, playerName: 'Test Player' }],
-        summary: { totalCombinations: 1, totalCasts: 1, uniqueGrimoires: 1, uniqueFocusScripts: 1, uniqueSignatureScripts: 1, uniqueAffixScripts: 1 }
+        summary: {
+          totalCombinations: 1,
+          totalCasts: 1,
+          uniqueGrimoires: 1,
+          uniqueFocusScripts: 1,
+          uniqueSignatureScripts: 1,
+          uniqueAffixScripts: 1,
+        },
       });
 
       mockService.getScribingDataForSkill!.mockRejectedValue(new Error('Skill fetch failed'));
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ 
-          enabled: true, 
+      const { result } = renderHook(() =>
+        useScribingDetection({
+          enabled: true,
           fightId: 'test-fight',
           playerId: 123,
-          abilityId: 12345 
-        })
+          abilityId: 12345,
+        }),
       );
 
       await waitFor(() => {
@@ -202,13 +223,20 @@ describe('useScribingDetection', () => {
     it('should refetch data when refetch is called', async () => {
       const mockResult = {
         players: [],
-        summary: { totalCombinations: 0, totalCasts: 0, uniqueGrimoires: 0, uniqueFocusScripts: 0, uniqueSignatureScripts: 0, uniqueAffixScripts: 0 }
+        summary: {
+          totalCombinations: 0,
+          totalCasts: 0,
+          uniqueGrimoires: 0,
+          uniqueFocusScripts: 0,
+          uniqueSignatureScripts: 0,
+          uniqueAffixScripts: 0,
+        },
       };
 
       mockService.detectScribingRecipes!.mockResolvedValue(mockResult);
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ enabled: true, fightId: 'test-fight' })
+      const { result } = renderHook(() =>
+        useScribingDetection({ enabled: true, fightId: 'test-fight' }),
       );
 
       await waitFor(() => {
@@ -227,15 +255,22 @@ describe('useScribingDetection', () => {
     it('should handle refetch errors', async () => {
       const mockResult = {
         players: [],
-        summary: { totalCombinations: 0, totalCasts: 0, uniqueGrimoires: 0, uniqueFocusScripts: 0, uniqueSignatureScripts: 0, uniqueAffixScripts: 0 }
+        summary: {
+          totalCombinations: 0,
+          totalCasts: 0,
+          uniqueGrimoires: 0,
+          uniqueFocusScripts: 0,
+          uniqueSignatureScripts: 0,
+          uniqueAffixScripts: 0,
+        },
       };
 
-      mockService.detectScribingRecipes!
-        .mockResolvedValueOnce(mockResult)
+      mockService
+        .detectScribingRecipes!.mockResolvedValueOnce(mockResult)
         .mockRejectedValueOnce(new Error('Refetch failed'));
 
-      const { result } = renderHook(() => 
-        useScribingDetection({ enabled: true, fightId: 'test-fight' })
+      const { result } = renderHook(() =>
+        useScribingDetection({ enabled: true, fightId: 'test-fight' }),
       );
 
       await waitFor(() => {
@@ -274,12 +309,19 @@ describe('useScribingDetection', () => {
     it('should respect enabled flag', async () => {
       mockService.detectScribingRecipes!.mockResolvedValue({
         players: [],
-        summary: { totalCombinations: 0, totalCasts: 0, uniqueGrimoires: 0, uniqueFocusScripts: 0, uniqueSignatureScripts: 0, uniqueAffixScripts: 0 }
+        summary: {
+          totalCombinations: 0,
+          totalCasts: 0,
+          uniqueGrimoires: 0,
+          uniqueFocusScripts: 0,
+          uniqueSignatureScripts: 0,
+          uniqueAffixScripts: 0,
+        },
       });
 
       const { result, rerender } = renderHook(
         ({ enabled }) => useScribingDetection({ enabled, fightId: 'test-fight' }),
-        { initialProps: { enabled: false } }
+        { initialProps: { enabled: false } },
       );
 
       expect(mockService.detectScribingRecipes).not.toHaveBeenCalled();
@@ -320,7 +362,14 @@ describe('useSkillScribingData', () => {
     it('should fetch when all parameters provided', async () => {
       const mockResult = {
         players: [{ playerId: 123, playerName: 'Test Player' }],
-        summary: { totalCombinations: 1, totalCasts: 1, uniqueGrimoires: 1, uniqueFocusScripts: 1, uniqueSignatureScripts: 1, uniqueAffixScripts: 1 }
+        summary: {
+          totalCombinations: 1,
+          totalCasts: 1,
+          uniqueGrimoires: 1,
+          uniqueFocusScripts: 1,
+          uniqueSignatureScripts: 1,
+          uniqueAffixScripts: 1,
+        },
       };
       const mockSkillData = {
         grimoire: 'Trample',
@@ -334,9 +383,7 @@ describe('useSkillScribingData', () => {
       mockService.detectScribingRecipes!.mockResolvedValue(mockResult);
       mockService.getScribingDataForSkill!.mockResolvedValue(mockSkillData);
 
-      const { result } = renderHook(() => 
-        useSkillScribingData('fight-id', 123, 12345)
-      );
+      const { result } = renderHook(() => useSkillScribingData('fight-id', 123, 12345));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -351,13 +398,18 @@ describe('useSkillScribingData', () => {
     it('should handle fetch errors', async () => {
       mockService.detectScribingRecipes!.mockResolvedValue({
         players: [{ playerId: 123, playerName: 'Test Player' }],
-        summary: { totalCombinations: 1, totalCasts: 1, uniqueGrimoires: 1, uniqueFocusScripts: 1, uniqueSignatureScripts: 1, uniqueAffixScripts: 1 }
+        summary: {
+          totalCombinations: 1,
+          totalCasts: 1,
+          uniqueGrimoires: 1,
+          uniqueFocusScripts: 1,
+          uniqueSignatureScripts: 1,
+          uniqueAffixScripts: 1,
+        },
       });
       mockService.getScribingDataForSkill!.mockRejectedValue(new Error('Skill data fetch failed'));
 
-      const { result } = renderHook(() => 
-        useSkillScribingData('fight-id', 123, 12345)
-      );
+      const { result } = renderHook(() => useSkillScribingData('fight-id', 123, 12345));
 
       await waitFor(() => {
         expect(result.current.loading).toBe(false);
@@ -369,9 +421,16 @@ describe('useSkillScribingData', () => {
     it('should update when parameters change', async () => {
       const mockResult = {
         players: [{ playerId: 123, playerName: 'Test Player' }],
-        summary: { totalCombinations: 1, totalCasts: 1, uniqueGrimoires: 1, uniqueFocusScripts: 1, uniqueSignatureScripts: 1, uniqueAffixScripts: 1 }
+        summary: {
+          totalCombinations: 1,
+          totalCasts: 1,
+          uniqueGrimoires: 1,
+          uniqueFocusScripts: 1,
+          uniqueSignatureScripts: 1,
+          uniqueAffixScripts: 1,
+        },
       };
-      
+
       const mockSkillData1 = {
         grimoire: 'Trample',
         focus: 'Physical Damage',
@@ -386,18 +445,18 @@ describe('useSkillScribingData', () => {
         focus: 'Fire Damage',
         signature: 'Test Signature 2',
         affix: 'Test Affix 2',
-        confidence: 0.90,
+        confidence: 0.9,
         wasCastInFight: true,
       };
 
       mockService.detectScribingRecipes!.mockResolvedValue(mockResult);
-      mockService.getScribingDataForSkill!
-        .mockResolvedValueOnce(mockSkillData1)
+      mockService
+        .getScribingDataForSkill!.mockResolvedValueOnce(mockSkillData1)
         .mockResolvedValueOnce(mockSkillData2);
 
       const { result, rerender } = renderHook(
         ({ abilityId }) => useSkillScribingData('fight-id', 123, abilityId),
-        { initialProps: { abilityId: 12345 } }
+        { initialProps: { abilityId: 12345 } },
       );
 
       await waitFor(() => {

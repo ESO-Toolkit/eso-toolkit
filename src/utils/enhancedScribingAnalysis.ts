@@ -1,6 +1,6 @@
 /**
  * Enhanced Scribing Analysis with Signature Script Detection
- * 
+ *
  * Integrates signature script detection with existing scribing skill analysis
  */
 
@@ -17,20 +17,61 @@ import {
 import { PlayerTalent } from '@/types/playerDetails';
 
 // Removed databaseSignatureScriptDetection - using unified detection instead
-import { 
+import {
   analyzeScribingSkillEffects,
   ScribingSkillAnalysis,
-  getAllGrimoires,
   GRIMOIRE_NAME_PATTERNS,
   SCRIBING_BLACKLIST,
   getScribingSkillByAbilityId,
-} from './Scribing';
+} from '../features/scribing/utils/Scribing';
 import {
-  detectSignatureScript,
   SignatureScript,
   SignatureScriptDetectionResult,
-  EnhancedScribingSkillAnalysis,
-} from './signatureScriptDetection';
+} from '../features/scribing/utils/signatureScriptDetection';
+
+// Extended event types with optional extraAbilityGameID
+type ExtendedBuffEvent = BuffEvent & {
+  extraAbilityGameID?: number;
+  sourceFile?: string;
+};
+
+type ExtendedDebuffEvent = DebuffEvent & {
+  extraAbilityGameID?: number;
+  sourceFile?: string;
+};
+
+type ExtendedResourceEvent = ResourceChangeEvent & {
+  extraAbilityGameID?: number;
+  sourceFile?: string;
+};
+
+// Player structure interfaces
+interface PlayerData {
+  id: number;
+  combatantInfo?: {
+    talents?: PlayerTalent[];
+  };
+}
+
+interface PlayerDetails {
+  data?: {
+    playerDetails?: {
+      tanks?: PlayerData[];
+      dps?: PlayerData[];
+      healers?: PlayerData[];
+    };
+  };
+}
+
+interface MasterData {
+  reportData?: {
+    report?: {
+      masterData?: {
+        abilities?: ReportAbility[];
+      };
+    };
+  };
+}
 
 /**
  * Enhanced scribing skill analysis that includes signature script detection
@@ -46,10 +87,9 @@ export function analyzeScribingSkillWithSignature(
   allHealingEvents: HealEvent[],
   playerId = 1,
 ): ScribedSkillData | null {
-  
   // FIRST: Check if we have an exact ability ID match from the scribing database
   const scribingInfo = getScribingSkillByAbilityId(talent.guid);
-  
+
   if (scribingInfo) {
     // We have a perfect match from the database, use it with 100% confidence
     return {
@@ -66,11 +106,11 @@ export function analyzeScribingSkillWithSignature(
       },
     };
   }
-  
+
   // FALLBACK: If no ability ID match, run the existing scribing analysis
   // Filter UnifiedCastEvent to only include actual cast events
-  const filteredCastEvents = allCastEvents.filter(event => event.type === 'cast');
-  
+  const filteredCastEvents = allCastEvents.filter((event) => event.type === 'cast');
+
   const basicAnalysis = analyzeScribingSkillEffects(
     talent,
     allReportAbilities,
@@ -91,62 +131,60 @@ export function analyzeScribingSkillWithSignature(
   const grimoirePattern = GRIMOIRE_NAME_PATTERNS[basicAnalysis.grimoire];
   const relatedAbilities = allReportAbilities.filter(
     (ability) =>
-      ability.name && 
-      grimoirePattern.test(ability.name) && 
-      !SCRIBING_BLACKLIST.has(ability.name),
+      ability.name && grimoirePattern.test(ability.name) && !SCRIBING_BLACKLIST.has(ability.name),
   );
 
   // Find related events for signature script detection
-  const relatedDamage = allDamageEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+  const _relatedDamage = allDamageEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
 
-  const relatedHealing = allHealingEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID)
-    ),
+  const _relatedHealing = allHealingEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID)),
   );
 
-  const relatedBuffs = allBuffEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID) ||
-      (event as any).extraAbilityGameID === talent.guid
-    ),
+  const _relatedBuffs = allBuffEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID) ||
+        (event as ExtendedBuffEvent).extraAbilityGameID === talent.guid),
   );
 
-  const relatedDebuffs = allDebuffEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID) ||
-      (event as any).extraAbilityGameID === talent.guid
-    ),
+  const _relatedDebuffs = allDebuffEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID) ||
+        (event as ExtendedDebuffEvent).extraAbilityGameID === talent.guid),
   );
 
-  const relatedResources = allResourceEvents.filter(event => 
-    event.sourceID === playerId && (
-      event.abilityGameID === talent.guid ||
-      relatedAbilities.some(ability => ability.gameID === event.abilityGameID) ||
-      (event as any).extraAbilityGameID === talent.guid
-    ),
+  const _relatedResources = allResourceEvents.filter(
+    (event) =>
+      event.sourceID === playerId &&
+      (event.abilityGameID === talent.guid ||
+        relatedAbilities.some((ability) => ability.gameID === event.abilityGameID) ||
+        (event as ExtendedResourceEvent).extraAbilityGameID === talent.guid),
   );
 
   // TODO: Replace with unified scribing detection
-  const allEventAbilityIds: number[] = [];
-  const databaseSignatureDetection = { 
-    matchingAbilities: [], 
+  const _allEventAbilityIds: number[] = [];
+  const databaseSignatureDetection = {
+    matchingAbilities: [],
     signatureScript: null,
     detectedScript: null,
     confidence: 0,
-    matchingPatterns: []
+    matchingPatterns: [],
   };
-  
+
   // Convert basic analysis effects to ScribedSkillEffect format
-  const effects: ScribedSkillEffect[] = basicAnalysis.effects.map(effect => ({
+  const effects: ScribedSkillEffect[] = basicAnalysis.effects.map((effect) => ({
     abilityId: effect.abilityId,
     abilityName: effect.abilityName,
     type: determineEffectType(effect.events),
@@ -158,14 +196,14 @@ export function analyzeScribingSkillWithSignature(
     detectedScript: databaseSignatureDetection.detectedScript as SignatureScript | null,
     confidence: databaseSignatureDetection.confidence,
     matchingPatterns: databaseSignatureDetection.matchingPatterns,
-    evidence: databaseSignatureDetection.matchingAbilities.map(abilityId => ({
+    evidence: databaseSignatureDetection.matchingAbilities.map((abilityId) => ({
       type: 'ability-name' as const,
       value: abilityId,
       pattern: `Ability ID ${abilityId}`,
       weight: 1.0,
     })),
   };
-  
+
   const recipe = createRecipeFromAnalysis(basicAnalysis, signatureDetectionForRecipe);
 
   // Build the result
@@ -188,12 +226,15 @@ export function analyzeScribingSkillWithSignature(
 /**
  * Determine effect type from events
  */
-function determineEffectType(events: any[]): ScribedSkillEffect['type'] {
-  if (events.some(e => e.sourceFile === 'damage-events')) return 'damage';
-  if (events.some(e => e.sourceFile === 'healing-events')) return 'heal';
-  if (events.some(e => e.sourceFile === 'buff-events')) return 'buff';
-  if (events.some(e => e.sourceFile === 'debuff-events')) return 'debuff';
-  if (events.some(e => e.sourceFile === 'resource-events')) return 'resource';
+function determineEffectType(events: unknown[]): ScribedSkillEffect['type'] {
+  const hasSourceFile = (event: unknown): event is { sourceFile: string } =>
+    typeof event === 'object' && event !== null && 'sourceFile' in event;
+
+  if (events.some((e) => hasSourceFile(e) && e.sourceFile === 'damage-events')) return 'damage';
+  if (events.some((e) => hasSourceFile(e) && e.sourceFile === 'healing-events')) return 'heal';
+  if (events.some((e) => hasSourceFile(e) && e.sourceFile === 'buff-events')) return 'buff';
+  if (events.some((e) => hasSourceFile(e) && e.sourceFile === 'debuff-events')) return 'debuff';
+  if (events.some((e) => hasSourceFile(e) && e.sourceFile === 'resource-events')) return 'resource';
   return 'aura';
 }
 
@@ -201,10 +242,9 @@ function determineEffectType(events: any[]): ScribedSkillEffect['type'] {
  * Create recipe information from analysis and signature detection
  */
 function createRecipeFromAnalysis(
-  analysis: ScribingSkillAnalysis, 
+  analysis: ScribingSkillAnalysis,
   signatureDetection: SignatureScriptDetectionResult,
 ): ScribedSkillData['recipe'] {
-  
   const grimoire = analysis.grimoire;
   let transformation = 'unknown';
   let tooltipInfo = `Grimoire: ${grimoire}`;
@@ -212,7 +252,7 @@ function createRecipeFromAnalysis(
   // Try to determine focus script from ability effects
   // This is a simplified approach - could be enhanced with more sophisticated analysis
   if (analysis.effects.length > 0) {
-    const firstEffect = analysis.effects[0];
+    const _firstEffect = analysis.effects[0];
     // This is where you could add logic to map specific effects to focus scripts
     transformation = 'focus-script-unknown';
   }
@@ -237,17 +277,18 @@ function createRecipeFromAnalysis(
  * Format signature script name for display
  */
 function formatSignatureScriptName(script: SignatureScript): string {
-  return script.split('-').map(word => 
-    word.charAt(0).toUpperCase() + word.slice(1),
-  ).join(' ');
+  return script
+    .split('-')
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(' ');
 }
 
 /**
  * Analyze all players' scribing skills with signature script detection
  */
 export function analyzeAllPlayersScribingSkillsWithSignatures(
-  playerDetails: any,
-  masterData: any,
+  playerDetails: PlayerDetails,
+  masterData: MasterData,
   allDebuffEvents: DebuffEvent[],
   allBuffEvents: BuffEvent[],
   allResourceEvents: ResourceChangeEvent[],
@@ -267,7 +308,7 @@ export function analyzeAllPlayersScribingSkillsWithSignatures(
   const allReportAbilities = masterData.reportData?.report?.masterData?.abilities || [];
 
   // Analyze each player's scribing skills
-  allPlayers.forEach((player: any) => {
+  allPlayers.forEach((player: PlayerData) => {
     const playerId = player.id;
     const talents = player.combatantInfo?.talents || [];
 

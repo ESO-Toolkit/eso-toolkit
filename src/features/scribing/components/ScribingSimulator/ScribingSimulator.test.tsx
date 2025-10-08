@@ -38,19 +38,21 @@ describe('ScribingSimulator', () => {
 
     it('should render the description text', () => {
       renderWithTheme(<ScribingSimulator />);
-      expect(screen.getByText(/Experiment with different script combinations/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Experiment with different script combinations/i),
+      ).toBeInTheDocument();
     });
 
     it('should render action buttons', () => {
       renderWithTheme(<ScribingSimulator />);
-      
+
       expect(screen.getByText(/Random Combination/i)).toBeInTheDocument();
       expect(screen.getByText(/Share Combination/i)).toBeInTheDocument();
     });
 
     it('should render script selection section', () => {
       renderWithTheme(<ScribingSimulator />);
-      
+
       expect(screen.getByText('Script Selection')).toBeInTheDocument();
     });
   });
@@ -58,14 +60,14 @@ describe('ScribingSimulator', () => {
   describe('Interface Elements', () => {
     it('should render expected buttons', () => {
       renderWithTheme(<ScribingSimulator />);
-      
+
       const buttons = screen.getAllByRole('button');
       expect(buttons.length).toBeGreaterThanOrEqual(2);
     });
 
     it('should have proper structure', () => {
       renderWithTheme(<ScribingSimulator />);
-      
+
       // Check that components rendered properly
       expect(screen.getByText('Script Selection')).toBeInTheDocument();
     });
@@ -78,7 +80,7 @@ describe('ScribingSimulator', () => {
 
     it('should display expected content', () => {
       renderWithTheme(<ScribingSimulator />);
-      
+
       // Component should render expected content
       expect(screen.getByText('ESO Scribing Simulator')).toBeInTheDocument();
     });

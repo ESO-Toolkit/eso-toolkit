@@ -34,7 +34,7 @@ describe('actualSignatureScriptAbilities', () => {
       expect(firstAbility).toHaveProperty('signatureScript');
       expect(firstAbility).toHaveProperty('grimoire');
       expect(firstAbility).toHaveProperty('icon');
-      
+
       expect(typeof firstAbility.id).toBe('number');
       expect(typeof firstAbility.name).toBe('string');
       expect(typeof firstAbility.signatureScript).toBe('string');
@@ -43,26 +43,24 @@ describe('actualSignatureScriptAbilities', () => {
     });
 
     it('should have unique ability IDs', () => {
-      const ids = SIGNATURE_SCRIPT_ABILITIES.map(ability => ability.id);
+      const ids = SIGNATURE_SCRIPT_ABILITIES.map((ability) => ability.id);
       const uniqueIds = new Set(ids);
       expect(uniqueIds.size).toBe(ids.length);
     });
 
     it('should contain expected signature scripts', () => {
       const signatureScripts = new Set(
-        SIGNATURE_SCRIPT_ABILITIES.map(ability => ability.signatureScript)
+        SIGNATURE_SCRIPT_ABILITIES.map((ability) => ability.signatureScript),
       );
-      
+
       // Test for some known signature scripts
       expect(signatureScripts.has('lingering-torment')).toBe(true);
       expect(signatureScripts.has('hunters-snare')).toBe(true);
     });
 
     it('should contain expected grimoires', () => {
-      const grimoires = new Set(
-        SIGNATURE_SCRIPT_ABILITIES.map(ability => ability.grimoire)
-      );
-      
+      const grimoires = new Set(SIGNATURE_SCRIPT_ABILITIES.map((ability) => ability.grimoire));
+
       // Test for some known grimoires
       expect(grimoires.has('vault')).toBe(true);
       expect(grimoires.has('soul-burst')).toBe(true);
@@ -75,8 +73,8 @@ describe('actualSignatureScriptAbilities', () => {
       const abilities = getAbilitiesBySignatureScript('lingering-torment');
       expect(Array.isArray(abilities)).toBe(true);
       expect(abilities.length).toBeGreaterThan(0);
-      
-      abilities.forEach(ability => {
+
+      abilities.forEach((ability) => {
         expect(ability.signatureScript).toBe('lingering-torment');
       });
     });
@@ -99,8 +97,8 @@ describe('actualSignatureScriptAbilities', () => {
       const abilities = getAbilitiesByGrimoire('vault');
       expect(Array.isArray(abilities)).toBe(true);
       expect(abilities.length).toBeGreaterThan(0);
-      
-      abilities.forEach(ability => {
+
+      abilities.forEach((ability) => {
         expect(ability.grimoire).toBe('vault');
       });
     });
@@ -176,9 +174,9 @@ describe('actualSignatureScriptAbilities', () => {
     it('should find abilities matching pattern', () => {
       const pattern = /Lingering/i;
       const abilities = findAbilitiesByNamePattern(pattern);
-      
+
       expect(Array.isArray(abilities)).toBe(true);
-      abilities.forEach(ability => {
+      abilities.forEach((ability) => {
         expect(ability.name).toMatch(pattern);
       });
     });
@@ -195,8 +193,8 @@ describe('actualSignatureScriptAbilities', () => {
     it('should return confirmed signature script abilities', () => {
       const confirmed = getConfirmedSignatureScriptAbilities();
       expect(Array.isArray(confirmed)).toBe(true);
-      
-      confirmed.forEach(ability => {
+
+      confirmed.forEach((ability) => {
         expect(ability.signatureScript).not.toBe('unknown');
       });
     });
@@ -204,13 +202,13 @@ describe('actualSignatureScriptAbilities', () => {
 
   describe('analyzeSignatureScriptsFromAbilityIds', () => {
     it('should analyze signature scripts from ability IDs', () => {
-      const abilityIds = SIGNATURE_SCRIPT_ABILITIES.slice(0, 5).map(a => a.id);
+      const abilityIds = SIGNATURE_SCRIPT_ABILITIES.slice(0, 5).map((a) => a.id);
       const analysis = analyzeSignatureScriptsFromAbilityIds(abilityIds);
-      
+
       expect(analysis).toHaveProperty('detectedScripts');
       expect(analysis).toHaveProperty('detectedAbilities');
       expect(analysis).toHaveProperty('scriptConfidence');
-      
+
       expect(Array.isArray(analysis.detectedScripts)).toBe(true);
       expect(Array.isArray(analysis.detectedAbilities)).toBe(true);
       expect(typeof analysis.scriptConfidence).toBe('object');
@@ -227,48 +225,44 @@ describe('actualSignatureScriptAbilities', () => {
   describe('data integrity checks', () => {
     it('should not have duplicate ability IDs', () => {
       const abilityIds = new Set<number>();
-      
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
+
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
         expect(abilityIds.has(ability.id)).toBe(false);
         abilityIds.add(ability.id);
       });
     });
 
     it('should have valid icon patterns', () => {
-      const validPatterns = [
-        /^ability_grimoire_/,
-        /^ability_mage_/,
-        /^scribing_/
-      ];
+      const validPatterns = [/^ability_grimoire_/, /^ability_mage_/, /^scribing_/];
 
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
-        const hasValidPattern = validPatterns.some(pattern => pattern.test(ability.icon));
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
+        const hasValidPattern = validPatterns.some((pattern) => pattern.test(ability.icon));
         expect(hasValidPattern).toBe(true);
       });
     });
 
     it('should have valid signature script naming conventions', () => {
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
         // Signature scripts should be lowercase with hyphens
         expect(ability.signatureScript).toMatch(/^[a-z][a-z\-]*[a-z]$/);
       });
     });
 
     it('should have valid grimoire naming conventions', () => {
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
         // Grimoires should be lowercase with hyphens
         expect(ability.grimoire).toMatch(/^[a-z][a-z\-]*[a-z]?$/);
       });
     });
 
     it('should have positive ability IDs', () => {
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
         expect(ability.id).toBeGreaterThan(0);
       });
     });
 
     it('should have non-empty names', () => {
-      SIGNATURE_SCRIPT_ABILITIES.forEach(ability => {
+      SIGNATURE_SCRIPT_ABILITIES.forEach((ability) => {
         expect(ability.name).toBeTruthy();
         expect(ability.name.trim().length).toBeGreaterThan(0);
       });
@@ -280,7 +274,7 @@ describe('actualSignatureScriptAbilities', () => {
       const grimoires = getAllGrimoires();
       expect(Array.isArray(grimoires)).toBe(true);
       expect(grimoires.length).toBeGreaterThan(0);
-      
+
       const uniqueSet = new Set(grimoires);
       expect(uniqueSet.size).toBe(grimoires.length);
     });
@@ -291,10 +285,10 @@ describe('actualSignatureScriptAbilities', () => {
       const scripts = getAllSignatureScripts();
       expect(Array.isArray(scripts)).toBe(true);
       expect(scripts.length).toBeGreaterThan(0);
-      
+
       const uniqueSet = new Set(scripts);
       expect(uniqueSet.size).toBe(scripts.length);
-      
+
       // Should not include "unknown"
       expect(scripts.includes('unknown')).toBe(false);
     });
@@ -329,7 +323,7 @@ describe('actualSignatureScriptAbilities', () => {
     it('should efficiently lookup abilities by ID', () => {
       // Test that lookups are reasonably fast even with many items
       const startTime = performance.now();
-      
+
       // Perform multiple lookups
       for (let i = 0; i < 100; i++) {
         const ability = SIGNATURE_SCRIPT_ABILITIES[i % SIGNATURE_SCRIPT_ABILITIES.length];
@@ -337,10 +331,10 @@ describe('actualSignatureScriptAbilities', () => {
         getAbilityById(ability.id);
         getAbilityByName(ability.name);
       }
-      
+
       const endTime = performance.now();
       const duration = endTime - startTime;
-      
+
       // Should complete lookups quickly (under 100ms for 100 lookups)
       expect(duration).toBeLessThan(100);
     });

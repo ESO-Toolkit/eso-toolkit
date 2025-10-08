@@ -321,7 +321,6 @@ const AppRoutes: React.FC = () => {
                 </ErrorBoundary>
               }
             />
-
           </Route>
         </Routes>
       </ErrorBoundary>

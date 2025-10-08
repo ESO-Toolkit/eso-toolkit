@@ -23,25 +23,26 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
     type: string,
     timestamp: number,
     sourceID: number,
-    abilityGameID: number
-  ): ParsedLogEvent => ({
-    type,
-    timestamp,
-    sourceID,
-    targetID: 999,
-    abilityGameID,
-    fight: 1,
-    sourceName: `Player ${sourceID}`,
-    targetName: 'Target',
-    sourceIsFriendly: true,
-    targetIsFriendly: false,
-  } as ParsedLogEvent);
+    abilityGameID: number,
+  ): ParsedLogEvent =>
+    ({
+      type,
+      timestamp,
+      sourceID,
+      targetID: 999,
+      abilityGameID,
+      fight: 1,
+      sourceName: `Player ${sourceID}`,
+      targetName: 'Target',
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+    }) as ParsedLogEvent;
 
   // Helper function to create mock scribing components
   const createMockGrimoireComponent = (
     abilityId: number,
     grimoireKey: string,
-    name: string
+    name: string,
   ): AbilityScribingMapping => ({
     abilityId,
     type: 'grimoire',
@@ -56,7 +57,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
     abilityId: number,
     grimoireKey: string,
     componentKey: string,
-    name: string
+    name: string,
   ): AbilityScribingMapping => ({
     abilityId,
     type: 'transformation',
@@ -79,7 +80,9 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
       // Mock responses for different ability IDs
       mockMapper.getScribingComponent
         .mockReturnValueOnce([createMockGrimoireComponent(12345, 'trample', 'Trample')])
-        .mockReturnValueOnce([createMockTransformationComponent(12346, 'wield-soul', 'physical', 'Physical Soul')])
+        .mockReturnValueOnce([
+          createMockTransformationComponent(12346, 'wield-soul', 'physical', 'Physical Soul'),
+        ])
         .mockReturnValueOnce([createMockGrimoireComponent(12345, 'trample', 'Trample')]);
 
       const result = await detector.detectGrimoiresFromEvents(events);
@@ -140,9 +143,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
         createMockEvent('cast', 2000, 1, 99998),
       ];
 
-      mockMapper.getScribingComponent
-        .mockReturnValue([])
-        .mockReturnValue([]);
+      mockMapper.getScribingComponent.mockReturnValue([]).mockReturnValue([]);
 
       const result = await detector.detectGrimoiresFromEvents(events);
 
@@ -223,7 +224,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
       const result = await detector.detectGrimoiresForPlayer(events, 1);
 
       expect(result.detections).toHaveLength(2);
-      expect(result.detections.every(d => d.sourcePlayer === 1)).toBe(true);
+      expect(result.detections.every((d) => d.sourcePlayer === 1)).toBe(true);
       expect(result.totalCasts).toBe(2);
     });
 
@@ -631,7 +632,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
 
       // Create 25 events within context window
       const allEvents = Array.from({ length: 25 }, (_, i) =>
-        createMockEvent('damage', 5000 + (i * 100), 1, 99999 + i)
+        createMockEvent('damage', 5000 + i * 100, 1, 99999 + i),
       );
       allEvents.push(createMockEvent('cast', 5000, 1, 12345)); // The detection event
 
@@ -708,9 +709,9 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
     it('should classify detections by confidence levels', () => {
       const detections = [
         createTestDetection(0.95), // Valid
-        createTestDetection(0.85), // Questionable  
+        createTestDetection(0.85), // Questionable
         createTestDetection(0.65), // Invalid (no support)
-        createTestDetection(0.60, true), // Questionable (has support)
+        createTestDetection(0.6, true), // Questionable (has support)
       ];
 
       const validation = detector.validateDetections(detections);
@@ -722,13 +723,13 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
 
       expect(validation.valid[0].confidence).toBe(0.95);
       expect(validation.questionable[0].confidence).toBe(0.85);
-      expect(validation.questionable[1].confidence).toBe(0.60);
+      expect(validation.questionable[1].confidence).toBe(0.6);
       expect(validation.invalid[0].confidence).toBe(0.65);
     });
 
     it('should handle validation errors gracefully', () => {
       const baseDetection = createTestDetection(0.95);
-      
+
       // Create a detection that causes an error during validation
       const problematicDetection = new Proxy(baseDetection, {
         get(target, prop) {
@@ -736,7 +737,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
             throw new Error('Property access error');
           }
           return target[prop as keyof GrimoireDetection];
-        }
+        },
       });
 
       const detections = [problematicDetection];
@@ -790,7 +791,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
             grimoireId: 12346,
             detectedAbilityId: 12346,
             detectionType: 'base-cast',
-            confidence: 0.90,
+            confidence: 0.9,
             timestamp: 3000,
             sourcePlayer: 1,
             event: createMockEvent('cast', 3000, 1, 12346),
@@ -814,7 +815,7 @@ describe('GrimoireDetector - Comprehensive Coverage', () => {
         totalDetections: 3,
         uniqueGrimoires: 2,
         uniquePlayers: 2,
-        averageConfidence: (0.95 + 0.85 + 0.90) / 3,
+        averageConfidence: (0.95 + 0.85 + 0.9) / 3,
         detectionsByGrimoire: new Map([
           ['trample', 2],
           ['wield-soul', 1],

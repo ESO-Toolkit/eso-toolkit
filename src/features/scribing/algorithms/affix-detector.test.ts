@@ -80,7 +80,7 @@ describe('AffixScriptDetector', () => {
       ];
 
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, events);
-      
+
       // Should execute without throwing
       expect(() => result).not.toThrow();
       expect(Array.isArray(result)).toBe(true);
@@ -104,7 +104,7 @@ describe('AffixScriptDetector', () => {
   describe('detectAffixScriptsFromGrimoires', () => {
     it('should handle empty grimoire detections array', async () => {
       const result = await detector.detectAffixScriptsFromGrimoires([], []);
-      
+
       expect(result).toMatchObject({
         detections: [],
         totalAnalyzed: 0,
@@ -123,7 +123,7 @@ describe('AffixScriptDetector', () => {
       const events = [createMockEvent({ type: 'applybuff', abilityGameID: 61687 })];
 
       const result = await detector.detectAffixScriptsFromGrimoires(grimoireDetections, events);
-      
+
       expect(result).toMatchObject({
         detections: expect.any(Array),
         totalAnalyzed: 1,
@@ -141,7 +141,7 @@ describe('AffixScriptDetector', () => {
   describe('error handling', () => {
     it('should handle null grimoire detection gracefully', async () => {
       const nullGrimoire = null as any;
-      
+
       try {
         const result = await detector.detectAffixScriptFromGrimoire(nullGrimoire, []);
         // If it doesn't throw, expect empty result
@@ -165,7 +165,7 @@ describe('AffixScriptDetector', () => {
 
       const grimoire = createMockGrimoire();
       const result = await detector.detectAffixScriptFromGrimoire(grimoire, malformedEvents);
-      
+
       // Should not throw and return empty result
       expect(result).toEqual([]);
     });

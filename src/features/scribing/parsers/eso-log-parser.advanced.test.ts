@@ -25,7 +25,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
     reportData: {
       report: {
         events: {
-          data: events.map(event => ({
+          data: events.map((event) => ({
             timestamp: 1000,
             type: 'cast',
             sourceID: 1,
@@ -105,7 +105,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
       expect(result.allEvents).toHaveLength(10);
 
       // Verify events are sorted by timestamp
-      const timestamps = result.allEvents.map(e => e.timestamp);
+      const timestamps = result.allEvents.map((e) => e.timestamp);
       expect(timestamps).toEqual([1000, 1200, 1300, 1500, 1800, 2000, 2200, 2300, 2500, 2800]);
 
       // Verify duration calculation
@@ -114,11 +114,15 @@ describe('EsoLogParser - Advanced Coverage', () => {
       expect(result.duration).toBe(1800);
 
       // Verify categorization
-      expect(result.castEvents.every(e => e.type === 'cast')).toBe(true);
-      expect(result.buffEvents.every(e => e.type === 'applybuff' || e.type === 'removebuff')).toBe(true);
-      expect(result.debuffEvents.every(e => e.type === 'applydebuff' || e.type === 'removedebuff')).toBe(true);
-      expect(result.damageEvents.every(e => e.type === 'damage')).toBe(true);
-      expect(result.healingEvents.every(e => e.type === 'heal')).toBe(true);
+      expect(result.castEvents.every((e) => e.type === 'cast')).toBe(true);
+      expect(
+        result.buffEvents.every((e) => e.type === 'applybuff' || e.type === 'removebuff'),
+      ).toBe(true);
+      expect(
+        result.debuffEvents.every((e) => e.type === 'applydebuff' || e.type === 'removedebuff'),
+      ).toBe(true);
+      expect(result.damageEvents.every((e) => e.type === 'damage')).toBe(true);
+      expect(result.healingEvents.every((e) => e.type === 'heal')).toBe(true);
     });
 
     it('should handle empty fight directory', async () => {
@@ -150,9 +154,11 @@ describe('EsoLogParser - Advanced Coverage', () => {
           // First file succeeds
           return {
             ok: true,
-            json: jest.fn().mockResolvedValue(createMockLogData([
-              { type: 'cast', abilityGameID: 123, timestamp: 1000 },
-            ])),
+            json: jest
+              .fn()
+              .mockResolvedValue(
+                createMockLogData([{ type: 'cast', abilityGameID: 123, timestamp: 1000 }]),
+              ),
           };
         } else if (callCount === 2) {
           // Second file fails
@@ -185,28 +191,30 @@ describe('EsoLogParser - Advanced Coverage', () => {
           // Focus on debuff events to test the filtering
           return {
             ok: true,
-            json: jest.fn().mockResolvedValue(createMockLogData([
-              { 
-                type: 'applydebuff', 
-                abilityGameID: 321, 
-                timestamp: 1200,
-                sourceID: 1,
-                sourceIsFriendly: true,
-                targetID: 2,
-                targetIsFriendly: false,
-                fight: 4
-              },
-              { 
-                type: 'removedebuff', 
-                abilityGameID: 654, 
-                timestamp: 2200,
-                sourceID: 1,
-                sourceIsFriendly: true,
-                targetID: 2,
-                targetIsFriendly: false,
-                fight: 4
-              }
-            ])),
+            json: jest.fn().mockResolvedValue(
+              createMockLogData([
+                {
+                  type: 'applydebuff',
+                  abilityGameID: 321,
+                  timestamp: 1200,
+                  sourceID: 1,
+                  sourceIsFriendly: true,
+                  targetID: 2,
+                  targetIsFriendly: false,
+                  fight: 4,
+                },
+                {
+                  type: 'removedebuff',
+                  abilityGameID: 654,
+                  timestamp: 2200,
+                  sourceID: 1,
+                  sourceIsFriendly: true,
+                  targetID: 2,
+                  targetIsFriendly: false,
+                  fight: 4,
+                },
+              ]),
+            ),
           };
         } else {
           // Other files return empty to focus on debuff test
@@ -231,7 +239,8 @@ describe('EsoLogParser - Advanced Coverage', () => {
       let callCount = 0;
       (fetch as jest.Mock).mockImplementation(async (url: string) => {
         callCount++;
-        if (callCount === 2) { // Second file (buff-events.json) fails
+        if (callCount === 2) {
+          // Second file (buff-events.json) fails
           return {
             ok: false,
             statusText: 'File not found',
@@ -240,9 +249,11 @@ describe('EsoLogParser - Advanced Coverage', () => {
         // Other files succeed
         return {
           ok: true,
-          json: jest.fn().mockResolvedValue(createMockLogData([
-            { type: 'cast', abilityGameID: 123, timestamp: 1000 },
-          ])),
+          json: jest
+            .fn()
+            .mockResolvedValue(
+              createMockLogData([{ type: 'cast', abilityGameID: 123, timestamp: 1000 }]),
+            ),
         };
       });
 
@@ -262,9 +273,18 @@ describe('EsoLogParser - Advanced Coverage', () => {
         const fightNumber = url.includes('fight-1') ? 1 : 2;
         return {
           ok: true,
-          json: jest.fn().mockResolvedValue(createMockLogData([
-            { type: 'cast', abilityGameID: fightNumber * 100, timestamp: fightNumber * 1000, fight: fightNumber },
-          ])),
+          json: jest
+            .fn()
+            .mockResolvedValue(
+              createMockLogData([
+                {
+                  type: 'cast',
+                  abilityGameID: fightNumber * 100,
+                  timestamp: fightNumber * 1000,
+                  fight: fightNumber,
+                },
+              ]),
+            ),
         };
       });
 
@@ -280,34 +300,38 @@ describe('EsoLogParser - Advanced Coverage', () => {
     it('should handle partial failures in batch processing', async () => {
       // Mock parseFightDirectory to simulate one success and one failure
       const originalParseFightDirectory = EsoLogParser.parseFightDirectory;
-      
+
       // Create a mock that throws for fight 2
-      (EsoLogParser.parseFightDirectory as jest.Mock) = jest.fn().mockImplementation(
-        async (basePath: string, fightNumber: number) => {
+      (EsoLogParser.parseFightDirectory as jest.Mock) = jest
+        .fn()
+        .mockImplementation(async (basePath: string, fightNumber: number) => {
           if (fightNumber === 2) {
             throw new Error('Fight 2 simulation error');
           }
           // Fight 1 succeeds - call the original with mocked fetch
           (fetch as jest.Mock).mockResolvedValue({
             ok: true,
-            json: jest.fn().mockResolvedValue(createMockLogData([
-              { type: 'cast', abilityGameID: 100, timestamp: 1000, fight: 1 },
-            ])),
+            json: jest
+              .fn()
+              .mockResolvedValue(
+                createMockLogData([
+                  { type: 'cast', abilityGameID: 100, timestamp: 1000, fight: 1 },
+                ]),
+              ),
           });
           return originalParseFightDirectory(basePath, fightNumber);
-        }
-      );
+        });
 
       const results = await EsoLogParser.parseBatchFights('/test/batch', [1, 2]);
 
       // Should return only successful fights
       expect(results).toHaveLength(1);
       expect(results[0].fightNumber).toBe(1);
-      
+
       // Should log warnings for failed fights
       expect(mockConsoleWarn).toHaveBeenCalledWith(
-        'Batch parsing completed with errors:', 
-        expect.arrayContaining([expect.stringContaining('Failed to parse fight 2')])
+        'Batch parsing completed with errors:',
+        expect.arrayContaining([expect.stringContaining('Failed to parse fight 2')]),
       );
 
       // Restore the original method
@@ -316,7 +340,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
 
     it('should handle empty fight numbers array', async () => {
       const results = await EsoLogParser.parseBatchFights('/test/empty', []);
-      
+
       expect(results).toHaveLength(0);
       expect(mockConsoleWarn).not.toHaveBeenCalled();
     });
@@ -324,9 +348,9 @@ describe('EsoLogParser - Advanced Coverage', () => {
     it('should handle all fights failing', async () => {
       // Mock parseFightDirectory to always throw
       const originalParseFightDirectory = EsoLogParser.parseFightDirectory;
-      (EsoLogParser.parseFightDirectory as jest.Mock) = jest.fn().mockRejectedValue(
-        new Error('Simulated fight parsing error')
-      );
+      (EsoLogParser.parseFightDirectory as jest.Mock) = jest
+        .fn()
+        .mockRejectedValue(new Error('Simulated fight parsing error'));
 
       const results = await EsoLogParser.parseBatchFights('/test/all-fail', [1, 2, 3]);
 
@@ -337,7 +361,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
           expect.stringContaining('Failed to parse fight 1'),
           expect.stringContaining('Failed to parse fight 2'),
           expect.stringContaining('Failed to parse fight 3'),
-        ])
+        ]),
       );
 
       // Restore the original method
@@ -375,9 +399,19 @@ describe('EsoLogParser - Advanced Coverage', () => {
 
       // Should only include relevant event types
       expect(result.events).toHaveLength(3);
-      expect(result.events.every(e => 
-        ['cast', 'applybuff', 'removebuff', 'applydebuff', 'removedebuff', 'damage', 'heal'].includes(e.type)
-      )).toBe(true);
+      expect(
+        result.events.every((e) =>
+          [
+            'cast',
+            'applybuff',
+            'removebuff',
+            'applydebuff',
+            'removedebuff',
+            'damage',
+            'heal',
+          ].includes(e.type),
+        ),
+      ).toBe(true);
       expect(result.totalEvents).toBe(3);
     });
 
@@ -430,7 +464,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
 
       // Should only include cast events
       expect(result.events).toHaveLength(2);
-      expect(result.events.every(e => e.type === 'cast')).toBe(true);
+      expect(result.events.every((e) => e.type === 'cast')).toBe(true);
       expect(result.totalEvents).toBe(2);
       expect(result.eventsByType['cast']).toBe(2);
       expect(result.eventsByType['damage']).toBeUndefined();
@@ -444,9 +478,11 @@ describe('EsoLogParser - Advanced Coverage', () => {
         if (url.includes('cast-events.json')) {
           return {
             ok: true,
-            json: jest.fn().mockResolvedValue(createMockLogData([
-              { type: 'cast', abilityGameID: 123, timestamp: 5000 },
-            ])),
+            json: jest
+              .fn()
+              .mockResolvedValue(
+                createMockLogData([{ type: 'cast', abilityGameID: 123, timestamp: 5000 }]),
+              ),
           };
         } else {
           return {

@@ -6,35 +6,69 @@
 // Import the actual algorithm results
 // TODO: Re-create missing fight88 results file or load from data-downloads
 // import fight88Results from '../../unified-scribing-analysis-fight-88.json';
-const fight88Results: any[] = []; // Placeholder - TODO: Load real data
+interface RawPlayerData {
+  playerId?: number;
+  playerName?: string;
+  playerClass?: string;
+  playerRole?: string;
+  playerInfo?: {
+    name?: string;
+    class?: string;
+    role?: string;
+  };
+  detectedCombinations?: RawCombinationData[];
+}
+
+interface RawCombinationData {
+  grimoire?: string;
+  casts?: number;
+  focus?: string;
+  signature?: string;
+  affix?: string;
+  confidence?: {
+    focus?: number;
+    signature?: number;
+    affix?: number;
+    overall?: number;
+  };
+  events?: unknown;
+}
+
+interface RawScribingResults {
+  players?: RawPlayerData[];
+}
+
+const fight88Results: RawScribingResults[] = []; // Placeholder - TODO: Load real data
+
+export interface ScribingCombination {
+  grimoire: string;
+  grimoireKey: string;
+  casts: number;
+  focus: string;
+  focusKey?: string;
+  signature: string;
+  signatureKey?: string;
+  affix: string;
+  affixKey?: string;
+  confidence?: {
+    focus?: number;
+    signature?: number;
+    affix?: number;
+    overall?: number;
+  };
+  events?: {
+    focusEvents?: number;
+    signatureEvents?: number;
+    affixEvents?: number;
+  };
+}
 
 export interface UnifiedScribingDetection {
   playerId: number;
   playerName: string;
   playerClass: string;
   playerRole: string;
-  detectedCombinations: Array<{
-    grimoire: string;
-    grimoireKey: string;
-    casts: number;
-    focus: string;
-    focusKey?: string;
-    signature: string;
-    signatureKey?: string;
-    affix: string;
-    affixKey?: string;
-    confidence?: {
-      focus: number;
-      signature: number;
-      affix: number;
-      overall: number;
-    };
-    events?: {
-      focusEvents: number;
-      signatureEvents: number;
-      affixEvents: number;
-    };
-  }>;
+  detectedCombinations: ScribingCombination[];
 }
 
 export interface UnifiedScribingAnalysisResult {
@@ -80,16 +114,15 @@ export interface UnifiedScribingResult {
  * Unified Scribing Detection Service
  */
 export class UnifiedScribingDetectionService {
-  
   /**
    * Run unified scribing detection on fight data
    */
   async detectScribingRecipes(fightId: string): Promise<UnifiedScribingResult> {
     // For Fight 88, return the REAL algorithm results!
     if (fightId === '88') {
-      return this.convertRealResultsToServiceFormat(fight88Results);
+      return this.convertRealResultsToServiceFormat(fight88Results[0] || { players: [] });
     }
-    
+
     // For other fights, return empty data
     return {
       players: [],
@@ -107,48 +140,78 @@ export class UnifiedScribingDetectionService {
   /**
    * Convert real algorithm results to our service format
    */
-  private convertRealResultsToServiceFormat(realResults: any): UnifiedScribingResult {
-    const players: UnifiedScribingDetection[] = (realResults.players || []).map((player: any) => ({
-      playerId: player.playerId,
-      playerName: player.playerInfo?.name || `Player ${player.playerId}`,
-      playerClass: player.playerInfo?.class || 'Unknown',
-      playerRole: player.playerInfo?.role || 'Unknown', 
-      detectedCombinations: (player.detectedCombinations || []).map((combo: any) => ({
-        grimoire: combo.grimoire || 'Unknown Grimoire',
-        grimoireKey: this.generateKey(combo.grimoire),
-        casts: combo.casts || 0,
-        focus: combo.focus || 'Unknown Focus',
-        focusKey: this.generateKey(combo.focus),
-        signature: combo.signature || 'Unknown Signature',
-        signatureKey: this.generateKey(combo.signature),
-        affix: combo.affix || 'Unknown Affix',
-        affixKey: this.generateKey(combo.affix),
-        confidence: combo.confidence || {
-          focus: 1.0,
-          signature: 1.0,
-          affix: 1.0,
-          overall: 1.0,
-        },
-        events: combo.events || {
-          focusEvents: 0,
-          signatureEvents: 0,
-          affixEvents: 0,
-        },
-      })),
-    }));
+  private convertRealResultsToServiceFormat(
+    realResults: RawScribingResults,
+  ): UnifiedScribingResult {
+    const players: UnifiedScribingDetection[] = (realResults.players || []).map(
+      (player: RawPlayerData) => ({
+        playerId: player.playerId || 0,
+        playerName: player.playerInfo?.name || `Player ${player.playerId}`,
+        playerClass: player.playerInfo?.class || 'Unknown',
+        playerRole: player.playerInfo?.role || 'Unknown',
+        detectedCombinations: (player.detectedCombinations || []).map(
+          (combo: RawCombinationData) => ({
+            grimoire: combo.grimoire || 'Unknown Grimoire',
+            grimoireKey: this.generateKey(combo.grimoire || 'Unknown Grimoire'),
+            casts: combo.casts || 0,
+            focus: combo.focus || 'Unknown Focus',
+            focusKey: this.generateKey(combo.focus || 'Unknown Focus'),
+            signature: combo.signature || 'Unknown Signature',
+            signatureKey: this.generateKey(combo.signature || 'Unknown Signature'),
+            affix: combo.affix || 'Unknown Affix',
+            affixKey: this.generateKey(combo.affix || 'Unknown Affix'),
+            confidence: combo.confidence || {
+              focus: 1.0,
+              signature: 1.0,
+              affix: 1.0,
+              overall: 1.0,
+            },
+            events: combo.events || {
+              focusEvents: 0,
+              signatureEvents: 0,
+              affixEvents: 0,
+            },
+          }),
+        ),
+      }),
+    );
 
-    const totalCombinations = players.reduce((sum: number, p: UnifiedScribingDetection) => sum + p.detectedCombinations.length, 0);
-    const totalCasts = players.reduce((sum: number, p: UnifiedScribingDetection) => sum + p.detectedCombinations.reduce((cSum: number, c: any) => cSum + c.casts, 0), 0);
+    const totalCombinations = players.reduce(
+      (sum: number, p: UnifiedScribingDetection) => sum + p.detectedCombinations.length,
+      0,
+    );
+    const totalCasts = players.reduce(
+      (sum: number, p: UnifiedScribingDetection) =>
+        sum +
+        p.detectedCombinations.reduce((cSum: number, c: ScribingCombination) => cSum + c.casts, 0),
+      0,
+    );
 
     const result = {
       players,
       summary: {
         totalCombinations,
         totalCasts,
-        uniqueGrimoires: new Set(players.flatMap((p: UnifiedScribingDetection) => p.detectedCombinations.map((c: any) => c.grimoire))).size,
-        uniqueFocusScripts: new Set(players.flatMap((p: UnifiedScribingDetection) => p.detectedCombinations.map((c: any) => c.focus))).size,
-        uniqueSignatureScripts: new Set(players.flatMap((p: UnifiedScribingDetection) => p.detectedCombinations.map((c: any) => c.signature))).size,
-        uniqueAffixScripts: new Set(players.flatMap((p: UnifiedScribingDetection) => p.detectedCombinations.map((c: any) => c.affix))).size,
+        uniqueGrimoires: new Set(
+          players.flatMap((p: UnifiedScribingDetection) =>
+            p.detectedCombinations.map((c: ScribingCombination) => c.grimoire),
+          ),
+        ).size,
+        uniqueFocusScripts: new Set(
+          players.flatMap((p: UnifiedScribingDetection) =>
+            p.detectedCombinations.map((c: ScribingCombination) => c.focus),
+          ),
+        ).size,
+        uniqueSignatureScripts: new Set(
+          players.flatMap((p: UnifiedScribingDetection) =>
+            p.detectedCombinations.map((c: ScribingCombination) => c.signature),
+          ),
+        ).size,
+        uniqueAffixScripts: new Set(
+          players.flatMap((p: UnifiedScribingDetection) =>
+            p.detectedCombinations.map((c: ScribingCombination) => c.affix),
+          ),
+        ).size,
       },
     };
 
@@ -176,19 +239,19 @@ export class UnifiedScribingDetectionService {
         {
           playerId: 6,
           playerName: "Grappa'Ko'Laid",
-          playerClass: "Nightblade",
-          playerRole: "Healer",
+          playerClass: 'Nightblade',
+          playerRole: 'Healer',
           detectedCombinations: [
             {
               grimoire: "Ulfsild's Contingency",
-              grimoireKey: "ulfsilds-contingency",
+              grimoireKey: 'ulfsilds-contingency',
               casts: 6,
-              focus: "Healing Contingency",
-              focusKey: "healing-contingency",
+              focus: 'Healing Contingency',
+              focusKey: 'healing-contingency',
               signature: "Gladiator's Tenacity",
-              signatureKey: "gladiators-tenacity", 
-              affix: "Taunt", 
-              affixKey: "taunt",
+              signatureKey: 'gladiators-tenacity',
+              affix: 'Taunt',
+              affixKey: 'taunt',
               confidence: {
                 focus: 1.0,
                 signature: 1.0,
@@ -205,23 +268,23 @@ export class UnifiedScribingDetectionService {
         },
         {
           playerId: 12,
-          playerName: "Tzu",
-          playerClass: "Nightblade", 
-          playerRole: "DD",
+          playerName: 'Tzu',
+          playerClass: 'Nightblade',
+          playerRole: 'DD',
           detectedCombinations: [
             {
-              grimoire: "Traveling Knife",
-              grimoireKey: "traveling-knife",
+              grimoire: 'Traveling Knife',
+              grimoireKey: 'traveling-knife',
               casts: 7,
-              focus: "Magical Trample",
-              focusKey: "magical-trample",
-              signature: "Frost Clench",
-              signatureKey: "frost-clench",
-              affix: "Immobilize",
-              affixKey: "immobilize",
+              focus: 'Magical Trample',
+              focusKey: 'magical-trample',
+              signature: 'Frost Clench',
+              signatureKey: 'frost-clench',
+              affix: 'Immobilize',
+              affixKey: 'immobilize',
               confidence: {
                 focus: 1.0,
-                signature: 1.0, 
+                signature: 1.0,
                 affix: 1.0,
                 overall: 1.0,
               },
@@ -250,24 +313,24 @@ export class UnifiedScribingDetectionService {
    */
   getAnalysisResult(): UnifiedScribingAnalysisResult {
     const result = this.getMockFightData();
-    
+
     return {
       metadata: {
-        fightId: "88",
+        fightId: '88',
         duration: 645000,
         playerCount: 2,
         algorithm: {
-          name: "Enhanced Unified Scribing Detection v2.0",
-          version: "2.0.0",
-          timestamp: "2024-10-02T10:15:30Z",
+          name: 'Enhanced Unified Scribing Detection v2.0',
+          version: '2.0.0',
+          timestamp: '2024-10-02T10:15:30Z',
         },
         detectionStats: {
           totalCombinations: result.summary.totalCombinations,
           totalCasts: result.summary.totalCasts,
           confidenceDistribution: {
-            "high": 2,
-            "medium": 0,
-            "low": 0,
+            high: 2,
+            medium: 0,
+            low: 0,
           },
         },
       },
@@ -281,8 +344,8 @@ export class UnifiedScribingDetectionService {
    */
   async getScribingDataForSkill(
     _fightId: string,
-    playerId: number, 
-    abilityId: number
+    playerId: number,
+    abilityId: number,
   ): Promise<{
     grimoire: string;
     focus: string;
@@ -292,19 +355,18 @@ export class UnifiedScribingDetectionService {
     wasCastInFight: boolean;
   } | null> {
     try {
-      
       // Ability ID to specific combination mapping
       // Each ability ID corresponds to a specific grimoire + focus script combination
       const abilityToCombination: Record<number, { grimoireKey: string; focusKey: string }> = {
         // Ulfsild's Contingency + Healing Contingency + Gladiator's Tenacity
         240150: { grimoireKey: 'ulfsilds-contingency', focusKey: 'healing-contingency' },
-        
+
         // Wield Soul + Leashing Soul combinations
         217784: { grimoireKey: 'wield-soul', focusKey: 'leashing-soul' },
         219837: { grimoireKey: 'wield-soul', focusKey: 'leashing-soul' },
         219838: { grimoireKey: 'wield-soul', focusKey: 'leashing-soul' },
-        
-        // Traveling Knife + Magical Trample combinations 
+
+        // Traveling Knife + Magical Trample combinations
         220115: { grimoireKey: 'traveling-knife', focusKey: 'magical-trample' },
         220117: { grimoireKey: 'traveling-knife', focusKey: 'magical-trample' },
         220118: { grimoireKey: 'traveling-knife', focusKey: 'magical-trample' },
@@ -317,18 +379,20 @@ export class UnifiedScribingDetectionService {
 
       // Get the detection results for Fight 88
       const results = await this.detectScribingRecipes('88');
-      
-      const player = results.players.find(p => p.playerId === playerId);
+
+      const player = results.players.find((p) => p.playerId === playerId);
       if (!player) {
         return null;
       }
 
       // Find the specific combination for this ability
       // Match both grimoireKey and focusKey for specificity
-      const combination = player.detectedCombinations.find(combo => {
+      const combination = player.detectedCombinations.find((combo) => {
         const comboFocusKey = combo.focusKey || this.generateKey(combo.focus);
-        return combo.grimoireKey === combinationMapping.grimoireKey && 
-               comboFocusKey === combinationMapping.focusKey;
+        return (
+          combo.grimoireKey === combinationMapping.grimoireKey &&
+          comboFocusKey === combinationMapping.focusKey
+        );
       });
 
       if (combination) {
@@ -344,8 +408,7 @@ export class UnifiedScribingDetectionService {
       }
 
       return null;
-      
-    } catch (_error) {
+    } catch {
       // Failed to get scribing data for skill
       return null;
     }

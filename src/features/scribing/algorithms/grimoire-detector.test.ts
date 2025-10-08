@@ -24,7 +24,7 @@ const mockGrimoireMapping: AbilityScribingMapping = {
 const mockTransformationMapping: AbilityScribingMapping = {
   abilityId: 12346,
   type: 'transformation',
-  grimoireKey: 'trample', 
+  grimoireKey: 'trample',
   componentKey: 'physical-damage',
   name: 'Physical Trample',
   category: 'focus',
@@ -142,7 +142,7 @@ describe('GrimoireDetector', () => {
       expect(result?.grimoireName).toBe('Physical Damage');
       expect(result?.detectionType).toBe('transformation-cast');
       expect(result?.focusScriptType).toBe('physical-damage');
-      expect(result?.confidence).toBe(0.90);
+      expect(result?.confidence).toBe(0.9);
     });
 
     it('should handle multiple components and prioritize grimoire type', async () => {
@@ -169,7 +169,7 @@ describe('GrimoireDetector', () => {
 
       expect(result).not.toBeNull();
       expect(result?.detectionType).toBe('transformation-cast'); // First match returned
-      expect(result?.confidence).toBe(0.90);
+      expect(result?.confidence).toBe(0.9);
     });
 
     it('should handle mapper errors gracefully', async () => {
@@ -182,11 +182,10 @@ describe('GrimoireDetector', () => {
 
     it('should handle invalid event data', async () => {
       const invalidEvent = {} as ParsedLogEvent;
-      
+
       const result = await detector.detectGrimoireFromEvent(invalidEvent);
       expect(result).toBeNull();
     });
-
   });
 
   describe('Error handling and edge cases', () => {
@@ -209,7 +208,7 @@ describe('GrimoireDetector', () => {
 
     it('should handle invalid event data', async () => {
       const invalidEvent = {} as ParsedLogEvent;
-      
+
       const result = await detector.detectGrimoireFromEvent(invalidEvent);
       expect(result).toBeNull();
     });
@@ -238,7 +237,7 @@ describe('GrimoireDetector', () => {
         fight: 1,
       } as ParsedLogEvent;
 
-      const result = await detector.detectGrimoireFromEvent(mockCastEvent) as GrimoireDetection;
+      const result = (await detector.detectGrimoireFromEvent(mockCastEvent)) as GrimoireDetection;
 
       expect(result).toHaveProperty('grimoireKey');
       expect(result).toHaveProperty('grimoireName');

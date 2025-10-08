@@ -1,10 +1,25 @@
 import React from 'react';
 
 import { SkillStat, SkillTooltipProps, ScribedSkillData } from '../components/SkillTooltip';
+import { analyzeScribingSkillWithSignature } from '../features/scribing/utils/enhancedScribingAnalysis';
+import {
+  GRIMOIRE_NAME_PATTERNS,
+  getAllGrimoires,
+  SCRIBING_BLACKLIST,
+  getScribingSkillByAbilityId,
+} from '../features/scribing/utils/Scribing';
+import { ReportAbility } from '../graphql/generated';
+import {
+  DamageEvent,
+  HealEvent,
+  BuffEvent,
+  DebuffEvent,
+  ResourceChangeEvent,
+  UnifiedCastEvent,
+} from '../types/combatlogEvents';
+import { PlayerTalent } from '../types/playerDetails';
 
 import { abilityIdMapper } from './abilityIdMapper';
-import { analyzeScribingSkillWithSignature } from '../features/scribing/utils/enhancedScribingAnalysis';
-import { GRIMOIRE_NAME_PATTERNS, getAllGrimoires, SCRIBING_BLACKLIST, getScribingSkillByAbilityId } from '../features/scribing/utils/Scribing';
 import { findSkillByName, SkillNode, getClassKey } from './skillLinesRegistry';
 
 // SkillNode type is now imported from skillLinesRegistry
@@ -280,7 +295,7 @@ export function buildTooltipPropsFromClassAndName(
   const abilityData = abilityIdMapper.getAbilityByName(abilityName);
   const scribingInfo = abilityData?.gameID ? getScribingSkillByAbilityId(abilityData.gameID) : null;
   const detectedGrimoire = scribingInfo ? null : detectScribedSkillGrimoire(abilityName);
-  
+
   const finalScribedSkillData =
     scribedSkillData ||
     (scribingInfo
@@ -365,14 +380,14 @@ export function buildTooltipPropsFromClassAndName(
  */
 export function enhancedScribingTooltipMapper(
   abilityId: number,
-  talent: any,
-  allReportAbilities: any[],
-  allDebuffEvents: any[],
-  allBuffEvents: any[],
-  allResourceEvents: any[],
-  allDamageEvents: any[],
-  allCastEvents: any[],
-  allHealingEvents: any[],
+  talent: PlayerTalent,
+  allReportAbilities: ReportAbility[],
+  allDebuffEvents: DebuffEvent[],
+  allBuffEvents: BuffEvent[],
+  allResourceEvents: ResourceChangeEvent[],
+  allDamageEvents: DamageEvent[],
+  allCastEvents: UnifiedCastEvent[],
+  allHealingEvents: HealEvent[],
   playerId = 1,
 ): SkillTooltipProps | null {
   // First try to get enhanced scribing data with signature script detection

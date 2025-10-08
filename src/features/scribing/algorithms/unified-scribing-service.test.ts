@@ -1,4 +1,7 @@
-import { UnifiedScribingDetectionService, unifiedScribingService } from './unified-scribing-service';
+import {
+  UnifiedScribingDetectionService,
+  unifiedScribingService,
+} from './unified-scribing-service';
 
 // Mock the algorithm dependencies
 jest.mock('./grimoire-detector', () => ({
@@ -79,7 +82,7 @@ describe('UnifiedScribingDetectionService', () => {
   describe('detectScribingRecipes', () => {
     it('should handle empty fight ID', async () => {
       const result = await service.detectScribingRecipes('');
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.objectContaining({
@@ -95,9 +98,9 @@ describe('UnifiedScribingDetectionService', () => {
 
     it('should process valid fight ID', async () => {
       const fightId = 'test-fight-123';
-      
+
       const result = await service.detectScribingRecipes(fightId);
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.objectContaining({
@@ -109,7 +112,7 @@ describe('UnifiedScribingDetectionService', () => {
 
     it('should handle fight 88 special case', async () => {
       const result = await service.detectScribingRecipes('88');
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.any(Object),
@@ -118,7 +121,7 @@ describe('UnifiedScribingDetectionService', () => {
 
     it('should handle detection with no results', async () => {
       const result = await service.detectScribingRecipes('no-scribing-fight');
-      
+
       expect(result.players).toEqual([]);
       expect(result.summary.totalCombinations).toBe(0);
     });
@@ -128,7 +131,7 @@ describe('UnifiedScribingDetectionService', () => {
     it('should handle service initialization errors gracefully', async () => {
       // Test with invalid inputs
       const result = await service.detectScribingRecipes(null as any);
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.any(Object),
@@ -140,11 +143,11 @@ describe('UnifiedScribingDetectionService', () => {
       const mockParser = {
         parseLogData: jest.fn().mockRejectedValue(new Error('Parser error')),
       };
-      
+
       const serviceWithErrorParser = new UnifiedScribingDetectionService();
-      
+
       const result = await serviceWithErrorParser.detectScribingRecipes('test');
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.any(Object),
@@ -155,9 +158,9 @@ describe('UnifiedScribingDetectionService', () => {
   describe('integration workflow', () => {
     it('should coordinate all detection algorithms', async () => {
       const fightId = 'integration-test-fight';
-      
+
       const result = await service.detectScribingRecipes(fightId);
-      
+
       // Should provide the expected result structure
       expect(result).toMatchObject({
         players: expect.any(Array),
@@ -174,7 +177,7 @@ describe('UnifiedScribingDetectionService', () => {
 
     it('should aggregate results from multiple algorithms', async () => {
       const result = await service.detectScribingRecipes('multi-algorithm-test');
-      
+
       expect(result.summary).toMatchObject({
         totalCombinations: expect.any(Number),
         totalCasts: expect.any(Number),
@@ -189,19 +192,19 @@ describe('UnifiedScribingDetectionService', () => {
   describe('caching and performance', () => {
     it('should handle repeated requests efficiently', async () => {
       const fightId = 'performance-test';
-      
+
       // First request
       const result1 = await service.detectScribingRecipes(fightId);
       // Second request (should potentially use cache)
       const result2 = await service.detectScribingRecipes(fightId);
-      
+
       expect(result1.players.length).toBe(result2.players.length);
       expect(result1.summary.totalCombinations).toBe(result2.summary.totalCombinations);
     });
 
     it('should return valid result structure', async () => {
       const result = await service.detectScribingRecipes('timing-test');
-      
+
       expect(result).toHaveProperty('players');
       expect(result).toHaveProperty('summary');
       expect(result.summary).toHaveProperty('totalCombinations');
@@ -212,7 +215,7 @@ describe('UnifiedScribingDetectionService', () => {
   describe('data validation', () => {
     it('should validate fight ID format', async () => {
       const invalidFightIds = ['', null, undefined, 123, {}];
-      
+
       for (const invalidId of invalidFightIds) {
         const result = await service.detectScribingRecipes(invalidId as any);
         expect(result).toMatchObject({
@@ -224,9 +227,9 @@ describe('UnifiedScribingDetectionService', () => {
 
     it('should handle malformed inputs gracefully', async () => {
       const serviceWithBadData = new UnifiedScribingDetectionService();
-      
+
       const result = await serviceWithBadData.detectScribingRecipes('malformed-test');
-      
+
       expect(result).toMatchObject({
         players: expect.any(Array),
         summary: expect.objectContaining({

@@ -1,6 +1,10 @@
 import '@testing-library/jest-dom';
 
-import { FocusScriptDetector, FocusScriptDetection, FocusScriptDetectionResult } from './focus-detector';
+import {
+  FocusScriptDetector,
+  FocusScriptDetection,
+  FocusScriptDetectionResult,
+} from './focus-detector';
 import { GrimoireDetection } from './grimoire-detector';
 import { ParsedLogEvent } from '../parsers/eso-log-parser';
 
@@ -22,23 +26,24 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
   const createMockEvent = (
     abilityGameID: number,
     timestamp: number = 1000,
-    sourceID: number = 1
-  ): ParsedLogEvent => ({
-    type: 'cast',
-    timestamp,
-    sourceID,
-    targetID: 999,
-    abilityGameID,
-    fight: 1,
-    sourceName: `Player ${sourceID}`,
-    targetName: 'Target',
-    sourceIsFriendly: true,
-    targetIsFriendly: false,
-  } as ParsedLogEvent);
+    sourceID: number = 1,
+  ): ParsedLogEvent =>
+    ({
+      type: 'cast',
+      timestamp,
+      sourceID,
+      targetID: 999,
+      abilityGameID,
+      fight: 1,
+      sourceName: `Player ${sourceID}`,
+      targetName: 'Target',
+      sourceIsFriendly: true,
+      targetIsFriendly: false,
+    }) as ParsedLogEvent;
 
   // Helper function to create mock grimoire detections
   const createMockGrimoireDetection = (
-    overrides: Partial<GrimoireDetection> = {}
+    overrides: Partial<GrimoireDetection> = {},
   ): GrimoireDetection => ({
     grimoireKey: 'trample',
     grimoireName: 'Trample',
@@ -107,7 +112,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(result!.focusScriptName).toBe('Frost Damage');
       expect(result!.transformedSkillName).toBe('Chilling Effect');
       expect(result!.detectionMethod).toBe('ability-mapping');
-      expect(result!.confidence).toBe(0.90);
+      expect(result!.confidence).toBe(0.9);
       expect(mockMapper.getTransformationByAbilityId).toHaveBeenCalledWith(54321);
     });
 
@@ -159,12 +164,20 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         { skillName: 'Frozen Strike', expectedKey: 'frost-damage', expectedCategory: 'damage' },
         { skillName: 'Sundering Blow', expectedKey: 'physical-damage', expectedCategory: 'damage' },
         { skillName: 'Traumatic Impact', expectedKey: 'trauma', expectedCategory: 'debuff' },
-        { skillName: 'Multi-Target Attack', expectedKey: 'multi-target', expectedCategory: 'utility' },
+        {
+          skillName: 'Multi-Target Attack',
+          expectedKey: 'multi-target',
+          expectedCategory: 'utility',
+        },
         { skillName: 'Taunting Shout', expectedKey: 'taunt', expectedCategory: 'control' },
         { skillName: 'Knocking Back', expectedKey: 'knockback', expectedCategory: 'control' },
         { skillName: 'Binding Roots', expectedKey: 'immobilize', expectedCategory: 'control' },
         { skillName: 'Healing Touch', expectedKey: 'healing', expectedCategory: 'healing' },
-        { skillName: 'Restoring Magicka', expectedKey: 'restore-resources', expectedCategory: 'utility' },
+        {
+          skillName: 'Restoring Magicka',
+          expectedKey: 'restore-resources',
+          expectedCategory: 'utility',
+        },
         { skillName: 'Dispelling Light', expectedKey: 'dispel', expectedCategory: 'utility' },
       ];
 
@@ -246,7 +259,10 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
     it('should calculate confidence based on detection rate', () => {
       const grimoireDetections = [
-        createMockGrimoireDetection({ focusScriptType: 'flame-damage', transformedSkillName: 'Fire' }),
+        createMockGrimoireDetection({
+          focusScriptType: 'flame-damage',
+          transformedSkillName: 'Fire',
+        }),
         createMockGrimoireDetection({ transformedSkillName: 'Unknown' }), // Won't detect
         createMockGrimoireDetection({ transformedSkillName: 'Mystery' }), // Won't detect
       ];
@@ -286,12 +302,12 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
     });
 
     it('should calculate different confidence levels', () => {
-      const createDetections = (count: number) => 
-        Array.from({ length: count }, (_, i) => 
+      const createDetections = (count: number) =>
+        Array.from({ length: count }, (_, i) =>
           createMockGrimoireDetection({
             focusScriptType: 'flame-damage',
             transformedSkillName: `Fire ${i}`,
-          })
+          }),
         );
 
       const testCases = [
@@ -305,7 +321,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         const grimoireDetections = [
           ...createDetections(successful),
           ...Array.from({ length: totalCount - successful }, () =>
-            createMockGrimoireDetection({ transformedSkillName: 'Unknown' })
+            createMockGrimoireDetection({ transformedSkillName: 'Unknown' }),
           ),
         ];
 
@@ -385,13 +401,14 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
           ['healing', 1],
         ]),
         focusScriptsByGrimoire: new Map([
-          ['trample', new Map([
-            ['flame-damage', 1],
-            ['healing', 1],
-          ])],
-          ['wield-soul', new Map([
-            ['flame-damage', 1],
-          ])],
+          [
+            'trample',
+            new Map([
+              ['flame-damage', 1],
+              ['healing', 1],
+            ]),
+          ],
+          ['wield-soul', new Map([['flame-damage', 1]])],
         ]),
         detectionMethods: new Map([
           ['name-transformation', 1],
@@ -430,8 +447,11 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
   describe('validateDetections', () => {
     const createTestDetection = (
-      confidence: number, 
-      detectionMethod: 'name-transformation' | 'ability-mapping' | 'pattern-analysis' = 'name-transformation'
+      confidence: number,
+      detectionMethod:
+        | 'name-transformation'
+        | 'ability-mapping'
+        | 'pattern-analysis' = 'name-transformation',
     ): FocusScriptDetection => ({
       focusScriptKey: 'flame-damage',
       focusScriptName: 'Flame Damage',
@@ -453,7 +473,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         createTestDetection(0.85), // Questionable (medium confidence)
         createTestDetection(0.65, 'ability-mapping'), // Questionable (low confidence but reliable method)
         createTestDetection(0.65, 'pattern-analysis'), // Invalid (low confidence, unreliable method)
-        createTestDetection(0.40), // Invalid (very low confidence)
+        createTestDetection(0.4), // Invalid (very low confidence)
       ];
 
       const validation = detector.validateDetections(detections);
@@ -467,7 +487,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(validation.questionable[0].confidence).toBe(0.85);
       expect(validation.questionable[1].confidence).toBe(0.65);
       expect(validation.invalid[0].confidence).toBe(0.65);
-      expect(validation.invalid[1].confidence).toBe(0.40);
+      expect(validation.invalid[1].confidence).toBe(0.4);
     });
 
     it('should handle validation errors gracefully', () => {
@@ -477,7 +497,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
             throw new Error('Confidence access error');
           }
           return target[prop as keyof FocusScriptDetection];
-        }
+        },
       });
 
       const detections = [problematicDetection];
@@ -575,8 +595,16 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       expect(result).not.toBeNull();
       // Should match the first pattern found (order depends on Object.entries iteration)
-      expect(['physical-damage', 'poison-damage', 'disease-damage', 'bleed-damage', 'magic-damage', 'shock-damage', 'frost-damage', 'flame-damage'])
-        .toContain(result!.focusScriptKey);
+      expect([
+        'physical-damage',
+        'poison-damage',
+        'disease-damage',
+        'bleed-damage',
+        'magic-damage',
+        'shock-damage',
+        'frost-damage',
+        'flame-damage',
+      ]).toContain(result!.focusScriptKey);
     });
   });
 

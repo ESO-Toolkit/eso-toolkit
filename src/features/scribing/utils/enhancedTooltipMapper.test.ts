@@ -16,21 +16,21 @@ jest.mock('@/components/SkillTooltip', () => ({}));
 jest.mock('./Scribing', () => ({
   getScribingSkillByAbilityId: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
-    effects: []
+    effects: [],
   })),
 }));
 
 jest.mock('../../../utils/skillTooltipMapper', () => ({
   buildTooltipProps: jest.fn(() => ({
     abilityName: 'Test Skill',
-    tooltip: 'Test tooltip content'
+    tooltip: 'Test tooltip content',
   })),
 }));
 
 jest.mock('./enhancedScribingAnalysis', () => ({
   analyzeScribingSkillWithSignature: jest.fn(() => ({
     grimoireName: 'Test Grimoire',
-    effects: []
+    effects: [],
   })),
 }));
 
@@ -47,7 +47,7 @@ describe('enhancedTooltipMapper', () => {
     id: 1,
     name: 'Test Scribing Skill',
     abilityId: 123456,
-    guid: 1
+    guid: 1,
   };
 
   const mockCombatEventData: CombatEventData = {
@@ -57,7 +57,7 @@ describe('enhancedTooltipMapper', () => {
     allDamageEvents: [] as any[],
     allDebuffEvents: [] as any[],
     allHealingEvents: [] as any[],
-    allResourceEvents: [] as any[]
+    allResourceEvents: [] as any[],
   };
 
   beforeEach(() => {
@@ -71,7 +71,7 @@ describe('enhancedTooltipMapper', () => {
       expect(createEnhancedScribedSkillData).toBeDefined();
       expect(extractCombatData).toBeDefined();
       expect(buildScribingTooltipProps).toBeDefined();
-      
+
       expect(typeof buildEnhancedTooltipProps).toBe('function');
       expect(typeof analyzePlayerScribingSkills).toBe('function');
       expect(typeof createEnhancedScribedSkillData).toBe('function');
@@ -85,7 +85,7 @@ describe('enhancedTooltipMapper', () => {
       expect(() => {
         buildEnhancedTooltipProps({
           talent: mockTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -100,7 +100,7 @@ describe('enhancedTooltipMapper', () => {
       expect(() => {
         buildEnhancedTooltipProps({
           talent: null as any,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -123,7 +123,7 @@ describe('enhancedTooltipMapper', () => {
       const talents = [
         mockTalent,
         { ...mockTalent, id: 2, guid: 2 },
-        { ...mockTalent, id: 3, guid: 3 }
+        { ...mockTalent, id: 3, guid: 3 },
       ];
 
       expect(() => {
@@ -141,11 +141,7 @@ describe('enhancedTooltipMapper', () => {
 
     it('should handle optional combat data', () => {
       expect(() => {
-        createEnhancedScribedSkillData(
-          'Test Grimoire',
-          'Test Ability',
-          mockCombatEventData
-        );
+        createEnhancedScribedSkillData('Test Grimoire', 'Test Ability', mockCombatEventData);
       }).not.toThrow();
     });
 
@@ -155,7 +151,7 @@ describe('enhancedTooltipMapper', () => {
           'Test Grimoire',
           'Test Ability',
           mockCombatEventData,
-          mockTalent
+          mockTalent,
         );
       }).not.toThrow();
     });
@@ -174,17 +170,17 @@ describe('enhancedTooltipMapper', () => {
           reportData: {
             report: {
               masterData: {
-                abilities: []
-              }
-            }
-          }
+                abilities: [],
+              },
+            },
+          },
         },
         damageEvents: [],
         healingEvents: [],
         buffEvents: [],
         debuffEvents: [],
         resourceEvents: [],
-        castEvents: []
+        castEvents: [],
       };
 
       const result = extractCombatData(data);
@@ -209,7 +205,7 @@ describe('enhancedTooltipMapper', () => {
     it('should handle malformed data', () => {
       const malformedData = {
         masterData: 'invalid',
-        damageEvents: 'not-array'
+        damageEvents: 'not-array',
       } as any;
 
       expect(() => {
@@ -223,7 +219,7 @@ describe('enhancedTooltipMapper', () => {
       expect(() => {
         buildScribingTooltipProps({
           talent: mockTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -233,7 +229,7 @@ describe('enhancedTooltipMapper', () => {
         buildScribingTooltipProps({
           talent: mockTalent,
           combatData: mockCombatEventData,
-          playerId: 1
+          playerId: 1,
         });
       }).not.toThrow();
     });
@@ -243,7 +239,7 @@ describe('enhancedTooltipMapper', () => {
         buildScribingTooltipProps({
           talent: mockTalent,
           combatData: mockCombatEventData,
-          classKey: 'sorcerer'
+          classKey: 'sorcerer',
         });
       }).not.toThrow();
     });
@@ -254,7 +250,7 @@ describe('enhancedTooltipMapper', () => {
           talent: mockTalent,
           combatData: mockCombatEventData,
           playerId: 1,
-          classKey: 'sorcerer'
+          classKey: 'sorcerer',
         });
       }).not.toThrow();
     });
@@ -265,13 +261,13 @@ describe('enhancedTooltipMapper', () => {
       const badTalent = {
         id: 'invalid',
         name: null,
-        guid: 'bad'
+        guid: 'bad',
       } as any;
 
       expect(() => {
         buildEnhancedTooltipProps({
           talent: badTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -284,13 +280,13 @@ describe('enhancedTooltipMapper', () => {
         allDamageEvents: [],
         allDebuffEvents: [],
         allHealingEvents: [],
-        allResourceEvents: []
+        allResourceEvents: [],
       } as any;
 
       expect(() => {
         buildEnhancedTooltipProps({
           talent: mockTalent,
-          combatData: badCombatData
+          combatData: badCombatData,
         });
       }).not.toThrow();
     });
@@ -300,13 +296,13 @@ describe('enhancedTooltipMapper', () => {
         id: Number.MAX_SAFE_INTEGER,
         name: 'A'.repeat(1000),
         abilityId: Number.MAX_SAFE_INTEGER,
-        guid: Number.MAX_SAFE_INTEGER
+        guid: Number.MAX_SAFE_INTEGER,
       };
 
       expect(() => {
         buildEnhancedTooltipProps({
           talent: extremeTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -325,7 +321,7 @@ describe('enhancedTooltipMapper', () => {
       // Test that functions can be called without errors
       buildEnhancedTooltipProps({
         talent: mockTalent,
-        combatData: mockCombatEventData
+        combatData: mockCombatEventData,
       });
 
       expect(true).toBe(true); // Basic assertion that we got here without throwing
@@ -340,7 +336,7 @@ describe('enhancedTooltipMapper', () => {
       for (let i = 0; i < 100; i++) {
         buildEnhancedTooltipProps({
           talent: { ...mockTalent, id: i, guid: i },
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }
 
@@ -352,7 +348,7 @@ describe('enhancedTooltipMapper', () => {
       const largeTalentArray = Array.from({ length: 1000 }, (_, i) => ({
         ...mockTalent,
         id: i,
-        guid: i
+        guid: i,
       }));
 
       const startTime = performance.now();
@@ -368,13 +364,13 @@ describe('enhancedTooltipMapper', () => {
     it('should handle special characters in names', () => {
       const specialTalent = {
         ...mockTalent,
-        name: 'Special !@#$%^&*()_+ Characters'
+        name: 'Special !@#$%^&*()_+ Characters',
       };
 
       expect(() => {
         buildEnhancedTooltipProps({
           talent: specialTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });
@@ -382,13 +378,13 @@ describe('enhancedTooltipMapper', () => {
     it('should handle Unicode characters', () => {
       const unicodeTalent = {
         ...mockTalent,
-        name: '测试技能 🎮 اختبار مهارة'
+        name: '测试技能 🎮 اختبار مهارة',
       };
 
       expect(() => {
         buildEnhancedTooltipProps({
           talent: unicodeTalent,
-          combatData: mockCombatEventData
+          combatData: mockCombatEventData,
         });
       }).not.toThrow();
     });

@@ -70,7 +70,7 @@ describe('FocusScriptDetector', () => {
       });
 
       const result = detector.detectFocusScriptFromGrimoire(grimoire);
-      
+
       // Should execute without throwing
       expect(() => result).not.toThrow();
     });
@@ -87,7 +87,7 @@ describe('FocusScriptDetector', () => {
   describe('detectFocusScriptsFromGrimoires', () => {
     it('should handle empty grimoire detections array', () => {
       const result = detector.detectFocusScriptsFromGrimoires([]);
-      
+
       expect(result).toMatchObject({
         detections: [],
         totalAnalyzed: 0,
@@ -105,7 +105,7 @@ describe('FocusScriptDetector', () => {
       const grimoireDetections = [createMockGrimoire()];
 
       const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
-      
+
       expect(result).toMatchObject({
         detections: expect.any(Array),
         totalAnalyzed: 1,
@@ -129,7 +129,7 @@ describe('FocusScriptDetector', () => {
       } as any;
 
       const result = detector.detectFocusScriptFromGrimoire(malformedGrimoire);
-      
+
       // Should not throw and return null or valid result
       expect(() => result).not.toThrow();
     });
@@ -143,7 +143,7 @@ describe('FocusScriptDetector', () => {
       });
 
       const result = detector.detectFocusScriptFromGrimoire(grimoire);
-      
+
       // Should return a valid detection when focus script type is provided
       if (result) {
         expect(result.focusScriptKey).toBe('flame-damage');
@@ -157,7 +157,7 @@ describe('FocusScriptDetector', () => {
       });
 
       const result = detector.detectFocusScriptFromGrimoire(grimoire);
-      
+
       // Should return a valid detection when focus script type is provided
       if (result) {
         expect(result.focusScriptKey).toBe('frost-damage');

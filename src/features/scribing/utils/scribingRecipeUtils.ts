@@ -1,6 +1,6 @@
 /**
  * Enhanced ESO Scribing Database Integration Utilities
- * 
+ *
  * This file provides utilities to match detected scribing skills with their
  * recipes using the comprehensive scribing database.
  */
@@ -60,11 +60,14 @@ interface DatabaseGrimoire {
   resource: string;
   skillType: string;
   school: string;
-  nameTransformations: Record<string, {
-    name: string;
-    abilityIds: number[];
-    matchCount: number;
-  }>;
+  nameTransformations: Record<
+    string,
+    {
+      name: string;
+      abilityIds: number[];
+      matchCount: number;
+    }
+  >;
   validationSuccess?: boolean;
   lastValidated?: string;
 }
@@ -88,8 +91,8 @@ export async function findScribingRecipe(
   abilityName?: string,
 ): Promise<ScribingRecipeMatch | null> {
   try {
-    const database = await loadScribingDatabase() as unknown as EnhancedScribingDatabase;
-    
+    const database = (await loadScribingDatabase()) as unknown as EnhancedScribingDatabase;
+
     if (!database?.grimoires) {
       // eslint-disable-next-line no-console
       console.warn('Scribing database not loaded or invalid structure');
@@ -122,7 +125,9 @@ export async function findScribingRecipe(
       if (!grimoire.nameTransformations) continue;
 
       // Check each transformation
-      for (const [transformationType, transformation] of Object.entries(grimoire.nameTransformations)) {
+      for (const [transformationType, transformation] of Object.entries(
+        grimoire.nameTransformations,
+      )) {
         // Check for exact ability ID match in transformations
         if (transformation.abilityIds?.includes(abilityId)) {
           const match: ScribingRecipeMatch = {
@@ -202,9 +207,9 @@ function checkNameMatch(detectedName: string, databaseName: string): number {
   // Check for significant word overlap
   const detectedWords = detected.split(/\s+/);
   const databaseWords = database.split(/\s+/);
-  
-  const commonWords = detectedWords.filter(word => 
-    databaseWords.some(dbWord => dbWord === word && word.length > 2),
+
+  const commonWords = detectedWords.filter((word) =>
+    databaseWords.some((dbWord) => dbWord === word && word.length > 2),
   );
 
   if (commonWords.length > 0) {
@@ -249,20 +254,18 @@ export interface ScribingRecipeDisplay {
 /**
  * Format a scribing recipe match for display
  */
-export function formatScribingRecipeForDisplay(
-  match: ScribingRecipeMatch,
-): ScribingRecipeDisplay {
+export function formatScribingRecipeForDisplay(match: ScribingRecipeMatch): ScribingRecipeDisplay {
   const transformationType = match.transformation?.type || 'unknown';
   const transformationName = match.transformation?.name || 'Unknown Transformation';
-  
+
   // Create a human-readable transformation type
   const readableTransformationType = transformationType
     .split('-')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
   const recipeSummary = `📖 ${match.grimoire.name} + 🔄 ${readableTransformationType}`;
-  
+
   const tooltipInfo = [
     `📖 Grimoire: ${match.grimoire.name}`,
     `🔄 Focus Script: ${transformationName} (${readableTransformationType})`,
