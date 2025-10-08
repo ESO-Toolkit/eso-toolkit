@@ -1837,8 +1837,6 @@ const CalculatorComponent: React.FC = () => {
       setArmorResistanceData((prev: CalculatorData) => {
         // TEMPORARILY DISABLED: Validate previous state before making changes
         // if (!validateCalculatorData(prev)) {
-        //   // eslint-disable-next-line no-console
-        //   console.error(`❌ [UPDATE] Previous state validation failed - aborting update`);
         //   return prev;
         // }
 
@@ -1872,8 +1870,6 @@ const CalculatorComponent: React.FC = () => {
 
         // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
         // if (!validateCalculatorData(updatedData)) {
-        //   // eslint-disable-next-line no-console
-        //   console.error(`❌ [UPDATE] Intermediate state validation failed - aborting update`);
         //   return prev;
         // }
 
@@ -2285,8 +2281,6 @@ const CalculatorComponent: React.FC = () => {
       setArmorResistanceData((prev: CalculatorData) => {
         // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
         // if (!validateCalculatorData(prev)) {
-        //   // eslint-disable-next-line no-console
-        //   console.error(`❌ [LEGACY_UPDATE] Previous state validation failed - aborting update`);
         //   return prev;
         // }
 
@@ -2341,8 +2335,6 @@ const CalculatorComponent: React.FC = () => {
 
         // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
         // if (!validateCalculatorData(updatedData)) {
-        //   // eslint-disable-next-line no-console
-        //   console.error(`❌ [LEGACY_UPDATE] Intermediate state validation failed - aborting update`);
         //   return prev;
         // }
 

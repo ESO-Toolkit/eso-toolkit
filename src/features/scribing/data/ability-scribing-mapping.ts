@@ -125,7 +125,6 @@ export class AbilityScribingMapper {
       }
       this.buildMappings();
     } catch {
-      // console.error('Failed to initialize ability scribing mapper:', error);
       throw new Error('Ability scribing mapper initialization failed');
     }
   }

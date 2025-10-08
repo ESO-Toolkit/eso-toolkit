@@ -5,7 +5,14 @@
  * recipes using the comprehensive scribing database.
  */
 
+import { Logger, LogLevel } from '../../../contexts/LoggerContext';
 import type { ScribingData } from '../types/scribing';
+
+// Create a logger instance for Scribing Recipe utilities
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'ScribingRecipe',
+});
 
 // Import the scribing database
 let scribingDatabase: ScribingData | null = null;
@@ -23,8 +30,7 @@ export async function loadScribingDatabase(): Promise<ScribingData> {
     scribingDatabase = await response.json();
     return scribingDatabase as ScribingData;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to load scribing database:', error);
+    logger.error('Failed to load scribing database:', error instanceof Error ? error : undefined);
     throw error;
   }
 }
@@ -94,8 +100,7 @@ export async function findScribingRecipe(
     const database = (await loadScribingDatabase()) as unknown as EnhancedScribingDatabase;
 
     if (!database?.grimoires) {
-      // eslint-disable-next-line no-console
-      console.warn('Scribing database not loaded or invalid structure');
+      logger.warn('Scribing database not loaded or invalid structure');
       return null;
     }
 
@@ -181,8 +186,7 @@ export async function findScribingRecipe(
     // Return the best match if confidence is above threshold
     return bestMatch && bestMatch.matchConfidence > 0.6 ? bestMatch : null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error finding scribing recipe:', error);
+    logger.error('Error finding scribing recipe:', error instanceof Error ? error : undefined);
     return null;
   }
 }

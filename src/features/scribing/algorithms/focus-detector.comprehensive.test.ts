@@ -615,5 +615,3 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
     });
   });
 });
-
-

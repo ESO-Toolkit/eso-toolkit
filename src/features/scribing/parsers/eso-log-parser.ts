@@ -5,6 +5,14 @@
  * from ESO combat log data files for scribing recipe analysis.
  */
 
+import { Logger, LogLevel } from '../../../contexts/LoggerContext';
+
+// Create a logger instance for ESO Log Parser
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'EsoLogParser',
+});
+
 export interface ParsedLogEvent {
   timestamp: number;
   type: 'cast' | 'applybuff' | 'removebuff' | 'applydebuff' | 'removedebuff' | 'damage' | 'heal';
@@ -236,7 +244,7 @@ export class EsoLogParser {
     }
 
     if (errors.length > 0) {
-      console.warn('Batch parsing completed with errors:', errors);
+      logger.warn('Batch parsing completed with errors:', errors);
     }
 
     return results;

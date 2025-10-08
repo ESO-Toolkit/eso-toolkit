@@ -198,7 +198,6 @@ export function extractCombatData(data: {
       allCastEvents: data.castEvents || [],
     };
   } catch {
-    // console.error('Failed to extract combat data:', error);
     return null;
   }
 }

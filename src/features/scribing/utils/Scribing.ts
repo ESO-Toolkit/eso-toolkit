@@ -17,7 +17,14 @@ import {
 import { PlayerTalent } from '@/types/playerDetails';
 
 import scribingDatabase from '../../../../data/scribing-complete.json';
+import { Logger, LogLevel } from '../../../contexts/LoggerContext';
 import { abilityIdMapper } from '../../../utils/abilityIdMapper';
+
+// Create logger instance for scribing utilities
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'Scribing',
+});
 
 // Type definitions for scribing database
 interface ScribingTransformation {
@@ -349,7 +356,6 @@ export function getScribingSkillByAbilityId(abilityId: number): ScribingSkillInf
 
     return null;
   } catch {
-    // console.error('Error looking up scribing skill by ability ID:', error);
     return null;
   }
 }
@@ -391,7 +397,7 @@ function getTransformationType(transformationKey: string): string {
     return 'Focus Script';
   } else {
     // Log unknown transformation types for debugging
-    console.warn(`Unknown scribing transformation type: ${transformationKey}`);
+    logger.warn(`Unknown scribing transformation type: ${transformationKey}`);
     return 'Focus Script'; // Default to Focus Script since that's what our database contains
   }
 }

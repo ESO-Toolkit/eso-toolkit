@@ -1,3 +1,24 @@
+// Mock logger before any imports
+const mockLoggerWarn = jest.fn();
+const mockLoggerError = jest.fn();
+const mockLoggerInfo = jest.fn();
+const mockLoggerDebug = jest.fn();
+
+jest.mock('../../../contexts/LoggerContext', () => ({
+  Logger: jest.fn().mockImplementation(() => ({
+    warn: mockLoggerWarn,
+    error: mockLoggerError,
+    info: mockLoggerInfo,
+    debug: mockLoggerDebug,
+  })),
+  LogLevel: {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3,
+  },
+}));
+
 import '@testing-library/jest-dom';
 import {
   EsoLogParser,
@@ -10,14 +31,10 @@ import {
 // Mock fetch for testing file parsing
 global.fetch = jest.fn() as jest.MockedFunction<typeof fetch>;
 
-// Mock console.warn to capture warnings in batch parsing
-const mockConsoleWarn = jest.fn();
-global.console.warn = mockConsoleWarn;
-
 describe('EsoLogParser - Advanced Coverage', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockConsoleWarn.mockClear();
+    mockLoggerWarn.mockClear();
   });
 
   // Helper function to create mock log data
@@ -327,7 +344,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
       expect(results[0].fightNumber).toBe(1);
 
       // Should log warnings for failed fights
-      expect(mockConsoleWarn).toHaveBeenCalledWith(
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
         'Batch parsing completed with errors:',
         expect.arrayContaining([expect.stringContaining('Failed to parse fight 2')]),
       );
@@ -340,7 +357,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
       const results = await EsoLogParser.parseBatchFights('/test/empty', []);
 
       expect(results).toHaveLength(0);
-      expect(mockConsoleWarn).not.toHaveBeenCalled();
+      expect(mockLoggerWarn).not.toHaveBeenCalled();
     });
 
     it('should handle all fights failing', async () => {
@@ -353,7 +370,7 @@ describe('EsoLogParser - Advanced Coverage', () => {
       const results = await EsoLogParser.parseBatchFights('/test/all-fail', [1, 2, 3]);
 
       expect(results).toHaveLength(0);
-      expect(mockConsoleWarn).toHaveBeenCalledWith(
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
         'Batch parsing completed with errors:',
         expect.arrayContaining([
           expect.stringContaining('Failed to parse fight 1'),

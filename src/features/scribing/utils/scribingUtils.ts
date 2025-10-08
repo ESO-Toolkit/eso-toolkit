@@ -5,6 +5,7 @@
  * in the ESO Log Aggregator application.
  */
 
+import { Logger, LogLevel } from '../../../contexts/LoggerContext';
 import type {
   ScribingData,
   Grimoire,
@@ -13,6 +14,12 @@ import type {
   ScriptType,
   SkillLine,
 } from '../types/scribing';
+
+// Create a logger instance for Scribing utilities
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'ScribingUtils',
+});
 
 // Import the scribing data
 // Note: In a real application, this would be loaded dynamically
@@ -32,8 +39,7 @@ export async function loadScribingData(): Promise<ScribingData> {
     scribingData = await response.json();
     return scribingData as ScribingData;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to load scribing data:', error);
+    logger.error('Failed to load scribing data:', error instanceof Error ? error : undefined);
     throw error;
   }
 }
