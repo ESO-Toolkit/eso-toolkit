@@ -391,7 +391,7 @@ function getTransformationType(transformationKey: string): string {
     return 'Focus Script';
   } else {
     // Log unknown transformation types for debugging
-    // console.warn(`Unknown scribing transformation type: ${transformationKey}`);
+    console.warn(`Unknown scribing transformation type: ${transformationKey}`);
     return 'Focus Script'; // Default to Focus Script since that's what our database contains
   }
 }

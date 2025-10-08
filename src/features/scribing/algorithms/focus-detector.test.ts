@@ -58,35 +58,35 @@ describe('FocusScriptDetector', () => {
   });
 
   describe('detectFocusScriptFromGrimoire', () => {
-    it('should handle null grimoire detection', () => {
-      const result = detector.detectFocusScriptFromGrimoire(null as any);
+    it('should handle null grimoire detection', async () => {
+      const result = await detector.detectFocusScriptFromGrimoire(null as any);
       expect(result).toBeNull();
     });
 
-    it('should detect focus script from transformed skill name', () => {
+    it('should detect focus script from transformed skill name', async () => {
       const grimoire = createMockGrimoire({
         focusScriptType: 'fire',
         transformedSkillName: 'Flame Weapon',
       });
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoire);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoire);
 
       // Should execute without throwing
-      expect(() => result).not.toThrow();
+      expect(result).not.toBeNull();
     });
 
-    it('should handle grimoire without focus script info', () => {
+    it('should handle grimoire without focus script info', async () => {
       const grimoire = createMockGrimoire();
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoire);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoire);
       // Should return null or a valid detection
       expect(result === null || typeof result === 'object').toBe(true);
     });
   });
 
   describe('detectFocusScriptsFromGrimoires', () => {
-    it('should handle empty grimoire detections array', () => {
-      const result = detector.detectFocusScriptsFromGrimoires([]);
+    it('should handle empty grimoire detections array', async () => {
+      const result = await detector.detectFocusScriptsFromGrimoires([]);
 
       expect(result).toMatchObject({
         detections: [],
@@ -101,10 +101,10 @@ describe('FocusScriptDetector', () => {
       });
     });
 
-    it('should process grimoire detections without errors', () => {
+    it('should process grimoire detections without errors', async () => {
       const grimoireDetections = [createMockGrimoire()];
 
-      const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
+      const result = await detector.detectFocusScriptsFromGrimoires(grimoireDetections);
 
       expect(result).toMatchObject({
         detections: expect.any(Array),
@@ -121,28 +121,28 @@ describe('FocusScriptDetector', () => {
   });
 
   describe('error handling', () => {
-    it('should handle malformed grimoire gracefully', () => {
+    it('should handle malformed grimoire gracefully', async () => {
       const malformedGrimoire = {
         grimoireKey: '',
         grimoireName: null,
         detectedAbilityId: NaN,
       } as any;
 
-      const result = detector.detectFocusScriptFromGrimoire(malformedGrimoire);
+      const result = await detector.detectFocusScriptFromGrimoire(malformedGrimoire);
 
       // Should not throw and return null or valid result
-      expect(() => result).not.toThrow();
+      expect(result === null || typeof result === 'object').toBe(true);
     });
   });
 
   describe('focus script pattern detection', () => {
-    it('should detect fire focus script from flame keywords', () => {
+    it('should detect fire focus script from flame keywords', async () => {
       const grimoire = createMockGrimoire({
         transformedSkillName: 'Flame Burst',
         focusScriptType: 'flame-damage',
       });
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoire);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoire);
 
       // Should return a valid detection when focus script type is provided
       if (result) {
@@ -150,13 +150,13 @@ describe('FocusScriptDetector', () => {
       }
     });
 
-    it('should detect ice focus script from frost keywords', () => {
+    it('should detect ice focus script from frost keywords', async () => {
       const grimoire = createMockGrimoire({
         transformedSkillName: 'Frost Strike',
         focusScriptType: 'frost-damage',
       });
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoire);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoire);
 
       // Should return a valid detection when focus script type is provided
       if (result) {

@@ -273,18 +273,16 @@ describe('EsoLogParser - Advanced Coverage', () => {
         const fightNumber = url.includes('fight-1') ? 1 : 2;
         return {
           ok: true,
-          json: jest
-            .fn()
-            .mockResolvedValue(
-              createMockLogData([
-                {
-                  type: 'cast',
-                  abilityGameID: fightNumber * 100,
-                  timestamp: fightNumber * 1000,
-                  fight: fightNumber,
-                },
-              ]),
-            ),
+          json: jest.fn().mockResolvedValue(
+            createMockLogData([
+              {
+                type: 'cast',
+                abilityGameID: fightNumber * 100,
+                timestamp: fightNumber * 1000,
+                fight: fightNumber,
+              },
+            ]),
+          ),
         };
       });
 

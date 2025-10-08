@@ -58,30 +58,30 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
   });
 
   describe('constructor', () => {
-    it('should create detector with default mapper', () => {
+    it('should create detector with default mapper', async () => {
       const defaultDetector = new FocusScriptDetector();
       expect(defaultDetector).toBeInstanceOf(FocusScriptDetector);
     });
 
-    it('should create detector with custom mapper', () => {
+    it('should create detector with custom mapper', async () => {
       const customDetector = new FocusScriptDetector(mockMapper);
       expect(customDetector).toBeInstanceOf(FocusScriptDetector);
     });
   });
 
   describe('detectFocusScriptFromGrimoire', () => {
-    it('should return null for null or undefined grimoire detection', () => {
-      expect(detector.detectFocusScriptFromGrimoire(null as any)).toBeNull();
-      expect(detector.detectFocusScriptFromGrimoire(undefined as any)).toBeNull();
+    it('should return null for null or undefined grimoire detection', async () => {
+      expect(await detector.detectFocusScriptFromGrimoire(null as any)).toBeNull();
+      expect(await detector.detectFocusScriptFromGrimoire(undefined as any)).toBeNull();
     });
 
-    it('should create detection from transformation info when available', () => {
+    it('should create detection from transformation info when available', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         focusScriptType: 'flame-damage',
         transformedSkillName: 'Burning Trample',
       });
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptKey).toBe('flame-damage');
@@ -93,7 +93,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(result!.confidence).toBe(0.95);
     });
 
-    it('should create detection from ability mapping when no transformation info', () => {
+    it('should create detection from ability mapping when no transformation info', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         detectedAbilityId: 54321,
       });
@@ -105,7 +105,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(mockMapping);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptKey).toBe('frost-damage');
@@ -116,14 +116,14 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(mockMapper.getTransformationByAbilityId).toHaveBeenCalledWith(54321);
     });
 
-    it('should detect focus script by pattern analysis of skill name', () => {
+    it('should detect focus script by pattern analysis of skill name', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         transformedSkillName: 'Shocking Trample',
       });
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptKey).toBe('shock-damage');
@@ -133,29 +133,29 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(result!.confidence).toBe(0.75);
     });
 
-    it('should return null when no detection method succeeds', () => {
+    it('should return null when no detection method succeeds', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         transformedSkillName: 'Unknown Skill',
       });
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).toBeNull();
     });
 
-    it('should handle missing transformed skill name gracefully', () => {
+    it('should handle missing transformed skill name gracefully', async () => {
       const grimoireDetection = createMockGrimoireDetection();
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).toBeNull();
     });
 
-    it('should detect different focus script types by keywords', () => {
+    it('should detect different focus script types by keywords', async () => {
       const testCases = [
         { skillName: 'Venomous Strike', expectedKey: 'poison-damage', expectedCategory: 'damage' },
         { skillName: 'Diseased Weapon', expectedKey: 'disease-damage', expectedCategory: 'damage' },
@@ -181,26 +181,26 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         { skillName: 'Dispelling Light', expectedKey: 'dispel', expectedCategory: 'utility' },
       ];
 
-      testCases.forEach(({ skillName, expectedKey, expectedCategory }) => {
+      for (const { skillName, expectedKey, expectedCategory } of testCases) {
         const grimoireDetection = createMockGrimoireDetection({
           transformedSkillName: skillName,
         });
 
         mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-        const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+        const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
         expect(result).not.toBeNull();
         expect(result!.focusScriptKey).toBe(expectedKey);
         expect(result!.focusScriptCategory).toBe(expectedCategory);
         expect(result!.transformedSkillName).toBe(skillName);
-      });
+      }
     });
   });
 
   describe('detectFocusScriptsFromGrimoires', () => {
-    it('should process empty array correctly', () => {
-      const result = detector.detectFocusScriptsFromGrimoires([]);
+    it('should process empty array correctly', async () => {
+      const result = await detector.detectFocusScriptsFromGrimoires([]);
 
       expect(result).toEqual({
         detections: [],
@@ -215,7 +215,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       });
     });
 
-    it('should process multiple grimoire detections', () => {
+    it('should process multiple grimoire detections', async () => {
       const grimoireDetections = [
         createMockGrimoireDetection({
           focusScriptType: 'flame-damage',
@@ -239,7 +239,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
+      const result = await detector.detectFocusScriptsFromGrimoires(grimoireDetections);
 
       expect(result.detections).toHaveLength(3);
       expect(result.totalAnalyzed).toBe(3);
@@ -257,7 +257,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(result.grimoireFocusScripts.get('banner')!.has('healing')).toBe(true);
     });
 
-    it('should calculate confidence based on detection rate', () => {
+    it('should calculate confidence based on detection rate', async () => {
       const grimoireDetections = [
         createMockGrimoireDetection({
           focusScriptType: 'flame-damage',
@@ -269,13 +269,13 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
+      const result = await detector.detectFocusScriptsFromGrimoires(grimoireDetections);
 
       // Detection rate: 1/3 = 0.33, should not reach higher confidence tiers
       expect(result.confidence).toBe(0.5);
     });
 
-    it('should handle processing errors gracefully', () => {
+    it('should handle processing errors gracefully', async () => {
       const normalDetection = createMockGrimoireDetection({
         focusScriptType: 'flame-damage',
         transformedSkillName: 'Fire Strike',
@@ -290,7 +290,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       const grimoireDetections = [normalDetection];
 
-      const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
+      const result = await detector.detectFocusScriptsFromGrimoires(grimoireDetections);
 
       expect(result.detections).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
@@ -301,7 +301,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       detector.detectFocusScriptFromGrimoire = originalMethod;
     });
 
-    it('should calculate different confidence levels', () => {
+    it('should calculate different confidence levels', async () => {
       const createDetections = (count: number) =>
         Array.from({ length: count }, (_, i) =>
           createMockGrimoireDetection({
@@ -317,7 +317,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         { detections: 10, successful: 10, expectedConfidence: 0.95 }, // 100% rate - > 0.9 threshold
       ];
 
-      testCases.forEach(({ detections: totalCount, successful, expectedConfidence }) => {
+      for (const { detections: totalCount, successful, expectedConfidence } of testCases) {
         const grimoireDetections = [
           ...createDetections(successful),
           ...Array.from({ length: totalCount - successful }, () =>
@@ -327,15 +327,15 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
         mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-        const result = detector.detectFocusScriptsFromGrimoires(grimoireDetections);
+        const result = await detector.detectFocusScriptsFromGrimoires(grimoireDetections);
 
         expect(result.confidence).toBe(expectedConfidence);
-      });
+      }
     });
   });
 
   describe('getFocusScriptStatistics', () => {
-    it('should calculate comprehensive statistics', () => {
+    it('should calculate comprehensive statistics', async () => {
       const detectionResult: FocusScriptDetectionResult = {
         detections: [
           {
@@ -419,7 +419,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       });
     });
 
-    it('should handle empty detections', () => {
+    it('should handle empty detections', async () => {
       const detectionResult: FocusScriptDetectionResult = {
         detections: [],
         totalAnalyzed: 0,
@@ -467,7 +467,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       event: createMockEvent(12345),
     });
 
-    it('should classify detections by confidence and method', () => {
+    it('should classify detections by confidence and method', async () => {
       const detections = [
         createTestDetection(0.95), // Valid (high confidence)
         createTestDetection(0.85), // Questionable (medium confidence)
@@ -490,7 +490,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(validation.invalid[1].confidence).toBe(0.4);
     });
 
-    it('should handle validation errors gracefully', () => {
+    it('should handle validation errors gracefully', async () => {
       const problematicDetection = new Proxy(createTestDetection(0.95), {
         get(target, prop) {
           if (prop === 'confidence') {
@@ -509,7 +509,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
       expect(validation.validationErrors[0]).toContain('Confidence access error');
     });
 
-    it('should handle empty detections array', () => {
+    it('should handle empty detections array', async () => {
       const validation = detector.validateDetections([]);
 
       expect(validation.valid).toEqual([]);
@@ -520,7 +520,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
   });
 
   describe('focus script name formatting', () => {
-    it('should format focus script keys correctly', () => {
+    it('should format focus script keys correctly', async () => {
       const testCases = [
         { input: 'flame-damage', expected: 'Flame Damage' },
         { input: 'physical-damage', expected: 'Physical Damage' },
@@ -529,26 +529,26 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
         { input: 'simple', expected: 'Simple' },
       ];
 
-      testCases.forEach(({ input, expected }) => {
+      for (const { input, expected } of testCases) {
         const grimoireDetection = createMockGrimoireDetection({
           focusScriptType: input,
           transformedSkillName: 'Test Skill',
         });
 
-        const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+        const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
         expect(result).not.toBeNull();
         expect(result!.focusScriptName).toBe(expected);
-      });
+      }
     });
 
-    it('should handle unknown focus script keys', () => {
+    it('should handle unknown focus script keys', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         focusScriptType: 'unknown-script-type',
         transformedSkillName: 'Test Skill',
       });
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptName).toBe('Unknown Script Type');
@@ -557,33 +557,33 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
   });
 
   describe('pattern matching edge cases', () => {
-    it('should match keywords case-insensitively', () => {
+    it('should match keywords case-insensitively', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         transformedSkillName: 'BURNING Strike', // Uppercase keyword
       });
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptKey).toBe('flame-damage');
     });
 
-    it('should match partial keywords in skill names', () => {
+    it('should match partial keywords in skill names', async () => {
       const grimoireDetection = createMockGrimoireDetection({
         transformedSkillName: 'Lightning Strike', // Contains 'lightning' keyword which is in shock-damage pattern
       });
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       expect(result!.focusScriptKey).toBe('shock-damage');
     });
 
-    it('should return first matching pattern when multiple keywords match', () => {
+    it('should return first matching pattern when multiple keywords match', async () => {
       // This skill name could match both 'flame' and 'magic' patterns
       const grimoireDetection = createMockGrimoireDetection({
         transformedSkillName: 'Magical Flame Burst',
@@ -591,7 +591,7 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
 
       mockMapper.getTransformationByAbilityId.mockReturnValue(null);
 
-      const result = detector.detectFocusScriptFromGrimoire(grimoireDetection);
+      const result = await detector.detectFocusScriptFromGrimoire(grimoireDetection);
 
       expect(result).not.toBeNull();
       // Should match the first pattern found (order depends on Object.entries iteration)
@@ -609,9 +609,11 @@ describe('FocusScriptDetector - Comprehensive Coverage', () => {
   });
 
   describe('singleton instance', () => {
-    it('should export singleton focusScriptDetector', () => {
+    it('should export singleton focusScriptDetector', async () => {
       const { focusScriptDetector } = require('./focus-detector');
       expect(focusScriptDetector).toBeInstanceOf(FocusScriptDetector);
     });
   });
 });
+
+

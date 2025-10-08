@@ -236,7 +236,7 @@ export class EsoLogParser {
     }
 
     if (errors.length > 0) {
-      // console.warn('Batch parsing completed with errors:', errors);
+      console.warn('Batch parsing completed with errors:', errors);
     }
 
     return results;
