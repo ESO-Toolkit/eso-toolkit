@@ -1,6 +1,8 @@
-import React, { createContext, useContext, ReactNode } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 
+import { setSelectedTargetIds } from './store/ui/uiSlice';
+import { useAppDispatch } from './store/useAppDispatch';
 import { TabId } from './utils/getSkeletonForTab';
 
 interface ReportFightContextType {
@@ -19,9 +21,19 @@ export const ReportFightProvider: React.FC<{ children: ReactNode }> = ({ childre
   const { reportId, fightId, tabId } = useParams();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const dispatch = useAppDispatch();
+  const previousFightId = useRef<string | null | undefined>(fightId);
 
   // Get experimental tab setting from search params
   const showExperimentalTabs = searchParams.get('experimental') === 'true';
+
+  // Clear selected targets when fight changes
+  useEffect(() => {
+    if (fightId !== previousFightId.current && fightId) {
+      dispatch(setSelectedTargetIds([]));
+    }
+    previousFightId.current = fightId;
+  }, [dispatch, fightId]);
 
   // Convert URL param to valid tab ID
   const getValidTabId = (param: string | null | undefined, experimental: boolean): TabId => {
