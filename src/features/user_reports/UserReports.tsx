@@ -220,73 +220,6 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
-  const renderHeaderContent = (insideCard: boolean): React.ReactElement => (
-    <Box sx={{ mb: insideCard ? 3 : isDesktop ? 4 : 3 }}>
-      <Box
-        sx={{
-          ...headerStackSx,
-          mb: insideCard ? 1.5 : 1.5,
-        }}
-      >
-        <Box>
-          <Typography
-            variant={isDesktop ? 'h4' : 'h5'}
-            component="h1"
-            sx={{
-              mb: insideCard ? 1.5 : 2,
-              pr: isDesktop ? 0 : 5 // Add right padding on mobile to account for floating button
-            }}
-          >
-            My Reports
-          </Typography>
-          {currentUser && (
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{
-                maxWidth: isDesktop ? 'none' : '26ch',
-                pr: isDesktop ? 0 : 1, // Add some right padding on mobile
-              }}
-            >
-              Reports for {currentUser.name}
-              {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
-              {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={actionGroupSx}>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={state.loading}
-            aria-label="refresh"
-            size={isDesktop ? 'medium' : 'large'}
-            sx={{
-              backgroundColor: theme.palette.action.hover,
-              '&:hover': {
-                backgroundColor: theme.palette.action.selected,
-              },
-              width: isDesktop ? 'auto' : '100%',
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {!currentUser && !userLoading && (
-        <Alert severity="info" sx={{ mb: insideCard ? 2 : 1.5 }}>
-          Note: Unable to load user profile information from ESO Logs API, but you can still view
-          your reports below.
-        </Alert>
-      )}
-
-      <Typography variant="body2" color="text.secondary" sx={{ mt: currentUser ? 1 : 0 }}>
-        Total: {state.pagination.totalReports} reports
-      </Typography>
-    </Box>
-  );
-
   const [state, setState] = useState<UserReportsState>({
     reports: [],
     loading: false, // Let useEffect handle initial loading
@@ -471,8 +404,47 @@ export const UserReports: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-      <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
-        <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+      {/* Error Alert */}
+      {state.error && (
+        <Alert severity="error" sx={{ mb: 3 }}>
+          {state.error}
+        </Alert>
+      )}
+
+      {/* Reports Table */}
+      <Card
+        elevation={isDesktop ? 4 : 1}
+        sx={{
+          ...cardSx,
+          transition: state.initialLoading
+            ? 'none !important'
+            : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          ...(state.initialLoading && {
+            isolation: 'isolate',
+            contain: 'strict',
+            '&, & *': {
+              transition: 'none !important',
+              animation: 'none !important',
+            },
+          }),
+          // Hover effect when not initially loading (allow hover during pagination)
+          '&:hover': state.initialLoading
+            ? {}
+            : {
+                transform: 'translateY(-2px)',
+                boxShadow: (theme) =>
+                  theme.palette.mode === 'dark'
+                    ? '0 8px 32px rgba(56, 189, 248, 0.15)'
+                    : '0 8px 32px rgba(25, 118, 210, 0.1)',
+              },
+        }}
+      >
+        <CardContent
+          sx={{
+            ...cardContentSx,
+            position: 'relative',
+          }}
+        >
           {/* Mobile Floating Refresh Button */}
           {!isDesktop && (
             <IconButton
@@ -551,37 +523,7 @@ export const UserReports: React.FC = () => {
             Total: {state.pagination.totalReports} reports
           </Typography>
 
-          {/* Error Alert */}
-          {state.error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {state.error}
-            </Alert>
-          )}
-
-          {state.reports.length > 0 ? (
-            <>
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems={isDesktop ? 'center' : 'flex-start'}
-                flexDirection={isDesktop ? 'row' : 'column'}
-                gap={isDesktop ? 2 : 1.5}
-                mb={isDesktop ? 3 : 2}
-              >
-                <Typography variant="body1" color="text.secondary">
-                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} -{' '}
-                  {state.pagination.totalReports} total reports
-                </Typography>
-
-                <Chip
-                  variant="outlined"
-                  color="primary"
-                  label={`${state.pagination.perPage} per page`}
-                  sx={{ fontWeight: 500 }}
-                />
-              </Box>
-
-              {isDesktop ? (
+          {isDesktop ? (
             <TableContainer
               component={Paper}
               elevation={0}
@@ -600,136 +542,159 @@ export const UserReports: React.FC = () => {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {state.reports.map((report) => (
+                  {state.loading
+                    ? Array.from({ length: state.reports.length || REPORTS_PER_PAGE }).map(
+                        (_, index) => (
+                          <MemoizedSkeletonRow key={`skeleton-${index}`} index={index} />
+                        ),
+                      )
+                    : state.reports.map((report) => (
                         <TableRow
                           key={report.code}
                           hover
                           onClick={() => handleReportClick(report.code)}
                           sx={{
                             cursor: 'pointer',
-                            transition: 'all 0.2s ease-in-out',
+                            animation: !state.loading ? 'fadeIn 0.3s ease-out both' : 'none',
+                            '@keyframes fadeIn': {
+                              '0%': { opacity: 0 },
+                              '100%': { opacity: 1 },
+                            },
+                            transition: 'all 0.15s ease-in-out',
                             '&:hover': {
-                              backgroundColor: theme.palette.action.hover,
-                              transform: 'translateX(4px)',
+                              backgroundColor: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.05)'
+                                  : 'rgba(25, 118, 210, 0.04)',
+                              boxShadow: (theme) =>
+                                theme.palette.mode === 'dark'
+                                  ? '0 2px 8px rgba(56, 189, 248, 0.15)'
+                                  : '0 2px 8px rgba(25, 118, 210, 0.1)',
                             },
                           }}
                         >
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                          <TableCell>
                             <Box>
-                              <Typography
-                                variant="body2"
-                                fontWeight="medium"
-                                color="primary.main"
-                                sx={{
-                                  overflowWrap: 'anywhere',
-                                  wordBreak: 'break-word',
-                                  lineHeight: 1.4,
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
+                              <Typography variant="body1" fontWeight="medium">
                                 {report.title || 'Untitled Report'}
                               </Typography>
                               <Typography
                                 variant="caption"
                                 color="text.secondary"
-                                sx={{
-                                  display: 'block',
-                                  mt: 0.25,
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
-                              >
-                                {`Owner: ${report.owner?.name || 'Unknown'}`}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                color="text.secondary"
-                                sx={{
-                                  display: 'block',
-                                  mt: 0.25,
-                                  whiteSpace: 'nowrap',
-                                  textOverflow: 'ellipsis',
-                                  overflow: 'hidden',
-                                }}
+                                sx={{ mt: 0.25, display: 'block' }}
                               >
                                 {formatReportDateTime(report.startTime)}
                               </Typography>
                             </Box>
                           </TableCell>
-                          <TableCell
-                            sx={{
-                              verticalAlign: 'top',
-                              whiteSpace: 'normal',
-                              wordBreak: 'break-word',
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ whiteSpace: 'inherit' }}>
+                          <TableCell>
+                            <Typography variant="body2">
                               {report.zone?.name || 'Unknown Zone'}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                          <TableCell>
                             <Typography variant="body2">
                               {formatReportDuration(report.startTime, report.endTime)}
                             </Typography>
                           </TableCell>
-                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                          <TableCell>
                             <Chip
                               label={report.visibility}
-                              color={getReportVisibilityColor(report.visibility)}
                               size="small"
+                              color={getReportVisibilityColor(report.visibility)}
                               variant="outlined"
-                              sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}
                             />
                           </TableCell>
                         </TableRow>
                       ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              ) : (
-                <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
-              )}
-
-              {/* Pagination */}
-              <Box display="flex" justifyContent="center" mt={isDesktop ? 3 : 2}>
-                <Pagination
-                  className="data-grid-pagination"
-                  count={state.pagination.totalPages}
-                  page={state.pagination.currentPage}
-                  onChange={handlePageChange}
-                  color="primary"
-                  size={isDesktop ? 'large' : 'medium'}
-                  disabled={state.loading}
-                />
-              </Box>
-            </>
+                </TableBody>
+              </Table>
+            </TableContainer>
           ) : (
-            !state.loading && <Alert severity="info">No reports found.</Alert>
+            <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
           )}
 
-          {/* Loading overlay */}
-          {state.loading && state.reports.length > 0 && (
-            <Box
-              position="absolute"
-              top={0}
-              left={0}
-              right={0}
-              bottom={0}
-              display="flex"
-              justifyContent="center"
-              alignItems="center"
-              bgcolor="rgba(255,255,255,0.7)"
-              zIndex={1}
-            >
-              <CircularProgress />
-            </Box>
-          )}
+          {/* Loading overlay - only shows during initial load, not pagination */}
+          {state.initialLoading && <LoadingOverlay />}
         </CardContent>
       </Card>
+
+      {/* Pagination */}
+      {state.pagination.totalPages > 1 && (
+        <Box
+          sx={{
+            mt: 3,
+            display: 'flex',
+            justifyContent: 'center',
+            transition: state.initialLoading
+              ? 'none !important'
+              : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+            ...(state.initialLoading && {
+              isolation: 'isolate',
+              contain: 'strict',
+              '&, & *': {
+                transition: 'none !important',
+                animation: 'none !important',
+              },
+            }),
+          }}
+        >
+          <Pagination
+            className="data-grid-pagination"
+            count={state.pagination.totalPages}
+            page={state.pagination.currentPage}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            disabled={state.loading}
+            sx={{
+              // Enable pagination transitions when not initially loading
+              transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+              // Enhanced hover effects when not initially loading (allow hover during pagination)
+              '& .MuiPaginationItem-root': {
+                transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+                '&:hover:not(.Mui-selected):not(:disabled)': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.25)'
+                      : '0 4px 12px rgba(25, 118, 210, 0.2)',
+                },
+                '&.Mui-selected': {
+                  backgroundColor: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.15)'
+                      : 'rgba(25, 118, 210, 0.15)',
+                  boxShadow: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '0 4px 12px rgba(56, 189, 248, 0.3)'
+                      : '0 4px 12px rgba(25, 118, 210, 0.2)',
+                },
+              },
+              // Force isolation during initial load only
+              ...(state.initialLoading && {
+                '&, & *': {
+                  transition: 'none !important',
+                  animation: 'none !important',
+                },
+              }),
+            }}
+          />
+        </Box>
+      )}
+
+      {/* Empty state */}
+      {!state.loading && state.reports.length === 0 && !state.error && (
+        <Box sx={{ textAlign: 'center', py: 8 }}>
+          <Typography variant="h6" color="text.secondary" gutterBottom>
+            No reports found
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            You haven&apos;t uploaded any reports yet, or they may not be visible with your current
+            permissions.
+          </Typography>
+        </Box>
+      )}
     </Container>
   );
+};
