@@ -232,12 +232,22 @@ export const UserReports: React.FC = () => {
           <Typography
             variant={isDesktop ? 'h4' : 'h5'}
             component="h1"
-            sx={{ mb: insideCard ? 1.5 : 2 }}
+            sx={{
+              mb: insideCard ? 1.5 : 2,
+              pr: isDesktop ? 0 : 5 // Add right padding on mobile to account for floating button
+            }}
           >
             My Reports
           </Typography>
           {currentUser && (
-            <Typography variant="body1" color="text.secondary">
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{
+                maxWidth: isDesktop ? 'none' : '26ch',
+                pr: isDesktop ? 0 : 1, // Add some right padding on mobile
+              }}
+            >
               Reports for {currentUser.name}
               {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
               {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
@@ -460,51 +470,93 @@ export const UserReports: React.FC = () => {
   // The overlay loading (line ~382) handles all loading states including initial load
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {!isDesktop && renderHeaderContent(false)}
+    <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
+      <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
+        <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+          {/* Mobile Floating Refresh Button */}
+          {!isDesktop && (
+            <IconButton
+              onClick={handleRefresh}
+              disabled={state.loading}
+              aria-label="refresh"
+              color="primary"
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
 
-      {/* Error Alert */}
-      {state.error && (
-        <Alert severity="error" sx={{ mb: 3 }}>
-          {state.error}
-        </Alert>
-      )}
+          {/* Header */}
+          <Box sx={{ ...headerStackSx, mb: 3 }}>
+            <Box>
+              <Typography
+                variant={isDesktop ? 'h4' : 'h5'}
+                component="h1"
+                gutterBottom
+                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }} // Add right padding on mobile to account for floating button
+              >
+                My Reports
+              </Typography>
+              {currentUser && (
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{
+                    maxWidth: isDesktop ? 'none' : '26ch',
+                    pr: isDesktop ? 0 : 1, // Add some right padding on mobile
+                  }}
+                >
+                  Reports for {currentUser.name}
+                  {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
+                  {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
+                </Typography>
+              )}
+            </Box>
 
-      {/* Reports Table */}
-      <Card
-        sx={{
-          ...cardSx,
-          transition: state.initialLoading
-            ? 'none !important'
-            : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-          ...(state.initialLoading && {
-            isolation: 'isolate',
-            contain: 'strict',
-            '&, & *': {
-              transition: 'none !important',
-              animation: 'none !important',
-            },
-          }),
-          // Hover effect when not initially loading (allow hover during pagination)
-          '&:hover': state.initialLoading
-            ? {}
-            : {
-                transform: 'translateY(-2px)',
-                boxShadow: (theme) =>
-                  theme.palette.mode === 'dark'
-                    ? '0 8px 32px rgba(56, 189, 248, 0.15)'
-                    : '0 8px 32px rgba(25, 118, 210, 0.1)',
-              },
-        }}
-      >
-        <CardContent
-          sx={{
-            ...cardContentSx,
-            p: isDesktop ? 4 : 0,
-            position: 'relative',
-          }}
-        >
-          {isDesktop && renderHeaderContent(true)}
+            {isDesktop && (
+              <Box sx={actionGroupSx}>
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={state.loading}
+                  aria-label="refresh"
+                  color="primary"
+                  sx={{
+                    width: 'auto',
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+
+          {!currentUser && !userLoading && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Note: Unable to load user profile information from ESO Logs API, but you can still view
+              your reports below.
+            </Alert>
+          )}
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: currentUser ? 2 : 1 }}>
+            Total: {state.pagination.totalReports} reports
+          </Typography>
+
+          {/* Error Alert */}
+          {state.error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              {state.error}
+            </Alert>
+          )}
 
           {isDesktop ? (
             <TableContainer
@@ -628,7 +680,7 @@ export const UserReports: React.FC = () => {
             page={state.pagination.currentPage}
             onChange={handlePageChange}
             color="primary"
-            size="large"
+            size={isDesktop ? 'large' : 'medium'}
             disabled={state.loading}
             sx={{
               // Enable pagination transitions when not initially loading
