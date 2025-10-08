@@ -518,8 +518,8 @@ export const UserReports: React.FC = () => {
 
           {!currentUser && !userLoading && (
             <Alert severity="info" sx={{ mb: 2 }}>
-              Note: Unable to load user profile information from ESO Logs API, but you can still view
-              your reports below.
+              Note: Unable to load user profile information from ESO Logs API, but you can still
+              view your reports below.
             </Alert>
           )}
 

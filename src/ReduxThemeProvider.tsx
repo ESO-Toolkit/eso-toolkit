@@ -843,7 +843,9 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 color: darkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.87)',
                 fontWeight: 600,
                 '&:hover': {
-                  backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(25, 118, 210, 0.25)',
+                  backgroundColor: darkMode
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(25, 118, 210, 0.25)',
                   borderColor: darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(25, 118, 210, 0.5)',
                 },
               },

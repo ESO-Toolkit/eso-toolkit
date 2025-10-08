@@ -73,17 +73,19 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
                 // Override default chip text color with higher specificity
                 '& .MuiChip-label': {
                   ...(report.visibility === 'public' && {
-                    color: (theme) => theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
-                      : 'rgba(0, 0, 0, 0.87) !important' // Dark text in light mode
+                    color: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
+                        : 'rgba(0, 0, 0, 0.87) !important', // Dark text in light mode
                   }),
                   ...(report.visibility === 'private' && {
-                    color: (theme) => theme.palette.mode === 'dark'
-                      ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
-                      : 'rgba(0, 0, 0, 0.87) !important' // Dark text in light mode
+                    color: (theme) =>
+                      theme.palette.mode === 'dark'
+                        ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
+                        : 'rgba(0, 0, 0, 0.87) !important', // Dark text in light mode
                   }),
                   ...(report.visibility === 'unlisted' && {
-                    color: 'rgba(0, 0, 0, 0.87) !important' // Dark text on orange/yellow background in both modes
+                    color: 'rgba(0, 0, 0, 0.87) !important', // Dark text on orange/yellow background in both modes
                   }),
                 },
               }}
