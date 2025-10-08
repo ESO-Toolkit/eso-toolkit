@@ -122,7 +122,7 @@
     "terser": "^5.44.0",
     "ts-jest": "^29.4.4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.9.2",
+    "typescript": "^5.9.3",
     "vite": "^6.3.6",
     "vite-bundle-analyzer": "^1.2.2",
     "vite-plugin-eslint": "^1.8.1",
