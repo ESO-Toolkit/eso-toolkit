@@ -3,6 +3,27 @@
  * Focuses on improving coverage for the getScribingSkillByAbilityId function
  */
 
+// Mock logger before any imports
+const mockLoggerWarn = jest.fn();
+const mockLoggerError = jest.fn();
+const mockLoggerInfo = jest.fn();
+const mockLoggerDebug = jest.fn();
+
+jest.mock('../../../contexts/LoggerContext', () => ({
+  Logger: jest.fn().mockImplementation(() => ({
+    warn: mockLoggerWarn,
+    error: mockLoggerError,
+    info: mockLoggerInfo,
+    debug: mockLoggerDebug,
+  })),
+  LogLevel: {
+    DEBUG: 0,
+    INFO: 1,
+    WARN: 2,
+    ERROR: 3,
+  },
+}));
+
 import { getScribingSkillByAbilityId, ScribingSkillInfo } from './Scribing';
 
 // Mock the scribing database
@@ -78,6 +99,11 @@ jest.mock('../../../../data/scribing-complete.json', () => ({
 }));
 
 describe('Scribing.ts - Coverage Improvement Tests', () => {
+  beforeEach(() => {
+    // Clear all mocks before each test
+    jest.clearAllMocks();
+  });
+
   describe('getScribingSkillByAbilityId', () => {
     it('should return base grimoire information for base ability IDs', () => {
       const result = getScribingSkillByAbilityId(123456);
@@ -150,16 +176,12 @@ describe('Scribing.ts - Coverage Improvement Tests', () => {
     });
 
     it('should handle unknown transformation types and log warnings', () => {
-      const consoleWarnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
-
       const result = getScribingSkillByAbilityId(222223);
 
       expect(result?.transformationType).toBe('Focus Script'); // Should default
-      expect(consoleWarnSpy).toHaveBeenCalledWith(
+      expect(mockLoggerWarn).toHaveBeenCalledWith(
         'Unknown scribing transformation type: unknown-transformation-type',
       );
-
-      consoleWarnSpy.mockRestore();
     });
 
     it('should handle malformed database entries with missing abilityIds', () => {
