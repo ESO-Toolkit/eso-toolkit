@@ -209,20 +209,20 @@ export interface PatternEvidence {
 // ============================================================================
 
 export enum MechanicCategory {
-  AVOIDABLE = 'Avoidable',
+  DIRECT_DAMAGE = 'Direct Damage',
   BURST_DAMAGE = 'Burst Damage', 
   EXECUTE_PHASE = 'Execute Phase',
-  POSITIONING = 'Positioning',
-  RESOURCE_MANAGEMENT = 'Resource Management',
-  COORDINATION = 'Group Coordination',
-  UNAVOIDABLE = 'Unavoidable',
+  AREA_EFFECT = 'Area Effect',
+  DAMAGE_OVER_TIME = 'Damage Over Time',
+  ENVIRONMENTAL = 'Environmental',
+  PLAYER_ABILITY = 'Player Ability',
   OTHER = 'Other'
 }
 
 export enum DeathPatternType {
-  REPEATED_MECHANIC_FAILURE = 'Repeated Mechanic Failure',
-  BURST_VULNERABILITY = 'Burst Vulnerability', 
-  POSITIONING_ERRORS = 'Positioning Errors',
+  RECURRING_MECHANIC = 'Recurring Mechanic',
+  HIGH_DAMAGE_ABILITY = 'High Damage Ability', 
+  MULTI_DEATH_ENCOUNTER = 'Multi-Death Encounter',
   RESOURCE_DEPLETION = 'Resource Depletion',
   COORDINATION_FAILURE = 'Coordination Failure',
   PROGRESSIVE_DIFFICULTY = 'Progressive Difficulty',

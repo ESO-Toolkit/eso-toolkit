@@ -364,13 +364,13 @@ function getRoleColor(role: string): 'primary' | 'secondary' | 'error' | 'warnin
 
 function getCategoryColor(category: MechanicCategory): 'primary' | 'secondary' | 'error' | 'warning' | 'info' | 'success' {
   switch (category) {
-    case MechanicCategory.AVOIDABLE:
+    case MechanicCategory.AREA_EFFECT:
       return 'warning';
     case MechanicCategory.BURST_DAMAGE:
       return 'error';
-    case MechanicCategory.POSITIONING:
+    case MechanicCategory.DAMAGE_OVER_TIME:
       return 'info';
-    case MechanicCategory.UNAVOIDABLE:
+    case MechanicCategory.ENVIRONMENTAL:
       return 'secondary';
     default:
       return 'primary';

@@ -19,8 +19,8 @@ import { ReportSummaryData } from '../../types/reportSummaryTypes';
 const DamageBreakdownSection = React.lazy(() => 
   import('./DamageBreakdownSection')
 );
-const DeathAnalysisSection = React.lazy(() => 
-  import('./DeathAnalysisSection')
+const EnhancedDeathAnalysisSection = React.lazy(() => 
+  import('./EnhancedDeathAnalysisSection')
 );
 import { useReportSummaryData } from './hooks/useReportSummaryData';
 
@@ -104,10 +104,10 @@ export const ReportSummaryPage: React.FC<ReportSummaryPageProps> = () => {
           </Suspense>
         </Box>
 
-        {/* Death Analysis Section */}
+        {/* Enhanced Death Analysis Section */}
         <Box>
           <Suspense fallback={<LinearProgress sx={{ mb: 2 }} />}>
-            <DeathAnalysisSection
+            <EnhancedDeathAnalysisSection
               deathAnalysis={summaryData?.deathAnalysis}
               isLoading={isSummaryLoading}
               error={summaryError}
