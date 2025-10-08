@@ -645,14 +645,25 @@ export const UserReports: React.FC = () => {
             page={state.pagination.currentPage}
             onChange={handlePageChange}
             color="primary"
-            size="large"
+            size={isDesktop ? 'large' : 'large'}
+            boundaryCount={isDesktop ? 2 : 0}
+            siblingCount={isDesktop ? 2 : 0}
             disabled={state.loading}
             sx={{
               // Enable pagination transitions when not initially loading
               transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+              // Responsive spacing only for mobile
+              mx: isDesktop ? 0 : 1,
               // Enhanced hover effects when not initially loading (allow hover during pagination)
               '& .MuiPaginationItem-root': {
+                borderRadius: isDesktop ? '50%' : 2,
                 transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+                // Larger touch targets only for mobile accessibility, fixed dimensions for desktop circles
+                minWidth: isDesktop ? 40 : 44,
+                minHeight: isDesktop ? 40 : 44,
+                width: isDesktop ? 40 : 'auto',
+                height: isDesktop ? 40 : 'auto',
+                padding: isDesktop ? '0' : '0 8px',
                 '&:hover:not(.Mui-selected):not(:disabled)': {
                   transform: 'translateY(-1px)',
                   boxShadow: (theme) =>
