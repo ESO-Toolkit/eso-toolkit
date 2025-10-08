@@ -42,13 +42,36 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
-import { analyzeAllPlayersScribingSkills } from '../../../utils/Scribing';
+import { analyzeAllPlayersScribingSkills } from '../../scribing/utils/Scribing';
+import {
+  findScribingRecipe,
+  formatScribingRecipeForDisplay,
+} from '../../scribing/utils/scribingRecipeUtils';
 
 import { PlayersPanelView } from './PlayersPanelView';
 
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {
+  // State for storing scribing recipe information
+  const [scribingRecipes, setScribingRecipes] = React.useState<
+    Record<
+      string,
+      Record<
+        string,
+        {
+          grimoire: string;
+          transformation: string;
+          transformationType: string;
+          confidence: number;
+          matchMethod: string;
+          recipeSummary: string;
+          tooltipInfo: string;
+        }
+      >
+    >
+  >({});
+
   // Get report/fight context for CPM and deeplink
   const { reportId, fightId } = useSelectedReportAndFight();
 
@@ -820,12 +843,106 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [maxResourcesByPlayer]);
 
+  // Effect to lookup scribing recipes for detected skills
+  React.useEffect(() => {
+    const lookupRecipes = async (): Promise<void> => {
+      const newRecipes: Record<
+        string,
+        Record<
+          string,
+          {
+            grimoire: string;
+            transformation: string;
+            transformationType: string;
+            confidence: number;
+            matchMethod: string;
+            recipeSummary: string;
+            tooltipInfo: string;
+          }
+        >
+      > = {};
+
+      for (const [playerId, grimoires] of Object.entries(scribingSkillsByPlayer)) {
+        newRecipes[playerId] = {};
+
+        for (const grimoire of grimoires) {
+          for (const skill of grimoire.skills) {
+            // Find the first effect with a valid ability ID for recipe lookup
+            const effectWithId = skill.effects.find(
+              (effect) => effect.abilityId && effect.abilityId > 0,
+            );
+
+            // Try recipe lookup with the skill's main ID first
+            try {
+              // eslint-disable-next-line no-console
+              console.log(
+                `🔍 Looking up recipe for skill: ${skill.skillName} (ID: ${skill.skillId})`,
+              );
+
+              let recipeMatch = await findScribingRecipe(skill.skillId, skill.skillName);
+
+              // If that doesn't work, try with the first effect's ability ID
+              if (!recipeMatch && effectWithId) {
+                // eslint-disable-next-line no-console
+                console.log(
+                  `🔍 Trying with effect ID: ${effectWithId.abilityId} (${effectWithId.abilityName})`,
+                );
+                recipeMatch = await findScribingRecipe(
+                  effectWithId.abilityId,
+                  effectWithId.abilityName,
+                );
+              }
+
+              if (recipeMatch) {
+                // eslint-disable-next-line no-console
+                console.log(
+                  `✅ Found recipe: ${recipeMatch.grimoire.name} + ${recipeMatch.transformation?.name}`,
+                );
+                const recipeDisplay = formatScribingRecipeForDisplay(recipeMatch);
+                newRecipes[playerId][skill.skillId] = recipeDisplay;
+              } else {
+                // eslint-disable-next-line no-console
+                console.log(`❌ No recipe found for ${skill.skillName}`);
+              }
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.warn(`Failed to lookup recipe for skill ${skill.skillName}:`, error);
+            }
+          }
+        }
+      }
+
+      setScribingRecipes(newRecipes);
+    };
+
+    if (Object.keys(scribingSkillsByPlayer).length > 0) {
+      lookupRecipes();
+    }
+  }, [scribingSkillsByPlayer]);
+
+  // Merge scribing skills with their recipe information
+  const enhancedScribingSkillsByPlayer = React.useMemo(() => {
+    const result: Record<string, GrimoireData[]> = {};
+
+    Object.entries(scribingSkillsByPlayer).forEach(([playerId, grimoires]) => {
+      result[playerId] = grimoires.map((grimoire) => ({
+        ...grimoire,
+        skills: grimoire.skills.map((skill) => ({
+          ...skill,
+          recipe: scribingRecipes[playerId]?.[skill.skillId],
+        })),
+      }));
+    });
+
+    return result;
+  }, [scribingSkillsByPlayer, scribingRecipes]);
+
   return (
     <PlayersPanelView
       playerActors={playerData?.playersById}
       mundusBuffsByPlayer={mundusBuffsByPlayer}
       championPointsByPlayer={championPointsByPlayer}
-      scribingSkillsByPlayer={scribingSkillsByPlayer}
+      scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
       buildIssuesByPlayer={buildIssuesByPlayer}
       classAnalysisByPlayer={classAnalysisByPlayer}
       deathsByPlayer={deathsByPlayer}

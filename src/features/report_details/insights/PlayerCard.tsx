@@ -35,12 +35,23 @@ import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { ScribedSkillData } from '../../../components/SkillTooltip';
 import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import {
+  selectFriendlyBuffEvents,
+  selectHostileBuffEvents,
+  selectCastEvents,
+  selectDamageEvents,
+  selectDebuffEvents,
+  selectHealingEvents,
+  selectResourceEvents,
+} from '../../../store/selectors/eventsSelectors';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
+import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -156,6 +167,37 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       return Object.values(playerData?.playersById || {});
     }, [playerData]);
 
+    // Get combat event data for affix script detection
+    const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
+    const hostileBuffEvents = useSelector(selectHostileBuffEvents);
+    const debuffEvents = useSelector(selectDebuffEvents);
+    const damageEvents = useSelector(selectDamageEvents);
+    const healingEvents = useSelector(selectHealingEvents);
+    const castEvents = useSelector(selectCastEvents);
+    const resourceEvents = useSelector(selectResourceEvents);
+
+    // Combine combat event data
+    const combatEventData: CombatEventData = React.useMemo(
+      () => ({
+        allReportAbilities: [], // This would need to come from abilities data if available
+        allDebuffEvents: debuffEvents,
+        allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
+        allResourceEvents: resourceEvents,
+        allDamageEvents: damageEvents,
+        allCastEvents: castEvents,
+        allHealingEvents: healingEvents,
+      }),
+      [
+        friendlyBuffEvents,
+        hostileBuffEvents,
+        debuffEvents,
+        damageEvents,
+        healingEvents,
+        castEvents,
+        resourceEvents,
+      ],
+    );
+
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
 
@@ -174,6 +216,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           scribedSkillsLookup.set(skill.skillName, {
             grimoireName: grimoire.grimoireName,
             effects: skill.effects,
+            recipe: skill.recipe, // Include the enhanced recipe information
           });
         });
       });
@@ -184,18 +227,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           // Check if this talent is a scribed skill by looking for it in our scribed skills data
           const scribedSkillData = scribedSkillsLookup.get(talent.name);
 
-          const tooltipProps = buildTooltipProps({
-            abilityId: talent.guid,
-            abilityName: talent.name,
-            classKey: clsKey,
-            scribedSkillData,
-          });
-          lookup.set(key, tooltipProps);
+          // Use enhanced tooltip builder for scribed skills to include affix script detection
+          let tooltipProps;
+          if (scribedSkillData) {
+            tooltipProps = buildEnhancedScribingTooltipProps({
+              talent,
+              combatEventData,
+              playerId: player.id,
+              classKey: clsKey,
+              abilityId: talent.guid,
+              abilityName: talent.name,
+            });
+          } else {
+            tooltipProps = buildTooltipProps({
+              abilityId: talent.guid,
+              abilityName: talent.name,
+              classKey: clsKey,
+              scribedSkillData,
+            });
+          }
+
+          if (tooltipProps) {
+            lookup.set(key, tooltipProps);
+          }
         }
       });
 
       return lookup;
-    }, [talents, player.type, scribingSkills]);
+    }, [talents, player.type, player.id, scribingSkills, combatEventData]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -468,6 +527,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
+                                      useUnifiedDetection={true}
+                                      fightId={fightId || undefined}
+                                      playerId={player.id}
                                     />
                                   );
                                 })()}
@@ -583,6 +645,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                           `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                         }
                                         abilityId={talent.guid}
+                                        useUnifiedDetection={true}
+                                        fightId={fightId || undefined}
+                                        playerId={player.id}
                                       />
                                     );
                                   })()}

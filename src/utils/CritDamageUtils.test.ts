@@ -21,7 +21,7 @@ import {
 describe('CritDamageUtils with BuffLookup', () => {
   describe('isBuffActive', () => {
     it('should return false for empty buff lookup', () => {
-      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
       expect(isBuffActive(emptyBuffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(false);
     });
 
@@ -67,8 +67,8 @@ describe('CritDamageUtils with BuffLookup', () => {
 
   describe('getEnabledCriticalDamageSources', () => {
     it('should return always-on sources for empty lookups', () => {
-      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
-      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: {} };
 
       const sources = getEnabledCriticalDamageSources(emptyBuffLookup, emptyDebuffLookup, null);
 
@@ -147,8 +147,8 @@ describe('CritDamageUtils with BuffLookup', () => {
 
   describe('calculateCriticalDamageAtTimestamp', () => {
     it('should calculate base critical damage when no buffs active', () => {
-      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
-      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: {} };
       const mockCombatant = createMockCombatantInfoEvent();
       const mockPlayerData = createMockPlayerData();
 

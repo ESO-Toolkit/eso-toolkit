@@ -53,6 +53,9 @@ help:
 	@$(COLOR) info "Workflow Commands:"
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
 	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
+	@$(COLOR) info "Affix Script Analysis Commands:"
+	@$(COLOR) color brightCyan "  analyze-affix-scripts     - Analyze affix scripts in combat logs"
+	@$(COLOR) color brightCyan "  analyze-affix-scripts-all - Analyze all downloaded combat logs"
 
 # Show detected OS
 os-info:
@@ -172,6 +175,17 @@ endif
 setup: install codegen fetch-abilities
 	@$(COLOR) header "Project Setup Complete"
 	@$(COLOR) success "Setup complete! Run 'make dev' to start development server."
+
+# Affix script detection commands  
+analyze-affix-scripts:
+	@$(COLOR) subheader "Analyzing Affix Scripts in Combat Logs"
+	@$(COLOR) info "Running affix script detection..."
+	npm run analyze-affix-scripts
+
+analyze-affix-scripts-all:
+	@$(COLOR) subheader "Analyzing All Downloaded Combat Logs"
+	@$(COLOR) info "Running batch affix script analysis..."
+	npm run analyze-affix-scripts:all
 
 # Cross-platform npm cache clear
 clear-cache:

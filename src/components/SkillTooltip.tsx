@@ -13,6 +13,7 @@ import { alpha } from '@mui/material/styles';
 import React from 'react';
 
 import { useLogger } from '@/hooks/useLogger';
+import { useSkillScribingData } from '@features/scribing/hooks/useScribingDetection';
 
 export interface SkillStat {
   label: string;
@@ -36,6 +37,39 @@ export interface ScribedSkillData {
   grimoireName: string;
   /** List of effects this scribed skill produces */
   effects: ScribedSkillEffect[];
+  /** Whether this skill was actually cast in the current fight */
+  wasCastInFight?: boolean;
+  /** Enhanced recipe information with focus script details */
+  recipe?: {
+    grimoire: string;
+    transformation: string;
+    transformationType: string;
+    confidence: number;
+    matchMethod: string;
+    recipeSummary: string;
+    tooltipInfo: string;
+  };
+  /** Detected signature script information */
+  signatureScript?: {
+    name: string;
+    confidence: number;
+    detectionMethod: string;
+    evidence: string[];
+  };
+  /** Detected affix scripts information */
+  affixScripts?: Array<{
+    id: string;
+    name: string;
+    description: string;
+    confidence: number;
+    detectionMethod: string;
+    evidence: {
+      buffIds: number[];
+      debuffIds: number[];
+      abilityNames: string[];
+      occurrenceCount: number;
+    };
+  }>;
 }
 
 export interface SkillTooltipProps {
@@ -61,6 +95,10 @@ export interface SkillTooltipProps {
   description: React.ReactNode;
   // Optional scribed skill data for enhanced tooltips
   scribedSkillData?: ScribedSkillData;
+  // Enhanced scribing detection options
+  useUnifiedDetection?: boolean;
+  fightId?: string;
+  playerId?: number;
 }
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
@@ -123,15 +161,29 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   lineText,
   iconUrl,
   iconSlug,
+  abilityId,
   _abilityId,
   name,
   morphOf,
   stats,
   description,
   scribedSkillData,
+  useUnifiedDetection = false,
+  fightId,
+  playerId,
 }) => {
   const theme = useTheme();
   const logger = useLogger();
+
+  // Use unified scribing detection if enabled
+  const { scribedSkillData: detectedScribingData, loading: scribingLoading } = useSkillScribingData(
+    useUnifiedDetection ? fightId : undefined,
+    useUnifiedDetection ? playerId : undefined,
+    useUnifiedDetection ? abilityId : undefined,
+  );
+
+  // Use detected data if available, otherwise fall back to provided data
+  const finalScribedData = useUnifiedDetection ? detectedScribingData : scribedSkillData;
 
   // Ensure at least one icon source is provided
   if (!iconUrl && !iconSlug) {
@@ -444,51 +496,266 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
           })}
         />
 
-        {scribedSkillData && (
+        {finalScribedData && (
           <>
             <Box sx={{ mb: 1.5 }}>
-              <Typography
-                variant="caption"
-                sx={{
-                  color: 'text.secondary',
-                  fontWeight: 600,
-                  letterSpacing: '.02em',
-                  fontSize: '0.72rem',
-                  mb: 0.75,
-                  display: 'block',
-                }}
+              {/* Grimoire Header - always show */}
+              <Stack
+                direction="row"
+                justifyContent="space-between"
+                alignItems="center"
+                sx={{ mb: 1 }}
               >
-                Grimoire: {scribedSkillData.grimoireName}
-              </Typography>
-              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                {scribedSkillData.effects.map((effect, index) => (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'text.primary',
+                    fontWeight: 700,
+                    letterSpacing: '.02em',
+                    fontSize: '0.78rem',
+                  }}
+                >
+                  📖 Grimoire: {finalScribedData.grimoireName}
+                </Typography>
+
+                {/* Enhanced Detection Badge */}
+                {useUnifiedDetection && (
                   <Chip
-                    key={index}
                     size="small"
-                    icon={
-                      <span style={{ fontSize: '0.7rem' }}>{getEffectTypeIcon(effect.type)}</span>
-                    }
-                    label={`${effect.abilityName} (${effect.count})`}
+                    label={scribingLoading ? 'Analyzing...' : 'Enhanced AI'}
                     variant="outlined"
-                    sx={(theme) => ({
-                      fontSize: '0.65rem',
-                      height: '22px',
-                      color: getEffectTypeColor(effect.type, theme),
-                      borderColor: alpha(getEffectTypeColor(effect.type, theme), 0.3),
-                      backgroundColor: alpha(getEffectTypeColor(effect.type, theme), 0.05),
+                    sx={{
+                      fontSize: '0.6rem',
+                      height: '18px',
+                      color: scribingLoading ? 'warning.main' : 'success.main',
+                      borderColor: scribingLoading ? 'warning.main' : 'success.main',
                       '& .MuiChip-label': {
                         px: 0.5,
-                        fontSize: '0.65rem',
-                        lineHeight: 1.2,
+                        fontSize: '0.6rem',
                       },
-                      '& .MuiChip-icon': {
-                        marginLeft: '4px',
-                        marginRight: '-2px',
-                      },
-                    })}
+                    }}
                   />
-                ))}
-              </Box>
+                )}
+              </Stack>
+
+              {/* Show message when skill wasn't cast */}
+              {finalScribedData.wasCastInFight === false ? (
+                <Box sx={{ mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'warning.main',
+                      fontWeight: 700,
+                      letterSpacing: '.02em',
+                      fontSize: '0.75rem',
+                      mb: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    ⚠️ Script Analysis Unavailable
+                  </Typography>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.secondary',
+                      fontSize: '0.7rem',
+                      fontStyle: 'italic',
+                      display: 'block',
+                    }}
+                  >
+                    This scribing skill was not cast during this fight, so the complete recipe could
+                    not be detected.
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  {/* Focus Script Recipe */}
+                  {finalScribedData.recipe && (
+                    <Box sx={{ mb: 1 }}>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'secondary.main',
+                          fontWeight: 700,
+                          letterSpacing: '.02em',
+                          fontSize: '0.75rem',
+                          mb: 0.5,
+                          display: 'block',
+                        }}
+                      >
+                        🧪 Focus Script
+                      </Typography>
+                      <Stack spacing={0.3} sx={{ mb: 1 }}>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.primary',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          🔄 {finalScribedData.recipe.transformation} (
+                          {finalScribedData.recipe.transformationType})
+                        </Typography>
+                        {finalScribedData.recipe.confidence < 1.0 && (
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.secondary',
+                              fontSize: '0.65rem',
+                              fontStyle: 'italic',
+                            }}
+                          >
+                            🎯 {Math.round(finalScribedData.recipe.confidence * 100)}% match
+                            confidence
+                          </Typography>
+                        )}
+                      </Stack>
+                    </Box>
+                  )}
+                </>
+              )}
+
+              {/* Signature Script Section */}
+              {finalScribedData.wasCastInFight !== false && (
+                <Box sx={{ mb: 1 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'primary.main',
+                      fontWeight: 700,
+                      letterSpacing: '.02em',
+                      fontSize: '0.75rem',
+                      mb: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    📜 Signature Script
+                  </Typography>
+                  <Stack spacing={0.3} sx={{ mb: 1 }}>
+                    {finalScribedData.signatureScript ? (
+                      <>
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            color: 'text.primary',
+                            fontSize: '0.7rem',
+                            fontWeight: 600,
+                          }}
+                        >
+                          🖋️ {finalScribedData.signatureScript.name}
+                        </Typography>
+                        {finalScribedData.signatureScript.evidence &&
+                          finalScribedData.signatureScript.evidence.length > 0 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.65rem',
+                                fontStyle: 'italic',
+                              }}
+                            >
+                              🔍 Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
+                            </Typography>
+                          )}
+                      </>
+                    ) : (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: 'text.secondary',
+                          fontSize: '0.7rem',
+                          fontStyle: 'italic',
+                        }}
+                      >
+                        ❓ No signature script detected
+                      </Typography>
+                    )}
+                  </Stack>
+                </Box>
+              )}
+
+              {/* Affix Scripts Section */}
+              {finalScribedData.wasCastInFight !== false &&
+                finalScribedData.affixScripts &&
+                finalScribedData.affixScripts.length > 0 && (
+                  <Box sx={{ mb: 1 }}>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: 'secondary.main',
+                        fontWeight: 700,
+                        letterSpacing: '.02em',
+                        fontSize: '0.75rem',
+                        mb: 0.5,
+                        display: 'block',
+                      }}
+                    >
+                      🎭 Affix Scripts
+                    </Typography>
+                    <Stack spacing={0.3} sx={{ mb: 1 }}>
+                      {finalScribedData.affixScripts.map((affixScript, index) => (
+                        <Box key={index} sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'text.primary',
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                            }}
+                          >
+                            ✨ {affixScript.name}
+                          </Typography>
+                          {affixScript.confidence < 1.0 && (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                color: 'text.secondary',
+                                fontSize: '0.6rem',
+                                fontStyle: 'italic',
+                              }}
+                            >
+                              ({Math.round(affixScript.confidence * 100)}%)
+                            </Typography>
+                          )}
+                        </Box>
+                      ))}
+                    </Stack>
+                  </Box>
+                )}
+
+              {/* Effects List - only show if skill was cast */}
+              {finalScribedData.wasCastInFight !== false && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                  {finalScribedData.effects.map((effect, index) => (
+                    <Chip
+                      key={index}
+                      size="small"
+                      icon={
+                        <span style={{ fontSize: '0.7rem' }}>{getEffectTypeIcon(effect.type)}</span>
+                      }
+                      label={`${effect.abilityName} (${effect.count})`}
+                      variant="outlined"
+                      sx={(theme) => ({
+                        fontSize: '0.65rem',
+                        height: '22px',
+                        color: getEffectTypeColor(effect.type, theme),
+                        borderColor: alpha(getEffectTypeColor(effect.type, theme), 0.3),
+                        backgroundColor: alpha(getEffectTypeColor(effect.type, theme), 0.05),
+                        '& .MuiChip-label': {
+                          px: 0.5,
+                          fontSize: '0.65rem',
+                          lineHeight: 1.2,
+                        },
+                        '& .MuiChip-icon': {
+                          marginLeft: '4px',
+                          marginRight: '-2px',
+                        },
+                      })}
+                    />
+                  ))}
+                </Box>
+              )}
             </Box>
             <Divider
               sx={(theme) => ({

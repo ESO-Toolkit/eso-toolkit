@@ -103,13 +103,6 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
-  // DEBUG: Log boss name matching (commented out to reduce console noise)
-  // console.log('🎯 BOSS NAME DEBUG:', {
-  //   originalBossName: bossName,
-  //   cleanBossName,
-  //   zoneName,
-  // });
-
   // Sanity's Edge bosses
   if (
     ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
@@ -532,18 +525,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
-
-      // DEBUG: Log difficulty mapping data (commented out to reduce console noise)
-      // console.log('🔍 DIFFICULTY DEBUG:', {
-      //   bossName,
-      //   trialName,
-      //   difficulty: currentBoss.difficulty,
-      //   startTime: new Date(currentBoss.startTime).toLocaleTimeString(),
-      //   endTime: new Date(currentBoss.endTime).toLocaleTimeString(),
-      //   instanceCount,
-      //   bossPercentage: currentBoss.bossPercentage,
-      //   currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName),
-      // });
 
       // SIMPLIFIED APPROACH: Don't try to separate trial instances
       // Just group all bosses from the same trial together
