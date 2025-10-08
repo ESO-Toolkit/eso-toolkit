@@ -41,6 +41,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
+            background: 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)',
             '&:hover': {
               boxShadow: theme.shadows[4],
               transform: 'translateY(-2px)',

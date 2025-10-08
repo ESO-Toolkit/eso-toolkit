@@ -153,7 +153,7 @@ export const LatestReports: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-      <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
+      <Card elevation={isDesktop ? 4 : 1} sx={{ ...cardSx, background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)' }}>
         <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
           {/* Mobile Floating Refresh Button */}
           {!isDesktop && (
