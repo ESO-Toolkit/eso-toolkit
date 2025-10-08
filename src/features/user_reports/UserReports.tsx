@@ -382,7 +382,7 @@ export const UserReports: React.FC = () => {
 
       {/* Pagination */}
       {state.pagination.totalPages > 1 && (
-        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }}>
+        <Box sx={{ mt: 3, display: 'flex', justifyContent: 'center' }} className="data-grid-pagination">
           <Pagination
             count={state.pagination.totalPages}
             page={state.pagination.currentPage}
