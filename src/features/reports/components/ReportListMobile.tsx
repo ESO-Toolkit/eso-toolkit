@@ -41,7 +41,10 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             display: 'flex',
             flexDirection: 'column',
             gap: 1.5,
-            background: 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)',
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
+                : 'linear-gradient(rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
             '&:hover': {
               boxShadow: theme.shadows[4],
               transform: 'translateY(-2px)',
@@ -70,10 +73,14 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
                 // Override default chip text color with higher specificity
                 '& .MuiChip-label': {
                   ...(report.visibility === 'public' && {
-                    color: 'rgba(255, 255, 255, 1) !important' // White text on green background in both modes
+                    color: (theme) => theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
+                      : 'rgba(0, 0, 0, 0.87) !important' // Dark text in light mode
                   }),
                   ...(report.visibility === 'private' && {
-                    color: 'rgba(255, 255, 255, 1) !important' // White text on red background in both modes
+                    color: (theme) => theme.palette.mode === 'dark'
+                      ? 'rgba(255, 255, 255, 1) !important' // White text in dark mode
+                      : 'rgba(0, 0, 0, 0.87) !important' // Dark text in light mode
                   }),
                   ...(report.visibility === 'unlisted' && {
                     color: 'rgba(0, 0, 0, 0.87) !important' // Dark text on orange/yellow background in both modes
