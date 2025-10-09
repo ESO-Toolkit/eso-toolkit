@@ -558,8 +558,10 @@ const CommunityCard = styled(Box)(({ theme }) => ({
 }));
 
 const CommunityIcon = styled(Box)(({ theme }) => ({
-  width: '80px',
-  height: '80px',
+  display: 'inline-flex',
+  alignItems: 'center',
+  justifyContent: 'center',
+  gap: '0.75rem',
   margin: '0 auto 1.5rem',
   background:
     theme.palette.mode === 'dark'
@@ -569,15 +571,42 @@ const CommunityIcon = styled(Box)(({ theme }) => ({
     theme.palette.mode === 'dark'
       ? '1px solid rgba(56, 189, 248, 0.2)'
       : '1px solid rgba(56, 189, 248, 0.15)',
-  borderRadius: '50%',
-  display: 'flex',
-  alignItems: 'center',
-  justifyContent: 'center',
-  fontSize: '2.5rem',
+  borderRadius: '50px',
+  padding: '0.75rem 1.5rem',
+  fontSize: '2rem',
+  fontWeight: 600,
   color: theme.palette.mode === 'dark' ? '#38bdf8' : '#0ea5e9',
-  transition: 'all 0.3s ease',
+  backdropFilter: 'blur(10px)',
+  boxShadow:
+    theme.palette.mode === 'dark'
+      ? '0 4px 20px rgba(0, 0, 0, 0.2), 0 0 20px rgba(56, 189, 248, 0.1)'
+      : '0 4px 20px rgba(15, 23, 42, 0.08), 0 0 20px rgba(56, 189, 248, 0.05)',
+  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+  animation: 'float 3s ease-in-out infinite',
   '&:hover': {
-    transform: 'scale(1.1) rotate(5deg)',
+    transform: 'translateY(-2px) scale(1.05)',
+    borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.25)',
+    boxShadow:
+      theme.palette.mode === 'dark'
+        ? '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.15)'
+        : '0 8px 30px rgba(15, 23, 42, 0.12), 0 0 30px rgba(56, 189, 248, 0.12)',
+  },
+  '@keyframes float': {
+    '0%, 100%': { transform: 'translateY(0px)' },
+    '50%': { transform: 'translateY(-3px)' },
+  },
+  [theme.breakpoints.down('sm')]: {
+    padding: '0.6rem 1.2rem',
+    fontSize: '1.75rem',
+    gap: '0.6rem',
+    '&:hover': {
+      transform: 'translateY(-1px) scale(1.02)',
+    },
+  },
+  [theme.breakpoints.down(480)]: {
+    padding: '0.5rem 1rem',
+    fontSize: '1.5rem',
+    gap: '0.5rem',
   },
 }));
 
