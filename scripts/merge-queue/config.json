@@ -1,0 +1,34 @@
+{
+  "labels": {
+    "mergeQueue": "merge-queue",
+    "autoMerge": "auto-merge",
+    "priority": ["priority", "hotfix", "critical"],
+    "blocking": ["do not merge", "do-not-merge", "wip", "work in progress", "needs review"]
+  },
+  "requirements": {
+    "reviews": 1,
+    "checks": [
+      "build",
+      "lint", 
+      "format",
+      "test",
+      "typecheck",
+      "build-storybook",
+      "playwright-smoke",
+      "check-do-not-merge-label"
+    ]
+  },
+  "mergeMethod": "squash",
+  "targetBranch": "master",
+  "processingInterval": 300,
+  "notifications": {
+    "onMerge": true,
+    "onBlock": true,
+    "statusUpdates": true
+  },
+  "safetyChecks": {
+    "requireUpToDate": true,
+    "requireLinearHistory": false,
+    "maxQueueSize": 50
+  }
+}
