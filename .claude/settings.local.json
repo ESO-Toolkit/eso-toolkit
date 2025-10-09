@@ -86,7 +86,9 @@
       "Bash(npm run test:*)",
       "WebFetch(domain:www.esologs.com)",
       "WebFetch(domain:bkrupa.github.io)",
-      "Bash(git log:*)"
+      "Bash(git log:*)",
+      "Bash(npm run test:playwright:*)",
+      "Bash(npm run test:e2e:*)"
     ],
     "deny": [],
     "ask": []

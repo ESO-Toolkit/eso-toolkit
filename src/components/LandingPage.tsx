@@ -571,7 +571,7 @@ const CommunityIcon = styled(Box)(({ theme }) => ({
     theme.palette.mode === 'dark'
       ? '1px solid rgba(56, 189, 248, 0.2)'
       : '1px solid rgba(56, 189, 248, 0.15)',
-  borderRadius: '50px',
+  borderRadius: '10px',
   padding: '0.75rem 1.5rem',
   fontSize: '2rem',
   fontWeight: 600,
@@ -585,7 +585,8 @@ const CommunityIcon = styled(Box)(({ theme }) => ({
   animation: 'float 3s ease-in-out infinite',
   '&:hover': {
     transform: 'translateY(-2px) scale(1.05)',
-    borderColor: theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.25)',
+    borderColor:
+      theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.3)' : 'rgba(56, 189, 248, 0.25)',
     boxShadow:
       theme.palette.mode === 'dark'
         ? '0 8px 30px rgba(0, 0, 0, 0.3), 0 0 30px rgba(56, 189, 248, 0.15)'
