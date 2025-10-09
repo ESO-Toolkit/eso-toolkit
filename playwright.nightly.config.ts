@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
  * Playwright configuration specifically for nightly regression tests
@@ -36,7 +37,11 @@ export default defineConfig({
 
   /* Run tests in files in parallel, but limit workers to avoid overloading APIs */
   fullyParallel: true,
-  workers: process.env.CI ? 2 : 4, // Fewer workers to be respectful to APIs
+  workers: process.env.CI ? calculateOptimalWorkers({ 
+    maxWorkers: 3, // Slightly more aggressive for nightly tests
+    memoryPerWorker: 900, // Lower memory per worker since tests are optimized
+    minWorkers: 2 // Ensure reasonable parallelization
+  }) : 4, // Fewer workers to be respectful to APIs
 
   /* Enable sharding for faster parallel execution */
   shard:

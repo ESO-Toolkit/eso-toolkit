@@ -99,6 +99,24 @@ npm run build
   npm run test:e2e:ui
   ```
 
+- **Screen Size Testing (All Devices):**
+
+  ```powershell
+  npm run test:screen-sizes
+  ```
+
+- **Screen Size Testing (Mobile Only):**
+
+  ```powershell
+  npm run test:screen-sizes:mobile
+  ```
+
+- **Screen Size Testing (View Report):**
+
+  ```powershell
+  npm run test:screen-sizes:report
+  ```
+
 - **Coverage Analysis:**
 
   ```powershell
@@ -131,8 +149,21 @@ npm run build
 - ✅ API mocking (ESO Logs, Sentry, CDN)
 - ✅ Error handling and edge cases
 - ✅ Cross-browser compatibility
+- ✅ **Screen size validation (22+ devices)**
+- ✅ **Visual regression testing**
+- ✅ **Responsive design validation**
+
+**Screen Size Testing:**
+
+- **Device Coverage**: Mobile, tablet, desktop, ultrawide displays
+- **Visual Regression**: Automatic screenshot comparison across screen sizes
+- **Performance Testing**: Load time validation per viewport
+- **Accessibility**: Touch target and readability validation
+- **GitHub Integration**: On-demand testing via GitHub Actions
+- **Live Reports**: View results at `https://[username].github.io/[repo]/screen-size-reports/`
 
 For detailed testing documentation, see [tests/README.md](tests/README.md).
+For screen size testing, see [documentation/SCREEN_SIZE_TESTING.md](documentation/SCREEN_SIZE_TESTING.md).
 
 **Coverage System Features:**
 

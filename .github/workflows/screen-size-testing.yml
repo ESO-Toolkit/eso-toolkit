@@ -1,0 +1,232 @@
+name: Screen Size Testing
+
+# Permissions needed for external repository deployment
+permissions:
+  contents: read
+
+on:
+  # Manual trigger only - run on demand for screen size validation
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to test'
+        required: true
+        default: 'master'
+        type: string
+      device_categories:
+        description: 'Device categories to test'
+        required: false
+        default: 'all'
+        type: choice
+        options:
+          - all
+          - mobile
+          - tablet
+          - desktop
+          - breakpoints
+      update_snapshots:
+        description: 'Update visual regression snapshots'
+        required: false
+        default: false
+        type: boolean
+
+jobs:
+  screen-size-testing:
+    name: Screen Size Tests - Insights & Players Panel
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Install Playwright Browsers
+        run: npx playwright install --with-deps
+
+      - name: Build Application
+        run: |
+          npm run build
+          npm run generate-version
+        env:
+          CI: true
+
+      - name: Start Application Server
+        run: |
+          npm run preview &
+          sleep 10
+          # Wait for server to be ready
+          npx wait-on http://localhost:3000 --timeout 30000
+        env:
+          CI: true
+
+      - name: Check for Existing Snapshots
+        id: check_snapshots
+        run: |
+          if [ -d "tests/screen-sizes" ] && find tests/screen-sizes -name "*-snapshots" -type d | grep -q .; then
+            echo "snapshots_exist=true" >> $GITHUB_OUTPUT
+            echo "Found existing snapshots"
+          else
+            echo "snapshots_exist=false" >> $GITHUB_OUTPUT
+            echo "No snapshots found - will generate baseline snapshots"
+          fi
+
+      - name: Run Insights Panel and Players Panel Tests - All Screen Sizes
+        if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
+        run: |
+          UPDATE_SNAPSHOTS=""
+          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
+            UPDATE_SNAPSHOTS="--update-snapshots"
+            echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
+          fi
+          npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Run Insights Panel Tests - Mobile Only
+        if: ${{ github.event.inputs.device_categories == 'mobile' }}
+        run: |
+          UPDATE_SNAPSHOTS=""
+          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
+            UPDATE_SNAPSHOTS="--update-snapshots"
+          fi
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Run Insights Panel Tests - Tablet Only
+        if: ${{ github.event.inputs.device_categories == 'tablet' }}
+        run: |
+          UPDATE_SNAPSHOTS=""
+          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
+            UPDATE_SNAPSHOTS="--update-snapshots"
+          fi
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Run Insights Panel Tests - Desktop Only
+        if: ${{ github.event.inputs.device_categories == 'desktop' }}
+        run: |
+          UPDATE_SNAPSHOTS=""
+          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
+            UPDATE_SNAPSHOTS="--update-snapshots"
+          fi
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Run Screen Size Tests - Breakpoints Only
+        if: ${{ github.event.inputs.device_categories == 'breakpoints' }}
+        run: |
+          UPDATE_SNAPSHOTS=""
+          if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
+            UPDATE_SNAPSHOTS="--update-snapshots"
+          fi
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+        env:
+          CI: true
+          BASE_URL: http://localhost:3000
+
+      - name: Prepare Report for Upload
+        if: always()
+        run: |
+          # Create reports directory with metadata
+          mkdir -p screen-size-reports
+          
+          if [ -d "playwright-report" ]; then
+            echo "Found Playwright HTML report with screenshots"
+            cp -r playwright-report/* screen-size-reports/
+            
+            # Count screenshots
+            SCREENSHOT_COUNT=$(find screen-size-reports/data -name "*.png" 2>/dev/null | wc -l)
+            echo "Generated $SCREENSHOT_COUNT screenshots"
+            
+            # Add test run metadata
+            cat > screen-size-reports/test-metadata.json << EOF
+          {
+            "testRun": {
+              "timestamp": "$(date -Iseconds)",
+              "branch": "${{ github.event.inputs.branch || github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "workflow": "Screen Size Testing - Insights & Players Panel",
+              "runId": "${{ github.run_id }}",
+              "runNumber": "${{ github.run_number }}",
+              "deviceCategories": "${{ github.event.inputs.device_categories || 'all' }}",
+              "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
+              "screenshotCount": $SCREENSHOT_COUNT
+            },
+            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.event.inputs.branch || github.ref_name }}/${{ github.run_number }}/index.html"
+          }
+          EOF
+          else
+            echo "No Playwright report found - creating error page"
+            cat > screen-size-reports/index.html << EOF
+          <!DOCTYPE html>
+          <html><head><title>Screen Size Test Failed</title></head>
+          <body>
+            <h1>Screen Size Test Failed</h1>
+            <p>No test results were generated. The test run may have failed.</p>
+            <p>Check the <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">workflow logs</a> for details.</p>
+          </body></html>
+          EOF
+          fi
+
+      - name: Upload Test Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: screen-size-test-report-complete
+          path: screen-size-reports/
+          retention-days: 90
+
+      - name: Deploy Reports to GitHub Pages
+        if: always()
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          personal_token: ${{ secrets.GIST_TOKEN }}
+          external_repository: bkrupa/eso-log-aggregator-reports
+          publish_dir: screen-size-reports
+          destination_dir: screen-size-tests/${{ github.event.inputs.branch || github.ref_name }}/${{ github.run_number }}
+          keep_files: true
+
+      - name: Create Job Summary
+        if: always()
+        run: |
+          echo "# 📱 Screen Size Testing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "screen-size-reports/test-metadata.json" ]; then
+            SCREENSHOT_COUNT=$(cat screen-size-reports/test-metadata.json | grep -o '"screenshotCount": [0-9]*' | grep -o '[0-9]*')
+            echo "**Screenshots Generated:** $SCREENSHOT_COUNT" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## 🔗 View Results" >> $GITHUB_STEP_SUMMARY
+          
+          BRANCH_NAME="${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+          REPORT_URL="https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
+          ARTIFACTS_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          
+          echo "📊 **[Interactive Report: ${REPORT_URL}](${REPORT_URL})**" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **[Download Artifacts: ${ARTIFACTS_URL}](${ARTIFACTS_URL})**" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Features Tested" >> $GITHUB_STEP_SUMMARY
+          echo "- **Insights Panel** - Damage/healing statistics responsive layout" >> $GITHUB_STEP_SUMMARY
+          echo "- **Players Panel** - Character cards and participant information" >> $GITHUB_STEP_SUMMARY
+          echo "- **22 Viewport Sizes** - From iPhone SE (375px) to 4K Desktop (3840px)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Real Data** - Authentic ESO Kyne's Aegis trial report" >> $GITHUB_STEP_SUMMARY
+

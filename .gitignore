@@ -11,10 +11,43 @@
 /test-results-nightly/
 /test-results-manual/
 /test-results-extracted/
+/test-results-screen-sizes/
 /playwright-report/
 /playwright-report-nightly/
+/screen-size-report/
+/screen-size-reports/
 /playwright/.cache/
 /tests/auth-state.json
+
+# Screen size test report directories and artifacts (keep baseline screenshots)
+/tests/screen-sizes/**/test-results/
+/tests/screen-sizes/**/*-actual.png
+/tests/screen-sizes/**/*-expected.png
+/tests/screen-sizes/**/*-diff.png
+
+# Screen size test artifacts (prevent screenshots in root directory)
+/*-overview-*.png
+/*-viewport-*.png
+/test-output/
+
+# Additional Playwright test artifacts
+/test-results*/
+/playwright-report*/
+*.trace
+*.webm
+*.zip
+/artifacts/
+/downloads/
+
+# HTML report metadata and test run artifacts
+test-metadata.json
+*.har
+*.video
+
+# CI/CD temporary files
+/gh-pages/
+/reports-temp/
+.last-run.json
 
 # production
 /build
