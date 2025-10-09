@@ -92,6 +92,9 @@ jobs:
         env:
           CI: true
           BASE_URL: http://localhost:3000
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
       - name: Run Insights Panel Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}
@@ -104,6 +107,9 @@ jobs:
         env:
           CI: true
           BASE_URL: http://localhost:3000
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
       - name: Run Insights Panel Tests - Tablet Only
         if: ${{ github.event.inputs.device_categories == 'tablet' }}
@@ -116,6 +122,9 @@ jobs:
         env:
           CI: true
           BASE_URL: http://localhost:3000
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
       - name: Run Insights Panel Tests - Desktop Only
         if: ${{ github.event.inputs.device_categories == 'desktop' }}
@@ -128,6 +137,9 @@ jobs:
         env:
           CI: true
           BASE_URL: http://localhost:3000
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
       - name: Run Screen Size Tests - Breakpoints Only
         if: ${{ github.event.inputs.device_categories == 'breakpoints' }}
@@ -140,6 +152,9 @@ jobs:
         env:
           CI: true
           BASE_URL: http://localhost:3000
+          # ESO Logs OAuth credentials for authenticated tests
+          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
+          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
 
       - name: Prepare Report for Upload
         if: always()
