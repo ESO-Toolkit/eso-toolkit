@@ -63,6 +63,43 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New', monospace;
 }
 
+/* Mobile-first responsive fixes */
+@media (max-width: 768px) {
+  body {
+    font-size: 14px;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+
+  /* Prevent horizontal scroll on mobile */
+  html,
+  body {
+    overflow-x: hidden;
+  }
+
+  /* Responsive grid containers */
+  .MuiGrid-root {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  /* Responsive cards and containers */
+  .MuiPaper-root {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+  }
+}
+
+/* Tablet responsive fixes */
+@media (min-width: 769px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+}
+
 /* Pickr theme CSS variables */
 :root {
   --site-bg: #121212;
