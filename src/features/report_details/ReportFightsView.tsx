@@ -760,8 +760,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           m: 0,
           width: '100%',
           maxWidth: '100vw',
+          minWidth: 0,
           boxSizing: 'border-box',
           background: 'transparent',
+          overflowX: 'hidden',
         }}
       >
         <Box
@@ -827,7 +829,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           onClick={() => handleFightSelect(fight.id)}
           sx={{
             width: '100%',
-            height: 64,
+            height: { xs: 56, sm: 64 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -836,8 +838,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             border: 1,
             borderColor: 'divider',
             borderRadius: 1,
-            py: 0.5,
-            px: 1,
+            py: { xs: 0.25, sm: 0.5 },
+            px: { xs: 0.5, sm: 1 },
             position: 'relative',
             backgroundColor: 'transparent',
             overflow: 'visible',
@@ -934,11 +936,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             variant="caption"
             sx={{
               color: darkMode ? '#d9e9ff' : 'text.secondary',
-              fontSize: '0.66rem',
+              fontSize: { xs: '0.55rem', sm: '0.66rem' },
               lineHeight: 1.1,
               whiteSpace: 'nowrap',
               position: 'absolute',
-              bottom: 6,
+              bottom: { xs: 4, sm: 6 },
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 2,
@@ -966,8 +968,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         m: 0,
         width: '100%',
         maxWidth: '100vw',
+        minWidth: 0,
         boxSizing: 'border-box',
         background: 'transparent',
+        overflowX: 'hidden',
       }}
     >
       <Box
@@ -978,6 +982,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
           overflow: 'visible',
+          minWidth: 0,
+          maxWidth: '100%',
         }}
       >
         <Typography
@@ -1347,8 +1353,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           <List
                             sx={{
                               display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
+                              gridTemplateColumns: {
+                                xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                                md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                              },
+                              gap: { xs: 0.5, sm: 1 },
                               overflow: 'visible',
                             }}
                           >
@@ -1361,8 +1372,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       <List
                         sx={{
                           display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                          gap: 1,
+                          gridTemplateColumns: {
+                            xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                            sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                          },
+                          gap: { xs: 0.5, sm: 1 },
                           overflow: 'visible',
                         }}
                       >
@@ -1385,8 +1401,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           <List
                             sx={{
                               display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
+                              gridTemplateColumns: {
+                                xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                                md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                              },
+                              gap: { xs: 0.5, sm: 1 },
                               overflow: 'visible',
                             }}
                           >
