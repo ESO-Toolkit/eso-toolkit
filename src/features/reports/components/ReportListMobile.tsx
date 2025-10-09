@@ -44,7 +44,7 @@ export const ReportListMobile: React.FC<ReportListMobileProps> = ({
             background: (theme) =>
               theme.palette.mode === 'dark'
                 ? 'linear-gradient(rgba(15, 23, 42, 0.66) 0%, rgba(3, 7, 18, 0.66) 100%)'
-                : 'linear-gradient(rgba(255, 255, 255, 0.9) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             '&:hover': {
               boxShadow: theme.shadows[4],
               transform: 'translateY(-2px)',
