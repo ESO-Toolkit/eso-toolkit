@@ -74,7 +74,8 @@ code {
   }
 
   /* Prevent horizontal scroll on mobile */
-  html, body {
+  html,
+  body {
     overflow-x: hidden;
   }
 
