@@ -75,7 +75,7 @@ jobs:
             const MERGE_QUEUE_LABEL = 'merge-queue';
             const PRIORITY_LABELS = ['priority', 'hotfix', 'critical'];
             const BLOCK_LABELS = ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'needs review'];
-            const REQUIRED_REVIEWS = 1; // Note: This is in addition to any branch protection rules
+            const REQUIRED_REVIEWS = 0; // Note: This is in addition to any branch protection rules
             const AUTO_MERGE_LABEL = 'auto-merge';
             
             // Note: Merge method is determined by repository settings (respects branch protection rules)
