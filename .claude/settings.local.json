@@ -84,7 +84,9 @@
       "mcp__chrome-devtools__monitor_console_live",
       "Bash(npm run test:coverage:*)",
       "Bash(npm run test:*)",
-      "WebFetch(domain:www.esologs.com)"
+      "WebFetch(domain:www.esologs.com)",
+      "WebFetch(domain:bkrupa.github.io)",
+      "Bash(git log:*)"
     ],
     "deny": [],
     "ask": []

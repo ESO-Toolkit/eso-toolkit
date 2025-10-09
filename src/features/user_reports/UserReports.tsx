@@ -220,63 +220,6 @@ export const UserReports: React.FC = () => {
   const client = useEsoLogsClientInstance();
   const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
-  const renderHeaderContent = (insideCard: boolean): React.ReactElement => (
-    <Box sx={{ mb: insideCard ? 3 : isDesktop ? 4 : 3 }}>
-      <Box
-        sx={{
-          ...headerStackSx,
-          mb: insideCard ? 1.5 : 1.5,
-        }}
-      >
-        <Box>
-          <Typography
-            variant={isDesktop ? 'h4' : 'h5'}
-            component="h1"
-            sx={{ mb: insideCard ? 1.5 : 2 }}
-          >
-            My Reports
-          </Typography>
-          {currentUser && (
-            <Typography variant="body1" color="text.secondary">
-              Reports for {currentUser.name}
-              {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
-              {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
-            </Typography>
-          )}
-        </Box>
-
-        <Box sx={actionGroupSx}>
-          <IconButton
-            onClick={handleRefresh}
-            disabled={state.loading}
-            aria-label="refresh"
-            size={isDesktop ? 'medium' : 'large'}
-            sx={{
-              backgroundColor: theme.palette.action.hover,
-              '&:hover': {
-                backgroundColor: theme.palette.action.selected,
-              },
-              width: isDesktop ? 'auto' : '100%',
-            }}
-          >
-            <RefreshIcon />
-          </IconButton>
-        </Box>
-      </Box>
-
-      {!currentUser && !userLoading && (
-        <Alert severity="info" sx={{ mb: insideCard ? 2 : 1.5 }}>
-          Note: Unable to load user profile information from ESO Logs API, but you can still view
-          your reports below.
-        </Alert>
-      )}
-
-      <Typography variant="body2" color="text.secondary" sx={{ mt: currentUser ? 1 : 0 }}>
-        Total: {state.pagination.totalReports} reports
-      </Typography>
-    </Box>
-  );
-
   const [state, setState] = useState<UserReportsState>({
     reports: [],
     loading: false, // Let useEffect handle initial loading
@@ -460,9 +403,7 @@ export const UserReports: React.FC = () => {
   // The overlay loading (line ~382) handles all loading states including initial load
 
   return (
-    <Container maxWidth="lg" sx={{ mt: 4, mb: 4 }}>
-      {!isDesktop && renderHeaderContent(false)}
-
+    <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
       {/* Error Alert */}
       {state.error && (
         <Alert severity="error" sx={{ mb: 3 }}>
@@ -472,8 +413,13 @@ export const UserReports: React.FC = () => {
 
       {/* Reports Table */}
       <Card
+        elevation={isDesktop ? 4 : 1}
         sx={{
           ...cardSx,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
           transition: state.initialLoading
             ? 'none !important'
             : 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -500,11 +446,86 @@ export const UserReports: React.FC = () => {
         <CardContent
           sx={{
             ...cardContentSx,
-            p: isDesktop ? 4 : 0,
             position: 'relative',
           }}
         >
-          {isDesktop && renderHeaderContent(true)}
+          {/* Mobile Floating Refresh Button */}
+          {!isDesktop && (
+            <IconButton
+              onClick={handleRefresh}
+              disabled={state.loading}
+              aria-label="refresh"
+              color="primary"
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
+
+          {/* Header */}
+          <Box sx={{ ...headerStackSx, mb: 3 }}>
+            <Box>
+              <Typography
+                variant={isDesktop ? 'h4' : 'h5'}
+                component="h1"
+                gutterBottom
+                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }} // Add right padding on mobile to account for floating button
+              >
+                My Reports
+              </Typography>
+              {currentUser && (
+                <Typography
+                  variant="body1"
+                  color="text.secondary"
+                  sx={{
+                    maxWidth: isDesktop ? 'none' : '26ch',
+                    pr: isDesktop ? 0 : 1, // Add some right padding on mobile
+                  }}
+                >
+                  Reports for {currentUser.name}
+                  {currentUser.naDisplayName && ` (${currentUser.naDisplayName})`}
+                  {currentUser.euDisplayName && ` (${currentUser.euDisplayName})`}
+                </Typography>
+              )}
+            </Box>
+
+            {isDesktop && (
+              <Box sx={actionGroupSx}>
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={state.loading}
+                  aria-label="refresh"
+                  color="primary"
+                  sx={{
+                    width: 'auto',
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
+            )}
+          </Box>
+
+          {!currentUser && !userLoading && (
+            <Alert severity="info" sx={{ mb: 2 }}>
+              Note: Unable to load user profile information from ESO Logs API, but you can still
+              view your reports below.
+            </Alert>
+          )}
+
+          <Typography variant="body2" color="text.secondary" sx={{ mb: currentUser ? 2 : 1 }}>
+            Total: {state.pagination.totalReports} reports
+          </Typography>
 
           {isDesktop ? (
             <TableContainer
@@ -623,18 +644,30 @@ export const UserReports: React.FC = () => {
           }}
         >
           <Pagination
+            className="data-grid-pagination"
             count={state.pagination.totalPages}
             page={state.pagination.currentPage}
             onChange={handlePageChange}
             color="primary"
-            size="large"
+            size={isDesktop ? 'large' : 'large'}
+            boundaryCount={isDesktop ? 2 : 0}
+            siblingCount={isDesktop ? 2 : 0}
             disabled={state.loading}
             sx={{
               // Enable pagination transitions when not initially loading
               transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+              // Responsive spacing only for mobile
+              mx: isDesktop ? 0 : 1,
               // Enhanced hover effects when not initially loading (allow hover during pagination)
               '& .MuiPaginationItem-root': {
+                borderRadius: isDesktop ? '50%' : 2,
                 transition: state.initialLoading ? 'none !important' : 'all 0.15s ease-in-out',
+                // Larger touch targets only for mobile accessibility, fixed dimensions for desktop circles
+                minWidth: isDesktop ? 40 : 44,
+                minHeight: isDesktop ? 40 : 44,
+                width: isDesktop ? 40 : 'auto',
+                height: isDesktop ? 40 : 'auto',
+                padding: isDesktop ? '0' : '0 8px',
                 '&:hover:not(.Mui-selected):not(:disabled)': {
                   transform: 'translateY(-1px)',
                   boxShadow: (theme) =>

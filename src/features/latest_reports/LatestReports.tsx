@@ -153,8 +153,39 @@ export const LatestReports: React.FC = () => {
 
   return (
     <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
-      <Card elevation={isDesktop ? 4 : 1} sx={cardSx}>
-        <CardContent sx={cardContentSx}>
+      <Card
+        elevation={isDesktop ? 4 : 1}
+        sx={{
+          ...cardSx,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
+        }}
+      >
+        <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+          {/* Mobile Floating Refresh Button */}
+          {!isDesktop && (
+            <IconButton
+              onClick={handleRefresh}
+              disabled={state.loading}
+              color="primary"
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
+
           {/* Header */}
           <Box sx={{ ...headerStackSx, mb: 3 }}>
             <Box>
@@ -162,31 +193,36 @@ export const LatestReports: React.FC = () => {
                 variant={isDesktop ? 'h4' : 'h5'}
                 component="h1"
                 gutterBottom
-                sx={{ mb: isDesktop ? 0.5 : 0 }}
+                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }} // Add right padding on mobile to account for floating button
               >
                 Latest Reports
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  maxWidth: isDesktop ? 'none' : '26ch',
+                  pr: isDesktop ? 0 : 1, // Add some right padding on mobile
+                }}
+              >
                 Discover the most recent combat logs from the community
               </Typography>
             </Box>
 
-            <Box sx={actionGroupSx}>
-              <IconButton
-                onClick={handleRefresh}
-                disabled={state.loading}
-                color="primary"
-                sx={{
-                  backgroundColor: theme.palette.action.hover,
-                  '&:hover': {
-                    backgroundColor: theme.palette.action.selected,
-                  },
-                  width: isDesktop ? 'auto' : '100%',
-                }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Box>
+            {isDesktop && (
+              <Box sx={actionGroupSx}>
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={state.loading}
+                  color="primary"
+                  sx={{
+                    width: 'auto',
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
+            )}
           </Box>
 
           {state.reports.length > 0 ? (

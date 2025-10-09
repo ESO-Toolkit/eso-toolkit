@@ -85,12 +85,13 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 color: tokens.text,
                 // Enable variable font optical sizing where supported
                 fontOpticalSizing: 'auto',
-                // Disable transitions completely to test if they cause flashing
-                transition: 'none',
+                // Smooth theme transitions
+                transition: 'background-color 0.2s ease-in-out, color 0.2s ease-in-out',
               },
-              // Disable all transitions completely to test
+              // Only add transitions to commonly themed elements
               'body, .MuiPaper-root, .MuiButton-root, .MuiIconButton-root': {
-                transition: 'none',
+                transition:
+                  'background-color 0.15s ease-in-out, color 0.15s ease-in-out, border-color 0.15s ease-in-out',
               },
               '*, *::before, *::after': { boxSizing: 'border-box' },
             },
@@ -818,50 +819,15 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
               background: darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(15, 23, 42, 0.45)',
             },
           },
-          // Pagination-specific styling to prevent theme flashing
-          '.MuiPagination-root': {
-            transition: 'all 0.1s ease-in-out !important',
-            '& .MuiPaginationItem-root': {
-              transition: 'all 0.1s ease-in-out !important',
-              backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.8)' : 'rgba(255, 255, 255, 0.9)',
-              border: darkMode
-                ? '1px solid rgba(56, 189, 248, 0.2)'
-                : '1px solid rgba(25, 118, 210, 0.3)',
-              color: darkMode ? tokens.text : '#000000',
-              '&:hover': {
-                backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.15)' : 'rgba(25, 118, 210, 0.08)',
-                borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(25, 118, 210, 0.5)',
-                transform: 'translateY(-1px)',
-              },
-              '&.Mui-selected': {
-                backgroundColor: darkMode ? tokens.accent : '#1976d2',
-                color: '#ffffff',
-                borderColor: darkMode ? tokens.accent : '#1976d2',
-                boxShadow: darkMode
-                  ? '0 2px 8px rgba(56, 189, 248, 0.3)'
-                  : '0 2px 8px rgba(25, 118, 210, 0.3)',
-              },
-              '&.Mui-disabled': {
-                backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.4)' : 'rgba(0, 0, 0, 0.1)',
-                color: darkMode ? 'rgba(229, 231, 235, 0.3)' : 'rgba(0, 0, 0, 0.3)',
-                borderColor: darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.1)',
-              },
-            },
-            '& .MuiPaginationItem-ellipsis': {
-              color: darkMode ? tokens.muted : '#666666',
-              backgroundColor: 'transparent',
-              border: 'none',
-            },
-          },
           // DataGrid pagination controls styling
           '.data-grid-pagination': {
-            '& .MuiIconButton-root': {
+            '& .MuiPaginationItem-root': {
               transition: 'all 0.1s ease-in-out !important',
               backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 0.8)',
               border: darkMode
                 ? '1px solid rgba(56, 189, 248, 0.2)'
                 : '1px solid rgba(25, 118, 210, 0.2)',
-              color: darkMode ? tokens.text : '#000000',
+              color: darkMode ? tokens.text : tokens.text,
               '&:hover:not(:disabled)': {
                 backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.1)' : 'rgba(25, 118, 210, 0.08)',
                 borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(25, 118, 210, 0.4)',
@@ -871,10 +837,18 @@ export const ReduxThemeProvider: React.FC<{ children: React.ReactNode }> = ({ ch
                 backgroundColor: darkMode ? 'rgba(15, 23, 42, 0.3)' : 'rgba(0, 0, 0, 0.05)',
                 color: darkMode ? 'rgba(229, 231, 235, 0.4)' : 'rgba(0, 0, 0, 0.4)',
               },
-            },
-            '& .MuiTypography-root': {
-              transition: 'color 0.1s ease-in-out !important',
-              color: darkMode ? tokens.text : '#000000',
+              '&.Mui-selected': {
+                backgroundColor: darkMode ? 'rgba(56, 189, 248, 0.2)' : 'rgba(25, 118, 210, 0.15)',
+                borderColor: darkMode ? 'rgba(56, 189, 248, 0.4)' : 'rgba(25, 118, 210, 0.3)',
+                color: darkMode ? '#ffffff' : 'rgba(0, 0, 0, 0.87)',
+                fontWeight: 600,
+                '&:hover': {
+                  backgroundColor: darkMode
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(25, 118, 210, 0.25)',
+                  borderColor: darkMode ? 'rgba(56, 189, 248, 0.6)' : 'rgba(25, 118, 210, 0.5)',
+                },
+              },
             },
           },
         }}
