@@ -462,7 +462,7 @@ export const LogInputContainer = styled(Box)(({ theme }) => ({
   },
   [theme.breakpoints.down('sm')]: {
     flexDirection: 'column',
-    margin: '1rem 0 2.5rem 0',
+    margin: '1rem auto 2.5rem auto',
     alignItems: 'stretch',
     minWidth: '94%',
     maxWidth: '94%',
@@ -519,7 +519,10 @@ const CommunityGrid = styled(Box)(({ theme }) => ({
 }));
 
 const CommunityCard = styled(Box)(({ theme }) => ({
-  background: theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.4)' : 'rgba(255, 255, 255, 0.6)',
+  background:
+    theme.palette.mode === 'dark'
+      ? 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)'
+      : 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
   backdropFilter: 'blur(10px)',
   border:
     theme.palette.mode === 'dark'
