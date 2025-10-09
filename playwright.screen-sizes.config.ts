@@ -47,6 +47,9 @@ export default defineConfig({
     ['json', { outputFile: 'screen-size-report/results.json' }],
     ...(process.env.CI ? [['github'] as const] : []),
   ],
+  /* Use OS-agnostic snapshot paths for cross-platform compatibility */
+  snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
+  
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
