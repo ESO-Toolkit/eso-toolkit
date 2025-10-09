@@ -1,8 +1,74 @@
 import { Page } from '@playwright/test';
+import * as fs from 'fs';
+import * as path from 'path';
+
+/**
+ * Load real report data from data-downloads directory
+ */
+function loadReportData(reportCode: string, fileName: string = 'report-metadata.json') {
+  try {
+    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, fileName);
+    if (fs.existsSync(dataPath)) {
+      const data = fs.readFileSync(dataPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.log(`Could not load real report data: ${error}`);
+  }
+  return null;
+}
+
+/**
+ * Load real fight data from data-downloads directory
+ */
+function loadFightData(reportCode: string, fightId: string) {
+  try {
+    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'fight-info.json');
+    if (fs.existsSync(dataPath)) {
+      const data = fs.readFileSync(dataPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.log(`Could not load real fight data: ${error}`);
+  }
+  return null;
+}
+
+/**
+ * Load real damage/healing events for a fight
+ */
+function loadFightEventsData(reportCode: string, fightId: string, eventType: 'damage' | 'healing') {
+  try {
+    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'events', `${eventType}-events.json`);
+    if (fs.existsSync(dataPath)) {
+      const data = fs.readFileSync(dataPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.log(`Could not load real ${eventType} data: ${error}`);
+  }
+  return null;
+}
+
+/**
+ * Load real player details data
+ */
+function loadPlayerData(reportCode: string) {
+  try {
+    const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, 'player-details.json');
+    if (fs.existsSync(dataPath)) {
+      const data = fs.readFileSync(dataPath, 'utf8');
+      return JSON.parse(data);
+    }
+  } catch (error) {
+    console.log(`Could not load real player data: ${error}`);
+  }
+  return null;
+}
 
 /**
  * Sets up API mocking for Playwright tests using route interception
- * This avoids the need for MSW service workers in the test environment
+ * Now uses real ESO report data when available for authentic testing
  */
 export async function setupApiMocking(page: Page) {
   // In CI environments, block external font requests that might cause timeouts
@@ -50,8 +116,20 @@ export async function setupApiMocking(page: Page) {
       const requestBody = await request.postDataJSON();
 
       if (requestBody?.query?.includes('getReportByCode')) {
-        const reportCode = requestBody.variables?.code || 'TEST123';
+        const reportCode = requestBody.variables?.code || '7zj1ma8kD9xn4cTq';
+        
+        // Try to load real report data first
+        const realReportData = loadReportData(reportCode);
+        if (realReportData) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(realReportData),
+          });
+          return;
+        }
 
+        // Fallback to mock data if real data not available
         await route.fulfill({
           status: 200,
           contentType: 'application/json',
@@ -62,7 +140,7 @@ export async function setupApiMocking(page: Page) {
                   code: reportCode,
                   startTime: 1630000000000,
                   endTime: 1630003600000,
-                  title: 'Test Raid Report',
+                  title: 'Sunspire Veteran - Test Guild',
                   visibility: 'PUBLIC',
                   zone: {
                     name: 'Trials',
@@ -70,18 +148,89 @@ export async function setupApiMocking(page: Page) {
                   fights: [
                     {
                       id: 1,
-                      name: 'Boss Fight 1',
+                      name: 'Sunspire - Yolnahkriin',
                       difficulty: 3,
                       startTime: 0,
                       endTime: 300000,
-                      friendlyPlayers: [],
+                      bossPercentage: 15,
+                      friendlyPlayers: [
+                        {
+                          id: 1,
+                          name: 'TestTank',
+                          displayName: '@TestTank',
+                          type: 'Dragonknight',
+                          server: 'NA',
+                          icon: 'dragonknight.png',
+                        },
+                        {
+                          id: 2,
+                          name: 'TestHealer',
+                          displayName: '@TestHealer',
+                          type: 'Templar',
+                          server: 'NA',
+                          icon: 'templar.png',
+                        },
+                        {
+                          id: 3,
+                          name: 'TestDPS',
+                          displayName: '@TestDPS',
+                          type: 'Nightblade',
+                          server: 'NA',
+                          icon: 'nightblade.png',
+                        },
+                      ],
                       enemyPlayers: [],
-                      bossPercentage: 0,
                       friendlyNPCs: [],
                       enemyNPCs: [
                         {
                           gameID: 12345,
                           id: 1,
+                          name: 'Yolnahkriin',
+                          groupCount: 1,
+                          instanceCount: 1,
+                        },
+                      ],
+                    },
+                    {
+                      id: 2,
+                      name: 'Sunspire - Lokkestiiz',
+                      difficulty: 3,
+                      startTime: 400000,
+                      endTime: 700000,
+                      bossPercentage: 0,
+                      friendlyPlayers: [
+                        {
+                          id: 1,
+                          name: 'TestTank',
+                          displayName: '@TestTank',
+                          type: 'Dragonknight',
+                          server: 'NA',
+                          icon: 'dragonknight.png',
+                        },
+                        {
+                          id: 2,
+                          name: 'TestHealer',
+                          displayName: '@TestHealer',
+                          type: 'Templar',
+                          server: 'NA',
+                          icon: 'templar.png',
+                        },
+                        {
+                          id: 3,
+                          name: 'TestDPS',
+                          displayName: '@TestDPS',
+                          type: 'Nightblade',
+                          server: 'NA',
+                          icon: 'nightblade.png',
+                        },
+                      ],
+                      enemyPlayers: [],
+                      friendlyNPCs: [],
+                      enemyNPCs: [
+                        {
+                          gameID: 12346,
+                          id: 2,
+                          name: 'Lokkestiiz',
                           groupCount: 1,
                           instanceCount: 1,
                         },
@@ -125,6 +274,104 @@ export async function setupApiMocking(page: Page) {
           }),
         });
         return;
+      }
+
+      // Mock damage/healing data queries with real data when possible
+      if (requestBody?.query?.includes('damage') || requestBody?.query?.includes('healing')) {
+        const reportCode = requestBody.variables?.code || '7zj1ma8kD9xn4cTq';
+        const fightId = requestBody.variables?.fightIDs?.[0] || '1';
+        const eventType = requestBody.query?.includes('damage') ? 'damage' : 'healing';
+        
+        // Try to load real events data
+        const realEventsData = loadFightEventsData(reportCode, fightId.toString(), eventType);
+        if (realEventsData && realEventsData.data) {
+          // Transform real events data to match expected format
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify({
+              data: {
+                reportData: {
+                  report: {
+                    table: {
+                      data: {
+                        entries: realEventsData.data.slice(0, 20), // Limit for performance
+                      },
+                    },
+                  },
+                },
+              },
+            }),
+          });
+          return;
+        }
+
+        // Fallback to mock data
+        await route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            data: {
+              reportData: {
+                report: {
+                  table: {
+                    data: {
+                      entries: [
+                        {
+                          name: 'TestTank',
+                          id: 1,
+                          total: 15230000,
+                          activeTime: 285000,
+                          abilities: [
+                            { name: 'Puncture', total: 5000000 },
+                            { name: 'Heroic Slash', total: 3200000 },
+                          ],
+                        },
+                        {
+                          name: 'TestDPS',
+                          id: 3,
+                          total: 45670000,
+                          activeTime: 280000,
+                          abilities: [
+                            { name: 'Surprise Attack', total: 15000000 },
+                            { name: 'Incapacitating Strike', total: 12000000 },
+                          ],
+                        },
+                        {
+                          name: 'TestHealer',
+                          id: 2,
+                          total: 8900000,
+                          activeTime: 290000,
+                          abilities: [
+                            { name: 'Breath of Life', total: 4500000 },
+                            { name: 'Healing Springs', total: 3200000 },
+                          ],
+                        },
+                      ],
+                    },
+                  },
+                },
+              },
+            },
+          }),
+        });
+        return;
+      }
+
+      // Mock player details queries with real data
+      if (requestBody?.query?.includes('playerDetails') || requestBody?.query?.includes('getPlayers')) {
+        const reportCode = requestBody.variables?.code || '7zj1ma8kD9xn4cTq';
+        
+        // Try to load real player data
+        const realPlayerData = loadPlayerData(reportCode);
+        if (realPlayerData) {
+          await route.fulfill({
+            status: 200,
+            contentType: 'application/json',
+            body: JSON.stringify(realPlayerData),
+          });
+          return;
+        }
       }
 
       // Default GraphQL response
