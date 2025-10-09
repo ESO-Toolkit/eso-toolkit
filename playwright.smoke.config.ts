@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
  * Playwright configuration for smoke tests - minimal, fast e2e tests for PR checks
@@ -19,8 +20,12 @@ export default defineConfig({
   /* No retries for smoke tests - fail fast */
   retries: 0,
 
-  /* Single worker for faster startup */
-  workers: 1,
+  /* Conservative worker count for smoke tests - prioritize fast startup */
+  workers: process.env.CI ? calculateOptimalWorkers({ 
+    maxWorkers: 2, 
+    minWorkers: 1,
+    memoryPerWorker: 800 // Lower since smoke tests are lighter
+  }) : 1,
 
   /* Increased timeout for smoke tests to handle slower CI environments */
   timeout: 120000, // 2 minutes per test

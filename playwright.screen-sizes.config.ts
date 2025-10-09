@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
  * Configuration for screen size validation testing
@@ -15,8 +16,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0,
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 2 : undefined,
+  /* Optimize workers for screenshot testing (can be memory intensive) */
+  workers: process.env.CI ? calculateOptimalWorkers({ 
+    maxWorkers: 2, // Conservative for screenshot comparisons
+    memoryPerWorker: 1500, // Screenshots can be memory intensive
+    minWorkers: 1
+  }) : undefined,
   /* Timeout settings */
   timeout: 45000, // Longer timeout for screenshot comparisons
   expect: {

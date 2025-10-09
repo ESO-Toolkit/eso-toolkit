@@ -1,6 +1,14 @@
 import { test, expect, Page } from '@playwright/test';
 import { setupApiMocking } from '../utils/api-mocking';
 import { setupAuthentication } from './utils';
+import {
+  TEST_REPORT_CONFIG,
+  TIMEOUTS,
+  BREAKPOINTS,
+  DIMENSIONS,
+  LIMITS,
+  SELECTORS
+} from './test-constants';
 
 /**
  * Screen Size Validation Tests - Real Fight Report Analysis
@@ -16,14 +24,14 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
     await setupAuthentication(page);
     
     // Navigate to real Kyne's Aegis report for authentic fight analysis UI
-    await page.goto('/report?code=7zj1ma8kD9xn4cTq&fight=1');
+    await page.goto(`/report?code=${TEST_REPORT_CONFIG.REPORT_CODE}&fight=${TEST_REPORT_CONFIG.FIGHT_ID}`);
     
     // Wait for the page to be fully loaded
     await page.waitForLoadState('domcontentloaded');
     
     // Try to wait for network idle but don't fail if timeout (development can be slow)
     try {
-      await page.waitForLoadState('networkidle', { timeout: 15000 });
+      await page.waitForLoadState('networkidle', { timeout: TIMEOUTS.NETWORK_IDLE });
     } catch (error) {
       console.log('Network idle timeout in fight report tests - continuing anyway');
     }
@@ -35,7 +43,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
     
     // Look for fight report specific elements
     const reportTitle = page.locator('h1, h2, h3, [data-testid*="report"], [class*="report"], [class*="title"]').first();
-    await reportTitle.waitFor({ state: 'visible', timeout: 10000 }).catch(() => {
+    await reportTitle.waitFor({ state: 'visible', timeout: TIMEOUTS.ELEMENT_VISIBILITY }).catch(() => {
       console.log('Report title not found - continuing with screenshot');
     });
     
@@ -48,12 +56,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should display fight data tables responsively', async ({ page }) => {
     // Look for damage/healing tables, player panels, or fight data grids
-    const fightDataTables = page.locator([
-      'table, [role="grid"], [role="table"]', 
-      '.data-table, .MuiDataGrid-root',
-      '[class*="damage"], [class*="healing"], [class*="player"]',
-      '[data-testid*="damage"], [data-testid*="healing"], [data-testid*="fight"]'
-    ].join(', '));
+    const fightDataTables = page.locator(SELECTORS.FIGHT_DATA_TABLES);
     
     const count = await fightDataTables.count();
     
@@ -68,7 +71,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
       const tableBox = await table.boundingBox();
       const viewportWidth = page.viewportSize()?.width || 0;
       
-      if (tableBox && viewportWidth < 768) {
+      if (tableBox && viewportWidth < BREAKPOINTS.MOBILE) {
         // On mobile/tablet, tables should handle overflow gracefully
         const hasOverflow = tableBox.width > viewportWidth;
         if (hasOverflow) {
@@ -85,12 +88,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should handle fight selection interface responsively', async ({ page }) => {
     // Look for fight selection elements (dropdowns, tabs, navigation)
-    const fightSelectors = page.locator([
-      'select, [role="combobox"], .MuiSelect-root',
-      '[class*="fight"], [class*="boss"], [class*="encounter"]',
-      '[data-testid*="fight"], [data-testid*="boss"], [data-testid*="encounter"]',
-      'nav, .navigation, [class*="nav"]'
-    ].join(', '));
+    const fightSelectors = page.locator(SELECTORS.FIGHT_SELECTORS);
     
     const count = await fightSelectors.count();
     
@@ -103,12 +101,12 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
       
       // On mobile screens, ensure selector is accessible and not cut off
       const viewportWidth = page.viewportSize()?.width || 0;
-      if (viewportWidth < 768) {
+      if (viewportWidth < BREAKPOINTS.MOBILE) {
         const selectorBox = await selector.boundingBox();
         if (selectorBox) {
           // Should be within viewport bounds
           expect(selectorBox.x).toBeGreaterThanOrEqual(0);
-          expect(selectorBox.x + selectorBox.width).toBeLessThanOrEqual(viewportWidth + 10);
+          expect(selectorBox.x + selectorBox.width).toBeLessThanOrEqual(viewportWidth + DIMENSIONS.BOUNDS_TOLERANCE_SMALL);
         }
       }
     }
@@ -116,15 +114,11 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should display damage/healing charts responsively', async ({ page }) => {
     // Look for combat-related chart containers (damage meters, healing charts, DPS graphs)
-    const charts = page.locator([
-      'canvas, .chart, .chart-container, [class*="chart"], svg[class*="chart"]',
-      '[class*="damage"], [class*="healing"], [class*="dps"]',
-      '[data-testid*="chart"], [data-testid*="damage"], [data-testid*="healing"]'
-    ].join(', '));
+    const charts = page.locator(SELECTORS.CHARTS);
     const count = await charts.count();
     
     if (count > 0) {
-      for (let i = 0; i < Math.min(count, 3); i++) {
+      for (let i = 0; i < Math.min(count, LIMITS.MAX_CHARTS_TO_TEST); i++) {
         const chart = charts.nth(i);
         if (await chart.isVisible()) {
           await expect(chart).toHaveScreenshot(`chart-${i}-responsive.png`);
@@ -134,7 +128,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
           const viewportWidth = page.viewportSize()?.width || 0;
           
           if (chartBox) {
-            expect(chartBox.x + chartBox.width).toBeLessThanOrEqual(viewportWidth + 10);
+            expect(chartBox.x + chartBox.width).toBeLessThanOrEqual(viewportWidth + DIMENSIONS.BOUNDS_TOLERANCE_SMALL);
           }
         }
       }
@@ -153,12 +147,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
     });
     
     // Look for player information panels, character cards, or roster displays
-    const playerPanels = page.locator([
-      '[class*="player"], [class*="character"], [class*="roster"]',
-      '[data-testid*="player"], [data-testid*="character"]',
-      '.card, .panel, [class*="card"], [class*="panel"]',
-      '[class*="member"], [class*="participant"]'
-    ].join(', '));
+    const playerPanels = page.locator(SELECTORS.PLAYER_PANELS);
     
     const count = await playerPanels.count();
     
@@ -171,7 +160,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
       });
       
       // Test first few player panels
-      for (let i = 0; i < Math.min(count, 3); i++) {
+      for (let i = 0; i < Math.min(count, LIMITS.MAX_PLAYER_PANELS_TO_TEST); i++) {
         const panel = playerPanels.nth(i);
         if (await panel.isVisible()) {
           // Take screenshot of individual player panel
@@ -183,11 +172,11 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
           
           // Ensure player panels stack properly on mobile
           const viewportWidth = page.viewportSize()?.width || 0;
-          if (viewportWidth < 768) {
+          if (viewportWidth < BREAKPOINTS.MOBILE) {
             const panelBox = await panel.boundingBox();
             if (panelBox) {
               // Panel should not be wider than viewport
-              expect(panelBox.width).toBeLessThanOrEqual(viewportWidth + 10);
+              expect(panelBox.width).toBeLessThanOrEqual(viewportWidth + DIMENSIONS.BOUNDS_TOLERANCE_SMALL);
             }
           }
         }
@@ -207,12 +196,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
     });
     
     // Look for insights panel, tabs, or analysis sections
-    const insightsPanels = page.locator([
-      '[class*="insight"], [class*="analysis"], [class*="summary"]',
-      '[data-testid*="insight"], [data-testid*="analysis"]', 
-      '.tab, .tabs, [role="tab"], [role="tablist"]',
-      '[class*="metric"], [class*="stat"], [class*="performance"]'
-    ].join(', '));
+    const insightsPanels = page.locator(SELECTORS.INSIGHTS_PANELS);
     
     const count = await insightsPanels.count();
     
@@ -234,13 +218,13 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
       
       if (insightsBox) {
         // On mobile, insights should stack vertically and not overflow
-        if (viewportWidth < 768) {
-          expect(insightsBox.width).toBeLessThanOrEqual(viewportWidth + 20);
+        if (viewportWidth < BREAKPOINTS.MOBILE) {
+          expect(insightsBox.width).toBeLessThanOrEqual(viewportWidth + DIMENSIONS.BOUNDS_TOLERANCE_LARGE);
         }
         
         // On desktop, insights should use available space effectively
-        if (viewportWidth >= 1024) {
-          expect(insightsBox.width).toBeGreaterThan(300); // Should have reasonable width
+        if (viewportWidth >= BREAKPOINTS.DESKTOP) {
+          expect(insightsBox.width).toBeGreaterThan(DIMENSIONS.MIN_INSIGHTS_WIDTH);
         }
       }
     } else {
@@ -261,7 +245,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should handle fight navigation and sidebar layouts properly', async ({ page }) => {
     // Look for sidebar or drawer components
-    const sidebars = page.locator('.sidebar, .drawer, [role="complementary"], .MuiDrawer-root, nav[class*="sidebar"]');
+    const sidebars = page.locator(SELECTORS.SIDEBARS);
     const count = await sidebars.count();
     
     if (count > 0) {
@@ -273,9 +257,9 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
         const viewportWidth = page.viewportSize()?.width || 0;
         const sidebarBox = await sidebar.boundingBox();
         
-        if (sidebarBox && viewportWidth < 768) { // Mobile breakpoint
+        if (sidebarBox && viewportWidth < BREAKPOINTS.MOBILE) {
           // On mobile, sidebar should either be hidden or not take full width
-          expect(sidebarBox.width).toBeLessThan(viewportWidth * 0.9);
+          expect(sidebarBox.width).toBeLessThan(viewportWidth * DIMENSIONS.MAX_SIDEBAR_WIDTH_MOBILE);
         }
       }
     }
@@ -283,7 +267,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should handle modal dialogs responsively', async ({ page }) => {
     // Look for any modal triggers and test modal behavior
-    const modalTriggers = page.locator('button:has-text("Settings"), button:has-text("Options"), button:has-text("Filter"), [data-testid*="modal"], [aria-haspopup="dialog"]');
+    const modalTriggers = page.locator(SELECTORS.MODAL_TRIGGERS);
     const count = await modalTriggers.count();
     
     if (count > 0) {
@@ -292,7 +276,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
         await trigger.click();
         
         // Wait for modal to appear
-        const modal = page.locator('[role="dialog"], .modal, .MuiDialog-root').first();
+        const modal = page.locator(SELECTORS.MODALS).first();
         if (await modal.count() > 0) {
           await expect(modal).toBeVisible();
           await expect(modal).toHaveScreenshot('modal-responsive.png');
@@ -307,7 +291,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
           }
           
           // Close modal
-          const closeButton = page.locator('[aria-label="close"], .close, button:has-text("Cancel")').first();
+          const closeButton = page.locator(SELECTORS.MODAL_CLOSE).first();
           if (await closeButton.count() > 0) {
             await closeButton.click();
           } else {
@@ -320,8 +304,8 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should handle form elements responsively', async ({ page }) => {
     // Look for form elements
-    const forms = page.locator('form, .form, [role="form"]');
-    const inputs = page.locator('input, select, textarea');
+    const forms = page.locator(SELECTORS.FORMS);
+    const inputs = page.locator(SELECTORS.INPUTS);
     
     // Test form layout if forms exist
     const formCount = await forms.count();
@@ -333,7 +317,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
     // Test input field sizing
     const inputCount = await inputs.count();
     if (inputCount > 0) {
-      for (let i = 0; i < Math.min(inputCount, 3); i++) {
+      for (let i = 0; i < Math.min(inputCount, LIMITS.MAX_INPUTS_TO_TEST); i++) {
         const input = inputs.nth(i);
         if (await input.isVisible()) {
           const inputBox = await input.boundingBox();
@@ -344,7 +328,7 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
             expect(inputBox.x + inputBox.width).toBeLessThanOrEqual(viewportWidth);
             
             // Input should have reasonable minimum size
-            expect(inputBox.width).toBeGreaterThan(50);
+            expect(inputBox.width).toBeGreaterThan(DIMENSIONS.MIN_INPUT_WIDTH);
           }
         }
       }
@@ -353,11 +337,11 @@ test.describe('Real Fight Report Analysis - Screen Size Validation', () => {
 
   test('should handle loading states properly', async ({ page }) => {
     // Check for loading indicators and spinners
-    const loadingElements = page.locator('.loading, .spinner, .skeleton, [role="progressbar"], .MuiCircularProgress-root');
+    const loadingElements = page.locator(SELECTORS.LOADING_ELEMENTS);
     const count = await loadingElements.count();
     
     if (count > 0) {
-      for (let i = 0; i < Math.min(count, 2); i++) {
+      for (let i = 0; i < Math.min(count, LIMITS.MAX_LOADING_INDICATORS_TO_TEST); i++) {
         const loader = loadingElements.nth(i);
         if (await loader.isVisible()) {
           await expect(loader).toHaveScreenshot(`loading-indicator-${i}.png`);

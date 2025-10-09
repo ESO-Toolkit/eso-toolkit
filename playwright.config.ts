@@ -1,4 +1,5 @@
 import { defineConfig, devices } from '@playwright/test';
+import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
 /**
  * @see https://playwright.dev/docs/test-configuration.
@@ -11,8 +12,11 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0, // Reduce retries to save memory
-  /* Opt out of parallel tests on CI. */
-  workers: process.env.CI ? 1 : undefined,
+  /* Optimize worker count for CI environment */
+  workers: process.env.CI ? calculateOptimalWorkers({ 
+    maxWorkers: 2, // Conservative for standard tests
+    memoryPerWorker: 1200 // Higher memory per worker for safety
+  }) : undefined,
   /* Timeout settings */
   timeout: process.env.CI ? 60000 : 30000, // 60s in CI, 30s locally
   expect: {
