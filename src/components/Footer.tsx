@@ -27,15 +27,15 @@ export const Footer: React.FC = React.memo(() => {
 
   const toolLinks = React.useMemo<FooterLink[]>(
     () => [
-      { label: 'Build Calculator', href: '/calculator' },
-
       { label: 'Text Editor', href: '/text-editor' },
 
-      { label: 'Log Analyzer', href: '/logs' },
+      { label: 'Calculator', href: '/calculator' },
 
       { label: 'Scribing Simulator', href: '/scribing-simulator' },
 
       { label: 'Scribing Analysis', href: '/scribing-analysis' },
+
+      { label: 'Logs', href: '/logs' },
     ],
 
     [],
@@ -43,15 +43,9 @@ export const Footer: React.FC = React.memo(() => {
 
   const quickLinks = React.useMemo<FooterLink[]>(
     () => [
-      { label: 'Home', href: '/' },
-
       { label: 'Latest Reports', href: '/latest-reports' },
 
-      { label: 'My Reports', href: '/my-reports' },
-
-      { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
-
-      { label: 'GitHub', href: 'https://github.com/esohelper', external: true },
+      { label: 'Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
     ],
 
     [],
