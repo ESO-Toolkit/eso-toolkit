@@ -318,35 +318,7 @@ body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(1) .Mui
   background-clip: text !important;
 }
 
-/* Fix the two main containers - target the grid container (2nd child) and its contents */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-h5,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-body1,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-body2,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) p,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) span {
-  color: #ffffff !important;
-}
-
-/* Fix gradient text in the overview panel (ESO Helper Tools title) */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root[style*='background: linear-gradient'],
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root[style*='WebkitBackgroundClip'] {
-  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-}
-
-/* Fix links in the links panel */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiLink-root,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) a {
-  color: #f8fafc !important;
-}
-
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiLink-root:hover,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) a:hover {
-  color: #38bdf8 !important;
-}
+/* Remove text color overrides for the two main containers - let them use natural theme colors */
 
 /* Preserve footer decorative elements */
 body.text-editor-page footer .MuiBox-root::before,
