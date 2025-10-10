@@ -310,8 +310,16 @@ body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(1) .Mui
 }
 
 /* Fix CTA card gradient text specifically */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(1) .MuiTypography-root[style*='background: linear-gradient'],
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(1) .MuiTypography-root[style*='WebkitBackgroundClip'] {
+body.text-editor-page
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(1)
+  .MuiTypography-root[style*='background: linear-gradient'],
+body.text-editor-page
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(1)
+  .MuiTypography-root[style*='WebkitBackgroundClip'] {
   background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
@@ -330,8 +338,16 @@ body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) p {
 }
 
 /* Fix gradient text in the overview panel (ESO Helper Tools title) */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root[style*='background: linear-gradient'],
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root[style*='WebkitBackgroundClip'] {
+body.text-editor-page
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-root[style*='background: linear-gradient'],
+body.text-editor-page
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-root[style*='WebkitBackgroundClip'] {
   background: linear-gradient(135deg, #1e293b 0%, #475569 50%, #64748b 100%) !important;
   -webkit-background-clip: text !important;
   -webkit-text-fill-color: transparent !important;
