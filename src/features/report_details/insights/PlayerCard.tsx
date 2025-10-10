@@ -307,7 +307,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
     return (
       <Box sx={{ minWidth: 0, display: 'flex' }}>
-        <Card variant="outlined" className="u-hover-lift u-fade-in-up" sx={cardStyles}>
+        <Card 
+          variant="outlined" 
+          className="u-hover-lift u-fade-in-up" 
+          sx={cardStyles}
+          data-testid={`player-card-${player.id}`}
+        >
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
@@ -786,7 +791,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             </Typography>
                           </Box>
                         </Box>
-                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
+                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32} data-testid={`gear-chips-${player.id}`}>
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
                             const gearRecord = playerGear[index];
@@ -890,7 +895,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       }}
                     >
                       {mundusBuffs.length > 0 && (
-                        <>
+                        <div data-testid={`mundus-buffs-${player.id}`}>
                           {mundusBuffs.map((buff, idx) => (
                             <Box
                               key={idx}
@@ -939,7 +944,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               </Box>
                             </Box>
                           ))}
-                        </>
+                        </div>
                       )}
                     </Box>
                     <Typography
@@ -962,7 +967,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         enterTouchDelay={0}
                         leaveTouchDelay={3000}
                       >
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <span style={{ display: 'inline-flex', alignItems: 'center' }} data-testid={`food-drink-${player.id}`}>
                           <span role="img" aria-label="food">
                             🍲
                           </span>

@@ -5,40 +5,41 @@ This directory contains comprehensive end-to-end tests for validating responsive
 ## Overview
 
 The screen size testing suite validates:
-- **Responsive Layout**: Components adapt properly to different screen sizes
-- **Visual Regression**: UI appears consistently across device types
-- **User Experience**: Interactive elements work well on all screen sizes
-- **Performance**: Load times and rendering performance across viewports
-- **Accessibility**: Touch targets and readability standards
+- **Panel Responsiveness**: Players and insights panels adapt properly to different screen sizes
+- **Data Loading**: Real ESO Logs API data loads correctly across all viewport sizes
+- **Visual Consistency**: Panel layouts appear consistently across device types
+- **OAuth Authentication**: Real authentication works across all screen sizes
 
 ## Test Files
 
 ### Core Test Suites
-- **`home-page.spec.ts`** - Home page layout validation across all screen sizes
-- **`log-analysis.spec.ts`** - Log analysis interface responsive behavior  
-- **`cross-device.spec.ts`** - Device-specific functionality and interactions
-- **`visual-regression.spec.ts`** - Screenshot comparison and visual consistency
-- **`comprehensive-report.spec.ts`** - Detailed reporting and performance metrics
+- **`core-panels.spec.ts`** - Players and insights panel layout validation across all screen sizes
+- **`insights-analysis.spec.ts`** - Insights (players) panel responsive behavior and data loading
 
 ### Utilities
-- **`utils.ts`** - Helper functions and utilities for screen size testing
+- **`utils.ts`** - Helper functions and OAuth authentication for screen size testing
+- **`test-constants.ts`** - Shared constants and configuration
 
 ## Quick Start
 
 ```bash
-# Run all screen size tests
-npm run test:screen-sizes
+# Run all screen size tests (core panels and insights panel)
+npx playwright test --config playwright.screen-sizes.config.ts
 
-# Run tests for specific device categories
-npm run test:screen-sizes:mobile
-npm run test:screen-sizes:tablet  
-npm run test:screen-sizes:desktop
+# Run only core panels tests
+npx playwright test tests/screen-sizes/core-panels.spec.ts --config playwright.screen-sizes.config.ts
 
-# View the generated report
-npm run test:screen-sizes:report
+# Run only insights panel tests  
+npx playwright test tests/screen-sizes/insights-analysis.spec.ts --config playwright.screen-sizes.config.ts
+
+# Run tests for specific screen size
+npx playwright test --config playwright.screen-sizes.config.ts --project="Desktop Standard"
 
 # Update visual regression baselines (after UI changes)
-npm run test:screen-sizes:update-snapshots
+npx playwright test --config playwright.screen-sizes.config.ts --update-snapshots
+
+# View the generated report
+npx playwright show-report screen-size-report
 ```
 
 ## Cross-Platform Commands

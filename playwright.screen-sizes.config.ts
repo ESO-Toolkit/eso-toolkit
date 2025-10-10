@@ -16,12 +16,12 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0,
-  /* Optimize workers for screenshot testing (can be memory intensive) */
-  workers: process.env.CI ? calculateOptimalWorkers({ 
-    maxWorkers: 2, // Conservative for screenshot comparisons
+  /* Limit workers to prevent OAuth rate limiting - ESO Logs API has rate limits */
+  workers: calculateOptimalWorkers({ 
+    maxWorkers: 3, // Limited due to OAuth rate limiting from ESO Logs API
     memoryPerWorker: 1500, // Screenshots can be memory intensive
     minWorkers: 1
-  }) : undefined,
+  }),
   /* Timeout settings */
   timeout: 45000, // Longer timeout for screenshot comparisons
   expect: {

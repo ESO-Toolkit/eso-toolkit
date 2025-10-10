@@ -109,7 +109,7 @@ export const ReportFightDetailsView: React.FC<ReportFightDetailsViewProps> = ({
   // if we have a fightId, improving LCP performance
 
   return (
-    <Paper elevation={2} sx={{ p: 3, position: 'relative' }}>
+    <Paper elevation={2} sx={{ p: 3, position: 'relative' }} data-testid={fight ? 'report-fight-details-loaded' : 'report-fight-details-loading'}>
       <ReportFightHeader />
 
       {fight ? (

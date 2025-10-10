@@ -139,10 +139,125 @@ export class EsoLogsClient {
     return this.client;
   }
 
+  /**
+   * Checks if test caching is enabled
+   */
+  private isTestCacheEnabled(): boolean {
+    try {
+      return typeof window !== 'undefined' && 
+             window.localStorage?.getItem('test-cache-enabled') === 'true';
+    } catch {
+      return false;
+    }
+  }
+
+  /**
+   * Generates a cache key for test caching
+   */
+  private generateTestCacheKey(
+    operationName: string,
+    variables: OperationVariables = {},
+    endpoint: 'client' | 'user' = 'client'
+  ): string {
+    const sortedVars = JSON.stringify(variables, Object.keys(variables || {}).sort());
+    const content = `${operationName}:${endpoint}:${sortedVars}`;
+    
+    let hash = 0;
+    for (let i = 0; i < content.length; i++) {
+      const char = content.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    
+    return `eso-logs-cache-${Math.abs(hash).toString(16)}`;
+  }
+
+  /**
+   * Reads from test cache
+   */
+  private readTestCache<T>(cacheKey: string): T | null {
+    try {
+      if (typeof window === 'undefined') return null;
+      
+      const cached = window.localStorage.getItem(cacheKey);
+      if (!cached) return null;
+      
+      const parsedCache = JSON.parse(cached);
+      
+      // Check if cache has expired (1 hour for tests)
+      const maxAge = 60 * 60 * 1000;
+      if (Date.now() - parsedCache.timestamp > maxAge) {
+        window.localStorage.removeItem(cacheKey);
+        return null;
+      }
+      
+      return parsedCache.data;
+    } catch {
+      return null;
+    }
+  }
+
+  /**
+   * Writes to test cache
+   */
+  private writeTestCache<T>(cacheKey: string, data: T): void {
+    try {
+      if (typeof window === 'undefined') return;
+      
+      const cacheData = {
+        data,
+        timestamp: Date.now()
+      };
+      
+      window.localStorage.setItem(cacheKey, JSON.stringify(cacheData));
+    } catch (error) {
+      logger.debug('Failed to write test cache', error);
+    }
+  }
+
   // Delegate Apollo Client methods
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
     options: QueryOptions<TVariables, TData>,
   ): Promise<TData> {
+    // Check for test caching
+    if (this.isTestCacheEnabled()) {
+      console.log('🧪 Test caching is ENABLED');
+      const operationName = getOperationName(options.query);
+      
+      if (operationName) {
+        const isUserOperation = this.isUserSpecificOperation(operationName);
+        const endpoint = isUserOperation ? 'user' : 'client';
+        const cacheKey = this.generateTestCacheKey(operationName, options.variables, endpoint);
+        
+        // Try to read from cache first
+        const cachedData = this.readTestCache<TData>(cacheKey);
+        if (cachedData) {
+          console.log(`🟢 Cache HIT for ${operationName} (${endpoint})`);
+          logger.debug(`🟢 Cache HIT for ${operationName} (${endpoint})`);
+          return cachedData;
+        }
+        
+        console.log(`🔴 Cache MISS for ${operationName} (${endpoint}) - fetching from API`);
+        logger.debug(`🔴 Cache MISS for ${operationName} (${endpoint}) - fetching from API`);
+        
+        // Fetch from API and cache the result
+        const result = await this.client.query(options);
+        
+        if (result.error) {
+          logger.error('GraphQL query error', result.error, {
+            query: operationName,
+          });
+          throw new Error(`GraphQL error: ${result.error.message}`);
+        }
+        
+        // Cache the successful response
+        console.log(`💾 Caching response for ${operationName} (${endpoint})`);
+        this.writeTestCache(cacheKey, result.data);
+        return result.data;
+      }
+    }
+
+    // Normal flow without caching
     const result = await this.client.query(options);
 
     // Check for GraphQL errors and reject if they exist

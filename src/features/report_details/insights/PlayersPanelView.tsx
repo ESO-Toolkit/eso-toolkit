@@ -317,7 +317,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     }
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box data-testid="players-panel-view" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {/* Controls */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
           <TextField
@@ -384,6 +384,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
         {/* Player cards grid */}
         <Box
+          data-testid="players-panel-loaded"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
@@ -393,7 +394,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           }}
         >
           {filteredAndSortedPlayerCards.map((playerData) => (
-            <PlayerCard
+            <Box key={playerData.key} data-testid={`player-card-${playerData.player.id}`}>
+              <PlayerCard
               key={String(playerData.key)}
               player={playerData.player}
               mundusBuffs={playerData.mundusBuffs}
@@ -412,6 +414,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               fightId={fightId}
               playerGear={playerData.playerGear}
             />
+            </Box>
           ))}
         </Box>
       </Box>

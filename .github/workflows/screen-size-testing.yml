@@ -1,4 +1,9 @@
-name: Screen Size Testing
+name: Screen Size Testing - Visual Regression
+
+# Comprehensive screen size testing with visual regression validation
+# Tests core panels and insights analysis across 22+ viewport configurations
+# Supports OAuth authentication and API response caching for reliable testing
+# Generates interactive HTML reports with detailed screenshot comparisons
 
 # Permissions needed for external repository deployment
 permissions:
@@ -32,7 +37,7 @@ on:
 
 jobs:
   screen-size-testing:
-    name: Screen Size Tests - Insights & Players Panel
+    name: Screen Size Tests - Core Panels & Insights Analysis
     runs-on: ubuntu-latest
 
     steps:
@@ -80,7 +85,18 @@ jobs:
             echo "No snapshots found - will generate baseline snapshots"
           fi
 
-      - name: Run Insights Panel and Players Panel Tests - All Screen Sizes
+      - name: Verify Screen Size Test Configuration
+        run: |
+          echo "🔍 Verifying screen size test suite configuration..."
+          echo "Available test files:"
+          ls -la tests/screen-sizes/*.spec.ts
+          echo ""
+          echo "Available configuration:"
+          ls -la playwright.screen-sizes.config.ts
+          echo ""
+          echo "Worker configuration will limit parallel execution to prevent API rate limiting"
+
+      - name: Run Screen Size Tests - All Devices
         if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
         run: |
           UPDATE_SNAPSHOTS=""
@@ -88,58 +104,64 @@ jobs:
             UPDATE_SNAPSHOTS="--update-snapshots"
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+          npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
+          # Use sequential execution to prevent rate limiting
+          PLAYWRIGHT_WORKERS: 1
 
-      - name: Run Insights Panel Tests - Mobile Only
+      - name: Run Screen Size Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}
         run: |
           UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             UPDATE_SNAPSHOTS="--update-snapshots"
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
 
-      - name: Run Insights Panel Tests - Tablet Only
+      - name: Run Screen Size Tests - Tablet Only
         if: ${{ github.event.inputs.device_categories == 'tablet' }}
         run: |
           UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             UPDATE_SNAPSHOTS="--update-snapshots"
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
 
-      - name: Run Insights Panel Tests - Desktop Only
+      - name: Run Screen Size Tests - Desktop Only
         if: ${{ github.event.inputs.device_categories == 'desktop' }}
         run: |
           UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             UPDATE_SNAPSHOTS="--update-snapshots"
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
 
       - name: Run Screen Size Tests - Breakpoints Only
         if: ${{ github.event.inputs.device_categories == 'breakpoints' }}
@@ -148,13 +170,14 @@ jobs:
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             UPDATE_SNAPSHOTS="--update-snapshots"
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/log-analysis.spec.ts --grep "insights panel|player panels" --reporter=html $UPDATE_SNAPSHOTS
+          npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
           # ESO Logs OAuth credentials for authenticated tests
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
+          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
 
       - name: Prepare Report for Upload
         if: always()
@@ -162,9 +185,9 @@ jobs:
           # Create reports directory with metadata
           mkdir -p screen-size-reports
           
-          if [ -d "playwright-report" ]; then
-            echo "Found Playwright HTML report with screenshots"
-            cp -r playwright-report/* screen-size-reports/
+          if [ -d "screen-size-report" ]; then
+            echo "Found Screen Size HTML report with screenshots"
+            cp -r screen-size-report/* screen-size-reports/
             
             # Count screenshots
             SCREENSHOT_COUNT=$(find screen-size-reports/data -name "*.png" 2>/dev/null | wc -l)
@@ -177,7 +200,7 @@ jobs:
               "timestamp": "$(date -Iseconds)",
               "branch": "${{ github.event.inputs.branch || github.ref_name }}",
               "commit": "${{ github.sha }}",
-              "workflow": "Screen Size Testing - Insights & Players Panel",
+              "workflow": "Screen Size Testing - Core Panels & Insights Analysis",
               "runId": "${{ github.run_id }}",
               "runNumber": "${{ github.run_number }}",
               "deviceCategories": "${{ github.event.inputs.device_categories || 'all' }}",
@@ -188,7 +211,7 @@ jobs:
           }
           EOF
           else
-            echo "No Playwright report found - creating error page"
+            echo "No screen size report found - creating error page"
             cat > screen-size-reports/index.html << EOF
           <!DOCTYPE html>
           <html><head><title>Screen Size Test Failed</title></head>
@@ -240,8 +263,9 @@ jobs:
           echo "📦 **[Download Artifacts: ${ARTIFACTS_URL}](${ARTIFACTS_URL})**" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Features Tested" >> $GITHUB_STEP_SUMMARY
-          echo "- **Insights Panel** - Damage/healing statistics responsive layout" >> $GITHUB_STEP_SUMMARY
-          echo "- **Players Panel** - Character cards and participant information" >> $GITHUB_STEP_SUMMARY
-          echo "- **22 Viewport Sizes** - From iPhone SE (375px) to 4K Desktop (3840px)" >> $GITHUB_STEP_SUMMARY
-          echo "- **Real Data** - Authentic ESO Kyne's Aegis trial report" >> $GITHUB_STEP_SUMMARY
+          echo "- **Core Panels** - Players panel with character cards and participant information" >> $GITHUB_STEP_SUMMARY
+          echo "- **Insights Analysis** - Damage/healing statistics and fight insights responsive layout" >> $GITHUB_STEP_SUMMARY
+          echo "- **22+ Viewport Sizes** - From iPhone SE (375px) to 4K Desktop (3840px) and beyond" >> $GITHUB_STEP_SUMMARY
+          echo "- **Real Data** - Authentic ESO combat log data with API caching for reduced server load" >> $GITHUB_STEP_SUMMARY
+          echo "- **66 Total Tests** - Comprehensive responsive layout validation across all screen sizes" >> $GITHUB_STEP_SUMMARY
 

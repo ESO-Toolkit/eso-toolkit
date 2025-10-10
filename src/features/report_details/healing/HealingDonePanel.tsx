@@ -189,5 +189,9 @@ export const HealingDonePanel: React.FC<HealingDonePanelProps> = ({ fight }) => 
     );
   }
 
-  return <HealingDonePanelView healingRows={healingRows} />;
+  return (
+    <Box data-testid="healing-done-panel">
+      <HealingDonePanelView healingRows={healingRows} />
+    </Box>
+  );
 };
