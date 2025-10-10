@@ -99,12 +99,13 @@ jobs:
       - name: Run Screen Size Tests - All Devices
         if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
         run: |
-          UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            UPDATE_SNAPSHOTS="--update-snapshots"
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
+            npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+          else
+            echo "Running without --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -118,11 +119,13 @@ jobs:
       - name: Run Screen Size Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}
         run: |
-          UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            UPDATE_SNAPSHOTS="--update-snapshots"
+            echo "Running with --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+          else
+            echo "Running without --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -134,11 +137,13 @@ jobs:
       - name: Run Screen Size Tests - Tablet Only
         if: ${{ github.event.inputs.device_categories == 'tablet' }}
         run: |
-          UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            UPDATE_SNAPSHOTS="--update-snapshots"
+            echo "Running with --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+          else
+            echo "Running without --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -150,11 +155,13 @@ jobs:
       - name: Run Screen Size Tests - Desktop Only
         if: ${{ github.event.inputs.device_categories == 'desktop' }}
         run: |
-          UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            UPDATE_SNAPSHOTS="--update-snapshots"
+            echo "Running with --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+          else
+            echo "Running without --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
@@ -166,11 +173,13 @@ jobs:
       - name: Run Screen Size Tests - Breakpoints Only
         if: ${{ github.event.inputs.device_categories == 'breakpoints' }}
         run: |
-          UPDATE_SNAPSHOTS=""
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
-            UPDATE_SNAPSHOTS="--update-snapshots"
+            echo "Running with --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+          else
+            echo "Running without --update-snapshots"
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
           fi
-          npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html $UPDATE_SNAPSHOTS
         env:
           CI: true
           BASE_URL: http://localhost:3000
