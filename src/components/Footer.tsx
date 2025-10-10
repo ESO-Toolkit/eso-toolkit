@@ -1,18 +1,12 @@
 import { Launch, ChevronRight } from '@mui/icons-material';
-
 import { Box, Button, Container, Typography, useTheme } from '@mui/material';
-
 import Link from '@mui/material/Link';
-
 import { alpha } from '@mui/material/styles';
-
 import React from 'react';
-
 import { Link as RouterLink } from 'react-router-dom';
 
-import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
-
 import discordIcon from '../assets/discord-icon.svg';
+import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 
 type FooterLink = {
   label: string;
@@ -29,21 +23,7 @@ export const Footer: React.FC = React.memo(() => {
 
   const secondaryAccent = theme.palette.mode === 'dark' ? '#a855f7' : '#7c3aed';
 
-  const currentYear = React.useMemo(() => new Date().getFullYear(), []);
-
-  const quickLinks = React.useMemo<FooterLink[]>(
-    () => [
-      { label: 'Home', href: '/' },
-
-      { label: 'Latest Reports', href: '/latest-reports' },
-
-      { label: 'Log Analyzer', href: '/logs' },
-
-      { label: 'My Reports', href: '/my-reports' },
-    ],
-
-    [],
-  );
+  const _currentYear = React.useMemo(() => new Date().getFullYear(), []);
 
   const toolLinks = React.useMemo<FooterLink[]>(
     () => [
@@ -54,32 +34,24 @@ export const Footer: React.FC = React.memo(() => {
       { label: 'Log Analyzer', href: '/logs' },
 
       { label: 'Scribing Simulator', href: '/scribing-simulator' },
+
+      { label: 'Scribing Analysis', href: '/scribing-analysis' },
     ],
 
     [],
   );
 
-  const communityLinks = React.useMemo<FooterLink[]>(
+  const quickLinks = React.useMemo<FooterLink[]>(
     () => [
+      { label: 'Home', href: '/' },
+
+      { label: 'Latest Reports', href: '/latest-reports' },
+
+      { label: 'My Reports', href: '/my-reports' },
+
       { label: 'Join Discord', href: 'https://discord.gg/mMjwcQYFdc', external: true },
 
       { label: 'GitHub', href: 'https://github.com/esohelper', external: true },
-
-      {
-        label: 'Issue Tracker',
-
-        href: 'https://github.com/esohelper/ESO-Log-Aggregator/issues',
-
-        external: true,
-      },
-
-      {
-        label: 'Release Notes',
-
-        href: 'https://github.com/esohelper/ESO-Log-Aggregator/releases',
-
-        external: true,
-      },
     ],
 
     [],
@@ -87,29 +59,147 @@ export const Footer: React.FC = React.memo(() => {
 
   const footerSections = React.useMemo(
     () => [
-      { title: 'Quick Links', links: quickLinks },
-
       { title: 'Tools', links: toolLinks },
 
-      { title: 'Community', links: communityLinks },
+      { title: 'Quick Links', links: quickLinks },
     ],
 
-    [communityLinks, quickLinks, toolLinks],
+    [quickLinks, toolLinks],
+  );
+
+  const _sectionMeta = React.useMemo(
+    () => ({
+      Tools: {
+        blurb: 'Essential utilities built for raid prep and log mastery.',
+      },
+      'Quick Links': {
+        blurb: 'Jump straight to the destinations you visit most often.',
+      },
+    }),
+    [],
+  );
+
+  const overviewPanelSx = React.useMemo(
+    () => ({
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: { xs: 2.25, md: 2.75 },
+      padding: { xs: '1.75rem', sm: '2rem', md: '2.35rem' },
+      borderRadius: { xs: 3, md: 3.5 },
+      height: '100%',
+      flexGrow: 1,
+      isolation: 'isolate',
+      background:
+        theme.palette.mode === 'dark'
+          ? 'linear-gradient(150deg, rgba(15, 23, 42, 0.96) 0%, rgba(21, 34, 56, 0.88) 48%, rgba(12, 21, 36, 0.92) 100%)'
+          : 'linear-gradient(150deg, rgba(226, 232, 240, 0.92) 0%, rgba(241, 245, 249, 0.95) 48%, rgba(248, 250, 252, 0.98) 100%)',
+      border: `1px solid ${alpha(accentColor, theme.palette.mode === 'dark' ? 0.3 : 0.22)}`,
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 32px 64px rgba(2, 6, 23, 0.58)'
+          : '0 28px 56px rgba(148, 163, 184, 0.3)',
+      overflow: 'hidden',
+      backdropFilter: 'blur(14px)',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(circle at top left, ${alpha(accentColor, 0.35)} 0%, transparent 55%)`
+            : `radial-gradient(circle at top left, ${alpha(accentColor, 0.2)} 0%, transparent 55%)`,
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: -80,
+        right: -80,
+        width: 220,
+        height: 220,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(circle, ${alpha(secondaryAccent, 0.28)} 0%, transparent 65%)`
+            : `radial-gradient(circle, ${alpha(secondaryAccent, 0.18)} 0%, transparent 65%)`,
+        filter: 'blur(6px)',
+        pointerEvents: 'none',
+      },
+      '& > *': { position: 'relative', zIndex: 1 },
+    }),
+    [accentColor, secondaryAccent, theme.palette.mode],
+  );
+
+  const linksPanelSx = React.useMemo(
+    () => ({
+      position: 'relative',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: { xs: 2.5, md: 3 },
+      padding: { xs: '1.75rem', sm: '2rem', md: '2.35rem' },
+      borderRadius: { xs: 3, md: 3.5 },
+      height: '100%',
+      flexGrow: 1,
+      isolation: 'isolate',
+      background:
+        theme.palette.mode === 'dark'
+          ? 'linear-gradient(150deg, rgba(10, 15, 28, 0.96) 0%, rgba(17, 24, 39, 0.9) 52%, rgba(10, 15, 28, 0.94) 100%)'
+          : 'linear-gradient(150deg, rgba(226, 232, 240, 0.9) 0%, rgba(234, 239, 247, 0.95) 52%, rgba(248, 250, 252, 0.98) 100%)',
+      border: `1px solid ${alpha(accentColor, theme.palette.mode === 'dark' ? 0.32 : 0.24)}`,
+      boxShadow:
+        theme.palette.mode === 'dark'
+          ? '0 34px 66px rgba(2, 6, 23, 0.6)'
+          : '0 30px 60px rgba(148, 163, 184, 0.32)',
+      overflow: 'hidden',
+      backdropFilter: 'blur(14px)',
+      '&::before': {
+        content: '""',
+        position: 'absolute',
+        inset: 0,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(circle at top right, ${alpha(accentColor, 0.32)} 0%, transparent 55%)`
+            : `radial-gradient(circle at top right, ${alpha(accentColor, 0.18)} 0%, transparent 55%)`,
+        pointerEvents: 'none',
+      },
+      '&::after': {
+        content: '""',
+        position: 'absolute',
+        bottom: -90,
+        left: -60,
+        width: 200,
+        height: 200,
+        background:
+          theme.palette.mode === 'dark'
+            ? `radial-gradient(circle, ${alpha(secondaryAccent, 0.25)} 0%, transparent 60%)`
+            : `radial-gradient(circle, ${alpha(secondaryAccent, 0.16)} 0%, transparent 60%)`,
+        filter: 'blur(8px)',
+        pointerEvents: 'none',
+      },
+      '& > *': { position: 'relative', zIndex: 1 },
+    }),
+    [accentColor, secondaryAccent, theme.palette.mode],
   );
 
   const linkBaseSx = React.useMemo(
     () => ({
-      display: 'inline-flex',
+      display: 'flex',
 
       alignItems: 'center',
 
-      gap: 0.5,
+      justifyContent: 'space-between',
+
+      width: '100%',
+
+      gap: { xs: 0.65, md: 0.85 },
+
+      whiteSpace: 'nowrap',
 
       color: theme.palette.text.secondary,
 
       textDecoration: 'none',
 
-      fontSize: { xs: '0.9rem', md: '0.95rem' },
+      fontSize: { xs: '0.95rem', md: '1rem' },
 
       fontWeight: 500,
 
@@ -128,7 +218,7 @@ export const Footer: React.FC = React.memo(() => {
 
         left: 0,
 
-        width: '28%',
+        width: '32%',
 
         height: '1px',
 
@@ -144,7 +234,7 @@ export const Footer: React.FC = React.memo(() => {
       '&:hover': {
         color: accentColor,
 
-        transform: 'translateX(4px)',
+        transform: 'translateX(3px)',
 
         '&::after': {
           width: '100%',
@@ -160,7 +250,7 @@ export const Footer: React.FC = React.memo(() => {
       },
 
       '&:active': {
-        transform: 'translateX(2px)',
+        transform: 'translateX(1px)',
       },
     }),
 
@@ -189,7 +279,7 @@ export const Footer: React.FC = React.memo(() => {
 
       py: { xs: 1, md: 1.2 },
 
-      width: { xs: '100%', sm: 'auto' },
+      width: { xs: '100%', sm: 220 },
 
       borderRadius: 2.5,
 
@@ -242,7 +332,7 @@ export const Footer: React.FC = React.memo(() => {
 
       py: { xs: 1, md: 1.2 },
 
-      width: { xs: '100%', sm: 'auto' },
+      width: { xs: '100%', sm: 220 },
 
       borderRadius: 2.5,
 
@@ -291,7 +381,7 @@ export const Footer: React.FC = React.memo(() => {
     [accentColor, theme.palette.mode, theme.palette.text.primary],
   );
 
-    const brandBadgeSx = React.useMemo(
+  const brandBadgeSx = React.useMemo(
     () => ({
       display: 'flex',
 
@@ -694,7 +784,7 @@ export const Footer: React.FC = React.memo(() => {
             marginTop: { xs: 5.5, md: 8 },
           }}
         >
-          <Box>
+          <Box sx={overviewPanelSx}>
             <Box
               sx={{
                 display: 'flex',
@@ -705,7 +795,7 @@ export const Footer: React.FC = React.memo(() => {
 
                 gap: { xs: 1.75, sm: 2, md: 2.5 },
 
-                mb: { xs: 2.5, md: 3 },
+                mb: { xs: 2, md: 2.5 },
 
                 textAlign: { xs: 'center', sm: 'left' },
               }}
@@ -800,7 +890,7 @@ export const Footer: React.FC = React.memo(() => {
 
                 mx: { xs: 'auto', md: 0 },
 
-                mt: { xs: 2.75, md: 3.25 },
+                mt: { xs: 2, md: 2.5 },
               }}
             >
               {brandHighlights.map((highlight) => (
@@ -813,36 +903,52 @@ export const Footer: React.FC = React.memo(() => {
             </Box>
           </Box>
 
-          <Box>
+          <Box sx={linksPanelSx}>
             <Box
               sx={{
-                display: 'grid',
+                display: 'flex',
 
-                gap: { xs: 3.5, md: 5 },
+                flexDirection: { xs: 'column', md: 'row' },
 
-                gridTemplateColumns: {
-                  xs: '1fr',
+                alignItems: { xs: 'stretch', md: 'flex-start' },
 
-                  sm: 'repeat(2, minmax(0, 1fr))',
+                justifyContent: { xs: 'flex-start', md: 'space-between' },
 
-                  md: 'repeat(3, minmax(0, 1fr))',
-                },
+                gap: { xs: 3, md: 5.25, lg: 6 },
+
+                width: '100%',
               }}
             >
               {footerSections.map((section) => (
-                <Box key={section.title}>
-                  <Typography
-                    variant="subtitle1"
-                    sx={{
-                      fontWeight: 700,
+                <Box
+                  key={section.title}
+                  sx={{
+                    display: 'flex',
 
-                      fontSize: { xs: '1rem', md: '1.05rem' },
+                    flexDirection: 'column',
+
+                    flex: 1,
+
+                    minWidth: 0,
+
+                    width: '100%',
+
+                    gap: { xs: 1.6, md: 1.9 },
+                  }}
+                >
+                  <Typography
+                    sx={{
+                      fontWeight: 800,
+
+                      letterSpacing: '-0.02em',
+
+                      fontSize: { xs: '1.5rem', md: '1.2rem' },
+
+                      textTransform: 'uppercase',
 
                       color: 'text.primary',
 
-                      letterSpacing: '-0.01em',
-
-                      mb: { xs: 2, md: 2.5 },
+                      mb: { xs: 1.1, md: 1.3 },
 
                       fontFamily: 'Space Grotesk,Inter,system-ui',
                     }}
@@ -850,7 +956,17 @@ export const Footer: React.FC = React.memo(() => {
                     {section.title}
                   </Typography>
 
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.6 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+
+                      flexDirection: 'column',
+
+                      gap: { xs: 1.2, md: 1.35 },
+
+                      width: '100%',
+                    }}
+                  >
                     {section.links.map((link) => (
                       <Link
                         key={link.label}
@@ -862,7 +978,9 @@ export const Footer: React.FC = React.memo(() => {
                         underline="none"
                         sx={linkBaseSx}
                       >
-                        {link.label}
+                        <Typography component="span" sx={{ flexGrow: 1 }}>
+                          {link.label}
+                        </Typography>
 
                         {link.external ? (
                           <Launch className="footer-link-icon" sx={linkIconSx} />
