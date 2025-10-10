@@ -301,66 +301,24 @@ body.text-editor-page footer {
   background-image: none !important;
 }
 
-/* Force ALL footer text colors to dark mode - comprehensive targeting */
-body.text-editor-page footer .MuiTypography-root,
-body.text-editor-page footer .MuiTypography-body1,
-body.text-editor-page footer .MuiTypography-body2,
-body.text-editor-page footer .MuiTypography-h5,
-body.text-editor-page footer .MuiTypography-h6,
-body.text-editor-page footer .MuiTypography-h4,
-body.text-editor-page footer .MuiTypography-caption,
-body.text-editor-page footer .MuiTypography-overline,
-body.text-editor-page footer .MuiTypography-subtitle1,
-body.text-editor-page footer .MuiTypography-subtitle2,
-body.text-editor-page footer p,
-body.text-editor-page footer h1,
-body.text-editor-page footer h2,
-body.text-editor-page footer h3,
-body.text-editor-page footer h4,
-body.text-editor-page footer h5,
-body.text-editor-page footer h6,
-body.text-editor-page footer span {
+/* Fix CTA card text colors - this is the main section that needs dark mode text */
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-root,
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-h4,
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-overline,
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-body1 {
   color: #ffffff !important;
 }
 
-body.text-editor-page footer .MuiTypography-colorTextSecondary {
-  color: #f8fafc !important;
+/* Fix CTA card gradient text specifically */
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-root[style*='background: linear-gradient'],
+body.text-editor-page footer .MuiBox-root:nth-child(1) .MuiTypography-root[style*='WebkitBackgroundClip'] {
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
+  -webkit-background-clip: text !important;
+  -webkit-text-fill-color: transparent !important;
+  background-clip: text !important;
 }
 
-body.text-editor-page footer .MuiTypography-colorTextPrimary {
-  color: #ffffff !important;
-}
-
-/* Force footer links and interactive elements - more comprehensive */
-body.text-editor-page footer a,
-body.text-editor-page footer .MuiLink-root,
-body.text-editor-page footer .MuiTypography-root a {
-  color: #f8fafc !important;
-}
-
-body.text-editor-page footer a:hover,
-body.text-editor-page footer .MuiLink-root:hover,
-body.text-editor-page footer .MuiTypography-root a:hover {
-  color: #38bdf8 !important;
-}
-
-/* Force buttons in footer */
-body.text-editor-page footer .MuiButton-root,
-body.text-editor-page footer .MuiButton-text,
-body.text-editor-page footer .MuiButton-outlined {
-  color: #ffffff !important;
-}
-
-body.text-editor-page footer .MuiButton-contained {
-  background-color: #38bdf8 !important;
-  color: #0f172a !important;
-}
-
-body.text-editor-page footer .MuiButton-outlined {
-  border-color: rgba(56, 189, 248, 0.5) !important;
-}
-
-/* Force footer decorative elements */
+/* Preserve footer decorative elements */
 body.text-editor-page footer .MuiBox-root::before,
 body.text-editor-page footer .MuiBox-root .MuiBox-root::before {
   background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent) !important;
@@ -371,55 +329,15 @@ body.text-editor-page footer .MuiBox-root .MuiBox-root::after {
   background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.15), transparent) !important;
 }
 
-/* Force footer box backgrounds - more specific to avoid breaking layout */
-body.text-editor-page footer .MuiBox-root .MuiBox-root:not(:has(img))[style*='background'] {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1)) !important;
-  border: 1px solid rgba(56, 189, 248, 0.2) !important;
-}
-
-/* Force text gradients to dark mode - more specific targeting */
-body.text-editor-page footer .MuiTypography-root[style*='background: linear-gradient'],
-body.text-editor-page footer .MuiTypography-root[style*='WebkitBackgroundClip'],
-body.text-editor-page footer .css-1npj6wl-MuiTypography-root,
-body.text-editor-page footer .MuiTypography-h5[style*='letter-spacing'],
-body.text-editor-page footer .MuiTypography-h4[style*='letter-spacing'] {
-  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #00e1ff 100%) !important;
-  -webkit-background-clip: text !important;
-  -webkit-text-fill-color: transparent !important;
-  background-clip: text !important;
-}
-
 /* Remove logo filters to let it show naturally */
 body.text-editor-page footer img[src*='ESOHelpers-logo-icon'] {
   filter: none !important;
   box-shadow: none !important;
 }
 
-/* Force brand badges and containers */
-body.text-editor-page footer .MuiBox-root[style*='background'],
-body.text-editor-page footer .MuiBox-root[style*='backgroundColor'] {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15), rgba(0, 225, 255, 0.1)) !important;
-  border: 1px solid rgba(56, 189, 248, 0.2) !important;
-}
-
-/* Force brand badge text */
-body.text-editor-page footer .MuiBox-root span,
-body.text-editor-page footer .MuiBox-root .MuiTypography-root span {
-  color: #ffffff !important;
-}
-
-/* Force any remaining text elements - but not images or icons */
-body.text-editor-page footer .MuiBox-root > *,
-body.text-editor-page footer .MuiTypography-root,
-body.text-editor-page footer .MuiButton-root {
-  color: #ffffff !important;
-}
-
-/* Exceptions - preserve original colors for images and icons */
-body.text-editor-page footer img,
-body.text-editor-page footer svg,
-body.text-editor-page footer .MuiSvgIcon-root {
-  color: inherit !important;
+/* Fix bottom copyright text for light mode readability */
+body.text-editor-page footer .MuiBox-root:last-child .MuiTypography-root {
+  color: #f8fafc !important;
 }
 
 /* Style footer container and remove space between text editor and footer */
