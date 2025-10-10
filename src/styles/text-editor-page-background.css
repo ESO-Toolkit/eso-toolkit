@@ -328,22 +328,38 @@ body.text-editor-page
 
 /* Remove text color overrides for the two main containers - let them use natural theme colors */
 
-/* Force dark text for the two main containers in light mode for readability */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-root,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-h5,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-body1,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiTypography-body2,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) p {
+/* Force dark text for the two main containers in LIGHT MODE only for readability */
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-root,
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-h5,
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-body1,
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiTypography-body2,
+body.text-editor-page:not(.dark-mode) footer .MuiContainer-root > .MuiBox-root:nth-child(2) p {
   color: #1e293b !important; /* Dark text for light mode readability */
 }
 
-/* Fix gradient text in the overview panel (ESO Helper Tools title) */
-body.text-editor-page
+/* Fix gradient text in the overview panel (ESO Helper Tools title) - LIGHT MODE only */
+body.text-editor-page:not(.dark-mode)
   footer
   .MuiContainer-root
   > .MuiBox-root:nth-child(2)
   .MuiTypography-root[style*='background: linear-gradient'],
-body.text-editor-page
+body.text-editor-page:not(.dark-mode)
   footer
   .MuiContainer-root
   > .MuiBox-root:nth-child(2)
@@ -354,14 +370,26 @@ body.text-editor-page
   background-clip: text !important;
 }
 
-/* Fix links in the links panel */
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiLink-root,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) a {
+/* Fix links in the links panel - LIGHT MODE only */
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiLink-root,
+body.text-editor-page:not(.dark-mode) footer .MuiContainer-root > .MuiBox-root:nth-child(2) a {
   color: #475569 !important;
 }
 
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) .MuiLink-root:hover,
-body.text-editor-page footer .MuiContainer-root > .MuiBox-root:nth-child(2) a:hover {
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  .MuiLink-root:hover,
+body.text-editor-page:not(.dark-mode)
+  footer
+  .MuiContainer-root
+  > .MuiBox-root:nth-child(2)
+  a:hover {
   color: #2563eb !important;
 }
 
