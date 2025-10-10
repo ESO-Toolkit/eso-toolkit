@@ -12,6 +12,8 @@ import { Link as RouterLink } from 'react-router-dom';
 
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
 
+import discordIcon from '../assets/discord-icon.svg';
+
 type FooterLink = {
   label: string;
 
@@ -662,8 +664,11 @@ export const Footer: React.FC = React.memo(() => {
               target="_blank"
               rel="noopener noreferrer"
               sx={primaryButtonSx}
+              startIcon={
+                <Box component="img" src={discordIcon} alt="" sx={{ width: 20, height: 20 }} />
+              }
             >
-              Join our Discord
+              Join Discord
             </Button>
 
             <Button
@@ -682,7 +687,7 @@ export const Footer: React.FC = React.memo(() => {
           sx={{
             display: 'grid',
 
-            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.2fr) minmax(0, 1fr)' },
+            gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 0.85fr) minmax(0, 1fr)' },
 
             gap: { xs: 5, md: 8 },
 
