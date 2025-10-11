@@ -61,7 +61,7 @@ test.describe('ESO Log Insights Panel - Screen Size Validation', () => {
     await expect(page).toHaveScreenshot('insights-players-panel.png', {
       fullPage: true,
       animations: 'disabled',
-      timeout: process.env.CI ? 8000 : 12000,
+      timeout: process.env.CI ? 60000 : 12000, // Increased CI timeout for slower GitHub Actions runners
     });
   });
 });

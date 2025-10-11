@@ -68,7 +68,7 @@ test.describe('Visual Regression - Core Panels', () => {
     await expect(page).toHaveScreenshot('players-panel.png', {
       fullPage: true,
       animations: 'disabled',
-      timeout: process.env.CI ? 8000 : 12000,
+      timeout: process.env.CI ? 60000 : 12000, // Increased CI timeout for slower GitHub Actions runners
     });
   });
 
@@ -80,7 +80,7 @@ test.describe('Visual Regression - Core Panels', () => {
     await expect(page).toHaveScreenshot('insights-panel.png', {
       fullPage: true,
       animations: 'disabled',
-      timeout: process.env.CI ? 8000 : 12000,
+      timeout: process.env.CI ? 60000 : 12000, // Increased CI timeout for slower GitHub Actions runners
     });
   });
 });
