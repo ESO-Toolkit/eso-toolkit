@@ -74,6 +74,13 @@ jobs:
           restore-keys: |
             eso-logs-api-v1
 
+      - name: Clear ESO Logs API Cache
+        run: |
+          echo "🧹 Clearing ESO Logs API cache for fresh test data..."
+          rm -rf cache/eso-logs-api/* || true
+          rm -rf tests/cache/*.json || true
+          echo "✅ ESO Logs API cache cleared"
+
       - name: Cache Build Output
         uses: actions/cache@v4
         id: build-cache

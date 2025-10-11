@@ -5,6 +5,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { getBaseUrl } from './selectors';
 import { EsoLogsNodeCache } from '../src/utils/esoLogsNodeCache';
+import { clearCache } from './screen-sizes/cache-utils';
 
 /**
  * Global setup for Playwright nightly tests
@@ -18,6 +19,21 @@ dotenv.config();
 
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Starting global setup for nightly tests...');
+
+  // Clear all cached ESO Logs API responses to ensure fresh data
+  console.log('🧹 Clearing ESO Logs API cache...');
+  try {
+    // Clear the main ESO Logs API cache
+    const cache = new EsoLogsNodeCache();
+    await cache.clear();
+    
+    // Clear the screen sizes test cache
+    clearCache();
+    
+    console.log('✅ All ESO Logs caches cleared successfully');
+  } catch (error) {
+    console.warn('⚠️  Failed to clear cache:', error);
+  }
 
   // Check if we have authentication credentials
   const clientId = process.env.OAUTH_CLIENT_ID;

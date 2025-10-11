@@ -121,7 +121,7 @@ server {
 
 ### Pre-deployment
 - [ ] Run full test suite: `npm run test:all`
-- [ ] Run E2E tests: `npm run test:e2e`
+- [ ] Run E2E tests: `npm run test:nightly:chromium`
 - [ ] Generate coverage report: `npm run test:coverage`
 - [ ] Validate code quality: `npm run validate`
 - [ ] Build production assets: `npm run build`

@@ -135,12 +135,7 @@ npm run test:coverage      # Generate coverage report
 npm run coverage:open      # Open coverage report in browser
 npm run coverage:full      # Complete coverage workflow
 
-# E2E tests
-npm run test:e2e           # Playwright tests (Chromium)
-npm run test:e2e:headed    # With browser UI
-npm run test:e2e:ui        # Playwright UI mode
-
-# Nightly tests (comprehensive)
+# Nightly tests (comprehensive E2E)
 npm run test:nightly:all   # All browsers
 npm run test:nightly:chromium
 npm run test:nightly:firefox

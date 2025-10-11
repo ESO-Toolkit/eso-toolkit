@@ -81,22 +81,16 @@ npm run build
   npm run test:coverage
   ```
 
-- **End-to-End Tests (Playwright):**
+- **Nightly Regression Tests (Playwright):**
 
   ```powershell
-  npm run test:e2e
+  npm run test:nightly:chromium
   ```
 
-- **End-to-End Tests (Headed Mode):**
+- **Smoke Tests (Quick E2E validation):**
 
   ```powershell
-  npm run test:e2e:headed
-  ```
-
-- **End-to-End Tests (Interactive UI):**
-
-  ```powershell
-  npm run test:e2e:ui
+  npm run test:smoke:e2e
   ```
 
 - **Screen Size Testing (All Devices):**
