@@ -18,6 +18,14 @@ const enableCacheLogging = process.env.ENABLE_CACHE_LOGGING !== 'false';
 // Check if debug logging is enabled (defaults to false for cleaner output)
 const enableDebugLogging = process.env.ENABLE_DEBUG_LOGGING === 'true';
 
+// Check if we're in CI environment for timeout adjustments
+const isCI = process.env.CI === 'true';
+
+// Determine if we're using fast config by checking timeout environment or test file
+const isFastMode = process.env.PLAYWRIGHT_FAST_MODE === 'true' || 
+                   process.env.TEST_TIMEOUT === '45000' ||
+                   process.argv.some(arg => arg.includes('visual-regression-minimal'));
+
 /**
  * Conditional logging for cache operations
  */
@@ -436,23 +444,50 @@ export class ScreenSizeTestUtils {
   /**
    * Wait for layout to stabilize
    */
-  async waitForLayoutStability(timeout = 10000): Promise<void> {
+  async waitForLayoutStability(timeout?: number): Promise<void> {
+    // Adjust timeout based on mode and environment
+    const defaultTimeout = isFastMode ? 5000 : (isCI ? 12000 : 10000);
+    const finalTimeout = timeout || defaultTimeout;
+    
     await this.page.waitForLoadState('domcontentloaded');
     
     // Try networkidle but don't fail if it times out
     try {
-      await this.page.waitForLoadState('networkidle', { timeout: Math.min(timeout, 15000) });
+      const networkIdleTimeout = Math.min(finalTimeout, isFastMode ? 8000 : 15000);
+      await this.page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
+      debugLog(`✓ Network idle achieved in ${networkIdleTimeout}ms`);
     } catch (error) {
       debugLog('Network idle timeout - continuing anyway');
     }
     
-    // Wait for any CSS animations/transitions to complete
-    await this.page.waitForTimeout(1000);
+    // Wait for any CSS animations/transitions to complete (shorter in fast mode)
+    const animationWait = isFastMode ? 500 : (isCI ? 1500 : 1000);
+    await this.page.waitForTimeout(animationWait);
     
     // Wait for fonts to load
     await this.page.evaluate(() => {
       return document.fonts.ready;
     });
+    
+    debugLog(`✓ Layout stability achieved (mode: ${isFastMode ? 'fast' : 'full'}, CI: ${isCI})`);
+  }
+
+  /**
+   * Final wait specifically for screenshot capture in CI
+   */
+  async waitForScreenshotReady(): Promise<void> {
+    if (isCI) {
+      // Extra wait in CI for visual stability
+      const ciWait = isFastMode ? 1000 : 1500;
+      debugLog(`CI Screenshot wait: ${ciWait}ms`);
+      await this.page.waitForTimeout(ciWait);
+      
+      // Double-check fonts are loaded
+      await this.page.evaluate(() => document.fonts.ready);
+      
+      // Ensure any pending updates are complete
+      await this.page.evaluate(() => new Promise(resolve => setTimeout(resolve, 100)));
+    }
   }
 
   /**
@@ -604,8 +639,12 @@ export class ScreenSizeTestUtils {
       }
     }
 
-    // Wait a moment for changes to apply
-    await this.page.waitForTimeout(200);
+    // Wait a moment for changes to apply (longer in CI for screenshot stability)
+    const finalWait = isCI ? (isFastMode ? 500 : 800) : 200;
+    await this.page.waitForTimeout(finalWait);
+    
+    // Additional wait for CI screenshot readiness
+    await this.waitForScreenshotReady();
   }
 
   /**
@@ -665,16 +704,21 @@ export class ScreenSizeTestUtils {
  */
 export async function waitForReportDataLoaded(page: Page): Promise<void> {
   debugLog('Waiting for report data to be fully loaded...');
+  debugLog(`Environment: CI=${isCI}, FastMode=${isFastMode}`);
   
   try {
+    // Adjust timeouts based on mode and environment
+    const bodyTimeout = isFastMode ? 8000 : 10000;
+    const networkIdleTimeout = isFastMode ? 8000 : (isCI ? 18000 : 15000);
+    
     // Step 1: Basic page readiness
     debugLog('Step 1: Waiting for basic page readiness...');
-    await page.waitForSelector('body', { state: 'visible', timeout: 10000 });
+    await page.waitForSelector('body', { state: 'visible', timeout: bodyTimeout });
     
     // Step 2: Wait for network activity to settle first (most important)
-    debugLog('Step 2: Waiting for network idle...');
+    debugLog(`Step 2: Waiting for network idle (${networkIdleTimeout}ms)...`);
     try {
-      await page.waitForLoadState('networkidle', { timeout: 15000 });
+      await page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
       debugLog('✓ Network idle achieved - data requests completed');
     } catch (error) {
       debugLog('⚠ Network idle timeout - continuing anyway');
@@ -682,13 +726,14 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
 
     // Step 3: Wait for any loading skeletons to disappear
     debugLog('Step 3: Waiting for skeletons to disappear...');
+    const skeletonTimeout = isFastMode ? 5000 : 8000;
     await page.waitForSelector([
       '.MuiSkeleton-root',
       '[class*="skeleton"]',
       '[data-testid*="skeleton"]',
       '.skeleton',
       '.loading-skeleton'
-    ].join(', '), { state: 'hidden', timeout: 8000 }).catch(() => {
+    ].join(', '), { state: 'hidden', timeout: skeletonTimeout }).catch(() => {
       debugLog('⚠ No loading skeletons found or they persisted');
     });
     
@@ -746,12 +791,30 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       debugLog('⚠ No specific data content found - may be empty or still loading');
     }
     
-    // Final stabilization wait
-    await page.waitForTimeout(2000);
+    // Final stabilization wait (adjusted for mode)
+    const finalWait = isFastMode ? 1000 : 2000;
+    await page.waitForTimeout(finalWait);
     debugLog('✅ Report data loading complete');
     
   } catch (error) {
     console.log('❌ Error waiting for report data:', error);
     // Don't throw - let the test continue
   }
+}
+
+/**
+ * Comprehensive preparation for screenshot capture
+ * This is the main function tests should call before taking screenshots
+ */
+export async function preparePageForScreenshot(page: Page, options: {
+  hideElements?: string[];
+  waitForStability?: boolean;
+} = {}): Promise<void> {
+  debugLog(`Preparing page for screenshot (CI: ${isCI}, FastMode: ${isFastMode})`);
+  
+  // Create utils instance and prepare
+  const utils = new ScreenSizeTestUtils(page);
+  await utils.prepareForScreenshot(options);
+  
+  debugLog('✅ Page ready for screenshot capture');
 }

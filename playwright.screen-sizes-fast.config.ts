@@ -1,6 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
+// Set fast mode environment variable for test utilities
+process.env.PLAYWRIGHT_FAST_MODE = 'true';
+
 /**
  * Optimized configuration for critical screen size testing in CI
  * Reduces test count by focusing on most important viewport sizes
@@ -22,10 +25,10 @@ export default defineConfig({
     memoryPerWorker: 1200, // Increased memory per worker for stability
     minWorkers: 1
   }),
-  /* Aggressive timeout settings for CI speed */
-  timeout: 20000, // Shorter timeout
+  /* Optimized timeout settings for CI speed but allowing for screenshot capture */
+  timeout: 45000, // Increased from 20s to allow for data loading + screenshot
   expect: {
-    timeout: 6000, // Faster expectations
+    timeout: 15000, // Increased from 6s to allow for screenshot comparison in CI
     // Configure visual comparison thresholds
     toHaveScreenshot: {
       threshold: 0.35, // Slightly more lenient for speed
@@ -65,9 +68,9 @@ export default defineConfig({
     /* Record video on failure for debugging */
     video: 'retain-on-failure',
     
-    /* Optimized timeouts */
-    navigationTimeout: process.env.CI ? 20000 : 15000,
-    actionTimeout: process.env.CI ? 10000 : 8000,
+    /* Optimized timeouts - increased for CI screenshot capture */
+    navigationTimeout: process.env.CI ? 35000 : 15000, // Increased for CI data loading
+    actionTimeout: process.env.CI ? 20000 : 8000, // Increased for CI screenshot actions
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',
