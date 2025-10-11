@@ -37,8 +37,22 @@ async function waitForVisualStability(page: any) {
   // Brief stabilization for animations/loading
   await page.waitForTimeout(process.env.CI ? 2000 : 3000);
   
-  // Ensure basic page structure is ready (minimal check)
-  await page.waitForSelector('body', { timeout: 10000 });
+  // Wait for React app to mount and render the main structure
+  // This is more reliable than just waiting for body which always exists
+  try {
+    await page.waitForSelector('#root', { timeout: 15000 });
+    
+    // Wait for the app layout structure (HeaderBar and Container) to be present
+    // This ensures the React app has actually rendered
+    await page.waitForSelector('[role="banner"], header, nav, main, #root > *', { 
+      timeout: 15000,
+      state: 'visible'
+    });
+  } catch (error) {
+    console.log('⚠️ App structure timeout, but continuing anyway...');
+    // Fall back to basic DOM ready check if app structure isn't available
+    await page.waitForFunction(() => document.readyState === 'complete', { timeout: 5000 });
+  }
 }
 
 test.describe('Visual Regression - Core Panels', () => {
