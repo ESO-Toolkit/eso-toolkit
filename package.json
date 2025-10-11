@@ -230,6 +230,8 @@
     "test:nightly:sharded:chromium": "npm-run-all --parallel \"test:nightly:shard* -- --project=chromium-desktop\"",
     "test:nightly:sharded:firefox": "npm-run-all --parallel \"test:nightly:shard* -- --project=firefox-desktop\"",
     "test:screen-sizes": "playwright test --config=playwright.screen-sizes.config.ts",
+    "test:screen-sizes:fast": "playwright test --config=playwright.screen-sizes-fast.config.ts",
+    "test:screen-sizes:minimal": "playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts",
     "test:screen-sizes:headed": "playwright test --config=playwright.screen-sizes.config.ts --headed",
     "test:screen-sizes:ui": "playwright test --config=playwright.screen-sizes.config.ts --ui",
     "test:screen-sizes:mobile": "playwright test --config=playwright.screen-sizes.config.ts --project=\"Mobile*\" --project=\"Android*\"",

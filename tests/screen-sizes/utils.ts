@@ -12,6 +12,30 @@ dotenvConfig();
 // Global cache instance for network interception
 const networkCache = new EsoLogsNodeCache();
 
+// Check if cache logging is enabled (defaults to true in test environment)
+const enableCacheLogging = process.env.ENABLE_CACHE_LOGGING !== 'false';
+
+// Check if debug logging is enabled (defaults to false for cleaner output)
+const enableDebugLogging = process.env.ENABLE_DEBUG_LOGGING === 'true';
+
+/**
+ * Conditional logging for cache operations
+ */
+function log(...args: any[]): void {
+  if (enableCacheLogging) {
+    console.log(...args);
+  }
+}
+
+/**
+ * Conditional debug logging for page loading and test flow
+ */
+function debugLog(...args: any[]): void {
+  if (enableDebugLogging) {
+    console.log(...args);
+  }
+}
+
 /**
  * Sleep for a given number of milliseconds
  */
@@ -42,7 +66,7 @@ async function setupNetworkCaching(page: Page): Promise<void> {
       const cachedResponse = await networkCache.get(operationName, variables, endpoint);
       
       if (cachedResponse) {
-        console.log(`🟢 Network Cache HIT for ${operationName}`);
+        log(`🟢 Network Cache HIT for ${operationName}`);
         
         await route.fulfill({
           status: cachedResponse.status || 200,
@@ -53,7 +77,7 @@ async function setupNetworkCaching(page: Page): Promise<void> {
       }
 
       // Cache miss - make real request
-      console.log(`🔴 Network Cache MISS for ${operationName} - fetching from API`);
+      log(`🔴 Network Cache MISS for ${operationName} - fetching from API`);
       
       const response = await route.fetch();
       const responseData = await response.json().catch(() => null);
@@ -67,7 +91,7 @@ async function setupNetworkCaching(page: Page): Promise<void> {
           timestamp: Date.now(),
         });
         
-        console.log(`💾 Network Cache STORED for ${operationName}`);
+        log(`💾 Network Cache STORED for ${operationName}`);
       }
       
       // Return the response
@@ -144,7 +168,7 @@ export async function getRealOAuthToken(): Promise<any> {
   const clientSecret = process.env.OAUTH_CLIENT_SECRET;
   
   if (!clientId || !clientSecret) {
-    console.log('⚠️  No OAuth credentials available - using mock authentication');
+    log('⚠️  No OAuth credentials available - using mock authentication');
     return null;
   }
 
@@ -171,7 +195,7 @@ export async function getRealOAuthToken(): Promise<any> {
         // Rate limited - retry with exponential backoff
         if (attempt < maxRetries) {
           const delayMs = baseDelayMs * Math.pow(2, attempt);
-          console.log(`⏳ Rate limited (429), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
+          log(`⏳ Rate limited (429), retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1})`);
           await sleep(delayMs);
           continue;
         } else {
@@ -188,9 +212,9 @@ export async function getRealOAuthToken(): Promise<any> {
       const data = await response.json();
       if (data.access_token) {
         if (attempt > 0) {
-          console.log(`✅ Successfully obtained real OAuth token after ${attempt + 1} attempts`);
+          log(`✅ Successfully obtained real OAuth token after ${attempt + 1} attempts`);
         } else {
-          console.log('✅ Successfully obtained real OAuth token for screen size tests');
+          log('✅ Successfully obtained real OAuth token for screen size tests');
         }
         return data;  // Return the full token object, not just access_token
       }
@@ -199,7 +223,7 @@ export async function getRealOAuthToken(): Promise<any> {
     } catch (error) {
       if (attempt < maxRetries) {
         const delayMs = baseDelayMs * Math.pow(2, attempt);
-        console.log(`⚠️  OAuth error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
+        log(`⚠️  OAuth error, retrying in ${delayMs}ms (attempt ${attempt + 1}/${maxRetries + 1}):`, error);
         await sleep(delayMs);
         continue;
       } else {
@@ -237,7 +261,7 @@ function createMockJWT(): string {
 export async function setupAuthentication(page: Page): Promise<void> {
   // Enable API caching to reduce load on ESO Logs servers
   await enableApiCaching(page);
-  console.log('✅ Enabled API response caching for reduced server load');
+  log('✅ Enabled API response caching for reduced server load');
   
   // Try to get real OAuth token first
   const realTokenData = await getRealOAuthToken();
@@ -310,7 +334,7 @@ export async function enableApiCaching(page: Page): Promise<void> {
   // For now, use a simpler approach with route interception
   await setupNetworkCaching(page);
   
-  console.log('✅ Enabled network-level API caching');
+  log('✅ Enabled network-level API caching');
 }
 
 /**
@@ -330,7 +354,7 @@ export async function clearApiCache(page: Page): Promise<void> {
   // Clear network-level cache
   try {
     await networkCache.clear();
-    console.log('🧹 Cleared network-level API cache');
+    log('🧹 Cleared network-level API cache');
   } catch (error) {
     console.warn('Could not clear network cache:', error);
   }
@@ -385,7 +409,7 @@ export class ScreenSizeTestUtils {
     try {
       await this.page.waitForLoadState('networkidle', { timeout: Math.min(timeout, 15000) });
     } catch (error) {
-      console.log('Network idle timeout - continuing anyway');
+      debugLog('Network idle timeout - continuing anyway');
     }
     
     // Wait for any CSS animations/transitions to complete
@@ -606,24 +630,24 @@ export class ScreenSizeTestUtils {
  * This ensures that GraphQL queries have completed and content is stable
  */
 export async function waitForReportDataLoaded(page: Page): Promise<void> {
-  console.log('Waiting for report data to be fully loaded...');
+  debugLog('Waiting for report data to be fully loaded...');
   
   try {
     // Step 1: Basic page readiness
-    console.log('Step 1: Waiting for basic page readiness...');
+    debugLog('Step 1: Waiting for basic page readiness...');
     await page.waitForSelector('body', { state: 'visible', timeout: 10000 });
     
     // Step 2: Wait for network activity to settle first (most important)
-    console.log('Step 2: Waiting for network idle...');
+    debugLog('Step 2: Waiting for network idle...');
     try {
       await page.waitForLoadState('networkidle', { timeout: 15000 });
-      console.log('✓ Network idle achieved - data requests completed');
+      debugLog('✓ Network idle achieved - data requests completed');
     } catch (error) {
-      console.log('⚠ Network idle timeout - continuing anyway');
+      debugLog('⚠ Network idle timeout - continuing anyway');
     }
 
     // Step 3: Wait for any loading skeletons to disappear
-    console.log('Step 3: Waiting for skeletons to disappear...');
+    debugLog('Step 3: Waiting for skeletons to disappear...');
     await page.waitForSelector([
       '.MuiSkeleton-root',
       '[class*="skeleton"]',
@@ -631,41 +655,41 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       '.skeleton',
       '.loading-skeleton'
     ].join(', '), { state: 'hidden', timeout: 8000 }).catch(() => {
-      console.log('⚠ No loading skeletons found or they persisted');
+      debugLog('⚠ No loading skeletons found or they persisted');
     });
     
     // Step 4: Look for specific content that indicates data is loaded
-    console.log('Step 4: Looking for loaded content indicators...');
+    debugLog('Step 4: Looking for loaded content indicators...');
     
     // Try to find player cards (most specific indicator for players panel)
     const hasPlayerCards = await page.locator('[data-testid^="player-card-"]').count();
     if (hasPlayerCards > 0) {
-      console.log(`✓ Found ${hasPlayerCards} player cards`);
+      debugLog(`✓ Found ${hasPlayerCards} player cards`);
       
       // Step 4a: Wait for actual player card content to be loaded
-      console.log('Step 4a: Waiting for player card content...');
+      debugLog('Step 4a: Waiting for player card content...');
       
       // Wait for gear chips to be loaded (indicates gear data is processed)
       const hasGearChips = await page.locator('[data-testid^="gear-chips-"]').count();
       if (hasGearChips > 0) {
-        console.log(`✓ Found gear chips in ${hasGearChips} player cards`);
+        debugLog(`✓ Found gear chips in ${hasGearChips} player cards`);
       }
       
       // Wait for mundus buffs to be loaded (indicates buff data is processed)  
       const hasMundusBuffs = await page.locator('[data-testid^="mundus-buffs-"]').count();
       if (hasMundusBuffs > 0) {
-        console.log(`✓ Found mundus buffs in ${hasMundusBuffs} player cards`);
+        debugLog(`✓ Found mundus buffs in ${hasMundusBuffs} player cards`);
       }
       
       // Wait for food/drink indicators to be loaded
       const hasFoodDrink = await page.locator('[data-testid^="food-drink-"]').count();
       if (hasFoodDrink > 0) {
-        console.log(`✓ Found food/drink indicators in ${hasFoodDrink} player cards`);
+        debugLog(`✓ Found food/drink indicators in ${hasFoodDrink} player cards`);
       }
       
       // Additional wait for content to fully render and stabilize
       await page.waitForTimeout(1500);
-      console.log('✓ Player card content should be fully loaded');
+      debugLog('✓ Player card content should be fully loaded');
       return;
     }
     
@@ -683,14 +707,14 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
     ].join(', ')).count();
     
     if (hasDataContent > 0) {
-      console.log(`✓ Found ${hasDataContent} data content elements - content appears loaded`);
+      debugLog(`✓ Found ${hasDataContent} data content elements - content appears loaded`);
     } else {
-      console.log('⚠ No specific data content found - may be empty or still loading');
+      debugLog('⚠ No specific data content found - may be empty or still loading');
     }
     
     // Final stabilization wait
     await page.waitForTimeout(2000);
-    console.log('✅ Report data loading complete');
+    debugLog('✅ Report data loading complete');
     
   } catch (error) {
     console.log('❌ Error waiting for report data:', error);

@@ -11,6 +11,9 @@ const CACHE_DIR = path.join(process.cwd(), 'cache', 'eso-logs-api');
 const CACHE_VERSION = '1.0';
 const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
+// Environment variable configuration for logging
+const ENABLE_CACHE_LOGGING = process.env.ENABLE_CACHE_LOGGING === 'true' || process.env.NODE_ENV === 'test';
+
 interface CacheEntry<T = any> {
   data: T;
   timestamp: number;
@@ -25,6 +28,15 @@ interface CacheEntry<T = any> {
 }
 
 export class EsoLogsNodeCache {
+  /**
+   * Log cache operations if enabled
+   */
+  private log(message: string): void {
+    if (ENABLE_CACHE_LOGGING) {
+      console.log(message);
+    }
+  }
+
   /**
    * Ensure cache directory exists
    */
@@ -122,7 +134,7 @@ export class EsoLogsNodeCache {
         return null;
       }
 
-      console.log(`🟢 File Cache HIT for ${operationName} (${endpoint})`);
+      this.log(`🟢 File Cache HIT for ${operationName} (${endpoint})`);
       return cacheEntry.data;
       
     } catch (error) {
@@ -161,7 +173,7 @@ export class EsoLogsNodeCache {
       };
 
       await fs.writeFile(filePath, JSON.stringify(cacheEntry, null, 2), 'utf-8');
-      console.log(`💾 File Cache STORED for ${operationName} (${endpoint})`);
+      this.log(`💾 File Cache STORED for ${operationName} (${endpoint})`);
       
     } catch (error) {
       console.warn('Failed to write to file cache:', error);
@@ -181,7 +193,7 @@ export class EsoLogsNodeCache {
       const filePath = this.getCacheFilePath(cacheKey);
       
       await fs.unlink(filePath);
-      console.log(`🗑️ File Cache DELETED for ${operationName} (${endpoint})`);
+      this.log(`🗑️ File Cache DELETED for ${operationName} (${endpoint})`);
       
     } catch (error) {
       // File might not exist, ignore error
@@ -201,7 +213,7 @@ export class EsoLogsNodeCache {
         }
       }
       
-      console.log('🧹 File Cache CLEARED');
+      this.log('🧹 File Cache CLEARED');
       
     } catch (error) {
       console.warn('Failed to clear file cache:', error);
@@ -291,7 +303,7 @@ export class EsoLogsNodeCache {
       }
       
       if (cleanedCount > 0) {
-        console.log(`🧹 Cleaned ${cleanedCount} expired cache entries`);
+        this.log(`🧹 Cleaned ${cleanedCount} expired cache entries`);
       }
       
     } catch (error) {

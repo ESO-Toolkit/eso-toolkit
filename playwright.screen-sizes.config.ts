@@ -18,14 +18,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   /* Limit workers to prevent OAuth rate limiting - ESO Logs API has rate limits */
   workers: calculateOptimalWorkers({ 
-    maxWorkers: 3, // Limited due to OAuth rate limiting from ESO Logs API
-    memoryPerWorker: 1500, // Screenshots can be memory intensive
+    maxWorkers: process.env.CI ? 6 : 3, // Increase to 6 workers in CI for faster execution
+    memoryPerWorker: 1200, // Reduce memory allocation to allow more workers
     minWorkers: 1
   }),
   /* Timeout settings - optimized for faster execution */
-  timeout: 30000, // Reduced from 45000ms
+  timeout: process.env.CI ? 25000 : 30000, // Further reduce for CI
   expect: {
-    timeout: 10000, // Reduced from 15000ms
+    timeout: process.env.CI ? 8000 : 10000, // Faster expectations in CI
     // Configure visual comparison thresholds - more lenient for dynamic content
     toHaveScreenshot: {
       threshold: 0.3, // Allow 30% pixel difference for dynamic content
@@ -50,6 +50,9 @@ export default defineConfig({
   /* Use OS-agnostic snapshot paths for cross-platform compatibility */
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   
+  /* Global setup to authenticate once before running the test suite */
+  globalSetup: './tests/global-setup.ts',
+  
   /* Shared settings for all the projects below */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
@@ -69,6 +72,9 @@ export default defineConfig({
     
     /* Action timeout */
     actionTimeout: process.env.CI ? 15000 : 10000,
+    
+    /* Use shared authentication state from global setup */
+    storageState: 'tests/auth-state.json',
     
     /* Block external requests in CI to improve reliability */
     ...(process.env.CI && {
