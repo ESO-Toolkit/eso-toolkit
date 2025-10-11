@@ -13,11 +13,6 @@ on:
   # Manual trigger only - run on demand for screen size validation
   workflow_dispatch:
     inputs:
-      branch:
-        description: 'Branch to test'
-        required: true
-        default: 'master'
-        type: string
       device_categories:
         description: 'Device categories to test'
         required: false
@@ -45,7 +40,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.inputs.branch || github.head_ref || github.ref }}
+          ref: ${{ github.head_ref || github.ref }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -270,7 +265,7 @@ jobs:
           {
             "testRun": {
               "timestamp": "$(date -Iseconds)",
-              "branch": "${{ github.event.inputs.branch || github.ref_name }}",
+              "branch": "${{ github.ref_name }}",
               "commit": "${{ github.sha }}",
               "workflow": "Screen Size Testing - Core Panels & Insights Analysis",
               "runId": "${{ github.run_id }}",
@@ -279,7 +274,7 @@ jobs:
               "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
               "screenshotCount": $SCREENSHOT_COUNT
             },
-            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.event.inputs.branch || github.ref_name }}/${{ github.run_number }}/index.html"
+            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
           else
@@ -310,7 +305,7 @@ jobs:
           personal_token: ${{ secrets.GIST_TOKEN }}
           external_repository: bkrupa/eso-log-aggregator-reports
           publish_dir: screen-size-reports
-          destination_dir: screen-size-tests/${{ github.event.inputs.branch || github.ref_name }}/${{ github.run_number }}
+          destination_dir: screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}
           keep_files: true
 
       - name: Create Job Summary
@@ -327,7 +322,7 @@ jobs:
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "## 🔗 View Results" >> $GITHUB_STEP_SUMMARY
           
-          BRANCH_NAME="${{ github.event.inputs.branch || github.head_ref || github.ref_name }}"
+          BRANCH_NAME="${{ github.ref_name }}"
           REPORT_URL="https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${BRANCH_NAME}/${{ github.run_number }}/"
           ARTIFACTS_URL="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
           
