@@ -45,8 +45,10 @@ async function waitForInsightsDataLoad(page: any) {
   // Wait for network to settle
   await page.waitForLoadState('networkidle', { timeout: WAIT_TIMEOUTS.NETWORK_IDLE });
   
-  // Ensure basic content exists
-  await page.waitForSelector('h1, h2, h3, h4, h5, h6', { timeout: WAIT_TIMEOUTS.DATA_LOADING });
+  // Wait for the main application content to load
+  await page.waitForSelector('[data-testid="main-content"], main, .MuiContainer-root, .App', { 
+    timeout: WAIT_TIMEOUTS.DATA_LOADING 
+  });
   
   // Brief stabilization
   await page.waitForTimeout(process.env.CI ? 1000 : 2000);

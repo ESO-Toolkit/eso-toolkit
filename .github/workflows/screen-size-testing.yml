@@ -103,19 +103,24 @@ jobs:
 
       - name: ESO Logs API Cache Statistics
         run: |
-          echo "📊 ESO Logs API Cache Status:"
+          # Cache statistics (minimal by default, detailed on cache miss)
           if [ -d "cache/eso-logs-api" ]; then
             CACHE_COUNT=$(find cache/eso-logs-api -name "*.json" | wc -l)
             CACHE_SIZE=$(du -sh cache/eso-logs-api | cut -f1)
-            echo "  📁 Cache entries: $CACHE_COUNT files"
-            echo "  📏 Cache size: $CACHE_SIZE"
-            echo "  🔄 Cache status: ${{ steps.api-cache.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+            CACHE_STATUS="${{ steps.api-cache.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
             
-            # Show most recent cache files
-            echo "  📄 Recent cache files:"
-            find cache/eso-logs-api -name "*.json" -printf "%T@ %p\n" | sort -n | tail -5 | cut -d' ' -f2- | sed 's/^/    /'
+            # Show minimal cache info by default
+            echo "📊 ESO Logs API Cache: $CACHE_STATUS ($CACHE_COUNT files, $CACHE_SIZE)"
+            
+            # Show detailed statistics only on cache miss (new environment/cache cleared)
+            if [[ "${{ steps.api-cache.outputs.cache-hit }}" != "true" ]]; then
+              echo "  📁 Cache entries: $CACHE_COUNT files"
+              echo "  📏 Cache size: $CACHE_SIZE"
+              echo "  📄 Recent cache files:"
+              find cache/eso-logs-api -name "*.json" -printf "%T@ %p\n" | sort -n | tail -3 | cut -d' ' -f2- | sed 's/^/    /'
+            fi
           else
-            echo "  📭 No cache directory found - will create on first API call"
+            echo "📊 ESO Logs API Cache: EMPTY (will create on first API call)"
           fi
 
       - name: Start Application Server

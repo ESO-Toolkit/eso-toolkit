@@ -22,8 +22,8 @@ export default defineConfig({
     memoryPerWorker: 1200, // Reduce memory allocation to allow more workers
     minWorkers: 1
   }),
-  /* Timeout settings - optimized for faster execution */
-  timeout: process.env.CI ? 25000 : 30000, // Further reduce for CI
+  /* Timeout settings - increased for API calls */
+  timeout: process.env.CI ? 45000 : 60000, // Increased for API calls
   expect: {
     timeout: process.env.CI ? 8000 : 10000, // Faster expectations in CI
     // Configure visual comparison thresholds - more lenient for dynamic content
@@ -67,11 +67,11 @@ export default defineConfig({
     /* Record video on failure for debugging */
     video: 'retain-on-failure',
     
-    /* Navigation timeout */
-    navigationTimeout: process.env.CI ? 30000 : 20000,
+    /* Navigation timeout - increased for API calls */
+    navigationTimeout: process.env.CI ? 45000 : 35000,
     
-    /* Action timeout */
-    actionTimeout: process.env.CI ? 15000 : 10000,
+    /* Action timeout - increased for API calls */
+    actionTimeout: process.env.CI ? 30000 : 25000,
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',
