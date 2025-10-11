@@ -1,5 +1,6 @@
 import { Page } from '@playwright/test';
 import { config as dotenvConfig } from 'dotenv';
+import { EsoLogsNodeCache } from '../../src/utils/esoLogsNodeCache';
 
 /**
  * Utility functions for screen size testing
@@ -8,11 +9,108 @@ import { config as dotenvConfig } from 'dotenv';
 // Load environment variables from .env file
 dotenvConfig();
 
+// Global cache instance for network interception
+const networkCache = new EsoLogsNodeCache();
+
 /**
  * Sleep for a given number of milliseconds
  */
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Setup network-level caching for ESO Logs API requests
+ */
+async function setupNetworkCaching(page: Page): Promise<void> {
+  await page.route('**/api/v2/**', async (route) => {
+    const request = route.request();
+    const url = request.url();
+    
+    // Only intercept ESO Logs API calls
+    if (!url.includes('esologs.com/api/v2/')) {
+      return route.continue();
+    }
+
+    try {
+      // Generate cache key
+      const method = request.method();
+      const body = request.postData();
+      const cacheKey = `${method}:${url}:${body || ''}`;
+      
+      // Try to get from cache
+      const cachedResponse = await networkCache.get(cacheKey);
+      
+      if (cachedResponse) {
+        console.log(`🟢 Network Cache HIT for ${extractOperationName(request)}`);
+        
+        await route.fulfill({
+          status: cachedResponse.status || 200,
+          headers: cachedResponse.headers || { 'content-type': 'application/json' },
+          body: JSON.stringify(cachedResponse.data),
+        });
+        return;
+      }
+
+      // Cache miss - make real request
+      const operationName = extractOperationName(request);
+      console.log(`🔴 Network Cache MISS for ${operationName} - fetching from API`);
+      
+      const response = await route.fetch();
+      const responseData = await response.json().catch(() => null);
+      
+      if (response.ok() && responseData) {
+        // Cache successful response
+        await networkCache.set(cacheKey, undefined, undefined, {
+          data: responseData,
+          status: response.status(),
+          headers: response.headers(),
+          timestamp: Date.now(),
+        });
+        
+        console.log(`💾 Network Cache STORED for ${operationName}`);
+      }
+      
+      // Return the response
+      await route.fulfill({
+        status: response.status(),
+        headers: response.headers(),
+        body: JSON.stringify(responseData),
+      });
+      
+    } catch (error) {
+      console.warn(`Network cache error for ${url}:`, error);
+      return route.continue();
+    }
+  });
+}
+
+/**
+ * Extract operation name from request for logging
+ */
+function extractOperationName(request: any): string {
+  try {
+    const body = request.postData();
+    if (body) {
+      const parsed = JSON.parse(body);
+      return parsed.operationName || extractOperationFromQuery(parsed.query) || 'unknown';
+    }
+    
+    const url = new URL(request.url());
+    return url.pathname.split('/').pop() || 'get';
+  } catch {
+    return 'unknown';
+  }
+}
+
+/**
+ * Extract operation name from GraphQL query string
+ */
+function extractOperationFromQuery(query?: string): string | null {
+  if (!query) return null;
+  
+  const match = query.match(/(?:query|mutation)\s+([a-zA-Z0-9_]+)/);
+  return match ? match[1] : null;
 }
 
 /**
@@ -183,40 +281,39 @@ export interface ViewportInfo {
 }
 
 /**
- * Sets up ESO Logs API response caching by adding a cache flag to localStorage
- * The application can check for this flag and use cached responses
+ * Sets up ESO Logs API response caching using Playwright network interception
+ * This caches API responses at the network level, keeping production code clean
  */
 export async function enableApiCaching(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    // Set a flag that the application can check to enable caching
-    window.localStorage.setItem('test-cache-enabled', 'true');
-  });
+  // For now, use a simpler approach with route interception
+  await setupNetworkCaching(page);
+  
+  console.log('✅ Enabled network-level API caching');
 }
 
 /**
- * Disables API caching by removing the cache flag
+ * Disables API caching by removing network intercepts and cache flags
  */
 export async function disableApiCaching(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    window.localStorage.removeItem('test-cache-enabled');
-  });
+  // Disable network-level caching
+  await page.unroute('**/api/v2/**');
+  
+
 }
 
 /**
  * Clears the ESO Logs API cache
  */
 export async function clearApiCache(page: Page): Promise<void> {
-  await page.addInitScript(() => {
-    // Clear the cache flag
-    window.localStorage.removeItem('test-cache-enabled');
-    
-    // Also clear any cached responses if they exist in localStorage
-    Object.keys(localStorage).forEach(key => {
-      if (key.startsWith('eso-logs-cache-')) {
-        localStorage.removeItem(key);
-      }
-    });
-  });
+  // Clear network-level cache
+  try {
+    await networkCache.clear();
+    console.log('🧹 Cleared network-level API cache');
+  } catch (error) {
+    console.warn('Could not clear network cache:', error);
+  }
+  
+
 }
 
 export class ScreenSizeTestUtils {

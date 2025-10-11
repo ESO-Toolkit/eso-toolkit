@@ -146,6 +146,10 @@
     "analyze-scribing-skills": "node scripts/analyze-scribing-skills.cjs",
     "analyze-scribing-recipes": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts",
 
+    "cache:stats": "node scripts/manage-cache-simple.js stats",
+    "cache:clean": "node scripts/manage-cache-simple.js clean",
+    "cache:clear": "node scripts/manage-cache-simple.js clear",
+
     "analyze-scribing-recipes:no-cache": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --no-optimize --clear-cache",
     "analyze-scribing-recipes:config": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --config",
 

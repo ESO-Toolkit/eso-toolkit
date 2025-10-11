@@ -73,6 +73,15 @@ jobs:
         if: steps.playwright-cache.outputs.cache-hit == 'true'
         run: npx playwright install-deps
 
+      - name: Cache ESO Logs API Responses
+        uses: actions/cache@v4
+        id: api-cache
+        with:
+          path: cache/eso-logs-api/
+          key: eso-logs-api-${{ hashFiles('src/**/*.graphql', 'src/**/*.ts') }}-v1
+          restore-keys: |
+            eso-logs-api-v1
+
       - name: Cache Build Output
         uses: actions/cache@v4
         id: build-cache
@@ -99,6 +108,23 @@ jobs:
         run: |
           echo "✅ Using cached build artifacts"
           npm run generate-version  # Still update version info
+
+      - name: ESO Logs API Cache Statistics
+        run: |
+          echo "📊 ESO Logs API Cache Status:"
+          if [ -d "cache/eso-logs-api" ]; then
+            CACHE_COUNT=$(find cache/eso-logs-api -name "*.json" | wc -l)
+            CACHE_SIZE=$(du -sh cache/eso-logs-api | cut -f1)
+            echo "  📁 Cache entries: $CACHE_COUNT files"
+            echo "  📏 Cache size: $CACHE_SIZE"
+            echo "  🔄 Cache status: ${{ steps.api-cache.outputs.cache-hit == 'true' && 'HIT' || 'MISS' }}"
+            
+            # Show most recent cache files
+            echo "  📄 Recent cache files:"
+            find cache/eso-logs-api -name "*.json" -printf "%T@ %p\n" | sort -n | tail -5 | cut -d' ' -f2- | sed 's/^/    /'
+          else
+            echo "  📭 No cache directory found - will create on first API call"
+          fi
 
       - name: Start Application Server
         run: |
