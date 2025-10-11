@@ -39,6 +39,7 @@ jobs:
   screen-size-testing:
     name: Screen Size Tests - Core Panels & Insights Analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 45  # Prevent runaway jobs
 
     steps:
       - name: Checkout Repository
@@ -55,15 +56,49 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Cache Playwright Browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-browsers-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            playwright-browsers-${{ runner.os }}-
+
       - name: Install Playwright Browsers
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps
 
+      - name: Install System Dependencies Only
+        if: steps.playwright-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps
+
+      - name: Cache Build Output
+        uses: actions/cache@v4
+        id: build-cache
+        with:
+          path: |
+            build/
+            node_modules/.vite/
+          key: build-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.mjs', 'src/**/*.ts', 'src/**/*.tsx') }}
+          restore-keys: |
+            build-${{ runner.os }}-${{ hashFiles('package-lock.json', 'vite.config.mjs') }}
+
       - name: Build Application
+        if: steps.build-cache.outputs.cache-hit != 'true'
         run: |
+          echo "🔨 Building application (cache miss)..."
           npm run build
           npm run generate-version
         env:
           CI: true
+          NODE_OPTIONS: "--max-old-space-size=4096"
+
+      - name: Use Cached Build
+        if: steps.build-cache.outputs.cache-hit == 'true'
+        run: |
+          echo "✅ Using cached build artifacts"
+          npm run generate-version  # Still update version info
 
       - name: Start Application Server
         run: |
@@ -113,8 +148,10 @@ jobs:
           OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
           OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
           ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
-          # Use sequential execution to prevent rate limiting
-          PLAYWRIGHT_WORKERS: 1
+          # Optimized parallelization - balance speed vs rate limiting  
+          PLAYWRIGHT_WORKERS: 4
+          # Memory optimization for CI
+          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Run Screen Size Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}

@@ -187,10 +187,15 @@ test.describe('ESO Log Aggregator - Core Panels Screen Size Validation', () => {
     const viewportWidth = page.viewportSize()?.width || 0;
     validateResponsiveLayout(viewportWidth, 'players panel');
 
+    // Quick stabilization before screenshot
+    await page.waitForTimeout(1000); // Reduced from 3000ms
+    await page.waitForLoadState('networkidle', { timeout: 5000 }); // Reduced timeout
+
     // Take screenshot for visual comparison
     await expect(page).toHaveScreenshot('players-panel.png', {
       fullPage: true,
       animations: 'disabled',
+      timeout: 15000, // Reduced from 30000ms
     });
   });
 
@@ -214,10 +219,15 @@ test.describe('ESO Log Aggregator - Core Panels Screen Size Validation', () => {
     const viewportWidth = page.viewportSize()?.width || 0;
     validateResponsiveLayout(viewportWidth, 'insights panel');
 
+    // Quick stabilization before screenshot
+    await page.waitForTimeout(1000); // Reduced from 3000ms
+    await page.waitForLoadState('networkidle', { timeout: 5000 }); // Reduced timeout
+
     // Take screenshot for visual comparison  
     await expect(page).toHaveScreenshot('insights-panel.png', {
       fullPage: true,
       animations: 'disabled',
+      timeout: 15000, // Reduced from 30000ms
     });
   });
 });

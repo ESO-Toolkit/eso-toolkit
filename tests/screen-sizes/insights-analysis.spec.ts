@@ -136,9 +136,14 @@ test.describe('ESO Log Insights Panel - Screen Size Validation', () => {
     const viewportWidth = page.viewportSize()?.width || 0;
     validateResponsiveLayout(viewportWidth, 'insights panel');
 
+    // Quick stabilization before screenshot
+    await page.waitForTimeout(1000); // Reduced from 3000ms
+    await page.waitForLoadState('networkidle', { timeout: 5000 }); // Reduced from 10000ms
+
     await expect(page).toHaveScreenshot('insights-players-panel.png', {
       fullPage: true,
       animations: 'disabled',
+      timeout: 15000, // Reduced from 30000ms
     });
   });
 });
