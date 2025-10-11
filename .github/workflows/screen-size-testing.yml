@@ -159,10 +159,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts --reporter=html --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots (using minimal visual regression tests with 8 key screen sizes)"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts --reporter=html
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts
           fi
         env:
           CI: true
@@ -183,10 +183,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
           fi
         env:
           CI: true
@@ -201,10 +201,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
           fi
         env:
           CI: true
@@ -219,10 +219,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
           fi
         env:
           CI: true
@@ -237,10 +237,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html --update-snapshots
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --reporter=html
+            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
           fi
         env:
           CI: true
@@ -256,8 +256,15 @@ jobs:
           # Create reports directory with metadata
           mkdir -p screen-size-reports
           
+          # Debug: List all files and directories to understand what was created
+          echo "=== Debug: Listing all directories and files ==="
+          ls -la
+          echo ""
+          echo "=== Checking for report directories ==="
+          
           if [ -d "screen-size-report" ]; then
-            echo "Found Screen Size HTML report with screenshots"
+            echo "✓ Found configured screen-size-report directory"
+            ls -la screen-size-report/
             cp -r screen-size-report/* screen-size-reports/
             
             # Count screenshots
@@ -281,8 +288,38 @@ jobs:
             "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
           }
           EOF
+          elif [ -d "playwright-report" ]; then
+            echo "⚠️  Found default playwright-report directory (fallback mode)"
+            ls -la playwright-report/
+            cp -r playwright-report/* screen-size-reports/
+            
+            # Count screenshots in the fallback directory structure
+            SCREENSHOT_COUNT=$(find screen-size-reports -name "*.png" 2>/dev/null | wc -l)
+            echo "Generated $SCREENSHOT_COUNT screenshots (fallback mode)"
+            
+            # Add metadata with fallback note
+            cat > screen-size-reports/test-metadata.json << EOF
+          {
+            "testRun": {
+              "timestamp": "$(date -Iseconds)",
+              "branch": "${{ github.ref_name }}",
+              "commit": "${{ github.sha }}",
+              "workflow": "Screen Size Testing - Core Panels & Insights Analysis (Fallback Mode)",
+              "runId": "${{ github.run_id }}",
+              "runNumber": "${{ github.run_number }}",
+              "deviceCategories": "${{ github.event.inputs.device_categories || 'all' }}",
+              "updateSnapshots": "${{ github.event.inputs.update_snapshots }}",
+              "screenshotCount": $SCREENSHOT_COUNT,
+              "note": "Report generated from fallback playwright-report directory"
+            },
+            "reportUrl": "https://bkrupa.github.io/eso-log-aggregator-reports/screen-size-tests/${{ github.ref_name }}/${{ github.run_number }}/index.html"
+          }
+          EOF
           else
-            echo "No screen size report found - creating error page"
+            echo "❌ No screen size report found - creating error page"
+            echo "Available directories:"
+            ls -la | grep "^d"
+            
             cat > screen-size-reports/index.html << EOF
           <!DOCTYPE html>
           <html><head><title>Screen Size Test Failed</title></head>
@@ -290,6 +327,10 @@ jobs:
             <h1>Screen Size Test Failed</h1>
             <p>No test results were generated. The test run may have failed.</p>
             <p>Check the <a href="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}">workflow logs</a> for details.</p>
+            <h2>Debugging Information</h2>
+            <p>Expected report directory: <code>screen-size-report</code></p>
+            <p>Fallback directory: <code>playwright-report</code></p>
+            <p>Timestamp: $(date -Iseconds)</p>
           </body></html>
           EOF
           fi
