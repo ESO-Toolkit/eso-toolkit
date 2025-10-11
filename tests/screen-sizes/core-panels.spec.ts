@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { enableApiCaching } from './utils';
+import { setupWithSharedPreprocessing } from './shared-preprocessing';
 
 // Test configuration
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -15,19 +15,11 @@ const WAIT_TIMEOUTS = {
 } as const;
 
 /**
- * Set up authentication and caching for screen size tests
- * Uses the shared authentication state from global setup
+ * Set up authentication and caching for screen size tests with shared preprocessing
+ * Uses the shared authentication state and preprocessed worker results from global setup
  */
 async function setupTestEnvironment(page: any) {
-  await enableApiCaching(page);
-  
-  // The authentication is already handled by the storageState configuration
-  // Just ensure the authenticated state is properly set for the app
-  await page.addInitScript(() => {
-    if (localStorage.getItem('access_token')) {
-      localStorage.setItem('authenticated', 'true');
-    }
-  });
+  await setupWithSharedPreprocessing(page);
 }
 
 /**

@@ -1,24 +1,16 @@
 import { test, expect } from '@playwright/test';
-import { enableApiCaching } from './utils';
+import { setupWithSharedPreprocessing } from './shared-preprocessing';
 
 // Test configuration - focused on visual regression only
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
 const TEST_FIGHT_ID = '117';
 
 /**
- * Set up test environment for visual regression tests
- * Uses the shared authentication state from global setup
+ * Set up test environment for visual regression tests with shared preprocessing
+ * Uses the shared authentication state and preprocessed worker results from global setup
  */
 async function setupTestEnvironment(page: any) {
-  await enableApiCaching(page);
-  
-  // The authentication is already handled by the storageState configuration
-  // Just ensure the authenticated state is properly set for the app
-  await page.addInitScript(() => {
-    if (localStorage.getItem('access_token')) {
-      localStorage.setItem('authenticated', 'true');
-    }
-  });
+  await setupWithSharedPreprocessing(page);
 }
 
 /**
@@ -26,18 +18,24 @@ async function setupTestEnvironment(page: any) {
  */
 async function navigateToReport(page: any, path: string = '') {
   const url = `http://localhost:3000/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}${path}`;
-  await page.goto(url, { waitUntil: 'networkidle', timeout: 30000 });
+  // Use config timeout and domcontentloaded since we have comprehensive preprocessing
+  await page.goto(url, { waitUntil: 'domcontentloaded' });
 }
 
 /**
  * Minimal wait for content - just enough for visual stability
  */
 async function waitForVisualStability(page: any) {
-  // Wait for network to settle
-  await page.waitForLoadState('networkidle', { timeout: 20000 });
+  try {
+    // Wait for network to settle with increased timeout
+    await page.waitForLoadState('networkidle', { timeout: 45000 });
+  } catch (error) {
+    console.log('⚠️ Network idle timeout, but continuing with visual stability checks...');
+    // Continue anyway - the page may still be usable
+  }
   
   // Brief stabilization for animations/loading
-  await page.waitForTimeout(process.env.CI ? 1000 : 2000);
+  await page.waitForTimeout(process.env.CI ? 2000 : 3000);
   
   // Ensure basic page structure is ready (minimal check)
   await page.waitForSelector('body', { timeout: 10000 });

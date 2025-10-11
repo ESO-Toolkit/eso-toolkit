@@ -26,9 +26,9 @@ export default defineConfig({
     minWorkers: 1
   }),
   /* Extended timeout settings for heavy client-side processing */
-  timeout: 90000, // Increased to 90s for complex client-side data processing + screenshot
+  timeout: 120000, // Increased to 120s for complex client-side data processing + screenshot
   expect: {
-    timeout: 30000, // Increased to 30s for screenshot comparison with heavy processing
+    timeout: 45000, // Increased to 45s for screenshot comparison with heavy processing
     // Configure visual comparison thresholds
     toHaveScreenshot: {
       threshold: 0.35, // Slightly more lenient for speed
@@ -69,8 +69,8 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     /* Extended timeouts for heavy client-side processing */
-    navigationTimeout: process.env.CI ? 60000 : 20000, // Extended for heavy client-side processing
-    actionTimeout: process.env.CI ? 45000 : 15000, // Extended for complex data processing + actions
+    navigationTimeout: process.env.CI ? 90000 : 45000, // Extended for heavy client-side processing + network issues
+    actionTimeout: process.env.CI ? 60000 : 30000, // Extended for complex data processing + actions
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',

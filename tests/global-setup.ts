@@ -6,6 +6,7 @@ import * as path from 'path';
 import { getBaseUrl } from './selectors';
 import { EsoLogsNodeCache } from '../src/utils/esoLogsNodeCache';
 import { clearCache } from './screen-sizes/cache-utils';
+import { preprocessWorkerComputations } from './screen-sizes/shared-preprocessing';
 
 /**
  * Global setup for Playwright nightly tests
@@ -96,6 +97,27 @@ async function globalSetup(config: FullConfig) {
   // Pre-cache getCurrentUser response to avoid spamming the API during tests
   if (accessToken) {
     await preCacheCurrentUser(accessToken);
+  }
+
+  // Pre-process heavy worker computations for screen size tests
+  // Only do this if we have authentication (since the test data requires it)
+  if (accessToken) {
+    try {
+      console.log('🏭 Pre-processing worker computations for screen size tests...');
+      const browser = await chromium.launch();
+      const context = await browser.newContext({
+        storageState: 'tests/auth-state.json'
+      });
+      const page = await context.newPage();
+      
+      await preprocessWorkerComputations(page);
+      
+      await browser.close();
+      console.log('✅ Worker computation preprocessing completed');
+    } catch (error) {
+      console.warn('⚠️  Failed to preprocess worker computations:', error);
+      // Don't fail the entire setup if preprocessing fails
+    }
   }
 
   console.log('✅ Global setup completed');
