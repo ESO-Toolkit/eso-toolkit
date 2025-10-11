@@ -33,16 +33,16 @@ async function setupNetworkCaching(page: Page): Promise<void> {
     }
 
     try {
-      // Generate cache key
-      const method = request.method();
-      const body = request.postData();
-      const cacheKey = `${method}:${url}:${body || ''}`;
+      // Extract GraphQL operation details
+      const operationName = extractOperationName(request);
+      const variables = extractVariables(request);
+      const endpoint = 'network'; // Use consistent endpoint for network-intercepted requests
       
-      // Try to get from cache
-      const cachedResponse = await networkCache.get(cacheKey);
+      // Try to get from cache using proper file cache parameters
+      const cachedResponse = await networkCache.get(operationName, variables, endpoint);
       
       if (cachedResponse) {
-        console.log(`🟢 Network Cache HIT for ${extractOperationName(request)}`);
+        console.log(`🟢 Network Cache HIT for ${operationName}`);
         
         await route.fulfill({
           status: cachedResponse.status || 200,
@@ -53,15 +53,14 @@ async function setupNetworkCaching(page: Page): Promise<void> {
       }
 
       // Cache miss - make real request
-      const operationName = extractOperationName(request);
       console.log(`🔴 Network Cache MISS for ${operationName} - fetching from API`);
       
       const response = await route.fetch();
       const responseData = await response.json().catch(() => null);
       
       if (response.ok() && responseData) {
-        // Cache successful response
-        await networkCache.set(cacheKey, undefined, undefined, {
+        // Cache successful response using proper file cache parameters
+        await networkCache.set(operationName, variables, endpoint, {
           data: responseData,
           status: response.status(),
           headers: response.headers(),
@@ -111,6 +110,29 @@ function extractOperationFromQuery(query?: string): string | null {
   
   const match = query.match(/(?:query|mutation)\s+([a-zA-Z0-9_]+)/);
   return match ? match[1] : null;
+}
+
+/**
+ * Extract variables from request for cache key generation
+ */
+function extractVariables(request: any): any {
+  try {
+    const body = request.postData();
+    if (body) {
+      const parsed = JSON.parse(body);
+      return parsed.variables || {};
+    }
+    
+    // For GET requests, extract from URL parameters
+    const url = new URL(request.url());
+    const variables: any = {};
+    for (const [key, value] of url.searchParams.entries()) {
+      variables[key] = value;
+    }
+    return variables;
+  } catch {
+    return {};
+  }
 }
 
 /**
