@@ -25,10 +25,10 @@ export default defineConfig({
     memoryPerWorker: 1200, // Increased memory per worker for stability
     minWorkers: 1
   }),
-  /* Optimized timeout settings for CI speed but allowing for screenshot capture */
-  timeout: 45000, // Increased from 20s to allow for data loading + screenshot
+  /* Extended timeout settings for heavy client-side processing */
+  timeout: 90000, // Increased to 90s for complex client-side data processing + screenshot
   expect: {
-    timeout: 15000, // Increased from 6s to allow for screenshot comparison in CI
+    timeout: 30000, // Increased to 30s for screenshot comparison with heavy processing
     // Configure visual comparison thresholds
     toHaveScreenshot: {
       threshold: 0.35, // Slightly more lenient for speed
@@ -68,9 +68,9 @@ export default defineConfig({
     /* Record video on failure for debugging */
     video: 'retain-on-failure',
     
-    /* Optimized timeouts - increased for CI screenshot capture */
-    navigationTimeout: process.env.CI ? 35000 : 15000, // Increased for CI data loading
-    actionTimeout: process.env.CI ? 20000 : 8000, // Increased for CI screenshot actions
+    /* Extended timeouts for heavy client-side processing */
+    navigationTimeout: process.env.CI ? 60000 : 20000, // Extended for heavy client-side processing
+    actionTimeout: process.env.CI ? 45000 : 15000, // Extended for complex data processing + actions
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',

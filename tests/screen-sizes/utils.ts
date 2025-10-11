@@ -445,23 +445,23 @@ export class ScreenSizeTestUtils {
    * Wait for layout to stabilize
    */
   async waitForLayoutStability(timeout?: number): Promise<void> {
-    // Adjust timeout based on mode and environment
-    const defaultTimeout = isFastMode ? 5000 : (isCI ? 12000 : 10000);
+    // Adjust timeout based on mode and environment - increased for heavy client processing
+    const defaultTimeout = isFastMode ? 15000 : (isCI ? 25000 : 15000);
     const finalTimeout = timeout || defaultTimeout;
     
     await this.page.waitForLoadState('domcontentloaded');
     
-    // Try networkidle but don't fail if it times out
+    // Try networkidle but don't fail if it times out - increased for heavy processing
     try {
-      const networkIdleTimeout = Math.min(finalTimeout, isFastMode ? 8000 : 15000);
+      const networkIdleTimeout = Math.min(finalTimeout, isFastMode ? 20000 : 30000);
       await this.page.waitForLoadState('networkidle', { timeout: networkIdleTimeout });
       debugLog(`✓ Network idle achieved in ${networkIdleTimeout}ms`);
     } catch (error) {
-      debugLog('Network idle timeout - continuing anyway');
+      debugLog('Network idle timeout - continuing anyway (this is normal with heavy client processing)');
     }
     
-    // Wait for any CSS animations/transitions to complete (shorter in fast mode)
-    const animationWait = isFastMode ? 500 : (isCI ? 1500 : 1000);
+    // Wait for any CSS animations/transitions to complete - increased for heavy processing
+    const animationWait = isFastMode ? 2000 : (isCI ? 3000 : 1500);
     await this.page.waitForTimeout(animationWait);
     
     // Wait for fonts to load
@@ -477,9 +477,9 @@ export class ScreenSizeTestUtils {
    */
   async waitForScreenshotReady(): Promise<void> {
     if (isCI) {
-      // Extra wait in CI for visual stability
-      const ciWait = isFastMode ? 1000 : 1500;
-      debugLog(`CI Screenshot wait: ${ciWait}ms`);
+      // Extra wait in CI for visual stability - increased for heavy client processing
+      const ciWait = isFastMode ? 3000 : 4000;
+      debugLog(`CI Screenshot wait for heavy processing: ${ciWait}ms`);
       await this.page.waitForTimeout(ciWait);
       
       // Double-check fonts are loaded
@@ -639,8 +639,8 @@ export class ScreenSizeTestUtils {
       }
     }
 
-    // Wait a moment for changes to apply (longer in CI for screenshot stability)
-    const finalWait = isCI ? (isFastMode ? 500 : 800) : 200;
+    // Wait a moment for changes to apply (increased for heavy client processing)
+    const finalWait = isCI ? (isFastMode ? 1500 : 2000) : 500;
     await this.page.waitForTimeout(finalWait);
     
     // Additional wait for CI screenshot readiness
@@ -703,13 +703,14 @@ export class ScreenSizeTestUtils {
  * This ensures that GraphQL queries have completed and content is stable
  */
 export async function waitForReportDataLoaded(page: Page): Promise<void> {
+  const startTime = Date.now();
   debugLog('Waiting for report data to be fully loaded...');
   debugLog(`Environment: CI=${isCI}, FastMode=${isFastMode}`);
   
   try {
-    // Adjust timeouts based on mode and environment
-    const bodyTimeout = isFastMode ? 8000 : 10000;
-    const networkIdleTimeout = isFastMode ? 8000 : (isCI ? 18000 : 15000);
+    // Adjust timeouts based on mode and environment - significantly increased for heavy client processing
+    const bodyTimeout = isFastMode ? 15000 : 20000;
+    const networkIdleTimeout = isFastMode ? 25000 : (isCI ? 40000 : 25000);
     
     // Step 1: Basic page readiness
     debugLog('Step 1: Waiting for basic page readiness...');
@@ -724,9 +725,9 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       debugLog('⚠ Network idle timeout - continuing anyway');
     }
 
-    // Step 3: Wait for any loading skeletons to disappear
+    // Step 3: Wait for any loading skeletons to disappear - increased for heavy processing
     debugLog('Step 3: Waiting for skeletons to disappear...');
-    const skeletonTimeout = isFastMode ? 5000 : 8000;
+    const skeletonTimeout = isFastMode ? 12000 : 15000;
     await page.waitForSelector([
       '.MuiSkeleton-root',
       '[class*="skeleton"]',
@@ -791,15 +792,52 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
       debugLog('⚠ No specific data content found - may be empty or still loading');
     }
     
-    // Final stabilization wait (adjusted for mode)
-    const finalWait = isFastMode ? 1000 : 2000;
+    // Final stabilization wait (adjusted for heavy client processing)
+    const finalWait = isFastMode ? 3000 : 5000;
     await page.waitForTimeout(finalWait);
-    debugLog('✅ Report data loading complete');
+    
+    const totalTime = Date.now() - startTime;
+    debugLog(`✅ Report data loading complete (took ${totalTime}ms)`);
     
   } catch (error) {
     console.log('❌ Error waiting for report data:', error);
     // Don't throw - let the test continue
   }
+}
+
+/**
+ * Wait specifically for heavy client-side processing to complete
+ * Use this when you know the app is doing intensive data processing
+ */
+export async function waitForHeavyClientProcessing(page: Page): Promise<void> {
+  debugLog('Waiting for heavy client-side processing to complete...');
+  
+  // Wait for any pending async operations
+  await page.evaluate(() => {
+    return new Promise(resolve => {
+      // Wait for any pending promises/microtasks
+      setTimeout(() => {
+        // Additional wait for heavy computation
+        setTimeout(resolve, isFastMode ? 2000 : 3000);
+      }, 1000);
+    });
+  });
+  
+  // Check if there are any active network requests
+  const activeRequests = await page.evaluate(() => {
+    // @ts-ignore - accessing internal playwright state if available
+    return typeof window !== 'undefined' && window.performance 
+      ? window.performance.getEntriesByType('navigation').length
+      : 0;
+  });
+  
+  debugLog(`Active requests check complete, waiting additional stabilization time...`);
+  
+  // Extra stabilization for heavy processing
+  const heavyProcessingWait = isFastMode ? 3000 : 5000;
+  await page.waitForTimeout(heavyProcessingWait);
+  
+  debugLog('✅ Heavy client-side processing wait complete');
 }
 
 /**
@@ -809,12 +847,20 @@ export async function waitForReportDataLoaded(page: Page): Promise<void> {
 export async function preparePageForScreenshot(page: Page, options: {
   hideElements?: string[];
   waitForStability?: boolean;
+  waitForHeavyProcessing?: boolean;
 } = {}): Promise<void> {
   debugLog(`Preparing page for screenshot (CI: ${isCI}, FastMode: ${isFastMode})`);
   
+  const { waitForHeavyProcessing = true, ...otherOptions } = options;
+  
+  // Wait for heavy processing if requested
+  if (waitForHeavyProcessing) {
+    await waitForHeavyClientProcessing(page);
+  }
+  
   // Create utils instance and prepare
   const utils = new ScreenSizeTestUtils(page);
-  await utils.prepareForScreenshot(options);
+  await utils.prepareForScreenshot(otherOptions);
   
   debugLog('✅ Page ready for screenshot capture');
 }

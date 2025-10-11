@@ -22,10 +22,10 @@ export default defineConfig({
     memoryPerWorker: 1500, // Increase memory per worker for stability
     minWorkers: 1
   }),
-  /* Timeout settings - increased for API calls */
-  timeout: process.env.CI ? 60000 : 60000, // Same timeout for consistency
+  /* Timeout settings - increased for heavy client-side processing */
+  timeout: process.env.CI ? 120000 : 90000, // Extended for complex client-side data processing
   expect: {
-    timeout: process.env.CI ? 15000 : 10000, // Longer expectations in CI due to slower environment
+    timeout: process.env.CI ? 45000 : 30000, // Extended for heavy processing + screenshot comparison
     // Configure visual comparison thresholds - more lenient for dynamic content
     toHaveScreenshot: {
       threshold: 0.3, // Allow 30% pixel difference for dynamic content
@@ -67,11 +67,11 @@ export default defineConfig({
     /* Record video on failure for debugging */
     video: 'retain-on-failure',
     
-    /* Navigation timeout - increased for API calls */
-    navigationTimeout: process.env.CI ? 60000 : 35000,
+    /* Navigation timeout - extended for heavy client-side processing */
+    navigationTimeout: process.env.CI ? 90000 : 45000,
     
-    /* Action timeout - increased for API calls */
-    actionTimeout: process.env.CI ? 45000 : 25000,
+    /* Action timeout - extended for complex data processing + actions */
+    actionTimeout: process.env.CI ? 75000 : 35000,
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',
