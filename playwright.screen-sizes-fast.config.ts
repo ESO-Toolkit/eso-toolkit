@@ -18,9 +18,9 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   /* Optimized workers for CI speed */
   workers: calculateOptimalWorkers({ 
-    maxWorkers: process.env.CI ? 8 : 4, // More aggressive parallelization
-    memoryPerWorker: 1000, // Reduced memory per worker
-    minWorkers: 2
+    maxWorkers: process.env.CI ? 3 : 4, // Conservative CI parallelization
+    memoryPerWorker: 1200, // Increased memory per worker for stability
+    minWorkers: 1
   }),
   /* Aggressive timeout settings for CI speed */
   timeout: 20000, // Shorter timeout

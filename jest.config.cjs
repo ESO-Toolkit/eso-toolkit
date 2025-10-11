@@ -106,4 +106,10 @@ module.exports = {
   clearMocks: true,
   resetMocks: true,
   restoreMocks: true,
+
+  // Timeout configuration
+  testTimeout: process.env.CI ? 30000 : 10000, // 30s in CI, 10s locally
+  
+  // Handle async operations better
+  detectOpenHandles: true,
 };

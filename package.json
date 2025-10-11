@@ -145,15 +145,11 @@
     "analyze-bundle": "npm run build && node scripts/analyze-bundle.cjs",
     "analyze-scribing-skills": "node scripts/analyze-scribing-skills.cjs",
     "analyze-scribing-recipes": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts",
-
     "cache:stats": "node scripts/manage-cache-simple.js stats",
     "cache:clean": "node scripts/manage-cache-simple.js clean",
     "cache:clear": "node scripts/manage-cache-simple.js clear",
-
     "analyze-scribing-recipes:no-cache": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --no-optimize --clear-cache",
     "analyze-scribing-recipes:config": "ts-node --project tsconfig.node.json scripts/scribing-analysis-runner.ts --config",
-
-
     "build": "npm run prebuild && cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "build-storybook": "cross-env NODE_OPTIONS=\"--max-old-space-size=8192\" storybook build",
     "clean:version": "node scripts/clean-version.cjs",
@@ -194,7 +190,7 @@
     "prebuild": "node scripts/generate-version.cjs && node scripts/update-manifest.cjs",
     "preview": "vite preview",
     "queue:add": "node scripts/merge-queue/manage-queue.cjs add",
-    "queue:help": "node scripts/merge-queue/manage-queue.cjs help", 
+    "queue:help": "node scripts/merge-queue/manage-queue.cjs help",
     "queue:process": "node scripts/merge-queue/manage-queue.cjs process",
     "queue:remove": "node scripts/merge-queue/manage-queue.cjs remove",
     "queue:status": "node scripts/merge-queue/manage-queue.cjs status",
@@ -206,8 +202,8 @@
     "test:all": "jest",
     "test:changed": "jest --onlyChanged",
     "test:changed-since": "jest --changedSince=main",
-    "test:coverage": "set COVERAGE=true && jest --coverage --watchAll=false",
-    "test:coverage:ci": "set NODE_ENV=ci && set COVERAGE_MODE=ci && set COVERAGE=true && jest --coverage --watchAll=false",
+    "test:coverage": "cross-env COVERAGE=true jest --coverage --watchAll=false",
+    "test:coverage:ci": "cross-env NODE_ENV=ci COVERAGE_MODE=ci jest --config=jest.ci.config.cjs",
     "test:coverage:report": "npm run test:coverage && npm run coverage:open",
     "test:coverage:watch": "set COVERAGE=true && jest --coverage --watchAll",
     "test:e2e": "playwright test --project=chromium",

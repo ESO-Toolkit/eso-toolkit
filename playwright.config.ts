@@ -13,10 +13,7 @@ export default defineConfig({
   /* Retry on CI only */
   retries: process.env.CI ? 1 : 0, // Reduce retries to save memory
   /* Optimize worker count for CI environment */
-  workers: process.env.CI ? calculateOptimalWorkers({ 
-    maxWorkers: 2, // Conservative for standard tests
-    memoryPerWorker: 1200 // Higher memory per worker for safety
-  }) : undefined,
+  workers: process.env.CI ? 1 : undefined, // Single worker in CI to prevent memory issues
   /* Timeout settings */
   timeout: process.env.CI ? 60000 : 30000, // 60s in CI, 30s locally
   expect: {

@@ -18,14 +18,14 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
   /* Limit workers to prevent OAuth rate limiting - ESO Logs API has rate limits */
   workers: calculateOptimalWorkers({ 
-    maxWorkers: process.env.CI ? 6 : 3, // Increase to 6 workers in CI for faster execution
-    memoryPerWorker: 1200, // Reduce memory allocation to allow more workers
+    maxWorkers: process.env.CI ? 3 : 3, // Conservative CI workers to prevent API rate limiting
+    memoryPerWorker: 1500, // Increase memory per worker for stability
     minWorkers: 1
   }),
   /* Timeout settings - increased for API calls */
-  timeout: process.env.CI ? 45000 : 60000, // Increased for API calls
+  timeout: process.env.CI ? 60000 : 60000, // Same timeout for consistency
   expect: {
-    timeout: process.env.CI ? 8000 : 10000, // Faster expectations in CI
+    timeout: process.env.CI ? 15000 : 10000, // Longer expectations in CI due to slower environment
     // Configure visual comparison thresholds - more lenient for dynamic content
     toHaveScreenshot: {
       threshold: 0.3, // Allow 30% pixel difference for dynamic content
@@ -68,10 +68,10 @@ export default defineConfig({
     video: 'retain-on-failure',
     
     /* Navigation timeout - increased for API calls */
-    navigationTimeout: process.env.CI ? 45000 : 35000,
+    navigationTimeout: process.env.CI ? 60000 : 35000,
     
     /* Action timeout - increased for API calls */
-    actionTimeout: process.env.CI ? 30000 : 25000,
+    actionTimeout: process.env.CI ? 45000 : 25000,
     
     /* Use shared authentication state from global setup */
     storageState: 'tests/auth-state.json',
