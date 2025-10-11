@@ -51,8 +51,8 @@ export default defineConfig({
   /* Use OS-agnostic snapshot paths for cross-platform compatibility */
   snapshotPathTemplate: '{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}',
   
-  /* Global setup to authenticate once before running the test suite */
-  globalSetup: './tests/global-setup.ts',
+  /* Global setup - use lightweight CI version when in CI environment */
+  globalSetup: process.env.CI ? './tests/global-setup-ci.ts' : './tests/global-setup.ts',
   
   /* Shared settings for all the projects below */
   use: {

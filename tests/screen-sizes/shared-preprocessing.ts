@@ -5,6 +5,7 @@
 
 import { Page } from '@playwright/test';
 import { enableApiCaching } from './utils';
+import { isOfflineDataAvailable, enableOfflineMode } from './offline-data';
 
 // Test configuration constants
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
@@ -307,8 +308,17 @@ export async function markPreprocessingComplete(page: Page): Promise<void> {
  * Call this instead of the individual setup functions in tests
  */
 export async function setupWithSharedPreprocessing(page: Page): Promise<void> {
-  // Enable API caching
-  await enableApiCaching(page);
+  // Check if offline data is available and prefer it over API calls
+  const useOfflineMode = isOfflineDataAvailable();
+  
+  if (useOfflineMode) {
+    console.log('🔌 Using offline mode with pre-downloaded data');
+    await enableOfflineMode(page);
+  } else {
+    console.log('🌐 Using online mode with API caching');
+    // Enable API caching as fallback
+    await enableApiCaching(page);
+  }
   
   // Add authentication state  
   await page.addInitScript(() => {
