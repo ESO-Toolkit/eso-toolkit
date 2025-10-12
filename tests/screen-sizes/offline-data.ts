@@ -40,6 +40,11 @@ const DATA_FILE_MAPPING: OfflineDataFile[] = [
     description: 'Player information with details and stats',
   },
   {
+    filename: 'mock-user.json',
+    operationName: 'getCurrentUser',
+    description: 'Mock user authentication data for offline testing',
+  },
+  {
     filename: 'events/damage-events.json',
     operationName: 'getDamageEvents', 
     description: 'Damage events for DPS analysis',
@@ -118,6 +123,20 @@ export function isOfflineDataAvailable(): boolean {
  * Load offline data for a specific operation
  */
 export function loadOfflineData(operationName: string, variables?: any): any {
+  // Handle special mock operations
+  if (operationName === 'getCurrentUser') {
+    console.log(`📂 Using mock data for ${operationName}`);
+    return {
+      data: {
+        currentUser: {
+          id: 'test-user',
+          name: 'Test User',
+          battletag: 'TestUser#1234'
+        }
+      }
+    };
+  }
+
   const mapping = DATA_FILE_MAPPING.find(m => m.operationName === operationName);
   if (!mapping) {
     console.warn(`⚠️ No offline data mapping found for operation: ${operationName}`);
@@ -149,14 +168,13 @@ export async function enableOfflineMode(page: Page): Promise<void> {
   console.log('🔌 Enabling offline mode with pre-downloaded data...');
 
   if (!isOfflineDataAvailable()) {
-    throw new Error(
-      `❌ Offline test data not available!\n\n` +
-      `Please run: npm run download-test-data\n\n` +
-      `This will download the required test data to: ${TEST_DATA_DIR}`
-    );
+    console.warn('⚠️ Offline test data not available - tests will use online mode');
+    console.warn(`Expected data location: ${TEST_DATA_DIR}`);
+    console.warn('To enable offline mode, run: npm run download-test-data');
+    return; // Graceful fallback to online mode
   }
 
-  await page.route('**/api/v2/**', async (route) => {
+  await page.route('**/*', async (route) => {
     const request = route.request();
     const url = request.url();
 

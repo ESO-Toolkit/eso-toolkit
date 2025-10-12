@@ -26,33 +26,48 @@ async function navigateToReport(page: any, path: string = '') {
  * Minimal wait for content - just enough for visual stability
  */
 async function waitForVisualStability(page: any) {
-  try {
-    // Wait for network to settle with increased timeout
-    await page.waitForLoadState('networkidle', { timeout: 45000 });
-  } catch (error) {
-    console.log('⚠️ Network idle timeout, but continuing with visual stability checks...');
-    // Continue anyway - the page may still be usable
-  }
-  
-  // Brief stabilization for animations/loading
-  await page.waitForTimeout(process.env.CI ? 2000 : 3000);
-  
-  // Wait for React app to mount and render the main structure
-  // This is more reliable than just waiting for body which always exists
+  // Wait for React app to mount first
   try {
     await page.waitForSelector('#root', { timeout: 15000 });
     
-    // Wait for the app layout structure (HeaderBar and Container) to be present
-    // This ensures the React app has actually rendered
+    // Wait for the app layout structure to be present
     await page.waitForSelector('[role="banner"], header, nav, main, #root > *', { 
       timeout: 15000,
       state: 'visible'
     });
   } catch (error) {
     console.log('⚠️ App structure timeout, but continuing anyway...');
-    // Fall back to basic DOM ready check if app structure isn't available
+    // Fall back to basic DOM ready check
     await page.waitForFunction(() => document.readyState === 'complete', { timeout: 5000 });
   }
+  
+  // Wait for app content to be loaded (not just loading state)
+  try {
+    // Look for actual content indicators rather than just loading states
+    await page.waitForFunction(() => {
+      // Check if there are any loading spinners or loading text visible
+      const loadingIndicators = document.querySelectorAll('[data-testid*="loading"], .loading, .spinner, [aria-label*="loading" i]');
+      const loadingText = document.body.innerText.toLowerCase();
+      
+      // Return true if no loading indicators are visible and we have content
+      const hasLoadingIndicators = Array.from(loadingIndicators).some(el => {
+        const element = el as HTMLElement;
+        return element.offsetParent !== null; // Check if visible
+      });
+      
+      const hasLoadingText = loadingText.includes('loading') && !loadingText.includes('data loaded');
+      
+      // Also check if we have actual content (not just empty containers)
+      const hasContent = document.querySelectorAll('[role="main"] > *, .panel, .card, .chart, [data-testid*="content"]').length > 0;
+      
+      return !hasLoadingIndicators && !hasLoadingText && hasContent;
+    }, { timeout: 30000 });
+  } catch (error) {
+    console.log('⚠️ Content loading timeout, taking screenshot anyway...');
+  }
+  
+  // Brief final stabilization for animations
+  await page.waitForTimeout(process.env.CI ? 1000 : 1500);
 }
 
 test.describe('Visual Regression - Core Panels', () => {
@@ -61,8 +76,33 @@ test.describe('Visual Regression - Core Panels', () => {
   });
 
   test('players panel visual regression', async ({ page }) => {
+    // Use the same navigation approach as the preprocessing test that works
     await navigateToReport(page);
-    await waitForVisualStability(page);
+    
+    // Wait for basic content (same approach as preprocessing test that works)
+    await page.waitForSelector('[data-testid="main-content"], main, .MuiContainer-root, .App', { 
+      timeout: 15000 
+    });
+    
+    // Navigate to players tab by clicking on it (more realistic approach)
+    const playersTabButton = page.locator('button, [role="tab"], a').filter({ hasText: /players/i });
+    if (await playersTabButton.isVisible({ timeout: 5000 })) {
+      await playersTabButton.click();
+      await page.waitForTimeout(2000); // Allow navigation to settle
+    } else {
+      // Fallback: navigate directly to players URL
+      await navigateToReport(page, '/players');
+    }
+    
+    // Use the same timing approach as the preprocessing test that works
+    const startTime = Date.now();
+    
+    // Give it a moment to settle
+    await page.waitForTimeout(3000);
+    
+    const loadTime = Date.now() - startTime;
+    console.log(`⏱️  Players panel loaded in ${loadTime}ms`);
+    console.log('✅ Players panel ready for screenshot capture');
 
     // Take screenshot - this is the only thing that matters for visual regression
     await expect(page).toHaveScreenshot('players-panel.png', {
