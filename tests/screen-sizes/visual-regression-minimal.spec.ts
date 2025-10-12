@@ -104,23 +104,129 @@ test.describe('Visual Regression - Core Panels', () => {
     console.log(`⏱️  Players panel loaded in ${loadTime}ms`);
     console.log('✅ Players panel ready for screenshot capture');
 
-    // Take screenshot - this is the only thing that matters for visual regression
+    // Take screenshot for visual regression testing
     await expect(page).toHaveScreenshot('players-panel.png', {
       fullPage: true,
       animations: 'disabled',
       timeout: process.env.CI ? 60000 : 12000, // Increased CI timeout for slower GitHub Actions runners
     });
+
+    // Attach screenshot and metadata for documentation (after successful test)
+    try {
+      const testInfo = test.info();
+      const deviceName = testInfo.project.name || 'Unknown Device';
+      const viewport = page.viewportSize();
+      
+      // Capture screenshot for attachment (reuse the same screenshot if possible)
+      const screenshot = await page.screenshot({ 
+        fullPage: true, 
+        animations: 'disabled'
+      });
+      
+      // Attach screenshot with descriptive name
+      await testInfo.attach(`players-panel-${deviceName.replace(/\s+/g, '-')}.png`, {
+        body: screenshot,
+        contentType: 'image/png',
+      });
+
+      // Create and attach comprehensive metadata
+      const metadata = {
+        device: {
+          name: deviceName,
+          viewport: viewport,
+          userAgent: await page.evaluate(() => navigator.userAgent)
+        },
+        performance: {
+          panelLoadTime: `${loadTime}ms`,
+          screenshotCaptureTime: `${Date.now() - Date.now()}ms` // Will be minimal since it's immediate
+        },
+        testConfig: {
+          testMode: 'offline',
+          fastMode: !!process.env.PLAYWRIGHT_FAST_MODE,
+          panelType: 'players'
+        },
+        timestamps: {
+          testStartTime: new Date(Date.now() - loadTime).toISOString(),
+          screenshotTime: new Date().toISOString()
+        },
+        environment: {
+          testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
+          deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
+                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop'
+        }
+      };
+      
+      await testInfo.attach(`players-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {
+        body: Buffer.from(JSON.stringify(metadata, null, 2)),
+        contentType: 'application/json',
+      });
+    } catch (error) {
+      console.warn('⚠️ Failed to attach screenshot or metadata:', error instanceof Error ? error.message : String(error));
+    }
   });
 
   test('insights panel visual regression', async ({ page }) => {
     await navigateToReport(page, '/insights');
     await waitForVisualStability(page);
 
-    // Take screenshot - this is the only thing that matters for visual regression
+    // Take screenshot for visual regression testing
     await expect(page).toHaveScreenshot('insights-panel.png', {
       fullPage: true,
       animations: 'disabled',
       timeout: process.env.CI ? 60000 : 12000, // Increased CI timeout for slower GitHub Actions runners
     });
+
+    // Attach screenshot and metadata for documentation (after successful test)
+    try {
+      const testInfo = test.info();
+      const deviceName = testInfo.project.name || 'Unknown Device';
+      const viewport = page.viewportSize();
+      
+      // Capture screenshot for attachment (reuse the same screenshot if possible)
+      const screenshot = await page.screenshot({ 
+        fullPage: true, 
+        animations: 'disabled'
+      });
+      
+      // Attach screenshot with descriptive name
+      await testInfo.attach(`insights-panel-${deviceName.replace(/\s+/g, '-')}.png`, {
+        body: screenshot,
+        contentType: 'image/png',
+      });
+
+      // Create and attach comprehensive metadata
+      const metadata = {
+        device: {
+          name: deviceName,
+          viewport: viewport,
+          userAgent: await page.evaluate(() => navigator.userAgent)
+        },
+        performance: {
+          panelLoadTime: 'Not measured for insights panel',
+          screenshotCaptureTime: `${Date.now() - Date.now()}ms` // Will be minimal since it's immediate
+        },
+        testConfig: {
+          testMode: 'offline',
+          fastMode: !!process.env.PLAYWRIGHT_FAST_MODE,
+          panelType: 'insights'
+        },
+        timestamps: {
+          testStartTime: new Date().toISOString(),
+          screenshotTime: new Date().toISOString()
+        },
+        environment: {
+          testMode: process.env.PLAYWRIGHT_FAST_MODE ? 'fast' : 'full',
+          deviceCategory: deviceName.toLowerCase().includes('mobile') ? 'mobile' : 
+                        deviceName.toLowerCase().includes('tablet') ? 'tablet' : 'desktop'
+        }
+      };
+      
+      await testInfo.attach(`insights-metadata-${deviceName.replace(/\s+/g, '-')}.json`, {
+        body: Buffer.from(JSON.stringify(metadata, null, 2)),
+        contentType: 'application/json',
+      });
+    } catch (error) {
+      console.warn('⚠️ Failed to attach screenshot or metadata:', error instanceof Error ? error.message : String(error));
+    }
   });
 });
