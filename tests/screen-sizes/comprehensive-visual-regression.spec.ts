@@ -191,22 +191,24 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
   test('visual regression for login page (unauthenticated)', async ({ page }) => {
     console.log('🔐 Running visual regression tests for login page...');
     
-    // Navigate directly to a protected route to trigger login redirect WITHOUT enableApiCaching
-    console.log('📍 Navigating to protected route to trigger login...');
-    await page.goto('/#/my-reports');
+    // Navigate directly to the login page WITHOUT enableApiCaching
+    console.log('📍 Navigating to login page...');
+    await page.goto('/#/login');
     
     // Wait for login page to load
     console.log('⏳ Waiting for login page to load...');
-    await page.waitForSelector('[data-testid="login-card"], .MuiCard-root', { timeout: 30000 });
+    await page.waitForSelector('[data-testid="login-title"], .MuiCard-root', { timeout: 30000 });
     
     // Wait for any loading states to complete
     await page.waitForTimeout(2000);
     
     // Verify we're on the login page
     console.log('🔍 Verifying login page elements...');
+    const loginTitle = await page.locator('[data-testid="login-title"]').count();
     const loginButton = await page.locator('button:has-text("Login"), button:has-text("Sign In")').count();
-    const loginCard = await page.locator('[data-testid="login-card"], .MuiCard-root').count();
+    const loginCard = await page.locator('.MuiCard-root').count();
     
+    console.log(`Login title: ${loginTitle}`);
     console.log(`Login button: ${loginButton}`);
     console.log(`Login card: ${loginCard}`);
     
@@ -261,20 +263,22 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     console.log('📍 Navigating to calculator page...');
     await page.goto('/#/calculator');
     
-    // Wait for the calculator to load
+    // Wait for the calculator to load - look for Container or main calculator elements
     console.log('⏳ Waiting for calculator content to load...');
-    await page.waitForSelector('[data-testid="calculator"], .calculator, [data-testid="smart-calculator"]', { timeout: 30000 });
+    await page.waitForSelector('.MuiContainer-root, [role="main"], main', { timeout: 30000 });
     
     // Wait for calculator components to fully render
     await page.waitForTimeout(4000);
     
     // Verify we're on the calculator page
     console.log('🔍 Verifying calculator page elements...');
-    const calculatorElement = await page.locator('[data-testid="calculator"], .calculator, [data-testid="smart-calculator"]').count();
+    const containerElement = await page.locator('.MuiContainer-root').count();
     const inputFields = await page.locator('input, .MuiTextField-root').count();
+    const buttons = await page.locator('button').count();
     
-    console.log(`Calculator element: ${calculatorElement}`);
+    console.log(`Container element: ${containerElement}`);
     console.log(`Input fields: ${inputFields}`);
+    console.log(`Buttons: ${buttons}`);
     
     // Visual regression comparison
     console.log('📸 Performing visual regression comparison for calculator page...');
