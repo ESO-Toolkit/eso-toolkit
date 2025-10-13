@@ -317,7 +317,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     }
 
     return (
-      <Box data-testid="players-panel-view" sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box
+        data-testid="players-panel-view"
+        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+      >
         {/* Controls */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
           <TextField
@@ -396,24 +399,24 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           {filteredAndSortedPlayerCards.map((playerData) => (
             <Box key={playerData.key} data-testid={`player-card-${playerData.player.id}`}>
               <PlayerCard
-              key={String(playerData.key)}
-              player={playerData.player}
-              mundusBuffs={playerData.mundusBuffs}
-              championPoints={playerData.championPoints}
-              auras={playerData.auras}
-              scribingSkills={playerData.scribingSkills}
-              buildIssues={playerData.buildIssues}
-              classAnalysis={playerData.classAnalysis}
-              deaths={playerData.deaths}
-              resurrects={playerData.resurrects}
-              cpm={playerData.cpm}
-              maxHealth={playerData.maxHealth}
-              maxStamina={playerData.maxStamina}
-              maxMagicka={playerData.maxMagicka}
-              reportId={reportId}
-              fightId={fightId}
-              playerGear={playerData.playerGear}
-            />
+                key={String(playerData.key)}
+                player={playerData.player}
+                mundusBuffs={playerData.mundusBuffs}
+                championPoints={playerData.championPoints}
+                auras={playerData.auras}
+                scribingSkills={playerData.scribingSkills}
+                buildIssues={playerData.buildIssues}
+                classAnalysis={playerData.classAnalysis}
+                deaths={playerData.deaths}
+                resurrects={playerData.resurrects}
+                cpm={playerData.cpm}
+                maxHealth={playerData.maxHealth}
+                maxStamina={playerData.maxStamina}
+                maxMagicka={playerData.maxMagicka}
+                reportId={reportId}
+                fightId={fightId}
+                playerGear={playerData.playerGear}
+              />
             </Box>
           ))}
         </Box>

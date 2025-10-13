@@ -30,6 +30,7 @@ initializeSentry();
 
 // Expose Redux store to window for debugging and testing (dev/test only)
 if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   (window as any).__REDUX_STORE__ = store;
 }
 

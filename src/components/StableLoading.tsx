@@ -96,7 +96,10 @@ export const StableLoading: React.FC<StableLoadingProps> = ({
   };
 
   return (
-    <Box data-testid={dataTestId} sx={{ width, minHeight: height, display: 'flex', flexDirection: 'column' }}>
+    <Box
+      data-testid={dataTestId}
+      sx={{ width, minHeight: height, display: 'flex', flexDirection: 'column' }}
+    >
       {getContent()}
     </Box>
   );

@@ -83,7 +83,9 @@ const SkillTooltipLoadingFallback: React.FC<SkillTooltipLoadingFallbackProps> = 
 );
 
 // Wrapper component with suspense boundary
-export const LazySkillTooltip: React.FC<SkillTooltipProps & { 'data-testid'?: string }> = (props) => {
+export const LazySkillTooltip: React.FC<SkillTooltipProps & { 'data-testid'?: string }> = (
+  props,
+) => {
   const {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     itemCount,
@@ -96,5 +98,5 @@ export const LazySkillTooltip: React.FC<SkillTooltipProps & { 'data-testid'?: st
       <SkillTooltip {...filteredProps} />
     </Suspense>
   );
-};// Re-export types for convenience
+}; // Re-export types for convenience
 export type { SkillTooltipProps, SkillStat } from './SkillTooltip';

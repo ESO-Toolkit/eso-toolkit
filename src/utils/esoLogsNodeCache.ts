@@ -3,18 +3,28 @@
  * Only works in Node.js environment (server-side/tests)
  */
 
+import crypto from 'crypto';
 import { promises as fs } from 'fs';
 import path from 'path';
-import crypto from 'crypto';
+
+import type { OperationVariables } from '@apollo/client';
+
+import { Logger, LogLevel } from '../contexts/LoggerContext';
 
 const CACHE_DIR = path.join(process.cwd(), 'cache', 'eso-logs-api');
 const CACHE_VERSION = '1.0';
 const DEFAULT_TTL = 7 * 24 * 60 * 60 * 1000; // 7 days in milliseconds
 
-// Environment variable configuration for logging
-const ENABLE_CACHE_LOGGING = process.env.ENABLE_CACHE_LOGGING === 'true' || process.env.NODE_ENV === 'test';
+// Create logger instance for cache operations
+const logger = new Logger({
+  level:
+    process.env.ENABLE_CACHE_LOGGING === 'true' || process.env.NODE_ENV === 'test'
+      ? LogLevel.DEBUG
+      : LogLevel.ERROR,
+  contextPrefix: 'FileCache',
+});
 
-interface CacheEntry<T = any> {
+interface CacheEntry<T = unknown> {
   data: T;
   timestamp: number;
   ttl: number;
@@ -22,28 +32,19 @@ interface CacheEntry<T = any> {
   key: string;
   metadata?: {
     operationName?: string;
-    variables?: any;
+    variables?: OperationVariables;
     endpoint?: string;
   };
 }
 
 export class EsoLogsNodeCache {
   /**
-   * Log cache operations if enabled
-   */
-  private log(message: string): void {
-    if (ENABLE_CACHE_LOGGING) {
-      console.log(message);
-    }
-  }
-
-  /**
    * Ensure cache directory exists
    */
   private async ensureCacheDir(): Promise<void> {
     try {
       await fs.mkdir(CACHE_DIR, { recursive: true });
-    } catch (error) {
+    } catch {
       // Directory might already exist, ignore error
     }
   }
@@ -53,34 +54,34 @@ export class EsoLogsNodeCache {
    */
   private generateCacheKey(
     operationName: string,
-    variables: any = {},
-    endpoint: string = 'client'
+    variables: OperationVariables = {},
+    endpoint: string = 'client',
   ): string {
     const content = JSON.stringify({
       operation: operationName,
       variables: this.normalizeVariables(variables),
       endpoint,
     });
-    
+
     return crypto.createHash('sha256').update(content).digest('hex').substring(0, 16);
   }
 
   /**
    * Normalize variables for consistent cache keys
    */
-  private normalizeVariables(variables: any): any {
+  private normalizeVariables(variables: OperationVariables): OperationVariables {
     if (!variables || typeof variables !== 'object') {
       return variables;
     }
 
     // Sort object keys for consistent hashing
-    const sorted: any = {};
+    const sorted: Record<string, unknown> = {};
     Object.keys(variables)
       .sort()
-      .forEach(key => {
+      .forEach((key) => {
         sorted[key] = variables[key];
       });
-    
+
     return sorted;
   }
 
@@ -98,24 +99,24 @@ export class EsoLogsNodeCache {
     const now = Date.now();
     const isExpired = now - entry.timestamp > entry.ttl;
     const isCorrectVersion = entry.version === CACHE_VERSION;
-    
+
     return !isExpired && isCorrectVersion;
   }
 
   /**
    * Get data from cache
    */
-  async get<T = any>(
+  async get<T = unknown>(
     operationName: string,
-    variables: any = {},
-    endpoint: string = 'client'
+    variables: OperationVariables = {},
+    endpoint: string = 'client',
   ): Promise<T | null> {
     try {
       await this.ensureCacheDir();
-      
+
       const cacheKey = this.generateCacheKey(operationName, variables, endpoint);
       const filePath = this.getCacheFilePath(cacheKey);
-      
+
       // Check if file exists
       try {
         await fs.access(filePath);
@@ -126,7 +127,7 @@ export class EsoLogsNodeCache {
       // Read and parse cache file
       const fileContent = await fs.readFile(filePath, 'utf-8');
       const cacheEntry: CacheEntry<T> = JSON.parse(fileContent);
-      
+
       // Validate cache entry
       if (!this.isValidCacheEntry(cacheEntry)) {
         // Clean up expired cache
@@ -134,11 +135,10 @@ export class EsoLogsNodeCache {
         return null;
       }
 
-      this.log(`🟢 File Cache HIT for ${operationName} (${endpoint})`);
+      logger.debug(`🟢 File Cache HIT for ${operationName} (${endpoint})`);
       return cacheEntry.data;
-      
     } catch (error) {
-      console.warn('Failed to read from file cache:', error);
+      logger.warn(`Failed to read from file cache: ${error}`);
       return null;
     }
   }
@@ -146,19 +146,19 @@ export class EsoLogsNodeCache {
   /**
    * Store data in cache
    */
-  async set<T = any>(
+  async set<T = unknown>(
     operationName: string,
-    variables: any = {},
+    variables: OperationVariables = {},
     endpoint: string = 'client',
     data: T,
-    ttl: number = DEFAULT_TTL
+    ttl: number = DEFAULT_TTL,
   ): Promise<void> {
     try {
       await this.ensureCacheDir();
-      
+
       const cacheKey = this.generateCacheKey(operationName, variables, endpoint);
       const filePath = this.getCacheFilePath(cacheKey);
-      
+
       const cacheEntry: CacheEntry<T> = {
         data,
         timestamp: Date.now(),
@@ -173,10 +173,9 @@ export class EsoLogsNodeCache {
       };
 
       await fs.writeFile(filePath, JSON.stringify(cacheEntry, null, 2), 'utf-8');
-      this.log(`💾 File Cache STORED for ${operationName} (${endpoint})`);
-      
+      logger.debug(`💾 File Cache STORED for ${operationName} (${endpoint})`);
     } catch (error) {
-      console.warn('Failed to write to file cache:', error);
+      logger.warn(`Failed to write to file cache: ${error}`);
     }
   }
 
@@ -185,17 +184,16 @@ export class EsoLogsNodeCache {
    */
   async delete(
     operationName: string,
-    variables: any = {},
-    endpoint: string = 'client'
+    variables: OperationVariables = {},
+    endpoint: string = 'client',
   ): Promise<void> {
     try {
       const cacheKey = this.generateCacheKey(operationName, variables, endpoint);
       const filePath = this.getCacheFilePath(cacheKey);
-      
+
       await fs.unlink(filePath);
-      this.log(`🗑️ File Cache DELETED for ${operationName} (${endpoint})`);
-      
-    } catch (error) {
+      logger.debug(`🗑️ File Cache DELETED for ${operationName} (${endpoint})`);
+    } catch {
       // File might not exist, ignore error
     }
   }
@@ -206,17 +204,16 @@ export class EsoLogsNodeCache {
   async clear(): Promise<void> {
     try {
       const files = await fs.readdir(CACHE_DIR);
-      
+
       for (const file of files) {
         if (file.endsWith('.json')) {
           await fs.unlink(path.join(CACHE_DIR, file));
         }
       }
-      
-      this.log('🧹 File Cache CLEARED');
-      
+
+      logger.info('🧹 File Cache CLEARED');
     } catch (error) {
-      console.warn('Failed to clear file cache:', error);
+      logger.warn(`Failed to clear file cache: ${error}`);
     }
   }
 
@@ -233,20 +230,20 @@ export class EsoLogsNodeCache {
       await this.ensureCacheDir();
       const files = await fs.readdir(CACHE_DIR);
       const jsonFiles = files.filter((f: string) => f.endsWith('.json'));
-      
+
       let totalSize = 0;
       let oldestTimestamp = Infinity;
       let newestTimestamp = 0;
-      
+
       for (const file of jsonFiles) {
         const filePath = path.join(CACHE_DIR, file);
         const stats = await fs.stat(filePath);
         totalSize += stats.size;
-        
+
         try {
           const content = await fs.readFile(filePath, 'utf-8');
           const entry: CacheEntry = JSON.parse(content);
-          
+
           if (entry.timestamp < oldestTimestamp) {
             oldestTimestamp = entry.timestamp;
           }
@@ -257,15 +254,14 @@ export class EsoLogsNodeCache {
           // Skip invalid cache files
         }
       }
-      
+
       return {
         totalEntries: jsonFiles.length,
         totalSize,
         oldestEntry: oldestTimestamp !== Infinity ? new Date(oldestTimestamp) : undefined,
         newestEntry: newestTimestamp > 0 ? new Date(newestTimestamp) : undefined,
       };
-      
-    } catch (error) {
+    } catch {
       return {
         totalEntries: 0,
         totalSize: 0,
@@ -278,19 +274,19 @@ export class EsoLogsNodeCache {
    */
   async cleanExpired(): Promise<number> {
     let cleanedCount = 0;
-    
+
     try {
       await this.ensureCacheDir();
       const files = await fs.readdir(CACHE_DIR);
-      
+
       for (const file of files) {
         if (!file.endsWith('.json')) continue;
-        
+
         try {
           const filePath = path.join(CACHE_DIR, file);
           const content = await fs.readFile(filePath, 'utf-8');
           const entry: CacheEntry = JSON.parse(content);
-          
+
           if (!this.isValidCacheEntry(entry)) {
             await fs.unlink(filePath);
             cleanedCount++;
@@ -301,15 +297,14 @@ export class EsoLogsNodeCache {
           cleanedCount++;
         }
       }
-      
+
       if (cleanedCount > 0) {
-        this.log(`🧹 Cleaned ${cleanedCount} expired cache entries`);
+        logger.info(`🧹 Cleaned ${cleanedCount} expired cache entries`);
       }
-      
     } catch (error) {
-      console.warn('Failed to clean expired cache:', error);
+      logger.warn(`Failed to clean expired cache: ${error}`);
     }
-    
+
     return cleanedCount;
   }
 }

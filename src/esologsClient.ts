@@ -139,8 +139,6 @@ export class EsoLogsClient {
     return this.client;
   }
 
-
-
   // Delegate Apollo Client methods
   public async query<TData = unknown, TVariables extends OperationVariables = OperationVariables>(
     options: QueryOptions<TVariables, TData>,

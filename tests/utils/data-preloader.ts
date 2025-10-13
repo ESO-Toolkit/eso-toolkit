@@ -465,6 +465,4 @@ export async function warmCacheForVisualTestSuite(
   });
   
   console.log('✅ Cache warmed for visual test suite - subsequent tests should be fast');
-  
-  return preloadedState;
 }

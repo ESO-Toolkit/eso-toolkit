@@ -950,7 +950,7 @@ export const PlayersPanel: React.FC = () => {
         resurrectsByPlayer={resurrectsByPlayer}
         cpmByPlayer={cpmByPlayer}
         aurasByPlayer={aurasByPlayer}
-        maxHealthByPlayer={maxStaminaByPlayer}
+        maxHealthByPlayer={maxHealthByPlayer}
         maxStaminaByPlayer={maxStaminaByPlayer}
         maxMagickaByPlayer={maxMagickaByPlayer}
         reportId={reportId}

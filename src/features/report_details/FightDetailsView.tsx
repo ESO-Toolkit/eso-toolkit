@@ -629,7 +629,10 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
 
       {/* Tab Content */}
       <Box sx={{ mt: 2 }} data-testid="fight-tab-content-container">
-        <AnimatedTabContent tabKey={validSelectedTabId} data-testid={`tab-content-${validSelectedTabId}`}>
+        <AnimatedTabContent
+          tabKey={validSelectedTabId}
+          data-testid={`tab-content-${validSelectedTabId}`}
+        >
           {validSelectedTabId === TabId.INSIGHTS && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.INSIGHTS} />}>
               <InsightsPanel fight={fight} />

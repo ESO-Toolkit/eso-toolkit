@@ -22,7 +22,13 @@ export const TabAwareLoadingSkeleton: React.FC<TabAwareLoadingSkeletonProps> = (
   // If not on a fight route, show generic loading
   if (!isFightRoute()) {
     return (
-      <Box data-testid={dataTestId} display="flex" justifyContent="center" alignItems="center" height="400px">
+      <Box
+        data-testid={dataTestId}
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="400px"
+      >
         <CircularProgress />
       </Box>
     );
@@ -53,11 +59,7 @@ export const TabAwareLoadingSkeleton: React.FC<TabAwareLoadingSkeletonProps> = (
 
   const selectedTabId = getSelectedTabFromURL();
   const skeleton = getSkeletonForTab(selectedTabId, true); // Include header and tabs for initial load
-  
+
   // Wrap the skeleton with our data-testid
-  return (
-    <Box data-testid={dataTestId}>
-      {skeleton}
-    </Box>
-  );
+  return <Box data-testid={dataTestId}>{skeleton}</Box>;
 };
