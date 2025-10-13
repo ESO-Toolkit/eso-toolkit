@@ -4,15 +4,18 @@ import React from 'react';
 interface PenetrationSkeletonProps {
   playerCount?: number;
   showNoTargetsState?: boolean;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const PenetrationSkeleton: React.FC<PenetrationSkeletonProps> = ({
   playerCount = 8,
   showNoTargetsState = false,
+  'data-testid': dataTestId = 'penetration-skeleton',
 }) => {
   if (showNoTargetsState) {
     return (
-      <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+      <Box data-testid={dataTestId} sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
         {/* Title */}
         <Skeleton
           variant="text"
@@ -44,7 +47,7 @@ export const PenetrationSkeleton: React.FC<PenetrationSkeletonProps> = ({
   }
 
   return (
-    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+    <Box data-testid={dataTestId} sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
       {/* Title */}
       <Skeleton
         variant="text"

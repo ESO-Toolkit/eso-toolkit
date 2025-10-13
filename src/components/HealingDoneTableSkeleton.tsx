@@ -3,13 +3,16 @@ import React from 'react';
 
 interface HealingDoneTableSkeletonProps {
   rowCount?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const HealingDoneTableSkeleton: React.FC<HealingDoneTableSkeletonProps> = ({
   rowCount = 8,
+  'data-testid': dataTestId = 'healing-done-table-skeleton',
 }) => {
   return (
-    <Box>
+    <Box data-testid={dataTestId}>
       {/* Title Section */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         <Skeleton variant="text" width="200px" height={28} />

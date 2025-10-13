@@ -4,14 +4,17 @@ import React from 'react';
 interface InsightsSkeletonLayoutProps {
   showHeader?: boolean;
   showTabs?: boolean;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const InsightsSkeletonLayout: React.FC<InsightsSkeletonLayoutProps> = ({
   showHeader = false,
   showTabs = false,
+  'data-testid': dataTestId = 'insights-skeleton-layout',
 }) => {
   return (
-    <Box sx={{ minHeight: '800px' }}>
+    <Box data-testid={dataTestId} sx={{ minHeight: '800px' }}>
       {/* Target Selection and Navigation Row Skeleton - from FightDetailsView */}
       {showHeader && (
         <Box

@@ -316,13 +316,15 @@ export const DamageDonePanel: React.FC = () => {
   }
 
   return (
-    <DamageDonePanelView
-      damageRows={damageRows}
-      selectedTargetNames={selectedTargetNames}
-      damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
-      isDamageOverTimeLoading={isDamageOverTimeLoading}
-      selectedTargetIds={selectedTargetIds}
-      availableTargets={availableTargets}
-    />
+    <Box data-testid="damage-done-panel">
+      <DamageDonePanelView
+        damageRows={damageRows}
+        selectedTargetNames={selectedTargetNames}
+        damageOverTimeData={damageOverTimeData as DamageOverTimeResult | null}
+        isDamageOverTimeLoading={isDamageOverTimeLoading}
+        selectedTargetIds={selectedTargetIds}
+        availableTargets={availableTargets}
+      />
+    </Box>
   );
 };

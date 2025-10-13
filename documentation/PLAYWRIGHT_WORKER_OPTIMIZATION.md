@@ -17,7 +17,6 @@ Created `tests/utils/worker-config.ts` with intelligent worker calculation based
 #### Before vs After:
 | Config File | Before | After |
 |-------------|---------|-------|
-| `playwright.config.ts` | `workers: process.env.CI ? 1 : undefined` | Dynamic calculation, max 2 workers |
 | `playwright.nightly.config.ts` | `workers: process.env.CI ? 2 : 4` | Dynamic calculation, max 3 workers |
 | `playwright.screen-sizes.config.ts` | `workers: process.env.CI ? 2 : undefined` | Dynamic calculation, conservative for screenshots |
 | `playwright.smoke.config.ts` | `workers: 1` | Dynamic calculation, max 2 workers |
@@ -33,10 +32,10 @@ Added support for fine-tuning via environment variables:
 
 ### 4. **Optimized Settings per Test Type**
 
-#### Standard Tests (`playwright.config.ts`)
-- **Workers**: Up to 2 (from 1)
-- **Memory per worker**: 1200MB (conservative)
-- **Reasoning**: Balanced approach for regular E2E tests
+#### Nightly Tests (`playwright.nightly.config.ts`)
+- **Workers**: Up to 3 (from 2-4)
+- **Memory per worker**: 1800MB (increased for comprehensive testing)
+- **Reasoning**: Comprehensive cross-browser testing with controlled parallelization
 
 #### Nightly Tests (`playwright.nightly.config.ts`)
 - **Workers**: Up to 3 (from 2)

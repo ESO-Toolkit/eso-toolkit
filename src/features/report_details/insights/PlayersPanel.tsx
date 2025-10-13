@@ -938,26 +938,28 @@ export const PlayersPanel: React.FC = () => {
   }, [scribingSkillsByPlayer, scribingRecipes]);
 
   return (
-    <PlayersPanelView
-      playerActors={playerData?.playersById}
-      mundusBuffsByPlayer={mundusBuffsByPlayer}
-      championPointsByPlayer={championPointsByPlayer}
-      scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
-      buildIssuesByPlayer={buildIssuesByPlayer}
-      classAnalysisByPlayer={classAnalysisByPlayer}
-      deathsByPlayer={deathsByPlayer}
-      resurrectsByPlayer={resurrectsByPlayer}
-      cpmByPlayer={cpmByPlayer}
-      aurasByPlayer={aurasByPlayer}
-      maxHealthByPlayer={maxHealthByPlayer}
-      maxStaminaByPlayer={maxStaminaByPlayer}
-      maxMagickaByPlayer={maxMagickaByPlayer}
-      reportId={reportId}
-      fightId={fightId}
-      isLoading={isLoading}
-      playerGear={playerGear}
-      fightStartTime={fight?.startTime}
-      fightEndTime={fight?.endTime}
-    />
+    <div data-testid="players-panel-loaded">
+      <PlayersPanelView
+        playerActors={playerData?.playersById}
+        mundusBuffsByPlayer={mundusBuffsByPlayer}
+        championPointsByPlayer={championPointsByPlayer}
+        scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
+        buildIssuesByPlayer={buildIssuesByPlayer}
+        classAnalysisByPlayer={classAnalysisByPlayer}
+        deathsByPlayer={deathsByPlayer}
+        resurrectsByPlayer={resurrectsByPlayer}
+        cpmByPlayer={cpmByPlayer}
+        aurasByPlayer={aurasByPlayer}
+        maxHealthByPlayer={maxHealthByPlayer}
+        maxStaminaByPlayer={maxStaminaByPlayer}
+        maxMagickaByPlayer={maxMagickaByPlayer}
+        reportId={reportId}
+        fightId={fightId}
+        isLoading={isLoading}
+        playerGear={playerGear}
+        fightStartTime={fight?.startTime}
+        fightEndTime={fight?.endTime}
+      />
+    </div>
   );
 };

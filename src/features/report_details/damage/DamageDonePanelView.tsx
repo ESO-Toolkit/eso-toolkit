@@ -496,6 +496,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             return (
               <Box
                 key={row.id}
+                data-testid={`damage-row-${row.id}`}
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },

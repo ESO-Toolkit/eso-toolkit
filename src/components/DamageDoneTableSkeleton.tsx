@@ -3,13 +3,16 @@ import React from 'react';
 
 interface DamageDoneTableSkeletonProps {
   rowCount?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const DamageDoneTableSkeleton: React.FC<DamageDoneTableSkeletonProps> = ({
   rowCount = 10,
+  'data-testid': dataTestId = 'damage-done-table-skeleton',
 }) => {
   return (
-    <Box>
+    <Box data-testid={dataTestId}>
       {/* Title Section */}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
         <Skeleton variant="text" width="200px" height={28} />

@@ -11,8 +11,16 @@ const SkillTooltip = React.lazy(() =>
 );
 
 // Loading fallback for skill tooltips
-const SkillTooltipLoadingFallback: React.FC = () => (
+interface SkillTooltipLoadingFallbackProps {
+  /** Test ID for testing */
+  'data-testid'?: string;
+}
+
+const SkillTooltipLoadingFallback: React.FC<SkillTooltipLoadingFallbackProps> = ({
+  'data-testid': dataTestId = 'skill-tooltip-loading-fallback',
+}) => (
   <Box
+    data-testid={dataTestId}
     sx={{
       padding: 1.25,
       minWidth: 260,
@@ -75,20 +83,20 @@ const SkillTooltipLoadingFallback: React.FC = () => (
 );
 
 // Wrapper component with suspense boundary
-export const LazySkillTooltip: React.FC<SkillTooltipProps> = (props) => {
-  // Filter out any unknown props that might cause DOM element warnings
+export const LazySkillTooltip: React.FC<SkillTooltipProps & { 'data-testid'?: string }> = (
+  props,
+) => {
   const {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     itemCount,
+    'data-testid': dataTestId,
     ...filteredProps
-  } = props as SkillTooltipProps & { itemCount?: unknown };
+  } = props as SkillTooltipProps & { itemCount?: unknown; 'data-testid'?: string };
 
   return (
-    <Suspense fallback={<SkillTooltipLoadingFallback />}>
+    <Suspense fallback={<SkillTooltipLoadingFallback data-testid={dataTestId} />}>
       <SkillTooltip {...filteredProps} />
     </Suspense>
   );
-};
-
-// Re-export types for convenience
+}; // Re-export types for convenience
 export type { SkillTooltipProps, SkillStat } from './SkillTooltip';

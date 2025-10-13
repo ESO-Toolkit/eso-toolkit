@@ -231,18 +231,20 @@ export const TalentsGridPanel: React.FC<TalentsGridPanelProps> = ({ fight }) => 
         </Box>
 
         {/* Talents Grid */}
-        <DataGrid
-          data={talentRows as unknown as Record<string, unknown>[]}
-          columns={columns as ColumnDef<Record<string, unknown>>[]}
-          title={`Talents (${talentRows.length} unique)`}
-          height={600}
-          initialPageSize={25}
-          pageSizeOptions={[25, 50, 100]}
-          enableSorting={true}
-          enableFiltering={true}
-          enablePagination={true}
-          emptyMessage="No talents found matching your search criteria"
-        />
+        <Box data-testid="talents-grid-panel">
+          <DataGrid
+            data={talentRows as unknown as Record<string, unknown>[]}
+            columns={columns as ColumnDef<Record<string, unknown>>[]}
+            title={`Talents (${talentRows.length} unique)`}
+            height={600}
+            initialPageSize={25}
+            pageSizeOptions={[25, 50, 100]}
+            enableSorting={true}
+            enableFiltering={true}
+            enablePagination={true}
+            emptyMessage="No talents found matching your search criteria"
+          />
+        </Box>
       </Stack>
     </Box>
   );
