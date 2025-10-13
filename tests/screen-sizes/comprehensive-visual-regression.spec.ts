@@ -187,4 +187,102 @@ test.describe('Comprehensive Visual Regression - All Device Types', () => {
     
     console.log('✅ Insights panel visual regression test completed successfully');
   });
+
+  test('visual regression for login page (unauthenticated)', async ({ page }) => {
+    console.log('🔐 Running visual regression tests for login page...');
+    
+    // Navigate directly to a protected route to trigger login redirect WITHOUT enableApiCaching
+    console.log('📍 Navigating to protected route to trigger login...');
+    await page.goto('/#/my-reports');
+    
+    // Wait for login page to load
+    console.log('⏳ Waiting for login page to load...');
+    await page.waitForSelector('[data-testid="login-card"], .MuiCard-root', { timeout: 30000 });
+    
+    // Wait for any loading states to complete
+    await page.waitForTimeout(2000);
+    
+    // Verify we're on the login page
+    console.log('🔍 Verifying login page elements...');
+    const loginButton = await page.locator('button:has-text("Login"), button:has-text("Sign In")').count();
+    const loginCard = await page.locator('[data-testid="login-card"], .MuiCard-root').count();
+    
+    console.log(`Login button: ${loginButton}`);
+    console.log(`Login card: ${loginCard}`);
+    
+    // Visual regression comparison
+    console.log('📸 Performing visual regression comparison for login page...');
+    await expect(page).toHaveScreenshot('login-page.png', {
+      fullPage: true,
+      animations: 'disabled'
+    });
+    
+    console.log('✅ Login page visual regression test completed successfully');
+  });
+
+  test('visual regression for home/landing page (unauthenticated)', async ({ page }) => {
+    console.log('🏠 Running visual regression tests for home/landing page...');
+    
+    // Navigate to the home page WITHOUT enableApiCaching (unauthenticated)
+    console.log('📍 Navigating to home/landing page...');
+    await page.goto('/');
+    
+    // Wait for the landing page to load
+    console.log('⏳ Waiting for landing page content to load...');
+    await page.waitForSelector('h1, [data-testid="landing-title"], .MuiTypography-h1', { timeout: 30000 });
+    
+    // Wait for any hero images or dynamic content to load
+    await page.waitForTimeout(3000);
+    
+    // Verify we're on the landing page
+    console.log('🔍 Verifying landing page elements...');
+    const heroText = await page.locator('h1, [data-testid="landing-title"], .MuiTypography-h1').count();
+    const navBar = await page.locator('header, [data-testid="header-bar"], .MuiAppBar-root').count();
+    const mainContent = await page.locator('main, [data-testid="main-content"], .MuiContainer-root').count();
+    
+    console.log(`Hero text: ${heroText}`);
+    console.log(`Navigation bar: ${navBar}`);
+    console.log(`Main content: ${mainContent}`);
+    
+    // Visual regression comparison
+    console.log('📸 Performing visual regression comparison for landing page...');
+    await expect(page).toHaveScreenshot('landing-page.png', {
+      fullPage: true,
+      animations: 'disabled'
+    });
+    
+    console.log('✅ Landing page visual regression test completed successfully');
+  });
+
+  test('visual regression for calculator page (public)', async ({ page }) => {
+    console.log('🧮 Running visual regression tests for calculator page...');
+    
+    // Navigate to the calculator page WITHOUT enableApiCaching (public, no auth required)
+    console.log('📍 Navigating to calculator page...');
+    await page.goto('/#/calculator');
+    
+    // Wait for the calculator to load
+    console.log('⏳ Waiting for calculator content to load...');
+    await page.waitForSelector('[data-testid="calculator"], .calculator, [data-testid="smart-calculator"]', { timeout: 30000 });
+    
+    // Wait for calculator components to fully render
+    await page.waitForTimeout(4000);
+    
+    // Verify we're on the calculator page
+    console.log('🔍 Verifying calculator page elements...');
+    const calculatorElement = await page.locator('[data-testid="calculator"], .calculator, [data-testid="smart-calculator"]').count();
+    const inputFields = await page.locator('input, .MuiTextField-root').count();
+    
+    console.log(`Calculator element: ${calculatorElement}`);
+    console.log(`Input fields: ${inputFields}`);
+    
+    // Visual regression comparison
+    console.log('📸 Performing visual regression comparison for calculator page...');
+    await expect(page).toHaveScreenshot('calculator-page.png', {
+      fullPage: true,
+      animations: 'disabled'
+    });
+    
+    console.log('✅ Calculator page visual regression test completed successfully');
+  });
 });
