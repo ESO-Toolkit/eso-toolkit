@@ -198,7 +198,7 @@ export default defineConfig({
   webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: true, // Always reuse existing server (GitHub Actions starts preview server)
     timeout: 120000, // Increased timeout for server startup
     stderr: 'pipe',
     stdout: 'pipe',
