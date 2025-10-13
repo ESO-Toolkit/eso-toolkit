@@ -8,6 +8,8 @@ export interface GenericTabSkeletonProps {
   chartHeight?: number;
   showTable?: boolean;
   tableRows?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
@@ -16,9 +18,10 @@ export const GenericTabSkeleton: React.FC<GenericTabSkeletonProps> = ({
   chartHeight = 300,
   showTable = true,
   tableRows = 8,
+  'data-testid': dataTestId = 'generic-tab-skeleton',
 }) => {
   return (
-    <Box sx={{ mt: 2, minHeight: '200px' }}>
+    <Box data-testid={dataTestId} sx={{ mt: 2, minHeight: '200px' }}>
       <Paper elevation={2} sx={{ p: 2, minHeight: '100%' }}>
         <Skeleton variant="text" width="200px" height={28} sx={{ mb: 2 }} />
 

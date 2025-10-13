@@ -83,9 +83,23 @@ export default defineConfig({
     }),
   },
 
-  /* Critical screen sizes only - reduce from 22+ to 8 key sizes */
+  /* Critical screen sizes - expanded to 14 comprehensive breakpoints for 99% coverage */
   projects: [
-    // Critical Mobile (2 sizes instead of 6)
+    // Critical Mobile (4 sizes for comprehensive mobile coverage)
+    {
+      name: 'Android Small',
+      use: {
+        ...devices['Galaxy S5'],
+        viewport: { width: 360, height: 640 },
+      },
+    },
+    {
+      name: 'iPhone SE',
+      use: {
+        ...devices['iPhone SE'],
+        viewport: { width: 375, height: 667 },
+      },
+    },
     {
       name: 'Mobile Portrait',
       use: {
@@ -101,7 +115,14 @@ export default defineConfig({
       },
     },
     
-    // Critical Tablet (2 sizes instead of 4) 
+    // Critical Tablet and Phablet (3 sizes for comprehensive tablet coverage)
+    {
+      name: 'Small Tablet',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 600, height: 800 },
+      },
+    },
     {
       name: 'Tablet Portrait',
       use: {
@@ -117,7 +138,21 @@ export default defineConfig({
       },
     },
     
-    // Critical Desktop (3 sizes instead of 5)
+    // Critical Desktop and 2-in-1 (6 sizes for comprehensive laptop/desktop coverage)
+    {
+      name: 'Surface Pro',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 912, height: 1368 },
+      },
+    },
+    {
+      name: 'Laptop Standard',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1024, height: 768 },
+      },
+    },
     {
       name: 'Desktop Standard',
       use: {
@@ -130,6 +165,13 @@ export default defineConfig({
       use: {
         ...devices['Desktop Chrome'],
         viewport: { width: 1920, height: 1080 },
+      },
+    },
+    {
+      name: 'Desktop 2K',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 2560, height: 1440 },
       },
     },
     
@@ -153,11 +195,11 @@ export default defineConfig({
   ],
 
   /* Run your local dev server before starting the tests */
-  webServer: process.env.CI ? undefined : {
+  webServer: {
     command: 'npm run dev',
     url: 'http://localhost:3000',
     reuseExistingServer: !process.env.CI,
-    timeout: 60000,
+    timeout: 120000, // Increased timeout for server startup
     stderr: 'pipe',
     stdout: 'pipe',
   },

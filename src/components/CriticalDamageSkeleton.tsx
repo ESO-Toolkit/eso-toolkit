@@ -3,13 +3,16 @@ import React from 'react';
 
 interface CriticalDamageSkeletonProps {
   playerCount?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const CriticalDamageSkeleton: React.FC<CriticalDamageSkeletonProps> = ({
   playerCount = 8,
+  'data-testid': dataTestId = 'critical-damage-skeleton',
 }) => {
   return (
-    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+    <Box data-testid={dataTestId} sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
       {/* Title - matches real title styling */}
       <Skeleton
         variant="text"

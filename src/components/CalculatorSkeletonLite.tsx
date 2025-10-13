@@ -9,7 +9,7 @@ interface CalculatorSkeletonLiteProps {
 }
 
 export const CalculatorSkeletonLite: React.FC<CalculatorSkeletonLiteProps> = ({
-  'data-testid': dataTestId,
+  'data-testid': dataTestId = 'calculator-skeleton-lite',
 }) => {
   const theme = useTheme();
   const isExtraSmall = useMediaQuery('(max-width:380px)');

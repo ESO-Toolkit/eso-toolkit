@@ -7,6 +7,8 @@ interface StableLoadingProps {
   variant?: 'chart' | 'table' | 'card' | 'panel';
   title?: string;
   _title?: string; // Unused title prop
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const StableLoading: React.FC<StableLoadingProps> = ({
@@ -14,6 +16,7 @@ export const StableLoading: React.FC<StableLoadingProps> = ({
   width = '100%',
   variant = 'panel',
   _title = 'Loading...',
+  'data-testid': dataTestId = 'stable-loading',
 }) => {
   const getContent = (): React.ReactElement => {
     switch (variant) {
@@ -93,7 +96,7 @@ export const StableLoading: React.FC<StableLoadingProps> = ({
   };
 
   return (
-    <Box sx={{ width, minHeight: height, display: 'flex', flexDirection: 'column' }}>
+    <Box data-testid={dataTestId} sx={{ width, minHeight: height, display: 'flex', flexDirection: 'column' }}>
       {getContent()}
     </Box>
   );

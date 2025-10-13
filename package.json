@@ -226,7 +226,6 @@
     "test:screen-sizes": "playwright test --config=playwright.screen-sizes.config.ts",
     "test:screen-sizes:setup": "npm run download-test-data",
     "test:screen-sizes:fast": "playwright test --config=playwright.screen-sizes-fast.config.ts",
-    "test:screen-sizes:minimal": "playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts",
     "test:screen-sizes:headed": "playwright test --config=playwright.screen-sizes.config.ts --headed",
     "test:screen-sizes:ui": "playwright test --config=playwright.screen-sizes.config.ts --ui",
     "test:screen-sizes:mobile": "playwright test --config=playwright.screen-sizes.config.ts --project=\"Mobile*\" --project=\"Android*\"",
@@ -246,7 +245,9 @@
     "test:watch-changed": "jest --watch --onlyChanged",
     "type-check": "npm run typecheck",
     "typecheck": "tsc --noEmit",
-    "validate": "npm run typecheck && npm run lint && npm run format:check"
+    "validate": "npm run typecheck && npm run lint && npm run format:check",
+    "validate:playwright-ai": "node scripts/validate-playwright-ai.cjs",
+    "validate:preloading": "node scripts/validate-playwright-ai.cjs tests/visual-*.spec.ts"
   },
   "sideEffects": [
     "*.css",

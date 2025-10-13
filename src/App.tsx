@@ -28,6 +28,11 @@ import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
 // Initialize Sentry before the app starts
 initializeSentry();
 
+// Expose Redux store to window for debugging and testing (dev/test only)
+if (process.env.NODE_ENV !== 'production') {
+  (window as any).__REDUX_STORE__ = store;
+}
+
 // Code splitting for major features and components
 const LiveLog = React.lazy(() =>
   import('./features/live_logging/LiveLog').then((module) => ({ default: module.LiveLog })),

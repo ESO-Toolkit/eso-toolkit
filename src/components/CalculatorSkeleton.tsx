@@ -11,7 +11,7 @@ interface CalculatorSkeletonProps {
 }
 
 export const CalculatorSkeleton: React.FC<CalculatorSkeletonProps> = ({
-  'data-testid': dataTestId,
+  'data-testid': dataTestId = 'calculator-skeleton',
 }) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

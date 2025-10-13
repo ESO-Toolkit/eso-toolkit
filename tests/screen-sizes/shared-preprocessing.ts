@@ -11,21 +11,25 @@ import { isOfflineDataAvailable, enableOfflineMode } from './offline-data';
 const TEST_REPORT_CODE = 'nbKdDtT4NcZyVrvX';
 const TEST_FIGHT_ID = '117';
 
+// Log levels
+type LogLevel = 'silent' | 'error' | 'warn' | 'info' | 'verbose';
+
+// Configuration
+const LOG_LEVEL: LogLevel = (process.env.PREPROCESSING_LOG_LEVEL as LogLevel) || 'info';
+
+// Logging utility
+function log(level: LogLevel, message: string, ...args: any[]) {
+  const levels = ['silent', 'error', 'warn', 'info', 'verbose'];
+  const currentLevelIndex = levels.indexOf(LOG_LEVEL);
+  const messageLevelIndex = levels.indexOf(level);
+  
+  if (messageLevelIndex <= currentLevelIndex) {
+    console.log(message, ...args);
+  }
+}
+
 interface PreprocessedResults {
-  // Core data that triggers worker computations
-  playerData?: any;
-  damageEvents?: any;
-  buffEvents?: any;
-  debuffEvents?: any;
-  
-  // Pre-computed worker results
-  damageOverTimeData?: any;
-  penetrationData?: any;
-  statusEffectUptimes?: any;
-  buffLookupData?: any;
-  debuffLookupData?: any;
-  
-  // Cache status
+  // Cache status - main benefit is network cache warming
   isPreprocessed: boolean;
   preprocessingTimestamp: number;
 }
@@ -38,7 +42,7 @@ let globalPreprocessedResults: PreprocessedResults | null = null;
  * This warms the ESO Logs API cache before any browser navigation
  */
 async function prefetchReportData(page: Page, accessToken?: string): Promise<void> {
-  console.log('🌐 Pre-fetching report data via GraphQL...');
+  log('verbose', '🌐 Pre-fetching report data via GraphQL...');
   
   // If no token provided, try to get it from localStorage after navigating to the app
   let token = accessToken;
@@ -49,13 +53,13 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
       const storageToken = await page.evaluate(() => localStorage.getItem('access_token'));
       token = storageToken || undefined;
     } catch (error) {
-      console.log('⚠️ Could not access localStorage or navigate to app, skipping direct API pre-fetching');
+      log('verbose', '⚠️ Could not access localStorage or navigate to app, skipping direct API pre-fetching');
       return;
     }
   }
   
   if (!token) {
-    console.log('⚠️ No access token available, skipping direct API pre-fetching');
+    log('verbose', '⚠️ No access token available, skipping direct API pre-fetching');
     return;
   }
 
@@ -111,7 +115,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
 
   for (const { name, query, variables } of queries) {
     try {
-      console.log(`📡 Pre-fetching ${name}...`);
+      log('verbose', `📡 Pre-fetching ${name}...`);
       
       const response = await page.evaluate(async ({ query, variables, token }: { query: string; variables: any; token: string | undefined }) => {
         const headers: Record<string, string> = {
@@ -130,16 +134,16 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
       }, { query, variables, token });
 
       if (response.ok) {
-        console.log(`✅ ${name} pre-fetched successfully`);
+        log('verbose', `✅ ${name} pre-fetched successfully`);
       } else {
-        console.warn(`⚠️ ${name} pre-fetch failed with status ${response.status}`);
+        log('warn', `⚠️ ${name} pre-fetch failed with status ${response.status}`);
       }
     } catch (error) {
-      console.warn(`⚠️ Failed to pre-fetch ${name}:`, error instanceof Error ? error.message : String(error));
+      log('warn', `⚠️ Failed to pre-fetch ${name}:`, error instanceof Error ? error.message : String(error));
     }
   }
 
-  console.log('✅ Report data pre-fetching completed');
+  log('verbose', '✅ Report data pre-fetching completed');
 }
 
 /**
@@ -147,7 +151,7 @@ async function prefetchReportData(page: Page, accessToken?: string): Promise<voi
  * This ensures all data types that screen size tests might need are cached
  */
 async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Promise<void> {
-  console.log('🔄 Triggering comprehensive data loading across all panels...');
+  log('verbose', '🔄 Triggering comprehensive data loading across all panels...');
   
   const panels = [
     { name: 'Players Panel', path: '' },
@@ -158,7 +162,7 @@ async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Pro
 
   for (const panel of panels) {
     try {
-      console.log(`📊 Loading ${panel.name}...`);
+      log('verbose', `📊 Loading ${panel.name}...`);
       
       await page.goto(`${baseUrl}${panel.path}`, { 
         waitUntil: 'networkidle',
@@ -168,13 +172,13 @@ async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Pro
       // Wait for panel-specific content to load
       await page.waitForTimeout(2000);
       
-      console.log(`✅ ${panel.name} data loaded`);
+      log('verbose', `✅ ${panel.name} data loaded`);
     } catch (error) {
-      console.warn(`⚠️ Failed to load ${panel.name}:`, error instanceof Error ? error.message : String(error));
+      log('warn', `⚠️ Failed to load ${panel.name}:`, error instanceof Error ? error.message : String(error));
     }
   }
   
-  console.log('✅ Comprehensive data loading completed');
+  log('verbose', '✅ Comprehensive data loading completed');
 }
 
 /**
@@ -185,11 +189,11 @@ async function triggerComprehensiveDataLoading(page: Page, baseUrl: string): Pro
 export async function preprocessWorkerComputations(page: Page): Promise<PreprocessedResults> {
   // Return cached results if already preprocessed
   if (globalPreprocessedResults?.isPreprocessed) {
-    console.log('🔄 Using cached preprocessing results from', new Date(globalPreprocessedResults.preprocessingTimestamp));
+    log('info', '🔄 Using cached preprocessing results from', new Date(globalPreprocessedResults.preprocessingTimestamp));
     return globalPreprocessedResults;
   }
 
-  console.log('🏭 Starting comprehensive data preprocessing and cache warming...');
+  log('info', '🏭 Starting comprehensive data preprocessing and cache warming...');
   const startTime = Date.now();
 
   // Set up test environment
@@ -203,11 +207,11 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
   });
 
   // Phase 1: Pre-fetch core report data
-  console.log('📋 Phase 1: Pre-fetching core report data...');
+  log('verbose', '📋 Phase 1: Pre-fetching core report data...');
   await prefetchReportData(page);
 
   // Phase 2: Navigate to main report page to trigger comprehensive data loading
-  console.log('📊 Phase 2: Loading main report page with all data...');
+  log('verbose', '📊 Phase 2: Loading main report page with all data...');
   const baseUrl = `http://localhost:3000/#/report/${TEST_REPORT_CODE}/fight/${TEST_FIGHT_ID}`;
   await page.goto(baseUrl, { 
     waitUntil: 'networkidle',
@@ -220,72 +224,70 @@ export async function preprocessWorkerComputations(page: Page): Promise<Preproce
   });
 
   // Phase 3: Navigate to insights to trigger heavy worker computations
-  console.log('🔬 Phase 3: Loading insights panel to trigger worker computations...');
+  log('verbose', '🔬 Phase 3: Loading insights panel to trigger worker computations...');
   await page.goto(`${baseUrl}/insights`, { 
     waitUntil: 'networkidle',
     timeout: 60000 
   });
 
   // Phase 4: Ensure comprehensive data loading
-  console.log('💾 Phase 4: Triggering comprehensive data loading...');
+  log('verbose', '💾 Phase 4: Triggering comprehensive data loading...');
   await triggerComprehensiveDataLoading(page, baseUrl);
 
-  // Wait for worker computations to complete - more patient approach
-  console.log('⏳ Waiting for worker computations to complete...');
+  // Give workers a moment to start processing after data loading
+  log('verbose', '⏳ Allowing workers to start processing after data load...');
+  await page.waitForTimeout(2000);
+  
+  // Wait for worker computations to complete
+  log('info', '⏳ Waiting for worker computations to complete...');
   
   let workerDataFound = false;
-  const maxAttempts = 60; // 60 attempts = 30 seconds
+  const maxAttempts = 10; // 10 attempts = 5 seconds (since workers complete immediately)
   
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     try {
       workerDataFound = await page.evaluate(() => {
-        // Check if Redux store has the computed data we expect
         const store = (window as any).__REDUX_STORE__;
         if (!store) return false;
         
         const state = store.getState();
         
-        // Check for key worker results - be more flexible about what counts
-        const hasWorkerResults = 
-          state.workerResults?.calculateDamageOverTimeData?.result ||
-          state.workerResults?.calculatePenetrationData?.result ||
-          state.workerResults?.calculateBuffLookup?.result ||
-          // Also check for loaded state even without results yet
-          (state.reportData?.selectedReport && state.playerData?.playersById);
+        // Basic data check
+        const hasBasicData = 
+          state.reportData?.selectedReport && 
+          state.playerData?.playersById && 
+          Object.keys(state.playerData?.playersById || {}).length > 0;
           
-        if (hasWorkerResults) {
-          console.log('Worker results found in Redux store');
-        }
+        if (!hasBasicData) return false;
         
-        return hasWorkerResults;
+        // Simple check: no workers should be loading
+        const workerResults = state.workerResults || {};
+        const hasLoadingWorkers = Object.values(workerResults)
+          .some((task: any) => task.isLoading);
+        
+        return !hasLoadingWorkers;
       });
       
-      if (workerDataFound) {
-        console.log(`✅ Worker data detected after ${attempt * 500}ms`);
-        break;
-      }
+      if (workerDataFound) break;
       
-      // Wait 500ms between checks
       await page.waitForTimeout(500);
     } catch (error) {
-      console.warn(`Attempt ${attempt + 1} failed:`, error instanceof Error ? error.message : String(error));
+      // Continue trying on errors
     }
   }
   
   if (!workerDataFound) {
-    console.warn('⚠️ Worker computations did not complete within timeout, but proceeding anyway');
+    log('warn', '⚠️ Worker computations did not complete within timeout, but proceeding anyway');
   }
 
   // Mark preprocessing as complete - the main benefit is the network cache warming
   globalPreprocessedResults = {
-    // The key benefit is that we've warmed the network cache
-    // All subsequent tests will get cache hits instead of API calls
     isPreprocessed: true,
     preprocessingTimestamp: Date.now(),
   };
 
   const duration = Date.now() - startTime;
-  console.log(`✅ Comprehensive preprocessing completed in ${duration}ms`);
+  log('info', `✅ Comprehensive preprocessing completed in ${duration}ms`);
   
   return globalPreprocessedResults;
 }
@@ -300,7 +302,7 @@ export async function markPreprocessingComplete(page: Page): Promise<void> {
     (window as any).__PREPROCESSING_COMPLETED__ = true;
   });
 
-  console.log('✅ Preprocessing marker added - tests will benefit from warmed network cache');
+  log('verbose', '✅ Preprocessing marker added - tests will benefit from warmed network cache');
 }
 
 /**
@@ -312,10 +314,10 @@ export async function setupWithSharedPreprocessing(page: Page): Promise<void> {
   const useOfflineMode = isOfflineDataAvailable();
   
   if (useOfflineMode) {
-    console.log('🔌 Using offline mode with pre-downloaded data');
+    log('info', '🔌 Using offline mode with pre-downloaded data');
     await enableOfflineMode(page);
   } else {
-    console.log('🌐 Using online mode with API caching');
+    log('info', '🌐 Using online mode with API caching');
     // Enable API caching as fallback
     await enableApiCaching(page);
   }
@@ -330,6 +332,15 @@ export async function setupWithSharedPreprocessing(page: Page): Promise<void> {
   // Mark that we're using shared preprocessing (main benefit is warmed cache)
   if (globalPreprocessedResults?.isPreprocessed) {
     await markPreprocessingComplete(page);
+    
+    // Add helper function to speed up worker tasks by providing hints about cache
+    await page.addInitScript(() => {
+      // Add a flag that worker tasks can check to know cache is warmed
+      (window as any).__CACHE_WARMED__ = true;
+      (window as any).__PREPROCESSING_TIMESTAMP__ = globalPreprocessedResults?.preprocessingTimestamp;
+    });
+    
+    log('verbose', '🚀 Preprocessing benefits available - cache should be warmed');
   }
 }
 
@@ -338,7 +349,7 @@ export async function setupWithSharedPreprocessing(page: Page): Promise<void> {
  */
 export function clearPreprocessedResults(): void {
   globalPreprocessedResults = null;
-  console.log('🧹 Cleared preprocessed worker computation results');
+  log('info', '🧹 Cleared preprocessed worker computation results');
 }
 
 /**
@@ -361,37 +372,22 @@ export async function checkPreprocessingStatus(page: Page): Promise<{
     const preprocessingCompleted = (window as any).__PREPROCESSING_COMPLETED__;
     const store = (window as any).__REDUX_STORE__;
     
-    let hasWorkerResults = false;
-    let hasCachedData = false;
-    
+    let hasData = false;
     if (store) {
       const state = store.getState();
-      hasWorkerResults = !!(
-        state.workerResults?.calculateDamageOverTimeData?.result ||
-        state.workerResults?.calculatePenetrationData?.result ||
-        state.workerResults?.calculateBuffLookup?.result
-      );
-      
-      // Check if we have any cached report or player data
-      hasCachedData = !!(
-        state.reportData?.selectedReport ||
-        state.reportData?.reports ||
-        state.playerData?.playersById ||
-        Object.keys(state.playerData?.playersById || {}).length > 0
-      );
+      // Simple check for any meaningful data
+      hasData = !!(state.reportData?.selectedReport || state.playerData?.playersById);
     }
     
     return {
       isPreprocessed: !!preprocessingCompleted,
-      hasWorkerResults,
-      hasCachedData,
-      storeAvailable: !!store,
+      hasData,
     };
   });
   
   return {
     isPreprocessed: status.isPreprocessed,
-    hasWorkerResults: status.hasWorkerResults || status.hasCachedData, // Consider cached data as optimized
-    loadTime: 0, // Not meaningful for this check
+    hasWorkerResults: status.hasData,
+    loadTime: 0,
   };
 }

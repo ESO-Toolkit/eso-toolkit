@@ -3,13 +3,16 @@ import React from 'react';
 
 interface DamageReductionSkeletonProps {
   playerCount?: number;
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 export const DamageReductionSkeleton: React.FC<DamageReductionSkeletonProps> = ({
   playerCount = 8,
+  'data-testid': dataTestId = 'damage-reduction-skeleton',
 }) => {
   return (
-    <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
+    <Box data-testid={dataTestId} sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
       {/* Title */}
       <Skeleton
         variant="text"

@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { setupAuthentication } from './screen-sizes/utils';
+import { createSkeletonDetector } from './utils/skeleton-detector';
 
 test.describe('HTML Content Analysis', () => {
   test('capture HTML snapshots to debug loading state', async ({ page }) => {
@@ -24,20 +25,23 @@ test.describe('HTML Content Analysis', () => {
     const initialHTML = await page.content();
     console.log('Initial page HTML length:', initialHTML.length);
     
-    // Check for loading indicators
-    const loadingSkeletons = page.locator('.MuiSkeleton-root, [class*="skeleton"], .loading, [data-testid*="loading"]');
-    const skeletonCount = await loadingSkeletons.count();
-    console.log('Loading skeletons found:', skeletonCount);
+    // Check for loading indicators using skeleton detector
+    const skeletonDetector = createSkeletonDetector(page);
+    const skeletonInfo = await skeletonDetector.getSkeletonInfo();
     
-    if (skeletonCount > 0) {
-      console.log('=== SKELETON DETAILS ===');
-      for (let i = 0; i < Math.min(skeletonCount, 5); i++) {
-        const skeleton = loadingSkeletons.nth(i);
-        const isVisible = await skeleton.isVisible().catch(() => false);
-        if (isVisible) {
-          const classes = await skeleton.getAttribute('class').catch(() => '');
-          console.log(`Skeleton ${i}: ${classes}`);
-        }
+    console.log('=== SKELETON DETECTION ===');
+    console.log('Has skeletons:', skeletonInfo.hasSkeletons);
+    console.log('Skeleton count:', skeletonInfo.count);
+    console.log('Skeleton types:', skeletonInfo.types);
+    
+    if (skeletonInfo.hasSkeletons) {
+      console.log('=== VISIBLE SKELETONS ===');
+      const visibleSkeletons = await skeletonDetector.getVisibleSkeletons();
+      for (let i = 0; i < visibleSkeletons.length && i < 5; i++) {
+        const skeleton = visibleSkeletons[i];
+        const testId = await skeleton.getAttribute('data-testid').catch(() => null);
+        const classes = await skeleton.getAttribute('class').catch(() => '');
+        console.log(`Skeleton ${i}: testid="${testId}", classes="${(classes || '').slice(0, 50)}..."`);
       }
     }
     
@@ -50,13 +54,20 @@ test.describe('HTML Content Analysis', () => {
       console.log('⚠ Network idle timeout');
     }
     
-    // Wait additional time for React components to render
-    await page.waitForTimeout(15000);
+    // Wait for skeletons to disappear using our detector
+    console.log('=== WAITING FOR SKELETONS TO DISAPPEAR ===');
+    try {
+      await skeletonDetector.waitForSkeletonsToDisappear({ timeout: 30000 });
+      console.log('✓ All skeletons have disappeared');
+    } catch (error) {
+      console.log('⚠ Skeletons still present after timeout');
+    }
     
-    // Check loading state after waiting
+    // Check final loading state
     console.log('=== POST-WAIT STATE ===');
-    const postWaitSkeletons = await loadingSkeletons.count();
-    console.log('Skeletons remaining after wait:', postWaitSkeletons);
+    const finalSkeletonInfo = await skeletonDetector.getSkeletonInfo();
+    console.log('Final skeleton count:', finalSkeletonInfo.count);
+    console.log('Final skeleton types:', finalSkeletonInfo.types);
     
     // Look for actual player content
     const playerSelectors = [
@@ -143,8 +154,9 @@ test.describe('HTML Content Analysis', () => {
     console.log('  - debug-final.png/html (after waiting)');
     
     // Try to determine what state we're in
-    if (postWaitSkeletons > 0) {
+    if (finalSkeletonInfo.count > 0) {
       console.log('🔄 DIAGNOSIS: Still showing loading skeletons - data not loaded');
+      console.log('   Remaining skeleton types:', finalSkeletonInfo.types);
     } else {
       const cardCount = await page.locator('.MuiCard-root').count();
       if (cardCount > 0) {

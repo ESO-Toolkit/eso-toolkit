@@ -13,8 +13,9 @@ The screen size testing suite validates:
 ## Test Files
 
 ### Core Test Suites
-- **`core-panels.spec.ts`** - Players and insights panel layout validation across all screen sizes
-- **`insights-analysis.spec.ts`** - Insights (players) panel responsive behavior and data loading
+- **`comprehensive-visual-regression.spec.ts`** - Complete visual regression testing with 150+ screenshots across 4 device categories (Mobile, Tablet, Desktop, Breakpoint)
+- **`single-page-validation.spec.ts`** - Fast single-page validation optimized for CI environments with basic functionality checks
+- **`basic-loading-detection.spec.ts`** - Fundamental loading detection tests for players and insights panels
 
 ### Utilities
 - **`utils.ts`** - Helper functions and OAuth authentication for screen size testing
@@ -26,11 +27,14 @@ The screen size testing suite validates:
 # Run all screen size tests (core panels and insights panel)
 npx playwright test --config playwright.screen-sizes.config.ts
 
-# Run only core panels tests
-npx playwright test tests/screen-sizes/core-panels.spec.ts --config playwright.screen-sizes.config.ts
+# Run comprehensive visual regression suite
+npx playwright test tests/screen-sizes/comprehensive-visual-regression.spec.ts --config playwright.screen-sizes.config.ts
 
-# Run only insights panel tests  
-npx playwright test tests/screen-sizes/insights-analysis.spec.ts --config playwright.screen-sizes.config.ts
+# Run fast single-page validation
+npx playwright test tests/screen-sizes/single-page-validation.spec.ts --config playwright.screen-sizes.config.ts
+
+# Run basic loading detection tests
+npx playwright test tests/screen-sizes/basic-loading-detection.spec.ts --config playwright.screen-sizes.config.ts
 
 # Run tests for specific screen size
 npx playwright test --config playwright.screen-sizes.config.ts --project="Desktop Standard"

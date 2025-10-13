@@ -1,4 +1,5 @@
 import { Page } from '@playwright/test';
+import { createSkeletonDetector, SkeletonDetector } from './skeleton-detector';
 
 // Default timeouts matching the existing test configuration
 const DEFAULT_TIMEOUTS = {
@@ -11,7 +12,11 @@ const DEFAULT_TIMEOUTS = {
  * Centralizes URL construction and navigation logic for all test files
  */
 export class EsoLogAggregatorPage {
-  constructor(private page: Page) {}
+  public readonly skeletons: SkeletonDetector;
+
+  constructor(private page: Page) {
+    this.skeletons = createSkeletonDetector(page);
+  }
 
   /**
    * Navigate to the login page
@@ -176,6 +181,41 @@ export class EsoLogAggregatorPage {
    */
   async waitForNavigation() {
     await this.page.waitForLoadState('networkidle', { timeout: DEFAULT_TIMEOUTS.networkIdle });
+  }
+
+  /**
+   * Wait for navigation and loading to complete (no skeletons)
+   */
+  async waitForPageLoad(options?: { 
+    expectSkeletons?: boolean;
+    timeout?: number;
+  }) {
+    await this.waitForNavigation();
+    
+    if (options?.expectSkeletons !== false) {
+      await this.skeletons.waitForSkeletonsToDisappear({ 
+        timeout: options?.timeout 
+      });
+    }
+  }
+
+  /**
+   * Navigate and wait for loading to complete
+   */
+  async navigateAndWaitForLoad(
+    url: string, 
+    options?: { 
+      expectSkeletons?: boolean;
+      timeout?: number;
+      navigationTimeout?: number;
+    }
+  ) {
+    await this.page.goto(url, { 
+      waitUntil: 'domcontentloaded',
+      timeout: options?.navigationTimeout ?? DEFAULT_TIMEOUTS.navigation,
+    });
+    
+    await this.waitForPageLoad(options);
   }
 }
 

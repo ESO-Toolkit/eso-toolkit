@@ -1,9 +1,9 @@
-name: Screen Size Testing - Visual Regression
+name: Screen Size Testing - Comprehensive Visual Regression
 
-# Comprehensive screen size testing with visual regression validation
-# Tests core panels and insights analysis across 22+ viewport configurations
-# Supports OAuth authentication and API response caching for reliable testing
-# Generates interactive HTML reports with detailed screenshot comparisons
+# Comprehensive visual regression testing across multiple device categories
+# Uses pixel-perfect comparison with baseline snapshots for automatic change detection
+# Tests players panel and insights analysis with responsive layout validation
+# Supports OAuth authentication with built-in network caching for optimal performance
 
 # Permissions needed for external repository deployment
 permissions:
@@ -32,7 +32,7 @@ on:
 
 jobs:
   screen-size-testing:
-    name: Screen Size Tests - Core Panels & Insights Analysis (Fast Mode)
+    name: Comprehensive Visual Regression Tests (All Device Categories)
     runs-on: ubuntu-latest
     timeout-minutes: 25  # Reduced timeout with optimizations
 
@@ -216,44 +216,26 @@ jobs:
       - name: Preload & Cache Test Data
         id: preload_data
         run: |
-          echo "🏭 Starting comprehensive data preprocessing and cache warming..."
-          echo "This step significantly improves test performance by:"
-          echo "  • Pre-fetching GraphQL report data with OAuth authentication"
-          echo "  • Warming network cache for all API endpoints"
-          echo "  • Pre-processing heavy worker computations"
-          echo "  • Reducing test execution time by 70-85%"
+          echo "🏭 Data preprocessing is now handled automatically by the visual regression tests"
+          echo "The comprehensive-visual-regression.spec.ts includes built-in network caching and preprocessing"
+          echo "This eliminates the need for a separate preprocessing step while maintaining performance"
           echo ""
-          
-          # Run preprocessing validation test to trigger all preprocessing
-          npx playwright test tests/screen-sizes/preprocessing-test.spec.ts --config=playwright.screen-sizes-fast.config.ts --reporter=line || {
-            echo "⚠️  Preprocessing validation failed, but continuing with tests"
-            echo "Tests will run without optimizations (slower performance expected)"
-            exit 0  # Don't fail the workflow, just log the warning
-          }
-          
-          echo ""
-          echo "✅ Data preprocessing completed successfully!"
-          echo "📊 Expected performance improvement: 70-85% faster test execution"
+          echo "✅ Ready to run visual regression tests with automatic preprocessing!"
         env:
           CI: true
-          BASE_URL: http://localhost:3000
-          OAUTH_CLIENT_ID: ${{ secrets.OAUTH_CLIENT_ID }}
-          OAUTH_CLIENT_SECRET: ${{ secrets.OAUTH_CLIENT_SECRET }}
-          ESOLOGS_TOKEN_URL: https://www.esologs.com/oauth/token
-          NODE_OPTIONS: "--max-old-space-size=4096"
 
       - name: Run Screen Size Tests - All Devices (Fast Mode)
         if: ${{ github.event.inputs.device_categories == 'all' || github.event.inputs.device_categories == '' }}
         run: |
-          echo "🧪 Running optimized screen size tests with pre-loaded data..."
-          echo "Excluding preprocessing validation test (already completed in preload step)"
+          echo "🧪 Running comprehensive visual regression tests with automatic preprocessing..."
+          echo "Using comprehensive-visual-regression.spec.ts with built-in network caching and preprocessing"
           
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots (manual: ${{ github.event.inputs.update_snapshots }}, auto: ${{ steps.check_snapshots.outputs.snapshots_exist == 'false' }})"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
-            echo "Running without --update-snapshots (using minimal visual regression tests with 8 key screen sizes)"
-            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/visual-regression-minimal.spec.ts
+            echo "Running visual regression comparison against baseline snapshots"
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
           
           echo "✅ Screen size tests completed with optimized performance"
@@ -288,22 +270,23 @@ jobs:
           echo "   • Extensive network cache hits for subsequent requests"
           echo ""
           echo "🔬 Test Coverage:"
-          echo "   • 16 tests across 8 critical screen sizes"
-          echo "   • Visual regression validation with screenshots"
+          echo "   • 4 comprehensive visual regression tests across all device categories"
+          echo "   • Pixel-perfect comparison using toHaveScreenshot() with baseline images"
+          echo "   • Built-in network caching and automatic preprocessing"
           echo "   • Real ESO combat log data authentication"
           echo ""
-          echo "💡 Without preprocessing, these tests would take 3-5x longer"
-          echo "   Thanks to separate preloading step for optimal CI visibility!"
+          echo "💡 Modern visual regression testing with automatic change detection!"
+          echo "   Built-in preprocessing eliminates separate preloading steps!"
 
       - name: Run Screen Size Tests - Mobile Only
         if: ${{ github.event.inputs.device_categories == 'mobile' }}
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Mobile*" --project="Android*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Mobile*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -318,10 +301,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Tablet*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Tablet*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -336,10 +319,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="Desktop*" --project="Ultrawide*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -354,10 +337,10 @@ jobs:
         run: |
           if [[ "${{ github.event.inputs.update_snapshots }}" == "true" ]] || [[ "${{ steps.check_snapshots.outputs.snapshots_exist }}" == "false" ]]; then
             echo "Running with --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts --update-snapshots
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Breakpoint*" tests/screen-sizes/comprehensive-visual-regression.spec.ts --update-snapshots
           else
             echo "Running without --update-snapshots"
-            npx playwright test --config=playwright.screen-sizes.config.ts --project="*Breakpoint*" tests/screen-sizes/core-panels.spec.ts tests/screen-sizes/insights-analysis.spec.ts
+            npx playwright test --config=playwright.screen-sizes-fast.config.ts --project="*Breakpoint*" tests/screen-sizes/comprehensive-visual-regression.spec.ts
           fi
         env:
           CI: true
@@ -497,9 +480,9 @@ jobs:
           echo "- **3-10s Load Times** - Reduced from previous 10-30+ seconds via preprocessing" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Features Tested" >> $GITHUB_STEP_SUMMARY
-          echo "- **Core Panels** - Players panel with character cards and participant information" >> $GITHUB_STEP_SUMMARY
-          echo "- **Insights Analysis** - Damage/healing statistics and fight insights responsive layout" >> $GITHUB_STEP_SUMMARY
-          echo "- **8 Critical Screen Sizes** - Fast mode focusing on most important viewport configurations" >> $GITHUB_STEP_SUMMARY
+          echo "- **Visual Regression Testing** - Pixel-perfect comparison against baseline snapshots" >> $GITHUB_STEP_SUMMARY
+          echo "- **Comprehensive Device Coverage** - Mobile, Tablet, Desktop, Ultrawide, Breakpoint Critical" >> $GITHUB_STEP_SUMMARY
+          echo "- **Players & Insights Panels** - Complete responsive layout validation" >> $GITHUB_STEP_SUMMARY
           echo "- **Real Data** - Authentic ESO combat log data with OAuth authentication" >> $GITHUB_STEP_SUMMARY
-          echo "- **16 Optimized Tests** - Comprehensive responsive layout validation with preprocessing" >> $GITHUB_STEP_SUMMARY
+          echo "- **4 Modernized Tests** - Streamlined suite with automatic preprocessing and caching" >> $GITHUB_STEP_SUMMARY
 
