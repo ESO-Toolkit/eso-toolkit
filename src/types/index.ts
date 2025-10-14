@@ -15,4 +15,4 @@ export * from './combatlogEvents';
 export * from './playerDetails';
 
 // Scribing system types
-export * from '../features/scribing/types/scribing-enhanced';
+export * from '../features/scribing/shared/types';
