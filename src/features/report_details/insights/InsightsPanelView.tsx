@@ -90,7 +90,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         }}
       >
         {/* Fight Insights Header - Full Width */}
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{
@@ -305,7 +308,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
         </Box>
         {/* All panels in flexbox with 2 items per row */}
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{
@@ -319,7 +325,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{
@@ -333,7 +342,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{
@@ -347,7 +359,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{
@@ -361,7 +376,10 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
           </Paper>
         </Box>
 
-        <Box sx={{ flex: '1 1 calc(50% - 8px)', minWidth: '300px' }}>
+        <Box sx={{
+          flex: { xs: '1 1 100%', sm: '1 1 calc(50% - 8px)' },
+          minWidth: { xs: 'auto', sm: '300px' }
+        }}>
           <Paper
             elevation={2}
             sx={{

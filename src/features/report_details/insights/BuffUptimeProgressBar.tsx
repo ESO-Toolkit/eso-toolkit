@@ -176,8 +176,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
           bottom: 0,
           display: 'flex',
           alignItems: 'center',
-          px: 2,
-          gap: 1.5,
+          px: { xs: 1.5, sm: 2 },
+          gap: { xs: 1, sm: 1.5 },
         }}
       >
         {/* Icon */}
@@ -186,8 +186,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
             src={`https://assets.rpglogs.com/img/eso/abilities/${buff.icon}.png`}
             alt={buff.abilityName}
             sx={{
-              width: 32,
-              height: 32,
+              width: { xs: 28, sm: 32 },
+              height: { xs: 28, sm: 32 },
               borderRadius: 1,
               boxShadow: 1,
               flexShrink: 0,
@@ -197,8 +197,8 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         ) : (
           <Avatar
             sx={{
-              width: 32,
-              height: 32,
+              width: { xs: 28, sm: 32 },
+              height: { xs: 28, sm: 32 },
               flexShrink: 0,
             }}
             variant="rounded"
@@ -208,7 +208,15 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
         )}
 
         {/* Text content */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Box sx={{
+          flex: 1,
+          minWidth: 0,
+          display: 'flex',
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-start', sm: 'center' },
+          gap: { xs: 0.5, sm: 0 },
+          justifyContent: 'space-between'
+        }}>
           <Typography
             variant="body2"
             sx={{
@@ -218,10 +226,14 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                 theme.palette.mode === 'dark'
                   ? '1px 1px 3px rgba(0,0,0,0.8), 0 0 10px rgba(0,0,0,0.5), 2px 2px 4px rgba(0,0,0,0.7)'
                   : '1px 1px 2px rgba(255,255,255,0.8), 0 0 4px rgba(255,255,255,0.6)',
-              whiteSpace: 'nowrap',
+              whiteSpace: { xs: 'normal', sm: 'nowrap' },
               overflow: 'hidden',
               textOverflow: 'ellipsis',
-              mb: 0.25,
+              fontSize: { xs: '0.75rem', sm: '0.875rem' },
+              lineHeight: { xs: 1.2, sm: 1.4 },
+              mb: { xs: 0, sm: 0.25 },
+              maxWidth: { xs: '200px', sm: 'none' },
+              flex: { xs: 1, sm: 'none' }
             }}
           >
             {buff.abilityName}
@@ -235,14 +247,28 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                 theme.palette.mode === 'dark'
                   ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)'
                   : '1px 1px 1px rgba(255,255,255,0.7), 0 0 3px rgba(255,255,255,0.5)',
+              fontSize: { xs: '0.65rem', sm: '0.75rem' },
+              lineHeight: { xs: 1, sm: 1.4 },
+              whiteSpace: { xs: 'normal', sm: 'nowrap' },
+              textAlign: { xs: 'left', sm: 'left' },
+              maxWidth: { xs: '160px', sm: 'none' },
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
             }}
           >
-            {currentData.applications} applications • {currentData.uptime.toFixed(1)}s total
+            {currentData.applications} apps • {currentData.uptime.toFixed(1)}s
           </Typography>
         </Box>
 
         {/* Right side: Stack badge and Percentage */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0 }}>
+        <Box sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: { xs: 0.5, sm: 1 },
+          flexShrink: 0,
+          flexDirection: { xs: 'column', sm: 'row' },
+          alignItems: { xs: 'flex-end', sm: 'center' }
+        }}>
           {buff.maxStacks && (
             <Chip
               label={`${selectedStack}/${buff.maxStacks}`}
