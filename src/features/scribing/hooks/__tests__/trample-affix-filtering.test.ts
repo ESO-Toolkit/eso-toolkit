@@ -5,8 +5,8 @@
 
 import { describe, it, expect } from '@jest/globals';
 
-// Import the scribing database
-import scribingData from '../../../../data/scribing-complete.json';
+// Import the scribing database using require for Jest compatibility
+const scribingData = require('../../../../../data/scribing-complete.json');
 
 describe('Trample Affix Detection with Grimoire Filtering', () => {
   it('should build correct grimoire-compatible affix ID set for Trample', () => {

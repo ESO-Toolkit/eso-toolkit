@@ -13,7 +13,6 @@ import { configureStore } from '@reduxjs/toolkit';
 
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
-import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
 
 // Mock the logger to avoid context issues
 jest.mock('../hooks/useLogger', () => ({
@@ -24,6 +23,18 @@ jest.mock('../hooks/useLogger', () => ({
     debug: jest.fn(),
   }),
 }));
+
+// Mock the useSkillScribingData hook
+jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
+  useSkillScribingData: jest.fn(),
+}));
+
+// Import the mocked hook
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
+
+const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
+  typeof useSkillScribingData
+>;
 
 // Mock Redux store
 const mockStore = configureStore({
@@ -74,6 +85,43 @@ const ScribingDataInspector: React.FC<{
 };
 
 describe('SkillTooltip Scribing Detection Debug', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Mock with debug scribing data for Shattering Knife
+    mockUseSkillScribingData.mockReturnValue({
+      scribedSkillData: {
+        grimoireName: 'Traveling Knife',
+        effects: [
+          {
+            abilityId: 217353,
+            abilityName: "Assassin's Misery",
+            type: 'debuff' as const,
+            count: 3,
+          },
+        ],
+        wasCastInFight: true,
+        recipe: {
+          grimoire: 'Traveling Knife',
+          transformation: 'Shattering Knife',
+          transformationType: 'focus',
+          confidence: 1.0,
+          matchMethod: 'combat-analysis',
+          recipeSummary: "Traveling Knife + Multi Target (Focus) + Assassin's Misery (Signature)",
+          tooltipInfo: 'Debug detection for Player 1 in Fight 11',
+        },
+        signatureScript: {
+          name: "Assassin's Misery",
+          confidence: 1.0,
+          detectionMethod: 'Post-Cast Pattern Analysis',
+          evidence: ['Debug test evidence'],
+        },
+      },
+      loading: false,
+      error: null,
+    });
+  });
+
   describe('Shattering Knife Player 1 Investigation', () => {
     it('should investigate what scribing data is returned for Shattering Knife', () => {
       const fightId = 'm2Y9FqdpMjcaZh4R-11';

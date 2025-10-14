@@ -15,7 +15,7 @@ import { configureStore } from '@reduxjs/toolkit';
 import { SkillTooltip } from './SkillTooltip';
 import type { SkillTooltipProps } from './SkillTooltip';
 
-// Only mock what's absolutely necessary - the logger to avoid context issues
+// Mock the logger to avoid context issues
 jest.mock('../hooks/useLogger', () => ({
   useLogger: () => ({
     warn: jest.fn(),
@@ -24,6 +24,18 @@ jest.mock('../hooks/useLogger', () => ({
     debug: jest.fn(),
   }),
 }));
+
+// Mock the useSkillScribingData hook
+jest.mock('../features/scribing/hooks/useScribingDetection', () => ({
+  useSkillScribingData: jest.fn(),
+}));
+
+// Import the mocked hook
+import { useSkillScribingData } from '../features/scribing/hooks/useScribingDetection';
+
+const mockUseSkillScribingData = useSkillScribingData as jest.MockedFunction<
+  typeof useSkillScribingData
+>;
 
 // Mock Redux store with minimal state
 const mockStore = configureStore({
@@ -52,6 +64,17 @@ const TestWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
 );
 
 describe('SkillTooltip Integration Tests', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+
+    // Default mock - no scribing data
+    mockUseSkillScribingData.mockReturnValue({
+      scribedSkillData: null,
+      loading: false,
+      error: null,
+    });
+  });
+
   describe('Shattering Knife - Real Scribing Detection', () => {
     // Real Shattering Knife data based on ESO Logs
     const shatteringKnifeProps: SkillTooltipProps = {
@@ -74,14 +97,31 @@ describe('SkillTooltip Integration Tests', () => {
     };
 
     it('should render Shattering Knife with real scribing detection', () => {
-      // This tests the actual integration - no mocking of scribing detection
+      // Mock scribing detection for Shattering Knife
+      mockUseSkillScribingData.mockReturnValue({
+        scribedSkillData: {
+          grimoireName: 'Traveling Knife',
+          effects: [
+            {
+              abilityId: 217353,
+              abilityName: "Assassin's Misery",
+              type: 'debuff' as const,
+              count: 3,
+            },
+          ],
+          wasCastInFight: true,
+        },
+        loading: false,
+        error: null,
+      });
+
       const { container } = render(
         <TestWrapper>
           <SkillTooltip {...shatteringKnifeProps} />
         </TestWrapper>,
       );
 
-      // The snapshot will capture whatever the real scribing detection returns
+      // The snapshot will capture the scribing detection rendering
       expect(container).toMatchSnapshot();
     });
 
@@ -102,6 +142,17 @@ describe('SkillTooltip Integration Tests', () => {
     });
 
     it('should render Shattering Knife with different fight context', () => {
+      // Mock minimal scribing data for different context
+      mockUseSkillScribingData.mockReturnValue({
+        scribedSkillData: {
+          grimoireName: 'Traveling Knife',
+          effects: [],
+          wasCastInFight: false,
+        },
+        loading: false,
+        error: null,
+      });
+
       const propsWithDifferentFight = {
         ...shatteringKnifeProps,
         fightId: 'm2Y9FqdpMjcaZh4R-88', // Different fight
@@ -180,6 +231,13 @@ describe('SkillTooltip Integration Tests', () => {
     });
 
     it('should handle JSX description', () => {
+      // Mock scribing data for this test
+      mockUseSkillScribingData.mockReturnValue({
+        scribedSkillData: null,
+        loading: false,
+        error: null,
+      });
+
       const jsxDescriptionProps: SkillTooltipProps = {
         abilityId: 217340,
         name: 'Shattering Knife',

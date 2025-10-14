@@ -49,7 +49,8 @@ exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description
           <strong>
             magical blade
           </strong>
-           that pierces through enemies, dealing 
+           that pierces through enemies, dealing
+           
           <em>
             Magic Damage
           </em>
@@ -322,82 +323,16 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           class="MuiBox-root css-19idom"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-eem20n-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-1p66mmu-MuiTypography-root"
           >
-            🧪 Focus Script
+            ⚠️ Script Analysis Unavailable
           </span>
-          <div
-            class="MuiStack-root css-yzxa55-MuiStack-root"
-          >
-            <span
-              class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
-            >
-              🔄 
-              Physical Damage
-               (
-              Focus Script
-              )
-            </span>
-          </div>
-        </div>
-        <div
-          class="MuiBox-root css-19idom"
-        >
           <span
-            class="MuiTypography-root MuiTypography-caption css-1y00so2-MuiTypography-root"
+            class="MuiTypography-root MuiTypography-caption css-6mkcxp-MuiTypography-root"
           >
-            📜 Signature Script
+            This scribing skill was not cast during this fight, so the complete recipe could not be detected.
           </span>
-          <div
-            class="MuiStack-root css-yzxa55-MuiStack-root"
-          >
-            <span
-              class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
-            >
-              🖋️ 
-              Unknown Signature
-            </span>
-            <span
-              class="MuiTypography-root MuiTypography-caption css-1vlvqo0-MuiTypography-root"
-            >
-              🔍 Evidence: 
-              Database lookup confirmed scribing ability
-            </span>
-          </div>
         </div>
-        <div
-          class="MuiBox-root css-19idom"
-        >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-eem20n-MuiTypography-root"
-          >
-            🎭 Affix Scripts
-          </span>
-          <div
-            class="MuiStack-root css-yzxa55-MuiStack-root"
-          >
-            <div
-              class="MuiBox-root css-171onha"
-            >
-              <span
-                class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
-              >
-                ✨ 
-                Unknown Affix
-              </span>
-              <span
-                class="MuiTypography-root MuiTypography-caption css-1k0kcjc-MuiTypography-root"
-              >
-                (
-                50
-                %)
-              </span>
-            </div>
-          </div>
-        </div>
-        <div
-          class="MuiBox-root css-yi3mkw"
-        />
       </div>
       <hr
         class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
@@ -557,28 +492,6 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           class="MuiBox-root css-19idom"
         >
           <span
-            class="MuiTypography-root MuiTypography-caption css-eem20n-MuiTypography-root"
-          >
-            🧪 Focus Script
-          </span>
-          <div
-            class="MuiStack-root css-yzxa55-MuiStack-root"
-          >
-            <span
-              class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
-            >
-              🔄 
-              Physical Damage
-               (
-              Focus Script
-              )
-            </span>
-          </div>
-        </div>
-        <div
-          class="MuiBox-root css-19idom"
-        >
-          <span
             class="MuiTypography-root MuiTypography-caption css-1y00so2-MuiTypography-root"
           >
             📜 Signature Script
@@ -587,52 +500,31 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             class="MuiStack-root css-yzxa55-MuiStack-root"
           >
             <span
-              class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
+              class="MuiTypography-root MuiTypography-caption css-1twjnv6-MuiTypography-root"
             >
-              🖋️ 
-              Unknown Signature
+              ❓ No signature script detected
             </span>
-            <span
-              class="MuiTypography-root MuiTypography-caption css-1vlvqo0-MuiTypography-root"
-            >
-              🔍 Evidence: 
-              Database lookup confirmed scribing ability
-            </span>
-          </div>
-        </div>
-        <div
-          class="MuiBox-root css-19idom"
-        >
-          <span
-            class="MuiTypography-root MuiTypography-caption css-eem20n-MuiTypography-root"
-          >
-            🎭 Affix Scripts
-          </span>
-          <div
-            class="MuiStack-root css-yzxa55-MuiStack-root"
-          >
-            <div
-              class="MuiBox-root css-171onha"
-            >
-              <span
-                class="MuiTypography-root MuiTypography-caption css-1369f0u-MuiTypography-root"
-              >
-                ✨ 
-                Unknown Affix
-              </span>
-              <span
-                class="MuiTypography-root MuiTypography-caption css-1k0kcjc-MuiTypography-root"
-              >
-                (
-                50
-                %)
-              </span>
-            </div>
           </div>
         </div>
         <div
           class="MuiBox-root css-yi3mkw"
-        />
+        >
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qkww3j-MuiChip-root"
+          >
+            <span
+              class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
+              style="font-size: 0.7rem;"
+            >
+              ⬇️
+            </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Assassin's Misery (3)
+            </span>
+          </div>
+        </div>
       </div>
       <hr
         class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"

@@ -7,6 +7,63 @@ import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
 import { useScribingDetection } from '../useScribingDetection';
 
+// Mock all event hooks with proper return values
+jest.mock('../../../../hooks/events/useDamageEvents', () => ({
+  useDamageEvents: () => ({
+    damageEvents: [],
+    isDamageEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useHealingEvents', () => ({
+  useHealingEvents: () => ({
+    healingEvents: [],
+    isHealingEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useFriendlyBuffEvents', () => ({
+  useFriendlyBuffEvents: () => ({
+    friendlyBuffEvents: [],
+    isFriendlyBuffEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useHostileBuffEvents', () => ({
+  useHostileBuffEvents: () => ({
+    hostileBuffEvents: [],
+    isHostileBuffEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useDebuffEvents', () => ({
+  useDebuffEvents: () => ({
+    debuffEvents: [],
+    isDebuffEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useCastEvents', () => ({
+  useCastEvents: () => ({
+    castEvents: [],
+    isCastEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
+jest.mock('../../../../hooks/events/useResourceEvents', () => ({
+  useResourceEvents: () => ({
+    resourceEvents: [],
+    isResourceEventsLoading: false,
+    selectedFight: null,
+  }),
+}));
+
 // Mock Redux store with sample events
 const mockStore = configureStore({
   reducer: {
