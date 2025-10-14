@@ -1,196 +1,430 @@
-[vite] connecting...
-[vite] connected.
-2025-09-26T00:35:15.902Z [Sentry] [INFO] Sentry disabled - not in production build
-2025-09-26T00:35:16.026Z [ESO-Logger][LoggerProvider] [INFO] Logger initialized Object
-2025-09-26T00:35:16.032Z [ESO-Logger][EsoLogsClient] [INFO] Creating new EsoLogsClient instance
-[Komodo] CS Register csid_t366ys_nh6cfa_2_8_3
-[sticky-footer metrics] {"cardTop":145,"cardBottom":2633,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":2633,"boundaryOverlap":0,"thresholds":{"enter":496,"exit":173}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2633,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":145,"cardBottom":2612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":45,"cardBottom":2512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-55,"cardBottom":2412,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-155,"cardBottom":2312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-255,"cardBottom":2212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-355,"cardBottom":2112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-455,"cardBottom":2012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-555,"cardBottom":1912,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-755,"cardBottom":1712,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-855,"cardBottom":1612,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-955,"cardBottom":1512,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1155,"cardBottom":1312,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1255,"cardBottom":1212,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1355,"cardBottom":1112,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1655,"cardBottom":812,"placeholderWidth":771}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":73,"cardTop":-1855,"cardBottom":612,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":373,"cardTop":-2155,"cardBottom":312,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":312,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":312,"boundaryOverlap":357,"thresholds":{"enter":139,"exit":530}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer metrics] {"cardTop":-2155,"cardBottom":333,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":333,"boundaryOverlap":336,"thresholds":{"enter":159,"exit":510}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":352,"cardTop":-2155,"cardBottom":333,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":473,"cardTop":-2255,"cardBottom":212,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":212,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":212,"boundaryOverlap":457,"thresholds":{"enter":39,"exit":630}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-[sticky-footer metrics] {"cardTop":-2255,"cardBottom":233,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":233,"boundaryOverlap":436,"thresholds":{"enter":59,"exit":610}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":452,"cardTop":-2255,"cardBottom":233,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":133,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":133,"boundaryOverlap":536,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":133,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2355,"cardBottom":112,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2355,"cardBottom":112,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":112,"boundaryOverlap":557,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-invariant.ts:42 Download the Apollo DevTools for a better development experience: https://chrome.google.com/webstore/detail/apollo-client-developer-t/jdkknkkbebbapilgoeccciglkfbmbnfm
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":12,"viewportHeight":669,"footerHeight":157,"isSticky":true,"shouldStick":false,"bottomBoundary":12,"boundaryOverlap":657,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-2455,"cardBottom":33,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":33,"boundaryOverlap":636,"thresholds":{"enter":16,"exit":653}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":496,"cardTop":-2455,"cardBottom":33,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:625 [sticky-footer metrics] {"cardTop":-1955,"cardBottom":512,"viewportHeight":669,"footerHeight":157,"isSticky":false,"shouldStick":true,"bottomBoundary":512,"boundaryOverlap":157,"thresholds":{"enter":339,"exit":330}}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":173,"cardTop":-1955,"cardBottom":512,"placeholderWidth":771}
-Calculator.tsx:678 [sticky-footer style] {"left":97,"width":771,"clampedBottom":16,"cardTop":-1455,"cardBottom":1012,"placeholderWidth":771}
-[NEW] Explain Console errors by using Copilot in Edge: click
-
-         to explain an error.
-        Learn more
-        Don't show again
-
-scheduler.development.js:14 [Violation] 'message' handler took 511ms
+[ENCHANT DEBUG] Item: "Nazaray Mask", Slot: 0, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Epaulets", Slot: 2, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Amulet", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 8, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 9, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Sword", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Shield", Slot: 11, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ice Staff", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Mask", Slot: 0, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Nazaray Epaulets", Slot: 2, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Lucent Echoes Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Amulet", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 8, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ring", Slot: 9, Enchant ID: 33, Enchant: "Reduce Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Sword", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Shield", Slot: 11, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pearlescent Ice Staff", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Jerkin", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Blind Arm Cops", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spell Power Cure Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Amulet", Slot: 7, Enchant ID: 23, Enchant: "Force Shock"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 8, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Band", Slot: 9, Enchant ID: 31, Enchant: "Increase Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Pillager's Lightning Staff", Slot: 12, Enchant ID: 32, Enchant: "Reduce Physical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ansuul's Perfected Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Magma Incarnate Visage", Slot: 0, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Cuirass", Slot: 1, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Spaulder of Ruin", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Girdle", Slot: 3, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Gauntlets", Slot: 4, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Greaves", Slot: 5, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Saxhleel Champion's Perfected Sabatons", Slot: 6, Enchant ID: 26, Enchant: "Soul Trap"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Necklace of the Powerful Assault", Slot: 7, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 8, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ring of the Powerful Assault", Slot: 9, Enchant ID: 30, Enchant: "Increase Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Ice Staff", Slot: 10, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Ice Staff of the Powerful Assault", Slot: 12, Enchant ID: 28, Enchant: "Spell Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Robe", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Symphony of Blades Epaulets", Slot: 2, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Sash", Slot: 3, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Gloves", Slot: 4, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Breeches", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Jorvuld's Guidance Shoes", Slot: 6, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 8, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ring", Slot: 9, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Roaring Opportunist's Perfected Ice Staff", Slot: 10, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Master's Perfected Restoration Staff", Slot: 12, Enchant ID: 2, Enchant: "Absorb Magicka"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Mask", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Epaulets", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Z'en's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Slimecraw Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Jack of Sul-Xan's Torment", Slot: 1, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Guards of Sul-Xan's Torment", Slot: 5, Enchant ID: 22, Enchant: "Burning"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Boots of Sul-Xan's Torment", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Deadly Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 10, Enchant ID: 6, Enchant: "Frost Damage"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Dagger of Sul-Xan's Torment", Slot: 11, Enchant ID: 3, Enchant: "Absorb Stamina"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Inferno Staff", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Valkyn Skoria Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Aegis Caller's Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Zaan Guise", Slot: 0, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Jack", Slot: 1, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Arm Cops", Slot: 2, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Belt", Slot: 3, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Bracers", Slot: 4, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Guards", Slot: 5, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Perfected Null Arca Boots", Slot: 6, Enchant ID: 35, Enchant: "Increase Spell Resistance"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Velothi Ur-Mage's Amulet", Slot: 7, Enchant ID: 21, Enchant: "Sickened"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 8, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Ring", Slot: 9, Enchant ID: 19, Enchant: "Concussion"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 10, Enchant ID: 12, Enchant: "Berserker"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "Tide-Born Dagger", Slot: 11, Enchant ID: 24, Enchant: "Prismatic Onslaught"
+GearDetailsPanel.tsx:393 [ENCHANT DEBUG] Item: "The Maelstrom's Perfected Greatsword", Slot: 12, Enchant ID: 5, Enchant: "Increase Magical Harm"

@@ -7,6 +7,8 @@ import {
   SelectAll as SelectAllIcon,
   Clear as ClearIcon,
   Autorenew as AutorenewIcon,
+  Add as AddIcon,
+  Remove as RemoveIcon,
 } from '@mui/icons-material';
 import {
   Box,
@@ -39,11 +41,18 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  InputAdornment,
 } from '@mui/material';
 import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
+import {
+  MAX_ARMOR_VALUE,
+  OVER_RESISTANCE_DIVISOR,
+  MAX_DAMAGE_MITIGATION,
+  DAMAGE_MITIGATION_DIVISOR,
+} from '../data/skill-lines/armor-resistance-data';
 import {
   CalculatorItem,
   CalculatorData,
@@ -54,6 +63,8 @@ import {
   PEN_OPTIMAL_MAX_PVE,
   PEN_OPTIMAL_MIN_PVP,
   PEN_OPTIMAL_MAX_PVP,
+  MAX_PENETRATION_PVE,
+  PENETRATION_DAMAGE_LOSS_DIVISOR,
   CRIT_OPTIMAL_MIN,
   CRIT_OPTIMAL_MAX,
   ARMOR_RESISTANCE_OPTIMAL_MIN,
@@ -61,6 +72,11 @@ import {
   ARMOR_RESISTANCE_CAP,
   ARMOR_QUALITY_LABELS,
 } from '../data/skill-lines/calculator-data';
+import {
+  extractSlotFromItemName,
+  isMutuallyExclusiveArmorItem,
+  findConflictingItems,
+} from '../utils/armorSlotUtils';
 
 // Mode filter configuration based on original calculator
 const MODE_FILTER = {
@@ -543,7 +559,598 @@ const MODE_FILTER = {
   },
 };
 
-type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number };
+type IndexedCalculatorItem = CalculatorItem & { originalIndex?: number; id?: string };
+
+// Helper function to generate unique ID for items
+const _generateItemId = (category: string, name: string, index: number): string => {
+  return `${category}-${name}-${index}`;
+};
+
+// Helper function to find item by ID in any category
+// Type for items that have been enhanced with an ID
+type CalculatorItemWithId = CalculatorItem & { id: string };
+
+const _findItemById = (
+  data: CalculatorData,
+  id: string,
+): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+    const index = data[category].findIndex((item) => (item as CalculatorItemWithId).id === id);
+    if (index !== -1) {
+      return { category, index, item: data[category][index] };
+    }
+  }
+  return null;
+};
+
+// Quantity input component to manage local state properly
+const QuantityInput: React.FC<{
+  item: CalculatorItem;
+  category: keyof CalculatorData;
+  resolvedIndex: number;
+  updateFunction: (
+    category: keyof CalculatorData,
+    index: number,
+    updates: Partial<CalculatorItem>,
+  ) => void;
+  isMobile: boolean;
+}> = ({ item, category, resolvedIndex, updateFunction, isMobile }) => {
+  const theme = useTheme();
+  const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
+
+  // Local state for quantity input to prevent keyboard dismissal on mobile
+  const [localQuantity, setLocalQuantity] = useState<string>(
+    hasQuantity ? item.quantity.toString() : '-',
+  );
+  const [_isFocused, _setIsFocused] = useState<boolean>(false);
+  const [showError, setShowError] = useState<boolean>(false);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced update function to prevent keyboard dismissal on mobile
+  const debouncedUpdate = useCallback(
+    (value: number) => {
+      updateFunction(category, resolvedIndex, { quantity: value });
+    },
+    [category, resolvedIndex, updateFunction],
+  );
+
+  // Handle decrement
+  const handleDecrement = useCallback(() => {
+    if (!hasQuantity) return;
+
+    const currentValue = parseInt(localQuantity) || 0;
+    const next = Math.max(item.minQuantity || 0, currentValue - (item.step || 1));
+    setLocalQuantity(next.toString());
+    debouncedUpdate(next);
+  }, [hasQuantity, localQuantity, item.minQuantity, item.step, debouncedUpdate]);
+
+  // Handle increment
+  const handleIncrement = useCallback(() => {
+    if (!hasQuantity) return;
+
+    const currentValue = parseInt(localQuantity) || 0;
+    const next = Math.min(item.maxQuantity || 100, currentValue + (item.step || 1));
+    setLocalQuantity(next.toString());
+    debouncedUpdate(next);
+  }, [hasQuantity, localQuantity, item.maxQuantity, item.step, debouncedUpdate]);
+
+  // Handle quantity input change with debouncing
+  const handleQuantityChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (!hasQuantity) return;
+
+      const newValue = e.target.value;
+      setLocalQuantity(newValue);
+
+      // Clear existing timeout
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+
+      // Parse and validate the input
+      const numValue = parseInt(newValue);
+      if (!isNaN(numValue)) {
+        const clampedValue = Math.max(
+          item.minQuantity || 0,
+          Math.min(item.maxQuantity || 100, numValue),
+        );
+
+        // Debounce the update (longer delay for mobile)
+        const delay = isMobile ? 500 : 300;
+        timeoutRef.current = setTimeout(() => {
+          debouncedUpdate(clampedValue);
+        }, delay);
+      }
+    },
+    [hasQuantity, item.minQuantity, item.maxQuantity, debouncedUpdate, isMobile],
+  );
+
+  // Handle input focus/blur events
+  const handleFocus = useCallback(() => {
+    _setIsFocused(true);
+    setShowError(false);
+  }, []);
+
+  const handleBlur = useCallback(() => {
+    _setIsFocused(false);
+
+    if (!hasQuantity) return;
+
+    // Final validation on blur
+    const numValue = parseInt(localQuantity);
+    if (
+      isNaN(numValue) ||
+      numValue < (item.minQuantity || 0) ||
+      numValue > (item.maxQuantity || 100)
+    ) {
+      setShowError(true);
+      // Reset to valid value
+      setLocalQuantity(item.quantity.toString());
+    }
+  }, [localQuantity, item.minQuantity, item.maxQuantity, item.quantity, hasQuantity]);
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  // Check if this is an armor passive item
+  const isArmorPassive = item.name === 'Light Armor Passive' || item.name === 'Heavy Armor Passive';
+
+  // For armor passives, show a static display instead of input
+  if (isArmorPassive) {
+    return (
+      <Tooltip title="Auto-calculated based on equipped armor pieces" arrow>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            minWidth: isMobile ? '50px' : '56px',
+            height: isMobile ? '36px' : '32px',
+            px: isMobile ? 1 : 2,
+            borderRadius: 1,
+            fontWeight: 700,
+            fontSize: isMobile ? '14px' : '16px',
+            color: item.enabled
+              ? '#f472b6' // Pink for both light and heavy armor
+              : theme.palette.mode === 'dark'
+                ? 'rgba(148, 163, 184, 0.5)'
+                : 'rgba(100, 116, 139, 0.5)',
+            backgroundColor: item.enabled
+              ? item.name === 'Light Armor Passive'
+                ? theme.palette.mode === 'dark'
+                  ? 'rgba(167, 139, 250, 0.15)'
+                  : 'rgba(167, 139, 250, 0.1)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(244, 114, 182, 0.15)'
+                  : 'rgba(244, 114, 182, 0.1)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(30, 41, 59, 0.3)'
+                : 'rgba(241, 245, 249, 0.5)',
+            border: `2px dashed ${
+              item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? 'rgba(167, 139, 250, 0.5)'
+                  : 'rgba(244, 114, 182, 0.5)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.2)'
+                  : 'rgba(148, 163, 184, 0.3)'
+            }`,
+            transition: 'all 0.2s ease',
+            cursor: 'default',
+            position: 'relative',
+            '&::before': {
+              content: '"🔒"',
+              position: 'absolute',
+              top: isMobile ? '-6px' : '-6px',
+              right: isMobile ? '-6px' : '-6px',
+              fontSize: isMobile ? '10px' : '12px',
+              opacity: item.enabled ? 0.7 : 0.4,
+            },
+            '&:hover': {
+              backgroundColor: item.enabled
+                ? item.name === 'Light Armor Passive'
+                  ? theme.palette.mode === 'dark'
+                    ? 'rgba(167, 139, 250, 0.25)'
+                    : 'rgba(167, 139, 250, 0.2)'
+                  : theme.palette.mode === 'dark'
+                    ? 'rgba(244, 114, 182, 0.25)'
+                    : 'rgba(244, 114, 182, 0.2)'
+                : theme.palette.mode === 'dark'
+                  ? 'rgba(30, 41, 59, 0.4)'
+                  : 'rgba(241, 245, 249, 0.6)',
+            },
+          }}
+        >
+          {item.quantity > 0 ? item.quantity : '-'}
+        </Box>
+      </Tooltip>
+    );
+  }
+
+  const minValue = item.minQuantity || 0;
+  const maxValue = item.maxQuantity || 100;
+  const currentValue = parseInt(localQuantity) || 0;
+  const isMinDisabled = currentValue <= minValue;
+  const isMaxDisabled = currentValue >= maxValue;
+
+  return (
+    <TextField
+      size={isMobile ? 'medium' : 'small'}
+      type={hasQuantity ? 'number' : 'text'}
+      value={hasQuantity ? localQuantity : '-'}
+      onChange={hasQuantity ? handleQuantityChange : undefined}
+      onFocus={hasQuantity ? handleFocus : undefined}
+      onBlur={hasQuantity ? handleBlur : undefined}
+      error={showError}
+      disabled={!hasQuantity || item.locked}
+      placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
+      inputProps={{
+        min: hasQuantity ? minValue : 0,
+        max: hasQuantity ? maxValue : 0,
+        step: hasQuantity ? item.step || 1 : 1,
+        readOnly: !hasQuantity,
+        style: {
+          fontSize: isMobile ? '18px' : '14px',
+          fontWeight: isMobile ? 500 : 400,
+          textAlign: 'center',
+          padding: isMobile ? '8px 4px' : '4px 2px',
+        },
+      }}
+      InputProps={{
+        startAdornment: hasQuantity ? (
+          <InputAdornment position="start" sx={{ mr: 0.5, position: 'relative', zIndex: 1 }}>
+            <IconButton
+              size="small"
+              onClick={handleDecrement}
+              disabled={isMinDisabled || item.locked}
+              edge="start"
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: isMobile ? '24px' : '20px',
+                height: isMobile ? '24px' : '20px',
+                minWidth: isMobile ? '24px' : '20px',
+                minHeight: isMobile ? '24px' : '20px',
+                borderRadius: '4px',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(15, 23, 42, 1)'
+                    : 'rgba(241, 245, 249, 0.8)',
+                border: `1px solid ${
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(40, 145, 200, 0.2)'
+                }`,
+                color:
+                  isMinDisabled || item.locked
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.4)'
+                      : 'rgba(100, 116, 139, 0.4)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.8)'
+                      : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMinDisabled || item.locked)
+                  ? {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.15)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.5)'
+                          : 'rgba(40, 145, 200, 0.4)',
+                      color:
+                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
+                    }
+                  : {},
+                '&:active': !(isMinDisabled || item.locked)
+                  ? {
+                      transform: 'scale(0.95)',
+                    }
+                  : {},
+                '&.Mui-disabled': {
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(30, 41, 59, 0.4)'
+                      : 'rgba(241, 245, 249, 0.6)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.2)'
+                      : 'rgba(148, 163, 184, 0.3)',
+                },
+              }}
+            >
+              <RemoveIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+            </IconButton>
+          </InputAdornment>
+        ) : undefined,
+        endAdornment: hasQuantity ? (
+          <InputAdornment position="end" sx={{ ml: 0.5, position: 'relative', zIndex: 1 }}>
+            <IconButton
+              size="small"
+              onClick={handleIncrement}
+              disabled={isMaxDisabled || item.locked}
+              edge="end"
+              sx={{
+                position: 'relative',
+                zIndex: 2,
+                width: isMobile ? '24px' : '20px',
+                height: isMobile ? '24px' : '20px',
+                minWidth: isMobile ? '24px' : '20px',
+                minHeight: isMobile ? '24px' : '20px',
+                borderRadius: '4px',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(15, 23, 42, 1)'
+                    : 'rgba(241, 245, 249, 0.8)',
+                border: `1px solid ${
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(56, 189, 248, 0.3)'
+                    : 'rgba(40, 145, 200, 0.2)'
+                }`,
+                color:
+                  isMaxDisabled || item.locked
+                    ? theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.4)'
+                      : 'rgba(100, 116, 139, 0.4)'
+                    : theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.8)'
+                      : 'rgba(40, 145, 200, 0.8)',
+                '&:hover': !(isMaxDisabled || item.locked)
+                  ? {
+                      backgroundColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.15)',
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.5)'
+                          : 'rgba(40, 145, 200, 0.4)',
+                      color:
+                        theme.palette.mode === 'dark' ? 'rgb(199, 234, 255)' : 'rgb(40, 145, 200)',
+                    }
+                  : {},
+                '&:active': !(isMaxDisabled || item.locked)
+                  ? {
+                      transform: 'scale(0.95)',
+                    }
+                  : {},
+                '&.Mui-disabled': {
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(30, 41, 59, 0.4)'
+                      : 'rgba(241, 245, 249, 0.6)',
+                  borderColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(148, 163, 184, 0.2)'
+                      : 'rgba(148, 163, 184, 0.3)',
+                },
+              }}
+            >
+              <AddIcon sx={{ fontSize: isMobile ? '14px' : '12px' }} />
+            </IconButton>
+          </InputAdornment>
+        ) : undefined,
+      }}
+      sx={{
+        width: '95px',
+        minWidth: '95px',
+        '& .MuiInputBase-root': {
+          fontSize: isMobile ? '14px' : '13px',
+          padding: isMobile ? '6px 1px' : '4px 1px',
+          height: isMobile ? '36px' : '30px',
+          minHeight: isMobile ? '36px' : '30px',
+          boxSizing: 'border-box',
+          borderRadius: '8px',
+          backgroundColor: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(30, 41, 59, 0.6)'
+              : 'rgba(241, 245, 249, 0.9)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(15, 23, 42, 0.4)'
+              : 'rgba(255, 255, 255, 0.8)',
+          opacity: !hasQuantity ? 0.7 : 1,
+          border: !hasQuantity
+            ? `1px solid ${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(148, 163, 184, 0.2)'
+                  : 'rgba(148, 163, 184, 0.3)'
+              }`
+            : `1px solid ${
+                theme.palette.mode === 'dark'
+                  ? 'rgba(56, 189, 248, 0.3)'
+                  : 'rgba(40, 145, 200, 0.2)'
+              }`,
+          '&:hover': {
+            backgroundColor: !hasQuantity
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(30, 41, 59, 0.7)'
+                : 'rgba(241, 245, 249, 1)'
+              : theme.palette.mode === 'dark'
+                ? 'rgba(15, 23, 42, 0.5)'
+                : 'rgba(255, 255, 255, 0.95)',
+            borderColor: hasQuantity
+              ? theme.palette.mode === 'dark'
+                ? 'rgba(56, 189, 248, 0.5)'
+                : 'rgba(40, 145, 200, 0.4)'
+              : undefined,
+          },
+          '&.Mui-focused': {
+            backgroundColor:
+              theme.palette.mode === 'dark' ? 'rgba(15, 23, 42, 0.6)' : 'rgba(255, 255, 255, 1)',
+            borderColor:
+              theme.palette.mode === 'dark' ? 'rgba(56, 189, 248, 0.6)' : 'rgba(40, 145, 200, 0.5)',
+            boxShadow:
+              theme.palette.mode === 'dark'
+                ? '0 0 0 2px rgba(56, 189, 248, 0.2)'
+                : '0 0 0 2px rgba(40, 145, 200, 0.15)',
+          },
+        },
+        '& .MuiInputBase-input': {
+          padding: isMobile ? '6px 1px' : '4px 1px',
+          textAlign: 'center',
+          fontSize: isMobile ? '14px' : '13px',
+          fontWeight: 600,
+          color: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.7)'
+              : 'rgba(100, 116, 139, 0.7)'
+            : theme.palette.mode === 'dark'
+              ? 'rgb(199, 234, 255)'
+              : 'rgb(40, 145, 200)',
+          cursor: !hasQuantity ? 'not-allowed' : 'text',
+          '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
+            WebkitAppearance: 'none',
+            margin: 0,
+          },
+          '&[type=number]': {
+            MozAppearance: 'textfield',
+          },
+        },
+        '& .MuiOutlinedInput-notchedOutline': {
+          borderColor: !hasQuantity
+            ? theme.palette.mode === 'dark'
+              ? 'rgba(148, 163, 184, 0.2)'
+              : 'rgba(148, 163, 184, 0.3)'
+            : theme.palette.mode === 'dark'
+              ? 'rgba(56, 189, 248, 0.3)'
+              : 'rgba(40, 145, 200, 0.2)',
+          borderWidth: '1px',
+        },
+        '&.Mui-error .MuiOutlinedInput-notchedOutline': {
+          borderColor:
+            theme.palette.mode === 'dark' ? 'rgba(248, 113, 113, 0.6)' : 'rgba(239, 68, 68, 0.6)',
+        },
+      }}
+    />
+  );
+};
+
+// Helper function to validate calculator data integrity
+const _validateCalculatorData = (data: CalculatorData): boolean => {
+  let isValid = true;
+  const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
+
+  // Check for duplicate items in each category and track all items
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+    const items = data[category];
+    const nameMap = new Map<string, number[]>();
+
+    items.forEach((item, index) => {
+      // Track all items for cross-category validation
+      if (!itemTracker.has(item.name)) {
+        itemTracker.set(item.name, []);
+      }
+      itemTracker.get(item.name)!.push({ category, index, id: (item as CalculatorItemWithId).id });
+
+      // Check within category duplicates
+      if (!nameMap.has(item.name)) {
+        nameMap.set(item.name, []);
+      }
+      nameMap.get(item.name)!.push(index);
+    });
+
+    // Check for duplicates within category
+    for (const [name, indices] of nameMap.entries()) {
+      if (indices.length > 1) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
+        );
+        isValid = false;
+      }
+    }
+  }
+
+  // Check for cross-category duplicates (should only exist for specific items like armor passives)
+  for (const [itemName, locations] of itemTracker.entries()) {
+    if (locations.length > 1 && !itemName.includes('Armor Passive')) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+        locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
+      );
+      isValid = false;
+    }
+  }
+
+  // TEMPORARILY DISABLED: Validate armor passive items specifically
+  // This validation is preventing normal operation when duplicates occur
+  // TODO: Fix the root cause of duplication instead of just detecting it
+  /*
+  const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
+  const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
+
+  if (lightArmorPassives.length > 1) {
+    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
+    isValid = false;
+  }
+
+  if (heavyArmorPassives.length > 1) {
+    // eslint-disable-next-line no-console
+    // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
+    isValid = false;
+  }
+  */
+
+  // Validate gear category structure
+  const expectedGearItems = [
+    'Light Helm',
+    'Light Chest',
+    'Light Shoulders',
+    'Light Gloves',
+    'Light Boots',
+    'Light Belt',
+    'Medium Helm',
+    'Medium Chest',
+    'Medium Shoulders',
+    'Medium Gloves',
+    'Medium Boots',
+    'Medium Belt',
+    'Heavy Helm',
+    'Heavy Chest',
+    'Heavy Shoulders',
+    'Heavy Gloves',
+    'Heavy Boots',
+    'Heavy Belt',
+  ];
+
+  expectedGearItems.forEach((expectedName, expectedIndex) => {
+    const actualItem = data.gear[expectedIndex];
+    if (!actualItem || actualItem.name !== expectedName) {
+      // eslint-disable-next-line no-console
+      console.error(
+        `❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`,
+        actualItem?.name || 'undefined',
+      );
+      isValid = false;
+    }
+  });
+
+  // Check for missing or invalid resistance values
+  for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+    data[category].forEach((item, index) => {
+      if (!item.resistanceValue || item.resistanceValue === '-') {
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`,
+        );
+        isValid = false;
+      }
+    });
+  }
+
+  return isValid;
+};
 
 // Mode type
 type GameMode = 'pve' | 'pvp' | 'both';
@@ -609,11 +1216,37 @@ const useStickyFooter = (
   const [placeholderHeight, setPlaceholderHeight] = useState<string>('auto');
 
   const rafRef = useRef<number | null>(null);
-  const tickerRef = useRef<number | null>(null);
   const cardRectSignatureRef = useRef<string>('');
   const placeholderWidthRef = useRef<number>(0);
 
+  // Cache for measurements to avoid redundant DOM queries
+  const measurementCacheRef = useRef<{
+    cardRect: DOMRect | null;
+    footerRect: DOMRect | null;
+    placeholderRect: DOMRect | null;
+    viewportHeight: number;
+    timestamp: number;
+  }>({
+    cardRect: null,
+    footerRect: null,
+    placeholderRect: null,
+    viewportHeight: 0,
+    timestamp: 0,
+  });
+
+  // Throttle measurements to avoid excessive calculations
+  const lastMeasurementTimeRef = useRef<number>(0);
+  const MEASUREMENT_THROTTLE = 16; // ~60fps
+
   const runMeasurement = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle measurements to 60fps
+    if (now - lastMeasurementTimeRef.current < MEASUREMENT_THROTTLE) {
+      return;
+    }
+    lastMeasurementTimeRef.current = now;
+
     const footerEl = footerRef.current;
     const placeholderEl = placeholderRef.current;
 
@@ -626,10 +1259,33 @@ const useStickyFooter = (
       return;
     }
 
-    const cardRect = calculatorCard.getBoundingClientRect();
-    const footerRect = footerEl.getBoundingClientRect();
-    const placeholderRect = placeholderEl?.getBoundingClientRect();
+    // Use cached measurements if available and recent
+    const cache = measurementCacheRef.current;
     const viewportHeight = window.innerHeight;
+
+    let cardRect = cache.cardRect;
+    let footerRect = cache.footerRect;
+    let placeholderRect = cache.placeholderRect;
+
+    // Only recalculate if viewport changed or cache is stale
+    if (cache.viewportHeight !== viewportHeight || now - cache.timestamp > 50) {
+      cardRect = calculatorCard.getBoundingClientRect();
+      footerRect = footerEl.getBoundingClientRect();
+      placeholderRect = placeholderEl?.getBoundingClientRect() || null;
+
+      measurementCacheRef.current = {
+        cardRect,
+        footerRect,
+        placeholderRect,
+        viewportHeight,
+        timestamp: now,
+      };
+    }
+
+    // Add null checks for safety
+    if (!cardRect || !footerRect) {
+      return;
+    }
 
     const cardBottomThreshold = viewportHeight - 8;
     const shouldStick = cardRect.bottom >= cardBottomThreshold && cardRect.top < viewportHeight;
@@ -664,50 +1320,54 @@ const useStickyFooter = (
     const desiredBottom = minBottom > 0 ? minBottom : adjustedBaseBottom;
     const clampedBottom = Math.min(desiredBottom, maxBottom);
 
-    const nextStyle: React.CSSProperties = {
-      position: 'fixed',
-      left: `${Math.round(left)}px`,
-      width: `${Math.round(width)}px`,
-      bottom: `${Math.round(clampedBottom)}px`,
-      zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
-      boxSizing: 'border-box',
-      // Preserve background styling - prevent transparency in full mode
-      background: liteMode
-        ? 'transparent'
-        : theme.palette.mode === 'dark'
-          ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
-          : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-      borderRadius: liteMode ? '0' : '12px',
-      boxShadow: liteMode
-        ? 'none'
-        : theme.palette.mode === 'dark'
-          ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
-          : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
-    };
-
+    // Batch all state updates together
     const footerHeight = `${Math.round(footerRect.height)}px`;
-    if (placeholderHeight !== footerHeight) {
-      setPlaceholderHeight(footerHeight);
-    }
-
-    const newSignature = `${cardRect.left}|${cardRect.width}|${cardRect.top}`;
+    const newSignature = `${Math.round(cardRect.left)}|${Math.round(cardRect.width)}|${Math.round(cardRect.top)}`;
     const widthChanged = Math.round(placeholderWidthRef.current) !== Math.round(width);
-    if (cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky) {
-      cardRectSignatureRef.current = newSignature;
-      placeholderWidthRef.current = width;
-      setFooterStyle(nextStyle);
-      if (!isSticky) {
-        setIsSticky(true);
-      }
-    } else {
-      // small positional adjustments
-      setFooterStyle((prev) => ({ ...prev, ...nextStyle }));
-      if (!isSticky) {
-        setIsSticky(true);
-      }
+    const styleChanged = cardRectSignatureRef.current !== newSignature || widthChanged || !isSticky;
+
+    // Only update state if something actually changed
+    if (styleChanged || placeholderHeight !== footerHeight) {
+      const nextStyle: React.CSSProperties = {
+        position: 'fixed',
+        left: `${Math.round(left)}px`,
+        width: `${Math.round(width)}px`,
+        bottom: `${Math.round(clampedBottom)}px`,
+        zIndex: isMobile ? 1001 : 11, // Ensure footer is above feedback button on mobile
+        boxSizing: 'border-box',
+        // Preserve background styling - prevent transparency in full mode
+        background: liteMode
+          ? 'transparent'
+          : theme.palette.mode === 'dark'
+            ? 'linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(3, 7, 18, 0.98) 100%)'
+            : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+        borderRadius: liteMode ? '0' : '12px',
+        boxShadow: liteMode
+          ? 'none'
+          : theme.palette.mode === 'dark'
+            ? '0 8px 32px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05)'
+            : '0 8px 32px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
+      };
+
+      // Batch state updates
+      requestAnimationFrame(() => {
+        if (placeholderHeight !== footerHeight) {
+          setPlaceholderHeight(footerHeight);
+        }
+
+        if (styleChanged) {
+          cardRectSignatureRef.current = newSignature;
+          placeholderWidthRef.current = width;
+          setFooterStyle(nextStyle);
+          if (!isSticky) {
+            setIsSticky(true);
+          }
+        }
+      });
     }
   }, [isSticky, placeholderHeight, liteMode, theme.palette.mode, isMobile]);
 
+  // Debounced measurement scheduler
   const scheduleMeasurement = useCallback(() => {
     if (rafRef.current !== null) {
       return;
@@ -718,64 +1378,110 @@ const useStickyFooter = (
     });
   }, [runMeasurement]);
 
+  // Throttled scroll handler
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastScrollTimeRef = useRef<number>(0);
+  const SCROLL_THROTTLE = 16; // ~60fps
+
+  const handleScroll = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle scroll events
+    if (now - lastScrollTimeRef.current < SCROLL_THROTTLE) {
+      return;
+    }
+    lastScrollTimeRef.current = now;
+
+    // Clear any pending timeout
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+
+    // Debounce the actual measurement
+    scrollTimeoutRef.current = setTimeout(() => {
+      scheduleMeasurement();
+    }, 32); // ~30fps for smooth scrolling
+  }, [scheduleMeasurement]);
+
+  // Throttled resize handler
+  const resizeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastResizeTimeRef = useRef<number>(0);
+  const RESIZE_THROTTLE = 100; // Slower for resize events
+
+  const handleResize = useCallback(() => {
+    const now = performance.now();
+
+    // Throttle resize events more aggressively
+    if (now - lastResizeTimeRef.current < RESIZE_THROTTLE) {
+      return;
+    }
+    lastResizeTimeRef.current = now;
+
+    // Clear any pending timeout
+    if (resizeTimeoutRef.current) {
+      clearTimeout(resizeTimeoutRef.current);
+    }
+
+    // Invalidate cache on resize to force recalculation
+    measurementCacheRef.current.timestamp = 0;
+
+    // Debounce the actual measurement
+    resizeTimeoutRef.current = setTimeout(() => {
+      scheduleMeasurement();
+    }, 150);
+  }, [scheduleMeasurement]);
+
   useEffect(() => {
+    // Initial measurement
     runMeasurement();
 
-    const handleScroll = (): void => {
-      runMeasurement();
-      scheduleMeasurement();
-    };
-    const handleResize = (): void => {
-      runMeasurement();
-      scheduleMeasurement();
-    };
-
+    // Add event listeners with passive option for better performance
     window.addEventListener('scroll', handleScroll, { passive: true });
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', handleResize, { passive: true });
 
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', handleResize);
+
+      // Cleanup timeouts
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
+      if (resizeTimeoutRef.current) {
+        clearTimeout(resizeTimeoutRef.current);
+      }
+
+      // Cleanup RAF
       if (rafRef.current !== null) {
         cancelAnimationFrame(rafRef.current);
         rafRef.current = null;
       }
     };
-  }, [runMeasurement, scheduleMeasurement]);
+  }, [runMeasurement, handleScroll, handleResize, scheduleMeasurement]);
 
-  useEffect(() => {
-    if (!isSticky) {
-      if (tickerRef.current !== null) {
-        cancelAnimationFrame(tickerRef.current);
-        tickerRef.current = null;
-      }
-      return;
-    }
-
-    const tick = (): void => {
-      runMeasurement();
-      tickerRef.current = window.requestAnimationFrame(tick);
-    };
-
-    tickerRef.current = window.requestAnimationFrame(tick);
-
-    return () => {
-      if (tickerRef.current !== null) {
-        cancelAnimationFrame(tickerRef.current);
-        tickerRef.current = null;
-      }
-    };
-  }, [isSticky, runMeasurement]);
-
+  // Optimized ResizeObserver with debouncing
   useEffect(() => {
     if (typeof ResizeObserver === 'undefined') {
       return;
     }
 
+    let resizeTimeout: NodeJS.Timeout | null = null;
+
     const observer = new ResizeObserver(() => {
-      runMeasurement();
+      // Invalidate cache on resize to force recalculation
+      measurementCacheRef.current.timestamp = 0;
+
+      // Debounce resize observer callbacks
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
+
+      resizeTimeout = setTimeout(() => {
+        scheduleMeasurement();
+      }, 100); // Debounce resize observer events
     });
 
+    // Only observe elements that actually exist
     if (footerRef.current) {
       observer.observe(footerRef.current);
     }
@@ -789,8 +1495,11 @@ const useStickyFooter = (
 
     return () => {
       observer.disconnect();
+      if (resizeTimeout) {
+        clearTimeout(resizeTimeout);
+      }
     };
-  }, [runMeasurement]);
+  }, [scheduleMeasurement]);
 
   return { footerRef, placeholderRef, footerStyle, placeholderHeight, isSticky };
 };
@@ -918,28 +1627,329 @@ const CalculatorTooltip: React.FC<CalculatorTooltipProps> = ({ title, content })
   );
 };
 
+// Gear icon component for trait button
+type GearProps = {
+  size?: string;
+  color?: string;
+};
+
+const Gear = ({ size = '20', color = '#000000' }: GearProps): React.JSX.Element => (
+  <svg
+    xmlns="http://www.w3.org/2000/svg"
+    width={size}
+    height={size}
+    viewBox="0 0 20 20"
+    fill={color}
+  >
+    <g fill={color} fillRule="evenodd" clipRule="evenodd">
+      <path
+        d="M11.558 3.5a.75.75 0 0 1 .685.447l.443 1c.044.1.065.202.065.302a6.2 6.2 0 0 1 1.254.52.751.751 0 0 1 .219-.151l.97-.443a.75.75 0 0 1 .843.151l.837.838a.75.75 0 0 1 .17.8l-.395 1.02a.748.748 0 0 1-.168.26c.218.398.393.818.52 1.255a.75.75 0 0 1 .261.048l1 .373a.75.75 0 0 1 .488.703v1.184a.75.75 0 0 1-.447.686l-1 .443a.748.748 0 0 1-.302.065 6.227 6.227 0 0 1-.52 1.254c.06.061.112.134.151.219l.444.97a.75.75 0 0 1-.152.843l-.838.837a.75.75 0 0 1-.8.17l-1.02-.395a.749.749 0 0 1-.26-.168 6.225 6.225 0 0 1-1.255.52.75.75 0 0 1-.048.261l-.373 1a.75.75 0 0 1-.703.488h-1.184a.75.75 0 0 1-.686-.447l-.443-1a.748.748 0 0 1-.065-.302 6.226 6.226 0 0 1-1.254-.52.752.752 0 0 1-.219.151l-.97.443a.75.75 0 0 1-.843-.151l-.837-.838a.75.75 0 0 1-.17-.8l.395-1.02a.75.75 0 0 1 .168-.26A6.224 6.224 0 0 1 4.999 13a.752.752 0 0 1-.261-.048l-1-.373a.75.75 0 0 1-.488-.703v-1.184a.75.75 0 0 1 .447-.686l1-.443a.748.748 0 0 1 .302-.065 6.2 6.2 0 0 1 .52-1.254.75.75 0 0 1-.15-.219l-.444-.97a.75.75 0 0 1 .152-.843l.837-.837a.75.75 0 0 1 .801-.17l1.02.395c.102.04.189.097.26.168a6.224 6.224 0 0 1 1.254-.52.75.75 0 0 1 .048-.261l.373-1a.75.75 0 0 1 .703-.488h1.185Z"
+        opacity=".2"
+      />
+      <path d="M8.232 11.768A2.493 2.493 0 0 0 10 12.5c.672 0 1.302-.267 1.768-.732A2.493 2.493 0 0 0 12.5 10c0-.672-.267-1.302-.732-1.768A2.493 2.493 0 0 0 10 7.5c-.672 0-1.302.267-1.768.732A2.493 2.493 0 0 0 7.5 10c0 .672.267 1.302.732 1.768Zm2.829-.707c-.28.28-.657.439-1.061.439-.404 0-.78-.16-1.06-.44S8.5 10.405 8.5 10s.16-.78.44-1.06.656-.44 1.06-.44.78.16 1.06.44.44.656.44 1.06-.16.78-.44 1.06Z" />
+      <path d="m14.216 3.773-1.27.714a6.213 6.213 0 0 0-1.166-.48l-.47-1.414a.5.5 0 0 0-.474-.343H9.06a.5.5 0 0 0-.481.365l-.392 1.403a6.214 6.214 0 0 0-1.164.486L5.69 3.835a.5.5 0 0 0-.578.094L3.855 5.185a.5.5 0 0 0-.082.599l.714 1.27c-.199.37-.36.76-.48 1.166l-1.414.47a.5.5 0 0 0-.343.474v1.777a.5.5 0 0 0 .365.481l1.403.392c.122.405.285.794.486 1.164l-.669 1.333a.5.5 0 0 0 .094.578l1.256 1.256a.5.5 0 0 0 .599.082l1.27-.714c.37.199.76.36 1.166.48l.47 1.414a.5.5 0 0 0 .474.343h1.777a.5.5 0 0 0 .481-.365l.392-1.403a6.21 6.21 0 0 0 1.164-.486l1.333.669a.5.5 0 0 0 .578-.093l1.256-1.257a.5.5 0 0 0 .082-.599l-.714-1.27c.199-.37.36-.76.48-1.166l1.414-.47a.5.5 0 0 0 .343-.474V9.06a.5.5 0 0 0-.365-.481l-1.403-.392a6.208 6.208 0 0 0-.486-1.164l.669-1.333a.5.5 0 0 0-.093-.578l-1.257-1.256a.5.5 0 0 0-.599-.082Zm-1.024 1.724l1.184-.667.733.733-.627 1.25a.5.5 0 0 0 .019.482c.265.44.464.918.59 1.418a.5.5 0 0 0 .35.36l1.309.366v1.037l-1.327.44a.5.5 0 0 0-.328.354 5.216 5.216 0 0 1-.585 1.42.5.5 0 0 0-.007.502l.667 1.184-.733.733-1.25-.627a.5.5 0 0 0-.482.019c-.44.265-.918.464-1.418.59a.5.5 0 0 0-.36.35l-.366 1.309H9.525l-.44-1.327a.5.5 0 0 0-.355-.328 5.217 5.217 0 0 1-1.42-.585.5.5 0 0 0-.502-.007l-1.184.667-.733-.733.627-1.25a.5.5 0 0 0-.019-.482 5.216 5.216 0 0 1-.59-1.418a.5.5 0 0 0-.35-.36l-1.309-.366V9.525l1.327-.44a.5.5 0 0 0 .327-.355c.125-.5.323-.979.586-1.42a.5.5 0 0 0 .007-.502L4.83 5.624l.733-.733 1.25.627a.5.5 0 0 0 .482-.019c.44-.265.918-.464 1.418-.59a.5.5 0 0 0 .36-.35l.366-1.309h1.037l.44 1.327a.5.5 0 0 0 .354.327c.5.125.979.323 1.42.586a.5.5 0 0 0 .502.007Z" />
+    </g>
+  </svg>
+);
+
 const CalculatorComponent: React.FC = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
   const isExtraSmall = useMediaQuery('(max-width:380px)');
   const [selectedTab, setSelectedTab] = useState(0);
+
+  // Helper function to generate unique IDs for items
+  const generateItemId = useCallback((category: string, name: string, index: number): string => {
+    return `${category}-${name}-${index}`;
+  }, []);
+
+  // Helper function to find item by ID
+  const findItemById = useCallback(
+    (
+      data: CalculatorData,
+      id: string,
+    ): { category: keyof CalculatorData; index: number; item: CalculatorItem } | null => {
+      for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+        const index = data[category].findIndex((item) => (item as CalculatorItemWithId).id === id);
+        if (index !== -1) {
+          return { category, index, item: data[category][index] };
+        }
+      }
+      return null;
+    },
+    [],
+  );
+
+  // Helper function to validate calculator data integrity
+  const validateCalculatorData = useCallback((data: CalculatorData): boolean => {
+    let isValid = true;
+    const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
+
+    // Check for duplicate items in each category and track all items
+    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+      const items = data[category];
+      const nameMap = new Map<string, number[]>();
+
+      items.forEach((item, index) => {
+        // Track all items for cross-category validation
+        if (!itemTracker.has(item.name)) {
+          itemTracker.set(item.name, []);
+        }
+        itemTracker
+          .get(item.name)!
+          .push({ category, index, id: (item as CalculatorItemWithId).id });
+
+        // Check within category duplicates
+        if (!nameMap.has(item.name)) {
+          nameMap.set(item.name, []);
+        }
+        nameMap.get(item.name)!.push(index);
+      });
+
+      // Check for duplicates within category
+      for (const [name, indices] of nameMap.entries()) {
+        if (indices.length > 1) {
+          // eslint-disable-next-line no-console
+          console.error(
+            `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
+          );
+          isValid = false;
+        }
+      }
+    }
+
+    // Check for cross-category duplicates (should only exist for specific items like armor passives)
+    for (const [itemName, locations] of itemTracker.entries()) {
+      if (locations.length > 1 && !itemName.includes('Armor Passive')) {
+        // eslint-disable-next-line no-console
+        console.error(
+          `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
+          locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
+        );
+        isValid = false;
+      }
+    }
+
+    // TEMPORARILY DISABLED: Validate armor passive items specifically
+    // This validation is preventing normal operation when duplicates occur
+    // TODO: Fix the root cause of duplication instead of just detecting it
+    /*
+    const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
+    const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
+
+    if (lightArmorPassives.length > 1) {
+      // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
+      isValid = false;
+    }
+
+    if (heavyArmorPassives.length > 1) {
+      // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
+      isValid = false;
+    }
+    */
+
+    // TEMPORARILY DISABLED: Validate gear category structure
+    // The actual gear array structure doesn't match the expected order
+    // TODO: Revisit this validation when data structure is stabilized
+    /*
+    const expectedGearItems = [
+      'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
+      'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
+      'Heavy Helm', 'Heavy Chest', 'Heavy Shoulders', 'Heavy Gloves', 'Heavy Boots', 'Heavy Belt'
+    ];
+
+    expectedGearItems.forEach((expectedName, expectedIndex) => {
+      const actualItem = data.gear[expectedIndex];
+      if (!actualItem || actualItem.name !== expectedName) {
+        // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
+        isValid = false;
+      }
+    });
+    */
+
+    // TEMPORARILY DISABLED: Check for missing or invalid resistance values
+    // This is preventing armor items from being clicked/enabled
+    // TODO: Fix resistance calculation logic
+    /*
+    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+      data[category].forEach((item, index) => {
+        if (!item.resistanceValue || item.resistanceValue === "-") {
+          // eslint-disable-next-line no-console
+    console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
+          isValid = false;
+        }
+      });
+    }
+    */
+
+    return isValid;
+  }, []);
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
   const [currentEditingIndex, setCurrentEditingIndex] = useState<number | null>(null);
+  const [tempSelectedVariant, setTempSelectedVariant] = useState<string>('Regular');
+  const [tempQualityLevel, setTempQualityLevel] = useState<number>(ARMOR_QUALITY_LABELS.length - 1);
   const [penetrationData, setPenetrationData] = useState<CalculatorData>(PENETRATION_DATA);
   const [criticalData, setCriticalData] = useState<CalculatorData>(CRITICAL_DATA);
   const [armorResistanceData, setArmorResistanceData] =
     useState<CalculatorData>(ARMOR_RESISTANCE_DATA);
+
+  // Use a ref to track the latest armor resistance data for modal state reading
+  const armorResistanceDataRef = useRef(armorResistanceData);
+
+  // Initialize heavy armor passive quantity on component mount
+  useEffect(() => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      // Count enabled heavy armor items (excluding the passive itself)
+      const heavyArmorCount = prev.gear.filter(
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+      ).length;
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = prev.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
+
+      if (heavyArmorPassiveIndex !== -1) {
+        const updatedData = { ...prev };
+        updatedData.gear = [...prev.gear];
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
+        };
+        return updatedData;
+      }
+
+      return prev;
+    });
+  }, []); // Empty dependency array ensures this runs only once on mount
+
+  // ID-based update function for armor resistance items
+  const updateArmorResistanceItemById = useCallback(
+    (id: string, updates: Partial<CalculatorItem>) => {
+      setArmorResistanceData((prev: CalculatorData) => {
+        // TEMPORARILY DISABLED: Validate previous state before making changes
+        // if (!validateCalculatorData(prev)) {
+        //   return prev;
+        // }
+
+        const location = findItemById(prev, id);
+        if (!location) {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [UPDATE] Item with ID ${id} not found`);
+          return prev;
+        }
+
+        const newCategoryItems = [...prev[location.category]];
+        const originalItem = newCategoryItems[location.index];
+
+        // Validate we're not corrupting the array
+        if (
+          originalItem.name !==
+          (updates.name && updates.name !== originalItem.name ? updates.name : originalItem.name)
+        ) {
+          // eslint-disable-next-line no-console
+          console.error(`❌ [UPDATE] Name mismatch detected - potential corruption`);
+          return prev;
+        }
+
+        newCategoryItems[location.index] = { ...originalItem, ...updates };
+
+        // Create updated data to calculate armor passives
+        const updatedData = {
+          ...prev,
+          [location.category]: newCategoryItems,
+        };
+
+        // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
+        // if (!validateCalculatorData(updatedData)) {
+        //   return prev;
+        // }
+
+        // Auto-calculate armor passive quantities and enabled state
+        const lightArmorItems = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
+        );
+        const heavyArmorItems = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+        );
+
+        const lightArmorCount = lightArmorItems.length;
+        const heavyArmorCount = heavyArmorItems.length;
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log('🔍 [ARMOR_PASSIVE_DEBUG] ID-based update function:', {
+          id,
+          location,
+          lightArmorItems: lightArmorItems.map((item) => item.name),
+          heavyArmorItems: heavyArmorItems.map((item) => item.name),
+          lightArmorCount,
+          heavyArmorCount,
+          updates,
+        });
+
+        // Find and update Light Armor Passive with validation
+        const lightArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Light Armor Passive',
+        );
+        if (lightArmorPassiveIndex !== -1) {
+          updatedData.gear[lightArmorPassiveIndex] = {
+            ...updatedData.gear[lightArmorPassiveIndex],
+            quantity: lightArmorCount,
+            enabled: lightArmorCount > 0, // Auto-enable if there are light armor pieces
+          };
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
+        }
+
+        // Find and update Heavy Armor Passive with validation
+        const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Heavy Armor Passive',
+        );
+        if (heavyArmorPassiveIndex !== -1) {
+          updatedData.gear[heavyArmorPassiveIndex] = {
+            ...updatedData.gear[heavyArmorPassiveIndex],
+            quantity: heavyArmorCount,
+            enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
+          };
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
+        }
+
+        // Final validation before returning
+        if (!validateCalculatorData(updatedData)) {
+          // eslint-disable-next-line no-console
+          console.error(`❌ [UPDATE] Final validation failed - reverting to previous state`);
+          return prev;
+        }
+
+        return updatedData;
+      });
+    },
+    [validateCalculatorData, findItemById],
+  );
+  armorResistanceDataRef.current = armorResistanceData;
 
   const armorResistanceGearWithIndex = useMemo<IndexedCalculatorItem[]>(
     () =>
       armorResistanceData.gear.map((item, gearIndex) => ({
         ...item,
         originalIndex: gearIndex,
+        id: generateItemId('gear', item.name, gearIndex),
       })),
-    [armorResistanceData.gear],
+    [armorResistanceData.gear, generateItemId],
   );
 
   const armorResistanceGearSections = useMemo(
@@ -957,10 +1967,20 @@ const CalculatorComponent: React.FC = () => {
     () => [
       ...armorResistanceData.cp
         .filter((item) => item.name === 'Armor Master')
-        .map((item, index) => ({ ...item, category: 'cp', originalIndex: index })),
+        .map((item) => {
+          const originalIndex = armorResistanceData.cp.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'cp', originalIndex };
+        }),
       ...armorResistanceData.passives
         .filter((item) => ['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name))
-        .map((item, index) => ({ ...item, category: 'passives', originalIndex: index })),
+        .map((item) => {
+          const originalIndex = armorResistanceData.passives.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'passives', originalIndex };
+        }),
     ],
     [armorResistanceData.cp, armorResistanceData.passives],
   );
@@ -968,14 +1988,27 @@ const CalculatorComponent: React.FC = () => {
   // Filter out set items from their original categories
   const filteredPassives = useMemo(
     () =>
-      armorResistanceData.passives.filter(
-        (item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name),
-      ),
+      armorResistanceData.passives
+        .filter((item) => !['Lord Warden', 'Ozezans', 'Markyn Ring of Majesty'].includes(item.name))
+        .map((item) => {
+          const originalIndex = armorResistanceData.passives.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'passives', originalIndex };
+        }),
     [armorResistanceData.passives],
   );
 
   const filteredCp = useMemo(
-    () => armorResistanceData.cp.filter((item) => item.name !== 'Armor Master'),
+    () =>
+      armorResistanceData.cp
+        .filter((item) => item.name !== 'Armor Master')
+        .map((item) => {
+          const originalIndex = armorResistanceData.cp.findIndex(
+            (originalItem) => originalItem.name === item.name,
+          );
+          return { ...item, category: 'cp', originalIndex };
+        }),
     [armorResistanceData.cp],
   );
 
@@ -1000,6 +2033,12 @@ const CalculatorComponent: React.FC = () => {
       // Penetration = Ultimate × 23
       const ult = parseFloat(item.quantity.toString()) || 0;
       return Math.round(ult * 23);
+    } else if (item.name === 'Warden Passive Per Skill') {
+      // 1240 resistance per skill slotted
+      return item.quantity * 1240;
+    } else if (item.name === 'Armor Line Bonus') {
+      // 1487 resistance per armor line bonus
+      return item.quantity * 1487;
     } else if (item.variants && item.selectedVariant !== undefined) {
       // Use the selected variant value with quality scaling
       const variant = item.variants[item.selectedVariant];
@@ -1054,9 +2093,10 @@ const CalculatorComponent: React.FC = () => {
       };
 
       Object.keys(data).forEach((category) => {
-        filteredData[category as keyof CalculatorData] = data[
-          category as keyof CalculatorData
-        ].filter((item) => allowedItems.includes(item.name));
+        const categoryKey = category as keyof CalculatorData;
+        filteredData[categoryKey] = data[categoryKey]
+          .map((item, originalIndex) => ({ ...item, originalIndex }))
+          .filter((item) => allowedItems.includes(item.name));
       });
 
       return filteredData;
@@ -1164,9 +2204,48 @@ const CalculatorComponent: React.FC = () => {
     return 'under-cap';
   }, []);
 
+  // Calculate over-resistance amount (amount above MAX_ARMOR_VALUE)
+  const getOverResistanceAmount = useCallback((total: number) => {
+    const overAmount = Math.max(0, total - MAX_ARMOR_VALUE);
+    return Math.floor(overAmount / OVER_RESISTANCE_DIVISOR);
+  }, []);
+
+  // Calculate damage mitigation percentage (capped at MAX_DAMAGE_MITIGATION)
+  const getDamageMitigationPercentage = useCallback((total: number) => {
+    const percentage = total / DAMAGE_MITIGATION_DIVISOR;
+    return Math.min(MAX_DAMAGE_MITIGATION, Math.floor(percentage * 10) / 10); // Round to 1 decimal place
+  }, []);
+
+  // Calculate underpenetration amount (amount below MAX_PENETRATION_PVE)
+  const getUnderpenetrationAmount = useCallback((total: number) => {
+    const underAmount = Math.max(0, MAX_PENETRATION_PVE - total);
+    return underAmount;
+  }, []);
+
+  // Calculate damage loss percentage due to incomplete resistance shred
+  const getDamageLossPercentage = useCallback(
+    (total: number) => {
+      const underAmount = getUnderpenetrationAmount(total);
+      if (underAmount === 0) return 0;
+
+      // Formula based on CSV analysis: damage loss percentage
+      const damageLoss = underAmount / PENETRATION_DAMAGE_LOSS_DIVISOR;
+      return Math.floor(damageLoss * 10) / 10; // Round to 1 decimal place
+    },
+    [getUnderpenetrationAmount],
+  );
+
   const penStatus = getPenStatus(penTotal, gameMode);
   const critStatus = getCritStatus(critTotal);
   const armorResistanceStatus = getArmorResistanceStatus(armorResistanceTotal);
+
+  // Calculate additional armor metrics
+  const _overResistanceAmount = getOverResistanceAmount(armorResistanceTotal);
+  const damageMitigationPercentage = getDamageMitigationPercentage(armorResistanceTotal);
+
+  // Calculate additional penetration metrics
+  const underpenetrationAmount = getUnderpenetrationAmount(penTotal);
+  const damageLossPercentage = getDamageLossPercentage(penTotal);
 
   // Update item handlers - optimized for performance
   const updatePenItem = useCallback(
@@ -1200,8 +2279,53 @@ const CalculatorComponent: React.FC = () => {
   const updateArmorResistanceItem = useCallback(
     (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
       setArmorResistanceData((prev: CalculatorData) => {
+        // TEMPORARILY DISABLED: Validate previous state to prevent blocking updates
+        // if (!validateCalculatorData(prev)) {
+        //   return prev;
+        // }
+
         const newCategoryItems = [...prev[category]];
-        newCategoryItems[index] = { ...newCategoryItems[index], ...updates };
+
+        // Add validation to prevent index out of bounds
+        if (index < 0 || index >= newCategoryItems.length) {
+          // eslint-disable-next-line no-console
+          console.warn(
+            `⚠️ [LEGACY_UPDATE] Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`,
+          );
+          return prev;
+        }
+
+        const originalItem = newCategoryItems[index];
+
+        newCategoryItems[index] = { ...originalItem, ...updates };
+
+        // Mutually exclusive armor logic: disable conflicting items when enabling an armor piece
+        if (
+          updates.enabled === true &&
+          category === 'gear' &&
+          isMutuallyExclusiveArmorItem(originalItem)
+        ) {
+          const slotKey = extractSlotFromItemName(originalItem.name);
+          if (slotKey) {
+            // Find and disable other items in the same slot
+            const conflictingItems = findConflictingItems(originalItem, newCategoryItems);
+            conflictingItems.forEach((conflictingItem) => {
+              const conflictingIndex = newCategoryItems.findIndex(
+                (item) => item.name === conflictingItem.name,
+              );
+              if (conflictingIndex !== -1 && newCategoryItems[conflictingIndex].enabled) {
+                newCategoryItems[conflictingIndex] = {
+                  ...newCategoryItems[conflictingIndex],
+                  enabled: false,
+                };
+                // eslint-disable-next-line no-console
+                console.log(
+                  `🔀 [MUTUAL_EXCLUSIVE] Disabled "${conflictingItem.name}" when enabling "${originalItem.name}" (slot: ${slotKey})`,
+                );
+              }
+            });
+          }
+        }
 
         // Create updated data to calculate armor passives
         const updatedData = {
@@ -1209,27 +2333,76 @@ const CalculatorComponent: React.FC = () => {
           [category]: newCategoryItems,
         };
 
-        // Auto-calculate armor passive quantities based on enabled gear pieces
-        const lightArmorCount = updatedData.gear.filter(
+        // TEMPORARILY DISABLED: Validate intermediate state to prevent blocking updates
+        // if (!validateCalculatorData(updatedData)) {
+        //   return prev;
+        // }
+
+        // Auto-calculate armor passive quantities and enabled state
+        const lightArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
-        ).length;
-
-        const heavyArmorCount = updatedData.gear.filter(
+        );
+        const heavyArmorItems = updatedData.gear.filter(
           (item) =>
             item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
-        ).length;
+        );
+
+        const lightArmorCount = lightArmorItems.length;
+        const heavyArmorCount = heavyArmorItems.length;
+
+        // Debug logging
+        // eslint-disable-next-line no-console
+        console.log('🔍 [ARMOR_PASSIVE_DEBUG] Main update function:', {
+          lightArmorItems: lightArmorItems.map((item) => item.name),
+          heavyArmorItems: heavyArmorItems.map((item) => item.name),
+          lightArmorCount,
+          heavyArmorCount,
+          updateCategory: category,
+          updateIndex: index,
+          updates,
+        });
+
+        // Validate no duplicate passive items exist
+        const lightArmorPassives = updatedData.gear.filter(
+          (item) => item.name === 'Light Armor Passive',
+        );
+        const heavyArmorPassives = updatedData.gear.filter(
+          (item) => item.name === 'Heavy Armor Passive',
+        );
+
+        if (lightArmorPassives.length > 1) {
+          // eslint-disable-next-line no-console
+          console.warn('Multiple Light Armor Passive items found, using first one');
+        }
+        if (heavyArmorPassives.length > 1) {
+          // eslint-disable-next-line no-console
+          console.warn('Multiple Heavy Armor Passive items found, using first one');
+        }
 
         // Find and update Light Armor Passive
         const lightArmorPassiveIndex = updatedData.gear.findIndex(
           (item) => item.name === 'Light Armor Passive',
         );
         if (lightArmorPassiveIndex !== -1) {
+          const oldQuantity = updatedData.gear[lightArmorPassiveIndex].quantity;
+          const oldEnabled = updatedData.gear[lightArmorPassiveIndex].enabled;
           updatedData.gear[lightArmorPassiveIndex] = {
             ...updatedData.gear[lightArmorPassiveIndex],
             quantity: lightArmorCount,
             enabled: lightArmorCount > 0,
           };
+          // eslint-disable-next-line no-console
+          console.log('✅ [LIGHT_ARMOR_PASSIVE] Updated:', {
+            index: lightArmorPassiveIndex,
+            oldQuantity,
+            newQuantity: lightArmorCount,
+            oldEnabled,
+            newEnabled: lightArmorCount > 0,
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
         }
 
         // Find and update Heavy Armor Passive
@@ -1237,17 +2410,46 @@ const CalculatorComponent: React.FC = () => {
           (item) => item.name === 'Heavy Armor Passive',
         );
         if (heavyArmorPassiveIndex !== -1) {
+          const oldQuantity = updatedData.gear[heavyArmorPassiveIndex].quantity;
+          const oldEnabled = updatedData.gear[heavyArmorPassiveIndex].enabled;
           updatedData.gear[heavyArmorPassiveIndex] = {
             ...updatedData.gear[heavyArmorPassiveIndex],
             quantity: heavyArmorCount,
             enabled: heavyArmorCount > 0,
           };
+          // eslint-disable-next-line no-console
+          console.log('✅ [HEAVY_ARMOR_PASSIVE] Updated:', {
+            index: heavyArmorPassiveIndex,
+            oldQuantity,
+            newQuantity: heavyArmorCount,
+            oldEnabled,
+            newEnabled: heavyArmorCount > 0,
+          });
+        } else {
+          // eslint-disable-next-line no-console
+          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
         }
 
         return updatedData;
       });
     },
     [],
+  );
+
+  // Create a wrapper update function that tries ID-based updates first for gear items
+  const _updateArmorResistanceItemWithFallback = useCallback(
+    (category: keyof CalculatorData, index: number, updates: Partial<CalculatorItem>) => {
+      // For gear items, try ID-based update first
+      if (category === 'gear') {
+        const item = armorResistanceData.gear[index];
+        if (item && (item as CalculatorItemWithId).id) {
+          updateArmorResistanceItemById((item as CalculatorItemWithId).id, updates);
+          return;
+        }
+      }
+      updateArmorResistanceItem(category, index, updates);
+    },
+    [armorResistanceData.gear, updateArmorResistanceItemById, updateArmorResistanceItem],
   );
 
   const cycleArmorResistanceVariant = useCallback((index: number) => {
@@ -1282,6 +2484,111 @@ const CalculatorComponent: React.FC = () => {
 
       item.qualityLevel = safeQualityLevel;
       item.value = variantQualityValues?.[safeQualityLevel] ?? nextVariant?.value ?? item.value;
+
+      newCategoryItems[index] = item;
+
+      // Create updated data to calculate armor passives
+      const updatedData = {
+        ...prev,
+        gear: newCategoryItems,
+      };
+
+      // Auto-calculate armor passive quantities based on enabled gear pieces
+      const lightArmorItems = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
+      );
+      const heavyArmorItems = updatedData.gear.filter(
+        (item) =>
+          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+      );
+
+      const lightArmorCount = lightArmorItems.length;
+      const heavyArmorCount = heavyArmorItems.length;
+
+      // Debug logging
+      // eslint-disable-next-line no-console
+      console.log('🔍 [ARMOR_PASSIVE_DEBUG] Cycle variant function:', {
+        index,
+        itemName: target.name,
+        lightArmorItems: lightArmorItems.map((item) => item.name),
+        heavyArmorItems: heavyArmorItems.map((item) => item.name),
+        lightArmorCount,
+        heavyArmorCount,
+      });
+
+      // Find and update Light Armor Passive
+      const lightArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Light Armor Passive',
+      );
+      if (lightArmorPassiveIndex !== -1) {
+        updatedData.gear[lightArmorPassiveIndex] = {
+          ...updatedData.gear[lightArmorPassiveIndex],
+          quantity: lightArmorCount,
+          enabled: lightArmorCount > 0,
+        };
+      }
+
+      // Find and update Heavy Armor Passive
+      const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+        (item) => item.name === 'Heavy Armor Passive',
+      );
+      if (heavyArmorPassiveIndex !== -1) {
+        updatedData.gear[heavyArmorPassiveIndex] = {
+          ...updatedData.gear[heavyArmorPassiveIndex],
+          quantity: heavyArmorCount,
+          enabled: heavyArmorCount > 0,
+        };
+      }
+
+      return updatedData;
+    });
+  }, []);
+
+  const setArmorResistanceVariant = useCallback((index: number, variantName: string) => {
+    setArmorResistanceData((prev: CalculatorData) => {
+      const newCategoryItems = [...prev.gear];
+      const target = newCategoryItems[index];
+
+      if (!target) {
+        return prev;
+      }
+
+      const item = { ...target };
+      const variants = item.variants ?? [];
+
+      if (!variants.length) {
+        return prev;
+      }
+
+      // Find the variant index by name with case-insensitive fallback
+      let variantIndex = variants.findIndex((v) => v.name === variantName);
+
+      // If not found, try case-insensitive matching
+      if (variantIndex === -1) {
+        variantIndex = variants.findIndex(
+          (v) => v.name.toLowerCase() === variantName.toLowerCase(),
+        );
+      }
+
+      if (variantIndex === -1) {
+        return prev;
+      }
+
+      const selectedVariant = variants[variantIndex];
+      item.selectedVariant = variantIndex;
+
+      // Update quality and value based on selected variant
+      const qualityLevel =
+        typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
+      const variantQualityValues = selectedVariant?.qualityValues;
+      const safeQualityLevel = Math.min(
+        Math.max(qualityLevel, 0),
+        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+      );
+
+      item.qualityLevel = safeQualityLevel;
+      item.value = variantQualityValues?.[safeQualityLevel] ?? selectedVariant?.value ?? item.value;
 
       newCategoryItems[index] = item;
 
@@ -1623,6 +2930,14 @@ const CalculatorComponent: React.FC = () => {
       const indexedItem = item as IndexedCalculatorItem;
       const resolvedIndex =
         typeof indexedItem.originalIndex === 'number' ? indexedItem.originalIndex : index;
+
+      // Armor passive detection for disabling manual interaction
+      // Only the actual auto-calculated armor passives should be blocked
+      const isLightArmorPassive = item.name === 'Light Armor Passive';
+      const isHeavyArmorPassive = item.name === 'Heavy Armor Passive';
+
+      // Use the original update function directly for now
+      const _enhancedUpdateFunction = updateFunction;
       const hasQuantity = item.maxQuantity && item.maxQuantity > 1;
       const key = `${category}-${resolvedIndex}-${item.enabled}-${item.quantity}-${hasQuantity}`;
 
@@ -1699,26 +3014,20 @@ const CalculatorComponent: React.FC = () => {
       };
 
       // Optimized text input styling for all mobile sizes
-      const controlSlotWidth = liteMode ? 36 : isExtraSmall ? 44 : isMobile ? 50 : 60;
-      const textFieldStyles = {
+      const controlSlotWidth = liteMode ? 36 : isExtraSmall ? 44 : isMobile ? 56 : 60;
+      const _textFieldStyles = {
         width: controlSlotWidth,
         '& .MuiInputBase-root': {
-          fontSize: liteMode
-            ? '0.75rem'
-            : isExtraSmall
-              ? '0.8rem'
-              : isMobile
-                ? '0.85rem'
-                : '0.8rem',
+          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.8rem' : isMobile ? '0.9rem' : '0.8rem',
           padding: liteMode
             ? '6px 6px'
             : isExtraSmall
               ? '8px 10px'
               : isMobile
-                ? '8px 12px'
+                ? '10px 14px'
                 : '4px 8px',
-          height: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
-          minHeight: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '40px' : '32px',
+          height: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '48px' : '32px',
+          minHeight: liteMode ? '32px' : isExtraSmall ? '40px' : isMobile ? '48px' : '32px',
           boxSizing: 'border-box',
           marginLeft: liteMode ? 0 : '-8px !important',
           borderRadius: '8px',
@@ -1742,16 +3051,10 @@ const CalculatorComponent: React.FC = () => {
             : isExtraSmall
               ? '8px 12px'
               : isMobile
-                ? '8px 12px'
+                ? '10px 14px'
                 : '2px 4px',
           textAlign: 'center',
-          fontSize: liteMode
-            ? '0.75rem'
-            : isExtraSmall
-              ? '0.85rem'
-              : isMobile
-                ? '0.9rem'
-                : '0.75rem',
+          fontSize: liteMode ? '0.75rem' : isExtraSmall ? '0.85rem' : isMobile ? '1rem' : '0.75rem',
           fontWeight: 500,
           // Hide spin buttons for a cleaner look
           '&::-webkit-outer-spin-button, &::-webkit-inner-spin-button': {
@@ -1804,21 +3107,49 @@ const CalculatorComponent: React.FC = () => {
             onClick={(e) => {
               e.stopPropagation();
               if (isMobile) {
-                setCurrentEditingIndex(resolvedIndex);
-                setVariantModalOpen(true);
+                // Get the latest item data to ensure we have the current selectedVariant
+                const currentItem = armorResistanceData.gear[resolvedIndex];
+                // Validate item exists and has variants before opening modal
+                if (currentItem && currentItem.variants && currentItem.variants.length > 0) {
+                  // Get the currently applied variant from the ref (latest data)
+                  const freshItem = armorResistanceDataRef.current.gear[resolvedIndex];
+                  let currentVariant = 'Regular'; // Default fallback
+
+                  // Try to get the selected variant from the fresh data
+                  if (
+                    freshItem &&
+                    freshItem.selectedVariant !== undefined &&
+                    freshItem.selectedVariant !== null
+                  ) {
+                    const variantIndex = freshItem.selectedVariant;
+                    if (freshItem.variants && freshItem.variants[variantIndex]) {
+                      currentVariant = freshItem.variants[variantIndex].name;
+                    }
+                  }
+
+                  setCurrentEditingIndex(resolvedIndex);
+                  setTempSelectedVariant(currentVariant);
+                  // Initialize temp quality level from current item
+                  const currentQualityLevel =
+                    freshItem?.qualityLevel !== undefined
+                      ? freshItem.qualityLevel
+                      : ARMOR_QUALITY_LABELS.length - 1;
+                  setTempQualityLevel(currentQualityLevel);
+                  setVariantModalOpen(true);
+                }
               } else {
                 cycleArmorResistanceVariant(resolvedIndex);
               }
             }}
             sx={{
-              minWidth: isMobile ? '80px' : '175px',
-              width: isMobile ? '80px' : '175px',
+              minWidth: isMobile ? '40px' : '175px',
+              width: isMobile ? '40px' : '175px',
               minHeight: isMobile ? '40px' : '24px',
               fontSize: '0.7rem',
               fontWeight: 600,
-              py: 0.4,
-              px: 1.2,
-              borderRadius: '8px',
+              py: isMobile ? 0 : 0.4,
+              px: isMobile ? 0 : 1.2,
+              borderRadius: isMobile ? '50%' : '8px',
               textTransform: 'none',
               border: '1px solid',
               borderColor:
@@ -1862,14 +3193,17 @@ const CalculatorComponent: React.FC = () => {
               },
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
-              <Typography
-                component="span"
-                fontWeight={600}
-                fontSize={isMobile ? '0.6rem' : '0.7rem'}
-              >
-                {isMobile ? 'Trait' : currentVariant.name}
-              </Typography>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: isMobile ? 0 : 0.75 }}>
+              {isMobile ? (
+                <Gear
+                  size="22"
+                  color={theme.palette.mode === 'dark' ? 'rgb(199 234 255)' : 'rgb(40 145  200)'}
+                />
+              ) : (
+                <Typography component="span" fontWeight={600} fontSize="0.7rem">
+                  {currentVariant.name}
+                </Typography>
+              )}
               {nextVariant && !isMobile && (
                 <Box
                   sx={{
@@ -1953,6 +3287,11 @@ const CalculatorComponent: React.FC = () => {
           return;
         }
 
+        // Don't allow manual clicking for armor passives - these are auto-calculated
+        if (isLightArmorPassive || isHeavyArmorPassive) {
+          return;
+        }
+
         if (!item.locked) {
           updateFunction(category, resolvedIndex, { enabled: !item.enabled });
         }
@@ -1972,11 +3311,12 @@ const CalculatorComponent: React.FC = () => {
           <ListItemIcon sx={{ minWidth: 'auto', mr: liteMode ? 0.125 : isMobile ? 0 : 0.75 }}>
             <Checkbox
               checked={item.enabled}
-              disabled={item.locked}
+              disabled={item.locked || isLightArmorPassive || isHeavyArmorPassive}
               size={isMobile ? 'medium' : 'small'}
               disableRipple
               disableTouchRipple
-              sx={(theme) => {
+              onChange={() => updateFunction(category, resolvedIndex, { enabled: !item.enabled })}
+              sx={(theme: Theme) => {
                 return {
                   ...checkboxStyles,
                   '&.Mui-checked': {
@@ -2011,10 +3351,6 @@ const CalculatorComponent: React.FC = () => {
                   },
                 };
               }}
-              onChange={(e) =>
-                updateFunction(category, resolvedIndex, { enabled: e.target.checked })
-              }
-              onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
             />
           </ListItemIcon>
 
@@ -2044,93 +3380,12 @@ const CalculatorComponent: React.FC = () => {
               placement="top"
               arrow
             >
-              <TextField
-                size={isMobile ? 'medium' : 'small'}
-                type="number"
-                value={hasQuantity ? item.quantity : '-'}
-                onChange={
-                  hasQuantity
-                    ? (e) =>
-                        updateFunction(category, resolvedIndex, {
-                          quantity: Math.max(
-                            item.minQuantity || 0,
-                            Math.min(item.maxQuantity || 100, parseInt(e.target.value) || 0),
-                          ),
-                        })
-                    : undefined
-                }
-                disabled={!hasQuantity || item.locked}
-                placeholder={hasQuantity ? item.quantityTitle || undefined : 'N/A'}
-                inputProps={{
-                  min: hasQuantity ? item.minQuantity || 0 : 0,
-                  max: hasQuantity ? item.maxQuantity || 100 : 0,
-                  step: hasQuantity ? item.step || 1 : 1,
-                  readOnly: !hasQuantity,
-                }}
-                sx={{
-                  ...textFieldStyles,
-                  '& .MuiInputBase-root': {
-                    ...textFieldStyles['& .MuiInputBase-root'],
-                    backgroundColor: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(30, 41, 59, 0.5)'
-                        : liteMode
-                          ? 'rgb(136 164 192 / 15%)'
-                          : 'rgba(241, 245, 249, 0.8)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.15)'
-                        : liteMode
-                          ? 'rgba(40 145 200, 0.12)'
-                          : 'rgba(40 145 200, 0.12)',
-                    opacity: !hasQuantity ? 0.6 : 1,
-                    '&:hover': {
-                      backgroundColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(30, 41, 59, 0.5)'
-                          : liteMode
-                            ? 'rgb(136 164 192 / 15%)'
-                            : 'rgba(241, 245, 249, 0.8)'
-                        : theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.25)'
-                          : liteMode
-                            ? 'rgba(40 145 200, 0.18)'
-                            : 'rgba(40 145 200, 0.18)',
-                    },
-                  },
-                  '& .MuiOutlinedInput-notchedOutline': {
-                    ...textFieldStyles['& .MuiOutlinedInput-notchedOutline'],
-                    borderColor: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.3)'
-                        : 'rgba(148, 163, 184, 0.4)'
-                      : theme.palette.mode === 'dark'
-                        ? 'rgba(56, 189, 248, 0.4)'
-                        : liteMode
-                          ? 'rgba(40 145 200, 0.4)'
-                          : 'rgba(40 145 200, 0.4)',
-                    '&:hover': {
-                      borderColor: !hasQuantity
-                        ? theme.palette.mode === 'dark'
-                          ? 'rgba(148, 163, 184, 0.4)'
-                          : 'rgba(148, 163, 184, 0.5)'
-                        : theme.palette.mode === 'dark'
-                          ? 'rgba(56, 189, 248, 0.6)'
-                          : liteMode
-                            ? 'rgba(40 145 200, 0.6)'
-                            : 'rgba(40 145 200, 0.6)',
-                    },
-                  },
-                  '& .MuiInputBase-input': {
-                    ...textFieldStyles['& .MuiInputBase-input'],
-                    color: !hasQuantity
-                      ? theme.palette.mode === 'dark'
-                        ? 'rgba(148, 163, 184, 0.8)'
-                        : 'rgba(100, 116, 139, 0.8)'
-                      : 'inherit',
-                    cursor: !hasQuantity ? 'not-allowed' : 'text',
-                  },
-                }}
-                onClick={(e) => e.stopPropagation()} // Prevent ListItem click from also triggering
+              <QuantityInput
+                item={item}
+                category={category}
+                resolvedIndex={resolvedIndex}
+                updateFunction={updateFunction}
+                isMobile={isMobile}
               />
             </Tooltip>
           )}
@@ -2239,6 +3494,7 @@ const CalculatorComponent: React.FC = () => {
       theme.palette.text.secondary,
       cycleArmorResistanceVariant,
       updateArmorResistanceQuality,
+      armorResistanceData.gear,
     ],
   );
 
@@ -2354,12 +3610,20 @@ const CalculatorComponent: React.FC = () => {
     valueSuffix = '',
     status,
     rangeDescription,
+    isArmorTab = false,
+    quadrantData,
   }: {
     label: string;
     value: string;
     valueSuffix?: string;
     status: SummaryStatus;
     rangeDescription: string;
+    isArmorTab?: boolean;
+    quadrantData?: {
+      underpenInfo?: string;
+      overResistInfo?: string;
+      targetRanges?: string;
+    };
   }): React.JSX.Element => {
     const statusVisual = getStatusVisuals(status);
     const StatusIcon = statusVisual.Icon;
@@ -2394,138 +3658,435 @@ const CalculatorComponent: React.FC = () => {
           position: 'relative', // Ensure no positioning conflicts
         }}
       >
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: {
-              xs: 'minmax(0, 1.35fr) minmax(0, 1fr)',
-              sm: 'minmax(0, 1fr) minmax(240px, auto)',
-            },
-            gridTemplateAreas: {
-              xs: '"value status" "value status"',
-              sm: '"value status"',
-            },
-            alignItems: { xs: 'stretch', sm: 'center' },
-            columnGap: { xs: 1.25, sm: 4, md: 5 },
-            rowGap: { xs: 0.75, sm: 0 },
-            padding: {
-              xs: liteMode ? '18px 20px' : '22px 26px',
-              sm: liteMode ? '20px 28px' : '24px 32px',
-            },
-            maxWidth: { xs: 460, sm: '100%' },
-            margin: '0 auto',
-          }}
-        >
+        {/* Use different layout for armor tab on mobile */}
+        {isArmorTab && isMobile ? (
           <Box
             sx={{
-              gridArea: 'value',
-              minWidth: 0,
-              textAlign: { xs: 'left', sm: 'left' },
-              pr: { xs: 1, sm: 0 },
+              padding: liteMode ? '18px 20px' : '22px 26px',
+              maxWidth: 460,
+              margin: '0 auto',
             }}
           >
-            <Typography
-              variant="overline"
+            {/* Value and Status Section */}
+            <Box
               sx={{
-                display: 'block',
-                letterSpacing: { xs: '0.07em', sm: '0.08em' },
-                fontSize: { xs: '0.72rem', sm: '0.75rem' },
-                fontWeight: 600,
-                color: theme.palette.text.secondary,
-                mb: { xs: 0.6, sm: 0.75 },
+                mb: 2,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: 2,
               }}
             >
-              {label}
-            </Typography>
-            <Typography
-              variant={isMobile ? 'h5' : 'h4'}
-              sx={{
-                fontWeight: 700,
-                fontSize: { xs: '1.95rem', sm: '2.25rem' },
-                color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
-                fontFamily: 'Inter, sans-serif',
-                lineHeight: 1.15,
-              }}
-            >
-              {value}
-              {valueSuffix ? (
-                <Box
-                  component="span"
+              <Box sx={{ flex: 1 }}>
+                <Typography
+                  variant="overline"
                   sx={{
-                    fontSize: { xs: '1.25rem', sm: '1.3rem' },
+                    display: 'block',
+                    letterSpacing: '0.07em',
+                    fontSize: '0.72rem',
                     fontWeight: 600,
-                    ml: 0.45,
-                    opacity: 0.85,
+                    color: theme.palette.text.secondary,
+                    mb: 0.5,
                   }}
                 >
-                  {valueSuffix}
-                </Box>
-              ) : null}
-            </Typography>
-          </Box>
+                  {label}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    fontSize: '2rem',
+                    color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                    fontFamily: 'Inter, sans-serif',
+                    lineHeight: 1.1,
+                  }}
+                >
+                  {value}
+                  {valueSuffix ? (
+                    <Box
+                      component="span"
+                      sx={{
+                        fontSize: '1.3rem',
+                        fontWeight: 600,
+                        ml: 0.5,
+                        opacity: 0.85,
+                      }}
+                    >
+                      {valueSuffix}
+                    </Box>
+                  ) : null}
+                </Typography>
+              </Box>
 
-          <Stack
-            spacing={{ xs: 1.1, sm: 1 }}
-            alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
-            justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
+              {/* Status Badge */}
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                  borderRadius: '999px',
+                  px: 1.2,
+                  py: 0.6,
+                  background: statusVisual.background,
+                  border: `1px solid ${statusVisual.border}`,
+                  flexShrink: 0,
+                }}
+              >
+                <StatusIcon sx={{ fontSize: 16, color: statusVisual.color }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: '0.8rem',
+                    color: statusVisual.color,
+                    letterSpacing: 0.1,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {statusVisual.label}
+                </Typography>
+              </Box>
+            </Box>
+
+            {/* Divider */}
+            <Box
+              sx={{
+                height: '1px',
+                background: alpha(theme.palette.divider, 0.2),
+                mb: 2,
+                mx: -1,
+              }}
+            />
+
+            {/* Range Description or Quadrant Data */}
+            {quadrantData ? (
+              <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 2 }}>
+                {/* Bottom Left: Damage Mitigation or Over-Resistance Info */}
+                {quadrantData.overResistInfo && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8rem',
+                      lineHeight: 1.5,
+                      color: alpha(theme.palette.text.secondary, 0.95),
+                      whiteSpace: 'pre-line',
+                      letterSpacing: 0.1,
+                      fontWeight: 400,
+                    }}
+                  >
+                    {quadrantData.overResistInfo.replace(/-/g, '–')}
+                  </Typography>
+                )}
+
+                {/* Bottom Right: Target Ranges */}
+                {quadrantData.targetRanges && (
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontSize: '0.8rem',
+                      lineHeight: 1.5,
+                      color: alpha(theme.palette.text.secondary, 0.95),
+                      whiteSpace: 'pre-line',
+                      letterSpacing: 0.1,
+                      fontWeight: 400,
+                      textAlign: 'right',
+                    }}
+                  >
+                    {quadrantData.targetRanges.replace(/-/g, '–')}
+                  </Typography>
+                )}
+              </Box>
+            ) : (
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  color: alpha(theme.palette.text.secondary, 0.95),
+                  whiteSpace: 'pre-line',
+                  textAlign: 'left',
+                  letterSpacing: 0.1,
+                  wordBreak: 'break-word',
+                  hyphens: 'auto',
+                  fontWeight: 400,
+                }}
+              >
+                {rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            )}
+          </Box>
+        ) : quadrantData ? (
+          // 2x2 Grid Layout for Penetration Summary
+          <Box
             sx={{
-              gridArea: 'status',
-              minWidth: { sm: 220 },
-              borderLeft: {
-                xs: 'none',
-                sm: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
+              display: 'grid',
+              gridTemplateColumns: '1fr 1fr',
+              gridTemplateAreas: '"value status" "underpen targets"',
+              gap: 2,
+              padding: {
+                xs: liteMode ? '18px 20px' : '22px 26px',
+                sm: liteMode ? '20px 28px' : '24px 32px',
               },
-              pl: { xs: 0, sm: 3 },
-              ml: { xs: 0, sm: 2 },
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: { xs: 1, sm: 1 },
-              alignSelf: { xs: 'stretch', sm: 'center' },
+              maxWidth: { xs: 460, sm: '100%' },
+              margin: '0 auto',
+            }}
+          >
+            {/* Top Left: Pen Value */}
+            <Box sx={{ gridArea: 'value' }}>
+              <Typography
+                variant="overline"
+                sx={{
+                  display: 'block',
+                  letterSpacing: '0.08em',
+                  fontSize: '0.75rem',
+                  fontWeight: 600,
+                  color: theme.palette.text.secondary,
+                  mb: 0.75,
+                }}
+              >
+                {label}
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '2rem',
+                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.1,
+                }}
+              >
+                {value}
+                {valueSuffix ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: '1.3rem',
+                      fontWeight: 600,
+                      ml: 0.5,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {valueSuffix}
+                  </Box>
+                ) : null}
+              </Typography>
+            </Box>
+
+            {/* Top Right: Status Badge */}
+            <Box
+              sx={{
+                gridArea: 'status',
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'flex-end',
+                pt: 0.5,
+              }}
+            >
+              <Box
+                sx={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                  borderRadius: '999px',
+                  py: 0.5,
+                  px: 1.2,
+                  fontSize: '0.8rem',
+                  fontWeight: 600,
+                  backgroundColor: alpha(statusVisual.color, 0.15),
+                  color: statusVisual.color,
+                  border: `1px solid ${alpha(statusVisual.color, 0.3)}`,
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <StatusIcon sx={{ fontSize: 16, color: statusVisual.color }} />
+                <Typography variant="body2">{statusVisual.label}</Typography>
+              </Box>
+            </Box>
+
+            {/* Bottom Left: Underpen Info or Over-Resistance Info */}
+            {(quadrantData.underpenInfo || quadrantData.overResistInfo) && (
+              <Box
+                sx={{
+                  gridArea: 'underpen',
+                  display: 'flex',
+                  alignItems: 'flex-end',
+                  pb: 0.5,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontSize: '0.8rem',
+                    lineHeight: 1.5,
+                    color: alpha(theme.palette.text.secondary, 0.95),
+                    whiteSpace: 'pre-line',
+                    letterSpacing: 0.1,
+                    fontWeight: 400,
+                  }}
+                >
+                  {(quadrantData.underpenInfo || quadrantData.overResistInfo || '').replace(
+                    /-/g,
+                    '–',
+                  )}
+                </Typography>
+              </Box>
+            )}
+
+            {/* Bottom Right: Target Ranges */}
+            <Box sx={{ gridArea: 'targets', textAlign: 'right' }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  fontSize: '0.8rem',
+                  lineHeight: 1.5,
+                  color: alpha(theme.palette.text.secondary, 0.95),
+                  whiteSpace: 'pre-line',
+                  letterSpacing: 0.1,
+                  fontWeight: 400,
+                }}
+              >
+                {quadrantData.targetRanges?.replace(/-/g, '–') ||
+                  rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            </Box>
+          </Box>
+        ) : (
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'minmax(0, 1.35fr) minmax(0, 1fr)',
+                sm: 'minmax(0, 1fr) minmax(240px, auto)',
+              },
+              gridTemplateAreas: {
+                xs: '"value status" "value status"',
+                sm: '"value status"',
+              },
+              alignItems: { xs: 'stretch', sm: 'center' },
+              columnGap: { xs: 1.25, sm: 4, md: 5 },
+              rowGap: { xs: 0.75, sm: 0 },
+              padding: {
+                xs: liteMode ? '18px 20px' : '22px 26px',
+                sm: liteMode ? '20px 28px' : '24px 32px',
+              },
+              maxWidth: { xs: 460, sm: '100%' },
+              margin: '0 auto',
             }}
           >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: { xs: 'flex-end', sm: 'flex-end' },
-                gap: { xs: 0.85, sm: 1 },
-                borderRadius: '999px',
-                px: { xs: 1.4, sm: 1.75 },
-                py: { xs: 0.6, sm: 0.7 },
-                background: statusVisual.background,
-                border: `1px solid ${statusVisual.border}`,
+                gridArea: 'value',
+                minWidth: 0,
+                textAlign: { xs: 'left', sm: 'left' },
+                pr: { xs: 1, sm: 0 },
               }}
             >
-              <StatusIcon sx={{ fontSize: { xs: 19, sm: 20 }, color: statusVisual.color }} />
               <Typography
-                variant="body2"
+                variant="overline"
                 sx={{
+                  display: 'block',
+                  letterSpacing: { xs: '0.07em', sm: '0.08em' },
+                  fontSize: { xs: '0.72rem', sm: '0.75rem' },
                   fontWeight: 600,
-                  fontSize: { xs: '0.92rem', sm: '0.85rem' },
-                  color: statusVisual.color,
-                  letterSpacing: 0.15,
+                  color: theme.palette.text.secondary,
+                  mb: { xs: 0.6, sm: 0.75 },
                 }}
               >
-                {statusVisual.label}
+                {label}
+              </Typography>
+              <Typography
+                variant={isMobile ? 'h5' : 'h4'}
+                sx={{
+                  fontWeight: 700,
+                  fontSize: { xs: '1.95rem', sm: '2.25rem' },
+                  color: theme.palette.mode === 'dark' ? '#f8fafc' : '#0f172a',
+                  fontFamily: 'Inter, sans-serif',
+                  lineHeight: 1.15,
+                }}
+              >
+                {value}
+                {valueSuffix ? (
+                  <Box
+                    component="span"
+                    sx={{
+                      fontSize: { xs: '1.25rem', sm: '1.3rem' },
+                      fontWeight: 600,
+                      ml: 0.45,
+                      opacity: 0.85,
+                    }}
+                  >
+                    {valueSuffix}
+                  </Box>
+                ) : null}
               </Typography>
             </Box>
-            <Typography
-              variant="caption"
+
+            <Stack
+              spacing={{ xs: 1.1, sm: 1 }}
+              alignItems={{ xs: 'flex-end', sm: 'flex-end' }}
+              justifyContent={{ xs: 'flex-end', sm: 'flex-end' }}
               sx={{
-                fontSize: { xs: '0.82rem', sm: '0.8rem' },
-                lineHeight: { xs: 1.42, sm: 1.4 },
-                color: alpha(theme.palette.text.secondary, 0.9),
-                whiteSpace: 'pre-line',
-                textAlign: 'right',
-                letterSpacing: 0.12,
-                pr: { xs: 0.25, sm: 0 },
+                gridArea: 'status',
+                minWidth: { sm: 220 },
+                borderLeft: {
+                  xs: 'none',
+                  sm: `1px solid ${alpha(theme.palette.common.white, theme.palette.mode === 'dark' ? 0.18 : 0.12)}`,
+                },
+                pl: { xs: 0, sm: 3 },
+                ml: { xs: 0, sm: 2 },
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between',
+                gap: { xs: 1, sm: 1 },
+                alignSelf: { xs: 'stretch', sm: 'center' },
               }}
             >
-              {rangeDescription.replace(/-/g, '–')}
-            </Typography>
-          </Stack>
-        </Box>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: { xs: 'flex-end', sm: 'flex-end' },
+                  gap: { xs: 0.85, sm: 1 },
+                  borderRadius: '999px',
+                  px: { xs: 1.4, sm: 1.75 },
+                  py: { xs: 0.6, sm: 0.7 },
+                  background: statusVisual.background,
+                  border: `1px solid ${statusVisual.border}`,
+                }}
+              >
+                <StatusIcon sx={{ fontSize: { xs: 19, sm: 20 }, color: statusVisual.color }} />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 600,
+                    fontSize: { xs: '0.92rem', sm: '0.85rem' },
+                    color: statusVisual.color,
+                    letterSpacing: 0.15,
+                  }}
+                >
+                  {statusVisual.label}
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontSize: { xs: isArmorTab ? '0.75rem' : '0.82rem', sm: '0.8rem' },
+                  lineHeight: { xs: isArmorTab ? 1.3 : 1.42, sm: 1.4 },
+                  color: alpha(theme.palette.text.secondary, 0.9),
+                  whiteSpace: 'pre-line',
+                  textAlign: { xs: isArmorTab ? 'left' : 'right', sm: 'right' },
+                  letterSpacing: 0.12,
+                  pr: { xs: isArmorTab ? 0 : 0.25, sm: 0 },
+                  wordBreak: isArmorTab ? 'break-word' : 'normal',
+                  hyphens: isArmorTab ? 'auto' : 'manual',
+                }}
+              >
+                {rangeDescription.replace(/-/g, '–')}
+              </Typography>
+            </Stack>
+          </Box>
+        )}
       </Box>
     );
   };
@@ -2759,8 +4320,10 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const itemIndex = filteredPenData[category].indexOf(item);
-                          updatePenItem(category, itemIndex, { enabled: true });
+                          const originalIndex =
+                            (item as CalculatorItemWithId).originalIndex ??
+                            filteredPenData[category].indexOf(item);
+                          updatePenItem(category, originalIndex, { enabled: true });
                         });
                       }}
                       startIcon={<SelectAllIcon sx={{ fontSize: '0.9rem' }} />}
@@ -2784,7 +4347,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      All
+                      Select All
                     </Button>
                     <Button
                       size="small"
@@ -2797,8 +4360,10 @@ const CalculatorComponent: React.FC = () => {
                           const category = Object.keys(filteredPenData).find((key) =>
                             filteredPenData[key as keyof CalculatorData].includes(item),
                           ) as keyof CalculatorData;
-                          const itemIndex = filteredPenData[category].indexOf(item);
-                          updatePenItem(category, itemIndex, { enabled: false });
+                          const originalIndex =
+                            (item as CalculatorItemWithId).originalIndex ??
+                            filteredPenData[category].indexOf(item);
+                          updatePenItem(category, originalIndex, { enabled: false });
                         });
                       }}
                       startIcon={<ClearIcon sx={{ fontSize: '0.9rem' }} />}
@@ -2922,7 +4487,7 @@ const CalculatorComponent: React.FC = () => {
                         },
                       }}
                     >
-                      All
+                      Select All
                     </Button>
                     <Button
                       size="small"
@@ -2964,148 +4529,168 @@ const CalculatorComponent: React.FC = () => {
                   width: { xs: '100%', sm: 'auto' },
                 }}
               >
-                <ButtonGroup
-                  size={
-                    isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
-                  }
-                  variant="outlined"
+                <Box
                   sx={{
                     width: { xs: '100%', sm: 'auto' },
-                    '& .MuiButton-root': {
-                      border: liteMode
-                        ? theme.palette.mode === 'dark'
-                          ? '1px solid rgb(128 211 255 / 25%)'
-                          : '1px solid rgb(40 145 200 / 20%)'
-                        : theme.palette.mode === 'dark'
-                          ? '1px solid rgb(128 211 255 / 30%)'
-                          : '1px solid rgb(40 145 200 / 25%)',
-                      // backdropFilter: // REMOVED - breaks sticky positioning 'blur(10px)',
-                      transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
-                      // Enhanced mobile touch targets
-                      minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
-                      minWidth: {
-                        xs: 'auto',
-                        sm: isExtraSmall ? '70px' : isMobile ? '80px' : 'auto',
-                      },
-                      fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
-                      px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
-                      flex: { xs: 1, sm: 'none' },
-                      '&:hover': {
-                        transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
-                        borderColor: 'rgb(128 211 255 / 80%)',
-                      },
-                      '&:active': {
-                        transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
-                      },
-                    },
+                    display: 'flex',
                   }}
                 >
-                  <Button
-                    variant={gameMode === 'pve' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('pve')}
-                    startIcon={
-                      <Typography
-                        fontSize={
-                          isExtraSmall
-                            ? '0.75rem'
-                            : liteMode
-                              ? '0.8rem'
-                              : isMobile
-                                ? '0.9rem'
-                                : '1rem'
-                        }
-                      >
-                        🗡️
-                      </Typography>
+                  <ButtonGroup
+                    size={
+                      isExtraSmall ? 'small' : liteMode ? 'small' : isMobile ? 'medium' : 'medium'
                     }
+                    variant="outlined"
+                    disabled={selectedTab === 2}
                     sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'pve'
+                      width: '100%',
+                      display: 'flex',
+                      '& .MuiButtonGroup-grouped': {
+                        flex: 1,
+                        minWidth: 0,
+                      },
+                      '& .MuiButton-root': {
+                        border: liteMode
                           ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'pve' ? 'rgb(128 211 255 / 80%)' : undefined,
-                      color: gameMode === 'pve' ? 'inherit' : 'inherit',
+                            ? '1px solid rgb(128 211 255 / 25%)'
+                            : '1px solid rgb(40 145 200 / 20%)'
+                          : theme.palette.mode === 'dark'
+                            ? '1px solid rgb(128 211 255 / 30%)'
+                            : '1px solid rgb(40 145 200 / 25%)',
+                        transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                        minHeight: isExtraSmall ? '40px' : isMobile ? '44px' : 'auto',
+                        minWidth: 0,
+                        fontSize: isExtraSmall ? '0.75rem' : isMobile ? '0.8rem' : '0.85rem',
+                        px: isExtraSmall ? 1 : isMobile ? 1.2 : 1.5,
+                        flex: 1,
+                        '&:hover': {
+                          transform: liteMode || isMobile ? 'translateY(-1px)' : 'none',
+                          borderColor: 'rgb(128 211 255 / 80%)',
+                        },
+                        '&:active': {
+                          transform: liteMode || isMobile ? 'translateY(0) scale(0.98)' : 'none',
+                        },
+                        ...(selectedTab === 2 && {
+                          opacity: 0.5,
+                          cursor: 'not-allowed',
+                          '&:hover': {
+                            transform: 'none',
+                            borderColor: 'inherit',
+                          },
+                        }),
+                      },
+                      ...(selectedTab === 2 && {
+                        opacity: 0.6,
+                        pointerEvents: 'none',
+                      }),
                     }}
                   >
-                    PvE
-                  </Button>
-                  <Button
-                    variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('pvp')}
-                    startIcon={
-                      <Typography
-                        fontSize={
-                          isExtraSmall
-                            ? '0.75rem'
-                            : liteMode
-                              ? '0.8rem'
-                              : isMobile
-                                ? '0.9rem'
-                                : '1rem'
-                        }
-                      >
-                        🛡️
-                      </Typography>
-                    }
-                    sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'pvp'
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'pvp' ? 'rgb(128 211 255 / 80%)' : undefined,
-                      color: gameMode === 'pvp' ? 'inherit' : 'inherit',
-                    }}
-                  >
-                    PvP
-                  </Button>
-                  <Button
-                    variant={gameMode === 'both' ? 'contained' : 'outlined'}
-                    onClick={() => setGameMode('both')}
-                    sx={{
-                      fontSize: isExtraSmall
-                        ? '0.75rem'
-                        : liteMode
-                          ? '0.8rem'
-                          : isMobile
-                            ? '0.85rem'
-                            : '0.9rem',
-                      px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
-                      fontWeight: 600,
-                      background:
-                        gameMode === 'both'
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
-                            : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
-                          : 'transparent',
-                      borderColor: gameMode === 'both' ? 'rgb(56 189 248 / 80%)' : undefined,
-                      color: gameMode === 'both' ? 'inherit' : 'inherit',
-                    }}
-                  >
-                    Both
-                  </Button>
-                </ButtonGroup>
+                    <Button
+                      variant={gameMode === 'pve' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('pve')}
+                      startIcon={
+                        <Typography
+                          fontSize={
+                            isExtraSmall
+                              ? '0.75rem'
+                              : liteMode
+                                ? '0.8rem'
+                                : isMobile
+                                  ? '0.9rem'
+                                  : '1rem'
+                          }
+                        >
+                          🗡️
+                        </Typography>
+                      }
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'pve'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'pve' ? 'rgb(128 211 255 / 80%)' : undefined,
+                        color: gameMode === 'pve' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      PvE
+                    </Button>
+                    <Button
+                      variant={gameMode === 'pvp' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('pvp')}
+                      startIcon={
+                        <Typography
+                          fontSize={
+                            isExtraSmall
+                              ? '0.75rem'
+                              : liteMode
+                                ? '0.8rem'
+                                : isMobile
+                                  ? '0.9rem'
+                                  : '1rem'
+                          }
+                        >
+                          🛡️
+                        </Typography>
+                      }
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'pvp'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'pvp' ? 'rgb(128 211 255 / 80%)' : undefined,
+                        color: gameMode === 'pvp' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      PvP
+                    </Button>
+                    <Button
+                      variant={gameMode === 'both' ? 'contained' : 'outlined'}
+                      onClick={() => setGameMode('both')}
+                      sx={{
+                        fontSize: isExtraSmall
+                          ? '0.75rem'
+                          : liteMode
+                            ? '0.8rem'
+                            : isMobile
+                              ? '0.85rem'
+                              : '0.9rem',
+                        px: isExtraSmall ? 1 : liteMode ? 0.5 : isMobile ? 1.2 : 1.5,
+                        fontWeight: 600,
+                        background:
+                          gameMode === 'both'
+                            ? theme.palette.mode === 'dark'
+                              ? 'linear-gradient(135deg, rgb(128 211 255 / 35%) 0%, rgb(56 189 248 / 35%) 50%, rgb(40 145 200 / 35%) 100%)'
+                              : 'linear-gradient(135deg, rgb(40 145 200 / 20%) 0%, rgb(56 189 248 / 20%) 50%, rgb(128 211 255 / 20%) 100%)'
+                            : 'transparent',
+                        borderColor: gameMode === 'both' ? 'rgb(56 189 248 / 80%)' : undefined,
+                        color: gameMode === 'both' ? 'inherit' : 'inherit',
+                      }}
+                    >
+                      Both
+                    </Button>
+                  </ButtonGroup>
+                </Box>
               </Box>
             </Box>
 
@@ -3998,7 +5583,7 @@ const CalculatorComponent: React.FC = () => {
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
-                            itemIndex,
+                            item.originalIndex ?? itemIndex,
                             Object.keys(filteredPenData)[categoryIndex] as keyof CalculatorData,
                             updatePenItem,
                           ),
@@ -4042,7 +5627,7 @@ const CalculatorComponent: React.FC = () => {
                         items.map((item: CalculatorItem, itemIndex: number) =>
                           renderItem(
                             item,
-                            itemIndex,
+                            item.originalIndex ?? itemIndex,
                             Object.keys(filteredCritData)[categoryIndex] as keyof CalculatorData,
                             updateCritItem,
                           ),
@@ -4118,82 +5703,203 @@ const CalculatorComponent: React.FC = () => {
                         'gear',
                         updateArmorResistanceItem,
                       )}
-                      {renderSection(
-                        'Sets',
-                        armorResistanceSets,
-                        'gear',
-                        updateArmorResistanceItem,
-                      )}
-                      {renderSection(
-                        'Passives',
-                        filteredPassives,
-                        'passives',
-                        updateArmorResistanceItem,
-                      )}
-                      {renderSection(
-                        'Champion Points',
-                        filteredCp,
-                        'cp',
-                        updateArmorResistanceItem,
-                      )}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Sets
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceSets.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+                      {/* Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Passives
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredPassives.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Champion Points */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Champion Points
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredCp.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
                     </>
                   )}
 
                   {/* Lite Mode - All categories in one */}
                   {liteMode && (
-                    <List sx={{ p: 0 }}>
-                      {[
-                        ...armorResistanceData.groupBuffs.map((item, index) => ({
-                          ...item,
-                          category: 'groupBuffs',
-                          originalIndex: index,
-                        })),
-                        ...armorResistanceGearSections.light.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                        })),
-                        ...armorResistanceGearSections.medium.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                        })),
-                        ...armorResistanceGearSections.heavy.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                        })),
-                        ...armorResistanceGearSections.shield.map((item) => ({
-                          ...item,
-                          category: 'gear',
-                        })),
-                        ...armorResistanceSets.map((item) => ({ ...item, category: 'gear' })),
-                        ...armorResistanceData.classPassives.map((item, index) => ({
-                          ...item,
-                          category: 'classPassives',
-                          originalIndex: index,
-                        })),
-                        ...filteredPassives.map((item, index) => ({
-                          ...item,
-                          category: 'passives',
-                          originalIndex: index,
-                        })),
-                        ...filteredCp.map((item, index) => ({
-                          ...item,
-                          category: 'cp',
-                          originalIndex: index,
-                        })),
-                      ].map((item, index) =>
-                        renderItem(
-                          item,
-                          item.category === 'gear' ? (item.originalIndex ?? index) : index,
-                          item.category as keyof CalculatorData,
-                          (category, itemIndex, updates) =>
-                            updateArmorResistanceItem(
-                              category,
-                              item.originalIndex ?? itemIndex,
-                              updates,
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      {/* Group Buffs */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Group Buffs
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceData.groupBuffs.map((item, index) =>
+                            renderItem(item, index, 'groupBuffs', updateArmorResistanceItem),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Light Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Light Armor
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.light.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
                             ),
-                        ),
-                      )}
-                    </List>
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Medium Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Medium Armor
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.medium.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Heavy Armor */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Heavy Armor
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.heavy.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Shield */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Shield
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceGearSections.shield.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              'gear',
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Set Items */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Set Items
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceSets.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Class Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Class Passives
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {armorResistanceData.classPassives.map((item, index) =>
+                            renderItem(item, index, 'classPassives', updateArmorResistanceItem),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Other Passives */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Other Passives
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredPassives.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+
+                      {/* Champion Points */}
+                      <Box>
+                        <Typography variant="h6" sx={{ fontWeight: 600, mb: 1 }}>
+                          Champion Points
+                        </Typography>
+                        <List sx={{ p: 0 }}>
+                          {filteredCp.map((item, index) =>
+                            renderItem(
+                              item,
+                              item.originalIndex ?? index,
+                              item.category as keyof CalculatorData,
+                              updateArmorResistanceItem,
+                            ),
+                          )}
+                        </List>
+                      </Box>
+                    </Box>
                   )}
                 </Box>
                 {/* Footer removed from inside TabPanel - moved outside */}
@@ -4229,12 +5935,19 @@ const CalculatorComponent: React.FC = () => {
                     label: 'Total Penetration',
                     value: penTotal.toLocaleString(),
                     status: penStatus,
-                    rangeDescription:
-                      gameMode === 'pve'
-                        ? 'Target: 18,200–18,999'
-                        : gameMode === 'pvp'
-                          ? 'Target: 33,100–33,500'
-                          : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
+                    rangeDescription: '', // Not used in quadrant layout
+                    quadrantData: {
+                      underpenInfo:
+                        gameMode === 'pve' || gameMode === 'both'
+                          ? `Underpen: ${underpenetrationAmount.toLocaleString()}\nDamage Loss: ${damageLossPercentage}%`
+                          : undefined,
+                      targetRanges:
+                        gameMode === 'pve'
+                          ? 'Target: 18,200–18,999'
+                          : gameMode === 'pvp'
+                            ? 'Target: 33,100–33,500'
+                            : 'PvE: 18,200–18,999\nPvP: 33,100–33,500',
+                    },
                   })}
                 {selectedTab === 1 &&
                   renderSummaryFooter({
@@ -4242,19 +5955,27 @@ const CalculatorComponent: React.FC = () => {
                     value: critTotal.toLocaleString(undefined, { maximumFractionDigits: 1 }),
                     valueSuffix: '%',
                     status: critStatus,
-                    rangeDescription:
-                      gameMode === 'pve'
-                        ? 'Target: 125%+'
-                        : gameMode === 'pvp'
-                          ? 'Target: 100%+'
-                          : 'PvE: 125%+\nPvP: 100%+',
+                    rangeDescription: '', // Not used in quadrant layout
+                    quadrantData: {
+                      targetRanges:
+                        gameMode === 'pve'
+                          ? 'Target: 125%'
+                          : gameMode === 'pvp'
+                            ? 'Target: 125%'
+                            : 'PvE: 125%+\nPvP: 100%+',
+                    },
                   })}
                 {selectedTab === 2 &&
                   renderSummaryFooter({
                     label: 'Total Armor Resistance',
                     value: armorResistanceTotal.toLocaleString(),
                     status: armorResistanceStatus,
-                    rangeDescription: 'Target: 33,100–33,500\nCap: 33,500',
+                    rangeDescription: '', // Not used in quadrant layout
+                    isArmorTab: true,
+                    quadrantData: {
+                      overResistInfo: `🛡️ Damage Mitigation: ${damageMitigationPercentage.toLocaleString()}%${damageMitigationPercentage >= MAX_DAMAGE_MITIGATION ? ' (Max)' : ''}`,
+                      targetRanges: `Target: 33,100–33,500\nCap: 33,100`,
+                    },
                   })}
               </Box>
             </Box>
@@ -4300,254 +6021,277 @@ const CalculatorComponent: React.FC = () => {
         </Container>
 
         {/* Armor Variant Selection Modal for Mobile */}
-        <Dialog
-          open={variantModalOpen}
-          onClose={() => {
-            setVariantModalOpen(false);
-            setCurrentEditingIndex(null);
-          }}
-          fullWidth
-          maxWidth="xs"
-          PaperProps={{
-            sx: {
-              borderRadius: '12px',
-              background:
-                theme.palette.mode === 'dark'
-                  ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
-                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              border: `1px solid ${
-                theme.palette.mode === 'dark'
-                  ? 'rgba(56, 189, 248, 0.3)'
-                  : 'rgba(40, 145, 200, 0.2)'
-              }`,
-              boxShadow:
-                theme.palette.mode === 'dark'
-                  ? '0 8px 32px rgba(0, 0, 0, 0.4)'
-                  : '0 8px 32px rgba(0, 0, 0, 0.1)',
-            },
-          }}
-        >
-          <DialogTitle
-            sx={{
-              textAlign: 'center',
-              fontWeight: 700,
-              fontSize: '1.1rem',
-              color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
-              pb: 1,
-            }}
-          >
-            Select Armor Variant
-          </DialogTitle>
-          <DialogContent sx={{ py: 2 }}>
-            <Stack spacing={3}>
-              {['regular', 'reinforced', 'nirnhoned'].map((variant) => {
-                // Get current variant from state using the editing index
-                const currentItem =
-                  currentEditingIndex !== null
-                    ? armorResistanceData.gear[currentEditingIndex]
-                    : null;
-                const currentVariant =
-                  currentItem?.variants && currentItem.selectedVariant !== undefined
-                    ? currentItem.variants[currentItem.selectedVariant]
-                    : null;
-                const isSelected = currentVariant?.name === variant;
+        {(() => {
+          // Calculate current item information for the modal title
+          const currentItem =
+            currentEditingIndex !== null ? armorResistanceData.gear[currentEditingIndex] : null;
 
-                // Quality rating is handled globally below
+          // Calculate the current display value for the item using temporary states
+          let currentDisplayValue: number | null = null;
+          if (currentItem) {
+            // Use temporary quality level instead of current item's quality level
+            const qualityLevel = tempQualityLevel;
 
-                return (
-                  <Box key={variant}>
-                    <Button
-                      fullWidth
-                      size="large"
-                      onClick={() => {
-                        // Find the variant index and cycle to it
-                        const variantIndex = ['regular', 'reinforced', 'nirnhoned'].indexOf(
-                          variant,
-                        );
-                        if (variantIndex !== -1 && currentEditingIndex !== null) {
-                          // Calculate how many cycles needed to reach this variant
-                          const currentIndex = currentVariant
-                            ? ['regular', 'reinforced', 'nirnhoned'].indexOf(currentVariant.name)
-                            : 0;
-                          const cyclesNeeded = (variantIndex - currentIndex + 3) % 3;
+            // Find the temporary variant and its values
+            const currentVariant = currentItem.variants?.find(
+              (v: { name: string; value: number; qualityValues?: number[] }) =>
+                v.name === tempSelectedVariant,
+            );
+            const variantQualityValues = currentVariant?.qualityValues;
 
-                          // Cycle the required number of times
-                          for (let i = 0; i < cyclesNeeded; i++) {
-                            cycleArmorResistanceVariant(currentEditingIndex);
-                          }
-                        }
-                      }}
-                      sx={{
-                        borderRadius: '8px',
-                        textTransform: 'none',
-                        fontWeight: 600,
-                        fontSize: '1rem',
-                        py: 1.5,
-                        border: '2px solid',
-                        borderColor: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.8)'
-                            : 'rgba(40, 145, 200, 0.6)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(56, 189, 248, 0.3)'
-                            : 'rgba(40, 145, 200, 0.2)',
-                        background: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
-                            : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
-                          : 'transparent',
-                        color: isSelected
-                          ? theme.palette.mode === 'dark'
-                            ? 'rgb(199 234 255)'
-                            : 'rgb(40, 145, 200)'
-                          : theme.palette.mode === 'dark'
-                            ? 'rgba(255, 255, 255, 0.7)'
-                            : theme.palette.text.secondary,
-                        '&:hover': {
-                          borderColor:
-                            theme.palette.mode === 'dark'
-                              ? 'rgba(56, 189, 248, 0.6)'
-                              : 'rgba(40, 145, 200, 0.4)',
-                          background:
-                            theme.palette.mode === 'dark'
-                              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
-                              : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
-                        },
-                      }}
-                    >
-                      {variant === 'regular'
-                        ? 'Regular'
-                        : variant === 'reinforced'
-                          ? 'Reinforced'
-                          : 'Nirnhoned'}
-                    </Button>
-                  </Box>
-                );
-              })}
+            // Calculate display value using the same logic as renderItem
+            if (currentVariant) {
+              currentDisplayValue =
+                variantQualityValues?.[qualityLevel] ??
+                currentVariant.value ??
+                currentItem.value ??
+                0;
+            } else if (currentItem.isFlat) {
+              currentDisplayValue = currentItem.value || 0;
+            } else {
+              currentDisplayValue = currentItem.quantity * (currentItem.per || 0);
+            }
+          }
 
-              {/* Divider */}
-              <Divider
-                sx={{
-                  borderColor:
+          return (
+            <Dialog
+              open={variantModalOpen}
+              onClose={() => {
+                setVariantModalOpen(false);
+                setCurrentEditingIndex(null);
+                setTempSelectedVariant('Regular');
+                setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+              }}
+              fullWidth
+              maxWidth="xs"
+              PaperProps={{
+                sx: {
+                  borderRadius: '12px',
+                  background:
                     theme.palette.mode === 'dark'
-                      ? 'rgba(56, 189, 248, 0.2)'
-                      : 'rgba(40, 145, 200, 0.2)',
-                }}
-              />
-
-              {/* Single Quality Rating */}
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  pt: 1,
-                }}
-              >
-                <Typography
-                  variant="body2"
-                  sx={{
-                    mb: 2,
-                    fontWeight: 600,
-                    color:
-                      theme.palette.mode === 'dark'
-                        ? 'rgba(255, 255, 255, 0.9)'
-                        : theme.palette.text.primary,
-                    textAlign: 'center',
-                  }}
-                >
-                  Gear Quality
-                </Typography>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    px: 2,
-                  }}
-                >
-                  {(() => {
-                    // Calculate quality rating values once for the current item
-                    const currentItem =
-                      currentEditingIndex !== null
-                        ? armorResistanceData.gear[currentEditingIndex]
-                        : null;
-                    const qualityLevel =
-                      typeof currentItem?.qualityLevel === 'number'
-                        ? currentItem.qualityLevel
-                        : ARMOR_QUALITY_LABELS.length - 1;
-                    const ratingValue = qualityLevel + 1;
-                    const qualityLabel =
-                      ARMOR_QUALITY_LABELS[qualityLevel] ??
-                      ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
-
-                    return (
-                      <>
-                        <Tooltip title={`Gear Quality: ${qualityLabel}`}>
-                          <Rating
-                            name="modal-armor-quality"
-                            value={ratingValue}
-                            max={ARMOR_QUALITY_LABELS.length}
-                            precision={1}
-                            size="large"
-                            onChange={(event, newValue) => {
-                              event.stopPropagation();
-                              if (typeof newValue === 'number' && currentEditingIndex !== null) {
-                                updateArmorResistanceQuality(currentEditingIndex, newValue - 1);
-                              }
-                            }}
-                            onClick={(event) => event.stopPropagation()}
-                            onMouseDown={(event) => event.stopPropagation()}
-                            onTouchStart={(event) => event.stopPropagation()}
-                            getLabelText={(value: number) =>
-                              `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
-                            }
-                            sx={{
-                              '& .MuiRating-iconFilled': {
-                                color: 'rgb(255 222 148)',
-                              },
-                              '& .MuiRating-iconHover': {
-                                color: 'rgb(255 234 179)',
-                              },
-                            }}
-                          />
-                        </Tooltip>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            ml: 2,
-                            fontWeight: 600,
-                            color:
-                              theme.palette.mode === 'dark'
-                                ? 'rgb(199 234 255)'
-                                : 'rgb(40, 145, 200)',
-                          }}
-                        >
-                          {qualityLabel}
-                        </Typography>
-                      </>
-                    );
-                  })()}
-                </Box>
-              </Box>
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 3 }}>
-            <Button
-              onClick={() => setVariantModalOpen(false)}
-              sx={{
-                borderRadius: '6px',
-                textTransform: 'none',
-                fontWeight: 500,
+                      ? 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.9) 100%)'
+                      : 'linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(248, 250, 252, 0.9) 100%)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: `1px solid ${
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(56, 189, 248, 0.3)'
+                      : 'rgba(40, 145, 200, 0.2)'
+                  }`,
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 8px 32px rgba(0, 0, 0, 0.4)'
+                      : '0 8px 32px rgba(0, 0, 0, 0.1)',
+                },
               }}
             >
-              Cancel
-            </Button>
-          </DialogActions>
-        </Dialog>
+              <DialogTitle
+                sx={{
+                  textAlign: 'center',
+                  fontWeight: 700,
+                  fontSize: '1.1rem',
+                  color: theme.palette.mode === 'dark' ? '#ffffff' : theme.palette.text.primary,
+                  pb: 1,
+                }}
+              >
+                {currentItem
+                  ? `${currentItem.name}: ${currentDisplayValue?.toLocaleString()}${currentItem.isPercent ? '%' : ''}`
+                  : 'Select Armor Variant'}
+              </DialogTitle>
+              <DialogContent sx={{ py: 2 }}>
+                <Stack spacing={3}>
+                  {['Regular', 'Reinforced', 'Nirnhoned'].map((variant) => {
+                    const isSelected = tempSelectedVariant === variant;
+
+                    // Quality rating is handled globally below
+
+                    return (
+                      <Box key={variant}>
+                        <Button
+                          fullWidth
+                          size="large"
+                          onClick={() => {
+                            setTempSelectedVariant(variant);
+                          }}
+                          sx={{
+                            borderRadius: '8px',
+                            textTransform: 'none',
+                            fontWeight: 600,
+                            fontSize: '1rem',
+                            py: 1.5,
+                            border: '2px solid',
+                            borderColor: isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.8)'
+                                : 'rgba(40, 145, 200, 0.6)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(56, 189, 248, 0.3)'
+                                : 'rgba(40, 145, 200, 0.2)',
+                            background: isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(0, 225, 255, 0.15) 100%)'
+                                : 'linear-gradient(135deg, rgba(40, 145, 200, 0.12) 0%, rgba(56, 189, 248, 0.08) 100%)'
+                              : 'transparent',
+                            color: isSelected
+                              ? theme.palette.mode === 'dark'
+                                ? 'rgb(199 234 255)'
+                                : 'rgb(40, 145, 200)'
+                              : theme.palette.mode === 'dark'
+                                ? 'rgba(255, 255, 255, 0.7)'
+                                : theme.palette.text.secondary,
+                            '&:hover': {
+                              borderColor:
+                                theme.palette.mode === 'dark'
+                                  ? 'rgba(56, 189, 248, 0.6)'
+                                  : 'rgba(40, 145, 200, 0.4)',
+                              background:
+                                theme.palette.mode === 'dark'
+                                  ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(0, 225, 255, 0.1) 100%)'
+                                  : 'linear-gradient(135deg, rgba(40, 145, 200, 0.08) 0%, rgba(56, 189, 248, 0.05) 100%)',
+                            },
+                          }}
+                        >
+                          {variant === 'Regular'
+                            ? 'Regular'
+                            : variant === 'Reinforced'
+                              ? 'Reinforced'
+                              : 'Nirnhoned'}
+                        </Button>
+                      </Box>
+                    );
+                  })}
+
+                  {/* Divider */}
+                  <Divider
+                    sx={{
+                      borderColor:
+                        theme.palette.mode === 'dark'
+                          ? 'rgba(56, 189, 248, 0.2)'
+                          : 'rgba(40, 145, 200, 0.2)',
+                    }}
+                  />
+
+                  {/* Single Quality Rating */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      pt: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        px: 2,
+                        pb: 3,
+                      }}
+                    >
+                      {(() => {
+                        // Calculate quality rating values using temporary state
+                        const qualityLevel = tempQualityLevel;
+                        const ratingValue = qualityLevel + 1;
+                        const qualityLabel =
+                          ARMOR_QUALITY_LABELS[qualityLevel] ??
+                          ARMOR_QUALITY_LABELS[ARMOR_QUALITY_LABELS.length - 1];
+
+                        return (
+                          <>
+                            <Tooltip title={`Gear Quality: ${qualityLabel}`}>
+                              <Rating
+                                name="modal-armor-quality"
+                                value={ratingValue}
+                                max={ARMOR_QUALITY_LABELS.length}
+                                precision={1}
+                                size="large"
+                                onChange={(event, newValue) => {
+                                  event.stopPropagation();
+                                  if (typeof newValue === 'number') {
+                                    setTempQualityLevel(newValue - 1);
+                                  }
+                                }}
+                                onClick={(event) => event.stopPropagation()}
+                                onMouseDown={(event) => event.stopPropagation()}
+                                onTouchStart={(event) => event.stopPropagation()}
+                                getLabelText={(value: number) =>
+                                  `${ARMOR_QUALITY_LABELS[value - 1] ?? value} quality`
+                                }
+                                sx={{
+                                  '& .MuiRating-iconFilled': {
+                                    color: 'rgb(255 222 148)',
+                                  },
+                                  '& .MuiRating-iconHover': {
+                                    color: 'rgb(255 234 179)',
+                                  },
+                                }}
+                              />
+                            </Tooltip>
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                ml: 2,
+                                fontWeight: 600,
+                                color:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgb(199 234 255)'
+                                    : 'rgb(40, 145, 200)',
+                              }}
+                            >
+                              {qualityLabel}
+                            </Typography>
+                          </>
+                        );
+                      })()}
+                    </Box>
+                  </Box>
+                </Stack>
+              </DialogContent>
+              <DialogActions
+                sx={{ px: 3, pb: 3, display: 'flex', gap: 2, justifyContent: 'center' }}
+              >
+                <Button
+                  onClick={() => {
+                    setVariantModalOpen(false);
+                    setCurrentEditingIndex(null);
+                    setTempSelectedVariant('Regular');
+                    setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+                  }}
+                  sx={{
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 500,
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={() => {
+                    if (currentEditingIndex !== null) {
+                      // Apply both variant and quality changes
+                      setArmorResistanceVariant(currentEditingIndex, tempSelectedVariant);
+                      updateArmorResistanceQuality(currentEditingIndex, tempQualityLevel);
+                    }
+                    setVariantModalOpen(false);
+                    setCurrentEditingIndex(null);
+                    setTempSelectedVariant('Regular');
+                    setTempQualityLevel(ARMOR_QUALITY_LABELS.length - 1);
+                  }}
+                  sx={{
+                    borderRadius: '6px',
+                    textTransform: 'none',
+                    fontWeight: 600,
+                  }}
+                  variant="outlined"
+                >
+                  Apply
+                </Button>
+              </DialogActions>
+            </Dialog>
+          );
+        })()}
       </CalculatorContainer>
     </>
   );

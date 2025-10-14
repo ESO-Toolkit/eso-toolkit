@@ -1,9 +1,16 @@
 import { Box, Card, CardContent, Skeleton, Stack } from '@mui/material';
 import React from 'react';
 
-export const PlayersSkeleton: React.FC = () => {
+interface PlayersSkeletonProps {
+  /** Test ID for testing */
+  'data-testid'?: string;
+}
+
+export const PlayersSkeleton: React.FC<PlayersSkeletonProps> = ({
+  'data-testid': dataTestId = 'players-skeleton',
+}) => {
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box data-testid={dataTestId} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       {/* Controls skeleton */}
       <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
         <Skeleton variant="rounded" height={40} sx={{ minWidth: { sm: 200 } }} />

@@ -21,6 +21,7 @@ export interface DamageEvent {
   targetResources: Resources;
   blocked?: number;
   tick?: boolean;
+  buffs?: string; // Dot-separated string of active buff ability IDs
 }
 
 export interface DeathEvent {

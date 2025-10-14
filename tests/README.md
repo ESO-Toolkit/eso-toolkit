@@ -107,20 +107,20 @@ The tests provide realistic mock data including:
 ## Running Tests
 
 ```bash
-# Run all tests
-npm run test:e2e
+# Run nightly regression tests
+npm run test:nightly:chromium
+
+# Run smoke tests (quick validation)
+npm run test:smoke:e2e
+
+# Run screen size tests
+npm run test:screen-sizes:fast
 
 # Run tests in headed mode (see browser)
-npm run test:e2e:headed
-
-# Run tests with UI for debugging
-npm run test:e2e:ui
-
-# Run only Chromium tests
-npx playwright test --project=chromium
+npm run test:nightly:headed
 
 # Run specific test file
-npx playwright test tests/home.spec.ts
+npx playwright test --config=playwright.nightly.config.ts tests/home.spec.ts
 ```
 
 ## Configuration

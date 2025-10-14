@@ -103,13 +103,6 @@ function getTrialNameFromBoss(
   // Check boss names FIRST to handle mixed-trial reports
   const cleanBossName = bossName.toLowerCase();
 
-  // DEBUG: Log boss name matching (commented out to reduce console noise)
-  // console.log('🎯 BOSS NAME DEBUG:', {
-  //   originalBossName: bossName,
-  //   cleanBossName,
-  //   zoneName,
-  // });
-
   // Sanity's Edge bosses
   if (
     ['ansuul', 'spiral', 'twelvane', 'yaseyla', 'yasela'].some((name) =>
@@ -533,18 +526,6 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
       // Determine trial name from boss name
       const trialName = getTrialNameFromBoss(bossName, reportData);
 
-      // DEBUG: Log difficulty mapping data (commented out to reduce console noise)
-      // console.log('🔍 DIFFICULTY DEBUG:', {
-      //   bossName,
-      //   trialName,
-      //   difficulty: currentBoss.difficulty,
-      //   startTime: new Date(currentBoss.startTime).toLocaleTimeString(),
-      //   endTime: new Date(currentBoss.endTime).toLocaleTimeString(),
-      //   instanceCount,
-      //   bossPercentage: currentBoss.bossPercentage,
-      //   currentDifficultyLabel: getDifficultyLabel(currentBoss.difficulty ?? null, trialName),
-      // });
-
       // SIMPLIFIED APPROACH: Don't try to separate trial instances
       // Just group all bosses from the same trial together
       // This avoids all the complex edge cases and false separations
@@ -760,8 +741,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           m: 0,
           width: '100%',
           maxWidth: '100vw',
+          minWidth: 0,
           boxSizing: 'border-box',
           background: 'transparent',
+          overflowX: 'hidden',
         }}
       >
         <Box
@@ -827,7 +810,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           onClick={() => handleFightSelect(fight.id)}
           sx={{
             width: '100%',
-            height: 64,
+            height: { xs: 56, sm: 64 },
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
@@ -836,8 +819,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             border: 1,
             borderColor: 'divider',
             borderRadius: 1,
-            py: 0.5,
-            px: 1,
+            py: { xs: 0.25, sm: 0.5 },
+            px: { xs: 0.5, sm: 1 },
             position: 'relative',
             backgroundColor: 'transparent',
             overflow: 'visible',
@@ -934,11 +917,11 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             variant="caption"
             sx={{
               color: darkMode ? '#d9e9ff' : 'text.secondary',
-              fontSize: '0.66rem',
+              fontSize: { xs: '0.55rem', sm: '0.66rem' },
               lineHeight: 1.1,
               whiteSpace: 'nowrap',
               position: 'absolute',
-              bottom: 6,
+              bottom: { xs: 4, sm: 6 },
               left: '50%',
               transform: 'translateX(-50%)',
               zIndex: 2,
@@ -966,8 +949,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         m: 0,
         width: '100%',
         maxWidth: '100vw',
+        minWidth: 0,
         boxSizing: 'border-box',
         background: 'transparent',
+        overflowX: 'hidden',
       }}
     >
       <Box
@@ -978,6 +963,8 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
           overflow: 'visible',
+          minWidth: 0,
+          maxWidth: '100%',
         }}
       >
         <Typography
@@ -1347,8 +1334,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           <List
                             sx={{
                               display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
+                              gridTemplateColumns: {
+                                xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                                md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                              },
+                              gap: { xs: 0.5, sm: 1 },
                               overflow: 'visible',
                             }}
                           >
@@ -1361,8 +1353,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                       <List
                         sx={{
                           display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                          gap: 1,
+                          gridTemplateColumns: {
+                            xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                            sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                            md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                            lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                          },
+                          gap: { xs: 0.5, sm: 1 },
                           overflow: 'visible',
                         }}
                       >
@@ -1385,8 +1382,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
                           <List
                             sx={{
                               display: 'grid',
-                              gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                              gap: 1,
+                              gridTemplateColumns: {
+                                xs: 'repeat(auto-fill, minmax(100px, 1fr))',
+                                sm: 'repeat(auto-fill, minmax(120px, 1fr))',
+                                md: 'repeat(auto-fill, minmax(140px, 1fr))',
+                                lg: 'repeat(auto-fill, minmax(160px, 1fr))',
+                              },
+                              gap: { xs: 0.5, sm: 1 },
                               overflow: 'visible',
                             }}
                           >

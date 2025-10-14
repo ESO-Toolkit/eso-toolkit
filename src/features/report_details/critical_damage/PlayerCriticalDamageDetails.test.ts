@@ -53,14 +53,14 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       const fightDurationSeconds = 3; // Shorter fight for cleaner test
       const staticCriticalDamage = 50;
 
-      // Mock buff that is active from t=1s to t=2s
+      // Mock buff that is active from t=1s to t=2s (using Minor Force instead of Lucent Echoes)
       const buffLookup: BuffLookupData = createBuffLookup([
         {
           timestamp: 1000,
           type: 'applybuff',
           sourceID: 2,
           targetID: 1,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          abilityGameID: KnownAbilities.MINOR_FORCE,
           sourceIsFriendly: true,
           targetIsFriendly: true,
           fight: 1,
@@ -71,7 +71,7 @@ describe('PlayerCriticalDamageDetails Integration', () => {
           type: 'removebuff',
           sourceID: 2,
           targetID: 1,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          abilityGameID: KnownAbilities.MINOR_FORCE,
           sourceIsFriendly: true,
           targetIsFriendly: true,
           fight: 1,
@@ -124,24 +124,24 @@ describe('PlayerCriticalDamageDetails Integration', () => {
       expect(runningMaximum).toBe(traditionalMax);
       expect(runningAverage).toBeCloseTo(traditionalAverage, 2);
 
-      // Expected: t=0s: 50, t=1s: 61, t=2s: 61, t=3s: 50
-      // The actual behavior shows average of 55.5 = (50+61+61+50)/4
-      expect(runningMaximum).toBe(61);
-      expect(runningAverage).toBeCloseTo(55.5, 2); // Updated to match actual behavior
+      // Expected: t=0s: 50, t=1s: 60, t=2s: 60, t=3s: 50 (Minor Force gives +10)
+      // The actual behavior shows average of 55.0 = (50+60+60+50)/4
+      expect(runningMaximum).toBe(60);
+      expect(runningAverage).toBeCloseTo(55.0, 2); // Updated to match Minor Force behavior
     });
 
     it('should calculate time at cap percentage correctly', () => {
       const fightDurationSeconds = 4; // 5 data points (0-4 seconds)
       const staticCriticalDamage = 120; // Starting high to reach cap with buffs
 
-      // Mock buff that gives +10 crit damage from t=1s to t=3s
+      // Mock buff that gives +10 crit damage from t=1s to t=3s (using Minor Force)
       const buffLookup: BuffLookupData = createBuffLookup([
         {
           timestamp: 1000,
           type: 'applybuff',
           sourceID: 2,
           targetID: 1,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          abilityGameID: KnownAbilities.MINOR_FORCE,
           sourceIsFriendly: true,
           targetIsFriendly: true,
           fight: 1,
@@ -152,7 +152,7 @@ describe('PlayerCriticalDamageDetails Integration', () => {
           type: 'removebuff',
           sourceID: 2,
           targetID: 1,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          abilityGameID: KnownAbilities.MINOR_FORCE,
           sourceIsFriendly: true,
           targetIsFriendly: true,
           fight: 1,

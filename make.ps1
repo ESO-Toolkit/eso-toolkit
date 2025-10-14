@@ -24,6 +24,14 @@ function Show-Help {
     Write-Host "  all           - Run clean, install, lint, test, and build"
     Write-Host "  check         - Run lint and test (quick pre-commit check)"
     Write-Host "  setup         - Setup project for new developers"
+    Write-Host ""
+    Write-Host "Screen Size Testing Commands:" -ForegroundColor Magenta
+    Write-Host "  test-screen-sizes         - Run all screen size validation tests"
+    Write-Host "  test-screen-sizes-mobile  - Test mobile device screen sizes"
+    Write-Host "  test-screen-sizes-tablet  - Test tablet device screen sizes"
+    Write-Host "  test-screen-sizes-desktop - Test desktop screen sizes"
+    Write-Host "  test-screen-sizes-report  - View screen size test report"
+    Write-Host "  test-screen-sizes-update  - Update screen size test snapshots"
 }
 
 function Install-Dependencies {
@@ -139,6 +147,37 @@ function Setup-Project {
     Write-Host "✅ Project setup complete! Run './build.ps1 dev' to start development server." -ForegroundColor Green
 }
 
+# Screen Size Testing Functions
+function Run-ScreenSizeTests {
+    Write-Host "Running screen size validation tests..." -ForegroundColor Yellow
+    npm run test:screen-sizes
+}
+
+function Run-ScreenSizeTestsMobile {
+    Write-Host "Running mobile screen size tests..." -ForegroundColor Yellow
+    npm run test:screen-sizes:mobile
+}
+
+function Run-ScreenSizeTestsTablet {
+    Write-Host "Running tablet screen size tests..." -ForegroundColor Yellow
+    npm run test:screen-sizes:tablet
+}
+
+function Run-ScreenSizeTestsDesktop {
+    Write-Host "Running desktop screen size tests..." -ForegroundColor Yellow
+    npm run test:screen-sizes:desktop
+}
+
+function Open-ScreenSizeReport {
+    Write-Host "Opening screen size test report..." -ForegroundColor Yellow
+    npm run test:screen-sizes:report
+}
+
+function Update-ScreenSizeSnapshots {
+    Write-Host "Updating screen size test snapshots..." -ForegroundColor Yellow
+    npm run test:screen-sizes:update-snapshots
+}
+
 # Main command dispatcher
 switch ($Command.ToLower()) {
     "help" { Show-Help }
@@ -157,6 +196,12 @@ switch ($Command.ToLower()) {
     "all" { Run-All }
     "check" { Run-Check }
     "setup" { Setup-Project }
+    "test-screen-sizes" { Run-ScreenSizeTests }
+    "test-screen-sizes-mobile" { Run-ScreenSizeTestsMobile }
+    "test-screen-sizes-tablet" { Run-ScreenSizeTestsTablet }
+    "test-screen-sizes-desktop" { Run-ScreenSizeTestsDesktop }
+    "test-screen-sizes-report" { Open-ScreenSizeReport }
+    "test-screen-sizes-update" { Update-ScreenSizeSnapshots }
     default {
         Write-Host "Unknown command: $Command" -ForegroundColor Red
         Write-Host "Run './build.ps1 help' to see available commands." -ForegroundColor Yellow

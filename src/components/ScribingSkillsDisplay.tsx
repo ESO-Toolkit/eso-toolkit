@@ -7,6 +7,16 @@ export interface ScribingSkillData {
   skillId: number;
   /** The name of the scribed skill */
   skillName: string;
+  /** Recipe information if detected */
+  recipe?: {
+    grimoire: string;
+    transformation: string;
+    transformationType: string;
+    confidence: number;
+    matchMethod: string;
+    recipeSummary: string;
+    tooltipInfo: string;
+  };
   /** List of effects (buffs/debuffs/damage) triggered by this scribed skill */
   effects: Array<{
     /** The ability ID of the effect */
@@ -141,6 +151,52 @@ export const ScribingSkillsDisplay: React.FC<ScribingSkillsDisplayProps> = ({
               >
                 📖 {grimoire.grimoireName}
               </Typography>
+
+              {/* Recipe Information */}
+              {grimoire.skills.some((skill) => skill.recipe) && (
+                <Box sx={{ mb: 1, pl: 1 }}>
+                  {grimoire.skills
+                    .filter((skill) => skill.recipe)
+                    .map((skill, skillIndex) => (
+                      <Tooltip
+                        key={`recipe-${skillIndex}`}
+                        title={skill.recipe?.tooltipInfo || ''}
+                        arrow
+                        placement="top"
+                      >
+                        <Chip
+                          label={
+                            <Box display="flex" alignItems="center" gap={0.5}>
+                              <span>🧪</span>
+                              <span>{skill.recipe?.recipeSummary}</span>
+                              {skill.recipe?.confidence && skill.recipe.confidence < 1.0 && (
+                                <span style={{ opacity: 0.7 }}>
+                                  ({Math.round(skill.recipe.confidence * 100)}%)
+                                </span>
+                              )}
+                            </Box>
+                          }
+                          size="small"
+                          variant="filled"
+                          sx={{
+                            backgroundColor: theme.palette.primary.main,
+                            color: theme.palette.primary.contrastText,
+                            fontSize: '0.7rem',
+                            height: 24,
+                            mr: 0.5,
+                            '& .MuiChip-label': {
+                              px: 1,
+                              py: 0,
+                            },
+                            '&:hover': {
+                              backgroundColor: theme.palette.primary.dark,
+                            },
+                          }}
+                        />
+                      </Tooltip>
+                    ))}
+                </Box>
+              )}
 
               {/* All effects for this grimoire, grouped by name */}
               <Box display="flex" flexWrap="wrap" gap={0.5} sx={{ pl: 1 }}>

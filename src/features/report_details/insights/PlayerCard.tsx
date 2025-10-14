@@ -35,17 +35,29 @@ import { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import { ScribedSkillData } from '../../../components/SkillTooltip';
 import { selectPlayerData } from '../../../store/player_data/playerDataSelectors';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
+import {
+  selectFriendlyBuffEvents,
+  selectHostileBuffEvents,
+  selectCastEvents,
+  selectDamageEvents,
+  selectDebuffEvents,
+  selectHealingEvents,
+  selectResourceEvents,
+} from '../../../store/selectors/eventsSelectors';
 import { type ClassAnalysisResult } from '../../../utils/classDetectionUtils';
 import { BuildIssue } from '../../../utils/detectBuildIssues';
 import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
+import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
+import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
+  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -112,6 +124,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     player,
     mundusBuffs,
     championPoints,
+    auras,
     scribingSkills,
     buildIssues,
     classAnalysis,
@@ -128,13 +141,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     const theme = useTheme();
 
     // Encoded pins filter provided by user for casts view
-    const CASTS_PINS =
+    const _CASTS_PINS =
       '2%24Off%24%23244F4B%24expression%24ability.id+NOT+IN%2816499%2C28541%2C16165%2C16145%2C18350%2C28549%2C45223%2C18396%2C16277%2C115548%2C85572%2C23196%2C95040%2C39301%2C63507%2C22269%2C95042%2C191078%2C32910%2C41963%2C16261%2C45221%2C48076%2C32974%2C21970%2C41838%2C16565%2C45227%2C118604%2C26832%2C15383%2C45382%2C16420%2C68401%2C47193%2C190583%2C16212%2C228524%2C186981%2C16037%2C15435%2C15279%2C72931%2C45228%2C16688%2C61875%2C61874%29';
 
     const castsUrl = React.useCallback((rid?: string, fid?: string | null) => {
       if (!rid) return undefined;
       const fightParam = fid ? `&fight=${encodeURIComponent(fid)}` : '';
-      return `https://www.esologs.com/reports/${encodeURIComponent(rid)}?type=casts${fightParam}&pins=${CASTS_PINS}`;
+      return `https://www.esologs.com/reports/${encodeURIComponent(rid)}?type=casts${fightParam}`;
     }, []);
 
     const talents = React.useMemo(
@@ -154,10 +167,41 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
       return Object.values(playerData?.playersById || {});
     }, [playerData]);
 
+    // Get combat event data for affix script detection
+    const friendlyBuffEvents = useSelector(selectFriendlyBuffEvents);
+    const hostileBuffEvents = useSelector(selectHostileBuffEvents);
+    const debuffEvents = useSelector(selectDebuffEvents);
+    const damageEvents = useSelector(selectDamageEvents);
+    const healingEvents = useSelector(selectHealingEvents);
+    const castEvents = useSelector(selectCastEvents);
+    const resourceEvents = useSelector(selectResourceEvents);
+
+    // Combine combat event data
+    const combatEventData: CombatEventData = React.useMemo(
+      () => ({
+        allReportAbilities: [], // This would need to come from abilities data if available
+        allDebuffEvents: debuffEvents,
+        allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
+        allResourceEvents: resourceEvents,
+        allDamageEvents: damageEvents,
+        allCastEvents: castEvents,
+        allHealingEvents: healingEvents,
+      }),
+      [
+        friendlyBuffEvents,
+        hostileBuffEvents,
+        debuffEvents,
+        damageEvents,
+        healingEvents,
+        castEvents,
+        resourceEvents,
+      ],
+    );
+
     // Get dynamic skill lines from class analysis
     const detectedSkillLines = classAnalysis?.skillLines || [];
 
-    const foodAura = detectFoodFromAuras([]);
+    const foodAura = detectFoodFromAuras(auras);
 
     // Memoize tooltip props lookup to avoid repeated function calls
     const tooltipPropsLookup = React.useMemo(() => {
@@ -172,6 +216,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           scribedSkillsLookup.set(skill.skillName, {
             grimoireName: grimoire.grimoireName,
             effects: skill.effects,
+            recipe: skill.recipe, // Include the enhanced recipe information
           });
         });
       });
@@ -182,18 +227,34 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
           // Check if this talent is a scribed skill by looking for it in our scribed skills data
           const scribedSkillData = scribedSkillsLookup.get(talent.name);
 
-          const tooltipProps = buildTooltipProps({
-            abilityId: talent.guid,
-            abilityName: talent.name,
-            classKey: clsKey,
-            scribedSkillData,
-          });
-          lookup.set(key, tooltipProps);
+          // Use enhanced tooltip builder for scribed skills to include affix script detection
+          let tooltipProps;
+          if (scribedSkillData) {
+            tooltipProps = buildEnhancedScribingTooltipProps({
+              talent,
+              combatEventData,
+              playerId: player.id,
+              classKey: clsKey,
+              abilityId: talent.guid,
+              abilityName: talent.name,
+            });
+          } else {
+            tooltipProps = buildTooltipProps({
+              abilityId: talent.guid,
+              abilityName: talent.name,
+              classKey: clsKey,
+              scribedSkillData,
+            });
+          }
+
+          if (tooltipProps) {
+            lookup.set(key, tooltipProps);
+          }
         }
       });
 
       return lookup;
-    }, [talents, player.type, scribingSkills]);
+    }, [talents, player.type, player.id, scribingSkills, combatEventData]);
 
     // Memoize card styles to prevent recalculations
     const cardStyles = React.useMemo(
@@ -246,7 +307,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
 
     return (
       <Box sx={{ minWidth: 0, display: 'flex' }}>
-        <Card variant="outlined" className="u-hover-lift u-fade-in-up" sx={cardStyles}>
+        <Card
+          variant="outlined"
+          className="u-hover-lift u-fade-in-up"
+          sx={cardStyles}
+          data-testid={`player-card-${player.id}`}
+        >
           <CardContent
             sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}
           >
@@ -466,6 +532,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
+                                      useUnifiedDetection={true}
+                                      fightId={fightId || undefined}
+                                      playerId={player.id}
                                     />
                                   );
                                 })()}
@@ -581,6 +650,9 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                           `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                         }
                                         abilityId={talent.guid}
+                                        useUnifiedDetection={true}
+                                        fightId={fightId || undefined}
+                                        playerId={player.id}
                                       />
                                     );
                                   })()}
@@ -719,7 +791,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                             </Typography>
                           </Box>
                         </Box>
-                        <Box display="flex" flexWrap="wrap" gap={1.25} minHeight={32}>
+                        <Box
+                          display="flex"
+                          flexWrap="wrap"
+                          gap={1.25}
+                          minHeight={32}
+                          data-testid={`gear-chips-${player.id}`}
+                        >
                           {gearChips.map((chipData, index) => {
                             // Find the corresponding gear record for tooltip
                             const gearRecord = playerGear[index];
@@ -823,7 +901,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       }}
                     >
                       {mundusBuffs.length > 0 && (
-                        <>
+                        <div data-testid={`mundus-buffs-${player.id}`}>
                           {mundusBuffs.map((buff, idx) => (
                             <Box
                               key={idx}
@@ -872,7 +950,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               </Box>
                             </Box>
                           ))}
-                        </>
+                        </div>
                       )}
                     </Box>
                     <Typography
@@ -895,7 +973,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                         enterTouchDelay={0}
                         leaveTouchDelay={3000}
                       >
-                        <span style={{ display: 'inline-flex', alignItems: 'center' }}>
+                        <span
+                          style={{ display: 'inline-flex', alignItems: 'center' }}
+                          data-testid={`food-drink-${player.id}`}
+                        >
                           <span role="img" aria-label="food">
                             🍲
                           </span>

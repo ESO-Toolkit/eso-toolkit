@@ -19,13 +19,19 @@ import {
   Typography,
   useTheme,
 } from '@mui/material';
-import { format } from 'date-fns';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetLatestReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
 import { GetLatestReportsDocument } from '../../graphql/reports.generated';
+import { ReportListMobile } from '../reports/components/ReportListMobile';
+import {
+  formatReportDateTime,
+  formatReportDuration,
+  getReportVisibilityColor,
+} from '../reports/reportFormatting';
+import { useReportPageLayout } from '../reports/useReportPageLayout';
 
 interface LatestReportsState {
   reports: UserReportSummaryFragment[];
@@ -42,43 +48,11 @@ interface LatestReportsState {
 
 const REPORTS_PER_PAGE = 25;
 
-// Utility functions
-const formatDateTime = (timestamp: number): string => {
-  return format(new Date(timestamp), 'MMM dd, yyyy HH:mm');
-};
-
-const formatDuration = (startTime: number, endTime: number): string => {
-  const durationMs = endTime - startTime;
-  const totalMinutes = Math.floor(durationMs / 60000);
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  if (hours > 0) {
-    return `${hours}h ${minutes}m`;
-  } else {
-    return `${minutes}m`;
-  }
-};
-
-const getVisibilityColor = (
-  visibility: string,
-): 'default' | 'primary' | 'secondary' | 'error' | 'info' | 'success' | 'warning' => {
-  switch (visibility) {
-    case 'public':
-      return 'success';
-    case 'private':
-      return 'error';
-    case 'unlisted':
-      return 'warning';
-    default:
-      return 'default';
-  }
-};
-
 export const LatestReports: React.FC = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const client = useEsoLogsClientInstance();
+  const { isDesktop, cardSx, cardContentSx, headerStackSx, actionGroupSx } = useReportPageLayout();
 
   const [state, setState] = useState<LatestReportsState>({
     reports: [],
@@ -169,7 +143,7 @@ export const LatestReports: React.FC = () => {
   // Loading state
   if (state.loading && state.reports.length === 0) {
     return (
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
         <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
           <CircularProgress />
         </Box>
@@ -178,170 +152,242 @@ export const LatestReports: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
+    <Container maxWidth="lg" sx={{ py: isDesktop ? 4 : 2 }}>
       <Card
-        elevation={3}
+        elevation={isDesktop ? 4 : 1}
         sx={{
-          borderRadius: 2,
-          background: `linear-gradient(135deg, ${theme.palette.primary.main}15 0%, ${theme.palette.secondary.main}15 100%)`,
-          border: `1px solid ${theme.palette.divider}`,
+          ...cardSx,
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(135deg, rgba(56, 189, 248, 0.12) 0%, rgba(0, 225, 255, 0.12) 100%)'
+              : 'linear-gradient(135deg, rgba(219, 234, 254, 0.5) 0%, rgba(224, 242, 254, 0.5) 100%)',
         }}
       >
-        <CardContent sx={{ p: 4 }}>
+        <CardContent sx={{ ...cardContentSx, position: 'relative' }}>
+          {/* Mobile Floating Refresh Button */}
+          {!isDesktop && (
+            <IconButton
+              onClick={handleRefresh}
+              disabled={state.loading}
+              color="primary"
+              sx={{
+                position: 'absolute',
+                top: 16,
+                right: 16,
+                zIndex: 1,
+                backgroundColor: theme.palette.background.paper,
+                boxShadow: theme.shadows[2],
+                '&:hover': {
+                  backgroundColor: theme.palette.action.hover,
+                },
+              }}
+            >
+              <RefreshIcon />
+            </IconButton>
+          )}
+
           {/* Header */}
-          <Box
-            display="flex"
-            justifyContent="space-between"
-            alignItems="center"
-            flexWrap="wrap"
-            gap={2}
-            mb={3}
-          >
+          <Box sx={{ ...headerStackSx, mb: 3 }}>
             <Box>
-              <Typography variant="h4" component="h1" gutterBottom>
+              <Typography
+                variant={isDesktop ? 'h4' : 'h5'}
+                component="h1"
+                gutterBottom
+                sx={{ mb: isDesktop ? 0.5 : 0, pr: isDesktop ? 0 : 5 }} // Add right padding on mobile to account for floating button
+              >
                 Latest Reports
               </Typography>
-              <Typography variant="body1" color="text.secondary">
+              <Typography
+                variant="body1"
+                color="text.secondary"
+                sx={{
+                  maxWidth: isDesktop ? 'none' : '26ch',
+                  pr: isDesktop ? 0 : 1, // Add some right padding on mobile
+                }}
+              >
                 Discover the most recent combat logs from the community
               </Typography>
             </Box>
 
-            <Box display="flex" alignItems="center" gap={2}>
-              <IconButton
-                onClick={handleRefresh}
-                disabled={state.loading}
-                color="primary"
-                sx={{
-                  backgroundColor: theme.palette.action.hover,
-                  '&:hover': {
-                    backgroundColor: theme.palette.action.selected,
-                  },
-                }}
-              >
-                <RefreshIcon />
-              </IconButton>
-            </Box>
+            {isDesktop && (
+              <Box sx={actionGroupSx}>
+                <IconButton
+                  onClick={handleRefresh}
+                  disabled={state.loading}
+                  color="primary"
+                  sx={{
+                    width: 'auto',
+                  }}
+                >
+                  <RefreshIcon />
+                </IconButton>
+              </Box>
+            )}
           </Box>
 
-          {/* Error state */}
-          {state.error && (
-            <Alert severity="error" sx={{ mb: 3 }}>
-              {state.error}
-            </Alert>
-          )}
-
-          {/* Reports table */}
           {state.reports.length > 0 ? (
             <>
-              <TableContainer component={Paper} elevation={1} sx={{ borderRadius: 2, mb: 3 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Report
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Zone
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Owner
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Start Time
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Duration
-                        </Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography variant="subtitle2" fontWeight="bold">
-                          Visibility
-                        </Typography>
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {state.reports.map((report) => (
-                      <TableRow
-                        key={report.code}
-                        hover
-                        onClick={() => handleReportClick(report.code)}
-                        sx={{
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease-in-out',
-                          '&:hover': {
-                            backgroundColor: theme.palette.action.hover,
-                            transform: 'translateX(4px)',
-                          },
-                        }}
-                      >
-                        <TableCell>
-                          <Box>
-                            <Typography
-                              variant="body2"
-                              fontWeight="medium"
-                              color="primary.main"
-                              noWrap
-                              sx={{ maxWidth: 200 }}
-                            >
-                              {report.title || 'Untitled Report'}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
-                              {report.code}
-                            </Typography>
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {report.zone?.name || 'Unknown Zone'}
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems={isDesktop ? 'center' : 'flex-start'}
+                flexDirection={isDesktop ? 'row' : 'column'}
+                gap={isDesktop ? 2 : 1.5}
+                mb={isDesktop ? 3 : 2}
+              >
+                <Typography variant="body1" color="text.secondary">
+                  Showing page {state.pagination.currentPage} of {state.pagination.totalPages} -{' '}
+                  {state.pagination.totalReports} total reports
+                </Typography>
+
+                <Chip
+                  variant="outlined"
+                  color="primary"
+                  label={`${state.pagination.perPage} per page`}
+                  sx={{ fontWeight: 500 }}
+                />
+              </Box>
+
+              {isDesktop ? (
+                <TableContainer
+                  component={Paper}
+                  elevation={1}
+                  sx={{
+                    borderRadius: 2,
+                    mb: 3,
+                    overflowX: 'hidden',
+                  }}
+                >
+                  <Table sx={{ tableLayout: 'fixed', width: '100%' }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            Title
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">{report.owner?.name || 'Unknown'}</Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {formatDateTime(report.startTime)}
+                        <TableCell sx={{ width: '35%', whiteSpace: 'normal' }}>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            Zone
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          <Typography variant="body2">
-                            {formatDuration(report.startTime, report.endTime)}
+                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            Duration
                           </Typography>
                         </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={report.visibility}
-                            color={getVisibilityColor(report.visibility)}
-                            size="small"
-                            variant="outlined"
-                            sx={{ textTransform: 'capitalize' }}
-                          />
+                        <TableCell sx={{ width: '15%', whiteSpace: 'normal' }}>
+                          <Typography variant="subtitle2" fontWeight="bold">
+                            Visibility
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {state.reports.map((report) => (
+                        <TableRow
+                          key={report.code}
+                          hover
+                          onClick={() => handleReportClick(report.code)}
+                          sx={{
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease-in-out',
+                            '&:hover': {
+                              backgroundColor: theme.palette.action.hover,
+                              transform: 'translateX(4px)',
+                            },
+                          }}
+                        >
+                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                            <Box>
+                              <Typography
+                                variant="body2"
+                                fontWeight="medium"
+                                color="primary.main"
+                                sx={{
+                                  overflowWrap: 'anywhere',
+                                  wordBreak: 'break-word',
+                                  lineHeight: 1.4,
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                  textOverflow: 'ellipsis',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                {report.title || 'Untitled Report'}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.25,
+                                  whiteSpace: 'nowrap',
+                                  textOverflow: 'ellipsis',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                {`Owner: ${report.owner?.name || 'Unknown'}`}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  display: 'block',
+                                  mt: 0.25,
+                                  whiteSpace: 'nowrap',
+                                  textOverflow: 'ellipsis',
+                                  overflow: 'hidden',
+                                }}
+                              >
+                                {formatReportDateTime(report.startTime)}
+                              </Typography>
+                            </Box>
+                          </TableCell>
+                          <TableCell
+                            sx={{
+                              verticalAlign: 'top',
+                              whiteSpace: 'normal',
+                              wordBreak: 'break-word',
+                            }}
+                          >
+                            <Typography variant="body2" sx={{ whiteSpace: 'inherit' }}>
+                              {report.zone?.name || 'Unknown Zone'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                            <Typography variant="body2">
+                              {formatReportDuration(report.startTime, report.endTime)}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ verticalAlign: 'top', whiteSpace: 'normal' }}>
+                            <Chip
+                              label={report.visibility}
+                              color={getReportVisibilityColor(report.visibility)}
+                              size="small"
+                              variant="outlined"
+                              sx={{ textTransform: 'capitalize', whiteSpace: 'nowrap' }}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              ) : (
+                <ReportListMobile reports={state.reports} onSelect={handleReportClick} showOwner />
+              )}
 
               {/* Pagination */}
-              <Box display="flex" justifyContent="center" mt={3}>
+              <Box display="flex" justifyContent="center" mt={isDesktop ? 3 : 2}>
                 <Pagination
                   count={state.pagination.totalPages}
                   page={state.pagination.currentPage}
                   onChange={handlePageChange}
                   disabled={state.loading}
                   color="primary"
-                  size="large"
+                  size={isDesktop ? 'large' : 'medium'}
                   sx={{
                     '& .MuiPaginationItem-root': {
                       borderRadius: 2,

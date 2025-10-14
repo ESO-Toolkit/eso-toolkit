@@ -47,13 +47,15 @@ export const FightDetails: React.FC = () => {
   }
 
   return (
-    <FightDetailsView
-      selectedTabId={selectedTabId}
-      fight={fight}
-      onTabChange={setSelectedTab}
-      showExperimentalTabs={showExperimentalTabs}
-      onToggleExperimentalTabs={setShowExperimentalTabs}
-      isLoading={false}
-    />
+    <div data-testid="fight-details-loaded">
+      <FightDetailsView
+        selectedTabId={selectedTabId}
+        fight={fight}
+        onTabChange={setSelectedTab}
+        showExperimentalTabs={showExperimentalTabs}
+        onToggleExperimentalTabs={setShowExperimentalTabs}
+        isLoading={false}
+      />
+    </div>
   );
 };

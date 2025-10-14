@@ -42,23 +42,36 @@ import {
   PlayerGearItemData,
   PlayerGearSetRecord,
 } from '../../../utils/gearUtilities';
-import { analyzeAllPlayersScribingSkills } from '../../../utils/Scribing';
+import { analyzeAllPlayersScribingSkills } from '../../scribing/utils/Scribing';
+import {
+  findScribingRecipe,
+  formatScribingRecipeForDisplay,
+} from '../../scribing/utils/scribingRecipeUtils';
 
 import { PlayersPanelView } from './PlayersPanelView';
-
-// Exclusion list extracted from the provided pins filter
-const CPM_EXCLUSION_LIST = Object.freeze(
-  new Set<number>([
-    16499, 28541, 16165, 16145, 18350, 28549, 45223, 18396, 16277, 115548, 85572, 23196, 95040,
-    39301, 63507, 22269, 95042, 191078, 32910, 41963, 16261, 45221, 48076, 32974, 21970, 41838,
-    16565, 45227, 118604, 26832, 15383, 45382, 16420, 68401, 47193, 190583, 16212, 228524, 186981,
-    16037, 15435, 15279, 72931, 45228, 16688, 61875, 61874,
-  ]),
-);
 
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {
+  // State for storing scribing recipe information
+  const [scribingRecipes, setScribingRecipes] = React.useState<
+    Record<
+      string,
+      Record<
+        string,
+        {
+          grimoire: string;
+          transformation: string;
+          transformationType: string;
+          confidence: number;
+          matchMethod: string;
+          recipeSummary: string;
+          tooltipInfo: string;
+        }
+      >
+    >
+  >({});
+
   // Get report/fight context for CPM and deeplink
   const { reportId, fightId } = useSelectedReportAndFight();
 
@@ -245,7 +258,7 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [combatantInfoEvents, abilitiesById, playerData]);
 
-  // Compute CPM (casts per minute) per player for the current fight, excluding specific abilities per provided filter
+  // Compute CPM (casts per minute) per player for the current fight, including all casts
   const cpmByPlayer = React.useMemo(() => {
     const result: Record<string, number> = {};
     if (!fight) return result;
@@ -253,10 +266,7 @@ export const PlayersPanel: React.FC = () => {
     for (const ev of castEvents) {
       if (ev.type === 'cast' && !ev.fake) {
         const src = ev.sourceID;
-        const abilityId: number | undefined = ev.abilityGameID;
-        if (!CPM_EXCLUSION_LIST.has(abilityId)) {
-          result[src] = (result[src] || 0) + 1;
-        }
+        result[src] = (result[src] || 0) + 1;
       }
     }
 
@@ -312,6 +322,53 @@ export const PlayersPanel: React.FC = () => {
 
     return counts;
   }, [castEvents]);
+
+  // Calculate the latest aura snapshot per player from combatantinfo events
+  const aurasByPlayer = React.useMemo(() => {
+    const result: Record<string, Array<{ name: string; id: number; stacks?: number }>> = {};
+
+    if (!playerData?.playersById || !combatantInfoEvents || !abilitiesById) {
+      return result;
+    }
+
+    Object.values(playerData.playersById).forEach((actor) => {
+      if (!actor?.id) {
+        return;
+      }
+
+      const playerId = String(actor.id);
+      result[playerId] = [];
+
+      const latestCombatantInfo = combatantInfoEvents
+        .filter((event): event is CombatantInfoEvent => {
+          return (
+            event.type === 'combatantinfo' &&
+            'sourceID' in event &&
+            String(event.sourceID) === playerId
+          );
+        })
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))[0];
+
+      if (!latestCombatantInfo?.auras) {
+        return;
+      }
+
+      latestCombatantInfo.auras.forEach((aura) => {
+        const ability = abilitiesById[aura.ability];
+        const auraName = ability?.name || aura.name || `Unknown Aura (${aura.ability})`;
+
+        result[playerId].push({
+          name: auraName,
+          id: aura.ability,
+          stacks: aura.stacks,
+        });
+      });
+
+      result[playerId].sort((a, b) => a.name.localeCompare(b.name));
+    });
+
+    return result;
+  }, [abilitiesById, combatantInfoEvents, playerData?.playersById]);
 
   const playerGear = React.useMemo(() => {
     const result: Record<number, PlayerGearSetRecord[]> = {};
@@ -423,6 +480,18 @@ export const PlayersPanel: React.FC = () => {
 
       const playerId = String(player.id);
       const gear = player?.combatantInfo?.gear ?? [];
+
+      // Extract auras for this player from combatant info events
+      const playerAuras: CombatantAura[] = [];
+      if (combatantInfoEvents) {
+        const playerCombatantInfo = combatantInfoEvents.find(
+          (event) => event.sourceID === player.id,
+        );
+        if (playerCombatantInfo?.auras) {
+          playerAuras.push(...playerCombatantInfo.auras);
+        }
+      }
+
       const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
 
       const buildIssues = detectBuildIssues(
@@ -430,15 +499,24 @@ export const PlayersPanel: React.FC = () => {
         friendlyBuffLookup || emptyBuffLookup,
         fight.startTime,
         fight.endTime,
-        [],
+        playerAuras,
         player.role,
+        damageEvents,
+        player.id,
       );
 
       result[playerId] = buildIssues;
     });
 
     return result;
-  }, [playerData?.playersById, friendlyBuffLookup, fight?.startTime, fight?.endTime]);
+  }, [
+    playerData?.playersById,
+    friendlyBuffLookup,
+    fight?.startTime,
+    fight?.endTime,
+    damageEvents,
+    combatantInfoEvents,
+  ]);
 
   // Calculate scribing skills per player using the utility function
   const scribingSkillsByPlayer = React.useMemo(() => {
@@ -765,26 +843,123 @@ export const PlayersPanel: React.FC = () => {
     return result;
   }, [maxResourcesByPlayer]);
 
+  // Effect to lookup scribing recipes for detected skills
+  React.useEffect(() => {
+    const lookupRecipes = async (): Promise<void> => {
+      const newRecipes: Record<
+        string,
+        Record<
+          string,
+          {
+            grimoire: string;
+            transformation: string;
+            transformationType: string;
+            confidence: number;
+            matchMethod: string;
+            recipeSummary: string;
+            tooltipInfo: string;
+          }
+        >
+      > = {};
+
+      for (const [playerId, grimoires] of Object.entries(scribingSkillsByPlayer)) {
+        newRecipes[playerId] = {};
+
+        for (const grimoire of grimoires) {
+          for (const skill of grimoire.skills) {
+            // Find the first effect with a valid ability ID for recipe lookup
+            const effectWithId = skill.effects.find(
+              (effect) => effect.abilityId && effect.abilityId > 0,
+            );
+
+            // Try recipe lookup with the skill's main ID first
+            try {
+              // eslint-disable-next-line no-console
+              console.log(
+                `🔍 Looking up recipe for skill: ${skill.skillName} (ID: ${skill.skillId})`,
+              );
+
+              let recipeMatch = await findScribingRecipe(skill.skillId, skill.skillName);
+
+              // If that doesn't work, try with the first effect's ability ID
+              if (!recipeMatch && effectWithId) {
+                // eslint-disable-next-line no-console
+                console.log(
+                  `🔍 Trying with effect ID: ${effectWithId.abilityId} (${effectWithId.abilityName})`,
+                );
+                recipeMatch = await findScribingRecipe(
+                  effectWithId.abilityId,
+                  effectWithId.abilityName,
+                );
+              }
+
+              if (recipeMatch) {
+                // eslint-disable-next-line no-console
+                console.log(
+                  `✅ Found recipe: ${recipeMatch.grimoire.name} + ${recipeMatch.transformation?.name}`,
+                );
+                const recipeDisplay = formatScribingRecipeForDisplay(recipeMatch);
+                newRecipes[playerId][skill.skillId] = recipeDisplay;
+              } else {
+                // eslint-disable-next-line no-console
+                console.log(`❌ No recipe found for ${skill.skillName}`);
+              }
+            } catch (error) {
+              // eslint-disable-next-line no-console
+              console.warn(`Failed to lookup recipe for skill ${skill.skillName}:`, error);
+            }
+          }
+        }
+      }
+
+      setScribingRecipes(newRecipes);
+    };
+
+    if (Object.keys(scribingSkillsByPlayer).length > 0) {
+      lookupRecipes();
+    }
+  }, [scribingSkillsByPlayer]);
+
+  // Merge scribing skills with their recipe information
+  const enhancedScribingSkillsByPlayer = React.useMemo(() => {
+    const result: Record<string, GrimoireData[]> = {};
+
+    Object.entries(scribingSkillsByPlayer).forEach(([playerId, grimoires]) => {
+      result[playerId] = grimoires.map((grimoire) => ({
+        ...grimoire,
+        skills: grimoire.skills.map((skill) => ({
+          ...skill,
+          recipe: scribingRecipes[playerId]?.[skill.skillId],
+        })),
+      }));
+    });
+
+    return result;
+  }, [scribingSkillsByPlayer, scribingRecipes]);
+
   return (
-    <PlayersPanelView
-      playerActors={playerData?.playersById}
-      mundusBuffsByPlayer={mundusBuffsByPlayer}
-      championPointsByPlayer={championPointsByPlayer}
-      scribingSkillsByPlayer={scribingSkillsByPlayer}
-      buildIssuesByPlayer={buildIssuesByPlayer}
-      classAnalysisByPlayer={classAnalysisByPlayer}
-      deathsByPlayer={deathsByPlayer}
-      resurrectsByPlayer={resurrectsByPlayer}
-      cpmByPlayer={cpmByPlayer}
-      maxHealthByPlayer={maxHealthByPlayer}
-      maxStaminaByPlayer={maxStaminaByPlayer}
-      maxMagickaByPlayer={maxMagickaByPlayer}
-      reportId={reportId}
-      fightId={fightId}
-      isLoading={isLoading}
-      playerGear={playerGear}
-      fightStartTime={fight?.startTime}
-      fightEndTime={fight?.endTime}
-    />
+    <div data-testid="players-panel-loaded">
+      <PlayersPanelView
+        playerActors={playerData?.playersById}
+        mundusBuffsByPlayer={mundusBuffsByPlayer}
+        championPointsByPlayer={championPointsByPlayer}
+        scribingSkillsByPlayer={enhancedScribingSkillsByPlayer}
+        buildIssuesByPlayer={buildIssuesByPlayer}
+        classAnalysisByPlayer={classAnalysisByPlayer}
+        deathsByPlayer={deathsByPlayer}
+        resurrectsByPlayer={resurrectsByPlayer}
+        cpmByPlayer={cpmByPlayer}
+        aurasByPlayer={aurasByPlayer}
+        maxHealthByPlayer={maxHealthByPlayer}
+        maxStaminaByPlayer={maxStaminaByPlayer}
+        maxMagickaByPlayer={maxMagickaByPlayer}
+        reportId={reportId}
+        fightId={fightId}
+        isLoading={isLoading}
+        playerGear={playerGear}
+        fightStartTime={fight?.startTime}
+        fightEndTime={fight?.endTime}
+      />
+    </div>
   );
 };

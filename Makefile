@@ -53,6 +53,15 @@ help:
 	@$(COLOR) info "Workflow Commands:"
 	@$(COLOR) color brightMagenta "  setup         - Initial project setup for new developers"
 	@$(COLOR) color brightMagenta "  all           - Run clean, install, lint, test, and build"
+	@$(COLOR) info "Affix Script Analysis Commands:"
+	@$(COLOR) color brightCyan "  analyze-affix-scripts     - Analyze affix scripts in combat logs"
+	@$(COLOR) color brightCyan "  analyze-affix-scripts-all - Analyze all downloaded combat logs"
+	@$(COLOR) info "Screen Size Testing Commands:"
+	@$(COLOR) color brightBlue "  test-screen-sizes         - Run all screen size validation tests"
+	@$(COLOR) color brightBlue "  test-screen-sizes-mobile  - Test mobile device screen sizes"
+	@$(COLOR) color brightBlue "  test-screen-sizes-tablet  - Test tablet device screen sizes"
+	@$(COLOR) color brightBlue "  test-screen-sizes-desktop - Test desktop screen sizes"
+	@$(COLOR) color brightBlue "  test-screen-sizes-report  - View screen size test report"
 
 # Show detected OS
 os-info:
@@ -173,6 +182,17 @@ setup: install codegen fetch-abilities
 	@$(COLOR) header "Project Setup Complete"
 	@$(COLOR) success "Setup complete! Run 'make dev' to start development server."
 
+# Affix script detection commands  
+analyze-affix-scripts:
+	@$(COLOR) subheader "Analyzing Affix Scripts in Combat Logs"
+	@$(COLOR) info "Running affix script detection..."
+	npm run analyze-affix-scripts
+
+analyze-affix-scripts-all:
+	@$(COLOR) subheader "Analyzing All Downloaded Combat Logs"
+	@$(COLOR) info "Running batch affix script analysis..."
+	npm run analyze-affix-scripts:all
+
 # Cross-platform npm cache clear
 clear-cache:
 	@$(COLOR) subheader "Clearing NPM Cache"
@@ -196,3 +216,34 @@ clean-all: clean clean-modules
 # Reinstall everything from scratch
 reinstall: clean-modules install
 	@$(COLOR) success "Dependencies reinstalled!"
+
+# Screen Size Testing Commands
+test-screen-sizes:
+	@$(COLOR) subheader "Running Screen Size Validation Tests"
+	@$(COLOR) info "Testing responsive layout across all device sizes..."
+	npm run test:screen-sizes
+
+test-screen-sizes-mobile:
+	@$(COLOR) subheader "Testing Mobile Screen Sizes"
+	@$(COLOR) info "Running tests for mobile devices..."
+	npm run test:screen-sizes:mobile
+
+test-screen-sizes-tablet:
+	@$(COLOR) subheader "Testing Tablet Screen Sizes"
+	@$(COLOR) info "Running tests for tablet devices..."
+	npm run test:screen-sizes:tablet
+
+test-screen-sizes-desktop:
+	@$(COLOR) subheader "Testing Desktop Screen Sizes"
+	@$(COLOR) info "Running tests for desktop sizes..."
+	npm run test:screen-sizes:desktop
+
+test-screen-sizes-report:
+	@$(COLOR) subheader "Opening Screen Size Test Report"
+	@$(COLOR) info "Launching HTML report in browser..."
+	npm run test:screen-sizes:report
+
+test-screen-sizes-update:
+	@$(COLOR) subheader "Updating Screen Size Test Snapshots"
+	@$(COLOR) warning "Updating visual regression baselines..."
+	npm run test:screen-sizes:update-snapshots

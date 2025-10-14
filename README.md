@@ -81,22 +81,34 @@ npm run build
   npm run test:coverage
   ```
 
-- **End-to-End Tests (Playwright):**
+- **Nightly Regression Tests (Playwright):**
 
   ```powershell
-  npm run test:e2e
+  npm run test:nightly:chromium
   ```
 
-- **End-to-End Tests (Headed Mode):**
+- **Smoke Tests (Quick E2E validation):**
 
   ```powershell
-  npm run test:e2e:headed
+  npm run test:smoke:e2e
   ```
 
-- **End-to-End Tests (Interactive UI):**
+- **Screen Size Testing (All Devices):**
 
   ```powershell
-  npm run test:e2e:ui
+  npm run test:screen-sizes
+  ```
+
+- **Screen Size Testing (Mobile Only):**
+
+  ```powershell
+  npm run test:screen-sizes:mobile
+  ```
+
+- **Screen Size Testing (View Report):**
+
+  ```powershell
+  npm run test:screen-sizes:report
   ```
 
 - **Coverage Analysis:**
@@ -131,8 +143,30 @@ npm run build
 - ✅ API mocking (ESO Logs, Sentry, CDN)
 - ✅ Error handling and edge cases
 - ✅ Cross-browser compatibility
+- ✅ **Screen size validation (22+ devices)**
+- ✅ **Visual regression testing**
+- ✅ **Responsive design validation**
+
+**Screen Size Testing:**
+
+- **Device Coverage**: Mobile, tablet, desktop, ultrawide displays
+- **Visual Regression**: Automatic screenshot comparison across screen sizes
+- **Performance Testing**: Load time validation per viewport
+- **Accessibility**: Touch target and readability validation
+- **GitHub Integration**: On-demand testing via GitHub Actions
+- **Live Reports**: View results at `https://[username].github.io/[repo]/screen-size-reports/`
+
+**Offline Testing System:**
+
+- **3x Faster Tests**: Pre-downloaded data eliminates API latency during test execution
+- **Smart Caching**: GitHub Actions automatically cache 3.87 GB of test data for ~7 days
+- **Graceful Fallback**: Tests automatically fall back to online mode when needed
+- **Zero Repository Bloat**: Large data files excluded from git, downloaded on-demand
+- **Local Development**: Run `npm run download-test-data` for offline testing locally
 
 For detailed testing documentation, see [tests/README.md](tests/README.md).
+For screen size testing, see [documentation/SCREEN_SIZE_TESTING.md](documentation/SCREEN_SIZE_TESTING.md).
+For offline testing, see [OFFLINE_TESTING.md](OFFLINE_TESTING.md).
 
 **Coverage System Features:**
 

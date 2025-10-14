@@ -111,6 +111,80 @@ export const handlers = [
     });
   }),
 
+  // Mock getCurrentUser query for authentication
+  graphql.query('getCurrentUser', () => {
+    return HttpResponse.json({
+      data: {
+        userData: {
+          currentUser: {
+            id: 12345,
+            name: 'TestUser',
+            naDisplayName: '@TestUser',
+            euDisplayName: '@TestUser',
+          },
+        },
+      },
+    });
+  }),
+
+  // Mock getPlayersForReport query for player data
+  graphql.query('getPlayersForReport', ({ variables }) => {
+    return HttpResponse.json({
+      data: {
+        reportData: {
+          report: {
+            playerDetails: [
+              {
+                id: 1,
+                name: 'Krazh-Kazak',
+                displayName: '@Krazh-Kazak',
+                type: 'Dragonknight',
+                icon: 'https://assets.rpglogs.com/img/eso/classes/dragonknight.png',
+                server: 'NA',
+                combatantInfo: {
+                  specs: [{ role: 'Tank' }]
+                }
+              },
+              {
+                id: 2,
+                name: 'Sylvanas-Windruner',
+                displayName: '@Sylvanas-Windruner',
+                type: 'Templar',
+                icon: 'https://assets.rpglogs.com/img/eso/classes/templar.png',
+                server: 'NA',
+                combatantInfo: {
+                  specs: [{ role: 'Healer' }]
+                }
+              },
+              {
+                id: 3,
+                name: 'Zakyrius',
+                displayName: '@Zakyrius',
+                type: 'Necromancer',
+                icon: 'https://assets.rpglogs.com/img/eso/classes/necromancer.png',
+                server: 'NA',
+                combatantInfo: {
+                  specs: [{ role: 'DPS' }]
+                }
+              },
+              {
+                id: 4,
+                name: 'Dart-Shadow',
+                displayName: '@Dart-Shadow',
+                type: 'Nightblade',
+                icon: 'https://assets.rpglogs.com/img/eso/classes/nightblade.png',
+                server: 'NA',
+                combatantInfo: {
+                  specs: [{ role: 'DPS' }]
+                }
+              }
+            ]
+          }
+        }
+      }
+    });
+  }),
+
   // Mock any other GraphQL queries with a fallback
   graphql.query('*', () => {
     return HttpResponse.json({

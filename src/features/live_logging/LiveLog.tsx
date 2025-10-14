@@ -4,6 +4,7 @@ import { useParams } from 'react-router-dom';
 
 import { fetchReportMasterData, forceMasterDataRefresh } from '@/store/master_data/masterDataSlice';
 import { setReportCacheMetadata, setReportData, setReportId } from '@/store/report/reportSlice';
+import { setSelectedTargetIds } from '@/store/ui/uiSlice';
 import { useAppDispatch } from '@/store/useAppDispatch';
 
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
@@ -45,6 +46,9 @@ export const LiveLog: React.FC<React.PropsWithChildren> = (props) => {
 
     if (lastFight && lastFight.id.toString() !== latestFightId) {
       setFightId(lastFight.id.toString());
+
+      // Clear selected targets when a new fight is detected
+      dispatch(setSelectedTargetIds([]));
 
       // Force master data refresh when a new fight is detected
       // This ensures new actors and abilities from the new fight are loaded

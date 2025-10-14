@@ -1,0 +1,6 @@
+# ESO Logs API Response Cache
+# This directory caches API responses to reduce load during testing
+*.json
+
+# Keep the directory structure but ignore cache files
+!.gitkeep

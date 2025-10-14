@@ -30,6 +30,7 @@ interface PlayersPanelViewProps {
     string,
     Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>
   >;
+  aurasByPlayer: Record<string, Array<{ name: string; id: number; stacks?: number }>>;
   scribingSkillsByPlayer: Record<string, GrimoireData[]>;
   buildIssuesByPlayer: Record<string, BuildIssue[]>;
   classAnalysisByPlayer: Record<string, ClassAnalysisResult>;
@@ -62,6 +63,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     playerActors,
     mundusBuffsByPlayer,
     championPointsByPlayer,
+    aurasByPlayer,
     scribingSkillsByPlayer,
     buildIssuesByPlayer,
     classAnalysisByPlayer,
@@ -89,6 +91,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
         const playerDataSet = playerGear?.[Number(player.id)];
         const mundusBuffs = mundusBuffsByPlayer?.[String(player.id)] ?? [];
         const championPoints = championPointsByPlayer?.[String(player.id)] ?? [];
+        const auras = aurasByPlayer?.[String(player.id)] ?? [];
         const scribingSkills = scribingSkillsByPlayer?.[String(player.id)] ?? [];
         const buildIssues = buildIssuesByPlayer[String(player.id)] || [];
         const classAnalysis = classAnalysisByPlayer[String(player.id)];
@@ -107,6 +110,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           player,
           mundusBuffs,
           championPoints,
+          auras,
           scribingSkills,
           buildIssues,
           classAnalysis,
@@ -124,6 +128,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
       playerGear,
       mundusBuffsByPlayer,
       championPointsByPlayer,
+      aurasByPlayer,
       scribingSkillsByPlayer,
       buildIssuesByPlayer,
       classAnalysisByPlayer,
@@ -312,7 +317,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
     }
 
     return (
-      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <Box
+        data-testid="players-panel-view"
+        sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+      >
         {/* Controls */}
         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems="stretch">
           <TextField
@@ -379,6 +387,7 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
 
         {/* Player cards grid */}
         <Box
+          data-testid="players-panel-loaded"
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
@@ -388,24 +397,27 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           }}
         >
           {filteredAndSortedPlayerCards.map((playerData) => (
-            <PlayerCard
-              key={String(playerData.key)}
-              player={playerData.player}
-              mundusBuffs={playerData.mundusBuffs}
-              championPoints={playerData.championPoints}
-              scribingSkills={playerData.scribingSkills}
-              buildIssues={playerData.buildIssues}
-              classAnalysis={playerData.classAnalysis}
-              deaths={playerData.deaths}
-              resurrects={playerData.resurrects}
-              cpm={playerData.cpm}
-              maxHealth={playerData.maxHealth}
-              maxStamina={playerData.maxStamina}
-              maxMagicka={playerData.maxMagicka}
-              reportId={reportId}
-              fightId={fightId}
-              playerGear={playerData.playerGear}
-            />
+            <Box key={playerData.key} data-testid={`player-card-${playerData.player.id}`}>
+              <PlayerCard
+                key={String(playerData.key)}
+                player={playerData.player}
+                mundusBuffs={playerData.mundusBuffs}
+                championPoints={playerData.championPoints}
+                auras={playerData.auras}
+                scribingSkills={playerData.scribingSkills}
+                buildIssues={playerData.buildIssues}
+                classAnalysis={playerData.classAnalysis}
+                deaths={playerData.deaths}
+                resurrects={playerData.resurrects}
+                cpm={playerData.cpm}
+                maxHealth={playerData.maxHealth}
+                maxStamina={playerData.maxStamina}
+                maxMagicka={playerData.maxMagicka}
+                reportId={reportId}
+                fightId={fightId}
+                playerGear={playerData.playerGear}
+              />
+            </Box>
           ))}
         </Box>
       </Box>

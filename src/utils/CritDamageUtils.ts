@@ -11,6 +11,21 @@ import {
 } from './BuffLookupUtils';
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
+const CRITICAL_DAMAGE_BUFF_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
+  [KnownAbilities.LUCENT_ECHOES]: [
+    KnownAbilities.LUCENT_ECHOES,
+    KnownAbilities.LUCENT_ECHOES_GROUP,
+  ],
+  [KnownAbilities.LUCENT_ECHOES_GROUP]: [
+    KnownAbilities.LUCENT_ECHOES,
+    KnownAbilities.LUCENT_ECHOES_GROUP,
+  ],
+};
+
+function getBuffAbilityVariants(abilityId: KnownAbilities): KnownAbilities[] {
+  return CRITICAL_DAMAGE_BUFF_VARIANTS[abilityId] ?? [abilityId];
+}
+
 interface BaseCriticalDamageSource {
   name: string;
   description: string;
@@ -178,7 +193,7 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     value: CriticalDamageValues.LUCENT_ECHOES,
     name: 'Lucent Echoes',
     description: 'Critical damage from Lucent Echoes set bonus (11%)',
-    source: 'buff',
+    source: 'aura',
   },
   {
     ability: KnownAbilities.MINOR_FORCE,
@@ -215,12 +230,16 @@ export function isAuraActive(
   abilityId: KnownAbilities,
 ): boolean {
   if (!combatantInfo || !combatantInfo.auras) return false;
-  return combatantInfo.auras.some((aura) => aura.ability === abilityId);
+  return getBuffAbilityVariants(abilityId).some((id) =>
+    combatantInfo.auras.some((aura) => aura.ability === id),
+  );
 }
 
 export function isBuffActive(buffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
-  const intervals = buffLookup.buffIntervals[abilityId.toString()];
-  return intervals !== undefined && intervals.length > 0;
+  return getBuffAbilityVariants(abilityId).some((id) => {
+    const intervals = buffLookup.buffIntervals[id.toString()];
+    return intervals !== undefined && intervals.length > 0;
+  });
 }
 
 export function isDebuffActive(debuffLookup: BuffLookupData, abilityId: KnownAbilities): boolean {
@@ -233,7 +252,9 @@ export function isBuffActiveAtTimestamp(
   abilityId: KnownAbilities,
   timestamp: number,
 ): boolean {
-  return checkBuffActiveAtTimestamp(buffLookup, abilityId, timestamp);
+  return getBuffAbilityVariants(abilityId).some((id) =>
+    checkBuffActiveAtTimestamp(buffLookup, id, timestamp),
+  );
 }
 
 export function isDebuffActiveAtTimestamp(

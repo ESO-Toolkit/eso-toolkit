@@ -1,0 +1,22 @@
+{
+  "version": "1.0.0",
+  "description": "Scribing database integrity protection",
+  "createdAt": "2025-10-03T22:17:59.604Z",
+  "createdBy": "scribing-shrinkwrap.js",
+  "files": {
+    "data/scribing-complete.json": {
+      "checksum": "c91478d84ca5db1673417dd8c7e40fdd08c8ce8fc3e2c39ae0d604447500d351",
+      "size": 153268,
+      "lastModified": "2025-10-06T05:26:57.372Z",
+      "algorithm": "sha256"
+    },
+    "data/abilities.json": {
+      "checksum": "2163b74d925879495ac9198f8e4b24d5a5d46b60310420ef966d421f683d356d",
+      "size": 20230834,
+      "lastModified": "2025-10-03T22:13:00.546Z",
+      "algorithm": "sha256"
+    }
+  },
+  "updatedAt": "2025-10-06T19:42:29.616Z",
+  "updatedBy": "scribing-shrinkwrap.js"
+}

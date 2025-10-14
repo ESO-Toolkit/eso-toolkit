@@ -15,8 +15,15 @@ const PlayerCard = React.lazy(() =>
 );
 
 // Loading fallback for player cards
-const PlayerCardLoadingFallback: React.FC = () => (
-  <Card sx={{ marginBottom: 2, minHeight: 380, height: '100%' }}>
+interface PlayerCardLoadingFallbackProps {
+  /** Test ID for testing */
+  'data-testid'?: string;
+}
+
+const PlayerCardLoadingFallback: React.FC<PlayerCardLoadingFallbackProps> = ({
+  'data-testid': dataTestId = 'player-card-loading-fallback',
+}) => (
+  <Card data-testid={dataTestId} sx={{ marginBottom: 2, minHeight: 380, height: '100%' }}>
     <CardContent sx={{ p: 2, pb: 1, display: 'flex', flexDirection: 'column', height: '100%' }}>
       {/* Player header section */}
       <Box sx={{ display: 'flex', alignItems: 'center', mb: 1.5 }}>
@@ -102,6 +109,7 @@ export interface PlayerCardProps {
   player: PlayerDetailsWithRole;
   mundusBuffs: Array<{ name: string; id: number }>;
   championPoints: Array<{ name: string; id: number; color: 'red' | 'blue' | 'green' }>;
+  auras: Array<{ name: string; id: number; stacks?: number }>;
   scribingSkills: GrimoireData[];
   buildIssues: BuildIssue[];
   classAnalysis?: ClassAnalysisResult;
@@ -114,13 +122,16 @@ export interface PlayerCardProps {
   reportId?: string | null;
   fightId?: string | null;
   playerGear: PlayerGearSetRecord[];
+  /** Test ID for testing */
+  'data-testid'?: string;
 }
 
 // Wrapper component with suspense boundary
 export const LazyPlayerCard: React.FC<PlayerCardProps> = (props) => {
+  const { 'data-testid': dataTestId, ...playerCardProps } = props;
   return (
-    <Suspense fallback={<PlayerCardLoadingFallback />}>
-      <PlayerCard {...props} />
+    <Suspense fallback={<PlayerCardLoadingFallback data-testid={dataTestId} />}>
+      <PlayerCard {...playerCardProps} />
     </Suspense>
   );
 };

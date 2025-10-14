@@ -1,0 +1,528 @@
+name: Merge Queue
+
+on:
+  # Triggered when labels are added/removed or when PR status changes
+  pull_request:
+    types:
+      - labeled
+      - unlabeled
+      - synchronize
+      - reopened
+  
+  # Triggered when checks complete
+  check_run:
+    types:
+      - completed
+  
+  # Triggered when PR review state changes
+  pull_request_review:
+    types:
+      - submitted
+  
+  # Triggered when statuses change
+  status:
+  
+  # Allow manual queue processing
+  workflow_dispatch:
+    inputs:
+      force_process:
+        description: 'Force process the merge queue'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  checks: read
+  statuses: read
+
+jobs:
+  process-merge-queue:
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && (
+        github.event.action == 'labeled' ||
+        github.event.action == 'unlabeled' ||
+        github.event.action == 'synchronize' ||
+        github.event.action == 'reopened'
+      )) ||
+      github.event_name == 'check_run' ||
+      github.event_name == 'pull_request_review' ||
+      github.event_name == 'status'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v5
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: ./.github/actions/setup-node-with-cache
+
+      - name: Process Merge Queue
+        uses: actions/github-script@v8
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const { execSync } = require('child_process');
+            const fs = require('fs');
+            
+            // Configuration - Merge Queue Labels and Settings
+            const MERGE_QUEUE_LABEL = 'merge-queue';
+            const PRIORITY_LABELS = ['priority', 'hotfix', 'critical'];
+            const BLOCK_LABELS = ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'needs review'];
+            const REQUIRED_REVIEWS = 0; // Note: This is in addition to any branch protection rules
+            const AUTO_MERGE_LABEL = 'auto-merge';
+            
+            // Note: Merge method is determined by repository settings (respects branch protection rules)
+            
+            // Required check names (these must pass for a PR to be mergeable)
+            const REQUIRED_CHECKS = [
+              'build',
+              'lint', 
+              'format',
+              'test',
+              'typecheck',
+              'build-storybook',
+              'playwright-smoke',
+              'check-do-not-merge-label'
+            ];
+
+            async function log(message) {
+              console.log(`[MERGE QUEUE] ${new Date().toISOString()}: ${message}`);
+            }
+
+            async function getPullRequests() {
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                base: 'master',
+                sort: 'created',
+                direction: 'asc',
+                per_page: 100
+              });
+              
+              return prs;
+            }
+
+            async function isInMergeQueue(pr) {
+              const labels = pr.labels.map(label => label.name.toLowerCase());
+              return labels.includes(MERGE_QUEUE_LABEL.toLowerCase());
+            }
+
+            async function hasBlockingLabels(pr) {
+              const labels = pr.labels.map(label => label.name.toLowerCase());
+              return BLOCK_LABELS.some(blockLabel => 
+                labels.some(prLabel => prLabel.includes(blockLabel.toLowerCase()))
+              );
+            }
+
+            async function hasPriorityLabel(pr) {
+              const labels = pr.labels.map(label => label.name.toLowerCase());
+              return PRIORITY_LABELS.some(priorityLabel => 
+                labels.some(prLabel => prLabel.includes(priorityLabel.toLowerCase()))
+              );
+            }
+
+            async function hasAutoMergeLabel(pr) {
+              const labels = pr.labels.map(label => label.name.toLowerCase());
+              return labels.includes(AUTO_MERGE_LABEL.toLowerCase());
+            }
+
+            async function getCheckRuns(pr) {
+              try {
+                const { data: checkRuns } = await github.rest.checks.listForRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: pr.head.sha,
+                  per_page: 100
+                });
+                
+                return checkRuns.check_runs;
+              } catch (error) {
+                await log(`Error fetching check runs for PR #${pr.number}: ${error.message}`);
+                return [];
+              }
+            }
+
+            async function getStatuses(pr) {
+              try {
+                const { data: statuses } = await github.rest.repos.listCommitStatusesForRef({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  ref: pr.head.sha,
+                  per_page: 100
+                });
+                
+                return statuses;
+              } catch (error) {
+                await log(`Error fetching statuses for PR #${pr.number}: ${error.message}`);
+                return [];
+              }
+            }
+
+            async function getReviews(pr) {
+              try {
+                const { data: reviews } = await github.rest.pulls.listReviews({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number
+                });
+                
+                return reviews;
+              } catch (error) {
+                await log(`Error fetching reviews for PR #${pr.number}: ${error.message}`);
+                return [];
+              }
+            }
+
+            async function areAllChecksComplete(pr) {
+              const checkRuns = await getCheckRuns(pr);
+              const statuses = await getStatuses(pr);
+              
+              // Map check runs by name
+              const checkRunsByName = {};
+              checkRuns.forEach(checkRun => {
+                checkRunsByName[checkRun.name] = checkRun;
+              });
+              
+              // Map statuses by context (name)
+              const statusesByContext = {};
+              statuses.forEach(status => {
+                statusesByContext[status.context] = status;
+              });
+              
+              const results = {
+                allComplete: true,
+                allSuccess: true,
+                details: []
+              };
+              
+              for (const requiredCheck of REQUIRED_CHECKS) {
+                let checkStatus = 'missing';
+                let checkConclusion = null;
+                
+                // Check if it's a check run
+                if (checkRunsByName[requiredCheck]) {
+                  const checkRun = checkRunsByName[requiredCheck];
+                  checkStatus = checkRun.status;
+                  checkConclusion = checkRun.conclusion;
+                } 
+                // Check if it's a status check
+                else if (statusesByContext[requiredCheck]) {
+                  const status = statusesByContext[requiredCheck];
+                  checkStatus = status.state === 'pending' ? 'in_progress' : 'completed';
+                  checkConclusion = status.state; // success, failure, error, pending
+                }
+                
+                const isComplete = checkStatus === 'completed';
+                const isSuccess = checkConclusion === 'success';
+                
+                results.details.push({
+                  name: requiredCheck,
+                  status: checkStatus,
+                  conclusion: checkConclusion,
+                  complete: isComplete,
+                  success: isSuccess
+                });
+                
+                if (!isComplete) {
+                  results.allComplete = false;
+                }
+                
+                if (!isSuccess) {
+                  results.allSuccess = false;
+                }
+              }
+              
+              return results;
+            }
+
+            async function hasRequiredReviews(pr) {
+              const reviews = await getReviews(pr);
+              
+              // Get the latest review from each reviewer
+              const reviewerLatestReviews = {};
+              reviews.forEach(review => {
+                const reviewerId = review.user.id;
+                if (!reviewerLatestReviews[reviewerId] || 
+                    new Date(review.submitted_at) > new Date(reviewerLatestReviews[reviewerId].submitted_at)) {
+                  reviewerLatestReviews[reviewerId] = review;
+                }
+              });
+              
+              // Count approved reviews (excluding the PR author)
+              const approvedReviews = Object.values(reviewerLatestReviews).filter(review => 
+                review.state === 'APPROVED' && review.user.id !== pr.user.id
+              );
+              
+              const hasChangesRequested = Object.values(reviewerLatestReviews).some(review => 
+                review.state === 'CHANGES_REQUESTED'
+              );
+              
+              return {
+                hasRequired: approvedReviews.length >= REQUIRED_REVIEWS,
+                approvedCount: approvedReviews.length,
+                hasChangesRequested: hasChangesRequested,
+                reviews: Object.values(reviewerLatestReviews)
+              };
+            }
+
+            async function isMergeable(pr) {
+              // Check if PR is still open
+              if (pr.state !== 'open') {
+                return { mergeable: false, reason: 'PR is not open' };
+              }
+              
+              // Check for blocking labels
+              if (await hasBlockingLabels(pr)) {
+                return { mergeable: false, reason: 'PR has blocking labels' };
+              }
+              
+              // Check if PR is mergeable (no conflicts)
+              // Note: GitHub's merge API will also check branch protection rules
+              if (pr.mergeable === false) {
+                return { mergeable: false, reason: 'PR has merge conflicts' };
+              }
+              
+              // If mergeable state is null, we need to wait for GitHub to compute it
+              if (pr.mergeable === null) {
+                return { mergeable: false, reason: 'Merge status being computed by GitHub, will retry shortly' };
+              }
+              
+              // Check required reviews (in addition to branch protection rules)
+              const reviewStatus = await hasRequiredReviews(pr);
+              if (!reviewStatus.hasRequired) {
+                return { 
+                  mergeable: false, 
+                  reason: `PR needs ${REQUIRED_REVIEWS - reviewStatus.approvedCount} more approved review(s)` 
+                };
+              }
+              
+              if (reviewStatus.hasChangesRequested) {
+                return { mergeable: false, reason: 'PR has requested changes' };
+              }
+              
+              // Check required checks
+              const checkStatus = await areAllChecksComplete(pr);
+              if (!checkStatus.allComplete) {
+                const incompleteChecks = checkStatus.details
+                  .filter(detail => !detail.complete)
+                  .map(detail => detail.name);
+                return { 
+                  mergeable: false, 
+                  reason: `Waiting for checks to complete: ${incompleteChecks.join(', ')}` 
+                };
+              }
+              
+              if (!checkStatus.allSuccess) {
+                const failedChecks = checkStatus.details
+                  .filter(detail => !detail.success)
+                  .map(detail => detail.name);
+                return { 
+                  mergeable: false, 
+                  reason: `Failed checks: ${failedChecks.join(', ')}` 
+                };
+              }
+              
+              return { mergeable: true, reason: 'Ready to merge (will respect all branch protection rules)' };
+            }
+
+            async function mergePR(pr) {
+              try {
+                await log(`Attempting to merge PR #${pr.number}: ${pr.title}`);
+                
+                // Get the repository's default merge method from settings
+                // This respects branch protection rules and repository settings
+                const { data: repo } = await github.rest.repos.get({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo
+                });
+                
+                // Use repository's default merge method, or fallback to squash
+                const mergeMethod = repo.allow_squash_merge ? 'squash' : 
+                                  repo.allow_merge_commits ? 'merge' : 
+                                  repo.allow_rebase_merge ? 'rebase' : 'squash';
+                
+                // Simulate clicking the merge button by using GitHub's merge API
+                // This respects all branch protection rules, required status checks, etc.
+                const { data: mergeResult } = await github.rest.pulls.merge({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  pull_number: pr.number,
+                  merge_method: mergeMethod
+                  // Let GitHub generate the commit title and message automatically
+                  // This follows the same logic as clicking the merge button
+                });
+                
+                await log(`✅ Successfully merged PR #${pr.number} using ${mergeMethod} method`);
+                
+                // Add a comment to the PR
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: `🎉 **Auto-Merged via Merge Queue**\n\nThis PR was automatically merged using GitHub's merge button because:\n- All required checks passed ✅\n- Required reviews were approved ✅\n- No blocking labels present ✅\n- Branch protection rules satisfied ✅\n\nMerge method: **${mergeMethod}**\nCommit SHA: \`${mergeResult.sha}\``
+                });
+                
+                return { success: true, sha: mergeResult.sha, method: mergeMethod };
+              } catch (error) {
+                await log(`❌ Failed to merge PR #${pr.number}: ${error.message}`);
+                
+                // Provide more helpful error messages
+                let errorHelp = '';
+                if (error.message.includes('branch protection')) {
+                  errorHelp = '\n\n💡 This may be due to branch protection rules. Check that all required status checks have passed and required reviews are approved.';
+                } else if (error.message.includes('merge conflicts')) {
+                  errorHelp = '\n\n💡 The PR has merge conflicts that need to be resolved first.';
+                } else if (error.message.includes('not mergeable')) {
+                  errorHelp = '\n\n💡 The PR is not in a mergeable state. Check for conflicts, failing checks, or missing reviews.';
+                }
+                
+                // Add a comment about the failure
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: `❌ **Merge Queue Error**\n\nFailed to automatically merge this PR:\n\`\`\`\n${error.message}\n\`\`\`${errorHelp}\n\n*The merge queue will retry automatically when conditions change.*`
+                });
+                
+                return { success: false, error: error.message };
+              }
+            }
+
+            async function updatePRStatus(pr, status, reason) {
+              const statusEmojis = {
+                'queued': '⏳',
+                'ready': '✅', 
+                'blocked': '❌',
+                'merging': '🔄',
+                'merged': '🎉'
+              };
+              
+              const emoji = statusEmojis[status] || '📋';
+              const body = `${emoji} **Merge Queue Status: ${status.toUpperCase()}**\n\n**Reason:** ${reason}\n\n---\n*Updated: ${new Date().toISOString()}*`;
+              
+              // Look for existing merge queue status comments
+              const { data: comments } = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: pr.number
+              });
+              
+              const existingComment = comments.find(comment => 
+                comment.user.type === 'Bot' && 
+                comment.body.includes('**Merge Queue Status:')
+              );
+              
+              if (existingComment) {
+                // Update existing comment
+                await github.rest.issues.updateComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: existingComment.id,
+                  body: body
+                });
+              } else {
+                // Create new comment
+                await github.rest.issues.createComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  issue_number: pr.number,
+                  body: body
+                });
+              }
+            }
+
+            // Main processing logic
+            async function processQueue() {
+              await log('🚀 Starting merge queue processing...');
+              
+              const allPRs = await getPullRequests();
+              const queuedPRs = [];
+              
+              // Filter PRs in the merge queue
+              for (const pr of allPRs) {
+                if (await isInMergeQueue(pr) || await hasAutoMergeLabel(pr)) {
+                  queuedPRs.push(pr);
+                }
+              }
+              
+              await log(`Found ${queuedPRs.length} PRs in merge queue`);
+              
+              if (queuedPRs.length === 0) {
+                await log('No PRs in merge queue. Exiting.');
+                return;
+              }
+              
+              // Sort PRs by priority (priority labels first, then by creation date)
+              queuedPRs.sort((a, b) => {
+                const aPriority = hasPriorityLabel(a);
+                const bPriority = hasPriorityLabel(b);
+                
+                if (aPriority && !bPriority) return -1;
+                if (!aPriority && bPriority) return 1;
+                
+                // If same priority, sort by creation date (older first)
+                return new Date(a.created_at) - new Date(b.created_at);
+              });
+              
+              // Process each PR in order
+              for (const pr of queuedPRs) {
+                await log(`\n📋 Processing PR #${pr.number}: ${pr.title}`);
+                
+                // Check if PR is mergeable
+                const mergeableStatus = await isMergeable(pr);
+                
+                if (mergeableStatus.mergeable) {
+                  await log(`✅ PR #${pr.number} is ready to merge`);
+                  await updatePRStatus(pr, 'merging', 'All requirements met, attempting merge...');
+                  
+                  const mergeResult = await mergePR(pr);
+                  if (mergeResult.success) {
+                    await updatePRStatus(pr, 'merged', `Successfully merged with SHA: ${mergeResult.sha}`);
+                    // Only process one PR at a time to avoid conflicts
+                    break;
+                  } else {
+                    await updatePRStatus(pr, 'blocked', `Merge failed: ${mergeResult.error}`);
+                  }
+                } else {
+                  await log(`❌ PR #${pr.number} is not ready: ${mergeableStatus.reason}`);
+                  await updatePRStatus(pr, 'blocked', mergeableStatus.reason);
+                }
+              }
+              
+              await log('✨ Merge queue processing completed');
+            }
+
+            // Execute the main logic
+            try {
+              await processQueue();
+            } catch (error) {
+              await log(`💥 Fatal error in merge queue processing: ${error.message}`);
+              console.error(error);
+              process.exit(1);
+            }
+
+      - name: Summary
+        run: |
+          echo "## 🎯 Merge Queue Processing Complete" >> $GITHUB_STEP_SUMMARY
+          echo "The merge queue has been processed. Check the logs above for detailed information about each PR." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### How to use the merge queue:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Add the \`merge-queue\` or \`auto-merge\` label to a PR" >> $GITHUB_STEP_SUMMARY
+          echo "2. Ensure all required checks pass" >> $GITHUB_STEP_SUMMARY
+          echo "3. Get required approvals" >> $GITHUB_STEP_SUMMARY
+          echo "4. The merge queue will automatically click the merge button when ready" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Features:" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Respects all branch protection rules" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Uses repository's default merge method" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Priority queue support with priority labels" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Automatic retry when conditions change" >> $GITHUB_STEP_SUMMARY
+          echo "- ✅ Detailed status updates and error reporting" >> $GITHUB_STEP_SUMMARY

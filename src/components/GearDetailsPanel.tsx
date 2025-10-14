@@ -385,8 +385,10 @@ export const GearDetailsPanel: React.FC<GearDetailsPanelProps> = ({
       {
         id: 'enchant',
         header: 'Enchant',
-        accessorFn: (row: Record<string, unknown>) =>
-          ENCHANTMENT_NAMES[(row as unknown as PlayerGear).enchantType] || '',
+        accessorFn: (row: Record<string, unknown>) => {
+          const gear = row as unknown as PlayerGear;
+          return ENCHANTMENT_NAMES[gear.enchantType] || '';
+        },
         size: 130,
         cell: (info: CellContext<Record<string, unknown>, unknown>) => (
           <Typography

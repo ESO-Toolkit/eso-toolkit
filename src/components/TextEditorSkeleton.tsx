@@ -7,7 +7,7 @@ interface TextEditorSkeletonProps {
 }
 
 export const TextEditorSkeleton: React.FC<TextEditorSkeletonProps> = ({
-  'data-testid': dataTestId,
+  'data-testid': dataTestId = 'text-editor-skeleton',
 }) => {
   const theme = useTheme();
 

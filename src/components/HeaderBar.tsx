@@ -16,7 +16,7 @@ import {
 } from '@mui/material';
 import { styled } from '@mui/material/styles';
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import discordIcon from '../assets/discord-icon.svg';
 import esoLogo from '../assets/ESOHelpers-logo-icon.svg';
@@ -422,9 +422,41 @@ const Reports = ({ size }: ReportsProps): React.JSX.Element => (
   </svg>
 );
 
+// Function to determine logo text based on current path
+const getLogoText = (pathname: string): string => {
+  // Landing page
+  if (pathname === '/' || pathname === '' || pathname === '#/') {
+    return 'ESO HELPER TOOLS';
+  }
+
+  // Calculator page
+  if (pathname.includes('/calculator')) {
+    return 'ESO Calculator';
+  }
+
+  // Text editor page
+  if (pathname.includes('/text-editor')) {
+    return 'ESO Text-Editor';
+  }
+
+  // Log analyzer related pages (reports, logs, etc.)
+  if (
+    pathname.includes('/report/') ||
+    pathname.includes('/logs') ||
+    pathname.includes('/latest-reports') ||
+    pathname.includes('/my-reports')
+  ) {
+    return 'ESO Log Analyzer';
+  }
+
+  // Default for other pages
+  return 'ESO Log Analyzer';
+};
+
 export const HeaderBar: React.FC = () => {
   const { isLoggedIn, rebindAccessToken } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const theme = useTheme();
   const [scrolled, setScrolled] = React.useState(false);
   const [mobileOpen, setMobileOpen] = React.useState(false);
@@ -432,6 +464,9 @@ export const HeaderBar: React.FC = () => {
   const [toolsAnchorEl, setToolsAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileToolsOpen, setMobileToolsOpen] = React.useState(false);
   const [mobileAccountOpen, setMobileAccountOpen] = React.useState(false);
+
+  // Determine logo text based on current location
+  const logoText = getLogoText(location.pathname);
 
   React.useEffect(() => {
     const onScroll = (): void => setScrolled(window.scrollY > 8);
@@ -543,6 +578,16 @@ export const HeaderBar: React.FC = () => {
       path: '/calculator',
     },
     {
+      text: 'Scribing Simulator',
+      icon: '📜',
+      path: '/scribing-simulator',
+    },
+    {
+      text: 'Scribing Analysis',
+      icon: '📊',
+      path: '/scribing-analysis',
+    },
+    {
       text: 'Logs',
       icon: '📋',
       path: '/logs',
@@ -623,6 +668,12 @@ export const HeaderBar: React.FC = () => {
                     fontWeight: 800,
                     letterSpacing: '-.02em',
                     fontFamily: 'Space Grotesk,Inter,system-ui',
+                    textTransform:
+                      location.pathname === '/' ||
+                      location.pathname === '' ||
+                      location.pathname === '#/'
+                        ? 'uppercase'
+                        : 'none',
                     background:
                       theme.palette.mode === 'dark'
                         ? 'linear-gradient(135deg, #ffffff 0%, #f8fafc 50%, #e2e8f0 100%)'
@@ -633,7 +684,7 @@ export const HeaderBar: React.FC = () => {
                   }}
                 >
                   <img src={esoLogo} alt="ESO Helpers" style={{ width: 30, height: 30 }} />
-                  Log Analyzer
+                  {logoText}
                 </Typography>
               </Button>
             </Box>
@@ -979,10 +1030,14 @@ export const HeaderBar: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: 1,
+              textTransform:
+                location.pathname === '/' || location.pathname === '' || location.pathname === '#/'
+                  ? 'uppercase'
+                  : 'none',
             }}
           >
             <img src={esoLogo} alt="ESO Helpers" style={{ width: 32, height: 32 }} />
-            ESO Helper
+            {logoText}
           </Typography>
 
           {navItems.map((item, index) => (

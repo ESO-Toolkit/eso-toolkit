@@ -1,12 +1,13 @@
+import { Box } from '@mui/material';
 import React, { Suspense } from 'react';
 import { Provider as ReduxProvider } from 'react-redux';
 import { Routes, Route, HashRouter } from 'react-router-dom';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
-import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -26,6 +27,12 @@ import { initializeSentry, addBreadcrumb } from './utils/sentryUtils';
 
 // Initialize Sentry before the app starts
 initializeSentry();
+
+// Expose Redux store to window for debugging and testing (dev/test only)
+if (process.env.NODE_ENV !== 'production') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (window as any).__REDUX_STORE__ = store;
+}
 
 // Code splitting for major features and components
 const LiveLog = React.lazy(() =>
@@ -57,13 +64,23 @@ const Logs = React.lazy(() =>
 const FightReplay = React.lazy(() =>
   import('./features/fight_replay/FightReplay').then((module) => ({ default: module.FightReplay })),
 );
+const ScribingSimulatorPage = React.lazy(() =>
+  import('./pages/ScribingSimulatorPage').then((module) => ({
+    default: module.ScribingSimulatorPage,
+  })),
+);
+
 // Lazy load the feedback FAB to improve initial page load performance
 const LazyModernFeedbackFab = React.lazy(() =>
   import('./components/BugReportDialog').then((module) => ({ default: module.ModernFeedbackFab })),
 );
 
-// Loading fallback component - use skeleton for consistency
-const LoadingFallback: React.FC = () => <ReportFightsSkeleton />;
+// Loading fallback component - use custom spinner to prevent theme flashing
+const LoadingFallback: React.FC = () => (
+  <Box display="flex" justifyContent="center" alignItems="center" height="400px">
+    <MemoizedLoadingSpinner size={40} />
+  </Box>
+);
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
@@ -295,11 +312,19 @@ const AppRoutes: React.FC = () => {
               element={
                 <AuthenticatedRoute>
                   <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
-                      <UserReports />
-                    </Suspense>
+                    <UserReports />
                   </ErrorBoundary>
                 </AuthenticatedRoute>
+              }
+            />
+            <Route
+              path="/scribing-simulator"
+              element={
+                <ErrorBoundary>
+                  <Suspense fallback={<LoadingFallback />}>
+                    <ScribingSimulatorPage />
+                  </Suspense>
+                </ErrorBoundary>
               }
             />
           </Route>

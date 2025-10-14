@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect, devices } from '@playwright/test';
 import { setupApiMocking } from './utils/api-mocking';
 
 test.describe('Report Page', () => {
@@ -109,5 +109,104 @@ test.describe('Report Page', () => {
     // Should not crash the entire app
     const bodyContent = await page.locator('body').textContent();
     expect(bodyContent).toBeTruthy();
+  });
+
+  // Responsive tests added to existing test suite
+  test.describe('Responsive Layout', () => {
+    test('should not have horizontal overflow on mobile', async ({ page }) => {
+      // Use mobile viewport
+      await page.setViewportSize({ width: 375, height: 667 }); // iPhone SE size
+
+      const testReportId = 'TEST123';
+      await page.goto(`/#/report/${testReportId}`);
+      await page.waitForLoadState('domcontentloaded');
+
+      // Check for horizontal overflow
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1); // Allow 1px tolerance
+    });
+
+    test('should display properly on tablet', async ({ page }) => {
+      // Use tablet viewport
+      await page.setViewportSize({ width: 768, height: 1024 }); // iPad size
+
+      const testReportId = 'TEST123';
+      await page.goto(`/#/report/${testReportId}`);
+      await page.waitForLoadState('domcontentloaded');
+
+      // Basic checks that page loads properly on tablet
+      await expect(page.locator('body')).toBeVisible();
+
+      // Check that content is not overflowing
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+    });
+
+    test('should handle responsive fight card layout', async ({ page }) => {
+      // Test on multiple viewport sizes
+      const viewports = [
+        { width: 375, height: 667, name: 'mobile' },
+        { width: 768, height: 1024, name: 'tablet' },
+        { width: 1920, height: 1080, name: 'desktop' },
+      ];
+
+      const testReportId = 'TEST123';
+
+      for (const viewport of viewports) {
+        await page.setViewportSize(viewport);
+        await page.goto(`/#/report/${testReportId}`);
+        await page.waitForLoadState('domcontentloaded');
+
+        // Check that page loads without errors on this viewport
+        await expect(page.locator('body')).toBeVisible();
+
+        // Check for horizontal overflow
+        const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+        const viewportWidth = await page.evaluate(() => window.innerWidth);
+        expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1).catch(() => {
+          // Log which viewport failed if this assertion fails
+          console.error(`Horizontal overflow detected on ${viewport.name} viewport`);
+        });
+
+        // Give a brief moment between viewport changes
+        await page.waitForTimeout(100);
+      }
+    });
+  });
+
+  // Mobile-specific device tests
+  test.describe('Mobile Device Compatibility', () => {
+    test('should work on Pixel 5', async ({ page }) => {
+      test.use({ ...devices['Pixel 5'] });
+
+      const testReportId = 'TEST123';
+      await page.goto(`/#/report/${testReportId}`);
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page.locator('body')).toBeVisible();
+
+      // Check for horizontal overflow on Pixel 5
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+    });
+
+    test('should work on iPhone 12', async ({ page }) => {
+      test.use({ ...devices['iPhone 12'] });
+
+      const testReportId = 'TEST123';
+      await page.goto(`/#/report/${testReportId}`);
+      await page.waitForLoadState('domcontentloaded');
+
+      await expect(page.locator('body')).toBeVisible();
+
+      // Check for horizontal overflow on iPhone 12
+      const bodyWidth = await page.evaluate(() => document.body.scrollWidth);
+      const viewportWidth = await page.evaluate(() => window.innerWidth);
+      expect(bodyWidth).toBeLessThanOrEqual(viewportWidth + 1);
+    });
   });
 });

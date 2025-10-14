@@ -4,6 +4,9 @@ import fetch from 'cross-fetch';
 import * as fs from 'fs';
 import * as path from 'path';
 import { getBaseUrl } from './selectors';
+import { EsoLogsNodeCache } from '../src/utils/esoLogsNodeCache';
+import { clearCache } from './screen-sizes/cache-utils';
+import { preprocessWorkerComputations } from './screen-sizes/shared-preprocessing';
 
 /**
  * Global setup for Playwright nightly tests
@@ -17,6 +20,21 @@ dotenv.config();
 
 async function globalSetup(config: FullConfig) {
   console.log('🚀 Starting global setup for nightly tests...');
+
+  // Clear all cached ESO Logs API responses to ensure fresh data
+  console.log('🧹 Clearing ESO Logs API cache...');
+  try {
+    // Clear the main ESO Logs API cache
+    const cache = new EsoLogsNodeCache();
+    await cache.clear();
+    
+    // Clear the screen sizes test cache
+    clearCache();
+    
+    console.log('✅ All ESO Logs caches cleared successfully');
+  } catch (error) {
+    console.warn('⚠️  Failed to clear cache:', error);
+  }
 
   // Check if we have authentication credentials
   const clientId = process.env.OAUTH_CLIENT_ID;
@@ -74,6 +92,32 @@ async function globalSetup(config: FullConfig) {
       console.log('   - ESO_LOGS_TEST_EMAIL and ESO_LOGS_TEST_PASSWORD (for browser flow testing)');
     }
     console.log('⚠️  No authentication token available - tests will run in unauthenticated mode');
+  }
+
+  // Pre-cache getCurrentUser response to avoid spamming the API during tests
+  if (accessToken) {
+    await preCacheCurrentUser(accessToken);
+  }
+
+  // Pre-process heavy worker computations for screen size tests
+  // Only do this if we have authentication (since the test data requires it)
+  if (accessToken) {
+    try {
+      console.log('🏭 Pre-processing worker computations for screen size tests...');
+      const browser = await chromium.launch();
+      const context = await browser.newContext({
+        storageState: 'tests/auth-state.json'
+      });
+      const page = await context.newPage();
+      
+      await preprocessWorkerComputations(page);
+      
+      await browser.close();
+      console.log('✅ Worker computation preprocessing completed');
+    } catch (error) {
+      console.warn('⚠️  Failed to preprocess worker computations:', error);
+      // Don't fail the entire setup if preprocessing fails
+    }
   }
 
   console.log('✅ Global setup completed');
@@ -250,6 +294,54 @@ async function performBrowserLogin(
     throw error;
   } finally {
     await browser.close();
+  }
+}
+
+/**
+ * Pre-cache getCurrentUser response to avoid API spam during tests
+ * This creates a mock response in the cache without making an API call
+ */
+async function preCacheCurrentUser(accessToken: string): Promise<void> {
+  console.log('💾 Pre-caching getCurrentUser response...');
+  
+  try {
+    const cache = new EsoLogsNodeCache();
+    
+    // Check if getCurrentUser is already cached
+    const cached = await cache.get('getCurrentUser', {}, 'network');
+    if (cached) {
+      console.log('✅ getCurrentUser already cached, skipping');
+      return;
+    }
+
+    // Create a mock getCurrentUser response to avoid API spam
+    // This represents a successful authentication check
+    const mockCurrentUserResponse = {
+      data: {
+        userData: {
+          currentUser: {
+            id: 999999,
+            name: 'TestUser',
+            naDisplayName: '@TestUser',
+            euDisplayName: null,
+          },
+        },
+      },
+    };
+    
+    // Cache the mock response with a longer TTL (24 hours) to reduce API spam
+    await cache.set('getCurrentUser', {}, 'network', {
+      data: mockCurrentUserResponse,
+      status: 200,
+      headers: { 'content-type': 'application/json' },
+      timestamp: Date.now(),
+    }, 24 * 60 * 60 * 1000); // 24 hours TTL
+
+    console.log('✅ getCurrentUser mock response pre-cached successfully');
+    
+  } catch (error) {
+    console.warn('⚠️  Failed to pre-cache getCurrentUser:', error);
+    // Don't fail the entire setup if pre-caching fails
   }
 }
 
