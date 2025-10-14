@@ -11,6 +11,12 @@ export default defineConfig({
   // Only run smoke test files
   testMatch: ['**/home.spec.ts', '**/*.smoke.spec.ts'],
 
+  // Exclude scribing detection tests from PR smoke tests (run in nightly instead)
+  testIgnore: [
+    '**/shattering-knife-simple.smoke.spec.ts',
+    '**/scribing-regression.smoke.spec.ts',
+  ],
+
   /* Run tests in files in parallel */
   fullyParallel: false, // Keep sequential for faster CI
 
