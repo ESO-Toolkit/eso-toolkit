@@ -1,0 +1,734 @@
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
+
+exports[`SkillTooltip Integration Tests Edge Cases should handle JSX description 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Active
+          </span>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Shattering Knife
+            </h6>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        <span>
+          Launch a 
+          <strong>
+            magical blade
+          </strong>
+           that pierces through enemies, dealing
+           
+          <em>
+            Magic Damage
+          </em>
+          .
+        </span>
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Edge Cases should handle minimal props gracefully 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Active
+          </span>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Shattering Knife
+            </h6>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        A magical blade attack.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Edge Cases should handle non-scribing ability 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Active
+          </span>
+        </div>
+        <span
+          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+        >
+          Weapon Skills
+        </span>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-boc1p7"
+          >
+            <img
+              alt="Bash"
+              class="MuiBox-root css-ykomfw"
+              src="https://assets.rpglogs.com/img/eso/abilities/ability_warrior_031.png"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Bash
+            </h6>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        Strike an enemy with your weapon, dealing damage and interrupting.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife with different fight context 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Ultimate
+          </span>
+        </div>
+        <span
+          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+        >
+          Scribing - Affix
+        </span>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-boc1p7"
+          >
+            <img
+              alt="Shattering Knife"
+              class="MuiBox-root css-ykomfw"
+              src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Shattering Knife
+            </h6>
+          </div>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-hljinv"
+      >
+        <div
+          class="MuiBox-root css-1o3fvql"
+        >
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Cost
+            </span>
+            <span
+              class="MuiBox-root css-sck1gj"
+            >
+              175 Ultimate
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Range
+            </span>
+            <span
+              class="MuiBox-root css-bpa2de"
+            >
+              28 meters
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Target
+            </span>
+            <span
+              class="MuiBox-root css-1ecqdv1"
+            >
+              Enemy
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Area
+            </span>
+            <span
+              class="MuiBox-root css-sknepn"
+            >
+              Line
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <div
+        class="MuiBox-root css-1upilqn"
+      >
+        <div
+          class="MuiStack-root css-14irx59-MuiStack-root"
+        >
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
+          >
+            📖 Grimoire: 
+            Traveling Knife
+          </span>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-gx9vmb-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Enhanced AI
+            </span>
+          </div>
+        </div>
+        <div
+          class="MuiBox-root css-19idom"
+        >
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1p66mmu-MuiTypography-root"
+          >
+            ⚠️ Script Analysis Unavailable
+          </span>
+          <span
+            class="MuiTypography-root MuiTypography-caption css-6mkcxp-MuiTypography-root"
+          >
+            This scribing skill was not cast during this fight, so the complete recipe could not be detected.
+          </span>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife with real scribing detection 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Ultimate
+          </span>
+        </div>
+        <span
+          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+        >
+          Scribing - Affix
+        </span>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-boc1p7"
+          >
+            <img
+              alt="Shattering Knife"
+              class="MuiBox-root css-ykomfw"
+              src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Shattering Knife
+            </h6>
+          </div>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-hljinv"
+      >
+        <div
+          class="MuiBox-root css-1o3fvql"
+        >
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Cost
+            </span>
+            <span
+              class="MuiBox-root css-sck1gj"
+            >
+              175 Ultimate
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Range
+            </span>
+            <span
+              class="MuiBox-root css-bpa2de"
+            >
+              28 meters
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Target
+            </span>
+            <span
+              class="MuiBox-root css-1ecqdv1"
+            >
+              Enemy
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Area
+            </span>
+            <span
+              class="MuiBox-root css-sknepn"
+            >
+              Line
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <div
+        class="MuiBox-root css-1upilqn"
+      >
+        <div
+          class="MuiStack-root css-14irx59-MuiStack-root"
+        >
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
+          >
+            📖 Grimoire: 
+            Traveling Knife
+          </span>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-gx9vmb-MuiChip-root"
+          >
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Enhanced AI
+            </span>
+          </div>
+        </div>
+        <div
+          class="MuiBox-root css-19idom"
+        >
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1y00so2-MuiTypography-root"
+          >
+            📜 Signature Script
+          </span>
+          <div
+            class="MuiStack-root css-yzxa55-MuiStack-root"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1twjnv6-MuiTypography-root"
+            >
+              ❓ No signature script detected
+            </span>
+          </div>
+        </div>
+        <div
+          class="MuiBox-root css-yi3mkw"
+        >
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qkww3j-MuiChip-root"
+          >
+            <span
+              class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
+              style="font-size: 0.7rem;"
+            >
+              ⬇️
+            </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Assassin's Misery (3)
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render Shattering Knife without fight context 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qphwag-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Ultimate
+          </span>
+        </div>
+        <span
+          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+        >
+          Scribing - Affix
+        </span>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-boc1p7"
+          >
+            <img
+              alt="Shattering Knife"
+              class="MuiBox-root css-ykomfw"
+              src="https://assets.rpglogs.com/img/eso/abilities/ability_scribing_affix_001.png"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Shattering Knife
+            </h6>
+          </div>
+        </div>
+      </div>
+      <div
+        class="MuiBox-root css-hljinv"
+      >
+        <div
+          class="MuiBox-root css-1o3fvql"
+        >
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Cost
+            </span>
+            <span
+              class="MuiBox-root css-sck1gj"
+            >
+              175 Ultimate
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Range
+            </span>
+            <span
+              class="MuiBox-root css-bpa2de"
+            >
+              28 meters
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Target
+            </span>
+            <span
+              class="MuiBox-root css-1ecqdv1"
+            >
+              Enemy
+            </span>
+          </div>
+          <div
+            class="MuiBox-root css-9wp72w"
+          >
+            <span
+              class="MuiTypography-root MuiTypography-caption css-1369yck-MuiTypography-root"
+            >
+              Area
+            </span>
+            <span
+              class="MuiBox-root css-sknepn"
+            >
+              Line
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        Launch a magical blade that pierces through enemies, dealing Magic Damage. When the blade hits an enemy, it applies a debuff that reduces their Physical and Spell Resistance.
+      </p>
+    </div>
+  </div>
+</div>
+`;
+
+exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detection should render scribing ability with detected data 1`] = `
+<div>
+  <div
+    class="MuiPaper-root MuiPaper-outlined MuiPaper-rounded MuiCard-root u-fade-in skill-tooltip css-1d0v8rk-MuiPaper-root-MuiCard-root"
+  >
+    <div
+      class="MuiCardContent-root css-1p29psn-MuiCardContent-root"
+    >
+      <div
+        class="MuiBox-root css-2q8ezs"
+      >
+        <div
+          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorSuccess MuiChip-outlinedSuccess css-hjxzhk-MuiChip-root"
+        >
+          <span
+            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+          >
+            Active
+          </span>
+        </div>
+        <span
+          class="MuiTypography-root MuiTypography-caption css-yg747k-MuiTypography-root"
+        >
+          Scribing - Focus
+        </span>
+      </div>
+      <div
+        class="MuiBox-root css-7c8hho"
+      >
+        <div
+          class="MuiStack-root css-1bml2fr-MuiStack-root"
+        >
+          <div
+            class="MuiBox-root css-boc1p7"
+          >
+            <img
+              alt="Cephaliarch's Flail"
+              class="MuiBox-root css-ykomfw"
+              src="https://assets.rpglogs.com/img/eso/abilities/ability_arcanist_003_a.png"
+            />
+          </div>
+          <div
+            class="MuiBox-root css-lufoed"
+          >
+            <h6
+              class="MuiTypography-root MuiTypography-subtitle1 css-1vn6yxm-MuiTypography-root"
+            >
+              Cephaliarch's Flail
+            </h6>
+          </div>
+        </div>
+      </div>
+      <hr
+        class="MuiDivider-root MuiDivider-fullWidth css-1vx04gl-MuiDivider-root"
+      />
+      <p
+        class="MuiTypography-root MuiTypography-body2 css-9z5i0i-MuiTypography-root"
+      >
+        A magical tentacle attack that deals damage and applies effects.
+      </p>
+    </div>
+  </div>
+</div>
+`;

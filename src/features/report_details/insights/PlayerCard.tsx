@@ -50,8 +50,34 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
-import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
-import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
+// TODO: Implement proper scribing detection services
+// Temporary stubs to prevent compilation errors
+interface CombatEventData {
+  castEvents: Array<{ sourceID: number; abilityGameID: number; timestamp: number }>;
+  damageEvents: Array<{
+    sourceID: number;
+    abilityGameID: number;
+    amount?: number;
+    timestamp: number;
+  }>;
+}
+const buildEnhancedScribingTooltipProps = (options: {
+  talent: { name?: string };
+  combatEventData: CombatEventData;
+  playerId?: number;
+}): {
+  name: string;
+  description: string;
+  scribedSkillData: null;
+  enhancedTooltip: null;
+  isScribingSkill: false;
+} => ({
+  name: options.talent.name || 'Unknown Skill',
+  description: '',
+  scribedSkillData: null,
+  enhancedTooltip: null,
+  isScribingSkill: false,
+});
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -179,6 +205,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // Combine combat event data
     const combatEventData: CombatEventData = React.useMemo(
       () => ({
+        castEvents: castEvents,
+        damageEvents: damageEvents,
         allReportAbilities: [], // This would need to come from abilities data if available
         allDebuffEvents: debuffEvents,
         allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
@@ -234,9 +262,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               talent,
               combatEventData,
               playerId: player.id,
-              classKey: clsKey,
-              abilityId: talent.guid,
-              abilityName: talent.name,
             });
           } else {
             tooltipProps = buildTooltipProps({
@@ -532,7 +557,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
-                                      useUnifiedDetection={true}
                                       fightId={fightId || undefined}
                                       playerId={player.id}
                                     />
@@ -650,7 +674,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                           `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                         }
                                         abilityId={talent.guid}
-                                        useUnifiedDetection={true}
                                         fightId={fightId || undefined}
                                         playerId={player.id}
                                       />

@@ -6609,7 +6609,7 @@
       "id": "assassins-misery",
       "name": "Assassin's Misery",
       "category": "signature",
-      "description": "Adds stealth/critical effects",
+      "description": "Afflicts enemies with status effects (varies by grimoire)",
       "compatibleGrimoires": [
         "traveling-knife",
         "elemental-explosion",
@@ -6619,7 +6619,42 @@
         217353,
         217258,
         217690
-      ]
+      ],
+      "grimoireSpecificEffects": {
+        "traveling-knife": {
+          "mainAbilityId": 217353,
+          "statusEffects": [],
+          "description": "Misery Knife - applies stealth/critical effects"
+        },
+        "elemental-explosion": {
+          "mainAbilityId": 217258,
+          "statusEffects": [
+            145866,
+            149091,
+            21487
+          ],
+          "statusEffectNames": [
+            "Burning",
+            "Chilled",
+            "Concussion"
+          ],
+          "description": "Misery Explosion - afflicts enemies with Burning, Chilled, and Concussion"
+        },
+        "trample": {
+          "mainAbilityId": 217690,
+          "statusEffects": [
+            21487,
+            148800,
+            148801
+          ],
+          "statusEffectNames": [
+            "Concussion",
+            "Sundered",
+            "Hemorrhaging"
+          ],
+          "description": "Misery Trample - afflicts enemies with Concussion, Sundered, and Hemorrhaging"
+        }
+      }
     },
     "anchorites-cruelty": {
       "id": "anchorites-cruelty",
@@ -6972,6 +7007,9 @@
         "shield-throw",
         "elemental-explosion",
         "trample"
+      ],
+      "abilityIds": [
+        5805
       ]
     },
     "interrupt": {
@@ -6983,6 +7021,11 @@
         "smash",
         "shield-throw",
         "soul-burst"
+      ],
+      "abilityIds": [
+        56554,
+        71694,
+        72450
       ]
     },
     "savagery-and-prophecy": {
@@ -7002,6 +7045,14 @@
         "torchbearer",
         "trample",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        61666,
+        27190,
+        61688,
+        47193,
+        61667,
+        61689
       ]
     },
     "expedition": {
@@ -7015,6 +7066,10 @@
         "smash",
         "soul-burst",
         "trample"
+      ],
+      "abilityIds": [
+        61735,
+        61736
       ]
     },
     "resolve": {
@@ -7029,6 +7084,10 @@
         "ulfsilds-contingency",
         "torchbearer",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        37247,
+        22236
       ]
     },
     "evasion": {
@@ -7041,6 +7100,10 @@
         "menders-bond",
         "shield-throw",
         "torchbearer"
+      ],
+      "abilityIds": [
+        61715,
+        49264
       ]
     },
     "vitality": {
@@ -7054,6 +7117,10 @@
         "shield-throw",
         "wield-soul",
         "torchbearer"
+      ],
+      "abilityIds": [
+        34837,
+        42197
       ]
     },
     "berserk": {
@@ -7066,6 +7133,10 @@
         "vault",
         "smash",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        61744,
+        61745
       ]
     },
     "brutality-and-sorcery": {
@@ -7085,6 +7156,12 @@
         "torchbearer",
         "trample",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        61662,
+        61665,
+        61685,
+        61687
       ]
     },
     "empower": {
@@ -7095,6 +7172,10 @@
       "compatibleGrimoires": [
         "menders-bond",
         "wield-soul"
+      ],
+      "abilityIds": [
+        6192,
+        8082
       ]
     },
     "protection": {
@@ -7107,6 +7188,10 @@
         "ulfsilds-contingency",
         "trample",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        3929,
+        22233
       ]
     },
     "courage": {
@@ -7118,6 +7203,10 @@
         "menders-bond",
         "soul-burst",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        121878,
+        66902
       ]
     },
     "heroism": {
@@ -7130,6 +7219,10 @@
         "torchbearer",
         "trample",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        61708,
+        61709
       ]
     },
     "intellect-and-endurance": {
@@ -7144,6 +7237,12 @@
         "wield-soul",
         "ulfsilds-contingency",
         "banner-bearer"
+      ],
+      "abilityIds": [
+        26216,
+        45224,
+        26215,
+        32748
       ]
     },
     "force": {
@@ -7157,19 +7256,28 @@
         "menders-bond",
         "smash",
         "ulfsilds-contingency"
+      ],
+      "abilityIds": [
+        61746,
+        40225
       ]
     },
     "vulnerability": {
       "id": "vulnerability",
       "name": "Vulnerability",
       "category": "affix",
-      "description": "Applies Major Vulnerability debuff to enemies",
+      "description": "Applies Major or Minor Vulnerability debuff to enemies",
       "compatibleGrimoires": [
         "traveling-knife",
         "vault",
         "menders-bond",
         "ulfsilds-contingency",
         "trample"
+      ],
+      "abilityIds": [
+        106754,
+        68359,
+        79717
       ]
     },
     "maim": {
@@ -7185,6 +7293,10 @@
         "shield-throw",
         "soul-burst",
         "wield-soul"
+      ],
+      "abilityIds": [
+        61723,
+        61725
       ]
     },
     "cowardice": {
@@ -7198,6 +7310,11 @@
         "wield-soul",
         "torchbearer",
         "trample"
+      ],
+      "abilityIds": [
+        46202,
+        111354,
+        147643
       ]
     },
     "enervation": {
@@ -7209,6 +7326,9 @@
         "shield-throw",
         "elemental-explosion",
         "ulfsilds-contingency"
+      ],
+      "abilityIds": [
+        47202
       ]
     },
     "mangle": {
@@ -7220,6 +7340,9 @@
         "smash",
         "torchbearer",
         "trample"
+      ],
+      "abilityIds": [
+        39168
       ]
     },
     "breach": {
@@ -7234,6 +7357,10 @@
         "wield-soul",
         "ulfsilds-contingency",
         "torchbearer"
+      ],
+      "abilityIds": [
+        38688,
+        28307
       ]
     },
     "lifesteal": {
@@ -7245,6 +7372,9 @@
         "traveling-knife",
         "vault",
         "elemental-explosion"
+      ],
+      "abilityIds": [
+        33541
       ]
     },
     "defile": {
@@ -7256,6 +7386,10 @@
         "elemental-explosion",
         "wield-soul",
         "trample"
+      ],
+      "abilityIds": [
+        21926,
+        24153
       ]
     },
     "brittle": {
@@ -7266,6 +7400,10 @@
       "compatibleGrimoires": [
         "menders-bond",
         "elemental-explosion"
+      ],
+      "abilityIds": [
+        145975,
+        145977
       ]
     },
     "uncertainty": {
@@ -7276,6 +7414,9 @@
       "compatibleGrimoires": [
         "traveling-knife",
         "torchbearer"
+      ],
+      "abilityIds": [
+        47204
       ]
     },
     "magickasteal": {
@@ -7287,6 +7428,9 @@
         "elemental-explosion",
         "soul-burst",
         "ulfsilds-contingency"
+      ],
+      "abilityIds": [
+        26809
       ]
     }
   },

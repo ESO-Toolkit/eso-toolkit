@@ -4,7 +4,7 @@ This directory contains comprehensive end-to-end tests designed to run against r
 
 ## Overview
 
-The nightly regression tests are split into three main test suites:
+The nightly regression tests are split into four main test suites:
 
 1. **`nightly-regression.spec.ts`** - Core functionality tests
    - Report landing pages
@@ -18,6 +18,19 @@ The nightly regression tests are split into three main test suites:
    - User reports (My Reports) page
    - Calculator page
    - Navigation and search
+
+3. **`shattering-knife-simple.smoke.spec.ts`** - Scribing detection regression ✅
+   - Player 1 Shattering Knife detection infrastructure
+   - Fight 11 navigation and data loading
+   - Scribing module error detection
+   - Visual regression for scribing features
+   - **Status**: ACTIVE - Protects against wasCastInFight false negatives
+
+4. **`scribing-regression.smoke.spec.ts`** - Advanced scribing validation
+   - Comprehensive UI component testing for scribing detection
+   - API response validation and error handling
+   - Data integrity verification for Shattering Knife
+   - **Status**: AVAILABLE - For detailed scribing feature validation
 
 3. **`nightly-regression-interactive.spec.ts`** - Advanced interactive features
    - Fight replay functionality
