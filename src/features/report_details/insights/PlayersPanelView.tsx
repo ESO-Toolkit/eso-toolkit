@@ -203,7 +203,13 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+              gridTemplateColumns: {
+                xs: '1fr',
+                // Use 2 columns only for screens 772px and above
+                '@media (min-width: 772px)': {
+                  gridTemplateColumns: 'repeat(2, minmax(0, 1fr))'
+                }
+              },
               gap: { xs: 2, md: 2 },
               alignItems: 'stretch',
               minHeight: '400px',
@@ -390,14 +396,31 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           data-testid="players-panel-loaded"
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))' },
+            gridTemplateColumns: {
+              xs: '1fr',
+              // Use 2 columns only for screens 772px and above
+              '@media (min-width: 772px)': {
+                gridTemplateColumns: 'repeat(2, minmax(0, 1fr))'
+              }
+            },
             gap: { xs: 2, md: 2 },
             alignItems: 'stretch',
             minHeight: '400px', // Prevent CLS when cards load
+            width: '100%',        // Ensure container doesn't exceed viewport
+            maxWidth: '100vw',    // Hard constraint to viewport width
           }}
         >
           {filteredAndSortedPlayerCards.map((playerData) => (
-            <Box key={playerData.key} data-testid={`player-card-${playerData.player.id}`}>
+            <Box
+              key={playerData.key}
+              data-testid={`player-card-${playerData.player.id}`}
+              sx={{
+                minWidth: 0,           // Allow shrinking below content width
+                maxWidth: '100%',      // Don't exceed parent container
+                overflow: 'hidden',    // Clip individual card overflow if needed
+                boxSizing: 'border-box', // Include padding in width calculation
+              }}
+            >
               <PlayerCard
                 key={String(playerData.key)}
                 player={playerData.player}
