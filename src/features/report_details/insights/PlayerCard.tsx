@@ -880,7 +880,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           }
                         })}
                       </Box>
-                      </Box>
+                    </Box>
                   )}
                 </Box>
               )}
