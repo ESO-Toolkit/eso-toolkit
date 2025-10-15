@@ -579,7 +579,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               })()}
                               placement="top-start"
                               enterDelay={0}
-                              arrow
+                              arrow={false}
                               disableInteractive
                               PopperProps={{
                                 disablePortal: true,
@@ -696,7 +696,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 })()}
                                 placement="top-start"
                                 enterDelay={0}
-                                arrow
+                                arrow={false}
                                 disableInteractive
                                 PopperProps={{
                                   disablePortal: true,
@@ -880,7 +880,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           }
                         })}
                       </Box>
-                      )
                       {talents.length > 6 && (
                         <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
                           {talents.slice(6).map((talent, idx) => {
