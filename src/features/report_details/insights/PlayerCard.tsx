@@ -472,76 +472,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                               key={idx}
                               title={title}
                               enterTouchDelay={0}
-                              leaveTouchDelay={999999}
-                              title={(() => {
-                                // Use memoized tooltip props lookup
-                                const rich = tooltipPropsLookup.get(talent.guid);
-                                const base = {
-                                  name: talent.name,
-                                  description: `${talent.name} (ID: ${talent.guid})`,
-                                };
-                                return (
-                                  <SkillTooltip
-                                    {...(rich ?? base)}
-                                    name={
-                                      isUltimate
-                                        ? `${rich?.name ?? base.name} (Ultimate)`
-                                        : (rich?.name ?? base.name)
-                                    }
-                                    iconUrl={
-                                      rich?.iconUrl ||
-                                      `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
-                                    }
-                                    abilityId={talent.guid}
-                                    fightId={fightId || undefined}
-                                    playerId={player.id}
-                                  />
-                                );
-                              })()}
-                              placement="top-start"
-                              enterDelay={0}
-                              arrow={false}
-                              disableInteractive
-                              PopperProps={{
-                                disablePortal: true,
-                                modifiers: [
-                                  {
-                                    name: 'preventOverflow',
-                                    options: {
-                                      altAxis: true,
-                                      altBoundary: true,
-                                      tether: false,
-                                      rootBoundary: 'document',
-                                      padding: 16,
-                                    },
-                                  },
-                                  {
-                                    name: 'flip',
-                                    enabled: true,
-                                    options: {
-                                      altBoundary: true,
-                                      rootBoundary: 'document',
-                                      padding: 16,
-                                      fallbackPlacements: ['bottom'],
-                                    },
-                                  },
-                                  {
-                                    name: 'arrow',
-                                    enabled: true,
-                                  },
-                                ],
-                              }}
-                              slotProps={{
-                                tooltip: {
-                                  sx: {
-                                    maxWidth: 320,
-                                    p: 0,
-                                    backgroundColor: 'transparent !important',
-                                    border: 'none !important',
-                                    boxShadow: 'none !important',
-                                  },
-                                },
-                              }}
+                              leaveTouchDelay={3000}
                             >
                               <Box
                                 sx={{
@@ -633,7 +564,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 })()}
                                 placement="top-start"
                                 enterDelay={0}
-                                arrow={false}
+                                arrow
                                 disableInteractive
                                 PopperProps={{
                                   disablePortal: true,
@@ -941,14 +872,10 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           })}
                         </Box>
                       </Box>
-                    </Box>
-                  )}
-                </Box>
-              )}
-            </Box>
-
-            {/* Spacer to push bottom section down */}
-            <Box sx={{ flex: 1 }} />
+                    )}
+                  </Box>
+                )}
+              </Box>
 
               {/* Right column content stacked below left, full width */}
               <Box
