@@ -88,7 +88,8 @@
       "WebFetch(domain:bkrupa.github.io)",
       "Bash(git log:*)",
       "Bash(npm run test:playwright:*)",
-      "Bash(npm run test:e2e:*)"
+      "Bash(npm run test:e2e:*)",
+      "Bash(gh pr view:*)"
     ],
     "deny": [],
     "ask": []
