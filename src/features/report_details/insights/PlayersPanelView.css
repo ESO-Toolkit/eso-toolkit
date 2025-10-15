@@ -1,0 +1,17 @@
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 1fr;
+  align-items: stretch;
+  gap: 16px;
+  min-height: 400px;
+  width: 100%;
+  max-width: 100vw;
+}
+
+/* Mobile fallback - single column */
+@media (max-width: 899px) {
+  .players-grid {
+    grid-template-columns: 1fr;
+  }
+}
