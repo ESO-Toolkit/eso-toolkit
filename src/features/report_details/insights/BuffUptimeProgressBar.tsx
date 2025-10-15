@@ -235,9 +235,15 @@ export const BuffUptimeProgressBar: React.FC<BuffUptimeProgressBarProps> = ({
                 theme.palette.mode === 'dark'
                   ? '1px 1px 2px rgba(0,0,0,0.8), 0 0 8px rgba(0,0,0,0.6)'
                   : '1px 1px 1px rgba(255,255,255,0.7), 0 0 3px rgba(255,255,255,0.5)',
+              fontSize: { xs: '0.65rem', sm: '0.7rem', md: '0.75rem' },
             }}
           >
-            {currentData.applications} applications • {currentData.uptime.toFixed(1)}s total
+            <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+              {currentData.applications} applications • {currentData.uptime.toFixed(1)}s total
+            </Box>
+            <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+              {currentData.applications} apps • {currentData.uptime.toFixed(1)}s total
+            </Box>
           </Typography>
         </Box>
 

@@ -100,7 +100,13 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 'linear-gradient(135deg, rgb(110 170 240 / 25%) 0%, rgb(152 131 227 / 15%) 50%, rgb(173 192 255 / 8%) 100%)',
             }}
           >
-            <Typography variant="h6" gutterBottom>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{
+                fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' },
+              }}
+            >
               Fight Insights
             </Typography>
 
@@ -123,7 +129,13 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               >
                 ⏱️
               </Box>
-              <Typography sx={{ '& strong': { fontWeight: 100 }, '& span': { fontWeight: 400 } }}>
+              <Typography
+                sx={{
+                  '& strong': { fontWeight: 100 },
+                  '& span': { fontWeight: 400 },
+                  fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
+                }}
+              >
                 <strong>Duration: </strong>
                 <span>{formatDuration(durationSeconds)}</span>
               </Typography>
@@ -149,7 +161,13 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 >
                   🎯
                 </Box>
-                <Typography sx={{ '& strong': { fontWeight: 100 }, '& span': { fontWeight: 400 } }}>
+                <Typography
+                  sx={{
+                    '& strong': { fontWeight: 100 },
+                    '& span': { fontWeight: 400 },
+                    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
+                  }}
+                >
                   <strong>First Damage Dealer: </strong>
                   <span>{firstDamageDealer}</span>
                 </Typography>
@@ -157,7 +175,14 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
             )}
 
             <Box sx={{ mt: 2.5 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, fontWeight: 300 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 1,
+                  fontWeight: 300,
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
+                }}
+              >
                 Abilities Equipped:
               </Typography>
               <Box
@@ -244,7 +269,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                               : theme.palette.mode === 'dark'
                                 ? 'rgba(255, 255, 255, 0.5)'
                                 : 'rgba(15, 23, 42, 0.4)',
-                            fontSize: '0.65rem',
+                            fontSize: { xs: '0.6rem', sm: '0.625rem', md: '0.65rem' },
                             lineHeight: 1,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -261,7 +286,14 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
             </Box>
 
             <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle1" sx={{ mb: 0, fontWeight: 300 }}>
+              <Typography
+                variant="subtitle1"
+                sx={{
+                  mb: 0,
+                  fontWeight: 300,
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
+                }}
+              >
                 Champion Points Equipped:
               </Typography>
               <List dense>
@@ -292,7 +324,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                       }
                       sx={{
                         '& .MuiListItemText-secondary': {
-                          fontSize: '0.75rem',
+                          fontSize: { xs: '0.7rem', sm: '0.725rem', md: '0.75rem' },
                           color: theme.palette.text.secondary,
                         },
                       }}
