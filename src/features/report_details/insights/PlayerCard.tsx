@@ -572,7 +572,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                     }
                                     abilityId={talent.guid}
-                                    useUnifiedDetection={true}
                                     fightId={fightId || undefined}
                                     playerId={player.id}
                                   />
@@ -867,126 +866,128 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   },
                                   arrow: { sx: { display: 'none' } },
                                 }}
-                              />
+                              >
+                                <Chip label={chipData.label} size="small" sx={chipData.sx} title={chipData.title} />
+                              </Tooltip>
                             );
                           } else {
                             return null;
                           }
                         })}
                       </Box>
-                    )
-                  {talents.length > 6 && (
-                      <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
-                        {talents.slice(6).map((talent, idx) => {
-                          const isUltimate = idx === 5;
-                          return (
-                            <React.Fragment key={idx}>
-                              {isUltimate && (
+                      )
+                      {talents.length > 6 && (
+                        <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
+                          {talents.slice(6).map((talent, idx) => {
+                            const isUltimate = idx === 5;
+                            return (
+                              <React.Fragment key={idx}>
+                                {isUltimate && (
+                                  <Box
+                                    sx={{
+                                      width: 2,
+                                      height: 34,
+                                      bgcolor: 'rgba(124,207,252,0.55)',
+                                      borderRadius: 0.5,
+                                      flexShrink: 0,
+                                    }}
+                                  />
+                                )}
                                 <Box
-                                  sx={{
-                                    width: 2,
-                                    height: 34,
-                                    bgcolor: 'rgba(124,207,252,0.55)',
-                                    borderRadius: 0.5,
-                                    flexShrink: 0,
-                                  }}
-                                />
-                              )}
-                              <Box
-                                component="span"
-                                sx={{ display: 'inline-flex', alignItems: 'center' }}
-                              >
-                                <Tooltip
-                                  enterTouchDelay={0}
-                                  leaveTouchDelay={3000}
-                                  title={(() => {
-                                    // Use memoized tooltip props lookup
-                                    const rich = tooltipPropsLookup.get(talent.guid);
-                                    const base = {
-                                      name: talent.name,
-                                      description: `${talent.name} (ID: ${talent.guid})`,
-                                    };
-                                    return (
-                                      <SkillTooltip
-                                        {...(rich ?? base)}
-                                        name={
-                                          isUltimate
-                                            ? `${rich?.name ?? base.name} (Ultimate)`
-                                            : (rich?.name ?? base.name)
-                                        }
-                                        iconUrl={
-                                          rich?.iconUrl ||
-                                          `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
-                                        }
-                                        abilityId={talent.guid}
-                                        fightId={fightId || undefined}
-                                        playerId={player.id}
-                                      />
-                                    );
-                                  })()}
-                                  placement="top-start"
-                                  enterDelay={0}
-                                  disableInteractive
-                                  PopperProps={{
-                                    disablePortal: true,
-                                    modifiers: [
-                                      {
-                                        name: 'preventOverflow',
-                                        options: {
-                                          altAxis: true,
-                                          altBoundary: true,
-                                          tether: false,
-                                          rootBoundary: 'document',
-                                          padding: 16,
+                                  component="span"
+                                  sx={{ display: 'inline-flex', alignItems: 'center' }}
+                                >
+                                  <Tooltip
+                                    enterTouchDelay={0}
+                                    leaveTouchDelay={3000}
+                                    title={(() => {
+                                      // Use memoized tooltip props lookup
+                                      const rich = tooltipPropsLookup.get(talent.guid);
+                                      const base = {
+                                        name: talent.name,
+                                        description: `${talent.name} (ID: ${talent.guid})`,
+                                      };
+                                      return (
+                                        <SkillTooltip
+                                          {...(rich ?? base)}
+                                          name={
+                                            isUltimate
+                                              ? `${rich?.name ?? base.name} (Ultimate)`
+                                              : (rich?.name ?? base.name)
+                                          }
+                                          iconUrl={
+                                            rich?.iconUrl ||
+                                            `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                          }
+                                          abilityId={talent.guid}
+                                          fightId={fightId || undefined}
+                                          playerId={player.id}
+                                        />
+                                      );
+                                    })()}
+                                    placement="top-start"
+                                    enterDelay={0}
+                                    disableInteractive
+                                    PopperProps={{
+                                      disablePortal: true,
+                                      modifiers: [
+                                        {
+                                          name: 'preventOverflow',
+                                          options: {
+                                            altAxis: true,
+                                            altBoundary: true,
+                                            tether: false,
+                                            rootBoundary: 'document',
+                                            padding: 16,
+                                          },
+                                        },
+                                        {
+                                          name: 'flip',
+                                          enabled: true,
+                                          options: {
+                                            altBoundary: true,
+                                            rootBoundary: 'document',
+                                            padding: 16,
+                                            fallbackPlacements: ['bottom'],
+                                          },
+                                        },
+                                        {
+                                          name: 'arrow',
+                                          enabled: true,
+                                        },
+                                      ],
+                                    }}
+                                    slotProps={{
+                                      tooltip: {
+                                        sx: {
+                                          maxWidth: 320,
+                                          p: 0,
+                                          backgroundColor: 'transparent !important',
+                                          border: 'none !important',
+                                          boxShadow: 'none !important',
                                         },
                                       },
-                                      {
-                                        name: 'flip',
-                                        enabled: true,
-                                        options: {
-                                          altBoundary: true,
-                                          rootBoundary: 'document',
-                                          padding: 16,
-                                          fallbackPlacements: ['bottom'],
-                                        },
-                                      },
-                                      {
-                                        name: 'arrow',
-                                        enabled: true,
-                                      },
-                                    ],
-                                  }}
-                                  slotProps={{
-                                    tooltip: {
-                                      sx: {
-                                        maxWidth: 320,
-                                        p: 0,
-                                        backgroundColor: 'transparent !important',
-                                        border: 'none !important',
-                                        boxShadow: 'none !important',
-                                      },
-                                    },
-                                    arrow: { sx: { display: 'none' } },
-                                  }}
-                              >
-                                <Box
-                                  component="img"
-                                  src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
-                                  alt={talent.name}
-                                  sx={{
-                                    width: 32,
-                                    height: 32,
-                                    borderRadius: 1,
-                                    border: '1px solid rgba(255,255,255,0.1)',
-                                  }}
-                                />
-                              </Tooltip>
-                            </Box>
-                            </React.Fragment>
-                          );
-                        })}
-                      </Box>
-                  )}
+                                      arrow: { sx: { display: 'none' } },
+                                    }}
+                                  >
+                                    <Box
+                                      component="img"
+                                      src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                      alt={talent.name}
+                                      sx={{
+                                        width: 32,
+                                        height: 32,
+                                        borderRadius: 1,
+                                        border: '1px solid rgba(255,255,255,0.1)',
+                                      }}
+                                    />
+                                  </Tooltip>
+                                </Box>
+                              </React.Fragment>
+                            );
+                          })}
+                        </Box>
+                      )}
                     </Box>
                   )}
                 </Box>
