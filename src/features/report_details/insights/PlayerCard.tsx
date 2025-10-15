@@ -854,7 +854,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                 enterDelay={300}
                                 enterTouchDelay={0}
                                 leaveTouchDelay={3000}
-                                arrow
                                 disableInteractive={false}
                                 slotProps={{
                                   tooltip: {
@@ -864,16 +863,18 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       backgroundColor: 'transparent !important',
                                       border: 'none !important',
                                       boxShadow: 'none !important',
+                                    },
                                   },
+                                  arrow: { sx: { display: 'none' } },
                                 }}
-                                arrow: { sx: { display: 'none' } },
-                              }}
-                            />
-                          );
+                              />
+                            );
+                          } else {
+                            return null;
+                          }
                         })}
                       </Box>
-                    )}
-                  )}
+                    )
                   {talents.length > 6 && (
                       <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
                         {talents.slice(6).map((talent, idx) => {
@@ -925,7 +926,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   })()}
                                   placement="top-start"
                                   enterDelay={0}
-                                  arrow
                                   disableInteractive
                                   PopperProps={{
                                     disablePortal: true,
@@ -966,27 +966,27 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         boxShadow: 'none !important',
                                       },
                                     },
-                                  },
-                                  arrow: { sx: { display: 'none' } },
-                                }}
+                                    arrow: { sx: { display: 'none' } },
+                                  }}
                               >
-                                <Chip label={chipData.label} size="small" sx={chipData.sx} />
+                                <Box
+                                  component="img"
+                                  src={`https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`}
+                                  alt={talent.name}
+                                  sx={{
+                                    width: 32,
+                                    height: 32,
+                                    borderRadius: 1,
+                                    border: '1px solid rgba(255,255,255,0.1)',
+                                  }}
+                                />
                               </Tooltip>
-                            );
-                          }
-
-                          // Fallback to simple chip if no gear set data
-                          return (
-                            <Chip
-                              key={chipData.key}
-                              label={chipData.label}
-                              size="small"
-                              title={chipData.title}
-                              sx={chipData.sx}
-                            />
+                            </Box>
+                            </React.Fragment>
                           );
                         })}
                       </Box>
+                  )}
                     </Box>
                   )}
                 </Box>
