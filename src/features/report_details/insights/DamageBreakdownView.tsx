@@ -175,62 +175,136 @@ export const DamageBreakdownView: React.FC<DamageBreakdownViewProps> = React.mem
                               flexWrap: 'nowrap',
                             }}
                           >
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 500 }}
+                            <Box
+                              component="span"
+                              sx={{
+                                display: { xs: 'none', sm: 'flex' },
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
                             >
-                              {formatNumber(damage.totalDamage)}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 200 }}
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {formatNumber(damage.totalDamage)}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200 }}
+                              >
+                                damage
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200 }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {damage.hitCount}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200 }}
+                              >
+                                hits
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200 }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500 }}
+                              >
+                                {formatNumber(Math.round(damage.averageDamage))}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200 }}
+                              >
+                                avg
+                              </Typography>
+                            </Box>
+                            <Box
+                              component="span"
+                              sx={{
+                                display: { xs: 'flex', sm: 'none' },
+                                alignItems: 'center',
+                                gap: 1,
+                              }}
                             >
-                              damage
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 200 }}
-                            >
-                              •
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 500 }}
-                            >
-                              {damage.hitCount}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 200 }}
-                            >
-                              hits
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 200 }}
-                            >
-                              •
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 500 }}
-                            >
-                              {formatNumber(Math.round(damage.averageDamage))}
-                            </Typography>
-                            <Typography
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ fontWeight: 200 }}
-                            >
-                              avg
-                            </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500, fontSize: '0.65rem' }}
+                              >
+                                {formatNumber(damage.totalDamage)}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200, fontSize: '0.65rem' }}
+                              >
+                                dmg
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200, fontSize: '0.65rem' }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500, fontSize: '0.65rem' }}
+                              >
+                                {damage.hitCount}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200, fontSize: '0.65rem' }}
+                              >
+                                hits
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200, fontSize: '0.65rem' }}
+                              >
+                                •
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 500, fontSize: '0.65rem' }}
+                              >
+                                {formatNumber(Math.round(damage.averageDamage))}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{ fontWeight: 200, fontSize: '0.65rem' }}
+                              >
+                                avg
+                              </Typography>
+                            </Box>
                           </Box>
                         </Box>
                         <LinearProgress

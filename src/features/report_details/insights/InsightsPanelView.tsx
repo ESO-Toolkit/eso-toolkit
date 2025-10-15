@@ -104,7 +104,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
               variant="h6"
               gutterBottom
               sx={{
-                fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' }
+                fontSize: { xs: '1.1rem', sm: '1.2rem', md: '1.25rem' },
               }}
             >
               Fight Insights
@@ -133,7 +133,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 sx={{
                   '& strong': { fontWeight: 100 },
                   '& span': { fontWeight: 400 },
-                  fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' }
+                  fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                 }}
               >
                 <strong>Duration: </strong>
@@ -165,7 +165,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                   sx={{
                     '& strong': { fontWeight: 100 },
                     '& span': { fontWeight: 400 },
-                    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' }
+                    fontSize: { xs: '0.875rem', sm: '0.9rem', md: '0.95rem' },
                   }}
                 >
                   <strong>First Damage Dealer: </strong>
@@ -180,7 +180,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 sx={{
                   mb: 1,
                   fontWeight: 300,
-                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' }
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
                 }}
               >
                 Abilities Equipped:
@@ -269,7 +269,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                               : theme.palette.mode === 'dark'
                                 ? 'rgba(255, 255, 255, 0.5)'
                                 : 'rgba(15, 23, 42, 0.4)',
-                            fontSize: '0.65rem',
+                            fontSize: { xs: '0.6rem', sm: '0.625rem', md: '0.65rem' },
                             lineHeight: 1,
                             whiteSpace: 'nowrap',
                             overflow: 'hidden',
@@ -291,7 +291,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                 sx={{
                   mb: 0,
                   fontWeight: 300,
-                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' }
+                  fontSize: { xs: '0.95rem', sm: '1rem', md: '1.0625rem' },
                 }}
               >
                 Champion Points Equipped:
@@ -324,7 +324,7 @@ export const InsightsPanelView: React.FC<InsightsPanelViewProps> = ({
                       }
                       sx={{
                         '& .MuiListItemText-secondary': {
-                          fontSize: '0.75rem',
+                          fontSize: { xs: '0.7rem', sm: '0.725rem', md: '0.75rem' },
                           color: theme.palette.text.secondary,
                         },
                       }}
