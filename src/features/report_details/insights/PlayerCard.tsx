@@ -867,7 +867,12 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                   arrow: { sx: { display: 'none' } },
                                 }}
                               >
-                                <Chip label={chipData.label} size="small" sx={chipData.sx} title={chipData.title} />
+                                <Chip
+                                  label={chipData.label}
+                                  size="small"
+                                  sx={chipData.sx}
+                                  title={chipData.title}
+                                />
                               </Tooltip>
                             );
                           } else {
