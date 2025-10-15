@@ -397,25 +397,27 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
           }}
         >
           {filteredAndSortedPlayerCards.map((playerData) => (
-            <PlayerCard
-              key={String(playerData.key)}
-              player={playerData.player}
-              mundusBuffs={playerData.mundusBuffs}
-              championPoints={playerData.championPoints}
-              auras={playerData.auras}
-              scribingSkills={playerData.scribingSkills}
-              buildIssues={playerData.buildIssues}
-              classAnalysis={playerData.classAnalysis}
-              deaths={playerData.deaths}
-              resurrects={playerData.resurrects}
-              cpm={playerData.cpm}
-              maxHealth={playerData.maxHealth}
-              maxStamina={playerData.maxStamina}
-              maxMagicka={playerData.maxMagicka}
-              reportId={reportId}
-              fightId={fightId}
-              playerGear={playerData.playerGear}
-            />
+            <Box key={playerData.key} data-testid={`player-card-${playerData.player.id}`}>
+              <PlayerCard
+                key={String(playerData.key)}
+                player={playerData.player}
+                mundusBuffs={playerData.mundusBuffs}
+                championPoints={playerData.championPoints}
+                auras={playerData.auras}
+                scribingSkills={playerData.scribingSkills}
+                buildIssues={playerData.buildIssues}
+                classAnalysis={playerData.classAnalysis}
+                deaths={playerData.deaths}
+                resurrects={playerData.resurrects}
+                cpm={playerData.cpm}
+                maxHealth={playerData.maxHealth}
+                maxStamina={playerData.maxStamina}
+                maxMagicka={playerData.maxMagicka}
+                reportId={reportId}
+                fightId={fightId}
+                playerGear={playerData.playerGear}
+              />
+            </Box>
           ))}
         </Box>
       </Box>
