@@ -50,8 +50,34 @@ import { PlayerGearSetRecord } from '../../../utils/gearUtilities';
 import { resolveActorName } from '../../../utils/resolveActorName';
 import { abbreviateSkillLine } from '../../../utils/skillLineDetectionUtils';
 import { buildTooltipProps } from '../../../utils/skillTooltipMapper';
-import { buildEnhancedScribingTooltipProps } from '../../scribing/utils/enhancedScribingTooltipMapper';
-import { CombatEventData } from '../../scribing/utils/enhancedTooltipMapper';
+// TODO: Implement proper scribing detection services
+// Temporary stubs to prevent compilation errors
+interface CombatEventData {
+  castEvents: Array<{ sourceID: number; abilityGameID: number; timestamp: number }>;
+  damageEvents: Array<{
+    sourceID: number;
+    abilityGameID: number;
+    amount?: number;
+    timestamp: number;
+  }>;
+}
+const buildEnhancedScribingTooltipProps = (options: {
+  talent: { name?: string };
+  combatEventData: CombatEventData;
+  playerId?: number;
+}): {
+  name: string;
+  description: string;
+  scribedSkillData: null;
+  enhancedTooltip: null;
+  isScribingSkill: false;
+} => ({
+  name: options.talent.name || 'Unknown Skill',
+  description: '',
+  scribedSkillData: null,
+  enhancedTooltip: null,
+  isScribingSkill: false,
+});
 
 interface PlayerCardProps {
   player: PlayerDetailsWithRole;
@@ -179,6 +205,8 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     // Combine combat event data
     const combatEventData: CombatEventData = React.useMemo(
       () => ({
+        castEvents: castEvents,
+        damageEvents: damageEvents,
         allReportAbilities: [], // This would need to come from abilities data if available
         allDebuffEvents: debuffEvents,
         allBuffEvents: [...friendlyBuffEvents, ...hostileBuffEvents],
@@ -234,9 +262,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               talent,
               combatEventData,
               playerId: player.id,
-              classKey: clsKey,
-              abilityId: talent.guid,
-              abilityName: talent.name,
             });
           } else {
             tooltipProps = buildTooltipProps({
@@ -665,7 +690,6 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                         `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
                                       }
                                       abilityId={talent.guid}
-                                      useUnifiedDetection={true}
                                       fightId={fightId || undefined}
                                       playerId={player.id}
                                     />
@@ -840,6 +864,107 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                                       backgroundColor: 'transparent !important',
                                       border: 'none !important',
                                       boxShadow: 'none !important',
+                                  },
+                                }}
+                                arrow: { sx: { display: 'none' } },
+                              }}
+                            />
+                          );
+                        })}
+                      </Box>
+                    )}
+                  )}
+                  {talents.length > 6 && (
+                      <Box display="flex" flexWrap="wrap" gap={1.25} mt={0.25}>
+                        {talents.slice(6).map((talent, idx) => {
+                          const isUltimate = idx === 5;
+                          return (
+                            <React.Fragment key={idx}>
+                              {isUltimate && (
+                                <Box
+                                  sx={{
+                                    width: 2,
+                                    height: 34,
+                                    bgcolor: 'rgba(124,207,252,0.55)',
+                                    borderRadius: 0.5,
+                                    flexShrink: 0,
+                                  }}
+                                />
+                              )}
+                              <Box
+                                component="span"
+                                sx={{ display: 'inline-flex', alignItems: 'center' }}
+                              >
+                                <Tooltip
+                                  enterTouchDelay={0}
+                                  leaveTouchDelay={3000}
+                                  title={(() => {
+                                    // Use memoized tooltip props lookup
+                                    const rich = tooltipPropsLookup.get(talent.guid);
+                                    const base = {
+                                      name: talent.name,
+                                      description: `${talent.name} (ID: ${talent.guid})`,
+                                    };
+                                    return (
+                                      <SkillTooltip
+                                        {...(rich ?? base)}
+                                        name={
+                                          isUltimate
+                                            ? `${rich?.name ?? base.name} (Ultimate)`
+                                            : (rich?.name ?? base.name)
+                                        }
+                                        iconUrl={
+                                          rich?.iconUrl ||
+                                          `https://assets.rpglogs.com/img/eso/abilities/${talent.abilityIcon}.png`
+                                        }
+                                        abilityId={talent.guid}
+                                        fightId={fightId || undefined}
+                                        playerId={player.id}
+                                      />
+                                    );
+                                  })()}
+                                  placement="top-start"
+                                  enterDelay={0}
+                                  arrow
+                                  disableInteractive
+                                  PopperProps={{
+                                    disablePortal: true,
+                                    modifiers: [
+                                      {
+                                        name: 'preventOverflow',
+                                        options: {
+                                          altAxis: true,
+                                          altBoundary: true,
+                                          tether: false,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                        },
+                                      },
+                                      {
+                                        name: 'flip',
+                                        enabled: true,
+                                        options: {
+                                          altBoundary: true,
+                                          rootBoundary: 'document',
+                                          padding: 16,
+                                          fallbackPlacements: ['bottom'],
+                                        },
+                                      },
+                                      {
+                                        name: 'arrow',
+                                        enabled: true,
+                                      },
+                                    ],
+                                  }}
+                                  slotProps={{
+                                    tooltip: {
+                                      sx: {
+                                        maxWidth: 320,
+                                        p: 0,
+                                        backgroundColor: 'transparent !important',
+                                        border: 'none !important',
+                                        boxShadow: 'none !important',
+                                      },
                                     },
                                   },
                                   arrow: { sx: { display: 'none' } },

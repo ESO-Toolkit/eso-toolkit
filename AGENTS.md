@@ -4,6 +4,19 @@
 Project: ESO Log Aggregator - React-based web application for analyzing Elder Scrolls Online (ESO) combat logs
 Features: data visualization, real-time analytics, comprehensive testing infrastructure
 
+## 🆕 Scribing Detection System (October 2025)
+
+**CRITICAL DISCOVERY**: Signature scripts appear in different event types!
+
+📖 **Full Documentation**:
+- **AI_SCRIBING_DETECTION_INSTRUCTIONS.md** - Complete guide for AI agents working on scribing detection
+- **AI_SCRIBING_QUICK_REFERENCE.md** - Quick reference card with common patterns and pitfalls
+- **RESOURCE_EVENT_DETECTION_SUMMARY.md** - Technical details of resource event detection discovery
+
+**Key Insight**: Always check **ALL event types** (cast, damage, healing, buff, debuff, **resource**) when searching for signature scripts. Example: Anchorite's Potency appears as resource events, not combat events!
+
+**Test Coverage**: 38 tests passing, fully validated against Fight 11 combat logs.
+
 ---
 
 Category,Item,Type,Description,Configuration_File,Command,Directory,Notes

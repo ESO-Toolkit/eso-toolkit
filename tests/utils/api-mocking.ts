@@ -35,9 +35,9 @@ function loadFightData(reportCode: string, fightId: string) {
 }
 
 /**
- * Load real damage/healing events for a fight
+ * Load real damage/healing/cast events for a fight
  */
-function loadFightEventsData(reportCode: string, fightId: string, eventType: 'damage' | 'healing') {
+function loadFightEventsData(reportCode: string, fightId: string, eventType: 'damage' | 'healing' | 'cast') {
   try {
     const dataPath = path.join(process.cwd(), 'data-downloads', reportCode, `fight-${fightId}`, 'events', `${eventType}-events.json`);
     if (fs.existsSync(dataPath)) {
