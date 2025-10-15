@@ -227,7 +227,9 @@ export const ReportFightHeader: React.FC = () => {
             startIcon={<PlayArrowIcon />}
             sx={{
               textTransform: 'none',
-              fontSize: '0.875rem',
+              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
               borderColor: isDarkMode ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.25)',
               color: isDarkMode ? 'rgba(34, 197, 94, 0.9)' : 'rgba(22, 163, 74, 0.9)',
               '&:hover': {
@@ -250,7 +252,9 @@ export const ReportFightHeader: React.FC = () => {
             startIcon={<OpenInNewIcon />}
             sx={{
               textTransform: 'none',
-              fontSize: '0.875rem',
+              fontSize: { xs: '0.75rem', sm: '0.8125rem', md: '0.875rem' },
+              padding: { xs: '4px 8px', sm: '6px 12px', md: '6px 16px' },
+              minWidth: { xs: 'auto', sm: 'auto', md: 'auto' },
               borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.3)' : 'rgba(59, 130, 246, 0.25)',
               '&:hover': {
                 borderColor: isDarkMode ? 'rgba(56, 189, 248, 0.5)' : 'rgba(59, 130, 246, 0.4)',
