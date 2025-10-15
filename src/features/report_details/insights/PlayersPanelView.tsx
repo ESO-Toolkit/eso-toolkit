@@ -23,6 +23,8 @@ import { resolveActorName } from '../../../utils/resolveActorName';
 
 import { LazyPlayerCard as PlayerCard } from './LazyPlayerCard';
 
+// Force cache invalidation - v2
+
 interface PlayersPanelViewProps {
   playerActors: Record<string, PlayerDetailsWithRole> | undefined;
   mundusBuffsByPlayer: Record<string, Array<{ name: string; id: number }>>;
