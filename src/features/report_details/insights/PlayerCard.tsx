@@ -346,7 +346,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               flexDirection="column"
               alignItems="stretch"
               gap={2}
-              sx={{ flex: 1, minHeight: 0, justifyContent: 'space-between' }}
+              sx={{ flex: 1, minHeight: 0 }}
             >
               {/* Left column: identity, talents, gear, issues */}
               <Box flex={0} minWidth={0}>
@@ -877,11 +877,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 )}
               </Box>
 
+              {/* Spacer to push right column content to bottom */}
+              <Box sx={{ flex: 1 }} />
+
               {/* Right column content stacked below left, full width */}
               <Box
                 sx={{
                   width: '100%',
-                  mt: 'auto',
                   pt: 1,
                   display: 'flex',
                   flexDirection: 'column',
