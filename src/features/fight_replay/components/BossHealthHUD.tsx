@@ -15,7 +15,7 @@ interface BossHealthHUDProps {
 }
 
 // Performance constants for HUD positioning - 1:1 pixel mapping
-const HUD_POSITION_OFFSET = 0.04; // Spacing between health bars (4px equivalent)
+const HUD_POSITION_OFFSET = 0.005; // Spacing between health bars (0.5px equivalent)
 const HUD_PANEL_WIDTH = 0.18; // Canvas width in world units (180px / 1000 for 1:1 mapping)
 const HUD_PANEL_HEIGHT = 0.036; // Canvas height in world units (36px / 1000 for 1:1 mapping)
 

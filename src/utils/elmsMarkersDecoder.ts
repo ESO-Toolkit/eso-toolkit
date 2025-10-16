@@ -33,8 +33,8 @@ const ELMS_ICON_MAP: Record<number, Partial<MorMarker>> = {
   11: { bgTexture: 'M0RMarkers/textures/blank.dds', text: '11', size: 1.5 },
   12: { bgTexture: 'M0RMarkers/textures/blank.dds', text: '12', size: 1.5 },
 
-  // White arrow
-  13: { bgTexture: 'M0RMarkers/textures/blank.dds', text: '↓', size: 1.5 },
+  // White arrow (downward arrow Unicode character, no background)
+  13: { text: '↓', size: 1.5 },
 
   // Chevron (lime green)
   14: { bgTexture: 'M0RMarkers/textures/chevron.dds', colour: [0, 1, 0.65, 1] },
@@ -198,9 +198,9 @@ export function decodeElmsMarkersString(elmsString: string): DecodedElmsMarkers 
       y: y + (iconTemplate?.size ? 50 * iconTemplate.size : 50), // Offset Y by half size (Elms convention)
       z,
       size: iconTemplate?.size || 1.0,
-      bgTexture: iconTemplate?.bgTexture || 'M0RMarkers/textures/circle.dds',
+      bgTexture: iconTemplate?.bgTexture, // No fallback - undefined means text-only marker
       colour: iconTemplate?.colour || [1, 1, 1, 1],
-      text: iconTemplate?.text,
+      text: iconTemplate?.text || undefined, // Ensure undefined instead of any falsy value
       orientation: undefined, // Elms markers are floating (no orientation)
     };
 

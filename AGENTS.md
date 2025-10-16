@@ -9,10 +9,23 @@ Features: data visualization, real-time analytics, comprehensive testing infrast
 **NEW STRUCTURE**: Documentation has been reorganized! See [documentation/INDEX.md](documentation/INDEX.md) for complete navigation.
 
 **Quick Access**:
+- **AI Agent Guidelines**: [documentation/ai-agents/AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md) - **START HERE**
 - **AI Agent Guides**: [documentation/ai-agents/](documentation/ai-agents/)
 - **Feature Docs**: [documentation/features/](documentation/features/)
 - **Architecture**: [documentation/architecture/](documentation/architecture/)
 - **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
+
+---
+
+## ⚠️ AI Agent Guidelines
+
+**READ THIS FIRST**: [AI_AGENT_GUIDELINES.md](documentation/ai-agents/AI_AGENT_GUIDELINES.md)
+
+**Key Points**:
+- ❌ Don't create summary docs for minor changes
+- ✅ Only document significant features/architecture changes
+- 💬 Be concise - ask before extensive work
+- 📝 Use code comments and clear commit messages for simple changes
 
 ---
 

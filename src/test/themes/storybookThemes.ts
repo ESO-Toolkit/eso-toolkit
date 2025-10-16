@@ -30,6 +30,35 @@ export const storybookDarkTheme: Theme = createTheme({
         },
       },
     },
+    MuiChip: {
+      styleOverrides: {
+        // Improve chip visibility on dark backgrounds
+        colorSuccess: {
+          borderColor: '#4caf50',
+          color: '#81c784',
+          fontWeight: 'bold',
+          borderWidth: 2,
+        },
+        colorInfo: {
+          borderColor: '#29b6f6',
+          color: '#4fc3f7',
+          fontWeight: 'bold',
+          borderWidth: 2,
+        },
+        colorWarning: {
+          borderColor: '#ffa726',
+          color: '#ffb74d',
+          fontWeight: 'bold',
+          borderWidth: 2,
+        },
+        colorError: {
+          borderColor: '#f44336',
+          color: '#e57373',
+          fontWeight: 'bold',
+          borderWidth: 2,
+        },
+      },
+    },
   },
 });
 
