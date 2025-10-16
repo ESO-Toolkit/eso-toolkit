@@ -5,9 +5,9 @@ import React, { Suspense, useMemo } from 'react';
 import { FightFragment } from '../../../graphql/generated';
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
-import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
+import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 
 import { AnimationFrameActor3D } from './AnimationFrameActor3D';
 import { BossHealthHUD } from './BossHealthHUD';

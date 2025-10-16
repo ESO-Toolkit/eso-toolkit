@@ -156,7 +156,7 @@ export const MorMarkers: React.FC<MorMarkersProps> = ({ encodedString, fight, sc
     }
 
     const markers = decodedMarkers.markers;
-    const { minX, maxX, minZ, maxZ, scaleFactor, y: mapY } = zoneScaleData;
+    const { minX, maxX, minZ, maxZ, scaleFactor: _scaleFactor, y: mapY } = zoneScaleData;
 
     // Filter markers to only those within this map's bounding box
     // This ensures markers from other maps in the same zone don't render
@@ -251,9 +251,9 @@ export const MorMarkers: React.FC<MorMarkersProps> = ({ encodedString, fight, sc
         const arenaX = 100 - normalizedX * 100; // Flip X to match the flipped map texture
         const arenaZ = 100 - normalizedZ * 100; // Flip Z to correct north/south orientation
 
-  // Convert marker size (meters) to arena units, then lift above the floor by half height
-  const normalizedSize = marker.size * unitsPerMeter;
-  const arenaY = (normalizedSize * scale) / 2 + 0.01;
+        // Convert marker size (meters) to arena units, then lift above the floor by half height
+        const normalizedSize = marker.size * unitsPerMeter;
+        const arenaY = (normalizedSize * scale) / 2 + 0.01;
 
         return {
           ...marker,

@@ -81,8 +81,8 @@ describe('MapMarkers scaling', () => {
     const rangeZ = mapData.maxZ - mapData.minZ;
     const unitsPerMeter = Math.sqrt((10000 / rangeX) * (10000 / rangeZ));
     const expectedSize = 2 * unitsPerMeter;
-  const expectedScale = 0.5;
-  const expectedY = (expectedSize * expectedScale) / 2 + 0.01;
+    const expectedScale = 0.5;
+    const expectedY = (expectedSize * expectedScale) / 2 + 0.01;
 
     expect(call.marker.size).toBeCloseTo(expectedSize, 6);
     expect(call.scale).toBeCloseTo(expectedScale, 6);

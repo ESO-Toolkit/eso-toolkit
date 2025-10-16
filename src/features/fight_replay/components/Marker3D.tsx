@@ -100,7 +100,12 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
           {/* Text label if provided */}
           {textTexture && (
             <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
-              <spriteMaterial map={textTexture} transparent={true} depthTest={false} />
+              <spriteMaterial
+                map={textTexture}
+                transparent
+                // eslint-disable-next-line react/no-unknown-property -- r3f sprite materials support depthTest
+                depthTest={false}
+              />
             </sprite>
           )}
         </Billboard>
@@ -127,7 +132,12 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
           {/* Text label if provided - slightly above the marker plane */}
           {textTexture && (
             <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
-              <spriteMaterial map={textTexture} transparent={true} depthTest={false} />
+              <spriteMaterial
+                map={textTexture}
+                transparent
+                // eslint-disable-next-line react/no-unknown-property -- r3f sprite materials support depthTest
+                depthTest={false}
+              />
             </sprite>
           )}
         </group>

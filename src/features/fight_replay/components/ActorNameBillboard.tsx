@@ -41,8 +41,8 @@ class SharedBillboardGeometry {
   private geometry: THREE.PlaneGeometry;
 
   private constructor() {
-  // Reduced base size to keep text panels slimmer at high actor scales
-  this.geometry = new THREE.PlaneGeometry(GEOMETRY_WIDTH, GEOMETRY_HEIGHT);
+    // Reduced base size to keep text panels slimmer at high actor scales
+    this.geometry = new THREE.PlaneGeometry(GEOMETRY_WIDTH, GEOMETRY_HEIGHT);
   }
 
   static getInstance(): SharedBillboardGeometry {
@@ -75,12 +75,12 @@ class BillboardTextRenderer {
 
     this.canvas = document.createElement('canvas');
     // Increase canvas resolution for sharper text at all zoom levels
-  this.canvas.width = 1024 * this.pixelRatio; // High resolution for crisp text
-  this.canvas.height = 256 * this.pixelRatio;
+    this.canvas.width = 1024 * this.pixelRatio; // High resolution for crisp text
+    this.canvas.height = 256 * this.pixelRatio;
 
     // Set CSS size to maintain the intended display size
     this.canvas.style.width = '1024px';
-  this.canvas.style.height = '256px';
+    this.canvas.style.height = '256px';
 
     const context = this.canvas.getContext('2d');
     if (!context) {
@@ -109,7 +109,7 @@ class BillboardTextRenderer {
     // Set high-quality text rendering for crisp output
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
-  this.context.font = '900 56px Arial';
+    this.context.font = '900 56px Arial';
     this.context.imageSmoothingEnabled = true;
     this.context.imageSmoothingQuality = 'high';
 
@@ -119,7 +119,7 @@ class BillboardTextRenderer {
 
     // Black outline - proportional thickness for good contrast
     this.context.strokeStyle = '#000000';
-  this.context.lineWidth = 5;
+    this.context.lineWidth = 5;
     this.context.strokeText(name, centerX, centerY);
 
     // Use the provided color for the text fill
@@ -240,11 +240,11 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
     // Apply distance-based scaling with a base distance appropriate for the new closer camera
     // Base scale at 20 units distance, then scale proportionally
     // Also apply the actor scale to make billboards match actor size
-  const baseDistance = 24;
-  const distanceScale = Math.max(0.4, Math.min(1.4, distanceToCamera / baseDistance));
-  // Damp actor scale impact so oversized arenas do not create huge billboards
-  const adjustedActorScale = 0.4 + scale * 0.6;
-  const scaleFactor = distanceScale * adjustedActorScale;
+    const baseDistance = 24;
+    const distanceScale = Math.max(0.4, Math.min(1.4, distanceToCamera / baseDistance));
+    // Damp actor scale impact so oversized arenas do not create huge billboards
+    const adjustedActorScale = 0.4 + scale * 0.6;
+    const scaleFactor = distanceScale * adjustedActorScale;
     groupRef.current.scale.setScalar(scaleFactor);
 
     // Check if we need to update the text (only if data changed)
