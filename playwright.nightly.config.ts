@@ -75,7 +75,7 @@ export default defineConfig({
   /* Base URL - use environment variable or default to production */
   use: {
     /* Base URL - now points to production website */
-    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://bkrupa.github.io/eso-log-aggregator/',
+    baseURL: process.env.NIGHTLY_BASE_URL || process.env.BASE_URL || 'https://esotk.com/',
 
     /* Extended navigation timeout for real API calls */
     navigationTimeout: 60000,

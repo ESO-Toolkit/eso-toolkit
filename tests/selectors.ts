@@ -135,5 +135,5 @@ export const TEST_DATA = {
 export function getBaseUrl(): string {
   return process.env.NIGHTLY_BASE_URL || 
          process.env.BASE_URL || 
-         'https://bkrupa.github.io/eso-log-aggregator/';
+         'https://esotk.com/';
 }

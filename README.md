@@ -16,6 +16,27 @@
 
 <!-- Additional Info Badges -->
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://esotk.com/#/)
+[![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)
+
+> **Note**: Coverage badges are automatically generated and updated via GitHub Gist endpoints. They show real-time coverage from the dedicated [Coverage Workflow](https://github.com/bkrupa/eso-log-aggregator/actions/workflows/coverage.yml). Detailed coverage reports and PR comments are available in the workflow runs.
+
+This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
+
+## Useful Links
+
+- [Deployment](https://esotk.com/#/)
+- [Jira](https://bkrupa.atlassian.net/jira/software/projects/ESO/boards/1/)
+- [Sentry](https://bkrupa.sentry.io/dashboards/)
+
+## Getting Started
+
+### Install Dependencies
+```
+
+<!-- Additional Info Badges -->
+
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Visit%20Site-blue?style=flat&logo=github)](https://bkrupa.github.io/eso-log-aggregator/#/)
 [![Node Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen?style=flat&logo=node.js)](package.json)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue?style=flat&logo=typescript)](https://www.typescriptlang.org/)

@@ -232,8 +232,8 @@ jobs:
           # CI environment flags
           CI: 'true'
           # Base URL for Playwright tests - production website
-          NIGHTLY_BASE_URL: 'https://bkrupa.github.io/eso-log-aggregator/'
-          BASE_URL: 'https://bkrupa.github.io/eso-log-aggregator/'
+          NIGHTLY_BASE_URL: 'https://esotk.com/'
+          BASE_URL: 'https://esotk.com/'
           # Node.js memory optimization
           NODE_OPTIONS: '--max_old_space_size=8192 --max_semi_space_size=1024'
           # ESO Logs OAuth credentials for authenticated tests
@@ -461,7 +461,7 @@ jobs:
           - Shards: ${{ needs.setup.outputs.total_shards }}
 
           **Test Environment:**
-          - Base URL: https://bkrupa.github.io/eso-log-aggregator/
+          - Base URL: https://esotk.com/
           - CI Environment: GitHub Actions
           - Runner: ubuntu-latest
 
