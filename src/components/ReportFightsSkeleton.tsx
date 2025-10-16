@@ -83,104 +83,100 @@ export const ReportFightsSkeleton: React.FC<ReportFightsSkeletonProps> = ({
           </Box>
 
           {/* Boss Encounters (always visible) */}
-          {Array.from({ length: Math.floor(Math.random() * 3) + 3 }).map(
-            (_, encounterIndex) => (
+          {Array.from({ length: Math.floor(Math.random() * 3) + 3 }).map((_, encounterIndex) => (
+            <Box
+              key={encounterIndex}
+              sx={{
+                mb: 2,
+                p: 2,
+                borderRadius: 2,
+                border: '1px solid rgba(255, 255, 255, 0.0)',
+                overflow: 'visible',
+              }}
+            >
+              {/* Encounter Header */}
               <Box
-                key={encounterIndex}
                 sx={{
-                  mb: 2,
-                  p: 2,
-                  borderRadius: 2,
-                  border: '1px solid rgba(255, 255, 255, 0.0)',
-                  overflow: 'visible',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  mb: 1,
                 }}
               >
-                {/* Encounter Header */}
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    mb: 1,
-                  }}
-                >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                    <Skeleton variant="circular" width={32} height={32} animation={false} />
-                    <Skeleton variant="text" width={120} height={20} animation={false} />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Skeleton variant="circular" width={32} height={32} animation={false} />
+                  <Skeleton variant="text" width={120} height={20} animation={false} />
+                </Box>
+                {/* Trash toggle (shown randomly) */}
+                {Math.random() > 0.5 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Skeleton variant="text" width={30} height={16} animation={false} />
+                    <Skeleton variant="rounded" width={40} height={24} animation={false} />
                   </Box>
-                  {/* Trash toggle (shown randomly) */}
-                  {Math.random() > 0.5 && (
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Skeleton variant="text" width={30} height={16} animation={false} />
-                      <Skeleton variant="rounded" width={40} height={24} animation={false} />
-                    </Box>
-                  )}
-                </Box>
-
-                {/* Fight Cards Grid */}
-                <Box
-                  sx={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-                    gap: 1,
-                  }}
-                >
-                  {/* Generate 2-5 fight cards per encounter */}
-                  {Array.from({ length: Math.floor(Math.random() * 4) + 2 }).map(
-                    (_, cardIndex) => (
-                      <Box
-                        key={cardIndex}
-                        sx={{
-                          width: '100%',
-                          height: 64,
-                          borderRadius: 1,
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          position: 'relative',
-                          overflow: 'hidden',
-                        }}
-                      >
-                        {/* Fight card background gradient effect */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            bottom: 0,
-                            right: '20%', // Show partial fill to simulate wipe/kill states
-                            background: `linear-gradient(90deg, rgba(76, 217, 100, 0.1) 0%, rgba(94, 234, 255, 0.1) 100%)`,
-                            borderRadius: 1,
-                          }}
-                        />
-                        {/* Status badge skeleton */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: '50%',
-                            left: '50%',
-                            transform: 'translate(-50%, -120%)',
-                          }}
-                        >
-                          <Skeleton variant="rounded" width={24} height={16} animation={false} />
-                        </Box>
-                        {/* Time/duration skeleton */}
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            bottom: 6,
-                            left: '50%',
-                            transform: 'translateX(-50%)',
-                          }}
-                        >
-                          <Skeleton variant="text" width={60} height={12} animation={false} />
-                        </Box>
-                      </Box>
-                    ),
-                  )}
-                </Box>
+                )}
               </Box>
-            ),
-          )}
+
+              {/* Fight Cards Grid */}
+              <Box
+                sx={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
+                  gap: 1,
+                }}
+              >
+                {/* Generate 2-5 fight cards per encounter */}
+                {Array.from({ length: Math.floor(Math.random() * 4) + 2 }).map((_, cardIndex) => (
+                  <Box
+                    key={cardIndex}
+                    sx={{
+                      width: '100%',
+                      height: 64,
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      position: 'relative',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* Fight card background gradient effect */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        bottom: 0,
+                        right: '20%', // Show partial fill to simulate wipe/kill states
+                        background: `linear-gradient(90deg, rgba(76, 217, 100, 0.1) 0%, rgba(94, 234, 255, 0.1) 100%)`,
+                        borderRadius: 1,
+                      }}
+                    />
+                    {/* Status badge skeleton */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: '50%',
+                        left: '50%',
+                        transform: 'translate(-50%, -120%)',
+                      }}
+                    >
+                      <Skeleton variant="rounded" width={24} height={16} animation={false} />
+                    </Box>
+                    {/* Time/duration skeleton */}
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        bottom: 6,
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                      }}
+                    >
+                      <Skeleton variant="text" width={60} height={12} animation={false} />
+                    </Box>
+                  </Box>
+                ))}
+              </Box>
+            </Box>
+          ))}
         </Box>
       </Box>
     </Paper>

@@ -1292,9 +1292,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                     {/* Pre-encounter trash */}
                     <Collapse
-                      in={
-                        showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0
-                      }
+                      in={showTrashForEncounter.has(encounter.id) && encounter.preTrash.length > 0}
                     >
                       <Box sx={{ mb: 2 }}>
                         <Typography
@@ -1335,9 +1333,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
                     {/* Post-encounter trash */}
                     <Collapse
-                      in={
-                        showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0
-                      }
+                      in={showTrashForEncounter.has(encounter.id) && encounter.postTrash.length > 0}
                     >
                       <Box>
                         <Typography
