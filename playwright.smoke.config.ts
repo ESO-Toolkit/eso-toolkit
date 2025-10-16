@@ -1,6 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import { calculateOptimalWorkers } from './tests/utils/worker-config';
 
+const rawSmokePort = process.env.SMOKE_PORT || process.env.PORT || '3000';
+const parsedSmokePort = Number.parseInt(rawSmokePort, 10);
+const smokePort = Number.isNaN(parsedSmokePort) ? 3000 : parsedSmokePort;
+const smokeBaseUrl = process.env.SMOKE_BASE_URL || `http://localhost:${smokePort}`;
+
 /**
  * Playwright configuration for smoke tests - minimal, fast e2e tests for PR checks
  * @see https://playwright.dev/docs/test-configuration.
@@ -45,7 +50,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://localhost:3001',
+    baseURL: smokeBaseUrl,
 
     /* Collect trace only on failure for smoke tests */
     trace: 'retain-on-failure',
@@ -88,7 +93,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm start',
-    url: 'http://localhost:3001',
+    url: smokeBaseUrl,
     reuseExistingServer: !process.env.CI,
     timeout: 300000, // 5 minutes timeout for server startup
     stdout: 'pipe',
@@ -100,7 +105,7 @@ export default defineConfig({
       // Disable source maps for faster builds
       GENERATE_SOURCEMAP: 'false',
       // Set the port for Vite
-      PORT: '3001',
+  PORT: smokePort.toString(),
     },
     // Additional options for better server startup detection
     cwd: process.cwd(),
