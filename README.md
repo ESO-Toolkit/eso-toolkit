@@ -24,6 +24,29 @@
 
 This project contains only the web application, built with React, TypeScript, GraphQL, Apollo Client, Material UI, Storybook, Jest, and Playwright.
 
+## 📚 Documentation
+
+**[Complete Documentation Index →](documentation/INDEX.md)**
+
+### Quick Links
+
+- **[AI Agent Documentation](documentation/ai-agents/)** - Guides for AI agents (Scribing, Playwright, Jira, Preloading)
+- **[Feature Documentation](documentation/features/)** - Feature-specific implementation guides
+- **[Architecture](documentation/architecture/)** - System design and architectural patterns
+- **[Fixes & Resolutions](documentation/fixes/)** - Bug fixes and issue resolutions
+- **[Implementation Summaries](documentation/implementation/)** - Jira ticket implementations
+- **[Developer Guide](documentation/AGENTS.md)** - Complete development workflows
+
+### For Developers
+- Start with [AGENTS.md](documentation/AGENTS.md) for development workflows
+- Review [Architecture Overview](documentation/architecture/system-architecture.md) for system design
+- Check [Feature Documentation](documentation/features/) for specific features
+
+### For AI Agents
+- See [AI Agent Documentation](documentation/ai-agents/) for comprehensive guides
+- Use Quick Reference cards for rapid lookups
+- Follow workflows in [Jira Integration](documentation/ai-agents/jira/)
+
 ## Useful Links
 
 - [Deployment](https://bkrupa.github.io/eso-log-aggregator/#/)

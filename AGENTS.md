@@ -4,13 +4,25 @@
 Project: ESO Log Aggregator - React-based web application for analyzing Elder Scrolls Online (ESO) combat logs
 Features: data visualization, real-time analytics, comprehensive testing infrastructure
 
+## 📚 Documentation Navigation
+
+**NEW STRUCTURE**: Documentation has been reorganized! See [documentation/INDEX.md](documentation/INDEX.md) for complete navigation.
+
+**Quick Access**:
+- **AI Agent Guides**: [documentation/ai-agents/](documentation/ai-agents/)
+- **Feature Docs**: [documentation/features/](documentation/features/)
+- **Architecture**: [documentation/architecture/](documentation/architecture/)
+- **Complete Guide**: [documentation/AGENTS.md](documentation/AGENTS.md)
+
+---
+
 ## � Jira Work Item Management (acli)
 
 **REQUIRED**: All AI agents must use `acli` (Atlassian CLI) for Jira work item management.
 
 📖 **Full Documentation**:
-- **AI_JIRA_ACLI_INSTRUCTIONS.md** - Comprehensive guide for using acli to query, update, and manage Jira work items
-- **AI_JIRA_QUICK_REFERENCE.md** - Quick reference card with essential acli commands
+- **[documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md](documentation/ai-agents/jira/AI_JIRA_ACLI_INSTRUCTIONS.md)** - Comprehensive guide
+- **[documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md](documentation/ai-agents/jira/AI_JIRA_QUICK_REFERENCE.md)** - Quick reference
 
 **Quick Start**:
 ```powershell
@@ -37,9 +49,9 @@ acli jira workitem transition ESO-394 --to "Done"
 **CRITICAL DISCOVERY**: Signature scripts appear in different event types!
 
 📖 **Full Documentation**:
-- **AI_SCRIBING_DETECTION_INSTRUCTIONS.md** - Complete guide for AI agents working on scribing detection
-- **AI_SCRIBING_QUICK_REFERENCE.md** - Quick reference card with common patterns and pitfalls
-- **RESOURCE_EVENT_DETECTION_SUMMARY.md** - Technical details of resource event detection discovery
+- **[documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md](documentation/ai-agents/scribing/AI_SCRIBING_DETECTION_INSTRUCTIONS.md)** - Complete guide
+- **[documentation/ai-agents/scribing/AI_SCRIBING_QUICK_REFERENCE.md](documentation/ai-agents/scribing/AI_SCRIBING_QUICK_REFERENCE.md)** - Quick reference
+- **[documentation/features/scribing/](documentation/features/scribing/)** - Feature documentation
 
 **Key Insight**: Always check **ALL event types** (cast, damage, healing, buff, debuff, **resource**) when searching for signature scripts. Example: Anchorite's Potency appears as resource events, not combat events!
 
