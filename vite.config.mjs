@@ -15,6 +15,14 @@ export default defineConfig(({ command, mode }) => {
   // Set the third parameter to '' to load all env regardless of the `VITE_` prefix.
   const env = loadEnv(mode, process.cwd(), '');
 
+  const rawPort = env.PORT || process.env.PORT || '3000';
+  const parsedPort = Number.parseInt(rawPort, 10);
+  const serverPort = Number.isNaN(parsedPort) ? 3000 : parsedPort;
+  const strictPortValue = (env.STRICT_PORT ?? process.env.STRICT_PORT ?? 'true')
+    .toLowerCase()
+    .trim();
+  const strictPortConfig = strictPortValue !== 'false' && strictPortValue !== '0';
+
   return {
     base: process.env.VITE_BASE_URL || '/',
     plugins: [
@@ -37,7 +45,7 @@ export default defineConfig(({ command, mode }) => {
         ],
       }),
       // ESLint plugin disabled due to ESLint 9 compatibility issues
-    // Use 'npm run lint' for linting during development
+      // Use 'npm run lint' for linting during development
     ],
 
     // Path aliases (backup to tsconfigPaths plugin)
@@ -55,10 +63,10 @@ export default defineConfig(({ command, mode }) => {
 
     // Development server configuration
     server: {
-      port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+      port: serverPort,
       open: false,
       host: true,
-      strictPort: process.env.STRICT_PORT === 'true', // Only strict if explicitly set
+      strictPort: strictPortConfig,
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
