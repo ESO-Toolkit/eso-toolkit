@@ -1,5 +1,7 @@
 import React from 'react';
 
+import { useLogger } from '@/contexts/LoggerContext';
+
 import type { GrimoireData } from '../../../components/ScribingSkillsDisplay';
 import {
   useCastEvents,
@@ -71,6 +73,8 @@ import { PlayersPanelView } from './PlayersPanelView';
 // This panel now uses report actors from masterData
 
 export const PlayersPanel: React.FC = () => {
+  const logger = useLogger('PlayersPanel');
+
   // State for storing scribing recipe information
   const [scribingRecipes, setScribingRecipes] = React.useState<
     Record<
@@ -912,10 +916,10 @@ export const PlayersPanel: React.FC = () => {
 
             // Try recipe lookup with the skill's main ID first
             try {
-              // eslint-disable-next-line no-console
-              console.log(
-                `🔍 Looking up recipe for skill: ${skill.skillName} (ID: ${skill.skillId})`,
-              );
+              logger.info('Looking up scribing recipe for skill', {
+                skillName: skill.skillName,
+                skillId: skill.skillId,
+              });
 
               let recipeMatch = (await findScribingRecipe(
                 skill.skillId,
@@ -924,10 +928,10 @@ export const PlayersPanel: React.FC = () => {
 
               // If that doesn't work, try with the first effect's ability ID
               if (!recipeMatch && effectWithId) {
-                // eslint-disable-next-line no-console
-                console.log(
-                  `🔍 Trying with effect ID: ${effectWithId.abilityId} (${effectWithId.abilityName})`,
-                );
+                logger.info('Trying recipe lookup with effect ID', {
+                  effectId: effectWithId.abilityId,
+                  effectName: effectWithId.abilityName,
+                });
                 recipeMatch = (await findScribingRecipe(
                   effectWithId.abilityId,
                   effectWithId.abilityName,
@@ -935,19 +939,20 @@ export const PlayersPanel: React.FC = () => {
               }
 
               if (recipeMatch) {
-                // eslint-disable-next-line no-console
-                console.log(
-                  `✅ Found recipe: ${recipeMatch.grimoire.name} + ${recipeMatch.transformation?.name}`,
-                );
+                logger.info('Found scribing recipe', {
+                  grimoire: recipeMatch.grimoire.name,
+                  transformation: recipeMatch.transformation?.name,
+                });
                 const recipeDisplay = formatScribingRecipeForDisplay(recipeMatch);
                 newRecipes[playerId][skill.skillId] = recipeDisplay;
               } else {
-                // eslint-disable-next-line no-console
-                console.log(`❌ No recipe found for ${skill.skillName}`);
+                logger.info('No recipe found for skill', { skillName: skill.skillName });
               }
             } catch (error) {
-              // eslint-disable-next-line no-console
-              console.warn(`Failed to lookup recipe for skill ${skill.skillName}:`, error);
+              logger.warn('Failed to lookup scribing recipe', {
+                skillName: skill.skillName,
+                error: error instanceof Error ? error.message : String(error),
+              });
             }
           }
         }
@@ -959,7 +964,7 @@ export const PlayersPanel: React.FC = () => {
     if (Object.keys(scribingSkillsByPlayer).length > 0) {
       lookupRecipes();
     }
-  }, [scribingSkillsByPlayer]);
+  }, [scribingSkillsByPlayer, logger]);
 
   // Merge scribing skills with their recipe information
   const enhancedScribingSkillsByPlayer = React.useMemo(() => {

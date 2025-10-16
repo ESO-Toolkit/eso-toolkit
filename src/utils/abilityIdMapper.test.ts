@@ -417,7 +417,7 @@ describe('AbilityIdMapper', () => {
     let consoleSpy: jest.SpyInstance;
 
     beforeEach(() => {
-      consoleSpy = jest.spyOn(console, 'log').mockImplementation();
+      consoleSpy = jest.spyOn(console, 'info').mockImplementation();
     });
 
     afterEach(() => {
@@ -427,9 +427,14 @@ describe('AbilityIdMapper', () => {
     it('should log success statistics after loading', async () => {
       await abilityIdMapper.preload();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('AbilityIdMapper: Successfully processed'),
+      // Logger passes message as first arg, data object as second arg, and error (undefined) as third arg
+      const calls = consoleSpy.mock.calls;
+      const successCall = calls.find((call) =>
+        call[0]?.includes('Successfully processed abilities from master data'),
       );
+      expect(successCall).toBeDefined();
+      expect(successCall?.[0]).toContain('[AbilityIdMapper]');
+      expect(successCall?.[0]).toContain('[INFO]');
     });
   });
 });

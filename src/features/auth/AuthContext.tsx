@@ -7,10 +7,10 @@ import React, {
   useCallback,
 } from 'react';
 
-import { Logger, LogLevel } from '../../contexts/LoggerContext';
 import { useEsoLogsClientContext } from '../../EsoLogsClientContext';
 import { GetCurrentUserQuery } from '../../graphql/generated';
 import { GetCurrentUserDocument } from '../../graphql/reports.generated';
+import { Logger, LogLevel } from '../../utils/logger';
 
 import { LOCAL_STORAGE_ACCESS_TOKEN_KEY } from './auth';
 

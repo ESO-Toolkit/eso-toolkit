@@ -5,6 +5,7 @@
 
 import { useEffect, useState, useCallback } from 'react';
 
+import { useLogger } from '../contexts/LoggerContext';
 import { getBuildInfo, getBuildInfoAsync, getCacheBustingQuery } from '../utils/cacheBusting';
 import { getBaseUrl } from '../utils/envUtils';
 
@@ -30,6 +31,8 @@ interface CacheInvalidationActions {
 export const useCacheInvalidation = (
   checkInterval: number = 5 * 60 * 1000, // 5 minutes
 ): [CacheInvalidationState, CacheInvalidationActions] => {
+  const logger = useLogger('useCacheInvalidation');
+
   const [state, setState] = useState<CacheInvalidationState>({
     isCheckingVersion: false,
     hasUpdate: false,
@@ -99,10 +102,9 @@ export const useCacheInvalidation = (
       }));
 
       // Silently fail version checks to avoid disrupting user experience
-      // eslint-disable-next-line no-console
-      console.warn('Version check failed:', error);
+      logger.warn('Version check failed', { error });
     }
-  }, [state.versionLoaded, state.currentVersion]);
+  }, [state.versionLoaded, state.currentVersion, logger]);
 
   const forceReload = useCallback(() => {
     // Clear all caches and reload
@@ -137,10 +139,9 @@ export const useCacheInvalidation = (
 
       setState((prev) => ({ ...prev, hasUpdate: false, serverVersion: undefined }));
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.warn('Failed to clear cache:', error);
+      logger.warn('Failed to clear cache', { error });
     }
-  }, []);
+  }, [logger]);
 
   const dismissUpdate = useCallback(() => {
     setState((prev) => ({ ...prev, hasUpdate: false }));

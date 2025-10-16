@@ -30,6 +30,7 @@ export enum TabId {
   AURAS_OVERVIEW = 'auras-overview',
   BUFFS_OVERVIEW = 'buffs-overview',
   DEBUFFS_OVERVIEW = 'debuffs-overview',
+  MAPS = 'maps',
 }
 
 // Shared header skeleton for FightDetailsView
@@ -442,6 +443,8 @@ export const getSkeletonForTab = (
         return <GenericTabSkeleton title="Buffs Overview" showChart={true} showTable={true} />;
       case TabId.DEBUFFS_OVERVIEW:
         return <GenericTabSkeleton title="Debuffs Overview" showTable={true} tableRows={15} />;
+      case TabId.MAPS:
+        return <GenericTabSkeleton title="Maps" showTable={false} />;
       default:
         return <GenericTabSkeleton title="Loading..." />;
     }

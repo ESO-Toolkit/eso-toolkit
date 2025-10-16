@@ -115,6 +115,10 @@ export default [
       // React Hooks recommended rules
       ...reactHooks.configs.recommended.rules,
       
+      // React Hooks exhaustive deps (what Strict Mode helps find)
+      'react-hooks/exhaustive-deps': 'error', // Ensure all dependencies are listed
+      'react-hooks/rules-of-hooks': 'error',   // Ensure hooks are called correctly
+      
       // Import recommended rules
       ...importPlugin.configs.recommended.rules,
       ...importPlugin.configs.typescript.rules,
@@ -179,6 +183,7 @@ export default [
             'map',
             'alphaTest',
             'shininess',
+            'depthWrite',
             
             // Three.js light properties
             'intensity',

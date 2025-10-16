@@ -1,5 +1,5 @@
 import { useFrame } from '@react-three/fiber';
-import { useRef, useCallback } from 'react';
+import { useRef, useCallback, useMemo } from 'react';
 import * as THREE from 'three';
 
 import { DARK_ROLE_COLORS } from '../../../utils/roleColors';
@@ -42,9 +42,9 @@ const TAUNT_RING_OPACITY = 0.8;
 const GROUND_LEVEL = 0.05;
 const ALIVE_PUCK_OPACITY = 1.0;
 const DEAD_PUCK_OPACITY = 0.3;
-const ALIVE_VISION_CONE_OPACITY = 0.3;
-const DEAD_VISION_CONE_OPACITY = 0.1;
-const PUCK_RADIUS = 0.15; // Actor puck radius for selection ring
+const ALIVE_VISION_CONE_OPACITY = 0.5;
+const DEAD_VISION_CONE_OPACITY = 0.2;
+const PUCK_RADIUS = 0.15; // Actor puck radius for selection ring (matches SharedActor3DGeometries)
 
 /**
  * Actor3D component that uses useFrame directly for high-frequency updates
@@ -77,6 +77,13 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
 
   // Use shared geometries for performance
   const { puckGeometry, visionConeGeometry, tauntRingGeometry } = useSharedActor3DGeometries(scale);
+
+  // Create selection ring geometry with proper scaling
+  const selectionRingGeometry = useMemo(() => {
+    const innerRadius = (PUCK_RADIUS + 0.2) * scale;
+    const outerRadius = (PUCK_RADIUS + 0.4) * scale;
+    return new THREE.RingGeometry(innerRadius, outerRadius, 32);
+  }, [scale]);
 
   // Color calculation
   const getActorColor = (actor: ActorPosition | null): string => {
@@ -178,10 +185,18 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
       ref={groupRef}
       visible={isVisibleRef.current}
       onClick={(e) => {
+        // Only allow clicking on visible actors
+        if (!isVisibleRef.current) {
+          return;
+        }
         e.stopPropagation();
         onActorClick?.(actorId);
       }}
       onPointerOver={(e) => {
+        // Only show pointer cursor for visible actors
+        if (!isVisibleRef.current) {
+          return;
+        }
         e.stopPropagation();
         document.body.style.cursor = 'pointer';
       }}
@@ -203,15 +218,15 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
       {/* Selection ring for selected actor */}
       <mesh
         ref={selectedRingMeshRef}
+        geometry={selectionRingGeometry}
         position={[0, GROUND_LEVEL + 0.005, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
       >
-        <ringGeometry args={[PUCK_RADIUS + 0.2, PUCK_RADIUS + 0.4, 32]} />
         <meshBasicMaterial color="#ffff00" opacity={0.8} transparent />
       </mesh>
 
       {/* Vision cone (direction indicator) */}
-      <mesh geometry={visionConeGeometry} position={[0, GROUND_LEVEL + 0.01, 0]}>
+      <mesh geometry={visionConeGeometry} position={[0, 0.01 + (actorId % 100) * 0.0001, 0]}>
         <meshBasicMaterial
           ref={visionConeMaterialRef}
           color={actorColor}
@@ -220,6 +235,7 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
           }
           transparent
           side={THREE.DoubleSide}
+          depthWrite={false}
         />
       </mesh>
 
@@ -227,15 +243,22 @@ export const AnimationFrameActor3D: React.FC<AnimationFrameActor3DProps> = ({
       <mesh
         ref={tauntRingMeshRef}
         geometry={tauntRingGeometry}
-        position={[0, GROUND_LEVEL + 0.02, 0]}
+        position={[0, 0.02 + (actorId % 100) * 0.0001, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         visible={actorData?.isTaunted || false}
       >
-        <meshBasicMaterial color={TAUNT_RING_COLOR} opacity={TAUNT_RING_OPACITY} transparent />
+        <meshBasicMaterial
+          color={TAUNT_RING_COLOR}
+          opacity={TAUNT_RING_OPACITY}
+          transparent
+          depthWrite={false}
+        />
       </mesh>
 
       {/* Actor name billboard */}
-      {showName && <ActorNameBillboard actorId={actorId} lookup={lookup} timeRef={timeRef} />}
+      {showName && (
+        <ActorNameBillboard actorId={actorId} lookup={lookup} timeRef={timeRef} scale={scale} />
+      )}
     </group>
   );
 };

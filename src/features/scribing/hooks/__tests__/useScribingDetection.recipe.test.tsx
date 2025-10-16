@@ -5,6 +5,7 @@
 import { renderHook, waitFor } from '@testing-library/react';
 import { Provider } from 'react-redux';
 import { configureStore } from '@reduxjs/toolkit';
+import { LoggerProvider } from '../../../../contexts/LoggerContext';
 import { useScribingDetection } from '../useScribingDetection';
 
 // Mock all event hooks with proper return values
@@ -82,7 +83,9 @@ const mockStore = configureStore({
 describe('useScribingDetection Recipe Data', () => {
   it("should return recipe data for Ulfsild's Contingency (240150)", async () => {
     const wrapper = ({ children }: { children: React.ReactNode }) => (
-      <Provider store={mockStore}>{children}</Provider>
+      <LoggerProvider>
+        <Provider store={mockStore}>{children}</Provider>
+      </LoggerProvider>
     );
 
     const { result } = renderHook(

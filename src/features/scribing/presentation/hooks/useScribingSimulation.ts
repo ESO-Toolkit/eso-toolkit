@@ -4,6 +4,8 @@
 
 import { useState, useEffect } from 'react';
 
+import { useLogger } from '@/contexts/LoggerContext';
+
 import { ScribingSimulatorService } from '../../application/simulators/ScribingSimulatorService';
 import { JsonScribingDataRepository } from '../../infrastructure/data/JsonScribingDataRepository';
 import {
@@ -54,6 +56,8 @@ export interface UseScribingSimulationResult {
 export function useScribingSimulation(
   options: UseScribingSimulationOptions = {},
 ): UseScribingSimulationResult {
+  const logger = useLogger('useScribingSimulation');
+
   // Services
   const [repository] = useState(() => new JsonScribingDataRepository());
   const [simulatorService] = useState(() => new ScribingSimulatorService(repository));
@@ -126,13 +130,14 @@ export function useScribingSimulation(
         setSelectedSignatureScript('');
         setSelectedAffixScript('');
       } catch (err) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to load compatible scripts:', err);
+        logger.error('Failed to load compatible scripts', err instanceof Error ? err : undefined, {
+          selectedGrimoire,
+        });
       }
     };
 
     loadCompatibleScripts();
-  }, [selectedGrimoire, simulatorService]);
+  }, [selectedGrimoire, simulatorService, logger]);
 
   // Auto-simulate when selections change (if enabled)
   useEffect(() => {

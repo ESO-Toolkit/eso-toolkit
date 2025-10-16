@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 
-// Geometry constants
+// Geometry constants - Base sizes for full-arena (100x100) scale
+// These will be scaled down automatically for smaller fight areas
 const VISION_CONE_LENGTH = 0.75;
 const VISION_CONE_ANGLE = Math.PI / 6;
 const PUCK_RADIUS = 0.15;

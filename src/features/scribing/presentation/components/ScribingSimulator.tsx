@@ -6,6 +6,7 @@
 import { Container, Box, Typography, Alert, CircularProgress } from '@mui/material';
 import React from 'react';
 
+import { useLogger } from '../../../../contexts/LoggerContext';
 import { useScribingSimulation } from '../hooks/useScribingSimulation';
 
 import {
@@ -25,6 +26,8 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
   defaultGrimoire,
   autoSimulate = false,
 }) => {
+  const logger = useLogger('ScribingSimulator');
+
   const {
     // Data
     grimoires,
@@ -72,8 +75,7 @@ export const ScribingSimulator: React.FC<ScribingSimulatorProps> = ({
     navigator.clipboard.writeText(shareUrl);
 
     // TODO: Show toast notification
-    // eslint-disable-next-line no-console
-    console.log('Configuration URL copied to clipboard');
+    logger.info('Configuration URL copied to clipboard', { shareUrl });
   };
 
   if (isLoading) {

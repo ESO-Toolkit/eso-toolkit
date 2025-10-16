@@ -3,7 +3,7 @@ import { Box, Button, Paper, Typography, Stack, Alert, Collapse } from '@mui/mat
 import * as Sentry from '@sentry/react';
 import React, { Component, ReactNode } from 'react';
 
-import { Logger, LogLevel } from '../contexts/LoggerContext';
+import { Logger, LogLevel } from '../utils/logger';
 import { reportError, addBreadcrumb } from '../utils/sentryUtils';
 
 // Create a logger instance for ErrorBoundary

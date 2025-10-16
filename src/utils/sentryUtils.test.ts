@@ -9,7 +9,7 @@ import {
   measurePerformance,
 } from './sentryUtils';
 import { SENTRY_CONFIG, ManualBugReport, BugReportCategory } from '../config/sentryConfig';
-import { Logger } from '../contexts/LoggerContext';
+import { Logger } from './logger';
 import { RootState } from '../store/storeWithHistory';
 
 // Mock the enum since TypeScript enums can cause issues in Jest

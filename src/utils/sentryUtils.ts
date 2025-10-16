@@ -1,8 +1,9 @@
 import * as Sentry from '@sentry/react';
 
 import { SENTRY_CONFIG, ManualBugReport } from '../config/sentryConfig';
-import { Logger, LogLevel } from '../contexts/LoggerContext';
 import { RootState } from '../store/storeWithHistory';
+
+import { Logger, LogLevel } from './logger';
 
 // Create a logger instance for Sentry utilities
 const logger = new Logger({

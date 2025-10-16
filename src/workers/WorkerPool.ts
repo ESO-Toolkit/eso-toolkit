@@ -1,6 +1,6 @@
 import { proxy, releaseProxy } from 'comlink';
 
-import { ILogger } from '../contexts/LoggerContext';
+import { ILogger } from '../utils/logger';
 
 import { ActorPositionsCalculationTask } from './calculations/CalculateActorPositions';
 import { BuffCalculationTask } from './calculations/CalculateBuffLookups';

@@ -1,4 +1,4 @@
-import { ILogger } from '../contexts/LoggerContext';
+import { ILogger } from '../utils/logger';
 
 import {
   SharedComputationWorkerTaskType,

@@ -15,6 +15,7 @@ import RepeatIcon from '@mui/icons-material/Repeat';
 import SecurityIcon from '@mui/icons-material/Security';
 import ShieldIcon from '@mui/icons-material/Shield';
 import StarIcon from '@mui/icons-material/Star';
+import TerrainIcon from '@mui/icons-material/Terrain';
 import WhatshotIcon from '@mui/icons-material/Whatshot';
 import {
   Box,
@@ -92,6 +93,9 @@ const InsightsPanel = React.lazy(() =>
 const PlayersPanel = React.lazy(() =>
   import('./insights/PlayersPanel').then((module) => ({ default: module.PlayersPanel })),
 );
+const MapsPanel = React.lazy(() =>
+  import('./maps/MapsPanel').then((module) => ({ default: module.MapsPanel })),
+);
 const PenetrationPanel = React.lazy(() =>
   import('./penetration/PenetrationPanel').then((module) => ({ default: module.PenetrationPanel })),
 );
@@ -137,6 +141,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
     TabId.AURAS_OVERVIEW,
     TabId.BUFFS_OVERVIEW,
     TabId.DEBUFFS_OVERVIEW,
+    TabId.MAPS,
   ];
 
   // Ensure we have a valid selectedTabId based on what tabs are actually rendered
@@ -591,6 +596,15 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
             }
             sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
           />
+          <Tab
+            value={TabId.MAPS}
+            icon={
+              <Tooltip title="Maps">
+                <TerrainIcon />
+              </Tooltip>
+            }
+            sx={{ display: showExperimentalTabs ? 'inline-flex' : 'none' }}
+          />
         </Tabs>
 
         {/* Experimental Toggle */}
@@ -721,6 +735,11 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           {showExperimentalTabs && validSelectedTabId === TabId.DEBUFFS_OVERVIEW && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DEBUFFS_OVERVIEW} />}>
               <DebuffsOverviewPanel />
+            </Suspense>
+          )}
+          {showExperimentalTabs && validSelectedTabId === TabId.MAPS && (
+            <Suspense fallback={<PanelLoadingFallback tabId={TabId.MAPS} />}>
+              <MapsPanel fight={fight} />
             </Suspense>
           )}
         </AnimatedTabContent>

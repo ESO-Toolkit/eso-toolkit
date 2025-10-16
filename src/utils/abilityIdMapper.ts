@@ -2,7 +2,14 @@ import { ReportAbilityFragment } from '../graphql/generated';
 import { selectAbilitiesById } from '../store/master_data/masterDataSelectors';
 import store, { RootState } from '../store/storeWithHistory';
 
+import { Logger, LogLevel } from './logger';
 import { DataLoadError, NestedError, ValidationError } from './NestedError';
+
+// Create logger instance for ability ID mapper
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'AbilityIdMapper',
+});
 
 // Type for ability data - now uses ReportAbilityFragment from master data
 export interface AbilityData {
@@ -104,10 +111,10 @@ class AbilityIdMapper {
       });
 
       // Log success statistics
-      // eslint-disable-next-line no-console
-      console.log(
-        `AbilityIdMapper: Successfully processed ${processedCount} abilities from master data, skipped ${skippedCount} invalid entries`,
-      );
+      logger.info('Successfully processed abilities from master data', {
+        processedCount,
+        skippedCount,
+      });
     } catch (error) {
       throw new NestedError(
         'Failed to build ability mappings from loaded data',
@@ -156,8 +163,12 @@ class AbilityIdMapper {
   getAbilityByName(name: string): AbilityData | null {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
-      // eslint-disable-next-line no-console
-      this.ensureLoaded().catch(console.error);
+      this.ensureLoaded().catch((error) =>
+        logger.error(
+          'Background ability data loading failed',
+          error instanceof Error ? error : new Error(String(error)),
+        ),
+      );
       return null;
     }
     const normalized = this.normalizeAbilityName(name);
@@ -172,18 +183,19 @@ class AbilityIdMapper {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
       this.ensureLoaded().catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error('Background ability data loading failed:', error);
+        logger.error(
+          'Background ability data loading failed',
+          error instanceof Error ? error : new Error(String(error)),
+        );
       });
       return null;
     }
 
     if (typeof id !== 'number' || !Number.isInteger(id) || id <= 0) {
-      // eslint-disable-next-line no-console
-      console.warn(`Invalid ability ID provided: ${id}`, {
+      logger.warn('Invalid ability ID provided', {
+        id,
         type: typeof id,
         isInteger: Number.isInteger(id),
-        value: id,
       });
       return null;
     }
@@ -228,16 +240,17 @@ class AbilityIdMapper {
     if (!this.isLoaded) {
       // Start loading asynchronously but don't block
       this.ensureLoaded().catch((error) => {
-        // eslint-disable-next-line no-console
-        console.error('Background ability data loading failed:', error);
+        logger.error(
+          'Background ability data loading failed',
+          error instanceof Error ? error : new Error(String(error)),
+        );
       });
       return [];
     }
 
     try {
       if (typeof partialName !== 'string' || partialName.trim().length === 0) {
-        // eslint-disable-next-line no-console
-        console.warn('Invalid search term provided to searchAbilities:', {
+        logger.warn('Invalid search term provided to searchAbilities', {
           partialName,
           type: typeof partialName,
         });
@@ -245,9 +258,8 @@ class AbilityIdMapper {
       }
 
       if (typeof limit !== 'number' || limit <= 0 || limit > 100) {
-        // eslint-disable-next-line no-console
-        console.warn('Invalid limit provided to searchAbilities, using default:', {
-          limit,
+        logger.warn('Invalid limit provided to searchAbilities, using default', {
+          providedLimit: limit,
           defaultLimit: 10,
         });
         limit = 10;

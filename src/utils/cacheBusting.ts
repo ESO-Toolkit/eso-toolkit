@@ -3,6 +3,13 @@
  */
 
 import { getBaseUrl } from './envUtils';
+import { Logger, LogLevel } from './logger';
+
+// Create logger instance for cache busting
+const logger = new Logger({
+  level: LogLevel.DEBUG,
+  contextPrefix: 'CacheBusting',
+});
 
 // Fallback version info for development when version files don't exist
 const FALLBACK_VERSION_INFO = {
@@ -34,8 +41,7 @@ const loadVersionInfo = async (): Promise<typeof FALLBACK_VERSION_INFO> => {
     }
   } catch {
     // Fall back to default version only if fetch fails
-    // eslint-disable-next-line no-console
-    console.debug('Could not load version.json, using fallback');
+    logger.debug('Could not load version.json, using fallback');
     VERSION_INFO = FALLBACK_VERSION_INFO;
     cacheBuster = FALLBACK_VERSION_INFO.cacheBuster;
   }

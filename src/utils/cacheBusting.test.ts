@@ -374,7 +374,9 @@ describe('cacheBusting', () => {
 
       const result = await getBuildInfoAsync();
       expect(result).toEqual(fallbackVersionInfo);
-      expect(consoleDebugSpy).toHaveBeenCalledWith('Could not load version.json, using fallback');
+      expect(consoleDebugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not load version.json, using fallback'),
+      );
 
       consoleDebugSpy.mockRestore();
     });
@@ -388,7 +390,9 @@ describe('cacheBusting', () => {
 
       const result = await getBuildInfoAsync();
       expect(result).toEqual(fallbackVersionInfo);
-      expect(consoleDebugSpy).toHaveBeenCalledWith('Could not load version.json, using fallback');
+      expect(consoleDebugSpy).toHaveBeenCalledWith(
+        expect.stringContaining('Could not load version.json, using fallback'),
+      );
 
       consoleDebugSpy.mockRestore();
     });

@@ -4,7 +4,35 @@
 Project: ESO Log Aggregator - React-based web application for analyzing Elder Scrolls Online (ESO) combat logs
 Features: data visualization, real-time analytics, comprehensive testing infrastructure
 
-## 🆕 Scribing Detection System (October 2025)
+## � Jira Work Item Management (acli)
+
+**REQUIRED**: All AI agents must use `acli` (Atlassian CLI) for Jira work item management.
+
+📖 **Full Documentation**:
+- **AI_JIRA_ACLI_INSTRUCTIONS.md** - Comprehensive guide for using acli to query, update, and manage Jira work items
+- **AI_JIRA_QUICK_REFERENCE.md** - Quick reference card with essential acli commands
+
+**Quick Start**:
+```powershell
+# View current story
+acli jira workitem view ESO-372
+
+# Find next task
+acli jira workitem search --jql "project = ESO AND status = 'To Do'" --fields key,summary,type
+
+# Start work
+acli jira workitem transition ESO-394 --to "In Progress"
+
+# Complete work
+acli jira workitem transition ESO-394 --to "Done"
+```
+
+**Epic**: ESO-368 - Replay System Architecture Improvements  
+**Project Board**: https://bkrupa.atlassian.net
+
+---
+
+## �🆕 Scribing Detection System (October 2025)
 
 **CRITICAL DISCOVERY**: Signature scripts appear in different event types!
 

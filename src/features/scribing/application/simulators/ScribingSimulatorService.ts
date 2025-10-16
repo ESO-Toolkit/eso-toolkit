@@ -3,6 +3,8 @@
  * Calculates dynamic skill properties based on script combinations
  */
 
+import { Logger, LogLevel } from '@/utils/logger';
+
 import { IScribingDataRepository } from '../../core/repositories/IScribingDataRepository';
 import { ERROR_MESSAGES, DEFAULT_SIMULATION_CONFIG } from '../../shared/constants';
 import { validateSimulationRequest, validateSimulationResponse } from '../../shared/schemas';
@@ -44,6 +46,8 @@ export interface IScribingSimulatorService {
 }
 
 export class ScribingSimulatorService implements IScribingSimulatorService {
+  private logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingSimulatorService' });
+
   constructor(private repository: IScribingDataRepository) {}
 
   async simulate(request: ScribingSimulationRequest): Promise<ScribingSimulationResponse> {
@@ -133,14 +137,14 @@ export class ScribingSimulatorService implements IScribingSimulatorService {
       try {
         validateSimulationResponse(response);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Response validation failed:', error);
+        this.logger.error('Response validation failed', error instanceof Error ? error : undefined);
       }
 
       return response;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Simulation failed:', error);
+      this.logger.error('Simulation failed', error instanceof Error ? error : undefined, {
+        grimoireId: request.grimoireId,
+      });
       return this.createErrorResponse(request, [
         `Simulation failed: ${error instanceof Error ? error.message : String(error)}`,
       ]);
