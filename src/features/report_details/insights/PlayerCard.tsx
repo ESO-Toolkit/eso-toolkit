@@ -331,7 +331,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
     }, [foodAura]);
 
     return (
-      <Box sx={{ minWidth: 0, display: 'flex' }}>
+      <Box sx={{ minWidth: 0, display: 'flex', height: '100%' }}>
         <Card
           variant="outlined"
           className="u-hover-lift u-fade-in-up"
@@ -346,14 +346,22 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
               flexDirection="column"
               alignItems="stretch"
               gap={2}
-              sx={{ flex: 1, minHeight: 0, justifyContent: 'space-between' }}
+              sx={{ flex: 1, minHeight: 0 }}
             >
               {/* Left column: identity, talents, gear, issues */}
               <Box flex={0} minWidth={0}>
-                <Box display="flex" alignItems="center" mb={1.5} sx={{ position: 'relative' }}>
+                <Box display="flex" alignItems="center" mb={1.5} gap={1}>
                   <PlayerIcon player={player} />
-                  <Box>
-                    <Box display="flex" alignItems="center" gap={0.75}>
+                  <Box
+                    display="flex"
+                    alignItems="center"
+                    justifyContent="space-between"
+                    flex={1}
+                    minWidth={0}
+                    gap={1}
+                  >
+                    {/* Player Name */}
+                    <OneLineAutoFit minScale={0.8}>
                       <Typography
                         variant="subtitle1"
                         sx={{
@@ -361,86 +369,90 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                           fontSize: '1.15rem',
                           fontWeight: 100,
                           lineHeight: 1.2,
+                          whiteSpace: 'nowrap',
                         }}
                       >
                         {resolveActorName(player)}
                       </Typography>
-                      <Box display="inline-flex" alignItems="center" gap={0.35}>
-                        <ShieldOutlinedIcon sx={{ color: 'text.secondary', fontSize: 26 }} />
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: (theme) =>
-                              theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
-                            fontSize: 11,
-                            lineHeight: 1,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {armorWeights.heavy}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
-                        >
-                          •
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            color: (theme) =>
-                              theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
-                            fontSize: 11,
-                            lineHeight: 1,
-                            fontWeight: 500,
-                          }}
-                        >
-                          {armorWeights.medium}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
-                        >
-                          •
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ color: '#3c9bff', fontSize: 11, lineHeight: 1 }}
-                        >
-                          {armorWeights.light}
-                        </Typography>
-                      </Box>
-                    </Box>
-                  </Box>
-                  <Tooltip
-                    title={`Role: ${roleInfo.roleType}`}
-                    enterTouchDelay={0}
-                    leaveTouchDelay={3000}
-                  >
+                    </OneLineAutoFit>
+
+                    {/* Gear Weights */}
                     <Box
+                      display="inline-flex"
+                      alignItems="center"
+                      gap={0.35}
                       sx={{
-                        position: 'absolute',
-                        top: 0,
-                        right: 0,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
+                        flex: '0 0 auto', // Don't shrink gear weights
+                        minWidth: 0, // Allow shrinking
+                        overflow: 'hidden', // Prevent overflow
                       }}
+                    >
+                      <ShieldOutlinedIcon sx={{ color: 'text.secondary', fontSize: 26 }} />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: (theme) =>
+                            theme.palette.mode === 'light' ? '#c44e4e' : '#ff7a7a',
+                          fontSize: 11,
+                          lineHeight: 1,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {armorWeights.heavy}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
+                      >
+                        •
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          color: (theme) =>
+                            theme.palette.mode === 'light' ? '#3db03d' : '#93f093',
+                          fontSize: 11,
+                          lineHeight: 1,
+                          fontWeight: 500,
+                        }}
+                      >
+                        {armorWeights.medium}
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: 'text.secondary', fontSize: 9, lineHeight: 1 }}
+                      >
+                        •
+                      </Typography>
+                      <Typography
+                        variant="caption"
+                        sx={{ color: '#3c9bff', fontSize: 11, lineHeight: 1 }}
+                      >
+                        {armorWeights.light}
+                      </Typography>
+                    </Box>
+
+                    {/* Role Icon */}
+                    <Tooltip
+                      title={`Role: ${roleInfo.roleType}`}
+                      enterTouchDelay={0}
+                      leaveTouchDelay={3000}
                     >
                       <Typography
                         variant="caption"
                         sx={{
-                          fontSize: 32,
+                          fontSize: { xs: 20, sm: 24, md: 28, lg: 32 },
                           lineHeight: 1,
                           filter: 'none',
+                          flex: '0 0 auto', // Don't shrink role icon
                         }}
                         role="img"
                         aria-label={`Role: ${roleInfo.roleType}`}
                       >
                         {roleInfo.roleEmoji}
                       </Typography>
-                    </Box>
-                  </Tooltip>
+                    </Tooltip>
+                  </Box>
                 </Box>
                 <Box>
                   <Box
@@ -877,11 +889,13 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                 )}
               </Box>
 
+              {/* Spacer to push bottom section down */}
+              <Box sx={{ flex: 1 }} />
+
               {/* Right column content stacked below left, full width */}
               <Box
                 sx={{
                   width: '100%',
-                  mt: 'auto',
                   pt: 1,
                   display: 'flex',
                   flexDirection: 'column',
