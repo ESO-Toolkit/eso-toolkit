@@ -17,8 +17,8 @@ export interface MorMarker {
   z: number;
   /** Size of the marker in meters */
   size: number;
-  /** Background texture/shape identifier */
-  bgTexture: string;
+  /** Background texture/shape identifier (optional - if not provided, only text will be shown) */
+  bgTexture?: string;
   /** RGBA color values (0-1 range) */
   colour: [number, number, number, number];
   /** Optional text label on the marker */

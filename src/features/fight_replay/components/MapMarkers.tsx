@@ -217,16 +217,22 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({ encodedString, fight, sc
     // Calculate the range of the zone in centimeters
     const rangeX = maxX - minX;
     const rangeZ = maxZ - minZ;
-    const _maxRange = Math.max(rangeX, rangeZ);
 
-    // Calculate zone scale multiplier
-    // Smaller scale factor = larger zone = markers should appear larger
-    // Use a baseline scale factor for comparison (middle-sized zones ~0.00003)
-    const baselineScaleFactor = 0.00003;
-    const zoneScaleMultiplier = baselineScaleFactor / scaleFactor;
+    if (rangeX <= 0 || rangeZ <= 0) {
+      logger.warn('Invalid zone ranges for marker transformation', {
+        rangeX,
+        rangeZ,
+        zoneName: zoneScaleData.name,
+        zoneId: zoneScaleData.zoneId,
+        mapId: zoneScaleData.mapId,
+      });
+      return null;
+    }
 
-    // Clamp the multiplier to reasonable bounds (0.5x to 10x)
-    const _clampedMultiplier = Math.max(0.5, Math.min(zoneScaleMultiplier, 10));
+    // Convert marker sizes (meters) to arena units using geometric mean across X/Z axes
+    const unitsPerMeterX = 10000 / rangeX;
+    const unitsPerMeterZ = 10000 / rangeZ;
+    const unitsPerMeter = Math.sqrt(unitsPerMeterX * unitsPerMeterZ);
 
     // Transform markers: map from ESO world space to arena space
     // Step 1: Normalize coordinates to map bounds (0-1 range)
@@ -244,32 +250,33 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({ encodedString, fight, sc
         // Map texture has scale={[-1, 1, 1]} which flips it, so we flip X coordinate
         const arenaX = 100 - normalizedX * 100; // Flip X to match the flipped map texture
         const arenaZ = 100 - normalizedZ * 100; // Flip Z to correct north/south orientation
-        // Position marker at half its height above ground to center it vertically
-        // This prevents floor clipping while keeping markers visually grounded
-        // Floor is at y=-0.02, marker.size is the diameter, so radius is size/2
-        const arenaY = marker.size / 2;
+
+  // Convert marker size (meters) to arena units, then lift above the floor by half height
+  const normalizedSize = marker.size * unitsPerMeter;
+  const arenaY = (normalizedSize * scale) / 2 + 0.01;
 
         return {
           ...marker,
           x: arenaX,
           y: arenaY,
           z: arenaZ,
+          size: normalizedSize,
         };
       }),
-      // Store the scale multiplier to apply to marker visual size (currently unused but kept for future)
-      scaleMultiplier: _clampedMultiplier,
     };
 
     logger.info('Transformed markers', {
       count: markersInBounds.length,
       zoneName: zoneScaleData.name,
+      unitsPerMeter: unitsPerMeter.toFixed(5),
+      visualScale: scale.toFixed(3),
       sample: transformed.markers
         .slice(0, 3)
         .map((m) => ({ x: m.x, y: m.y, z: m.z, text: m.text })),
     });
 
     return transformed;
-  }, [decodedMarkers, zoneScaleData]);
+  }, [decodedMarkers, scale, zoneScaleData]);
 
   // If decoding failed or no markers, don't render anything
   if (!transformedMarkers || transformedMarkers.markers.length === 0) {
@@ -280,8 +287,7 @@ export const MapMarkers: React.FC<MapMarkersProps> = ({ encodedString, fight, sc
     return null;
   }
 
-  // Apply zone-based scale multiplier to the base marker scale
-  const effectiveScale = scale * (transformedMarkers.scaleMultiplier || 1);
+  const effectiveScale = scale;
 
   // Limit the number of markers to prevent WebGL crashes
   // Most raid encounters have <50 markers, so 200 is a safe upper limit

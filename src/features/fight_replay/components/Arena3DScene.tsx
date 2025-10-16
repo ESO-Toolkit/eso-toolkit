@@ -3,6 +3,9 @@ import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
+import { getMapScaleData } from '../../../types/zoneScaleData';
+import { Logger, LogLevel } from '../../../utils/logger';
+import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { TimestampPositionLookup } from '../../../workers/calculations/CalculateActorPositions';
 
@@ -13,6 +16,12 @@ import { DynamicMapTexture } from './DynamicMapTexture';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
+
+// Create logger instance for Arena3DScene
+const logger = new Logger({
+  level: LogLevel.INFO,
+  contextPrefix: 'Arena3DScene',
+});
 
 /**
  * Props for the AnimationFrameSceneActors component
@@ -152,12 +161,12 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
   // Calculate dynamic camera settings based on arena dimensions
   const cameraSettings = useMemo(() => {
-    // Default fallback values with closer minimum zoom
+    // Default fallback values with closer minimum zoom for detailed actor inspection
     const defaults = {
       target:
         initialTarget ||
         ([arenaDimensions.centerX, 0, arenaDimensions.centerZ] as [number, number, number]),
-      minDistance: 1,
+      minDistance: 0.5, // Allow very close zoom
       maxDistance: 200,
     };
 
@@ -187,9 +196,10 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     const rangeZ = arenaMaxZ - arenaMinZ;
 
     // Set camera distances based on fight area size
-    // Minimum: Allow very close zoom for detailed inspection
+    // Minimum: Allow very close zoom for detailed inspection of actors
+    // With adaptable actor scale (0.8-1.1x), users need to zoom in closer
     const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-    const minDistance = Math.max(1, diagonal * 0.1);
+    const minDistance = Math.max(0.5, diagonal * 0.05); // Reduced from 1 and 0.1
 
     // Maximum: 3x the diagonal for good overview, capped at reasonable bounds
     const maxDistance = Math.min(500, Math.max(50, diagonal * 3));
@@ -203,35 +213,75 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
     };
   }, [fight.boundingBox, initialTarget, arenaDimensions.centerX, arenaDimensions.centerZ]);
 
-  // Calculate actor scale based on fight area size
-  // INVERSE SCALING: Smaller fights = LARGER actors for better visibility
-  // Larger fights = SMALLER actors to prevent overlap
+  // Calculate actor scale based on map dimensions so actors keep a consistent real-world footprint
   const actorScale = useMemo(() => {
-    if (!fight?.boundingBox) {
-      return 1;
+    const zoneId = fight.gameZone?.id;
+    const mapId = fight.maps?.[0]?.id;
+
+    if (!zoneId || !mapId) {
+      logger.warn('Missing zoneId or mapId for map-based actor scaling', { zoneId, mapId });
+      return DEFAULT_ACTOR_SCALE;
     }
 
-    const { minX, maxX, minY, maxY } = fight.boundingBox;
-    if (minX === undefined || maxX === undefined || minY === undefined || maxY === undefined) {
-      return 1;
+    const mapData = getMapScaleData(zoneId, mapId);
+    if (!mapData) {
+      logger.warn('No map scale data found for map-based actor scaling', { zoneId, mapId });
+      return DEFAULT_ACTOR_SCALE;
     }
 
-    // Calculate the size of the fight area
-    const rangeX = (maxX - minX) / 100;
-    const rangeZ = (maxY - minY) / 100;
-    const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+    const mapScale = computeActorScaleFromMapData(mapData);
+    if (mapScale) {
+      logger.info('Actor scale calculation (map-based)', {
+        fightId: fight.id,
+        mapName: mapData.name,
+        zoneId,
+        mapId,
+        actorScale: mapScale.toFixed(3),
+      });
 
-    // Full arena diagonal is ~141.42 units
-    // Scale actors INVERSELY to fight size:
-    // - Small fight (10 unit diagonal) → scale = 2.5x (very visible)
-    // - Medium fight (50 unit diagonal) → scale = 1.4x
-    // - Large fight (100+ unit diagonal) → scale = 0.7-1.0x (normal size)
-    const relativeFightSize = diagonal / 141.42;
-    const inverseScale = 1.0 / (relativeFightSize + 0.4); // +0.4 prevents division issues
+      return mapScale;
+    }
 
-    // Clamp between 0.7 (huge arenas) and 3.0 (tiny arenas)
-    return Math.max(0.7, Math.min(3.0, inverseScale));
-  }, [fight.boundingBox]);
+    logger.warn('Map data produced invalid actor scale, falling back to default', {
+      fightId: fight.id,
+      mapName: mapData.name,
+    });
+
+    // Fallback: use fight bounding box if available, otherwise default constant
+    const boundingBox = fight.boundingBox;
+    if (boundingBox) {
+      const { minX, maxX, minY, maxY } = boundingBox;
+      const hasBounds = [minX, maxX, minY, maxY].every(
+        (value) => typeof value === 'number' && Number.isFinite(value),
+      );
+
+      if (hasBounds) {
+        const rangeX = ((maxX as number) - (minX as number)) / 100;
+        const rangeZ = ((maxY as number) - (minY as number)) / 100;
+        const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+
+        if (diagonal > 0) {
+          const relativeFightSize = Math.min(1, diagonal / 141.42);
+          const fallbackScale = 0.5 + relativeFightSize * 0.3; // Keep within visibility bounds
+
+          logger.warn('Using bounding-box fallback for actor scale', {
+            fightId: fight.id,
+            diagonal: diagonal.toFixed(2),
+            fallbackScale: fallbackScale.toFixed(3),
+          });
+
+          return fallbackScale;
+        }
+      }
+    }
+
+    logger.warn('Unable to derive actor scale, using default constant', {
+      fightId: fight.id,
+      defaultScale: DEFAULT_ACTOR_SCALE,
+    });
+
+    return DEFAULT_ACTOR_SCALE;
+  }, [fight.boundingBox, fight.gameZone?.id, fight.id, fight.maps]);
 
   // Debug logging for Scene component
 
@@ -318,7 +368,7 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
       <BossHealthHUD lookup={lookup} timeRef={timeRef} />
 
       {/* Map Markers - Render raid/dungeon markers if provided (M0R or Elms format) */}
-      {mapMarkersString && <MapMarkers encodedString={mapMarkersString} fight={fight} scale={1} />}
+      {mapMarkersString && <MapMarkers encodedString={mapMarkersString} fight={fight} />}
 
       {/* Controls - dynamically positioned based on fight area */}
       <OrbitControls

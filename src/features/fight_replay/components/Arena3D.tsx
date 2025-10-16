@@ -5,9 +5,11 @@ import React, { useMemo, useState, useEffect } from 'react';
 
 import { FightFragment } from '../../../graphql/generated';
 import { useActorPositionsTask } from '../../../hooks/workerTasks/useActorPositionsTask';
+import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
 import { getActorPositionAtClosestTimestamp } from '../../../workers/calculations/CalculateActorPositions';
+import { DEFAULT_ACTOR_SCALE, computeActorScaleFromMapData } from '../utils/mapScaling';
 
 import { Arena3DScene } from './Arena3DScene';
 import { PerformanceMonitorExternal } from './PerformanceMonitor/PerformanceMonitorExternal';
@@ -208,15 +210,33 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   // MUST be before any early returns to comply with React Hooks rules
   const { initialCameraTarget, initialCameraPosition } = useMemo(() => {
     // Calculate actor scale based on fight size (same logic as Arena3DScene)
-    let actorScale = 1;
-    if (fight?.boundingBox) {
-      const { minX, maxX, minY, maxY } = fight.boundingBox;
-      if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
-        const rangeX = (maxX - minX) / 100;
-        const rangeZ = (maxY - minY) / 100;
-        const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
-        const relativeFightSize = diagonal / 141.42;
-        actorScale = Math.max(0.3, Math.min(1.0, relativeFightSize * 0.5));
+    let actorScale = DEFAULT_ACTOR_SCALE;
+
+    if (fight) {
+      const zoneId = fight.gameZone?.id;
+      const mapId = fight.maps?.[0]?.id;
+
+      if (zoneId && mapId) {
+        const mapData = getMapScaleData(zoneId, mapId);
+        const mapScale = mapData ? computeActorScaleFromMapData(mapData) : null;
+
+        if (mapScale) {
+          actorScale = mapScale;
+        }
+      }
+
+      if ((!fight.gameZone?.id || !fight.maps?.[0]?.id) && fight.boundingBox) {
+        const { minX, maxX, minY, maxY } = fight.boundingBox;
+        if (minX !== undefined && maxX !== undefined && minY !== undefined && maxY !== undefined) {
+          const rangeX = (maxX - minX) / 100;
+          const rangeZ = (maxY - minY) / 100;
+          const diagonal = Math.sqrt(rangeX * rangeX + rangeZ * rangeZ);
+
+          if (diagonal > 0) {
+            const relativeFightSize = Math.min(1, diagonal / 141.42);
+            actorScale = 0.5 + relativeFightSize * 0.3;
+          }
+        }
       }
     }
 
@@ -319,16 +339,14 @@ export const Arena3D: React.FC<Arena3DProps> = ({
     const fovRadians = (fov * Math.PI) / 180;
 
     // Calculate distance needed to fit the bounding box in view
-    // Use a tighter framing - only 5% padding and account for viewing angle
-    // Since camera is at an angle, we need less distance than straight-on view
-    // Apply actor scale to make camera proportionally closer for smaller fights
-    const requiredDistance =
-      (boundingBoxDiagonal / 2 / Math.tan(fovRadians / 2)) * 0.7 * actorScale;
+    // Use a tight framing multiplier for a closer initial view
+    const requiredDistance = (boundingBoxDiagonal / 2 / Math.tan(fovRadians / 2)) * 0.5;
 
-    // Ensure distance is within reasonable bounds
+    // Use our calculated distance, but ensure it's reasonable
+    // Don't use cameraSettings.minDistance as it can be too large for initial view
     const viewDistance = Math.max(
-      cameraSettings.minDistance,
-      Math.min(requiredDistance, cameraSettings.maxDistance * 0.5),
+      2, // Absolute minimum of 2 units (very close)
+      Math.min(requiredDistance, cameraSettings.maxDistance * 0.3),
     );
 
     // Position camera: southwest of target, elevated for good viewing angle

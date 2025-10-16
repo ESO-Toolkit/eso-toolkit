@@ -2,13 +2,47 @@
  * 3D Marker component for rendering map markers in the fight replay
  * Supports both M0R and Elms marker formats
  */
-import { Text, Billboard } from '@react-three/drei';
+import { Billboard } from '@react-three/drei';
 import React, { useMemo } from 'react';
 import * as THREE from 'three';
 
 import { MorMarker } from '../../../types/mapMarkers';
 
 import { MarkerShape } from './MarkerShape';
+
+/**
+ * Creates a canvas texture with text rendered using proper fonts
+ * This allows us to render Unicode characters correctly
+ */
+function createTextTexture(text: string, fontSize: number): THREE.CanvasTexture {
+  const canvas = document.createElement('canvas');
+  const context = canvas.getContext('2d')!;
+
+  // Set canvas size (higher resolution for sharper text)
+  canvas.width = 512;
+  canvas.height = 256;
+
+  // Configure text rendering with anti-aliasing and bold weight
+  context.font = `900 ${fontSize}px Arial, sans-serif`; // 900 = extra bold
+  context.textAlign = 'center';
+  context.textBaseline = 'middle';
+
+  // Draw outline (black, thicker for better readability)
+  context.strokeStyle = 'black';
+  context.lineWidth = fontSize * 0.2;
+  context.strokeText(text, canvas.width / 2, canvas.height / 2);
+
+  // Draw fill (white)
+  context.fillStyle = 'white';
+  context.fillText(text, canvas.width / 2, canvas.height / 2);
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.minFilter = THREE.LinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = 16; // Anisotropic filtering for crisp text at angles
+  texture.needsUpdate = true;
+  return texture;
+}
 
 interface Marker3DProps {
   marker: MorMarker;
@@ -34,8 +68,16 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
     return new THREE.Color(marker.colour[0], marker.colour[1], marker.colour[2]);
   }, [marker.colour]);
 
-  // Calculate marker size (marker.size is in meters)
+  // Calculate marker size (marker.size already normalized to arena units)
   const markerSize = marker.size * scale;
+
+  // Create text texture if text is provided (higher font size for sharper, bolder rendering)
+  const textTexture = useMemo(() => {
+    if (marker.text && marker.text.trim() !== '') {
+      return createTextTexture(marker.text, 200);
+    }
+    return null;
+  }, [marker.text]);
 
   // Determine if marker should be a billboard (always face camera) or have orientation
   const isFloating = marker.orientation === undefined;
@@ -45,27 +87,21 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
     return (
       <group position={position}>
         <Billboard follow={true} lockX={false} lockY={false} lockZ={false}>
-          {/* Shape based on bgTexture */}
-          <MarkerShape
-            texturePath={marker.bgTexture}
-            size={markerSize}
-            color={color}
-            opacity={marker.colour[3]}
-          />
+          {/* Shape based on bgTexture (only if provided) */}
+          {marker.bgTexture && (
+            <MarkerShape
+              texturePath={marker.bgTexture}
+              size={markerSize}
+              color={color}
+              opacity={marker.colour[3]}
+            />
+          )}
 
           {/* Text label if provided */}
-          {marker.text && marker.text.trim() !== '' && (
-            <Text
-              position={[0, 0, 0.01]}
-              fontSize={markerSize * 0.3}
-              color="white"
-              anchorX="center"
-              anchorY="middle"
-              outlineWidth={markerSize * 0.02}
-              outlineColor="black"
-            >
-              {marker.text}
-            </Text>
+          {textTexture && (
+            <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
+              <spriteMaterial map={textTexture} transparent={true} depthTest={false} />
+            </sprite>
           )}
         </Billboard>
       </group>
@@ -78,27 +114,21 @@ export const Marker3D: React.FC<Marker3DProps> = ({ marker, scale = 1 }) => {
     return (
       <group position={position}>
         <group rotation={[pitch, yaw, 0]}>
-          {/* Shape based on bgTexture */}
-          <MarkerShape
-            texturePath={marker.bgTexture}
-            size={markerSize}
-            color={color}
-            opacity={marker.colour[3]}
-          />
+          {/* Shape based on bgTexture (only if provided) */}
+          {marker.bgTexture && (
+            <MarkerShape
+              texturePath={marker.bgTexture}
+              size={markerSize}
+              color={color}
+              opacity={marker.colour[3]}
+            />
+          )}
 
           {/* Text label if provided - slightly above the marker plane */}
-          {marker.text && marker.text.trim() !== '' && (
-            <Text
-              position={[0, 0, 0.01]}
-              fontSize={markerSize * 0.3}
-              color="white"
-              anchorX="center"
-              anchorY="middle"
-              outlineWidth={markerSize * 0.02}
-              outlineColor="black"
-            >
-              {marker.text}
-            </Text>
+          {textTexture && (
+            <sprite position={[0, 0, 0.01]} scale={[markerSize * 0.8, markerSize * 0.4, 1]}>
+              <spriteMaterial map={textTexture} transparent={true} depthTest={false} />
+            </sprite>
           )}
         </group>
       </group>

@@ -160,7 +160,7 @@ export const FightReplay: React.FC = () => {
               label={`${markerStats.filtered} / ${markerStats.totalDecoded} markers`}
               color="success"
               size="small"
-              sx={{ fontWeight: 'medium' }}
+              variant="outlined"
             />
             {markerStats.is3D && (
               <Chip label="3D Filtering" color="info" size="small" variant="outlined" />
