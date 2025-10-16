@@ -15,21 +15,24 @@ jobs:
   check-do-not-merge-label:
     runs-on: ubuntu-latest
     steps:
-      - name: Check for Do Not Merge label
+      - name: Check for Do Not Merge or Waiting on Parent labels
         uses: actions/github-script@v8
         with:
           script: |
             const labels = context.payload.pull_request.labels.map(label => label.name.toLowerCase());
-            const doNotMergeLabels = ['do not merge', 'do-not-merge', 'wip', 'work in progress'];
+            const doNotMergeLabels = ['do not merge', 'do-not-merge', 'wip', 'work in progress', 'waiting on parent', 'waiting-on-parent'];
 
             const hasDoNotMergeLabel = doNotMergeLabels.some(label => 
               labels.some(prLabel => prLabel.includes(label.toLowerCase()))
             );
 
             if (hasDoNotMergeLabel) {
-              core.setFailed('❌ This PR has a "Do Not Merge" label and cannot be merged until the label is removed.');
+              const matchedLabels = labels.filter(prLabel => 
+                doNotMergeLabels.some(blockLabel => prLabel.includes(blockLabel.toLowerCase()))
+              );
+              core.setFailed(`❌ This PR has blocking label(s): ${matchedLabels.join(', ')}. The PR cannot be merged until these labels are removed.`);
             } else {
-              console.log('✅ No "Do Not Merge" labels found. PR can proceed.');
+              console.log('✅ No blocking labels found. PR can proceed.');
             }
 
   build:
