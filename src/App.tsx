@@ -8,6 +8,7 @@ import { MemoizedLoadingSpinner } from './components/CustomLoadingSpinner';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HeaderBar } from './components/HeaderBar';
 import { LandingPage } from './components/LandingPage';
+import { ReportFightsSkeleton } from './components/ReportFightsSkeleton';
 import { SmartCalculatorSkeleton } from './components/SmartCalculatorSkeleton';
 import { TextEditorSkeleton } from './components/TextEditorSkeleton';
 import { UpdateNotification } from './components/UpdateNotification';
@@ -84,6 +85,9 @@ const LoadingFallback: React.FC = () => (
 
 // Text Editor specific loading fallback
 const TextEditorLoadingFallback: React.FC = () => <TextEditorSkeleton />;
+
+// Report fights specific loading fallback
+const ReportFightsLoadingFallback: React.FC = () => <ReportFightsSkeleton />;
 
 // Calculator specific loading fallback
 const CalculatorLoadingFallback: React.FC = () => <SmartCalculatorSkeleton />;
@@ -258,7 +262,7 @@ const AppRoutes: React.FC = () => {
               element={
                 <AuthenticatedRoute>
                   <ErrorBoundary>
-                    <Suspense fallback={<LoadingFallback />}>
+                    <Suspense fallback={<ReportFightsLoadingFallback />}>
                       <ReportFights />
                     </Suspense>
                   </ErrorBoundary>
@@ -334,5 +338,5 @@ const AppRoutes: React.FC = () => {
   );
 };
 
-export { SmartCalculatorSkeleton, TextEditorSkeleton };
+export { SmartCalculatorSkeleton, ReportFightsSkeleton, TextEditorSkeleton };
 export default App;
