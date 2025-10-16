@@ -698,10 +698,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   // Auto-expand accordion if there's only 1 encounter
   React.useEffect(() => {
-    if (encounters.length === 1) {
+    if (encounters.length === 1 && !expandedEncounters.has(encounters[0].id)) {
       setExpandedEncounters(new Set([encounters[0].id]));
+    } else if (encounters.length > 1) {
+      // Keep all accordions collapsed when there are multiple
+      setExpandedEncounters(new Set());
     }
-  }, [encounters]);
+  }, [encounters, expandedEncounters]);
 
   const toggleEncounter = (encounterId: string): void => {
     setExpandedEncounters((prev) => {
@@ -948,11 +951,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         p: 0,
         m: 0,
         width: '100%',
-        maxWidth: '100vw',
-        minWidth: 0,
+        minWidth: 'auto',
         boxSizing: 'border-box',
         background: 'transparent',
-        overflowX: 'hidden',
+        overflowX: 'visible',
       }}
     >
       <Box
@@ -963,8 +965,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
           overflow: 'visible',
-          minWidth: 0,
-          maxWidth: '100%',
+          minWidth: 'auto',
+          maxWidth: 'none',
+          width: '100%',
+          position: 'relative',
         }}
       >
         <Typography
@@ -975,10 +979,19 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             mb: { xs: '1.5rem', sm: '2rem' },
             mt: { xs: 0, sm: '-2.7rem' },
             textAlign: { xs: 'center', sm: 'left' },
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            px: 0,
+            wordBreak: 'break-word',
+            whiteSpace: 'normal',
+            overflow: 'visible',
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 'calc(100% + 8rem)' },
+            minWidth: 0,
+            px: { xs: 1, sm: '2.7rem' },
+            pl: { xs: 1, sm: '2.7rem' },
+            pr: { xs: 1, sm: '1rem' },
+            hyphens: 'auto',
+            position: 'relative',
+            zIndex: 2,
+            textIndent: { xs: 0, sm: '-2.7rem' },
           }}
         >
           {reportData?.title || 'Report Details'}
