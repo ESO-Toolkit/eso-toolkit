@@ -951,11 +951,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
         p: 0,
         m: 0,
         width: '100%',
-        maxWidth: '100vw',
-        minWidth: 0,
+        minWidth: 'auto',
         boxSizing: 'border-box',
         background: 'transparent',
-        overflowX: 'hidden',
+        overflowX: 'visible',
       }}
     >
       <Box
@@ -984,12 +983,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             whiteSpace: 'normal',
             overflow: 'visible',
             width: '100%',
-            maxWidth: { xs: '100%', sm: 'calc(100% + 4rem)' },
+            maxWidth: { xs: '100%', sm: 'calc(100% + 8rem)' },
             minWidth: 0,
-            px: { xs: 1, sm: 0 },
+            px: { xs: 1, sm: '2.7rem' },
+            pl: { xs: 1, sm: '2.7rem' },
+            pr: { xs: 1, sm: '1rem' },
             hyphens: 'auto',
             position: 'relative',
             zIndex: 2,
+            textIndent: { xs: 0, sm: '-2.7rem' },
           }}
         >
           {reportData?.title || 'Report Details'}
