@@ -698,10 +698,13 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
 
   // Auto-expand accordion if there's only 1 encounter
   React.useEffect(() => {
-    if (encounters.length === 1) {
+    if (encounters.length === 1 && !expandedEncounters.has(encounters[0].id)) {
       setExpandedEncounters(new Set([encounters[0].id]));
+    } else if (encounters.length > 1) {
+      // Keep all accordions collapsed when there are multiple
+      setExpandedEncounters(new Set());
     }
-  }, [encounters]);
+  }, [encounters, expandedEncounters]);
 
   const toggleEncounter = (encounterId: string): void => {
     setExpandedEncounters((prev) => {
@@ -963,8 +966,10 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
           borderRadius: { xs: 0, sm: 1 },
           boxShadow: 2,
           overflow: 'visible',
-          minWidth: 0,
-          maxWidth: '100%',
+          minWidth: 'auto',
+          maxWidth: 'none',
+          width: '100%',
+          position: 'relative',
         }}
       >
         <Typography
@@ -976,7 +981,15 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             mt: { xs: 0, sm: '-2.7rem' },
             textAlign: { xs: 'center', sm: 'left' },
             wordBreak: 'break-word',
-            px: 0,
+            whiteSpace: 'normal',
+            overflow: 'visible',
+            width: '100%',
+            maxWidth: { xs: '100%', sm: 'calc(100% + 4rem)' },
+            minWidth: 0,
+            px: { xs: 1, sm: 0 },
+            hyphens: 'auto',
+            position: 'relative',
+            zIndex: 2,
           }}
         >
           {reportData?.title || 'Report Details'}
