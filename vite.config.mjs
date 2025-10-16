@@ -55,10 +55,10 @@ export default defineConfig(({ command, mode }) => {
 
     // Development server configuration
     server: {
-      port: process.env.PORT ? parseInt(process.env.PORT) : 3000,
+      port: 3000,
       open: false,
       host: true,
-      strictPort: process.env.STRICT_PORT === 'true', // Only strict if explicitly set
+      strictPort: true,
       headers: {
         'Access-Control-Allow-Origin': '*',
       },
