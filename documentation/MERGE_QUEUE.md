@@ -33,7 +33,7 @@ npm run queue:process
 | `merge-queue` | Standard queue | PR will be merged when ready |
 | `auto-merge` | Priority queue | High-priority merge with priority processing |
 | `priority`, `hotfix`, `critical` | Priority flags | Move PR to front of queue |
-| `do not merge`, `wip`, etc. | Blocking labels | Prevent PR from being merged |
+| `do not merge`, `wip`, `waiting on parent`, etc. | Blocking labels | Prevent PR from being merged |
 
 ## ⚙️ How It Works
 
