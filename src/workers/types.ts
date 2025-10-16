@@ -4,7 +4,7 @@
 
 import { Remote } from 'comlink';
 
-import { ILogger } from '../contexts/LoggerContext';
+import { ILogger } from '../utils/logger';
 
 import { SharedComputationWorker, SharedComputationWorkerTaskType } from './SharedWorker';
 import { OnProgressCallback } from './Utils';

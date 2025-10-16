@@ -38,7 +38,8 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
         }
       }
     },
-    [client, logger],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [client], // logger intentionally omitted - it's a stable singleton, not a reactive dependency
   );
 
   // Method to clear auth token
@@ -46,7 +47,8 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     logger.info('Clearing EsoLogsClient access token');
     setIsLoggedIn(false);
     client.updateAccessToken('');
-  }, [client, logger]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client]); // logger intentionally omitted - it's a stable singleton, not a reactive dependency
 
   const contextValue = useMemo(() => {
     const value = {
@@ -64,7 +66,8 @@ export const EsoLogsClientProvider: React.FC<{ children: ReactNode }> = ({ child
     });
 
     return value;
-  }, [client, isLoggedIn, logger, setAuthToken, clearAuthToken]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [client, isLoggedIn, setAuthToken, clearAuthToken]); // logger intentionally omitted - it's a stable singleton, not a reactive dependency
 
   return (
     <EsoLogsClientContext.Provider value={contextValue}>

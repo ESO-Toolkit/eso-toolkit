@@ -26,7 +26,16 @@ export default defineConfig(({ command, mode }) => {
         },
         include: '**/*.svg?react',
       }),
-      react(),
+      react({
+        // Exclude Web Workers from React Refresh to avoid "window is not defined" errors
+        // Workers run in a separate context without window/document globals
+        exclude: [
+          /node_modules/,
+          /\/workers\//,
+          /\.worker\./,
+          /SharedWorker/,
+        ],
+      }),
       // ESLint plugin disabled due to ESLint 9 compatibility issues
     // Use 'npm run lint' for linting during development
     ],

@@ -24,6 +24,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { MemoizedLoadingSpinner } from '../../components/CustomLoadingSpinner';
+import { useLogger } from '../../contexts/LoggerContext';
 import { useEsoLogsClientInstance } from '../../EsoLogsClientContext';
 import { GetUserReportsQuery, UserReportSummaryFragment } from '../../graphql/generated';
 import { GetUserReportsDocument } from '../../graphql/reports.generated';
@@ -214,6 +215,7 @@ const LoadingOverlay = React.memo(LoadingOverlayComponent);
 LoadingOverlay.displayName = 'LoadingOverlay';
 
 export const UserReports: React.FC = () => {
+  const logger = useLogger('UserReports');
   const theme = useTheme();
   const navigate = useNavigate();
   const { isLoggedIn, currentUser, userLoading, userError } = useAuth();
@@ -302,8 +304,10 @@ export const UserReports: React.FC = () => {
           },
         }));
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to fetch user reports:', error);
+        logger.error(
+          'Failed to fetch user reports',
+          error instanceof Error ? error : new Error(String(error)),
+        );
         setState((prev) => ({
           ...prev,
           loading: false,
@@ -312,7 +316,7 @@ export const UserReports: React.FC = () => {
         }));
       }
     },
-    [client, currentUser?.id],
+    [client, currentUser?.id, logger],
   );
 
   // Event handlers

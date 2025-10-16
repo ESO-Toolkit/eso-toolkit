@@ -21,6 +21,22 @@ if (typeof global.TextDecoder === 'undefined') {
   (global as any).TextDecoder = TextDecoder;
 }
 
+// Polyfill for ResizeObserver (required for Three.js Canvas and react-use-measure)
+if (typeof global.ResizeObserver === 'undefined') {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (global as any).ResizeObserver = class ResizeObserver {
+    observe(): void {
+      // Mock implementation
+    }
+    unobserve(): void {
+      // Mock implementation
+    }
+    disconnect(): void {
+      // Mock implementation
+    }
+  };
+}
+
 // Mock localStorage
 // Don't use jest.fn() here because it can cause issues if the individual tests spy
 const localStorageMock = {

@@ -3,6 +3,8 @@
  * Orchestrates multiple detection strategies to provide comprehensive scribing detection
  */
 
+import { Logger, LogLevel } from '@/utils/logger';
+
 import { IAbilityMappingService } from '../../core/services/AbilityMappingService';
 import { DETECTION_CONFIDENCE_THRESHOLDS } from '../../shared/constants';
 import { ScribingDetectionResult, DetectedCombination } from '../../shared/types';
@@ -29,6 +31,7 @@ export interface IScribingDetectionService {
 
 export class ScribingDetectionService implements IScribingDetectionService {
   private strategies: IDetectionStrategy[] = [];
+  private logger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetectionService' });
 
   constructor(abilityMappingService: IAbilityMappingService) {
     // Register default strategies
@@ -119,8 +122,9 @@ export class ScribingDetectionService implements IScribingDetectionService {
           totalConfidence += result.confidence;
         }
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(`Strategy ${strategy.getName()} failed:`, error);
+        this.logger.error('Strategy execution failed', error instanceof Error ? error : undefined, {
+          strategyName: strategy.getName(),
+        });
       }
     }
 
@@ -174,8 +178,11 @@ export class ScribingDetectionService implements IScribingDetectionService {
         const result = await this.detectScribingCombinations(context);
         results.push(result);
       } catch (error) {
-        // eslint-disable-next-line no-console
-        console.error(`Detection failed for player ${playerData.playerName}:`, error);
+        this.logger.error(
+          'Detection failed for player',
+          error instanceof Error ? error : undefined,
+          { playerId: playerData.playerId, playerName: playerData.playerName },
+        );
 
         // Add empty result for failed detection
         results.push({

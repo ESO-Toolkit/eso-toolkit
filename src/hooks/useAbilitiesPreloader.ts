@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
 
+import { useLogger } from '../contexts/LoggerContext';
 import { abilityIdMapper } from '../utils/abilityIdMapper';
 import { ErrorUtils, NestedError } from '../utils/NestedError';
 
@@ -7,6 +8,8 @@ import { ErrorUtils, NestedError } from '../utils/NestedError';
  * Hook to preload abilities data when navigating to pages that need it
  */
 export const useAbilitiesPreloader = (shouldPreload = false): void => {
+  const logger = useLogger('useAbilitiesPreloader');
+
   useEffect(() => {
     if (shouldPreload && !abilityIdMapper.isDataLoaded()) {
       // Preload abilities data in the background
@@ -26,9 +29,8 @@ export const useAbilitiesPreloader = (shouldPreload = false): void => {
           },
         );
 
-        // eslint-disable-next-line no-console
-        console.warn('Abilities preload failed:', ErrorUtils.formatForLogging(enhancedError));
+        logger.warn('Abilities preload failed', ErrorUtils.formatForLogging(enhancedError));
       });
     }
-  }, [shouldPreload]);
+  }, [shouldPreload, logger]);
 };

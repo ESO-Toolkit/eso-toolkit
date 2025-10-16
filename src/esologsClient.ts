@@ -17,7 +17,7 @@ import {
 import { setContext } from '@apollo/client/link/context';
 import { getOperationName } from '@apollo/client/utilities';
 
-import { Logger, LogLevel } from './contexts/LoggerContext';
+import { Logger, LogLevel } from './utils/logger';
 
 // Create a logger instance for GraphQL client
 const logger = new Logger({

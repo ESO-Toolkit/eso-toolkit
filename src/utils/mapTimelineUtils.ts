@@ -1,7 +1,14 @@
 import { FightFragment, ReportFragment } from '../graphql/generated';
 import { BuffEvent } from '../types/combatlogEvents';
 
+import { Logger, LogLevel } from './logger';
 import { createEnhancedPhaseTransitions } from './phaseDetectionUtils';
+
+// Create logger instance for map timeline utilities
+const logger = new Logger({
+  level: LogLevel.DEBUG,
+  contextPrefix: 'MapTimeline',
+});
 
 export interface MapTimelineEntry {
   startTime: number;
@@ -28,8 +35,7 @@ export function createMapTimeline(
 ): MapTimeline {
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: Input data', {
+    logger.debug('Input data', {
       hasFight: !!fight,
       hasReport: !!report,
       fightId: fight?.id,
@@ -46,8 +52,7 @@ export function createMapTimeline(
   }
 
   if (!fight?.maps || fight.maps.length === 0) {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: No maps available');
+    logger.debug('No maps available');
     return { entries: [], totalMaps: 0 };
   }
 
@@ -55,8 +60,7 @@ export function createMapTimeline(
 
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: Filtered maps', {
+    logger.debug('Filtered maps', {
       filteredMaps: availableMaps,
       filteredCount: availableMaps.length,
     });
@@ -83,8 +87,7 @@ export function createMapTimeline(
 
   // Strategy 1: Use fight's phase transitions (if available)
   if (fight.phaseTransitions && fight.phaseTransitions.length > 0) {
-    // eslint-disable-next-line no-console
-    console.log('🎯 Using Strategy 1: Explicit phase transitions');
+    logger.info('🎯 Using Strategy 1: Explicit phase transitions');
     return createTimelineFromPhaseTransitions(fight, availableMaps);
   }
 
@@ -98,8 +101,7 @@ export function createMapTimeline(
     );
 
     if (detectedPhases && detectedPhases.length > 1) {
-      // eslint-disable-next-line no-console
-      console.log('✅ Using enhanced phase detection for accurate map timing');
+      logger.info('✅ Using enhanced phase detection for accurate map timing');
       // Create a temporary fight object with the detected phase transitions
       const enhancedFight = {
         ...fight,
@@ -128,8 +130,7 @@ function createTimelineFromPhaseTransitions(
 
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: Using phase transitions', {
+    logger.debug('Using phase transitions', {
       phaseTransitions,
       availableMaps,
     });
@@ -163,8 +164,7 @@ function createTimelineFromPhaseTransitions(
 
   // Debug logging
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: Phase-based timeline entries created', {
+    logger.debug('Phase-based timeline entries created', {
       entries: entries.map((entry) => ({
         mapName: entry.mapName,
         mapFile: entry.mapFile,
@@ -206,8 +206,7 @@ function createTimelineFromEvenDistribution(
 
   // Debug logging for timeline creation
   if (process.env.NODE_ENV === 'development') {
-    // eslint-disable-next-line no-console
-    console.log('createMapTimeline: Even distribution timeline entries created', {
+    logger.debug('Even distribution timeline entries created', {
       fightStartTime: fight.startTime,
       fightEndTime: fight.endTime,
       fightDuration,

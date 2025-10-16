@@ -6,6 +6,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
+import { useLogger, Logger, LogLevel } from '@/contexts/LoggerContext';
+
 import scribingData from '../../../../data/scribing-complete.json';
 import { ScribedSkillData } from '../../../components/SkillTooltip';
 // Import event hooks instead of selectors to ensure data is fetched
@@ -25,6 +27,9 @@ import type {
   ResourceChangeEvent,
 } from '../../../types/combatlogEvents';
 import { getScribingSkillByAbilityId } from '../utils/Scribing';
+
+// Module-level logger for standalone functions
+const moduleLogger = new Logger({ level: LogLevel.INFO, contextPrefix: 'ScribingDetection' });
 
 // Extract all valid signature script ability IDs from the scribing database
 const VALID_SIGNATURE_SCRIPT_IDS = new Set<number>();
@@ -274,8 +279,11 @@ async function detectSignatureScript(
 
     return null;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error detecting signature script:', error);
+    moduleLogger.error(
+      'Error detecting signature script',
+      error instanceof Error ? error : undefined,
+      { abilityId, playerId },
+    );
     return null;
   }
 }
@@ -559,8 +567,11 @@ async function detectAffixScripts(
 
     return detections;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Error detecting affix scripts:', error);
+    moduleLogger.error(
+      'Error detecting affix scripts',
+      error instanceof Error ? error : undefined,
+      { abilityId, playerId, grimoireKey },
+    );
     return [];
   }
 }
@@ -574,6 +585,7 @@ export function useScribingDetection(
   options: UseScribingDetectionOptions,
 ): UseScribingDetectionResult {
   const { fightId, playerId, abilityId, enabled = true } = options;
+  const logger = useLogger('useScribingDetection');
 
   const [data, setData] = useState<unknown>(null);
   const [scribedSkillData, setScribedSkillData] = useState<ScribedSkillData | null>(null);
@@ -627,8 +639,9 @@ export function useScribingDetection(
         );
 
         // Debug logging for affix detection
-        // eslint-disable-next-line no-console
-        console.log(`🔍 Affix Detection for ${scribingInfo.grimoire} (ID: ${abilityId}):`, {
+        logger.info('Affix detection results', {
+          grimoire: scribingInfo.grimoire,
+          abilityId,
           grimoireKey: scribingInfo.grimoireKey,
           affixResultsCount: affixResults.length,
           affixResults,

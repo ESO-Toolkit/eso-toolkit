@@ -47,6 +47,8 @@ import { styled, useTheme, alpha, Theme } from '@mui/material/styles';
 import { motion } from 'framer-motion';
 import React, { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 
+import { useLogger } from '@/contexts/LoggerContext';
+
 import {
   MAX_ARMOR_VALUE,
   OVER_RESISTANCE_DIVISOR,
@@ -1088,15 +1090,11 @@ const _validateCalculatorData = (data: CalculatorData): boolean => {
   const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
 
   if (lightArmorPassives.length > 1) {
-    // eslint-disable-next-line no-console
-    // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
     isValid = false;
   }
 
   if (heavyArmorPassives.length > 1) {
-    // eslint-disable-next-line no-console
-    // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
     isValid = false;
   }
@@ -1653,6 +1651,7 @@ const Gear = ({ size = '20', color = '#000000' }: GearProps): React.JSX.Element 
 );
 
 const CalculatorComponent: React.FC = () => {
+  const logger = useLogger('Calculator');
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.down('md'));
@@ -1682,79 +1681,78 @@ const CalculatorComponent: React.FC = () => {
   );
 
   // Helper function to validate calculator data integrity
-  const validateCalculatorData = useCallback((data: CalculatorData): boolean => {
-    let isValid = true;
-    const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
+  const validateCalculatorData = useCallback(
+    (data: CalculatorData): boolean => {
+      let isValid = true;
+      const itemTracker = new Map<string, { category: string; index: number; id?: string }[]>();
 
-    // Check for duplicate items in each category and track all items
-    for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
-      const items = data[category];
-      const nameMap = new Map<string, number[]>();
+      // Check for duplicate items in each category and track all items
+      for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
+        const items = data[category];
+        const nameMap = new Map<string, number[]>();
 
-      items.forEach((item, index) => {
-        // Track all items for cross-category validation
-        if (!itemTracker.has(item.name)) {
-          itemTracker.set(item.name, []);
+        items.forEach((item, index) => {
+          // Track all items for cross-category validation
+          if (!itemTracker.has(item.name)) {
+            itemTracker.set(item.name, []);
+          }
+          itemTracker
+            .get(item.name)!
+            .push({ category, index, id: (item as CalculatorItemWithId).id });
+
+          // Check within category duplicates
+          if (!nameMap.has(item.name)) {
+            nameMap.set(item.name, []);
+          }
+          nameMap.get(item.name)!.push(index);
+        });
+
+        // Check for duplicates within category
+        for (const [name, indices] of nameMap.entries()) {
+          if (indices.length > 1) {
+            logger.error('Duplicate item found in category', undefined, {
+              category,
+              itemName: name,
+              indices: indices.join(', '),
+            });
+            isValid = false;
+          }
         }
-        itemTracker
-          .get(item.name)!
-          .push({ category, index, id: (item as CalculatorItemWithId).id });
+      }
 
-        // Check within category duplicates
-        if (!nameMap.has(item.name)) {
-          nameMap.set(item.name, []);
-        }
-        nameMap.get(item.name)!.push(index);
-      });
-
-      // Check for duplicates within category
-      for (const [name, indices] of nameMap.entries()) {
-        if (indices.length > 1) {
-          // eslint-disable-next-line no-console
-          console.error(
-            `❌ [VALIDATION] Duplicate item "${name}" found in ${category} at indices: ${indices.join(', ')}`,
-          );
+      // Check for cross-category duplicates (should only exist for specific items like armor passives)
+      for (const [itemName, locations] of itemTracker.entries()) {
+        if (locations.length > 1 && !itemName.includes('Armor Passive')) {
+          logger.error('Item duplicated across categories', undefined, {
+            itemName,
+            locations: locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
+          });
           isValid = false;
         }
       }
-    }
 
-    // Check for cross-category duplicates (should only exist for specific items like armor passives)
-    for (const [itemName, locations] of itemTracker.entries()) {
-      if (locations.length > 1 && !itemName.includes('Armor Passive')) {
-        // eslint-disable-next-line no-console
-        console.error(
-          `❌ [VALIDATION] Item "${itemName}" duplicated across categories:`,
-          locations.map((loc) => `${loc.category}[${loc.index}]`).join(', '),
-        );
-        isValid = false;
-      }
-    }
-
-    // TEMPORARILY DISABLED: Validate armor passive items specifically
-    // This validation is preventing normal operation when duplicates occur
-    // TODO: Fix the root cause of duplication instead of just detecting it
-    /*
+      // TEMPORARILY DISABLED: Validate armor passive items specifically
+      // This validation is preventing normal operation when duplicates occur
+      // TODO: Fix the root cause of duplication instead of just detecting it
+      /*
     const lightArmorPassives = data.gear.filter(item => item.name === 'Light Armor Passive');
     const heavyArmorPassives = data.gear.filter(item => item.name === 'Heavy Armor Passive');
 
     if (lightArmorPassives.length > 1) {
-      // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Light Armor Passive items found: ${lightArmorPassives.length}`);
       isValid = false;
     }
 
     if (heavyArmorPassives.length > 1) {
-      // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Multiple Heavy Armor Passive items found: ${heavyArmorPassives.length}`);
       isValid = false;
     }
     */
 
-    // TEMPORARILY DISABLED: Validate gear category structure
-    // The actual gear array structure doesn't match the expected order
-    // TODO: Revisit this validation when data structure is stabilized
-    /*
+      // TEMPORARILY DISABLED: Validate gear category structure
+      // The actual gear array structure doesn't match the expected order
+      // TODO: Revisit this validation when data structure is stabilized
+      /*
     const expectedGearItems = [
       'Light Helm', 'Light Chest', 'Light Shoulders', 'Light Gloves', 'Light Boots', 'Light Belt',
       'Medium Helm', 'Medium Chest', 'Medium Shoulders', 'Medium Gloves', 'Medium Boots', 'Medium Belt',
@@ -1764,21 +1762,19 @@ const CalculatorComponent: React.FC = () => {
     expectedGearItems.forEach((expectedName, expectedIndex) => {
       const actualItem = data.gear[expectedIndex];
       if (!actualItem || actualItem.name !== expectedName) {
-        // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Expected "${expectedName}" at gear[${expectedIndex}], found:`, actualItem?.name || 'undefined');
         isValid = false;
       }
     });
     */
 
-    // TEMPORARILY DISABLED: Check for missing or invalid resistance values
-    // This is preventing armor items from being clicked/enabled
-    // TODO: Fix resistance calculation logic
-    /*
+      // TEMPORARILY DISABLED: Check for missing or invalid resistance values
+      // This is preventing armor items from being clicked/enabled
+      // TODO: Fix resistance calculation logic
+      /*
     for (const category of Object.keys(data) as (keyof CalculatorData)[]) {
       data[category].forEach((item, index) => {
         if (!item.resistanceValue || item.resistanceValue === "-") {
-          // eslint-disable-next-line no-console
     console.error(`❌ [VALIDATION] Invalid resistance value for ${category}[${index}] (${item.name}): "${item.resistanceValue}"`);
           isValid = false;
         }
@@ -1786,8 +1782,10 @@ const CalculatorComponent: React.FC = () => {
     }
     */
 
-    return isValid;
-  }, []);
+      return isValid;
+    },
+    [logger],
+  );
   const [liteMode, setLiteMode] = useState(isMobile);
   const [gameMode, setGameMode] = useState<GameMode>('both');
   const [variantModalOpen, setVariantModalOpen] = useState(false);
@@ -1842,8 +1840,7 @@ const CalculatorComponent: React.FC = () => {
 
         const location = findItemById(prev, id);
         if (!location) {
-          // eslint-disable-next-line no-console
-          console.warn(`⚠️ [UPDATE] Item with ID ${id} not found`);
+          logger.warn('Item not found for update', { id });
           return prev;
         }
 
@@ -1855,8 +1852,10 @@ const CalculatorComponent: React.FC = () => {
           originalItem.name !==
           (updates.name && updates.name !== originalItem.name ? updates.name : originalItem.name)
         ) {
-          // eslint-disable-next-line no-console
-          console.error(`❌ [UPDATE] Name mismatch detected - potential corruption`);
+          logger.error('Name mismatch detected - potential corruption', undefined, {
+            originalName: originalItem.name,
+            updateName: updates.name,
+          });
           return prev;
         }
 
@@ -1887,8 +1886,7 @@ const CalculatorComponent: React.FC = () => {
         const heavyArmorCount = heavyArmorItems.length;
 
         // Debug logging
-        // eslint-disable-next-line no-console
-        console.log('🔍 [ARMOR_PASSIVE_DEBUG] ID-based update function:', {
+        logger.debug('Armor passive update calculation', {
           id,
           location,
           lightArmorItems: lightArmorItems.map((item) => item.name),
@@ -1909,8 +1907,7 @@ const CalculatorComponent: React.FC = () => {
             enabled: lightArmorCount > 0, // Auto-enable if there are light armor pieces
           };
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
+          logger.warn('Light Armor Passive not found in gear array');
         }
 
         // Find and update Heavy Armor Passive with validation
@@ -1924,21 +1921,19 @@ const CalculatorComponent: React.FC = () => {
             enabled: heavyArmorCount > 0, // Auto-enable if there are heavy armor pieces
           };
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
+          logger.warn('Heavy Armor Passive not found in gear array');
         }
 
         // Final validation before returning
         if (!validateCalculatorData(updatedData)) {
-          // eslint-disable-next-line no-console
-          console.error(`❌ [UPDATE] Final validation failed - reverting to previous state`);
+          logger.error('Final validation failed - reverting to previous state');
           return prev;
         }
 
         return updatedData;
       });
     },
-    [validateCalculatorData, findItemById],
+    [validateCalculatorData, findItemById, logger],
   );
   armorResistanceDataRef.current = armorResistanceData;
 
@@ -2288,10 +2283,11 @@ const CalculatorComponent: React.FC = () => {
 
         // Add validation to prevent index out of bounds
         if (index < 0 || index >= newCategoryItems.length) {
-          // eslint-disable-next-line no-console
-          console.warn(
-            `⚠️ [LEGACY_UPDATE] Invalid index ${index} for category ${category}. Array length: ${newCategoryItems.length}`,
-          );
+          logger.warn('Invalid index for category update', {
+            index,
+            category,
+            arrayLength: newCategoryItems.length,
+          });
           return prev;
         }
 
@@ -2318,10 +2314,11 @@ const CalculatorComponent: React.FC = () => {
                   ...newCategoryItems[conflictingIndex],
                   enabled: false,
                 };
-                // eslint-disable-next-line no-console
-                console.log(
-                  `🔀 [MUTUAL_EXCLUSIVE] Disabled "${conflictingItem.name}" when enabling "${originalItem.name}" (slot: ${slotKey})`,
-                );
+                logger.info('Disabled conflicting armor item', {
+                  conflictingItem: conflictingItem.name,
+                  enabledItem: originalItem.name,
+                  slot: slotKey,
+                });
               }
             });
           }
@@ -2352,8 +2349,7 @@ const CalculatorComponent: React.FC = () => {
         const heavyArmorCount = heavyArmorItems.length;
 
         // Debug logging
-        // eslint-disable-next-line no-console
-        console.log('🔍 [ARMOR_PASSIVE_DEBUG] Main update function:', {
+        logger.debug('Armor passive calculation (main update)', {
           lightArmorItems: lightArmorItems.map((item) => item.name),
           heavyArmorItems: heavyArmorItems.map((item) => item.name),
           lightArmorCount,
@@ -2372,12 +2368,14 @@ const CalculatorComponent: React.FC = () => {
         );
 
         if (lightArmorPassives.length > 1) {
-          // eslint-disable-next-line no-console
-          console.warn('Multiple Light Armor Passive items found, using first one');
+          logger.warn('Multiple Light Armor Passive items found, using first one', {
+            count: lightArmorPassives.length,
+          });
         }
         if (heavyArmorPassives.length > 1) {
-          // eslint-disable-next-line no-console
-          console.warn('Multiple Heavy Armor Passive items found, using first one');
+          logger.warn('Multiple Heavy Armor Passive items found, using first one', {
+            count: heavyArmorPassives.length,
+          });
         }
 
         // Find and update Light Armor Passive
@@ -2392,8 +2390,7 @@ const CalculatorComponent: React.FC = () => {
             quantity: lightArmorCount,
             enabled: lightArmorCount > 0,
           };
-          // eslint-disable-next-line no-console
-          console.log('✅ [LIGHT_ARMOR_PASSIVE] Updated:', {
+          logger.debug('Light Armor Passive updated', {
             index: lightArmorPassiveIndex,
             oldQuantity,
             newQuantity: lightArmorCount,
@@ -2401,8 +2398,7 @@ const CalculatorComponent: React.FC = () => {
             newEnabled: lightArmorCount > 0,
           });
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(`⚠️ [PASSIVE] Light Armor Passive not found in gear array`);
+          logger.warn('Light Armor Passive not found in gear array');
         }
 
         // Find and update Heavy Armor Passive
@@ -2417,8 +2413,7 @@ const CalculatorComponent: React.FC = () => {
             quantity: heavyArmorCount,
             enabled: heavyArmorCount > 0,
           };
-          // eslint-disable-next-line no-console
-          console.log('✅ [HEAVY_ARMOR_PASSIVE] Updated:', {
+          logger.debug('Heavy Armor Passive updated', {
             index: heavyArmorPassiveIndex,
             oldQuantity,
             newQuantity: heavyArmorCount,
@@ -2426,14 +2421,13 @@ const CalculatorComponent: React.FC = () => {
             newEnabled: heavyArmorCount > 0,
           });
         } else {
-          // eslint-disable-next-line no-console
-          console.warn(`⚠️ [PASSIVE] Heavy Armor Passive not found in gear array`);
+          logger.warn('Heavy Armor Passive not found in gear array');
         }
 
         return updatedData;
       });
     },
-    [],
+    [logger],
   );
 
   // Create a wrapper update function that tries ID-based updates first for gear items
@@ -2452,98 +2446,102 @@ const CalculatorComponent: React.FC = () => {
     [armorResistanceData.gear, updateArmorResistanceItemById, updateArmorResistanceItem],
   );
 
-  const cycleArmorResistanceVariant = useCallback((index: number) => {
-    setArmorResistanceData((prev: CalculatorData) => {
-      const newCategoryItems = [...prev.gear];
-      const target = newCategoryItems[index];
+  const cycleArmorResistanceVariant = useCallback(
+    (index: number) => {
+      setArmorResistanceData((prev: CalculatorData) => {
+        const newCategoryItems = [...prev.gear];
+        const target = newCategoryItems[index];
 
-      if (!target) {
-        return prev;
-      }
+        if (!target) {
+          return prev;
+        }
 
-      const item = { ...target };
-      const variants = item.variants ?? [];
+        const item = { ...target };
+        const variants = item.variants ?? [];
 
-      if (!variants.length) {
-        return prev;
-      }
+        if (!variants.length) {
+          return prev;
+        }
 
-      const currentIndex = typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
-      const nextIndex = (currentIndex + 1) % variants.length;
-      const nextVariant = variants[nextIndex];
+        const currentIndex = typeof item.selectedVariant === 'number' ? item.selectedVariant : 0;
+        const nextIndex = (currentIndex + 1) % variants.length;
+        const nextVariant = variants[nextIndex];
 
-      item.selectedVariant = nextIndex;
+        item.selectedVariant = nextIndex;
 
-      const qualityLevel =
-        typeof item.qualityLevel === 'number' ? item.qualityLevel : ARMOR_QUALITY_LABELS.length - 1;
-      const variantQualityValues = nextVariant?.qualityValues;
-      const safeQualityLevel = Math.min(
-        Math.max(qualityLevel, 0),
-        (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
-      );
+        const qualityLevel =
+          typeof item.qualityLevel === 'number'
+            ? item.qualityLevel
+            : ARMOR_QUALITY_LABELS.length - 1;
+        const variantQualityValues = nextVariant?.qualityValues;
+        const safeQualityLevel = Math.min(
+          Math.max(qualityLevel, 0),
+          (variantQualityValues?.length ?? ARMOR_QUALITY_LABELS.length) - 1,
+        );
 
-      item.qualityLevel = safeQualityLevel;
-      item.value = variantQualityValues?.[safeQualityLevel] ?? nextVariant?.value ?? item.value;
+        item.qualityLevel = safeQualityLevel;
+        item.value = variantQualityValues?.[safeQualityLevel] ?? nextVariant?.value ?? item.value;
 
-      newCategoryItems[index] = item;
+        newCategoryItems[index] = item;
 
-      // Create updated data to calculate armor passives
-      const updatedData = {
-        ...prev,
-        gear: newCategoryItems,
-      };
+        // Create updated data to calculate armor passives
+        const updatedData = {
+          ...prev,
+          gear: newCategoryItems,
+        };
 
-      // Auto-calculate armor passive quantities based on enabled gear pieces
-      const lightArmorItems = updatedData.gear.filter(
-        (item) =>
-          item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
-      );
-      const heavyArmorItems = updatedData.gear.filter(
-        (item) =>
-          item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
-      );
+        // Auto-calculate armor passive quantities based on enabled gear pieces
+        const lightArmorItems = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Light') && item.name !== 'Light Armor Passive' && item.enabled,
+        );
+        const heavyArmorItems = updatedData.gear.filter(
+          (item) =>
+            item.name.startsWith('Heavy') && item.name !== 'Heavy Armor Passive' && item.enabled,
+        );
 
-      const lightArmorCount = lightArmorItems.length;
-      const heavyArmorCount = heavyArmorItems.length;
+        const lightArmorCount = lightArmorItems.length;
+        const heavyArmorCount = heavyArmorItems.length;
 
-      // Debug logging
-      // eslint-disable-next-line no-console
-      console.log('🔍 [ARMOR_PASSIVE_DEBUG] Cycle variant function:', {
-        index,
-        itemName: target.name,
-        lightArmorItems: lightArmorItems.map((item) => item.name),
-        heavyArmorItems: heavyArmorItems.map((item) => item.name),
-        lightArmorCount,
-        heavyArmorCount,
+        // Debug logging
+        logger.debug('Armor passive calculation (cycle variant)', {
+          index,
+          itemName: target.name,
+          lightArmorItems: lightArmorItems.map((item) => item.name),
+          heavyArmorItems: heavyArmorItems.map((item) => item.name),
+          lightArmorCount,
+          heavyArmorCount,
+        });
+
+        // Find and update Light Armor Passive
+        const lightArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Light Armor Passive',
+        );
+        if (lightArmorPassiveIndex !== -1) {
+          updatedData.gear[lightArmorPassiveIndex] = {
+            ...updatedData.gear[lightArmorPassiveIndex],
+            quantity: lightArmorCount,
+            enabled: lightArmorCount > 0,
+          };
+        }
+
+        // Find and update Heavy Armor Passive
+        const heavyArmorPassiveIndex = updatedData.gear.findIndex(
+          (item) => item.name === 'Heavy Armor Passive',
+        );
+        if (heavyArmorPassiveIndex !== -1) {
+          updatedData.gear[heavyArmorPassiveIndex] = {
+            ...updatedData.gear[heavyArmorPassiveIndex],
+            quantity: heavyArmorCount,
+            enabled: heavyArmorCount > 0,
+          };
+        }
+
+        return updatedData;
       });
-
-      // Find and update Light Armor Passive
-      const lightArmorPassiveIndex = updatedData.gear.findIndex(
-        (item) => item.name === 'Light Armor Passive',
-      );
-      if (lightArmorPassiveIndex !== -1) {
-        updatedData.gear[lightArmorPassiveIndex] = {
-          ...updatedData.gear[lightArmorPassiveIndex],
-          quantity: lightArmorCount,
-          enabled: lightArmorCount > 0,
-        };
-      }
-
-      // Find and update Heavy Armor Passive
-      const heavyArmorPassiveIndex = updatedData.gear.findIndex(
-        (item) => item.name === 'Heavy Armor Passive',
-      );
-      if (heavyArmorPassiveIndex !== -1) {
-        updatedData.gear[heavyArmorPassiveIndex] = {
-          ...updatedData.gear[heavyArmorPassiveIndex],
-          quantity: heavyArmorCount,
-          enabled: heavyArmorCount > 0,
-        };
-      }
-
-      return updatedData;
-    });
-  }, []);
+    },
+    [logger],
+  );
 
   const setArmorResistanceVariant = useCallback((index: number, variantName: string) => {
     setArmorResistanceData((prev: CalculatorData) => {

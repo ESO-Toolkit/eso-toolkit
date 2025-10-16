@@ -14,10 +14,11 @@ interface ActorNameBillboardProps {
   actorId: number;
   lookup: TimestampPositionLookup | null;
   timeRef?: React.RefObject<number> | { current: number };
+  scale?: number;
 }
 
 // Performance constants
-const BILLBOARD_HEIGHT_OFFSET = 0.8; // Height above actor puck
+const BILLBOARD_HEIGHT_OFFSET = 0.35; // Height above actor puck (3.5x puck height when scaled)
 
 const ACTOR_COLORS = {
   player: {
@@ -38,7 +39,8 @@ class SharedBillboardGeometry {
   private geometry: THREE.PlaneGeometry;
 
   private constructor() {
-    this.geometry = new THREE.PlaneGeometry(8.0, 2.0);
+    // Reduced size for better scaling at closer camera distances
+    this.geometry = new THREE.PlaneGeometry(4.0, 1.0);
   }
 
   static getInstance(): SharedBillboardGeometry {
@@ -66,16 +68,17 @@ class BillboardTextRenderer {
 
   constructor() {
     // Get device pixel ratio for crisp rendering
-    this.pixelRatio = Math.min(window.devicePixelRatio || 1, 2); // Cap at 2x for performance
+    // Use higher multiplier for better quality when zoomed out
+    this.pixelRatio = Math.min(window.devicePixelRatio || 1, 3); // Increased cap to 3x for sharper text
 
     this.canvas = document.createElement('canvas');
-    // Scale canvas size by pixel ratio for crisp rendering
-    this.canvas.width = 512 * this.pixelRatio; // Match 3D geometry: 8.0 units * 64 pixels/unit * devicePixelRatio
-    this.canvas.height = 128 * this.pixelRatio; // Match 3D geometry: 2.0 units * 64 pixels/unit * devicePixelRatio
+    // Increase canvas resolution for sharper text at all zoom levels
+    this.canvas.width = 1024 * this.pixelRatio; // Doubled resolution
+    this.canvas.height = 256 * this.pixelRatio; // Doubled resolution
 
     // Set CSS size to maintain the intended display size
-    this.canvas.style.width = '512px';
-    this.canvas.style.height = '128px';
+    this.canvas.style.width = '1024px';
+    this.canvas.style.height = '256px';
 
     const context = this.canvas.getContext('2d');
     if (!context) {
@@ -89,30 +92,32 @@ class BillboardTextRenderer {
     this.texture = new THREE.CanvasTexture(this.canvas);
     this.texture.needsUpdate = true;
 
-    // Set texture filtering for crisp text rendering
+    // Set texture filtering for better quality at various distances
+    // Use linear filtering for both magnification and minification
     this.texture.magFilter = THREE.LinearFilter;
-    this.texture.minFilter = THREE.LinearFilter;
-    this.texture.generateMipmaps = false;
+    this.texture.minFilter = THREE.LinearMipmapLinearFilter; // Enable mipmaps for better quality when zoomed out
+    this.texture.generateMipmaps = true; // Generate mipmaps for multi-scale rendering
+    this.texture.anisotropy = 4; // Add anisotropic filtering for better quality at angles
   }
 
   private updateCanvas(name: string, color = '#ffffff', isAlive = true): void {
-    // Clear the canvas
-    this.context.clearRect(0, 0, 512, 128); // Use logical size, not physical size
+    // Clear the canvas (use doubled logical size)
+    this.context.clearRect(0, 0, 1024, 256);
 
     // Set high-quality text rendering for crisp output
     this.context.textAlign = 'center';
     this.context.textBaseline = 'middle';
-    this.context.font = '900 32px Arial'; // Font size for logical canvas size
+    this.context.font = '900 64px Arial'; // Doubled font size to match doubled resolution
     this.context.imageSmoothingEnabled = true;
     this.context.imageSmoothingQuality = 'high';
 
     // Draw text with black outline for visibility
-    const centerX = 512 / 2;
-    const centerY = 128 / 2;
+    const centerX = 1024 / 2; // Doubled center position
+    const centerY = 256 / 2; // Doubled center position
 
     // Black outline - proportional thickness for good contrast
     this.context.strokeStyle = '#000000';
-    this.context.lineWidth = 3;
+    this.context.lineWidth = 6; // Doubled outline width
     this.context.strokeText(name, centerX, centerY);
 
     // Use the provided color for the text fill
@@ -140,6 +145,7 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
   actorId,
   lookup,
   timeRef,
+  scale = 1,
 }) => {
   const { camera } = useThree();
   const meshRef = useRef<THREE.Mesh>(null);
@@ -202,9 +208,9 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
       isVisible.current = true;
     }
 
-    // Position relative to parent - just set height offset
+    // Position relative to parent - just set height offset scaled by actor scale
     // Parent component handles the base positioning
-    groupRef.current.position.set(0, BILLBOARD_HEIGHT_OFFSET, 0);
+    groupRef.current.position.set(0, BILLBOARD_HEIGHT_OFFSET * scale, 0);
 
     // IMPORTANT: The billboard is a child of the actor group, which has its own rotation
     // We need to counteract the parent's rotation and then apply camera alignment
@@ -223,13 +229,26 @@ export const ActorNameBillboard: React.FC<ActorNameBillboardProps> = ({
     // Apply the calculated local quaternion
     groupRef.current.quaternion.copy(localQuaternion);
 
+    // Scale billboard based on camera distance for consistent screen size
+    // Calculate distance from camera to billboard after positioning
+    const worldPosition = new THREE.Vector3();
+    groupRef.current.getWorldPosition(worldPosition);
+    const distanceToCamera = camera.position.distanceTo(worldPosition);
+
+    // Apply distance-based scaling with a base distance appropriate for the new closer camera
+    // Base scale at 20 units distance, then scale proportionally
+    // Also apply the actor scale to make billboards match actor size
+    const baseDistance = 20;
+    const scaleFactor = Math.max(0.5, Math.min(2.0, distanceToCamera / baseDistance)) * scale;
+    groupRef.current.scale.setScalar(scaleFactor);
+
     // Check if we need to update the text (only if data changed)
     const actorColor = getActorColor(actor);
     const currentData = {
       name: actor.name,
       color: actorColor,
       isAlive: !actor.isDead,
-      position: [0, BILLBOARD_HEIGHT_OFFSET, 0] as [number, number, number], // Relative position
+      position: [0, BILLBOARD_HEIGHT_OFFSET * scale, 0] as [number, number, number], // Relative position
     };
 
     const lastData = lastActorDataRef.current;

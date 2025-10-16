@@ -3,6 +3,14 @@
  * for better debugging and error tracking in the ESO Log Aggregator application.
  */
 
+import { Logger, LogLevel } from './logger';
+
+// Create logger instance for NestedError
+const logger = new Logger({
+  level: LogLevel.ERROR,
+  contextPrefix: 'NestedError',
+});
+
 export interface ErrorDetails {
   message: string;
   code?: string | number;
@@ -183,15 +191,22 @@ export class NestedError extends Error {
             ? 'warn'
             : 'log';
 
-    // eslint-disable-next-line no-console
-    console[logMethod]('NestedError occurred:', {
+    const logData = {
       message: this.message,
       code: this.code,
       severity: this.severity,
       context: this.context,
       fullChain: this.getFullErrorMessage(),
       timestamp: this.timestamp.toISOString(),
-    });
+    };
+
+    if (logMethod === 'error') {
+      logger.error('NestedError occurred', this, logData);
+    } else if (logMethod === 'warn') {
+      logger.warn('NestedError occurred', logData);
+    } else {
+      logger.info('NestedError occurred', logData);
+    }
   }
 
   /**

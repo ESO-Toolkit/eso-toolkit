@@ -3,6 +3,8 @@
  * Loads data from static JSON files
  */
 
+import { Logger, LogLevel } from '@/utils/logger';
+
 import { IScribingDataRepository } from '../../core/repositories/IScribingDataRepository';
 import { DATA_FILE_PATHS, ERROR_MESSAGES } from '../../shared/constants';
 import { validateScribingData } from '../../shared/schemas';
@@ -17,6 +19,10 @@ import {
 export class JsonScribingDataRepository implements IScribingDataRepository {
   private cachedData: ScribingData | null = null;
   private loadingPromise: Promise<ScribingData> | null = null;
+  private logger = new Logger({
+    level: LogLevel.WARN,
+    contextPrefix: 'JsonScribingDataRepository',
+  });
 
   async loadScribingData(): Promise<ScribingData> {
     if (this.cachedData) {
@@ -52,8 +58,7 @@ export class JsonScribingDataRepository implements IScribingDataRepository {
 
       return validatedData;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to load scribing data:', error);
+      this.logger.error('Failed to load scribing data', error instanceof Error ? error : undefined);
       throw new Error(
         `${ERROR_MESSAGES.DATA_LOAD_FAILED}: ${error instanceof Error ? error.message : String(error)}`,
       );
@@ -151,8 +156,11 @@ export class JsonScribingDataRepository implements IScribingDataRepository {
 
       return isCompatible;
     } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Error validating combination:', error);
+      this.logger.error(
+        'Error validating combination',
+        error instanceof Error ? error : undefined,
+        { grimoireId, focusScriptId, signatureScriptId, affixScriptId },
+      );
       return false;
     }
   }

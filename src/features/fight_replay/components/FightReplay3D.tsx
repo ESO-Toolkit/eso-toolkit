@@ -17,12 +17,15 @@ interface FightReplay3DProps {
   selectedFight: FightFragment;
   allBuffEvents: BuffEvent[];
   showActorNames?: boolean;
+  /** Optional map markers encoded string to display markers in the arena (M0R or Elms format) */
+  mapMarkersString?: string;
 }
 
 export const FightReplay3D: React.FC<FightReplay3DProps> = ({
   selectedFight,
   allBuffEvents,
   showActorNames = true,
+  mapMarkersString,
 }) => {
   // Parse URL parameters for actor initialization
   const [searchParams] = useSearchParams();
@@ -165,6 +168,8 @@ export const FightReplay3D: React.FC<FightReplay3DProps> = ({
           followingActorIdRef={followingActorIdRef}
           onCameraUnlock={handleCameraUnlock}
           onActorClick={handleActorClick}
+          mapMarkersString={mapMarkersString}
+          fight={selectedFight}
         />
       </Paper>
       {/* Playback Controls */}

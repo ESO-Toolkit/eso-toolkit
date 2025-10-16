@@ -9,7 +9,7 @@ import path from 'path';
 
 import type { OperationVariables } from '@apollo/client';
 
-import { Logger, LogLevel } from '../contexts/LoggerContext';
+import { Logger, LogLevel } from './logger';
 
 const CACHE_DIR = path.join(process.cwd(), 'cache', 'eso-logs-api');
 const CACHE_VERSION = '1.0';

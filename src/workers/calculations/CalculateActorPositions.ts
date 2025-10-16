@@ -11,8 +11,15 @@ import {
 import { isBuffActiveOnTarget, BuffLookupData } from '../../utils/BuffLookupUtils';
 import { convertCoordinatesWithBottomLeft, convertRotation } from '../../utils/coordinateUtils';
 import { fightTimeToTimestamp } from '../../utils/fightTimeUtils';
+import { Logger, LogLevel } from '../../utils/logger';
 import { resolveActorName } from '../../utils/resolveActorName';
 import { OnProgressCallback } from '../Utils';
+
+// Create logger instance for actor position calculations (worker context)
+const logger = new Logger({
+  level: LogLevel.WARN,
+  contextPrefix: 'ActorPositions',
+});
 
 export interface ActorPosition {
   id: number;
@@ -660,10 +667,11 @@ export function calculateActorPositions(
   // Check if we should limit processing for memory efficiency
   const memoryLimited = shouldLimitTimestamps(timestamps.length, totalActors);
   if (memoryLimited) {
-    // eslint-disable-next-line no-console
-    console.warn(
-      `Large dataset detected (${timestamps.length} timestamps × ${totalActors} actors). Consider reducing sample rate for better performance.`,
-    );
+    logger.warn('Large dataset detected', {
+      timestamps: timestamps.length,
+      totalActors,
+      recommendation: 'Consider reducing sample rate for better performance',
+    });
   }
 
   // Process actors in batches for better memory management
