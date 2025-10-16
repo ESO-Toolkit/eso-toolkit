@@ -382,7 +382,7 @@ export const PlayerCard: React.FC<PlayerCardProps> = React.memo(
                       alignItems="center"
                       gap={0.35}
                       sx={{
-                        flex: '0 0 auto',     // Don't shrink gear weights
+                        flex: '0 0 auto', // Don't shrink gear weights
                         minWidth: 0, // Allow shrinking
                         overflow: 'hidden', // Prevent overflow
                       }}

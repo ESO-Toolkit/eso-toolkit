@@ -213,8 +213,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               gap: { xs: 2, md: 2 },
               alignItems: 'stretch',
               minHeight: '400px',
-              width: '100%',        // Ensure container doesn't exceed viewport
-              maxWidth: '100vw',    // Hard constraint to viewport width
+              width: '100%', // Ensure container doesn't exceed viewport
+              maxWidth: '100vw', // Hard constraint to viewport width
             }}
           >
             {/* Generate 4 player card skeletons (typical party size) */}
@@ -408,8 +408,8 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
             gap: { xs: 2, md: 2 },
             alignItems: 'stretch',
             minHeight: '400px', // Prevent CLS when cards load
-            width: '100%',        // Ensure container doesn't exceed viewport
-            maxWidth: '100vw',    // Hard constraint to viewport width
+            width: '100%', // Ensure container doesn't exceed viewport
+            maxWidth: '100vw', // Hard constraint to viewport width
           }}
         >
           {filteredAndSortedPlayerCards.map((playerData) => (
@@ -417,10 +417,10 @@ export const PlayersPanelView: React.FC<PlayersPanelViewProps> = React.memo(
               key={playerData.key}
               data-testid={`player-card-${playerData.player.id}`}
               sx={{
-                height: '100%',        // Accept full height from grid stretch
-                minWidth: 0,           // Allow shrinking below content width
-                maxWidth: '100%',      // Don't exceed parent container
-                overflow: 'hidden',    // Clip individual card overflow if needed
+                height: '100%', // Accept full height from grid stretch
+                minWidth: 0, // Allow shrinking below content width
+                maxWidth: '100%', // Don't exceed parent container
+                overflow: 'hidden', // Clip individual card overflow if needed
                 boxSizing: 'border-box', // Include padding in width calculation
               }}
             >
