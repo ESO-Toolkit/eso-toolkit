@@ -41,10 +41,8 @@ runs:
     - name: Build Storybook
       shell: bash
       run: |
-        REPO_NAME=$(echo "${GITHUB_REPOSITORY}" | cut -d'/' -f2)
         export DISABLE_ESLINT_PLUGIN=true
-        export STORYBOOK_BASE_PATH="/$REPO_NAME/storybook/"
-        export DISABLE_ESLINT_PLUGIN=true
+        export STORYBOOK_BASE_PATH="${{steps.setup.outputs.base_url}}storybook/"
         npm run build-storybook
 
     - name: Move Storybook to build directory
