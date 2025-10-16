@@ -30,7 +30,23 @@ eso-log-aggregator/
 ├── tests/                        # End-to-end tests (Playwright)
 ├── public/                       # Static assets and HTML template
 ├── scripts/                      # Build and utility scripts
-├── documentation/                # Technical documentation
+├── documentation/                # Technical documentation (ORGANIZED)
+│   ├── INDEX.md                 # Master documentation index
+│   ├── ai-agents/               # AI agent documentation
+│   │   ├── scribing/            # Scribing detection guides
+│   │   ├── playwright/          # Playwright testing guides
+│   │   ├── preloading/          # Preloading system guides
+│   │   └── jira/                # Jira integration (acli)
+│   ├── features/                # Feature-specific documentation
+│   │   ├── markers/             # M0R markers system
+│   │   ├── scribing/            # Scribing detection feature
+│   │   ├── grimoire/            # Grimoire & affixes
+│   │   ├── logger/              # Logger system
+│   │   └── performance/         # Performance monitoring
+│   ├── architecture/            # System architecture docs
+│   ├── fixes/                   # Bug fixes and resolutions
+│   ├── implementation/          # Jira ticket implementations
+│   └── sessions/                # Session summaries and handoffs
 ├── data/                        # Static data files (abilities.json)
 ├── .storybook/                  # Storybook configuration
 ├── coverage/                    # Test coverage reports (generated)
@@ -46,6 +62,27 @@ eso-log-aggregator/
     ├── codegen.yml              # GraphQL code generation
     └── Makefile                 # Cross-platform build commands
 ```
+
+## 📚 Documentation Navigation
+
+**Complete Documentation Index**: [documentation/INDEX.md](INDEX.md)
+
+### Quick Access
+
+| Documentation Type | Location | Description |
+|-------------------|----------|-------------|
+| **AI Agent Guides** | [ai-agents/](ai-agents/) | Guides for AI agents (Scribing, Playwright, Jira, Preloading) |
+| **Feature Docs** | [features/](features/) | Feature-specific implementation guides |
+| **Architecture** | [architecture/](architecture/) | System design and architectural patterns |
+| **Fixes** | [fixes/](fixes/) | Bug fixes and issue resolutions |
+| **Implementation** | [implementation/](implementation/) | Jira ticket implementation summaries |
+| **Sessions** | [sessions/](sessions/) | Session summaries and handoff commands |
+
+### For AI Agents
+- **Start Here**: [ai-agents/INDEX.md](ai-agents/INDEX.md)
+- **Scribing Detection**: [ai-agents/scribing/](ai-agents/scribing/)
+- **Playwright Testing**: [ai-agents/playwright/](ai-agents/playwright/)
+- **Jira Integration**: [ai-agents/jira/](ai-agents/jira/)
 
 ## Essential Tools & Configuration
 
