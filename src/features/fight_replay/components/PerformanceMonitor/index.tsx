@@ -232,6 +232,7 @@ export const PerformanceMonitorWithOverlay: React.FC<PerformanceMonitorProps> = 
           slowFrameData={slowFrameData}
           onExportData={handleExportData}
           onClose={handleClose}
+          useHtmlWrapper={true}
         />
       )}
     </>

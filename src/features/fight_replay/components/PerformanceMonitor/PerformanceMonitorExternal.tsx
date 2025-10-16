@@ -115,6 +115,7 @@ export const PerformanceMonitorExternal: React.FC = () => {
       slowFrameData={slowFrameData}
       onExportData={handleExportData}
       onClose={handleClose}
+      useHtmlWrapper={false}
     />
   );
 };

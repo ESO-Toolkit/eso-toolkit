@@ -10,6 +10,7 @@ import { AnimationFrameActor3D } from './AnimationFrameActor3D';
 import { BossHealthHUD } from './BossHealthHUD';
 import { CameraFollower } from './CameraFollower';
 import { DynamicMapTexture } from './DynamicMapTexture';
+import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
 
@@ -250,6 +251,9 @@ export const Arena3DScene: React.FC<Arena3DSceneProps> = ({
 
       {/* Camera follower system */}
       <CameraFollower lookup={lookup} timeRef={timeRef} followingActorIdRef={followingActorIdRef} />
+
+      {/* Keyboard camera controls (WASD) - disabled when following an actor */}
+      <KeyboardCameraControls enabled={!followingActorIdRef.current} />
 
       {/* Lighting */}
       <ambientLight intensity={0.4} />
