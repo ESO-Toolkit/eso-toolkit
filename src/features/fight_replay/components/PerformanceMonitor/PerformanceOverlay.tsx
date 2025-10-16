@@ -27,6 +27,7 @@ import {
   LinearProgress,
   Tooltip,
 } from '@mui/material';
+import { Html } from '@react-three/drei';
 import React, { useState } from 'react';
 
 import { MemoryData } from './MemoryTracker';
@@ -51,6 +52,8 @@ interface PerformanceOverlayProps {
   onExportData?: () => void;
   /** Callback to close the overlay */
   onClose?: () => void;
+  /** Whether to use R3F Html wrapper (true when inside Canvas, false when outside) */
+  useHtmlWrapper?: boolean;
 }
 
 /**
@@ -73,6 +76,7 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
   slowFrameData,
   onExportData,
   onClose,
+  useHtmlWrapper = false,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -101,7 +105,8 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
     return num.toString();
   };
 
-  return (
+  // Render the overlay content
+  const overlayContent = (
     <Paper
       elevation={8}
       sx={{
@@ -370,5 +375,14 @@ export const PerformanceOverlay: React.FC<PerformanceOverlayProps> = ({
         </Box>
       </Stack>
     </Paper>
+  );
+
+  // Conditionally wrap with Html component if used inside Canvas
+  return useHtmlWrapper ? (
+    <Html fullscreen transform={false} zIndexRange={[9999, 0]}>
+      {overlayContent}
+    </Html>
+  ) : (
+    overlayContent
   );
 };

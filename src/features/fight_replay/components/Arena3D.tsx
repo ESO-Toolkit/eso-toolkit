@@ -1,5 +1,5 @@
 import { LockOpen } from '@mui/icons-material';
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Tooltip, Typography, Collapse } from '@mui/material';
 import { Canvas } from '@react-three/fiber';
 import React, { useMemo, useState, useEffect } from 'react';
 
@@ -50,6 +50,44 @@ export const Arena3D: React.FC<Arena3DProps> = ({
   fight,
 }) => {
   const { lookup, isActorPositionsLoading } = useActorPositionsTask();
+  const [showKeyboardHelp, setShowKeyboardHelp] = useState(false);
+
+  // Show keyboard help on initial mount for 5 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowKeyboardHelp(true);
+    }, 500);
+
+    const hideTimer = setTimeout(() => {
+      setShowKeyboardHelp(false);
+    }, 8000);
+
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(hideTimer);
+    };
+  }, []);
+
+  // Toggle help with 'H' key
+  useEffect(() => {
+    // Guard against SSR or environments without window
+    if (typeof window === 'undefined') return;
+
+    const handleKeyPress = (event: KeyboardEvent): void => {
+      // Don't interfere with text input
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (event.key.toLowerCase() === 'h') {
+        setShowKeyboardHelp((prev) => !prev);
+        event.preventDefault();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, []);
 
   // Calculate arena dimensions based on fight bounding box
   const arenaDimensions = useMemo(() => {
@@ -375,6 +413,49 @@ export const Arena3D: React.FC<Arena3DProps> = ({
 
       {/* Performance Monitor Overlay - rendered outside Canvas for proper screen-space positioning */}
       {process.env.NODE_ENV === 'development' && <PerformanceMonitorExternal />}
+
+      {/* Keyboard Controls Help - Shows briefly on load */}
+      <Collapse in={showKeyboardHelp}>
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: 16,
+            right: 16,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            borderRadius: 1,
+            padding: 2,
+            maxWidth: 280,
+          }}
+        >
+          <Typography variant="subtitle2" sx={{ color: 'white', mb: 1, fontWeight: 600 }}>
+            Camera Controls
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>WASD:</strong> Move camera
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>Shift:</strong> Sprint (faster movement)
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', mb: 0.5 }}
+          >
+            <strong>Mouse:</strong> Rotate & zoom
+          </Typography>
+          <Typography
+            variant="caption"
+            sx={{ color: 'rgba(255, 255, 255, 0.5)', display: 'block', mt: 1, fontSize: '0.7rem' }}
+          >
+            Press H to toggle this help
+          </Typography>
+        </Box>
+      </Collapse>
 
       {/* Camera Unlock Button - Show when following an actor */}
       {followingActorId && followingActorName && (
