@@ -25,6 +25,7 @@ This directory contains documentation for bug fixes, issue resolutions, and prob
 ### 🎯 Actor & Scaling
 
 - **ACTOR_PUCK_SCALING_FIX.md** - Actor puck scaling issues
+- **ACTOR_MARKER_SCALING_FIX.md** - Map-based scaling for actors and custom markers
 - **ACTOR_SCALING_COMPONENT_COVERAGE.md** - Component coverage for actor scaling
 
 ### 🗺️ Markers System

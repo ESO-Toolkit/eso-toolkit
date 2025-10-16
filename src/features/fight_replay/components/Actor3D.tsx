@@ -33,10 +33,10 @@ const ACTOR_COLORS = {
 } as const;
 
 // Geometry constants
-const VISION_CONE_LENGTH = 0.75; // Half the previous size (1.5 -> 0.75)
+const VISION_CONE_LENGTH = 0.65; // Slightly shorter cone to match reduced puck size
 const VISION_CONE_ANGLE = Math.PI / 6; // 30 degrees
-const PUCK_RADIUS = 0.15;
-const PUCK_HEIGHT = 0.1;
+const PUCK_RADIUS = 0.13; // Slightly smaller footprint to reduce overlap
+const PUCK_HEIGHT = 0.09;
 
 // Taunt indicator constants
 const TAUNT_RING_INNER_RADIUS = PUCK_RADIUS + 0.05;
