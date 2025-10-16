@@ -975,9 +975,7 @@ export const ReportFightsView: React.FC<ReportFightsViewProps> = ({
             mb: { xs: '1.5rem', sm: '2rem' },
             mt: { xs: 0, sm: '-2.7rem' },
             textAlign: { xs: 'center', sm: 'left' },
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            wordBreak: 'break-word',
             px: 0,
           }}
         >
