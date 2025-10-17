@@ -127,6 +127,50 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   // Get color based on player role using theme-aware colors
   const getPlayerColor = roleColors.getPlayerColor;
 
+  // Design tokens for senior-level mobile design
+  const designTokens = useMemo(() => ({
+    spacing: {
+      xs: 4,    // 4px base unit
+      sm: 8,    // 8px
+      md: 12,   // 12px
+      lg: 16,   // 16px
+      xl: 20,   // 20px
+      xxl: 24, // 24px
+      xxxl: 32, // 32px
+    },
+    typography: {
+      xs: { fontSize: '0.75rem', lineHeight: 1.4, fontWeight: 400 },
+      sm: { fontSize: '0.875rem', lineHeight: 1.4, fontWeight: 500 },
+      md: { fontSize: '1rem', lineHeight: 1.5, fontWeight: 600 },
+      lg: { fontSize: '1.125rem', lineHeight: 1.4, fontWeight: 700 },
+    },
+    borderRadius: {
+      sm: '4px',
+      md: '8px',
+      lg: '12px',
+      full: '9999px',
+    },
+    shadows: {
+      sm: roleColors.isDarkMode
+        ? '0 1px 2px 0 rgba(0, 0, 0, 0.3)'
+        : '0 1px 2px 0 rgba(0, 0, 0, 0.1)',
+      md: roleColors.isDarkMode
+        ? '0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
+        : '0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
+      lg: roleColors.isDarkMode
+        ? '0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4)'
+        : '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)',
+    },
+    colors: {
+      surface: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+      surfaceHover: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.95)',
+      border: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
+      textPrimary: roleColors.isDarkMode ? '#ffffff' : '#1a1a1a',
+      textSecondary: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+      textTertiary: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+    }
+  }), [roleColors]);
+
   return (
     <Box data-testid="damage-done-panel">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -155,233 +199,96 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         </Typography>
       </Box>
 
-      {/* Mobile Sort Controls */}
+      {/* Premium Mobile Sort Controls - Segmented Control Design */}
       <Box
         sx={{
           display: { xs: 'flex', sm: 'none' },
-          gap: 0.75,
-          mb: 1.5,
-          flexWrap: 'wrap',
-          alignItems: 'center',
+          mb: designTokens.spacing.xl,
+          justifyContent: 'center',
         }}
       >
         <Box
-          onClick={() => handleSort('name')}
           sx={{
-            px: 1.5,
-            py: 0.4,
-            borderRadius: '10px',
-            backgroundColor:
-              sortField === 'name'
-                ? roleColors.isDarkMode
-                  ? 'rgba(56, 181, 248, 0.2)'
-                  : 'rgba(14, 165, 233, 0.1)'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(15, 23, 42, 0.05)',
-            border: roleColors.isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.2)'
-              : '1px solid rgba(15, 23, 42, 0.1)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            minHeight: '32px',
             display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color:
-              sortField === 'name'
-                ? roleColors.isDarkMode
-                  ? '#38bdf8'
-                  : '#0ea5e9'
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: roleColors.isDarkMode
-                ? 'rgba(56, 181, 248, 0.15)'
-                : 'rgba(14, 165, 233, 0.08)',
-              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
-            },
+            backgroundColor: designTokens.colors.surface,
+            borderRadius: designTokens.borderRadius.full,
+            padding: designTokens.spacing.xs,
+            border: `1px solid ${designTokens.colors.border}`,
+            boxShadow: designTokens.shadows.sm,
+            gap: designTokens.spacing.xs,
           }}
         >
-          Name{getSortIcon('name')}
-        </Box>
-        <Box
-          onClick={() => handleSort('total')}
-          sx={{
-            px: 1.5,
-            py: 0.4,
-            borderRadius: '10px',
-            backgroundColor:
-              sortField === 'total'
-                ? roleColors.isDarkMode
-                  ? 'rgba(56, 181, 248, 0.2)'
-                  : 'rgba(14, 165, 233, 0.1)'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(15, 23, 42, 0.05)',
-            border: roleColors.isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.2)'
-              : '1px solid rgba(15, 23, 42, 0.1)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color:
-              sortField === 'total'
-                ? roleColors.isDarkMode
-                  ? '#38bdf8'
-                  : '#0ea5e9'
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: roleColors.isDarkMode
-                ? 'rgba(56, 181, 248, 0.15)'
-                : 'rgba(14, 165, 233, 0.08)',
-              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
-            },
-          }}
-        >
-          Amount{getSortIcon('total')}
-        </Box>
-        <Box
-          onClick={() => handleSort('dps')}
-          sx={{
-            px: 1.5,
-            py: 0.4,
-            borderRadius: '10px',
-            backgroundColor:
-              sortField === 'dps'
-                ? roleColors.isDarkMode
-                  ? 'rgba(255, 139, 97, 0.2)'
-                  : 'rgba(239, 68, 68, 0.1)'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(15, 23, 42, 0.05)',
-            border: roleColors.isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.2)'
-              : '1px solid rgba(15, 23, 42, 0.1)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color:
-              sortField === 'dps'
-                ? roleColors.getPlayerColor('dps')
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: roleColors.isDarkMode
-                ? 'rgba(255, 139, 97, 0.15)'
-                : 'rgba(239, 68, 68, 0.08)',
-              color: roleColors.getPlayerColor('dps'),
-            },
-          }}
-        >
-          DPS{getSortIcon('dps')}
-        </Box>
-        <Box
-          onClick={() => handleSort('activeDps')}
-          sx={{
-            px: 1.5,
-            py: 0.4,
-            borderRadius: '10px',
-            backgroundColor:
-              sortField === 'activeDps'
-                ? roleColors.isDarkMode
-                  ? 'rgba(56, 181, 248, 0.2)'
-                  : 'rgba(14, 165, 233, 0.1)'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(15, 23, 42, 0.05)',
-            border: roleColors.isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.2)'
-              : '1px solid rgba(15, 23, 42, 0.1)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color:
-              sortField === 'activeDps'
-                ? roleColors.isDarkMode
-                  ? '#38bdf8'
-                  : '#0ea5e9'
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: roleColors.isDarkMode
-                ? 'rgba(56, 181, 248, 0.15)'
-                : 'rgba(14, 165, 233, 0.08)',
-              color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
-            },
-          }}
-        >
-          Active{getSortIcon('activeDps')}
-        </Box>
-        <Box
-          onClick={() => handleSort('criticalDamage')}
-          sx={{
-            px: 1.5,
-            py: 0.4,
-            borderRadius: '10px',
-            backgroundColor:
-              sortField === 'criticalDamage'
-                ? roleColors.isDarkMode
-                  ? 'rgba(251, 191, 36, 0.2)'
-                  : 'rgba(245, 158, 11, 0.1)'
-                : roleColors.isDarkMode
-                  ? 'rgba(255, 255, 255, 0.1)'
-                  : 'rgba(15, 23, 42, 0.05)',
-            border: roleColors.isDarkMode
-              ? '1px solid rgba(255, 255, 255, 0.2)'
-              : '1px solid rgba(15, 23, 42, 0.1)',
-            cursor: 'pointer',
-            userSelect: 'none',
-            fontSize: '0.7rem',
-            fontWeight: 500,
-            minHeight: '32px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color:
-              sortField === 'criticalDamage'
-                ? roleColors.isDarkMode
-                  ? '#fbbf24'
-                  : '#f59e0b'
-                : roleColors.isDarkMode
-                  ? '#ecf0f1'
-                  : '#334155',
-            transition: 'all 0.2s ease',
-            '&:hover': {
-              backgroundColor: roleColors.isDarkMode
-                ? 'rgba(251, 191, 36, 0.15)'
-                : 'rgba(245, 158, 11, 0.08)',
-              color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
-            },
-          }}
-        >
-          Crit{getSortIcon('criticalDamage')}
+          {[
+            { field: 'name' as SortField, label: 'Name', icon: getSortIcon('name') },
+            { field: 'total' as SortField, label: 'Damage', icon: getSortIcon('total') },
+            { field: 'dps' as SortField, label: 'DPS', icon: getSortIcon('dps'), accent: true },
+            { field: 'activeDps' as SortField, label: 'Active', icon: getSortIcon('activeDps') },
+            { field: 'criticalDamage' as SortField, label: 'Crit', icon: getSortIcon('criticalDamage') },
+          ].map(({ field, label, icon, accent }) => (
+            <Box
+              key={field}
+              onClick={() => handleSort(field)}
+              sx={{
+                position: 'relative',
+                px: designTokens.spacing.md,
+                py: designTokens.spacing.sm,
+                borderRadius: designTokens.borderRadius.lg,
+                cursor: 'pointer',
+                userSelect: 'none',
+                minWidth: '44px', // Touch target minimum
+                height: '44px',   // Touch target minimum
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                fontWeight: sortField === field ? 600 : 500,
+                fontSize: '0.75rem',
+                letterSpacing: '0.025em',
+                whiteSpace: 'nowrap',
+                ...(sortField === field
+                  ? {
+                      backgroundColor: accent
+                        ? roleColors.isDarkMode
+                          ? 'rgba(255, 139, 97, 0.9)'
+                          : 'rgba(255, 139, 97, 0.95)'
+                        : roleColors.isDarkMode
+                          ? 'rgba(255, 255, 255, 0.9)'
+                          : 'rgba(26, 26, 26, 0.95)',
+                      color: accent
+                        ? '#ffffff'
+                        : designTokens.textPrimary,
+                      boxShadow: designTokens.shadows.md,
+                      transform: 'scale(1.05)',
+                      zIndex: 2,
+                    }
+                  : {
+                      color: designTokens.textSecondary,
+                      '&:hover': {
+                        backgroundColor: designTokens.colors.surfaceHover,
+                        color: designTokens.textPrimary,
+                        transform: 'scale(1.02)',
+                      },
+                    }
+                ),
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.xs }}>
+                <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
+                  {label}
+                </Typography>
+                <Typography
+                  sx={{
+                    fontSize: '0.65rem',
+                    fontWeight: 'inherit',
+                    opacity: sortField === field ? 1 : 0.7,
+                    transition: 'opacity 0.2s ease',
+                  }}
+                >
+                  {icon}
+                </Typography>
+              </Box>
+            </Box>
+          ))}
         </Box>
       </Box>
       {damageRows.length > 0 ? (
@@ -881,278 +788,349 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             );
           })}
 
-          {/* Mobile Card Layout */}
+          {/* Premium Mobile Card Layout */}
           {sortedRows.map((row, index) => {
             const percentage = ((row.total / maxDamage) * 100).toFixed(2);
             const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
+            const isActive = row.activePercentage > 0;
 
             return (
               <Box
                 key={`mobile-${row.id}`}
                 sx={{
                   display: { xs: 'block', sm: 'none' },
-                  p: 1.5,
-                  backgroundColor: 'transparent',
-                  borderBottom:
-                    index < damageRows.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
+                  p: designTokens.spacing.lg,
+                  mb: designTokens.spacing.lg,
+                  backgroundColor: designTokens.colors.surface,
+                  borderRadius: designTokens.borderRadius.lg,
+                  border: `1px solid ${designTokens.colors.border}`,
+                  boxShadow: designTokens.shadows.md,
                   position: 'relative',
-                  zIndex: 1,
-                  transition: 'all 0.2s ease',
+                  overflow: 'hidden',
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                    backgroundColor: designTokens.colors.surfaceHover,
+                    boxShadow: designTokens.shadows.lg,
+                    transform: 'translateY(-2px)',
+                  },
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    width: '4px',
+                    height: '100%',
+                    background: playerColor,
+                    opacity: 0.8,
                   },
                 }}
               >
-                {/* Mobile Header: Name and DPS */}
+                {/* Premium Card Header */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start',
+                    mb: designTokens.spacing.md,
+                  }}
+                >
+                  {/* Player Info Section */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.md, minWidth: 0, flex: 1 }}>
+                    {row.iconUrl && (
+                      <Avatar
+                        src={row.iconUrl}
+                        alt="icon"
+                        sx={{
+                          width: 40,
+                          height: 40,
+                          flexShrink: 0,
+                          border: `2px solid ${playerColor}`,
+                          boxShadow: `0 0 12px ${playerColor}40`,
+                        }}
+                      />
+                    )}
+                    <Box sx={{ minWidth: 0, flex: 1 }}>
+                      <Typography
+                        sx={{
+                          ...designTokens.typography.sm,
+                          fontWeight: 700,
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          whiteSpace: 'nowrap',
+                          ...(roleColors.isDarkMode
+                            ? {
+                                color: designTokens.textPrimary,
+                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                              }
+                            : {
+                                background: roleColors.getGradientColor(row.role),
+                                backgroundClip: 'text',
+                                WebkitBackgroundClip: 'text',
+                                WebkitTextFillColor: 'transparent',
+                                textShadow: '0 1px 1px rgba(0,0,0,0.1)',
+                              }),
+                        }}
+                      >
+                        {row.name}
+                      </Typography>
+                      <Typography
+                        sx={{
+                          ...designTokens.typography.xs,
+                          color: designTokens.textTertiary,
+                          mt: designTokens.spacing.xs,
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.05em',
+                        }}
+                      >
+                        {row.role?.toUpperCase()}
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  {/* Performance Metrics */}
+                  <Box sx={{ textAlign: 'right', ml: designTokens.spacing.md }}>
+                    <Tooltip title={formatNumber(row.dps)} arrow>
+                      <Typography
+                        sx={{
+                          ...designTokens.typography.md,
+                          fontWeight: 800,
+                          color: roleColors.isDarkMode ? '#ffffff' : '#1a1a1a',
+                          textShadow: roleColors.isDarkMode
+                            ? '0 2px 4px rgba(0,0,0,0.6)'
+                            : '0 1px 2px rgba(255,255,255,0.8)',
+                          cursor: 'help',
+                          lineHeight: 1.2,
+                        }}
+                      >
+                        {formatNumberShort(row.dps)}
+                      </Typography>
+                    </Tooltip>
+                    <Typography
+                      sx={{
+                        ...designTokens.typography.xs,
+                        color: designTokens.textTertiary,
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.05em',
+                        fontWeight: 600,
+                      }}
+                    >
+                      DPS
+                    </Typography>
+                    {isActive && (
+                      <Tooltip
+                        title={formatNumber(Math.round(row.dps / (row.activePercentage / 100)))}
+                        arrow
+                      >
+                        <Typography
+                          sx={{
+                            ...designTokens.typography.xs,
+                            color: '#38bdf8',
+                            fontWeight: 600,
+                            mt: designTokens.spacing.xs,
+                            cursor: 'help',
+                          }}
+                        >
+                          {formatNumberShort(Math.round(row.dps / (row.activePercentage / 100)))} active
+                        </Typography>
+                      </Tooltip>
+                    )}
+                  </Box>
+                </Box>
+
+                {/* Sophisticated Progress Section */}
+                <Box sx={{ mb: designTokens.spacing.md }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.md, mb: designTokens.spacing.sm }}>
+                    <Typography
+                      sx={{
+                        ...designTokens.typography.xs,
+                        color: designTokens.textSecondary,
+                        fontWeight: 600,
+                        minWidth: '48px',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.025em',
+                      }}
+                    >
+                      {percentageOfTotal}%
+                    </Typography>
+                    <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                      {/* Premium Progress Container */}
+                      <Box
+                        sx={{
+                          height: '8px',
+                          borderRadius: designTokens.borderRadius.sm,
+                          backgroundColor: roleColors.isDarkMode
+                            ? MUTED_ORANGE_PROGRESS_DARK.background
+                            : MUTED_ORANGE_PROGRESS_LIGHT.background,
+                          overflow: 'hidden',
+                          position: 'relative',
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            height: '100%',
+                            width: `${percentage}%`,
+                            background: roleColors.isDarkMode
+                              ? MUTED_ORANGE_PROGRESS_DARK.bar
+                              : MUTED_ORANGE_PROGRESS_LIGHT.bar,
+                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
+                          },
+                          '&::after': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            height: '100%',
+                            width: `${(row.criticalDamage / maxDamage) * 100}%`,
+                            background: playerColor,
+                            opacity: 0.9,
+                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s',
+                          },
+                        }}
+                      />
+                    </Box>
+                    <Tooltip title={formatNumber(row.total)} arrow>
+                      <Typography
+                        sx={{
+                          ...designTokens.typography.xs,
+                          color: designTokens.textSecondary,
+                          fontWeight: 600,
+                          minWidth: '48px',
+                          textAlign: 'right',
+                          cursor: 'help',
+                        }}
+                      >
+                        {formatNumberShort(row.total)}
+                      </Typography>
+                    </Tooltip>
+                  </Box>
+                </Box>
+
+                {/* Stats Row */}
                 <Box
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 1,
+                    pt: designTokens.spacing.sm,
+                    borderTop: `1px solid ${designTokens.colors.border}`,
                   }}
                 >
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
-                    {row.iconUrl && (
-                      <Avatar
-                        src={row.iconUrl}
-                        alt="icon"
-                        sx={{ width: 32, height: 32, flexShrink: 0 }}
-                      />
-                    )}
+                  {/* Critical Damage */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.sm }}>
+                    <Box
+                      sx={{
+                        width: '8px',
+                        height: '8px',
+                        borderRadius: '50%',
+                        backgroundColor: playerColor,
+                        opacity: 0.8,
+                      }}
+                    />
                     <Typography
                       sx={{
+                        ...designTokens.typography.xs,
+                        color: designTokens.textTertiary,
                         fontWeight: 600,
-                        fontSize: '0.85rem',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        ...(roleColors.isDarkMode
-                          ? {
-                              color: roleColors.getPlayerColor(row.role),
-                              textShadow: '0 1px 3px rgba(0,0,0,0.5)',
-                            }
-                          : {
-                              background: roleColors.getGradientColor(row.role),
-                              backgroundClip: 'text',
-                              WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: row.role === 'dps' ? '#ffbd7d00' : 'transparent',
-                              textShadow: '0 1px 1px rgba(0,0,0,0.2)',
-                            }),
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.025em',
                       }}
                     >
-                      {row.name}
+                      Crit
                     </Typography>
-                  </Box>
-
-                  <Box>
-                    <Tooltip title={formatNumber(row.dps)} arrow>
+                    <Tooltip title={formatNumber(row.criticalDamage)} arrow>
                       <Typography
                         sx={{
-                          color: roleColors.isDarkMode ? '#ffffff' : '#000000',
+                          ...designTokens.typography.xs,
+                          color: playerColor,
                           fontWeight: 700,
-                          fontSize: '0.85rem',
-                          textShadow: roleColors.isDarkMode
-                            ? '0 1px 3px rgba(0,0,0,0.8)'
-                            : '0 1px 2px rgba(255,255,255,0.8)',
                           cursor: 'help',
                         }}
                       >
-                        {formatNumberShort(row.dps)} DPS
-                      </Typography>
-                    </Tooltip>
-                    <Tooltip
-                      title={
-                        row.activePercentage > 0
-                          ? formatNumber(Math.round(row.dps / (row.activePercentage / 100)))
-                          : 'N/A'
-                      }
-                      arrow
-                    >
-                      <Typography
-                        sx={{
-                          color:
-                            row.activePercentage > 0
-                              ? roleColors.isDarkMode
-                                ? '#38bdf8'
-                                : '#0ea5e9'
-                              : roleColors.isDarkMode
-                                ? '#888'
-                                : '#64748b',
-                          fontWeight: 600,
-                          fontSize: '0.8rem',
-                          textShadow: roleColors.isDarkMode
-                            ? '0 1px 3px rgba(0,0,0,0.5)'
-                            : '0 1px 1px rgba(0,0,0,0.1)',
-                          cursor: row.activePercentage > 0 ? 'help' : 'default',
-                        }}
-                      >
-                        {row.activePercentage > 0
-                          ? `${formatNumberShort(Math.round(row.dps / (row.activePercentage / 100)))} Active`
-                          : 'N/A Active'}
+                        {formatNumberShort(row.criticalDamage)}
                       </Typography>
                     </Tooltip>
                   </Box>
-                </Box>
 
-                {/* Mobile Progress Bars and Amount */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.75 }}>
-                  <Typography
-                    sx={{
-                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                      fontWeight: 500,
-                      fontSize: '0.8rem',
-                      minWidth: '45px',
-                      textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {percentageOfTotal}%
-                  </Typography>
-                  <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
-                    {/* Total Damage Progress Bar (Background) - Muted Orange */}
-                    <LinearProgress
-                      variant="determinate"
-                      value={parseFloat(percentage)}
-                      sx={{
-                        height: 6, // Slightly smaller for mobile
-                        borderRadius: 1,
-                        backgroundColor: roleColors.isDarkMode
-                          ? MUTED_ORANGE_PROGRESS_DARK.background
-                          : MUTED_ORANGE_PROGRESS_LIGHT.background,
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 1,
-                          background: roleColors.isDarkMode
-                            ? MUTED_ORANGE_PROGRESS_DARK.bar
-                            : MUTED_ORANGE_PROGRESS_LIGHT.bar,
-                        },
-                      }}
-                    />
-                    {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
-                    <LinearProgress
-                      variant="determinate"
-                      value={(row.criticalDamage / maxDamage) * 100}
-                      sx={{
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: '100%',
-                        backgroundColor: 'transparent',
-                        '& .MuiLinearProgress-bar': {
-                          borderRadius: 1,
-                          background: playerColor,
-                          opacity: 0.85,
-                        },
-                      }}
-                    />
-                  </Box>
-                  <Tooltip title={formatNumber(row.total)} arrow>
-                    <Typography
-                      sx={{
-                        color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                        fontSize: '0.8rem',
-                        minWidth: '70px',
-                        textAlign: 'right',
-                        textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.15)',
-                        cursor: 'help',
-                      }}
-                    >
-                      {formatNumberShort(row.total)}
-                    </Typography>
-                  </Tooltip>
-                </Box>
-
-                {/* Critical Damage - Mobile */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
-                  <Typography
-                    sx={{
-                      color: roleColors.isDarkMode ? '#888' : '#64748b',
-                      fontSize: '0.75rem',
-                      minWidth: '45px',
-                    }}
-                  >
-                    Crit:
-                  </Typography>
-                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
-                    <Typography
-                      sx={{
-                        color: playerColor,
-                        fontWeight: 700,
-                        fontSize: '0.8rem',
-                        textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.12)',
-                        cursor: 'help',
-                      }}
-                    >
-                      {formatNumberShort(row.criticalDamage)}
-                    </Typography>
-                  </Tooltip>
-                </Box>
-
-                {/* Mobile Death and Resurrect Counters */}
-                {(row.deaths > 0 || row.resurrects > 0) && (
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'flex-end',
-                      mt: 0.25,
-                      gap: 0.5,
-                    }}
-                  >
+                  {/* Death & Resurrect Indicators */}
+                  <Box sx={{ display: 'flex', gap: designTokens.spacing.sm }}>
                     {row.deaths > 0 && (
                       <Box
                         sx={{
-                          px: 1.25,
-                          py: 0.35,
-                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: designTokens.spacing.xs,
+                          px: designTokens.spacing.sm,
+                          py: designTokens.spacing.xs,
+                          borderRadius: designTokens.borderRadius.md,
                           backgroundColor: roleColors.isDarkMode
-                            ? 'rgba(244, 67, 54, 0.2)'
-                            : 'rgba(239, 68, 68, 0.1)',
+                            ? 'rgba(244, 67, 54, 0.15)'
+                            : 'rgba(239, 68, 68, 0.08)',
                           border: roleColors.isDarkMode
-                            ? '1px solid rgba(244, 67, 54, 0.4)'
-                            : '1px solid rgba(239, 68, 68, 0.2)',
-                          cursor: 'default',
-                          userSelect: 'none',
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
-                          transition: 'all 0.2s ease',
+                            ? '1px solid rgba(244, 67, 54, 0.3)'
+                            : '1px solid rgba(239, 68, 68, 0.15)',
                         }}
                       >
-                        💀 {row.deaths}
+                        <Typography
+                          sx={{
+                            fontSize: '0.75rem',
+                            color: roleColors.isDarkMode ? '#f87171' : '#dc2626',
+                            fontWeight: 700,
+                          }}
+                        >
+                          💀
+                        </Typography>
+                        <Typography
+                          sx={{
+                            ...designTokens.typography.xs,
+                            color: roleColors.isDarkMode ? '#f87171' : '#dc2626',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {row.deaths}
+                        </Typography>
                       </Box>
                     )}
                     {row.resurrects > 0 && (
                       <Box
                         sx={{
-                          px: 1.25,
-                          py: 0.35,
-                          borderRadius: '10px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: designTokens.spacing.xs,
+                          px: designTokens.spacing.sm,
+                          py: designTokens.spacing.xs,
+                          borderRadius: designTokens.borderRadius.md,
                           backgroundColor: roleColors.isDarkMode
-                            ? 'rgba(74, 222, 128, 0.2)'
-                            : 'rgba(34, 197, 94, 0.1)',
+                            ? 'rgba(74, 222, 128, 0.15)'
+                            : 'rgba(34, 197, 94, 0.08)',
                           border: roleColors.isDarkMode
-                            ? '1px solid rgba(74, 222, 128, 0.4)'
-                            : '1px solid rgba(34, 197, 94, 0.2)',
-                          cursor: 'default',
-                          userSelect: 'none',
-                          fontSize: '0.65rem',
-                          fontWeight: 600,
-                          color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
-                          transition: 'all 0.2s ease',
+                            ? '1px solid rgba(74, 222, 128, 0.3)'
+                            : '1px solid rgba(34, 197, 94, 0.15)',
                         }}
                       >
-                        ❤️ {row.resurrects}
+                        <Typography
+                          sx={{
+                            fontSize: '0.75rem',
+                            color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ❤️
+                        </Typography>
+                        <Typography
+                          sx={{
+                            ...designTokens.typography.xs,
+                            color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
+                            fontWeight: 700,
+                          }}
+                        >
+                          {row.resurrects}
+                        </Typography>
                       </Box>
                     )}
                   </Box>
-                )}
+                </Box>
               </Box>
             );
           })}
