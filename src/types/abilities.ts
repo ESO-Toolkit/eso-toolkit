@@ -212,9 +212,11 @@ export enum KnownAbilities {
   // Velothi Ur-Mage's Amulet - Mythic set buff
   VELOTHI_UR_MAGE_BUFF = 193447,
 
-  // Lucent Echoes - Buff that provides 11% critical damage
-  LUCENT_ECHOES = 220015,
-  LUCENT_ECHOES_GROUP = 220061,
+  // Lucent Echoes - Heavy armor set that provides 11% critical damage
+  // 220015 = Group benefit buff (appears on recipients of the buff)
+  // 220061 = Wearer-only aura (appears only on the player wearing the set)
+  LUCENT_ECHOES_RECIPIENT = 220015,
+  LUCENT_ECHOES_WEARER = 220061,
 
   // Piercing Spear - Passive that provides 12% critical damage
   PIERCING_SPEAR = 44046,

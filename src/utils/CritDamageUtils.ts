@@ -12,18 +12,46 @@ import {
 import { getSetCount, countAxesInWeaponSlots, hasTwoHandedAxeEquipped } from './gearUtilities';
 
 const CRITICAL_DAMAGE_BUFF_VARIANTS: Partial<Record<KnownAbilities, KnownAbilities[]>> = {
-  [KnownAbilities.LUCENT_ECHOES]: [
-    KnownAbilities.LUCENT_ECHOES,
-    KnownAbilities.LUCENT_ECHOES_GROUP,
+  [KnownAbilities.LUCENT_ECHOES_RECIPIENT]: [
+    KnownAbilities.LUCENT_ECHOES_RECIPIENT,
+    KnownAbilities.LUCENT_ECHOES_WEARER,
   ],
-  [KnownAbilities.LUCENT_ECHOES_GROUP]: [
-    KnownAbilities.LUCENT_ECHOES,
-    KnownAbilities.LUCENT_ECHOES_GROUP,
+  [KnownAbilities.LUCENT_ECHOES_WEARER]: [
+    KnownAbilities.LUCENT_ECHOES_RECIPIENT,
+    KnownAbilities.LUCENT_ECHOES_WEARER,
   ],
 };
 
 function getBuffAbilityVariants(abilityId: KnownAbilities): KnownAbilities[] {
   return CRITICAL_DAMAGE_BUFF_VARIANTS[abilityId] ?? [abilityId];
+}
+
+/**
+ * Special detection logic for Lucent Echoes:
+ * - Ability 220061 (LUCENT_ECHOES_WEARER) appears ONLY on the wearer in their auras
+ * - Ability 220015 (LUCENT_ECHOES_RECIPIENT) appears on recipients in auras OR buff events
+ * - This hybrid approach handles both detection patterns seen in different fights
+ */
+function isLucentEchoesActive(
+  combatantInfo: CombatantInfoEvent | null,
+  buffLookup: BuffLookupData,
+  timestamp?: number,
+): boolean {
+  // Check if wearing Lucent Echoes (has the wearer-only aura 220061)
+  if (combatantInfo?.auras?.some((aura) => aura.ability === KnownAbilities.LUCENT_ECHOES_WEARER)) {
+    return true;
+  }
+
+  // Check if receiving Lucent Echoes benefit (has aura 220015 OR buff 220015)
+  const hasRecipientAura = combatantInfo?.auras?.some(
+    (aura) => aura.ability === KnownAbilities.LUCENT_ECHOES_RECIPIENT,
+  );
+  const targetId = combatantInfo?.sourceID;
+  const hasRecipientBuff =
+    targetId !== undefined &&
+    isBuffActiveOnTarget(buffLookup, KnownAbilities.LUCENT_ECHOES_RECIPIENT, timestamp, targetId);
+
+  return hasRecipientAura || hasRecipientBuff;
 }
 
 interface BaseCriticalDamageSource {
@@ -80,6 +108,7 @@ export enum ComputedCriticalDamageSources {
   TWO_HANDED_BATTLE_AXE,
   BACKSTABBER,
   ELEMENTAL_CATALYST,
+  LUCENT_ECHOES,
 }
 
 export interface CriticalDamageComputedSource extends BaseCriticalDamageSource {
@@ -168,6 +197,12 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     source: 'computed',
   },
   {
+    key: ComputedCriticalDamageSources.LUCENT_ECHOES,
+    name: 'Lucent Echoes',
+    description: 'Critical damage from Lucent Echoes set bonus (11%)',
+    source: 'computed',
+  },
+  {
     ability: KnownAbilities.HEMORRHAGE,
     value: CriticalDamageValues.HEMORRHAGE,
     name: 'Hemorrhage',
@@ -186,13 +221,6 @@ export const CRITICAL_DAMAGE_SOURCES = Object.freeze<CriticalDamageSource[]>([
     value: CriticalDamageValues.FELINE_AMBUSH,
     name: 'Feline Ambush',
     description: 'Critical damage from Feline Ambush aura (12%)',
-    source: 'aura',
-  },
-  {
-    ability: KnownAbilities.LUCENT_ECHOES,
-    value: CriticalDamageValues.LUCENT_ECHOES,
-    name: 'Lucent Echoes',
-    description: 'Critical damage from Lucent Echoes set bonus (11%)',
     source: 'aura',
   },
   {
@@ -279,6 +307,7 @@ export function isComputedSourceActive(
   combatantInfo: CombatantInfoEvent | null,
   source: CriticalDamageComputedSource,
   debuffLookup: BuffLookupData,
+  buffLookup?: BuffLookupData,
   timestamp?: number,
 ): boolean {
   switch (source.key) {
@@ -307,7 +336,11 @@ export function isComputedSourceActive(
         : isDebuffActive(debuffLookup, KnownAbilities.FLAME_WEAKNESS) ||
             isDebuffActive(debuffLookup, KnownAbilities.FROST_WEAKNESS) ||
             isDebuffActive(debuffLookup, KnownAbilities.SHOCK_WEAKNESS);
+    case ComputedCriticalDamageSources.LUCENT_ECHOES:
+      return !!buffLookup && isLucentEchoesActive(combatantInfo, buffLookup, timestamp);
   }
+
+  return false;
 }
 
 export function getEnabledCriticalDamageSources(
@@ -334,7 +367,7 @@ export function getEnabledCriticalDamageSources(
         isActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
         break;
       case 'computed':
-        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup);
+        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup, buffLookup);
         break;
       case 'always_on':
         isActive = true;
@@ -373,7 +406,7 @@ export function getAllCriticalDamageSourcesWithActiveState(
         wasActive = isGearSourceActive(combatantInfo, source.set, source.numberOfPieces);
         break;
       case 'computed':
-        wasActive = isComputedSourceActive(combatantInfo, source, debuffLookup);
+        wasActive = isComputedSourceActive(combatantInfo, source, debuffLookup, buffLookup);
         break;
       case 'always_on':
         wasActive = true;
@@ -434,7 +467,13 @@ export function calculateCriticalDamageAtTimestamp(
         }
         break;
       case 'computed':
-        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup, timestamp);
+        isActive = isComputedSourceActive(
+          combatantInfo,
+          source,
+          debuffLookup,
+          buffLookup,
+          timestamp,
+        );
         if (isActive) {
           computedCriticalDamage += getCritDamageFromComputedSource(
             source,
@@ -505,11 +544,15 @@ export function calculateDynamicCriticalDamageAtTimestamp(
   let buffCriticalDamage = 0;
   let debuffCriticalDamage = 0;
   let computedCriticalDamage = 0;
+  let auraCriticalDamage = 0;
 
   for (const source of CRITICAL_DAMAGE_SOURCES) {
     let isActive = false;
 
     switch (source.source) {
+      case 'aura':
+        // All aura-based sources are static and handled in calculateStaticCriticalDamage
+        break;
       case 'buff':
         isActive = isBuffActiveAtTimestamp(buffLookup, source.ability, timestamp);
         if (isActive) {
@@ -524,7 +567,13 @@ export function calculateDynamicCriticalDamageAtTimestamp(
         break;
 
       case 'computed':
-        isActive = isComputedSourceActive(combatantInfo, source, debuffLookup, timestamp);
+        isActive = isComputedSourceActive(
+          combatantInfo,
+          source,
+          debuffLookup,
+          buffLookup,
+          timestamp,
+        );
         if (isActive) {
           computedCriticalDamage += getCritDamageFromComputedSource(
             source,
@@ -535,11 +584,11 @@ export function calculateDynamicCriticalDamageAtTimestamp(
             timestamp,
           );
         }
-      // Skip static sources - these are calculated once
+      // Skip other static sources - these are calculated once
     }
   }
 
-  return buffCriticalDamage + debuffCriticalDamage + computedCriticalDamage;
+  return auraCriticalDamage + buffCriticalDamage + debuffCriticalDamage + computedCriticalDamage;
 }
 
 export function getCritDamageFromComputedSource(
@@ -631,7 +680,14 @@ export function getCritDamageFromComputedSource(
 
       return activeWeaknessCount * CriticalDamageValues.ELEMENTAL_CATALYST_PER_WEAKNESS;
     }
+    case ComputedCriticalDamageSources.LUCENT_ECHOES: {
+      return isLucentEchoesActive(combatantInfo, buffLookup, timestamp)
+        ? CriticalDamageValues.LUCENT_ECHOES
+        : 0;
+    }
   }
+
+  return 0;
 }
 
 export function getCritDamageFromAlwaysOnSource(
