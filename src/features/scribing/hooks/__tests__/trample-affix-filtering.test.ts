@@ -13,7 +13,7 @@ describe('Trample Affix Detection with Grimoire Filtering', () => {
     const grimoireKey = 'trample';
     const GRIMOIRE_COMPATIBLE_AFFIX_IDS = new Set<number>();
 
-    Object.entries(scribingData.affixScripts).forEach(([key, script]: [string, any]) => {
+    Object.entries(scribingData.affixScripts).forEach(([_, script]: [string, any]) => {
       if (script.compatibleGrimoires && script.compatibleGrimoires.includes(grimoireKey)) {
         if (script.abilityIds) {
           script.abilityIds.forEach((id: number) => {
@@ -23,6 +23,46 @@ describe('Trample Affix Detection with Grimoire Filtering', () => {
       }
     });
 
+    const EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS = [
+      3929,
+      5805,
+      21926,
+      22233,
+      24153,
+      27190,
+      39168,
+      46202,
+      47193,
+      61662,
+      61665,
+      61666,
+      61667,
+      61685,
+      61687,
+      61688,
+      61689,
+      61708,
+      61709,
+      61721,
+      61722,
+      61735,
+      61736,
+      68359,
+      79717,
+      103570,
+      106754,
+      111354,
+      147643,
+      161716,
+      186493,
+      203344
+    ];
+
+    // Ensure set contains exactly the expected ability IDs (10 affixes -> 32 IDs)
+    expect([...GRIMOIRE_COMPATIBLE_AFFIX_IDS].sort((a, b) => a - b)).toEqual(
+      EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS
+    );
+
     // Should include Heroism IDs
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(61708)).toBe(true); // Minor Heroism
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(61709)).toBe(true); // Major Heroism
@@ -31,8 +71,8 @@ describe('Trample Affix Detection with Grimoire Filtering', () => {
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(145975)).toBe(false); // Minor Brittle
     expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(145977)).toBe(false); // Major Brittle
 
-    // Should have 26 IDs total (10 affixes * varying number of IDs)
-    expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.size).toBe(26);
+    // Ensure new Minor Protection variants are covered by the affix mapping
+    expect(GRIMOIRE_COMPATIBLE_AFFIX_IDS.has(203344)).toBe(true);
   });
 
   it('should verify Heroism is compatible with Trample', () => {
