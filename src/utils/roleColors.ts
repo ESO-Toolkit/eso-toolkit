@@ -22,6 +22,17 @@ export const LIGHT_ROLE_COLORS_SOLID = {
   tank: '#0891b2', // Electric blue
 } as const;
 
+// Muted orange progress bar colors based on DPS orange #ff8b61
+export const MUTED_ORANGE_PROGRESS_DARK = {
+  background: 'rgba(255, 139, 97, 0.12)', // Very muted orange background for dark mode
+  bar: 'linear-gradient(90deg, rgba(255, 139, 97, 0.7) 0%, rgba(255, 139, 97, 0.5) 100%)', // Muted orange gradient for dark mode
+} as const;
+
+export const MUTED_ORANGE_PROGRESS_LIGHT = {
+  background: 'rgba(255, 139, 97, 0.08)', // Even lighter muted orange background for light mode
+  bar: 'linear-gradient(90deg, rgba(255, 139, 97, 0.6) 0%, rgba(255, 139, 97, 0.4) 100%)', // Subtle orange gradient for light mode
+} as const;
+
 export const ROLE_COLORS = DARK_ROLE_COLORS; // Keep for backward compatibility
 
 type Role = 'dps' | 'healer' | 'tank';
