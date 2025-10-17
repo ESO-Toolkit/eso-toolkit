@@ -280,38 +280,88 @@ describe('detectBuildIssues', () => {
       expect(hasMinorSlayerIssueTank).toBe(false);
     });
 
-    it('should check major buffs for DPS role only', () => {
-      // Only DPS should check for major buffs in the current implementation
-      const dpsIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'dps');
-      const hasMajorBuffIssues = dpsIssues.some(
-        (issue) =>
-          issue.message.includes('Major Sorcery') ||
-          issue.message.includes('Major Prophecy') ||
-          issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality'),
+    it('requires magicka-focused players to maintain Major Sorcery and Major Prophecy', () => {
+      const magickaFocusedIssues = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        [],
+        'dps',
+        undefined,
+        undefined,
+        { magicka: 36000, stamina: 18000 },
       );
-      expect(hasMajorBuffIssues).toBe(true);
 
-      // Tank and healer should not check for major buffs
-      const tankIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'tank');
-      const hasMajorBuffIssuesTank = tankIssues.some(
+      const magickaMajorIssues = magickaFocusedIssues.filter(
         (issue) =>
-          issue.message.includes('Major Sorcery') ||
-          issue.message.includes('Major Prophecy') ||
-          issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality'),
+          issue.message.includes('Major Sorcery') || issue.message.includes('Major Prophecy'),
       );
-      expect(hasMajorBuffIssuesTank).toBe(false);
+      const staminaMajorIssues = magickaFocusedIssues.filter(
+        (issue) =>
+          issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
+      );
 
-      const healerIssues = detectBuildIssues([], mockBuffLookup, 1000, 2000, [], 'healer');
-      const hasMajorBuffIssuesHealer = healerIssues.some(
-        (issue) =>
-          issue.message.includes('Major Sorcery') ||
-          issue.message.includes('Major Prophecy') ||
-          issue.message.includes('Major Savagery') ||
-          issue.message.includes('Major Brutality'),
+      expect(magickaMajorIssues).toHaveLength(2);
+      expect(staminaMajorIssues).toHaveLength(0);
+    });
+
+    it('requires stamina-focused players to maintain Major Brutality and Major Savagery', () => {
+      const staminaFocusedIssues = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        [],
+        'dps',
+        undefined,
+        undefined,
+        { stamina: 36000, magicka: 18000 },
       );
-      expect(hasMajorBuffIssuesHealer).toBe(false);
+
+      const staminaMajorIssues = staminaFocusedIssues.filter(
+        (issue) =>
+          issue.message.includes('Major Brutality') || issue.message.includes('Major Savagery'),
+      );
+      const magickaMajorIssues = staminaFocusedIssues.filter(
+        (issue) =>
+          issue.message.includes('Major Sorcery') || issue.message.includes('Major Prophecy'),
+      );
+
+      expect(staminaMajorIssues).toHaveLength(2);
+      expect(magickaMajorIssues).toHaveLength(0);
+    });
+
+    it('does not enforce major buff requirements for non-DPS roles', () => {
+      const tankIssues = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        [],
+        'tank',
+        undefined,
+        undefined,
+        { magicka: 36000, stamina: 18000 },
+      );
+
+      const healerIssues = detectBuildIssues(
+        [],
+        mockBuffLookup,
+        1000,
+        2000,
+        [],
+        'healer',
+        undefined,
+        undefined,
+        { stamina: 36000, magicka: 18000 },
+      );
+
+      const tankMajorIssues = tankIssues.filter((issue) => issue.message.includes('Major '));
+      const healerMajorIssues = healerIssues.filter((issue) => issue.message.includes('Major '));
+
+      expect(tankMajorIssues).toHaveLength(0);
+      expect(healerMajorIssues).toHaveLength(0);
     });
 
     it('should detect Minor Slayer from damage event buff strings', () => {
@@ -376,6 +426,7 @@ describe('detectBuildIssues', () => {
         'dps',
         [],
         9,
+        { stamina: 32000, magicka: 15000 },
       );
       const hasMajorBrutalityIssue = dpsIssues.some((issue) =>
         issue.message.includes('Major Brutality'),
@@ -397,11 +448,49 @@ describe('detectBuildIssues', () => {
         'dps',
         [],
         9,
+        { stamina: 32000, magicka: 15000 },
       );
       const hasMajorBrutalityIssueWithoutAura = dpsIssuesWithoutMajorBrutality.some((issue) =>
         issue.message.includes('Major Brutality'),
       );
       expect(hasMajorBrutalityIssueWithoutAura).toBe(true); // Should report as missing
+    });
+
+    it('treats combined major buff abilities as satisfying individual requirements', () => {
+      const combinedBuffLookup: BuffLookupData = {
+        buffIntervals: {
+          '219246': [{ start: 1000, end: 2000, targetID: 9, sourceID: 9 }],
+          '217672': [{ start: 1000, end: 2000, targetID: 9, sourceID: 9 }],
+        },
+      };
+
+      const staminaIssues = detectBuildIssues(
+        [],
+        combinedBuffLookup,
+        1000,
+        2000,
+        [],
+        'dps',
+        [],
+        9,
+        { stamina: 34000, magicka: 18000 },
+      );
+      expect(staminaIssues.some((issue) => issue.message.includes('Major Brutality'))).toBe(false);
+      expect(staminaIssues.some((issue) => issue.message.includes('Major Savagery'))).toBe(false);
+
+      const magickaIssues = detectBuildIssues(
+        [],
+        combinedBuffLookup,
+        1000,
+        2000,
+        [],
+        'dps',
+        [],
+        9,
+        { magicka: 34000, stamina: 18000 },
+      );
+      expect(magickaIssues.some((issue) => issue.message.includes('Major Sorcery'))).toBe(false);
+      expect(magickaIssues.some((issue) => issue.message.includes('Major Prophecy'))).toBe(false);
     });
 
     it('should detect Minor Aegis from auras for tank players (passive from slotted abilities)', () => {

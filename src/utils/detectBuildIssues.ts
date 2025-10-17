@@ -29,6 +29,19 @@ export interface MissingBuffIssue extends BaseIssue {
 
 export type BuildIssue = EnchantQualityIssue | GearLevelIssue | GearQualityIssue | MissingBuffIssue;
 
+interface PlayerResourceProfile {
+  magicka?: number;
+  maxMagicka?: number;
+  stamina?: number;
+  maxStamina?: number;
+}
+
+interface BuffRequirement {
+  abilityId: number;
+  name: string;
+  aliasIds?: number[];
+}
+
 // Role-specific minor buffs
 const ROLE_SPECIFIC_BUFFS = {
   tank: [
@@ -36,15 +49,21 @@ const ROLE_SPECIFIC_BUFFS = {
   ],
   dps: [
     { abilityId: 147226, name: 'Minor Slayer' }, // Damage buff for DPS
-    { abilityId: 61687, name: 'Major Sorcery' }, // Corrected from 28932 (was wrong ability)
-    { abilityId: 61689, name: 'Major Prophecy' }, // Corrected from 42435 (didn't exist)
-    { abilityId: 61667, name: 'Major Savagery' }, // Corrected from 68257 (didn't exist)
-    { abilityId: 183049, name: 'Major Brutality' }, // Passive Major Brutality from slotted abilities (appears in auras)
   ],
   healer: [
     // No specific minor buffs required for healers currently
   ],
 } as const;
+
+const MAGICKA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
+  { abilityId: 61687, name: 'Major Sorcery', aliasIds: [219246] },
+  { abilityId: 61689, name: 'Major Prophecy', aliasIds: [217672] },
+];
+
+const STAMINA_MAJOR_BUFF_REQUIREMENTS: BuffRequirement[] = [
+  { abilityId: 183049, name: 'Major Brutality', aliasIds: [219246] },
+  { abilityId: 61667, name: 'Major Savagery', aliasIds: [217672] },
+];
 
 /**
  * Helper function to check if a buff is active in auras
@@ -83,6 +102,32 @@ function isAbilityInDamageEventBuffs(
   });
 }
 
+interface BuffDetectionContext {
+  buffLookup?: BuffLookupData;
+  auras?: CombatantAura[] | Array<{ name: string; id: number; stacks?: number }>;
+  damageEvents?: DamageEvent[];
+  playerId?: number;
+  abilityIds: number[];
+}
+
+function wasBuffDetected({
+  buffLookup,
+  auras,
+  damageEvents,
+  playerId,
+  abilityIds,
+}: BuffDetectionContext): boolean {
+  return abilityIds.some((abilityId) => {
+    const isEverActiveInBuffs = buffLookup ? isBuffActive(buffLookup, abilityId) : false;
+    const isEverActiveInAuras = isBuffActiveInAuras(auras, abilityId);
+    const isInDamageEventBuffs = playerId
+      ? isAbilityInDamageEventBuffs(damageEvents, abilityId, playerId)
+      : false;
+
+    return isEverActiveInBuffs || isEverActiveInAuras || isInDamageEventBuffs;
+  });
+}
+
 /**
  * Detects various build issues for a player including gear problems and missing buffs.
  *
@@ -105,6 +150,7 @@ export function detectBuildIssues(
   role: 'dps' | 'tank' | 'healer',
   damageEvents?: DamageEvent[],
   playerId?: number,
+  playerResources?: PlayerResourceProfile,
 ): BuildIssue[] {
   const issues: BuildIssue[] = [];
 
@@ -160,17 +206,13 @@ export function detectBuildIssues(
     // Check role-specific minor buffs
     const roleBuffs = ROLE_SPECIFIC_BUFFS[role];
     roleBuffs.forEach((buff) => {
-      // Use single-tier detection: check if buff was ever active during the fight
-      // This handles both persistent passive effects and timing-sensitive buffs
-      const isEverActiveInBuffs = isBuffActive(buffLookup, buff.abilityId);
-      const isEverActiveInAuras = isBuffActiveInAuras(auras, buff.abilityId);
-
-      // Enhanced detection for Minor Slayer (and similar abilities) that appear in damage event buff strings
-      const isInDamageEventBuffs = playerId
-        ? isAbilityInDamageEventBuffs(damageEvents, buff.abilityId, playerId)
-        : false;
-
-      const isDetected = isEverActiveInBuffs || isEverActiveInAuras || isInDamageEventBuffs;
+      const isDetected = wasBuffDetected({
+        buffLookup,
+        auras,
+        damageEvents,
+        playerId,
+        abilityIds: [buff.abilityId],
+      });
 
       if (!isDetected) {
         const roleDescription =
@@ -182,6 +224,45 @@ export function detectBuildIssues(
         });
       }
     });
+
+    if (role === 'dps') {
+      const magickaPool = Math.max(playerResources?.magicka ?? 0, playerResources?.maxMagicka ?? 0);
+      const staminaPool = Math.max(playerResources?.stamina ?? 0, playerResources?.maxStamina ?? 0);
+
+      let resourceFocus: 'magicka' | 'stamina' | undefined;
+      if (magickaPool > staminaPool && magickaPool > 0) {
+        resourceFocus = 'magicka';
+      } else if (staminaPool > magickaPool && staminaPool > 0) {
+        resourceFocus = 'stamina';
+      }
+
+      const majorBuffsToCheck =
+        resourceFocus === 'magicka'
+          ? MAGICKA_MAJOR_BUFF_REQUIREMENTS
+          : resourceFocus === 'stamina'
+            ? STAMINA_MAJOR_BUFF_REQUIREMENTS
+            : [];
+
+      majorBuffsToCheck.forEach((buff) => {
+        const abilityIds = [buff.abilityId, ...(buff.aliasIds ?? [])];
+        const isDetected = wasBuffDetected({
+          buffLookup,
+          auras,
+          damageEvents,
+          playerId,
+          abilityIds,
+        });
+
+        if (!isDetected) {
+          const orientationDescriptor = resourceFocus === 'magicka' ? 'Magicka' : 'Stamina';
+          issues.push({
+            buffName: buff.name,
+            abilityId: buff.abilityId,
+            message: `Missing ${buff.name} - players with higher ${orientationDescriptor} should maintain this buff`,
+          });
+        }
+      });
+    }
   }
 
   return issues;
