@@ -1,6 +1,7 @@
 import {
   createMockCombatantInfoEvent,
   createMockCombatantAura,
+  createMockBuffEvent,
 } from '../test/utils/combatLogMockFactories';
 import { createMockPlayerData, createGearItem } from '../test/utils/playerMockFactories';
 import { KnownAbilities, CriticalDamageValues } from '../types/abilities';
@@ -16,13 +17,16 @@ import {
   getCritDamageFromAlwaysOnSource,
   isAuraActive,
   CRITICAL_DAMAGE_SOURCES,
+  ComputedCriticalDamageSources,
+  CriticalDamageComputedSource,
+  getCritDamageFromComputedSource,
 } from './CritDamageUtils';
 
 describe('CritDamageUtils with BuffLookup', () => {
   describe('isBuffActive', () => {
     it('should return false for empty buff lookup', () => {
       const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
-      expect(isBuffActive(emptyBuffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(false);
+      expect(isBuffActive(emptyBuffLookup, KnownAbilities.LUCENT_ECHOES_RECIPIENT)).toBe(false);
     });
 
     it('should return true when buff exists in lookup', () => {
@@ -34,14 +38,14 @@ describe('CritDamageUtils with BuffLookup', () => {
           sourceIsFriendly: true,
           targetID: 2,
           targetIsFriendly: true,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES_RECIPIENT,
           fight: 1,
           extraAbilityGameID: 0,
         },
       ];
 
       const buffLookup = createBuffLookup(buffEvents);
-      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(true);
+      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES_RECIPIENT)).toBe(true);
     });
 
     it('should detect alternate Lucent Echoes ability ID', () => {
@@ -53,15 +57,15 @@ describe('CritDamageUtils with BuffLookup', () => {
           sourceIsFriendly: true,
           targetID: 4,
           targetIsFriendly: true,
-          abilityGameID: KnownAbilities.LUCENT_ECHOES_GROUP,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES_WEARER,
           fight: 1,
           extraAbilityGameID: 0,
         },
       ];
 
       const buffLookup = createBuffLookup(buffEvents);
-      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES)).toBe(true);
-      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES_GROUP)).toBe(true);
+      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES_RECIPIENT)).toBe(true);
+      expect(isBuffActive(buffLookup, KnownAbilities.LUCENT_ECHOES_WEARER)).toBe(true);
     });
   });
 
@@ -82,7 +86,7 @@ describe('CritDamageUtils with BuffLookup', () => {
       const combatant = createMockCombatantInfoEvent({
         auras: [
           createMockCombatantAura({
-            ability: KnownAbilities.LUCENT_ECHOES,
+            ability: KnownAbilities.LUCENT_ECHOES_RECIPIENT,
             name: 'Lucent Echoes',
             icon: 'ability_mage_065',
           }),
@@ -108,12 +112,14 @@ describe('CritDamageUtils with BuffLookup', () => {
 
       const sources = getEnabledCriticalDamageSources(buffLookup, debuffLookup, combatant);
 
-      // Should find both Lucent Echoes (aura) and Minor Brittle (debuff) + always-on sources
+      // Should find Lucent Echoes (computed), Minor Brittle (debuff), and always-on sources
       expect(sources).toHaveLength(4);
       expect(
         sources.some(
           (s) =>
-            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+            'key' in s &&
+            s.key === ComputedCriticalDamageSources.LUCENT_ECHOES &&
+            s.source === 'computed',
         ),
       ).toBe(true);
       expect(
@@ -125,7 +131,7 @@ describe('CritDamageUtils with BuffLookup', () => {
       const combatant = createMockCombatantInfoEvent({
         auras: [
           createMockCombatantAura({
-            ability: KnownAbilities.LUCENT_ECHOES_GROUP,
+            ability: KnownAbilities.LUCENT_ECHOES_WEARER,
             name: 'Lucent Echoes',
             icon: 'ability_mage_065',
           }),
@@ -139,7 +145,9 @@ describe('CritDamageUtils with BuffLookup', () => {
       expect(
         sources.some(
           (s) =>
-            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+            'key' in s &&
+            s.key === ComputedCriticalDamageSources.LUCENT_ECHOES &&
+            s.source === 'computed',
         ),
       ).toBe(true);
     });
@@ -205,6 +213,91 @@ describe('CritDamageUtils with BuffLookup', () => {
     });
   });
 
+  describe('getCritDamageFromComputedSource', () => {
+    const findLucentSource = (): CriticalDamageComputedSource => {
+      const lucentSource = CRITICAL_DAMAGE_SOURCES.find(
+        (source): source is CriticalDamageComputedSource =>
+          'key' in source && source.key === ComputedCriticalDamageSources.LUCENT_ECHOES,
+      );
+
+      if (!lucentSource) {
+        throw new Error('Lucent Echoes computed source not found.');
+      }
+
+      return lucentSource;
+    };
+
+    it('should return Lucent Echoes value when wearer aura is present', () => {
+      const lucentSource = findLucentSource();
+      const combatant = createMockCombatantInfoEvent({
+        sourceID: 1,
+        auras: [
+          createMockCombatantAura({
+            ability: KnownAbilities.LUCENT_ECHOES_WEARER,
+            name: 'Lucent Echoes (Wearer)',
+          }),
+        ],
+      });
+
+      const result = getCritDamageFromComputedSource(
+        lucentSource,
+        createMockPlayerData({ id: 1 }),
+        combatant,
+        createBuffLookup([]),
+        undefined,
+        1000,
+      );
+
+      expect(result).toBe(CriticalDamageValues.LUCENT_ECHOES);
+    });
+
+    it('should return Lucent Echoes value when recipient buff is active at timestamp', () => {
+      const lucentSource = findLucentSource();
+      const buffLookup = createBuffLookup([
+        createMockBuffEvent({
+          timestamp: 1000,
+          targetID: 1,
+          abilityGameID: KnownAbilities.LUCENT_ECHOES_RECIPIENT,
+        }),
+      ]);
+
+      const combatant = createMockCombatantInfoEvent({
+        sourceID: 1,
+        auras: [],
+      });
+
+      const result = getCritDamageFromComputedSource(
+        lucentSource,
+        createMockPlayerData({ id: 1 }),
+        combatant,
+        buffLookup,
+        undefined,
+        1000,
+      );
+
+      expect(result).toBe(CriticalDamageValues.LUCENT_ECHOES);
+    });
+
+    it('should return zero when Lucent Echoes is inactive', () => {
+      const lucentSource = findLucentSource();
+      const combatant = createMockCombatantInfoEvent({
+        sourceID: 1,
+        auras: [],
+      });
+
+      const result = getCritDamageFromComputedSource(
+        lucentSource,
+        createMockPlayerData({ id: 1 }),
+        combatant,
+        createBuffLookup([]),
+        undefined,
+        1000,
+      );
+
+      expect(result).toBe(0);
+    });
+  });
+
   describe('isAuraActive', () => {
     it('should return false for null combatant', () => {
       expect(isAuraActive(null, KnownAbilities.FELINE_AMBUSH)).toBe(false);
@@ -220,19 +313,19 @@ describe('CritDamageUtils with BuffLookup', () => {
       expect(isAuraActive(combatantWithAura, KnownAbilities.FELINE_AMBUSH)).toBe(true);
     });
 
-    it('should detect Lucent Echoes as aura for critical damage calculation', () => {
+    it('should detect Lucent Echoes as computed source for critical damage calculation', () => {
       const combatant = createMockCombatantInfoEvent({
         auras: [
           createMockCombatantAura({
-            ability: KnownAbilities.LUCENT_ECHOES,
+            ability: KnownAbilities.LUCENT_ECHOES_RECIPIENT,
             name: 'Lucent Echoes',
             icon: 'ability_mage_065',
           }),
         ],
       });
 
-      const emptyBuffLookup: BuffLookupData = { buffIntervals: new Map() };
-      const emptyDebuffLookup: BuffLookupData = { buffIntervals: new Map() };
+      const emptyBuffLookup: BuffLookupData = { buffIntervals: {} };
+      const emptyDebuffLookup: BuffLookupData = { buffIntervals: {} };
 
       const sources = getEnabledCriticalDamageSources(
         emptyBuffLookup,
@@ -240,12 +333,14 @@ describe('CritDamageUtils with BuffLookup', () => {
         combatant,
       );
 
-      // Should find Lucent Echoes as aura source + always-on sources
+      // Should find Lucent Echoes as computed source + always-on sources
       expect(sources).toHaveLength(3);
       expect(
         sources.some(
           (s) =>
-            'ability' in s && s.ability === KnownAbilities.LUCENT_ECHOES && s.source === 'aura',
+            'key' in s &&
+            s.key === ComputedCriticalDamageSources.LUCENT_ECHOES &&
+            s.source === 'computed',
         ),
       ).toBe(true);
     });
