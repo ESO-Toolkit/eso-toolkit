@@ -229,15 +229,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           📖 Grimoire: 
           Traveling Knife
         </span>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-tkcdvg-MuiChip-root"
-        >
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Enhanced AI
-          </span>
-        </div>
       </div>
       <div
         class="MuiBox-root css-19idom"
@@ -465,15 +456,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           📖 Grimoire: 
           Traveling Knife
         </span>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-tkcdvg-MuiChip-root"
-        >
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Enhanced AI
-          </span>
-        </div>
       </div>
       <div
         class="MuiBox-root css-19idom"
@@ -760,15 +742,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           📖 Grimoire: 
           Traveling Knife
         </span>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-tkcdvg-MuiChip-root"
-        >
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Enhanced AI
-          </span>
-        </div>
       </div>
       <div
         class="MuiBox-root css-19idom"

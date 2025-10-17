@@ -309,15 +309,6 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             📖 Grimoire: 
             Traveling Knife
           </span>
-          <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-gx9vmb-MuiChip-root"
-          >
-            <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-            >
-              Enhanced AI
-            </span>
-          </div>
         </div>
         <div
           class="MuiBox-root css-19idom"
@@ -478,15 +469,6 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             📖 Grimoire: 
             Traveling Knife
           </span>
-          <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-gx9vmb-MuiChip-root"
-          >
-            <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-            >
-              Enhanced AI
-            </span>
-          </div>
         </div>
         <div
           class="MuiBox-root css-19idom"
