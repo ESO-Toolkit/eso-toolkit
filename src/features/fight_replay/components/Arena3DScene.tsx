@@ -2,6 +2,8 @@ import { Grid, OrbitControls } from '@react-three/drei';
 import { useFrame, useThree } from '@react-three/fiber';
 import React, { Suspense, useMemo } from 'react';
 
+import { FightFragment } from '@/graphql/gql/graphql';
+
 import { getMapScaleData } from '../../../types/zoneScaleData';
 import { Logger, LogLevel } from '../../../utils/logger';
 import { MapTimeline } from '../../../utils/mapTimelineUtils';
@@ -15,7 +17,6 @@ import { DynamicMapTexture } from './DynamicMapTexture';
 import { KeyboardCameraControls } from './KeyboardCameraControls';
 import { MapMarkers } from './MapMarkers';
 import { PerformanceMonitorCanvas } from './PerformanceMonitor';
-import { FightFragment } from '@/graphql/gql/graphql';
 
 // Create logger instance for Arena3DScene
 const logger = new Logger({
