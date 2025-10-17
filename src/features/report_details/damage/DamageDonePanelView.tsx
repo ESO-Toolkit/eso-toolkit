@@ -159,17 +159,18 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
       <Box
         sx={{
           display: { xs: 'flex', sm: 'none' },
-          gap: 1,
-          mb: 2,
+          gap: 0.75,
+          mb: 1.5,
           flexWrap: 'wrap',
+          alignItems: 'center',
         }}
       >
         <Box
           onClick={() => handleSort('name')}
           sx={{
-            px: 2,
-            py: 0.5,
-            borderRadius: '12px',
+            px: 1.5,
+            py: 0.4,
+            borderRadius: '10px',
             backgroundColor:
               sortField === 'name'
                 ? roleColors.isDarkMode
@@ -183,7 +184,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            minHeight: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color:
               sortField === 'name'
                 ? roleColors.isDarkMode
@@ -206,9 +212,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         <Box
           onClick={() => handleSort('total')}
           sx={{
-            px: 2,
-            py: 0.5,
-            borderRadius: '12px',
+            px: 1.5,
+            py: 0.4,
+            borderRadius: '10px',
             backgroundColor:
               sortField === 'total'
                 ? roleColors.isDarkMode
@@ -222,7 +228,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            minHeight: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color:
               sortField === 'total'
                 ? roleColors.isDarkMode
@@ -245,9 +256,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         <Box
           onClick={() => handleSort('dps')}
           sx={{
-            px: 2,
-            py: 0.5,
-            borderRadius: '12px',
+            px: 1.5,
+            py: 0.4,
+            borderRadius: '10px',
             backgroundColor:
               sortField === 'dps'
                 ? roleColors.isDarkMode
@@ -261,7 +272,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            minHeight: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color:
               sortField === 'dps'
                 ? roleColors.getPlayerColor('dps')
@@ -282,9 +298,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         <Box
           onClick={() => handleSort('activeDps')}
           sx={{
-            px: 2,
-            py: 0.5,
-            borderRadius: '12px',
+            px: 1.5,
+            py: 0.4,
+            borderRadius: '10px',
             backgroundColor:
               sortField === 'activeDps'
                 ? roleColors.isDarkMode
@@ -298,7 +314,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            minHeight: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color:
               sortField === 'activeDps'
                 ? roleColors.isDarkMode
@@ -321,9 +342,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         <Box
           onClick={() => handleSort('criticalDamage')}
           sx={{
-            px: 2,
-            py: 0.5,
-            borderRadius: '12px',
+            px: 1.5,
+            py: 0.4,
+            borderRadius: '10px',
             backgroundColor:
               sortField === 'criticalDamage'
                 ? roleColors.isDarkMode
@@ -337,7 +358,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               : '1px solid rgba(15, 23, 42, 0.1)',
             cursor: 'pointer',
             userSelect: 'none',
-            fontSize: '0.75rem',
+            fontSize: '0.7rem',
+            fontWeight: 500,
+            minHeight: '32px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
             color:
               sortField === 'criticalDamage'
                 ? roleColors.isDarkMode
@@ -866,7 +892,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 key={`mobile-${row.id}`}
                 sx={{
                   display: { xs: 'block', sm: 'none' },
-                  p: 2,
+                  p: 1.5,
                   backgroundColor: 'transparent',
                   borderBottom:
                     index < damageRows.length - 1 ? '1px solid rgba(255, 255, 255, 0.05)' : 'none',
@@ -884,7 +910,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    mb: 1.5,
+                    mb: 1,
                   }}
                 >
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0, flex: 1 }}>
@@ -897,8 +923,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     )}
                     <Typography
                       sx={{
-                        fontWeight: 500,
-                        fontSize: '0.9rem',
+                        fontWeight: 600,
+                        fontSize: '0.85rem',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
@@ -926,7 +952,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         sx={{
                           color: roleColors.isDarkMode ? '#ffffff' : '#000000',
                           fontWeight: 700,
-                          fontSize: '0.9rem',
+                          fontSize: '0.85rem',
                           textShadow: roleColors.isDarkMode
                             ? '0 1px 3px rgba(0,0,0,0.8)'
                             : '0 1px 2px rgba(255,255,255,0.8)',
@@ -971,7 +997,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 </Box>
 
                 {/* Mobile Progress Bars and Amount */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 0.75 }}>
                   <Typography
                     sx={{
                       color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
@@ -1042,7 +1068,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 </Box>
 
                 {/* Critical Damage - Mobile */}
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
                   <Typography
                     sx={{
                       color: roleColors.isDarkMode ? '#888' : '#64748b',
@@ -1075,16 +1101,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     sx={{
                       display: 'flex',
                       justifyContent: 'flex-end',
-                      mt: 0.5,
+                      mt: 0.25,
                       gap: 0.5,
                     }}
                   >
                     {row.deaths > 0 && (
                       <Box
                         sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: '12px',
+                          px: 1.25,
+                          py: 0.35,
+                          borderRadius: '10px',
                           backgroundColor: roleColors.isDarkMode
                             ? 'rgba(244, 67, 54, 0.2)'
                             : 'rgba(239, 68, 68, 0.1)',
@@ -1093,7 +1119,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                             : '1px solid rgba(239, 68, 68, 0.2)',
                           cursor: 'default',
                           userSelect: 'none',
-                          fontSize: '0.7rem',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
                           color: roleColors.isDarkMode ? '#f44336' : '#dc2626',
                           transition: 'all 0.2s ease',
                         }}
@@ -1104,9 +1131,9 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {row.resurrects > 0 && (
                       <Box
                         sx={{
-                          px: 1.5,
-                          py: 0.5,
-                          borderRadius: '12px',
+                          px: 1.25,
+                          py: 0.35,
+                          borderRadius: '10px',
                           backgroundColor: roleColors.isDarkMode
                             ? 'rgba(74, 222, 128, 0.2)'
                             : 'rgba(34, 197, 94, 0.1)',
@@ -1115,7 +1142,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                             : '1px solid rgba(34, 197, 94, 0.2)',
                           cursor: 'default',
                           userSelect: 'none',
-                          fontSize: '0.7rem',
+                          fontSize: '0.65rem',
+                          fontWeight: 600,
                           color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
                           transition: 'all 0.2s ease',
                         }}
