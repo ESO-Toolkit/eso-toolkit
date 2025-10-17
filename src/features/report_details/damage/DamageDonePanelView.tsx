@@ -2,6 +2,7 @@ import { Box, Typography, Avatar, LinearProgress, Tooltip } from '@mui/material'
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
+import { MUTED_ORANGE_PROGRESS_DARK, MUTED_ORANGE_PROGRESS_LIGHT } from '../../../utils/roleColors';
 import type { DamageOverTimeResult } from '../../../workers/calculations/CalculateDamageOverTime';
 
 import { DamageTimelineChart } from './DamageTimelineChart';
@@ -646,7 +647,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {percentageOfTotal}%
                   </Typography>
                   <Box sx={{ flex: 1, minWidth: '100px', position: 'relative' }}>
-                    {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
+                    {/* Total Damage Progress Bar (Background) - Muted Orange */}
                     <LinearProgress
                       variant="determinate"
                       value={percentageValue}
@@ -654,13 +655,13 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         height: 8,
                         borderRadius: 1,
                         backgroundColor: roleColors.isDarkMode
-                          ? 'rgba(250, 204, 21, 0.1)'
-                          : 'rgba(234, 179, 8, 0.1)',
+                          ? MUTED_ORANGE_PROGRESS_DARK.background
+                          : MUTED_ORANGE_PROGRESS_LIGHT.background,
                         '& .MuiLinearProgress-bar': {
                           borderRadius: 1,
                           background: roleColors.isDarkMode
-                            ? 'linear-gradient(90deg, #facc15 0%, #eab308 100%)'
-                            : 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
+                            ? MUTED_ORANGE_PROGRESS_DARK.bar
+                            : MUTED_ORANGE_PROGRESS_LIGHT.bar,
                         },
                       }}
                     />
@@ -710,12 +711,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   <Tooltip title={formatNumber(row.dps)} arrow>
                     <Typography
                       sx={{
-                        color: roleColors.isDarkMode ? '#eab308' : '#ca8a04',
+                        color: roleColors.isDarkMode ? '#ffffff' : '#000000',
                         fontWeight: 700,
                         fontSize: '0.875rem',
                         textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.12)',
+                          ? '0 1px 3px rgba(0,0,0,0.8)'
+                          : '0 1px 2px rgba(255,255,255,0.8)',
                         cursor: 'help',
                       }}
                     >
@@ -935,12 +936,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     <Tooltip title={formatNumber(row.dps)} arrow>
                       <Typography
                         sx={{
-                          color: roleColors.isDarkMode ? '#eab308' : '#ca8a04',
+                          color: roleColors.isDarkMode ? '#ffffff' : '#000000',
                           fontWeight: 700,
                           fontSize: '0.9rem',
                           textShadow: roleColors.isDarkMode
-                            ? '0 1px 3px rgba(0,0,0,0.5)'
-                            : '0 1px 1px rgba(0,0,0,0.12)',
+                            ? '0 1px 3px rgba(0,0,0,0.8)'
+                            : '0 1px 2px rgba(255,255,255,0.8)',
                           cursor: 'help',
                         }}
                       >
@@ -997,7 +998,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     {percentageOfTotal}%
                   </Typography>
                   <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
-                    {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
+                    {/* Total Damage Progress Bar (Background) - Muted Orange */}
                     <LinearProgress
                       variant="determinate"
                       value={percentageValue}
@@ -1005,13 +1006,13 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         height: 6, // Slightly smaller for mobile
                         borderRadius: 1,
                         backgroundColor: roleColors.isDarkMode
-                          ? 'rgba(250, 204, 21, 0.1)'
-                          : 'rgba(234, 179, 8, 0.1)',
+                          ? MUTED_ORANGE_PROGRESS_DARK.background
+                          : MUTED_ORANGE_PROGRESS_LIGHT.background,
                         '& .MuiLinearProgress-bar': {
                           borderRadius: 1,
                           background: roleColors.isDarkMode
-                            ? 'linear-gradient(90deg, #facc15 0%, #eab308 100%)'
-                            : 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
+                            ? MUTED_ORANGE_PROGRESS_DARK.bar
+                            : MUTED_ORANGE_PROGRESS_LIGHT.bar,
                         },
                       }}
                     />
