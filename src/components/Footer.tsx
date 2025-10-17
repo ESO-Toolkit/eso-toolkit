@@ -287,7 +287,9 @@ export const Footer: React.FC = React.memo(() => {
 
       letterSpacing: '0.02em',
 
-      color: '#0f172a',
+      color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
+
+      textShadow: theme.palette.mode === 'dark' ? '0 1px 2px rgba(0, 0, 0, 0.5)' : 'none',
 
       backgroundImage:
         theme.palette.mode === 'dark'
