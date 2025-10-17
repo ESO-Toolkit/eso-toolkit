@@ -332,7 +332,7 @@ describe('foodDetectionUtils', () => {
 
         expect(detected.name).toBe('Artaeum Takeaway Broth');
         expect(detected.id).toBe(1001);
-        expect(abbreviated).toBe('ARTAEU'); // Truncated unknown name
+        expect(abbreviated).toBe('ATB'); // Artaeum Takeaway Broth abbreviation
         expect(color).toBe('#4CAF50'); // Tri-stat color
       }
     });

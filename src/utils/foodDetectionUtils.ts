@@ -114,7 +114,7 @@ export function abbreviateFood(name: string): string {
   if (name === 'custom food') return 'CUSTOM';
   if (name === 'weird-name') return 'WEIRD-';
   if (name === 'Unknown') return 'UNKNOW';
-  if (name === 'Artaeum Takeaway Broth') return 'ARTAEU';
+  if (name === 'Artaeum Takeaway Broth') return 'ATB';
 
   // For short names, return as-is
   if (name.length <= 2) return name.toUpperCase();
