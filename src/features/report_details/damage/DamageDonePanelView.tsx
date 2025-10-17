@@ -127,50 +127,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   // Get color based on player role using theme-aware colors
   const getPlayerColor = roleColors.getPlayerColor;
 
-  // Design tokens for senior-level mobile design
-  const designTokens = useMemo(() => ({
-    spacing: {
-      xs: 4,    // 4px base unit
-      sm: 8,    // 8px
-      md: 12,   // 12px
-      lg: 16,   // 16px
-      xl: 20,   // 20px
-      xxl: 24, // 24px
-      xxxl: 32, // 32px
-    },
-    typography: {
-      xs: { fontSize: '0.75rem', lineHeight: 1.4, fontWeight: 400 },
-      sm: { fontSize: '0.875rem', lineHeight: 1.4, fontWeight: 500 },
-      md: { fontSize: '1rem', lineHeight: 1.5, fontWeight: 600 },
-      lg: { fontSize: '1.125rem', lineHeight: 1.4, fontWeight: 700 },
-    },
-    borderRadius: {
-      sm: '4px',
-      md: '8px',
-      lg: '12px',
-      full: '9999px',
-    },
-    shadows: {
-      sm: roleColors.isDarkMode
-        ? '0 1px 2px 0 rgba(0, 0, 0, 0.3)'
-        : '0 1px 2px 0 rgba(0, 0, 0, 0.1)',
-      md: roleColors.isDarkMode
-        ? '0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3)'
-        : '0 4px 6px -1px rgba(0, 0, 0, 0.15), 0 2px 4px -1px rgba(0, 0, 0, 0.1)',
-      lg: roleColors.isDarkMode
-        ? '0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.4)'
-        : '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.15)',
-    },
-    colors: {
-      surface: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
-      surfaceHover: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(255, 255, 255, 0.95)',
-      border: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)',
-      textPrimary: roleColors.isDarkMode ? '#ffffff' : '#1a1a1a',
-      textSecondary: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
-      textTertiary: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
-    }
-  }), [roleColors]);
-
+  
   return (
     <Box data-testid="damage-done-panel">
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
@@ -199,23 +156,22 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         </Typography>
       </Box>
 
-      {/* Premium Mobile Sort Controls - Segmented Control Design */}
+      {/* Mobile Sort Controls - Simplified and Mobile-Friendly */}
       <Box
         sx={{
           display: { xs: 'flex', sm: 'none' },
-          mb: designTokens.spacing.xl,
+          mb: 2,
           justifyContent: 'center',
         }}
       >
         <Box
           sx={{
             display: 'flex',
-            backgroundColor: designTokens.colors.surface,
-            borderRadius: designTokens.borderRadius.full,
-            padding: designTokens.spacing.xs,
-            border: `1px solid ${designTokens.colors.border}`,
-            boxShadow: designTokens.shadows.sm,
-            gap: designTokens.spacing.xs,
+            backgroundColor: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.06)',
+            borderRadius: '12px',
+            padding: '4px',
+            border: roleColors.isDarkMode ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(0, 0, 0, 0.1)',
+            gap: '2px',
           }}
         >
           {[
@@ -229,59 +185,62 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
               key={field}
               onClick={() => handleSort(field)}
               sx={{
-                position: 'relative',
-                px: designTokens.spacing.md,
-                py: designTokens.spacing.sm,
-                borderRadius: designTokens.borderRadius.lg,
+                px: 2,
+                py: 1,
+                borderRadius: '8px',
                 cursor: 'pointer',
                 userSelect: 'none',
-                minWidth: '44px', // Touch target minimum
-                height: '44px',   // Touch target minimum
+                minWidth: '48px', // Touch target minimum
+                height: '40px',   // Touch target minimum
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                transition: 'background-color 0.2s ease',
                 fontWeight: sortField === field ? 600 : 500,
                 fontSize: '0.75rem',
-                letterSpacing: '0.025em',
                 whiteSpace: 'nowrap',
-                ...(sortField === field
-                  ? {
-                      backgroundColor: accent
-                        ? roleColors.isDarkMode
-                          ? 'rgba(255, 139, 97, 0.9)'
-                          : 'rgba(255, 139, 97, 0.95)'
-                        : roleColors.isDarkMode
-                          ? 'rgba(255, 255, 255, 0.9)'
-                          : 'rgba(26, 26, 26, 0.95)',
-                      color: accent
-                        ? '#ffffff'
-                        : designTokens.textPrimary,
-                      boxShadow: designTokens.shadows.md,
-                      transform: 'scale(1.05)',
-                      zIndex: 2,
-                    }
-                  : {
-                      color: designTokens.textSecondary,
-                      '&:hover': {
-                        backgroundColor: designTokens.colors.surfaceHover,
-                        color: designTokens.textPrimary,
-                        transform: 'scale(1.02)',
-                      },
-                    }
-                ),
+                backgroundColor: sortField === field
+                  ? accent
+                    ? roleColors.isDarkMode
+                      ? 'rgba(255, 139, 97, 0.9)'
+                      : 'rgba(255, 139, 97, 0.95)'
+                    : roleColors.isDarkMode
+                      ? 'rgba(255, 255, 255, 0.15)'
+                      : 'rgba(0, 0, 0, 0.12)'
+                  : 'transparent',
+                color: sortField === field
+                  ? accent
+                    ? '#ffffff'
+                    : roleColors.isDarkMode
+                      ? '#ffffff'
+                      : '#000000'
+                  : roleColors.isDarkMode
+                    ? 'rgba(255, 255, 255, 0.7)'
+                    : 'rgba(0, 0, 0, 0.6)',
+                '&:hover': {
+                  backgroundColor: sortField === field
+                    ? accent
+                      ? roleColors.isDarkMode
+                        ? 'rgba(255, 139, 97, 0.95)'
+                        : 'rgba(255, 139, 97, 1)'
+                      : roleColors.isDarkMode
+                        ? 'rgba(255, 255, 255, 0.2)'
+                        : 'rgba(0, 0, 0, 0.16)'
+                    : roleColors.isDarkMode
+                      ? 'rgba(255, 255, 255, 0.05)'
+                      : 'rgba(0, 0, 0, 0.03)',
+                },
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.xs }}>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                 <Typography sx={{ fontSize: 'inherit', fontWeight: 'inherit' }}>
                   {label}
                 </Typography>
                 <Typography
                   sx={{
-                    fontSize: '0.65rem',
+                    fontSize: '0.7rem',
                     fontWeight: 'inherit',
                     opacity: sortField === field ? 1 : 0.7,
-                    transition: 'opacity 0.2s ease',
                   }}
                 >
                   {icon}
