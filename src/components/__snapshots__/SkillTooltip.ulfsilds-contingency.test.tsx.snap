@@ -63,7 +63,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Ulfsild's Contingency
         </span>
       </div>
@@ -73,7 +73,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -81,7 +81,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Unknown
              (
             unknown
@@ -90,7 +89,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🎯 
             50
             % match confidence
           </span>
@@ -102,7 +100,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -110,13 +108,22 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-1xrncdp-MuiTypography-root"
           >
-            ❓ No signature script detected
+            No signature script detected
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
-      />
+        class="MuiBox-root css-0"
+      >
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
+        >
+          Effects
+        </span>
+        <div
+          class="MuiBox-root css-yi3mkw"
+        />
+      </div>
     </div>
     <hr
       class="MuiDivider-root MuiDivider-fullWidth css-l65m1u-MuiDivider-root"
@@ -193,7 +200,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Ulfsild's Contingency
         </span>
       </div>
@@ -203,7 +210,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -211,7 +218,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Healing Contingency
              (
             focus
@@ -220,7 +226,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🎯 
             95
             % match confidence
           </span>
@@ -232,7 +237,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -240,34 +245,36 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Edge Cases fo
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🖋️ 
             Gladiator's Tenacity
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🔍 Evidence: 
+            Evidence: 
             Consistent healing pattern detected
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
+        class="MuiBox-root css-0"
       >
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+          Effects
+        </span>
+        <div
+          class="MuiBox-root css-yi3mkw"
+        >
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Tenacious Contingency (12)
-          </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Tenacious Contingency (12)
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -522,7 +529,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Ulfsild's Contingency
         </span>
       </div>
@@ -532,7 +539,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -540,7 +547,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Healing Contingency
              (
             focus
@@ -554,7 +560,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -562,64 +568,54 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🖋️ 
             Gladiator's Tenacity
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🔍 Evidence: 
+            Evidence: 
             Analyzed 6 casts, Found 1 consistent effects, Top effect: buff ID 217654 (24/6 casts), buff 217654: 24 occurrences
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
+        class="MuiBox-root css-0"
       >
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
-          >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Tenacious Contingency (24)
-          </span>
-        </div>
+          Effects
+        </span>
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
+          class="MuiBox-root css-yi3mkw"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Tenacious Contingency (24)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            Warding Contingency (24)
-          </span>
-        </div>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
-        >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Warding Contingency (24)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Ulfsild's Contingency (5)
-          </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Ulfsild's Contingency (5)
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -720,7 +716,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Ulfsild's Contingency
         </span>
       </div>
@@ -730,7 +726,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -738,7 +734,6 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Gladiator's Tenacity
              (
             signature
@@ -752,7 +747,7 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -760,34 +755,36 @@ exports[`SkillTooltip - Ulfsild's Contingency (Fight 11, Player 7) Ulfsild's Con
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🖋️ 
             Gladiator's Tenacity
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🔍 Evidence: 
+            Evidence: 
             Analyzed 6 casts, Top effect: buff ID 217654 (24/6 casts)
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
+        class="MuiBox-root css-0"
       >
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+          Effects
+        </span>
+        <div
+          class="MuiBox-root css-yi3mkw"
+        >
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Tenacious Contingency (24)
-          </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Tenacious Contingency (24)
+            </span>
+          </div>
         </div>
       </div>
     </div>

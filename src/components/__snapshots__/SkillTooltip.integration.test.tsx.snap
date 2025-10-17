@@ -306,7 +306,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           <span
             class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
           >
-            📖 Grimoire: 
+            Grimoire: 
             Traveling Knife
           </span>
         </div>
@@ -316,7 +316,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           <span
             class="MuiTypography-root MuiTypography-caption css-1p66mmu-MuiTypography-root"
           >
-            ⚠️ Script Analysis Unavailable
+            Script Analysis Unavailable
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-6mkcxp-MuiTypography-root"
@@ -466,7 +466,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           <span
             class="MuiTypography-root MuiTypography-caption css-1fhgshp-MuiTypography-root"
           >
-            📖 Grimoire: 
+            Grimoire: 
             Traveling Knife
           </span>
         </div>
@@ -476,7 +476,7 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
           <span
             class="MuiTypography-root MuiTypography-caption css-1y00so2-MuiTypography-root"
           >
-            📜 Signature Script
+            Signature Script
           </span>
           <div
             class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -484,27 +484,30 @@ exports[`SkillTooltip Integration Tests Shattering Knife - Real Scribing Detecti
             <span
               class="MuiTypography-root MuiTypography-caption css-1twjnv6-MuiTypography-root"
             >
-              ❓ No signature script detected
+              No signature script detected
             </span>
           </div>
         </div>
         <div
-          class="MuiBox-root css-yi3mkw"
+          class="MuiBox-root css-0"
         >
-          <div
-            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qkww3j-MuiChip-root"
+          <span
+            class="MuiTypography-root MuiTypography-caption css-1su74eg-MuiTypography-root"
           >
-            <span
-              class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-              style="font-size: 0.7rem;"
+            Effects
+          </span>
+          <div
+            class="MuiBox-root css-yi3mkw"
+          >
+            <div
+              class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18z2x9l-MuiChip-root"
             >
-              ⬇️
-            </span>
-            <span
-              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-            >
-              Assassin's Misery (3)
-            </span>
+              <span
+                class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+              >
+                Assassin's Misery (3)
+              </span>
+            </div>
           </div>
         </div>
       </div>

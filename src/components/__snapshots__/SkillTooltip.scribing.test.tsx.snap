@@ -226,7 +226,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Traveling Knife
         </span>
       </div>
@@ -236,7 +236,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -244,7 +244,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Shattering Knife
              (
             signature
@@ -258,7 +257,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -266,13 +265,12 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🖋️ 
             Shattering Knife
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🔍 Evidence: 
+            Evidence: 
             Ability ID 217340 found in database
           </span>
         </div>
@@ -283,7 +281,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🎭 Affix Scripts
+          Affix Scripts
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -294,7 +292,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
             <span
               class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
             >
-              ✨ 
               Armor Breach
             </span>
             <span
@@ -308,37 +305,34 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
+        class="MuiBox-root css-0"
       >
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-h0qsx2-MuiChip-root"
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
-          >
-            ⚔️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Shattering Knife (15)
-          </span>
-        </div>
+          Effects
+        </span>
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1bksjns-MuiChip-root"
+          class="MuiBox-root css-yi3mkw"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-uts9na-MuiChip-root"
           >
-            ⬇️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Shattering Knife (15)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qvvcse-MuiChip-root"
           >
-            Armor Reduction (8)
-          </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Armor Reduction (8)
+            </span>
+          </div>
         </div>
       </div>
     </div>
@@ -453,7 +447,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Traveling Knife
         </span>
       </div>
@@ -463,7 +457,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -471,7 +465,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Shattering Knife
              (
             signature
@@ -485,7 +478,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -493,13 +486,22 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife (Player 1) sh
           <span
             class="MuiTypography-root MuiTypography-caption css-1xrncdp-MuiTypography-root"
           >
-            ❓ No signature script detected
+            No signature script detected
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
-      />
+        class="MuiBox-root css-0"
+      >
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
+        >
+          Effects
+        </span>
+        <div
+          class="MuiBox-root css-yi3mkw"
+        />
+      </div>
     </div>
     <hr
       class="MuiDivider-root MuiDivider-fullWidth css-l65m1u-MuiDivider-root"
@@ -739,7 +741,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         <span
           class="MuiTypography-root MuiTypography-caption css-pdgy6c-MuiTypography-root"
         >
-          📖 Grimoire: 
+          Grimoire: 
           Traveling Knife
         </span>
       </div>
@@ -749,7 +751,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         <span
           class="MuiTypography-root MuiTypography-caption css-1so4hfi-MuiTypography-root"
         >
-          🧪 Focus Script
+          Focus Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -757,7 +759,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🔄 
             Shattering Knife
              (
             signature
@@ -766,7 +767,6 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🎯 
             95
             % match confidence
           </span>
@@ -778,7 +778,7 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
         <span
           class="MuiTypography-root MuiTypography-caption css-1g9mk0o-MuiTypography-root"
         >
-          📜 Signature Script
+          Signature Script
         </span>
         <div
           class="MuiStack-root css-yzxa55-MuiStack-root"
@@ -786,79 +786,63 @@ exports[`SkillTooltip - Scribing Skills Snapshots Shattering Knife - Various Eff
           <span
             class="MuiTypography-root MuiTypography-caption css-it9j4c-MuiTypography-root"
           >
-            🖋️ 
             Shattering Knife
           </span>
           <span
             class="MuiTypography-root MuiTypography-caption css-12s7ml7-MuiTypography-root"
           >
-            🔍 Evidence: 
+            Evidence: 
             Multiple damage instances, Armor reduction effects, Healing components
           </span>
         </div>
       </div>
       <div
-        class="MuiBox-root css-yi3mkw"
+        class="MuiBox-root css-0"
       >
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-h0qsx2-MuiChip-root"
+        <span
+          class="MuiTypography-root MuiTypography-caption css-kh764n-MuiTypography-root"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
-          >
-            ⚔️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Shattering Strike (12)
-          </span>
-        </div>
+          Effects
+        </span>
         <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1bksjns-MuiChip-root"
+          class="MuiBox-root css-yi3mkw"
         >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-uts9na-MuiChip-root"
           >
-            ⬇️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Shattering Strike (12)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qvvcse-MuiChip-root"
           >
-            Armor Shatter (8)
-          </span>
-        </div>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-18ep6ns-MuiChip-root"
-        >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Armor Shatter (8)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-qqf3vu-MuiChip-root"
           >
-            ⬆️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Combat Stance (5)
+            </span>
+          </div>
+          <div
+            class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-wybja1-MuiChip-root"
           >
-            Combat Stance (5)
-          </span>
-        </div>
-        <div
-          class="MuiChip-root MuiChip-outlined MuiChip-sizeSmall MuiChip-colorDefault MuiChip-outlinedDefault css-1t625lw-MuiChip-root"
-        >
-          <span
-            class="MuiChip-icon MuiChip-iconSmall MuiChip-iconColorDefault"
-            style="font-size: 0.7rem;"
-          >
-            ❤️
-          </span>
-          <span
-            class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
-          >
-            Life Steal (3)
-          </span>
+            <span
+              class="MuiChip-label MuiChip-labelSmall css-19m61dl-MuiChip-label"
+            >
+              Life Steal (3)
+            </span>
+          </div>
         </div>
       </div>
     </div>
