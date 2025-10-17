@@ -101,42 +101,22 @@ export interface SkillTooltipProps {
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
-// Utility functions for scribed skill effects
-const getEffectTypeColor = (type: string, theme: Theme): string => {
+const getEffectTypeIndicator = (type: string, theme: Theme): { color: string } => {
   switch (type) {
     case 'buff':
-      return theme.palette.success.main;
+      return { color: theme.palette.success.main };
     case 'debuff':
-      return theme.palette.error.main;
+      return { color: theme.palette.error.main };
     case 'damage':
-      return theme.palette.warning.main;
+      return { color: theme.palette.warning.main };
     case 'heal':
-      return theme.palette.info.main;
+      return { color: theme.palette.info.main };
     case 'aura':
-      return theme.palette.secondary.main;
+      return { color: theme.palette.secondary.main };
     case 'resource':
-      return theme.palette.primary.main;
+      return { color: theme.palette.primary.main };
     default:
-      return theme.palette.text.secondary;
-  }
-};
-
-const getEffectTypeIcon = (type: string): string => {
-  switch (type) {
-    case 'buff':
-      return '⬆️';
-    case 'debuff':
-      return '⬇️';
-    case 'damage':
-      return '⚔️';
-    case 'heal':
-      return '❤️';
-    case 'aura':
-      return '🔮';
-    case 'resource':
-      return '⚡';
-    default:
-      return '◯';
+      return { color: theme.palette.text.secondary };
   }
 };
 
@@ -172,7 +152,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
   const logger = useLogger();
 
   // Always use automatic scribing detection when fight and player context available
-  const { scribedSkillData: detectedScribingData, loading: scribingLoading } = useSkillScribingData(
+  const { scribedSkillData: detectedScribingData } = useSkillScribingData(
     fightId,
     playerId,
     abilityId,
@@ -511,25 +491,8 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                     fontSize: '0.78rem',
                   }}
                 >
-                  📖 Grimoire: {finalScribedData.grimoireName}
+                  Grimoire: {finalScribedData.grimoireName}
                 </Typography>
-
-                {/* Enhanced Detection Badge */}
-                <Chip
-                  size="small"
-                  label={scribingLoading ? 'Analyzing...' : 'Enhanced AI'}
-                  variant="outlined"
-                  sx={{
-                    fontSize: '0.6rem',
-                    height: '18px',
-                    color: scribingLoading ? 'warning.main' : 'success.main',
-                    borderColor: scribingLoading ? 'warning.main' : 'success.main',
-                    '& .MuiChip-label': {
-                      px: 0.5,
-                      fontSize: '0.6rem',
-                    },
-                  }}
-                />
               </Stack>
 
               {/* Show message when skill wasn't cast */}
@@ -546,7 +509,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       display: 'block',
                     }}
                   >
-                    ⚠️ Script Analysis Unavailable
+                    Script Analysis Unavailable
                   </Typography>
                   <Typography
                     variant="caption"
@@ -577,7 +540,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                           display: 'block',
                         }}
                       >
-                        🧪 Focus Script
+                        Focus Script
                       </Typography>
                       <Stack spacing={0.3} sx={{ mb: 1 }}>
                         <Typography
@@ -588,7 +551,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             fontWeight: 600,
                           }}
                         >
-                          🔄 {finalScribedData.recipe.transformation} (
+                          {finalScribedData.recipe.transformation} (
                           {finalScribedData.recipe.transformationType})
                         </Typography>
                         {finalScribedData.recipe.confidence < 1.0 && (
@@ -600,8 +563,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                               fontStyle: 'italic',
                             }}
                           >
-                            🎯 {Math.round(finalScribedData.recipe.confidence * 100)}% match
-                            confidence
+                            {Math.round(finalScribedData.recipe.confidence * 100)}% match confidence
                           </Typography>
                         )}
                       </Stack>
@@ -624,7 +586,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                       display: 'block',
                     }}
                   >
-                    📜 Signature Script
+                    Signature Script
                   </Typography>
                   <Stack spacing={0.3} sx={{ mb: 1 }}>
                     {finalScribedData.signatureScript ? (
@@ -637,7 +599,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                             fontWeight: 600,
                           }}
                         >
-                          🖋️ {finalScribedData.signatureScript.name}
+                          {finalScribedData.signatureScript.name}
                         </Typography>
                         {finalScribedData.signatureScript.evidence &&
                           finalScribedData.signatureScript.evidence.length > 0 && (
@@ -649,7 +611,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                 fontStyle: 'italic',
                               }}
                             >
-                              🔍 Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
+                              Evidence: {finalScribedData.signatureScript.evidence.join(', ')}
                             </Typography>
                           )}
                       </>
@@ -662,7 +624,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                           fontStyle: 'italic',
                         }}
                       >
-                        ❓ No signature script detected
+                        No signature script detected
                       </Typography>
                     )}
                   </Stack>
@@ -685,7 +647,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                         display: 'block',
                       }}
                     >
-                      🎭 Affix Scripts
+                      Affix Scripts
                     </Typography>
                     <Stack spacing={0.3} sx={{ mb: 1 }}>
                       {finalScribedData.affixScripts.map(
@@ -699,7 +661,7 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
                                 fontWeight: 600,
                               }}
                             >
-                              ✨ {affixScript.name}
+                              {affixScript.name}
                             </Typography>
                             {affixScript.confidence && affixScript.confidence < 1.0 && (
                               <Typography
@@ -722,46 +684,69 @@ export const SkillTooltip: React.FC<SkillTooltipProps> = ({
 
               {/* Effects List - only show if skill was cast */}
               {finalScribedData.wasCastInFight !== false && (
-                <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                  {finalScribedData.effects.map(
-                    (
-                      effect: {
-                        type: string;
-                        abilityName: string;
-                        abilityId?: number;
-                        count?: number;
+                <Box>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: 'text.primary',
+                      fontWeight: 600,
+                      letterSpacing: '.01em',
+                      fontSize: '0.7rem',
+                      mb: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    Effects
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                    {finalScribedData.effects.map(
+                      (
+                        effect: {
+                          type: string;
+                          abilityName: string;
+                          abilityId?: number;
+                          count?: number;
+                        },
+                        index: number,
+                      ) => {
+                        const indicator = getEffectTypeIndicator(effect.type, theme);
+                        return (
+                          <Chip
+                            key={index}
+                            size="small"
+                            label={`${effect.abilityName} (${effect.count})`}
+                            variant="outlined"
+                            sx={(_theme) => ({
+                              fontSize: '0.62rem',
+                              height: '20px',
+                              color: indicator.color,
+                              borderColor: alpha(indicator.color, 0.4),
+                              backgroundColor: alpha(indicator.color, 0.08),
+                              fontWeight: 600,
+                              '& .MuiChip-label': {
+                                px: 0.5,
+                                pl: 1.25,
+                                fontSize: '0.62rem',
+                                lineHeight: 1.2,
+                                position: 'relative',
+                                '&::before': {
+                                  content: '""',
+                                  position: 'absolute',
+                                  left: 0.25,
+                                  top: '50%',
+                                  transform: 'translateY(-50%)',
+                                  width: 4,
+                                  height: 4,
+                                  borderRadius: '50%',
+                                  backgroundColor: indicator.color,
+                                },
+                              },
+                            })}
+                          />
+                        );
                       },
-                      index: number,
-                    ) => (
-                      <Chip
-                        key={index}
-                        size="small"
-                        icon={
-                          <span style={{ fontSize: '0.7rem' }}>
-                            {getEffectTypeIcon(effect.type)}
-                          </span>
-                        }
-                        label={`${effect.abilityName} (${effect.count})`}
-                        variant="outlined"
-                        sx={(theme) => ({
-                          fontSize: '0.65rem',
-                          height: '22px',
-                          color: getEffectTypeColor(effect.type, theme),
-                          borderColor: alpha(getEffectTypeColor(effect.type, theme), 0.3),
-                          backgroundColor: alpha(getEffectTypeColor(effect.type, theme), 0.05),
-                          '& .MuiChip-label': {
-                            px: 0.5,
-                            fontSize: '0.65rem',
-                            lineHeight: 1.2,
-                          },
-                          '& .MuiChip-icon': {
-                            marginLeft: '4px',
-                            marginRight: '-2px',
-                          },
-                        })}
-                      />
-                    ),
-                  )}
+                    )}
+                  </Box>
                 </Box>
               )}
             </Box>
