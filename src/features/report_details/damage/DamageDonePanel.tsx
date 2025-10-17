@@ -116,12 +116,14 @@ export const DamageDonePanel: React.FC = () => {
   // Memoize damage calculations to prevent unnecessary recalculations
   const damageStatistics = useMemo(() => {
     const damageByPlayer: Record<number, number> = {};
+    const criticalDamageByPlayer: Record<number, number> = {};
     const damageEventsBySource: Record<number, number> = {};
 
     // Convert string keys to numbers and calculate totals
     Object.entries(damageEventsByPlayer).forEach(([playerIdStr, events]) => {
       const playerId = Number(playerIdStr);
       let totalDamage = 0;
+      let totalCriticalDamage = 0;
       let eventCount = 0;
 
       events.forEach((event) => {
@@ -134,17 +136,24 @@ export const DamageDonePanel: React.FC = () => {
 
           const amount = 'amount' in event ? Number(event.amount) || 0 : 0;
           totalDamage += amount;
+
+          // Check if this is a critical hit (hitType === 2)
+          if (event.hitType === 2) {
+            totalCriticalDamage += amount;
+          }
+
           eventCount++;
         }
       });
 
       if (totalDamage > 0) {
         damageByPlayer[playerId] = totalDamage;
+        criticalDamageByPlayer[playerId] = totalCriticalDamage;
         damageEventsBySource[playerId] = eventCount;
       }
     });
 
-    return { damageByPlayer, damageEventsBySource };
+    return { damageByPlayer, criticalDamageByPlayer, damageEventsBySource };
   }, [damageEventsByPlayer, selectedTargetIds]);
 
   // Calculate active percentages using ESO logs methodology with target filtering
@@ -275,12 +284,16 @@ export const DamageDonePanel: React.FC = () => {
         const activeData = activePercentages[playerId];
         const activePercentage = activeData?.activePercentage ?? 0;
 
+        // Get critical damage for this player
+        const criticalDamage = damageStatistics.criticalDamageByPlayer[playerId] || 0;
+
         return {
           id,
           name,
           total: totalDamage,
           dps: fightDuration > 0 ? totalDamage / fightDuration : 0,
           activePercentage,
+          criticalDamage,
           iconUrl,
           role,
           deaths,
@@ -290,6 +303,7 @@ export const DamageDonePanel: React.FC = () => {
       .sort((a, b) => b.dps - a.dps);
   }, [
     damageStatistics.damageByPlayer,
+    damageStatistics.criticalDamageByPlayer,
     isPlayerActor,
     masterData.actorsById,
     fightDuration,

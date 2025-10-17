@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar, LinearProgress } from '@mui/material';
+import { Box, Typography, Avatar, LinearProgress, Tooltip } from '@mui/material';
 import React, { useState, useMemo } from 'react';
 
 import { useRoleColors } from '../../../hooks';
@@ -12,6 +12,7 @@ interface DamageRow {
   total: number;
   dps: number;
   activePercentage: number;
+  criticalDamage: number;
   iconUrl?: string;
   role?: 'dps' | 'tank' | 'healer';
   deaths: number;
@@ -27,7 +28,7 @@ interface DamageDonePanelViewProps {
   availableTargets?: Array<{ id: number; name: string }>;
 }
 
-type SortField = 'name' | 'total' | 'dps' | 'activeDps';
+type SortField = 'name' | 'total' | 'dps' | 'activeDps' | 'criticalDamage';
 type SortDirection = 'asc' | 'desc';
 
 /**
@@ -68,6 +69,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           aValue = a.activePercentage > 0 ? a.dps / (a.activePercentage / 100) : 0;
           bValue = b.activePercentage > 0 ? b.dps / (b.activePercentage / 100) : 0;
           break;
+        case 'criticalDamage':
+          aValue = a.criticalDamage;
+          bValue = b.criticalDamage;
+          break;
         default:
           return 0;
       }
@@ -80,7 +85,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
     });
   }, [damageRows, sortField, sortDirection]);
 
-  // Calculate total damage for percentage calculations
+  // Find the highest damage for progress bar calculations
+  const maxDamage = sortedRows.length > 0 ? Math.max(...sortedRows.map((row) => row.total)) : 1;
+
+  // Calculate total damage for percentage display
   const totalDamage = sortedRows.reduce((sum, row) => sum + row.total, 0);
 
   // Handle column header clicks for sorting
@@ -102,6 +110,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
   // Format numbers for display with commas as thousand separators
   const formatNumber = (num: number): string => {
     return Math.round(num).toLocaleString();
+  };
+
+  // Format numbers in short format (k for thousands, m for millions)
+  const formatNumberShort = (num: number): string => {
+    const rounded = Math.round(num);
+    if (rounded >= 1000000) {
+      return `${(rounded / 1000000).toFixed(1)}m`;
+    } else if (rounded >= 1000) {
+      return `${(rounded / 1000).toFixed(1)}k`;
+    }
+    return rounded.toString();
   };
 
   // Get color based on player role using theme-aware colors
@@ -298,6 +317,45 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
         >
           Active{getSortIcon('activeDps')}
         </Box>
+        <Box
+          onClick={() => handleSort('criticalDamage')}
+          sx={{
+            px: 2,
+            py: 0.5,
+            borderRadius: '12px',
+            backgroundColor:
+              sortField === 'criticalDamage'
+                ? roleColors.isDarkMode
+                  ? 'rgba(251, 191, 36, 0.2)'
+                  : 'rgba(245, 158, 11, 0.1)'
+                : roleColors.isDarkMode
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : 'rgba(15, 23, 42, 0.05)',
+            border: roleColors.isDarkMode
+              ? '1px solid rgba(255, 255, 255, 0.2)'
+              : '1px solid rgba(15, 23, 42, 0.1)',
+            cursor: 'pointer',
+            userSelect: 'none',
+            fontSize: '0.75rem',
+            color:
+              sortField === 'criticalDamage'
+                ? roleColors.isDarkMode
+                  ? '#fbbf24'
+                  : '#f59e0b'
+                : roleColors.isDarkMode
+                  ? '#ecf0f1'
+                  : '#334155',
+            transition: 'all 0.2s ease',
+            '&:hover': {
+              backgroundColor: roleColors.isDarkMode
+                ? 'rgba(251, 191, 36, 0.15)'
+                : 'rgba(245, 158, 11, 0.08)',
+              color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
+            },
+          }}
+        >
+          Crit{getSortIcon('criticalDamage')}
+        </Box>
       </Box>
       {damageRows.length > 0 ? (
         <Box
@@ -348,7 +406,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
           <Box
             sx={{
               display: { xs: 'none', sm: 'grid' },
-              gridTemplateColumns: '1.5fr 2fr 80px 80px 60px 60px',
+              gridTemplateColumns: '1.5fr 2fr 80px 80px 80px 60px 60px',
               gap: 1,
               p: 1.5,
               backgroundColor: 'transparent',
@@ -474,6 +532,19 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
             </Box>
             <Box
               sx={{
+                textAlign: 'right',
+                cursor: 'pointer',
+                userSelect: 'none',
+                '&:hover': {
+                  color: roleColors.isDarkMode ? '#fbbf24' : '#f59e0b',
+                },
+              }}
+              onClick={() => handleSort('criticalDamage')}
+            >
+              Crit{getSortIcon('criticalDamage')}
+            </Box>
+            <Box
+              sx={{
                 textAlign: 'center',
               }}
             >
@@ -490,7 +561,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
 
           {/* Data Rows */}
           {sortedRows.map((row, index) => {
-            const percentage = ((row.total / totalDamage) * 100).toFixed(2);
+            const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -500,7 +572,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 sx={{
                   // Desktop grid layout
                   display: { xs: 'none', sm: 'grid' },
-                  gridTemplateColumns: '1.5fr 2fr 80px 80px 60px 60px',
+                  gridTemplateColumns: '1.5fr 2fr 80px 80px 80px 60px 60px',
                   gap: 1,
                   p: 1.5,
                   backgroundColor: 'transparent',
@@ -550,7 +622,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Typography>
                 </Box>
 
-                {/* Amount with Progress Bar */}
+                {/* Amount with Progress Bars */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
                   <Typography
                     sx={{
@@ -563,28 +635,62 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
-                    {percentage}%
+                    {percentageOfTotal}%
                   </Typography>
-                  <Box sx={{ flex: 1, minWidth: '100px' }}>
+                  <Box sx={{ flex: 1, minWidth: '100px', position: 'relative' }}>
+                    {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
-                      sx={roleColors.getProgressBarStyles(playerColor)}
+                      sx={{
+                        height: 8,
+                        borderRadius: 1,
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(250, 204, 21, 0.1)'
+                          : 'rgba(234, 179, 8, 0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 1,
+                          background: roleColors.isDarkMode
+                            ? 'linear-gradient(90deg, #facc15 0%, #eab308 100%)'
+                            : 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
+                        },
+                      }}
+                    />
+                    {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
+                    <LinearProgress
+                      variant="determinate"
+                      value={(row.criticalDamage / maxDamage) * 100}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '100%',
+                        backgroundColor: 'transparent',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 1,
+                          background: playerColor,
+                          opacity: 0.85,
+                        },
+                      }}
                     />
                   </Box>
-                  <Typography
-                    sx={{
-                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                      fontSize: '0.875rem',
-                      minWidth: '60px',
-                      textAlign: 'right',
-                      textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.15)',
-                    }}
-                  >
-                    {formatNumber(row.total)}
-                  </Typography>
+                  <Tooltip title={formatNumber(row.total)} arrow>
+                    <Typography
+                      sx={{
+                        color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
+                        fontSize: '0.875rem',
+                        minWidth: '60px',
+                        textAlign: 'right',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.15)',
+                        cursor: 'help',
+                      }}
+                    >
+                      {formatNumberShort(row.total)}
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 {/* DPS */}
@@ -593,18 +699,21 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     textAlign: 'right',
                   }}
                 >
-                  <Typography
-                    sx={{
-                      color: roleColors.getPlayerColor('dps'),
-                      fontWeight: 700,
-                      fontSize: '0.875rem',
-                      textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.12)',
-                    }}
-                  >
-                    {formatNumber(row.dps)}
-                  </Typography>
+                  <Tooltip title={formatNumber(row.dps)} arrow>
+                    <Typography
+                      sx={{
+                        color: roleColors.isDarkMode ? '#eab308' : '#ca8a04',
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.12)',
+                        cursor: 'help',
+                      }}
+                    >
+                      {formatNumberShort(row.dps)}
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 {/* Active DPS */}
@@ -614,18 +723,24 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   }}
                 >
                   {row.activePercentage > 0 ? (
-                    <Typography
-                      sx={{
-                        color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
-                        fontWeight: 700,
-                        fontSize: '0.875rem',
-                        textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 0 rgba(14,165,233,0.25)',
-                      }}
+                    <Tooltip
+                      title={formatNumber(Math.round(row.dps / (row.activePercentage / 100)))}
+                      arrow
                     >
-                      {formatNumber(Math.round(row.dps / (row.activePercentage / 100)))}
-                    </Typography>
+                      <Typography
+                        sx={{
+                          color: roleColors.isDarkMode ? '#38bdf8' : '#0ea5e9',
+                          fontWeight: 700,
+                          fontSize: '0.875rem',
+                          textShadow: roleColors.isDarkMode
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 0 rgba(14,165,233,0.25)',
+                          cursor: 'help',
+                        }}
+                      >
+                        {formatNumberShort(Math.round(row.dps / (row.activePercentage / 100)))}
+                      </Typography>
+                    </Tooltip>
                   ) : (
                     <Typography
                       sx={{
@@ -639,6 +754,29 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       —
                     </Typography>
                   )}
+                </Box>
+
+                {/* Critical Damage */}
+                <Box
+                  sx={{
+                    textAlign: 'right',
+                  }}
+                >
+                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                    <Typography
+                      sx={{
+                        color: playerColor,
+                        fontWeight: 700,
+                        fontSize: '0.875rem',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.12)',
+                        cursor: 'help',
+                      }}
+                    >
+                      {formatNumberShort(row.criticalDamage)}
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 {/* Deaths */}
@@ -718,7 +856,8 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
 
           {/* Mobile Card Layout */}
           {sortedRows.map((row, index) => {
-            const percentage = ((row.total / totalDamage) * 100).toFixed(2);
+            const percentage = ((row.total / maxDamage) * 100).toFixed(2);
+            const percentageOfTotal = ((row.total / totalDamage) * 100).toFixed(2);
             const playerColor = getPlayerColor(row.role);
 
             return (
@@ -781,43 +920,56 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Box>
 
                   <Box>
-                    <Typography
-                      sx={{
-                        color: roleColors.isDarkMode ? '#ecf0f1' : '#334155',
-                        fontWeight: 700,
-                        fontSize: '0.9rem',
-                        textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.12)',
-                      }}
+                    <Tooltip title={formatNumber(row.dps)} arrow>
+                      <Typography
+                        sx={{
+                          color: roleColors.isDarkMode ? '#eab308' : '#ca8a04',
+                          fontWeight: 700,
+                          fontSize: '0.9rem',
+                          textShadow: roleColors.isDarkMode
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 1px rgba(0,0,0,0.12)',
+                          cursor: 'help',
+                        }}
+                      >
+                        {formatNumberShort(row.dps)} DPS
+                      </Typography>
+                    </Tooltip>
+                    <Tooltip
+                      title={
+                        row.activePercentage > 0
+                          ? formatNumber(Math.round(row.dps / (row.activePercentage / 100)))
+                          : 'N/A'
+                      }
+                      arrow
                     >
-                      {formatNumber(row.dps)} DPS
-                    </Typography>
-                    <Typography
-                      sx={{
-                        color:
-                          row.activePercentage > 0
-                            ? roleColors.isDarkMode
-                              ? '#38bdf8'
-                              : '#0ea5e9'
-                            : roleColors.isDarkMode
-                              ? '#888'
-                              : '#64748b',
-                        fontWeight: 600,
-                        fontSize: '0.8rem',
-                        textShadow: roleColors.isDarkMode
-                          ? '0 1px 3px rgba(0,0,0,0.5)'
-                          : '0 1px 1px rgba(0,0,0,0.1)',
-                      }}
-                    >
-                      {row.activePercentage > 0
-                        ? `${formatNumber(Math.round(row.dps / (row.activePercentage / 100)))} Active`
-                        : 'N/A Active'}
-                    </Typography>
+                      <Typography
+                        sx={{
+                          color:
+                            row.activePercentage > 0
+                              ? roleColors.isDarkMode
+                                ? '#38bdf8'
+                                : '#0ea5e9'
+                              : roleColors.isDarkMode
+                                ? '#888'
+                                : '#64748b',
+                          fontWeight: 600,
+                          fontSize: '0.8rem',
+                          textShadow: roleColors.isDarkMode
+                            ? '0 1px 3px rgba(0,0,0,0.5)'
+                            : '0 1px 1px rgba(0,0,0,0.1)',
+                          cursor: row.activePercentage > 0 ? 'help' : 'default',
+                        }}
+                      >
+                        {row.activePercentage > 0
+                          ? `${formatNumberShort(Math.round(row.dps / (row.activePercentage / 100)))} Active`
+                          : 'N/A Active'}
+                      </Typography>
+                    </Tooltip>
                   </Box>
                 </Box>
 
-                {/* Mobile Progress Bar and Amount */}
+                {/* Mobile Progress Bars and Amount */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 1 }}>
                   <Typography
                     sx={{
@@ -830,31 +982,90 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                         : '0 1px 1px rgba(0,0,0,0.15)',
                     }}
                   >
-                    {percentage}%
+                    {percentageOfTotal}%
                   </Typography>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
+                    {/* Total Damage Progress Bar (Background) - Yellow/Amber */}
                     <LinearProgress
                       variant="determinate"
                       value={parseFloat(percentage)}
                       sx={{
-                        ...roleColors.getProgressBarStyles(playerColor),
                         height: 6, // Slightly smaller for mobile
+                        borderRadius: 1,
+                        backgroundColor: roleColors.isDarkMode
+                          ? 'rgba(250, 204, 21, 0.1)'
+                          : 'rgba(234, 179, 8, 0.1)',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 1,
+                          background: roleColors.isDarkMode
+                            ? 'linear-gradient(90deg, #facc15 0%, #eab308 100%)'
+                            : 'linear-gradient(90deg, #eab308 0%, #ca8a04 100%)',
+                        },
+                      }}
+                    />
+                    {/* Critical Damage Progress Bar (Overlay) - Role Colors */}
+                    <LinearProgress
+                      variant="determinate"
+                      value={(row.criticalDamage / maxDamage) * 100}
+                      sx={{
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        height: '100%',
+                        backgroundColor: 'transparent',
+                        '& .MuiLinearProgress-bar': {
+                          borderRadius: 1,
+                          background: playerColor,
+                          opacity: 0.85,
+                        },
                       }}
                     />
                   </Box>
+                  <Tooltip title={formatNumber(row.total)} arrow>
+                    <Typography
+                      sx={{
+                        color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
+                        fontSize: '0.8rem',
+                        minWidth: '70px',
+                        textAlign: 'right',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.15)',
+                        cursor: 'help',
+                      }}
+                    >
+                      {formatNumberShort(row.total)}
+                    </Typography>
+                  </Tooltip>
+                </Box>
+
+                {/* Critical Damage - Mobile */}
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
                   <Typography
                     sx={{
-                      color: roleColors.isDarkMode ? '#ecf0f1' : '#475569',
-                      fontSize: '0.8rem',
-                      minWidth: '70px',
-                      textAlign: 'right',
-                      textShadow: roleColors.isDarkMode
-                        ? '0 1px 3px rgba(0,0,0,0.5)'
-                        : '0 1px 1px rgba(0,0,0,0.15)',
+                      color: roleColors.isDarkMode ? '#888' : '#64748b',
+                      fontSize: '0.75rem',
+                      minWidth: '45px',
                     }}
                   >
-                    {formatNumber(row.total)}
+                    Crit:
                   </Typography>
+                  <Tooltip title={formatNumber(row.criticalDamage)} arrow>
+                    <Typography
+                      sx={{
+                        color: playerColor,
+                        fontWeight: 700,
+                        fontSize: '0.8rem',
+                        textShadow: roleColors.isDarkMode
+                          ? '0 1px 3px rgba(0,0,0,0.5)'
+                          : '0 1px 1px rgba(0,0,0,0.12)',
+                        cursor: 'help',
+                      }}
+                    >
+                      {formatNumberShort(row.criticalDamage)}
+                    </Typography>
+                  </Tooltip>
                 </Box>
 
                 {/* Mobile Death and Resurrect Counters */}
