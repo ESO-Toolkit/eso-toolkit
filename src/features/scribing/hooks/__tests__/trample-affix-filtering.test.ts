@@ -24,43 +24,14 @@ describe('Trample Affix Detection with Grimoire Filtering', () => {
     });
 
     const EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS = [
-      3929,
-      5805,
-      21926,
-      22233,
-      24153,
-      27190,
-      39168,
-      46202,
-      47193,
-      61662,
-      61665,
-      61666,
-      61667,
-      61685,
-      61687,
-      61688,
-      61689,
-      61708,
-      61709,
-      61721,
-      61722,
-      61735,
-      61736,
-      68359,
-      79717,
-      103570,
-      106754,
-      111354,
-      147643,
-      161716,
-      186493,
-      203344
+      3929, 5805, 21926, 22233, 24153, 27190, 39168, 46202, 47193, 61662, 61665, 61666, 61667,
+      61685, 61687, 61688, 61689, 61708, 61709, 61721, 61722, 61735, 61736, 68359, 79717, 103570,
+      106754, 111354, 147643, 161716, 186493, 203344,
     ];
 
     // Ensure set contains exactly the expected ability IDs (10 affixes -> 32 IDs)
     expect([...GRIMOIRE_COMPATIBLE_AFFIX_IDS].sort((a, b) => a - b)).toEqual(
-      EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS
+      EXPECTED_TRAMPLE_AFFIX_ABILITY_IDS,
     );
 
     // Should include Heroism IDs
