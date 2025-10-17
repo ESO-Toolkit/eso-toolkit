@@ -101,7 +101,6 @@ export interface SkillTooltipProps {
 
 type PaletteKey = 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info';
 
-
 const getEffectTypeIndicator = (type: string, theme: Theme): { color: string } => {
   switch (type) {
     case 'buff':
