@@ -822,20 +822,16 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                 key={`mobile-${row.id}`}
                 sx={{
                   display: { xs: 'block', sm: 'none' },
-                  p: designTokens.spacing.lg,
-                  mb: designTokens.spacing.lg,
-                  backgroundColor: designTokens.colors.surface,
-                  borderRadius: designTokens.borderRadius.lg,
-                  border: `1px solid ${designTokens.colors.border}`,
-                  boxShadow: designTokens.shadows.md,
+                  p: '16px',
+                  mb: '16px',
+                  backgroundColor: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(255, 255, 255, 0.8)',
+                  borderRadius: '12px',
+                  border: `1px solid ${roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}`,
+                  boxShadow: roleColors.isDarkMode
+                    ? '0 4px 6px rgba(0, 0, 0, 0.3)'
+                    : '0 2px 4px rgba(0, 0, 0, 0.1)',
                   position: 'relative',
                   overflow: 'hidden',
-                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                  '&:hover': {
-                    backgroundColor: designTokens.colors.surfaceHover,
-                    boxShadow: designTokens.shadows.lg,
-                    transform: 'translateY(-2px)',
-                  },
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -848,17 +844,17 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   },
                 }}
               >
-                {/* Premium Card Header */}
+                {/* Card Header */}
                 <Box
                   sx={{
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'flex-start',
-                    mb: designTokens.spacing.md,
+                    mb: '12px',
                   }}
                 >
                   {/* Player Info Section */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.md, minWidth: 0, flex: 1 }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0, flex: 1 }}>
                     {row.iconUrl && (
                       <Avatar
                         src={row.iconUrl}
@@ -868,41 +864,28 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                           height: 40,
                           flexShrink: 0,
                           border: `2px solid ${playerColor}`,
-                          boxShadow: `0 0 12px ${playerColor}40`,
                         }}
                       />
                     )}
                     <Box sx={{ minWidth: 0, flex: 1 }}>
                       <Typography
                         sx={{
-                          ...designTokens.typography.sm,
+                          fontSize: '0.875rem',
                           fontWeight: 700,
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           whiteSpace: 'nowrap',
-                          ...(roleColors.isDarkMode
-                            ? {
-                                color: designTokens.textPrimary,
-                                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
-                              }
-                            : {
-                                background: roleColors.getGradientColor(row.role),
-                                backgroundClip: 'text',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                textShadow: '0 1px 1px rgba(0,0,0,0.1)',
-                              }),
+                          color: roleColors.isDarkMode ? playerColor : 'inherit',
                         }}
                       >
                         {row.name}
                       </Typography>
                       <Typography
                         sx={{
-                          ...designTokens.typography.xs,
-                          color: designTokens.textTertiary,
-                          mt: designTokens.spacing.xs,
+                          fontSize: '0.75rem',
+                          color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
+                          mt: '4px',
                           textTransform: 'uppercase',
-                          letterSpacing: '0.05em',
                         }}
                       >
                         {row.role?.toUpperCase()}
@@ -910,35 +893,33 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     </Box>
                   </Box>
 
-                  {/* Performance Metrics */}
-                  <Box sx={{ textAlign: 'right', ml: designTokens.spacing.md }}>
-                    <Tooltip title={formatNumber(row.dps)} arrow>
+                  {/* DPS Display - Simple and Clean */}
+                  <Box sx={{ textAlign: 'right' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'baseline', gap: '4px', justifyContent: 'flex-end' }}>
+                      <Tooltip title={formatNumber(row.dps)} arrow>
+                        <Typography
+                          sx={{
+                            fontSize: '1.1rem',
+                            fontWeight: 700,
+                            color: roleColors.isDarkMode ? '#ffffff' : '#000000',
+                            cursor: 'help',
+                            lineHeight: 1,
+                          }}
+                        >
+                          {formatNumberShort(row.dps)}
+                        </Typography>
+                      </Tooltip>
                       <Typography
                         sx={{
-                          ...designTokens.typography.md,
-                          fontWeight: 800,
-                          color: roleColors.isDarkMode ? '#ffffff' : '#1a1a1a',
-                          textShadow: roleColors.isDarkMode
-                            ? '0 2px 4px rgba(0,0,0,0.6)'
-                            : '0 1px 2px rgba(255,255,255,0.8)',
-                          cursor: 'help',
-                          lineHeight: 1.2,
+                          fontSize: '0.75rem',
+                          color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
+                          fontWeight: 500,
+                          textTransform: 'uppercase',
                         }}
                       >
-                        {formatNumberShort(row.dps)}
+                        DPS
                       </Typography>
-                    </Tooltip>
-                    <Typography
-                      sx={{
-                        ...designTokens.typography.xs,
-                        color: designTokens.textTertiary,
-                        textTransform: 'uppercase',
-                        letterSpacing: '0.05em',
-                        fontWeight: 600,
-                      }}
-                    >
-                      DPS
-                    </Typography>
+                    </Box>
                     {isActive && (
                       <Tooltip
                         title={formatNumber(Math.round(row.dps / (row.activePercentage / 100)))}
@@ -946,10 +927,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                       >
                         <Typography
                           sx={{
-                            ...designTokens.typography.xs,
+                            fontSize: '0.8rem',
                             color: '#38bdf8',
                             fontWeight: 600,
-                            mt: designTokens.spacing.xs,
+                            mt: '2px',
                             cursor: 'help',
                           }}
                         >
@@ -960,63 +941,43 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                   </Box>
                 </Box>
 
-                {/* Sophisticated Progress Section */}
-                <Box sx={{ mb: designTokens.spacing.md }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.md, mb: designTokens.spacing.sm }}>
+                {/* Progress Section */}
+                <Box sx={{ mb: '12px' }}>
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px', mb: '4px' }}>
                     <Typography
                       sx={{
-                        ...designTokens.typography.xs,
-                        color: designTokens.textSecondary,
+                        fontSize: '0.75rem',
+                        color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
                         fontWeight: 600,
                         minWidth: '48px',
                         textTransform: 'uppercase',
-                        letterSpacing: '0.025em',
                       }}
                     >
                       {percentageOfTotal}%
                     </Typography>
                     <Box sx={{ flex: 1, minWidth: 0, position: 'relative' }}>
-                      {/* Premium Progress Container */}
-                      <Box
+                      {/* Total Damage Progress Bar (Background) - Muted Orange */}
+                      <LinearProgress
+                        variant="determinate"
+                        value={parseFloat(percentage)}
                         sx={{
-                          height: '8px',
-                          borderRadius: designTokens.borderRadius.sm,
+                          height: 8,
+                          borderRadius: 4,
                           backgroundColor: roleColors.isDarkMode
                             ? MUTED_ORANGE_PROGRESS_DARK.background
                             : MUTED_ORANGE_PROGRESS_LIGHT.background,
-                          overflow: 'hidden',
-                          position: 'relative',
-                          '&::before': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            height: '100%',
-                            width: `${percentage}%`,
+                          '& .MuiLinearProgress-bar': {
+                            borderRadius: 4,
                             background: roleColors.isDarkMode
                               ? MUTED_ORANGE_PROGRESS_DARK.bar
                               : MUTED_ORANGE_PROGRESS_LIGHT.bar,
-                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1)',
                           },
-                          '&::after': {
-                            content: '""',
-                            position: 'absolute',
-                            top: 0,
-                            left: 0,
-                            height: '100%',
-                            width: `${(row.criticalDamageTotal / maxDamage) * 100}%`,
-                            background: playerColor,
-                            opacity: 0.9,
-                            transition: 'width 0.8s cubic-bezier(0.4, 0, 0.2, 1) 0.1s',
-                          },
-                        }}
-                      />
                     </Box>
                     <Tooltip title={formatNumber(row.total)} arrow>
                       <Typography
                         sx={{
-                          ...designTokens.typography.xs,
-                          color: designTokens.textSecondary,
+                          fontSize: '0.75rem',
+                          color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)',
                           fontWeight: 600,
                           minWidth: '48px',
                           textAlign: 'right',
@@ -1035,12 +996,12 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
-                    pt: designTokens.spacing.sm,
-                    borderTop: `1px solid ${designTokens.colors.border}`,
+                    pt: '8px',
+                    borderTop: `1px solid ${roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.12)' : 'rgba(0, 0, 0, 0.08)'}`,
                   }}
                 >
-                  {/* Critical Damage */}
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: designTokens.spacing.sm }}>
+                  {/* Left Side: Critical Damage */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <Box
                       sx={{
                         width: '8px',
@@ -1052,11 +1013,10 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     />
                     <Typography
                       sx={{
-                        ...designTokens.typography.xs,
-                        color: designTokens.textTertiary,
+                        fontSize: '0.75rem',
+                        color: roleColors.isDarkMode ? 'rgba(255, 255, 255, 0.5)' : 'rgba(0, 0, 0, 0.4)',
                         fontWeight: 600,
                         textTransform: 'uppercase',
-                        letterSpacing: '0.025em',
                       }}
                     >
                       Crit
@@ -1064,7 +1024,7 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     <Tooltip title={formatNumber(row.criticalDamageTotal)} arrow>
                       <Typography
                         sx={{
-                          ...designTokens.typography.xs,
+                          fontSize: '0.75rem',
                           color: playerColor,
                           fontWeight: 700,
                           cursor: 'help',
@@ -1075,79 +1035,85 @@ export const DamageDonePanelView: React.FC<DamageDonePanelViewProps> = ({
                     </Tooltip>
                   </Box>
 
-                {/* Death & Resurrect Indicators */}
-                <Box sx={{ display: 'flex', gap: designTokens.spacing.sm }}>
-                    {row.deaths > 0 && (
+                {/* Right Side: Death & Resurrect Indicators */}
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    {row.deaths > 0 ? (
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: designTokens.spacing.xs,
-                          px: designTokens.spacing.sm,
-                          py: designTokens.spacing.xs,
-                          borderRadius: designTokens.borderRadius.md,
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
                           backgroundColor: roleColors.isDarkMode
                             ? 'rgba(244, 67, 54, 0.15)'
                             : 'rgba(239, 68, 68, 0.08)',
-                          border: roleColors.isDarkMode
-                            ? '1px solid rgba(244, 67, 54, 0.3)'
-                            : '1px solid rgba(239, 68, 68, 0.15)',
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: '0.75rem',
-                            color: roleColors.isDarkMode ? '#f87171' : '#dc2626',
-                            fontWeight: 700,
-                          }}
-                        >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#f87171' : '#dc2626', fontWeight: 700 }}>
                           💀
                         </Typography>
-                        <Typography
-                          sx={{
-                            ...designTokens.typography.xs,
-                            color: roleColors.isDarkMode ? '#f87171' : '#dc2626',
-                            fontWeight: 700,
-                          }}
-                        >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#f87171' : '#dc2626', fontWeight: 700 }}>
                           {row.deaths}
                         </Typography>
                       </Box>
-                    )}
-                    {row.resurrects > 0 && (
+                    ) : (
                       <Box
                         sx={{
                           display: 'flex',
                           alignItems: 'center',
-                          gap: designTokens.spacing.xs,
-                          px: designTokens.spacing.sm,
-                          py: designTokens.spacing.xs,
-                          borderRadius: designTokens.borderRadius.md,
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.03)',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#666' : '#999', fontWeight: 700 }}>
+                          💀 0
+                        </Typography>
+                      </Box>
+                    )}
+                    {row.resurrects > 0 ? (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
                           backgroundColor: roleColors.isDarkMode
                             ? 'rgba(74, 222, 128, 0.15)'
                             : 'rgba(34, 197, 94, 0.08)',
-                          border: roleColors.isDarkMode
-                            ? '1px solid rgba(74, 222, 128, 0.3)'
-                            : '1px solid rgba(34, 197, 94, 0.15)',
                         }}
                       >
-                        <Typography
-                          sx={{
-                            fontSize: '0.75rem',
-                            color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
-                            fontWeight: 700,
-                          }}
-                        >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#4ade80' : '#22c55e', fontWeight: 700 }}>
                           ❤️
                         </Typography>
-                        <Typography
-                          sx={{
-                            ...designTokens.typography.xs,
-                            color: roleColors.isDarkMode ? '#4ade80' : '#22c55e',
-                            fontWeight: 700,
-                          }}
-                        >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#4ade80' : '#22c55e', fontWeight: 700 }}>
                           {row.resurrects}
+                        </Typography>
+                      </Box>
+                    ) : (
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          px: '8px',
+                          py: '4px',
+                          borderRadius: '6px',
+                          backgroundColor: roleColors.isDarkMode
+                            ? 'rgba(255, 255, 255, 0.05)'
+                            : 'rgba(0, 0, 0, 0.03)',
+                        }}
+                      >
+                        <Typography sx={{ fontSize: '0.75rem', color: roleColors.isDarkMode ? '#666' : '#999', fontWeight: 700 }}>
+                          ❤️ 0
                         </Typography>
                       </Box>
                     )}
