@@ -36,6 +36,7 @@ import React, { Suspense } from 'react';
 
 import { AnimatedTabContent } from '../../components/AnimatedTabContent';
 import { FightFragment } from '../../graphql/gql/graphql';
+import { usePhaseTransitions } from '../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanel } from './critical_damage/CriticalDamagePanel';
@@ -129,6 +130,8 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
   showExperimentalTabs,
   onToggleExperimentalTabs,
 }) => {
+  const phaseTransitionInfo = usePhaseTransitions(fight);
+
   // Define experimental tabs array
   const experimentalTabs: TabId[] = [
     TabId.LOCATION_HEATMAP,
@@ -659,7 +662,7 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.DAMAGE_DONE && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_DONE} />}>
-              <DamageDonePanel />
+              <DamageDonePanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {validSelectedTabId === TabId.HEALING_DONE && (
@@ -674,17 +677,17 @@ export const FightDetailsView: React.FC<FightDetailsViewProps> = ({
           )}
           {validSelectedTabId === TabId.CRITICAL_DAMAGE && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.CRITICAL_DAMAGE} />}>
-              <CriticalDamagePanel />
+              <CriticalDamagePanel phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {validSelectedTabId === TabId.PENETRATION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.PENETRATION} />}>
-              <PenetrationPanel fight={fight} />
+              <PenetrationPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {validSelectedTabId === TabId.DAMAGE_REDUCTION && (
             <Suspense fallback={<PanelLoadingFallback tabId={TabId.DAMAGE_REDUCTION} />}>
-              <DamageReductionPanel fight={fight} />
+              <DamageReductionPanel fight={fight} phaseTransitionInfo={phaseTransitionInfo} />
             </Suspense>
           )}
           {showExperimentalTabs && validSelectedTabId === TabId.LOCATION_HEATMAP && (

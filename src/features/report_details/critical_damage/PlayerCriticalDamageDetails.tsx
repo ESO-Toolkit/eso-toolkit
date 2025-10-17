@@ -2,6 +2,7 @@ import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
 import { usePlayerData } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { CriticalDamageValues } from '../../../types/abilities';
 import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 
@@ -25,6 +26,7 @@ interface PlayerCriticalDamageDetailsProps {
   onExpandChange?: (event: React.SyntheticEvent, isExpanded: boolean) => void;
   criticalDamageData: PlayerCriticalDamageDataExtended | null;
   isLoading: boolean;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsProps> = ({
@@ -35,6 +37,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
   onExpandChange,
   criticalDamageData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   const { playerData } = usePlayerData();
 
@@ -146,6 +149,7 @@ export const PlayerCriticalDamageDetails: React.FC<PlayerCriticalDamageDetailsPr
       criticalMultiplier={null}
       fightDurationSeconds={fightDurationSeconds}
       onExpandChange={onExpandChange}
+      phaseTransitionInfo={phaseTransitionInfo}
     />
   );
 };

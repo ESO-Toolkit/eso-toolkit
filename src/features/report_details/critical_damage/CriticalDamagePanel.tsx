@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { useCriticalDamageTask, useCurrentFight, usePlayerData } from '../../../hooks';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { getSkeletonForTab, TabId } from '../../../utils/getSkeletonForTab';
 
 import { CriticalDamagePanelView } from './CriticalDamagePanelView';
@@ -9,7 +10,13 @@ import { CriticalDamagePanelView } from './CriticalDamagePanelView';
 /**
  * Smart component that handles data processing and state management for critical damage panel
  */
-export const CriticalDamagePanel: React.FC = () => {
+interface CriticalDamagePanelProps {
+  phaseTransitionInfo?: PhaseTransitionInfo;
+}
+
+export const CriticalDamagePanel: React.FC<CriticalDamagePanelProps> = ({
+  phaseTransitionInfo,
+}) => {
   const { fight, isFightLoading } = useCurrentFight();
   const { playerData, isPlayerDataLoading } = usePlayerData();
   const { criticalDamageData, isCriticalDamageLoading, criticalDamageError } =
@@ -69,6 +76,7 @@ export const CriticalDamagePanel: React.FC = () => {
       onExpandChange={handleExpandChange}
       criticalDamageData={criticalDamageData?.playerDataMap || null}
       isLoading={false}
+      phaseTransitionInfo={phaseTransitionInfo}
     />
   );
 };

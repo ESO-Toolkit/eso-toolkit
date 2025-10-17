@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 
 import {
@@ -18,6 +19,7 @@ interface DamageReductionPanelViewProps {
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
   damageReductionData: Record<number, PlayerDamageReductionData> | null;
   isLoading: boolean;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
@@ -32,6 +34,7 @@ export const DamageReductionPanelView: React.FC<DamageReductionPanelViewProps> =
   onExpandChange,
   damageReductionData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
@@ -67,6 +70,7 @@ export const DamageReductionPanelView: React.FC<DamageReductionPanelViewProps> =
               onExpandChange={onExpandChange(player.id)}
               damageReductionData={playerDamageReductionData || undefined}
               isLoading={isLoading}
+              phaseTransitionInfo={phaseTransitionInfo}
             />
           );
         })}

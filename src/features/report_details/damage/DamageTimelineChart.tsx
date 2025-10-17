@@ -26,6 +26,8 @@ import annotationPlugin from 'chartjs-plugin-annotation';
 import React from 'react';
 
 import { LineChart } from '../../../components/LazyCharts';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
+import { buildPhaseBoundaryAnnotations } from '../../../utils/chartPhaseAnnotationUtils';
 import type {
   DamageOverTimeResult,
   PlayerDamageOverTimeData,
@@ -71,6 +73,8 @@ interface DamageTimelineChartProps {
   isLoading?: boolean;
   /** Chart height in pixels */
   height?: number;
+  /** Phase transition timeline information */
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
@@ -83,6 +87,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
   availableTargets = [],
   isLoading = false,
   height = 400,
+  phaseTransitionInfo,
 }) => {
   const [viewMode, setViewMode] = React.useState<'all' | 'filtered'>('filtered');
 
@@ -200,6 +205,29 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
     return { labels, datasets };
   }, [displayData, damageOverTimeData?.bucketSizeMs]);
 
+  const phaseAnnotations = React.useMemo(() => {
+    if (!damageOverTimeData || !phaseTransitionInfo?.phaseTransitions) {
+      return {};
+    }
+
+    return buildPhaseBoundaryAnnotations(phaseTransitionInfo.phaseTransitions, {
+      fightStartTime: damageOverTimeData.fightStartTime,
+      fightEndTime: damageOverTimeData.fightEndTime,
+      xValueFormatter: (seconds: number) => Number(seconds.toFixed(1)),
+    });
+  }, [damageOverTimeData, phaseTransitionInfo]);
+
+  const annotationPluginConfig = React.useMemo(() => {
+    const hasAnnotations = Object.keys(phaseAnnotations).length > 0;
+    if (!hasAnnotations) {
+      return undefined;
+    }
+
+    return {
+      annotations: phaseAnnotations,
+    } as const;
+  }, [phaseAnnotations]);
+
   // Get target name helper
   const getTargetName = React.useCallback(
     (targetId: number): string => {
@@ -299,6 +327,7 @@ export const DamageTimelineChart: React.FC<DamageTimelineChartProps> = ({
                     },
                   },
                 },
+                ...(annotationPluginConfig ? { annotation: annotationPluginConfig } : {}),
               },
               scales: {
                 x: {

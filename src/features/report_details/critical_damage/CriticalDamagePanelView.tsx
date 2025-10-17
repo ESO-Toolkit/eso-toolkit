@@ -2,6 +2,7 @@ import { Box, Typography } from '@mui/material';
 import React from 'react';
 
 import { FightFragment } from '../../../graphql/gql/graphql';
+import type { PhaseTransitionInfo } from '../../../hooks/usePhaseTransitions';
 import { PlayerDetailsWithRole } from '../../../store/player_data/playerDataSlice';
 import { CriticalDamageSourceWithActiveState } from '../../../utils/CritDamageUtils';
 
@@ -20,6 +21,7 @@ interface CriticalDamagePanelProps {
   onExpandChange: (playerId: number) => (event: React.SyntheticEvent, isExpanded: boolean) => void;
   criticalDamageData: Record<number, PlayerCriticalDamageDataExtended> | null;
   isLoading: boolean;
+  phaseTransitionInfo?: PhaseTransitionInfo;
 }
 
 /**
@@ -32,6 +34,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
   onExpandChange,
   criticalDamageData,
   isLoading,
+  phaseTransitionInfo,
 }) => {
   return (
     <Box sx={{ px: { xs: 0, sm: 2 }, py: 2 }}>
@@ -66,6 +69,7 @@ export const CriticalDamagePanelView: React.FC<CriticalDamagePanelProps> = ({
               onExpandChange={onExpandChange(player.id)}
               criticalDamageData={playerCriticalDamageData || null}
               isLoading={isLoading}
+              phaseTransitionInfo={phaseTransitionInfo}
             />
           );
         })}
