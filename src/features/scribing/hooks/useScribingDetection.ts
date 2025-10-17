@@ -83,6 +83,10 @@ Object.values(scribingData.affixScripts).forEach(
   },
 );
 
+// Certain scribing abilities (e.g., Ulfsild's Contingency) delay their affix trigger
+// until the next resource-costing skill is used.
+const DEFERRED_AFFIX_TRIGGER_ABILITIES = new Set<number>([240150]);
+
 export interface CombatEventData {
   buffs: BuffEvent[];
   debuffs: DebuffEvent[];
@@ -362,6 +366,7 @@ async function detectAffixScripts(
     // Analyze effects in a tighter window for more accurate correlation
     // Affix effects typically appear within 1 second of the cast
     const AFFIX_WINDOW_MS = 1000; // Reduced from 10s to 1s for better accuracy
+    const BUFF_WINDOW_MS = 1200; // Slightly larger than the affix window to handle delayed buff ticks
 
     // Track which casts had each effect (to avoid >100% correlations from multi-target)
     const buffCandidates = new Map<number, Set<number>>(); // effectId -> Set of cast indices
@@ -369,9 +374,70 @@ async function detectAffixScripts(
     const damageCandidates = new Map<number, Set<number>>(); // effectId -> Set of cast indices
     const healCandidates = new Map<number, Set<number>>(); // effectId -> Set of cast indices
 
+    const getAffixTriggerStartTime = (
+      cast: UnifiedCastEvent,
+      ability: number,
+      player: number,
+      events: CombatEventData,
+    ): number => {
+      if (!DEFERRED_AFFIX_TRIGGER_ABILITIES.has(ability)) {
+        return cast.timestamp;
+      }
+
+      const candidates: number[] = [];
+
+      const recordNext = <T extends { sourceID: number; timestamp: number }>(
+        items: T[],
+        predicate: (item: T) => boolean = () => true,
+      ): void => {
+        const next = items.find(
+          (item) => item.sourceID === player && item.timestamp > cast.timestamp && predicate(item),
+        );
+        if (next) {
+          candidates.push(next.timestamp);
+        }
+      };
+
+      // Next cast that isn't the contingency itself is the ideal trigger signal.
+      recordNext(events.casts, (event) => event.abilityGameID !== ability);
+
+      // Fallbacks: combat or healing events triggered by the follow-up skill.
+      recordNext(events.damage);
+      recordNext(events.heals);
+
+      // Resource spending is the canonical trigger; prefer negative deltas when available.
+      const resourceCost = events.resources.find(
+        (event) =>
+          event.sourceID === player &&
+          event.timestamp > cast.timestamp &&
+          (event.resourceChange ?? 0) < 0,
+      );
+      if (resourceCost) {
+        candidates.push(resourceCost.timestamp);
+      }
+
+      if (candidates.length === 0) {
+        // As a final fallback, allow a subsequent cast even if it's the same ability.
+        const nextCast = events.casts.find(
+          (event) => event.sourceID === player && event.timestamp > cast.timestamp,
+        );
+        if (nextCast) {
+          candidates.push(nextCast.timestamp);
+        }
+      }
+
+      if (candidates.length === 0) {
+        return cast.timestamp;
+      }
+
+      return Math.min(...candidates);
+    };
+
     casts.forEach((cast, castIndex) => {
-      const windowStart = cast.timestamp;
-      const windowEnd = cast.timestamp + AFFIX_WINDOW_MS;
+      const triggerStart = getAffixTriggerStartTime(cast, abilityId, playerId, combatEvents);
+      const windowStart = triggerStart;
+      const windowEnd = triggerStart + AFFIX_WINDOW_MS;
+      const buffWindowEnd = triggerStart + BUFF_WINDOW_MS;
 
       // Analyze buffs applied in window (to self or allies)
       // KEY INSIGHT: Affix scripts do NOT populate extraAbilityGameID
@@ -380,7 +446,7 @@ async function detectAffixScripts(
         (b) =>
           b.sourceID === playerId &&
           b.timestamp >= windowStart &&
-          b.timestamp <= windowEnd &&
+          b.timestamp <= buffWindowEnd &&
           !('extraAbilityGameID' in b && b.extraAbilityGameID), // Filter out core ability effects
       );
 
@@ -391,7 +457,7 @@ async function detectAffixScripts(
         (d) =>
           d.sourceID === playerId &&
           d.timestamp >= windowStart &&
-          d.timestamp <= windowEnd &&
+          d.timestamp <= buffWindowEnd &&
           !('extraAbilityGameID' in d && d.extraAbilityGameID), // Filter out core ability effects
       );
 
