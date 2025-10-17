@@ -14,6 +14,7 @@ import { calculatePenetrationData } from './calculations/CalculatePenetration';
 import { calculateStaggerStacks } from './calculations/CalculateStaggerStacks';
 import { calculateStatusEffectUptimes } from './calculations/CalculateStatusEffectUptimes';
 import { calculateTouchOfZenStacks } from './calculations/CalculateTouchOfZenStacks';
+import { calculatePlayerTravelDistances } from './calculations/CalculatePlayerTravelDistances';
 
 const SHARED_WORKER = {
   calculateBuffLookup,
@@ -28,6 +29,7 @@ const SHARED_WORKER = {
   calculateStaggerStacks,
   calculateElementalWeaknessStacks,
   calculateActorPositions,
+  calculatePlayerTravelDistances,
 };
 
 expose(SHARED_WORKER);

@@ -82,3 +82,10 @@ export {
   executeElementalWeaknessStacksTask,
   elementalWeaknessStacksReducer,
 } from './elementalWeaknessStacksSlice';
+
+export {
+  playerTravelDistancesSlice,
+  playerTravelDistancesActions,
+  executePlayerTravelDistancesTask,
+  playerTravelDistancesReducer,
+} from './playerTravelDistancesSlice';

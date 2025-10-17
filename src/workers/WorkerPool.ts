@@ -12,6 +12,7 @@ import { PenetrationCalculationTask } from './calculations/CalculatePenetration'
 import { StaggerStacksCalculationTask } from './calculations/CalculateStaggerStacks';
 import { StatusEffectUptimesCalculationTask } from './calculations/CalculateStatusEffectUptimes';
 import { TouchOfZenStacksCalculationTask } from './calculations/CalculateTouchOfZenStacks';
+import { PlayerTravelDistanceTaskInput } from './calculations/CalculatePlayerTravelDistances';
 import { SharedComputationWorkerTaskType } from './SharedWorker';
 import type { WorkerPoolConfig, WorkerTask, WorkerInfo, WorkerStats } from './types';
 import { OnProgressCallback } from './Utils';
@@ -314,6 +315,12 @@ export class WorkerPool {
         case 'calculateElementalWeaknessStacks':
           result = await workerInfo.worker.calculateElementalWeaknessStacks(
             task.data as ElementalWeaknessStacksCalculationTask,
+            onProgress,
+          );
+          break;
+        case 'calculatePlayerTravelDistances':
+          result = await workerInfo.worker.calculatePlayerTravelDistances(
+            task.data as PlayerTravelDistanceTaskInput,
             onProgress,
           );
           break;

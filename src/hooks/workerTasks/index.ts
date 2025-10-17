@@ -9,6 +9,7 @@ export { useStatusEffectUptimesTask } from './useStatusEffectUptimesTask';
 export { useDamageReductionTask } from './useDamageReductionTask';
 export { useTouchOfZenStacksTask } from './useTouchOfZenStacksTask';
 export { useStaggerStacksTask } from './useStaggerStacksTask';
+export { usePlayerTravelDistanceTask } from './usePlayerTravelDistanceTask';
 
 // Shared dependencies helper
 export { useWorkerTaskDependencies } from './useWorkerTaskDependencies';
